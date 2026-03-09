@@ -65,6 +65,7 @@
     background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
     border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.2s ease;
     position: relative; overflow: hidden; margin-bottom: 6px;
+    touch-action: manipulation;
   }
   .player-card.leader {
     background: linear-gradient(135deg, rgba(255,62,108,0.15), rgba(255,215,0,0.1));
@@ -92,6 +93,7 @@
     background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
     border-radius: 6px; padding: 8px 4px; cursor: pointer; width: 100%;
     color: #fff; font-size: 18px; transition: transform 0.15s ease;
+    touch-action: manipulation;
   }
   .score-btn:active { transform: scale(0.93); }
   .score-label { font-size: 10px; color: #888; margin-top: 2px; }
@@ -240,24 +242,39 @@ function switchTab(tab) {
   render();
 }
 
+let lastActionTime = 0;
+
+function guardedAction(fn) {
+  lastActionTime = Date.now();
+  fn();
+}
+
 function incrementStat(playerId, catKey, amount) {
-  const p = players.find(x => x.id === playerId);
-  if (!p) return;
-  p.stats[catKey] = Math.max(0, (p.stats[catKey] || 0) + amount);
-  render();
+  guardedAction(() => {
+    const p = players.find(x => x.id === playerId);
+    if (!p) return;
+    p.stats[catKey] = Math.max(0, (p.stats[catKey] || 0) + amount);
+    render();
+  });
 }
 
 function removePlayer(id) {
-  players = players.filter(p => p.id !== id);
-  if (selectedPlayer === id) selectedPlayer = null;
-  render();
+  guardedAction(() => {
+    players = players.filter(p => p.id !== id);
+    if (selectedPlayer === id) selectedPlayer = null;
+    render();
+  });
 }
 
 function resetAll() {
   if (confirm("Reset all scores? This can't be undone.")) { players.forEach(p => p.stats = {}); render(); }
 }
 
-function togglePlayer(id) { selectedPlayer = selectedPlayer === id ? null : id; render(); }
+function togglePlayer(id) {
+  if (Date.now() - lastActionTime < 300) return;
+  selectedPlayer = selectedPlayer === id ? null : id;
+  render();
+}
 
 function addPlayer() {
   const input = document.getElementById('newNameInput');
@@ -291,14 +308,14 @@ function renderTable() {
     html += `</div>`;
 
     if (expanded) {
-      html += `<div class="score-grid">`;
+      html += `<div class="score-grid" onclick="event.stopPropagation()">`;
       CATEGORIES.forEach(cat => {
         const val = player.stats[cat.key] || 0;
         html += `<div class="score-cell">`;
-        html += `<button class="score-btn" onclick="event.stopPropagation();incrementStat(${player.id},'${cat.key}',1)">${cat.emoji}</button>`;
+        html += `<button class="score-btn" onclick="incrementStat(${player.id},'${cat.key}',1)">${cat.emoji}</button>`;
         html += `<div class="score-label">${cat.label}</div>`;
         html += `<div class="score-val" style="color:${val > 0 ? '#fff' : '#333'}">${val}</div>`;
-        if (val > 0) html += `<button class="undo-btn" onclick="event.stopPropagation();incrementStat(${player.id},'${cat.key}',-1)">undo</button>`;
+        if (val > 0) html += `<button class="undo-btn" onclick="incrementStat(${player.id},'${cat.key}',-1)">undo</button>`;
         html += `</div>`;
       });
       html += `</div>`;
