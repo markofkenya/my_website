@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -34,134 +33,133 @@
   }
   .container { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; padding: 16px 12px; }
 
-/* Header */
-.nhs-tag { font-size: 10px; letter-spacing: 6px; text-transform: uppercase; color: var(--pink); margin-bottom: 4px; font-weight: 700; text-align: center; }
-.date-tag { font-size: 12px; letter-spacing: 2px; color: #888; text-align: center; margin-bottom: 6px; font-weight: 700; }
-.title {
-font-size: 26px; font-weight: 900; letter-spacing: 2px; text-align: center; cursor: pointer;
-color: var(--gold); text-transform: uppercase; line-height: 1.2;
-}
-.title-input {
-background: transparent; border: 1px solid var(–pink); color: #fff;
-font-size: 26px; font-weight: 900; text-align: center; width: 100%; padding: 4px 8px;
-font-family: ‘Courier New’, Courier, monospace; letter-spacing: 2px;
-outline: none; border-radius: 6px;
-}
-.subtitle { font-size: 11px; color: #666; margin-top: 4px; text-align: center; }
+  /* Header */
+  .nhs-tag { font-size: 10px; letter-spacing: 6px; text-transform: uppercase; color: var(--pink); margin-bottom: 4px; font-weight: 700; text-align: center; }
+  .date-tag { font-size: 12px; letter-spacing: 2px; color: #888; text-align: center; margin-bottom: 6px; font-weight: 700; }
+  .title {
+    font-size: 26px; font-weight: 900; letter-spacing: 2px; text-align: center; cursor: pointer;
+    color: var(--gold); text-transform: uppercase; line-height: 1.2;
+  }
+  .title-input {
+    background: transparent; border: 1px solid var(--pink); color: #fff;
+    font-size: 26px; font-weight: 900; text-align: center; width: 100%; padding: 4px 8px;
+    font-family: 'Courier New', Courier, monospace; letter-spacing: 2px;
+    outline: none; border-radius: 6px;
+  }
+  .subtitle { font-size: 11px; color: #666; margin-top: 4px; text-align: center; }
 
-/* Tabs */
-.tabs { display: flex; gap: 6px; justify-content: center; margin: 16px 0; }
-.tab {
-padding: 8px 20px; border-radius: 6px; font-size: 12px; font-weight: 700;
-font-family: inherit; letter-spacing: 1px; cursor: pointer; transition: all 0.2s ease;
-background: rgba(255,255,255,0.05); color: #888; border: 1px solid rgba(255,255,255,0.1);
-}
-.tab.active {
-background: linear-gradient(135deg, var(–pink), var(–orange));
-color: #fff; border: none;
-}
+  /* Tabs */
+  .tabs { display: flex; gap: 6px; justify-content: center; margin: 16px 0; }
+  .tab {
+    padding: 8px 20px; border-radius: 6px; font-size: 12px; font-weight: 700;
+    font-family: inherit; letter-spacing: 1px; cursor: pointer; transition: all 0.2s ease;
+    background: rgba(255,255,255,0.05); color: #888; border: 1px solid rgba(255,255,255,0.1);
+  }
+  .tab.active {
+    background: linear-gradient(135deg, var(--pink), var(--orange));
+    color: #fff; border: none;
+  }
 
-/* Player cards */
-.player-card {
-background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
-border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.2s ease;
-position: relative; overflow: hidden; margin-bottom: 6px;
-}
-.player-card.leader {
-background: linear-gradient(135deg, rgba(255,62,108,0.15), rgba(255,215,0,0.1));
-border: 1px solid rgba(255,62,108,0.4);
-}
-.player-bar {
-position: absolute; left: 0; top: 0; bottom: 0;
-transition: width 0.5s ease;
-}
-.player-row { position: relative; display: flex; align-items: center; gap: 12px; }
-.rank { font-weight: 900; min-width: 36px; text-align: center; }
-.player-info { flex: 1; }
-.player-name { font-size: 16px; font-weight: 700; color: #fff; }
-.player-role { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
-.player-pts { font-size: 24px; font-weight: 900; text-align: right; }
-.pts-label { font-size: 10px; color: #666; display: block; }
+  /* Player cards */
+  .player-card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.2s ease;
+    position: relative; overflow: hidden; margin-bottom: 6px;
+  }
+  .player-card.leader {
+    background: linear-gradient(135deg, rgba(255,62,108,0.15), rgba(255,215,0,0.1));
+    border: 1px solid rgba(255,62,108,0.4);
+  }
+  .player-bar {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    transition: width 0.5s ease;
+  }
+  .player-row { position: relative; display: flex; align-items: center; gap: 12px; }
+  .rank { font-weight: 900; min-width: 36px; text-align: center; }
+  .player-info { flex: 1; }
+  .player-name { font-size: 16px; font-weight: 700; color: #fff; }
+  .player-role { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+  .player-pts { font-size: 24px; font-weight: 900; text-align: right; }
+  .pts-label { font-size: 10px; color: #666; display: block; }
 
-/* Score grid */
-.score-grid {
-margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);
-display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
-}
-.score-cell { text-align: center; }
-.score-btn {
-background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-border-radius: 6px; padding: 8px 4px; cursor: pointer; width: 100%;
-color: #fff; font-size: 18px; transition: transform 0.15s ease;
-}
-.score-btn:active { transform: scale(0.93); }
-.score-label { font-size: 10px; color: #888; margin-top: 2px; }
-.score-val { font-size: 14px; font-weight: 700; }
-.undo-btn {
-background: none; border: none; color: #555; font-size: 10px;
-cursor: pointer; padding: 0; font-family: inherit;
-}
-.remove-btn {
-margin-top: 10px; background: none; border: none; color: rgba(255,62,108,0.3);
-font-size: 11px; cursor: pointer; font-family: inherit;
-}
+  /* Score grid */
+  .score-grid {
+    margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+  }
+  .score-cell { text-align: center; }
+  .score-btn {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 8px 4px; cursor: pointer; width: 100%;
+    color: #fff; font-size: 18px; transition: transform 0.15s ease;
+  }
+  .score-btn:active { transform: scale(0.93); }
+  .score-label { font-size: 10px; color: #888; margin-top: 2px; }
+  .score-val { font-size: 14px; font-weight: 700; }
+  .undo-btn {
+    background: none; border: none; color: #555; font-size: 10px;
+    cursor: pointer; padding: 0; font-family: inherit;
+  }
+  .remove-btn {
+    margin-top: 10px; background: none; border: none; color: rgba(255,62,108,0.3);
+    font-size: 11px; cursor: pointer; font-family: inherit;
+  }
 
-/* Reset */
-.reset-btn {
-background: none; border: 1px solid rgba(255,62,108,0.2); color: rgba(255,62,108,0.5);
-padding: 6px 16px; border-radius: 6px; font-size: 11px; cursor: pointer;
-font-family: inherit; letter-spacing: 1px;
-}
+  /* Reset */
+  .reset-btn {
+    background: none; border: 1px solid rgba(255,62,108,0.2); color: rgba(255,62,108,0.5);
+    padding: 6px 16px; border-radius: 6px; font-size: 11px; cursor: pointer;
+    font-family: inherit; letter-spacing: 1px;
+  }
 
-/* Stats view */
-.stat-card {
-background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
-border-radius: 8px; padding: 10px 14px; margin-bottom: 6px;
-display: flex; align-items: center; gap: 12px;
-}
-.stat-emoji { font-size: 22px; }
-.stat-info { flex: 1; }
-.stat-desc { font-size: 13px; font-weight: 700; color: #ccc; }
-.stat-leader { font-size: 11px; color: #555; }
-.stat-total { font-size: 20px; font-weight: 900; }
-.team-total {
-margin-top: 16px; padding: 16px; text-align: center; border-radius: 8px;
-background: linear-gradient(135deg, rgba(255,62,108,0.08), rgba(0,212,255,0.08));
-border: 1px solid rgba(255,255,255,0.1);
-}
-.team-total-label { font-size: 11px; color: #888; letter-spacing: 2px; margin-bottom: 4px; }
-.team-total-num { font-size: 36px; font-weight: 900; color: #fff; }
-.team-total-sub { font-size: 11px; color: #555; }
+  /* Stats view */
+  .stat-card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px; padding: 10px 14px; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .stat-emoji { font-size: 22px; }
+  .stat-info { flex: 1; }
+  .stat-desc { font-size: 13px; font-weight: 700; color: #ccc; }
+  .stat-leader { font-size: 11px; color: #555; }
+  .stat-total { font-size: 20px; font-weight: 900; }
+  .team-total {
+    margin-top: 16px; padding: 16px; text-align: center; border-radius: 8px;
+    background: linear-gradient(135deg, rgba(255,62,108,0.08), rgba(0,212,255,0.08));
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .team-total-label { font-size: 11px; color: #888; letter-spacing: 2px; margin-bottom: 4px; }
+  .team-total-num { font-size: 36px; font-weight: 900; color: #fff; }
+  .team-total-sub { font-size: 11px; color: #555; }
 
-/* Add player */
-.add-panel {
-background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
-border-radius: 10px; padding: 20px;
-}
-.field-label { font-size: 11px; color: #888; display: block; margin-bottom: 4px; }
-.name-input {
-width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-border-radius: 6px; color: #fff; padding: 10px 12px; font-size: 16px;
-font-family: inherit; outline: none;
-}
-.role-btns { display: flex; gap: 6px; margin-top: 6px; }
-.role-btn {
-flex: 1; border-radius: 6px; padding: 8px 4px; font-size: 11px; font-weight: 700;
-cursor: pointer; font-family: inherit; letter-spacing: 0.5px;
-background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: #555;
-}
-.role-btn.active { border-width: 2px; }
-.add-btn {
-width: 100%; border: none; border-radius: 8px; color: #fff; padding: 12px;
-font-size: 14px; font-weight: 900; cursor: pointer; font-family: inherit;
-letter-spacing: 2px; background: linear-gradient(135deg, var(–pink), var(–orange)); margin-top: 20px;
-}
+  /* Add player */
+  .add-panel {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 20px;
+  }
+  .field-label { font-size: 11px; color: #888; display: block; margin-bottom: 4px; }
+  .name-input {
+    width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; color: #fff; padding: 10px 12px; font-size: 16px;
+    font-family: inherit; outline: none;
+  }
+  .role-btns { display: flex; gap: 6px; margin-top: 6px; }
+  .role-btn {
+    flex: 1; border-radius: 6px; padding: 8px 4px; font-size: 11px; font-weight: 700;
+    cursor: pointer; font-family: inherit; letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: #555;
+  }
+  .role-btn.active { border-width: 2px; }
+  .add-btn {
+    width: 100%; border: none; border-radius: 8px; color: #fff; padding: 12px;
+    font-size: 14px; font-weight: 900; cursor: pointer; font-family: inherit;
+    letter-spacing: 2px; background: linear-gradient(135deg, var(--pink), var(--orange)); margin-top: 20px;
+  }
 
-.footer { text-align: center; margin-top: 24px; padding-bottom: 20px; font-size: 10px; color: #333; letter-spacing: 1px; }
-.section-label { font-size: 11px; color: #666; text-align: center; margin-bottom: 16px; letter-spacing: 2px; }
-.hidden { display: none; }
+  .footer { text-align: center; margin-top: 24px; padding-bottom: 20px; font-size: 10px; color: #333; letter-spacing: 1px; }
+  .section-label { font-size: 11px; color: #666; text-align: center; margin-bottom: 16px; letter-spacing: 2px; }
+  .hidden { display: none; }
 </style>
-
 </head>
 <body>
 <div class="grid-bg"></div>
@@ -359,6 +357,5 @@ function render() {
 
 render();
 </script>
-
 </body>
 </html>
