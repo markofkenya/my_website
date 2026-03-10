@@ -439,25 +439,41 @@ html+="<h3 style='text-align:center;margin-top:20px'>CATEGORY LEADERS</h3>"
 
 CATEGORIES.forEach(c=>{
 
-let leader=null
 let best=0
+let leaders=[]
 
 players.forEach(p=>{
 let val=p.stats?.[c.key]||0
+
 if(val>best){
 best=val
-leader=p
+leaders=[p.name]
+}
+else if(val===best && val>0){
+leaders.push(p.name)
 }
 })
 
 if(best>0){
-html+=`
-<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid rgba(255,255,255,0.06)">
-<div>👑 ${c.label}</div>
-<div>${leader.name} — <b>${best}</b></div>
-</div>`
-}
 
+html+=`
+<div style="
+display:flex;
+justify-content:space-between;
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.06);
+">
+
+<div>👑 ${c.label}</div>
+
+<div>
+${leaders.join(", ")} — <b>${best}</b>
+</div>
+
+</div>
+`
+
+}
 })
 
 let mvp=null
