@@ -6,9 +6,9 @@
 <title>Acute Take League</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
+<!-- Firebase (compat builds for namespaced API) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <style>
 :root {
@@ -215,8 +215,8 @@ function togglePlayer(id){selectedPlayer=selectedPlayer===id?null:id;render();}
 function addPlayer(){const input=document.getElementById('newNameInput');const name=input.value.trim();if(!name)return;players.push({id:nextId++,name,role:newRole,stats:{}});input.value='';saveData();switchTab('table');}
 function selectRole(role){newRole=role;renderAdd();}
 
-// ──
-  function renderTable() {
+// ─── Render Functions ───
+function renderTable() {
   const el = document.getElementById('view-table');
   const sorted = [...players].sort((a, b) => getPoints(b.stats) - getPoints(a.stats));
   const leaderPts = sorted[0] ? getPoints(sorted[0].stats) : 0;
@@ -322,3 +322,5 @@ function render() {
 // Initial render
 render();
 </script>
+</body>
+</html>
