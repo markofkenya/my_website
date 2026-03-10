@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Acute Take League</title>
 
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
@@ -12,204 +12,121 @@
 
 <style>
 
-:root{
---pink:#ff3e6c;
---orange:#ff6b3e;
---gold:#ffd700;
---cyan:#00d4ff;
---green:#7cff6b;
---bg1:#0a0a1a;
---bg2:#111128;
---bg3:#1a0a2e;
-}
-
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-
 body{
-min-height:100vh;
-background:linear-gradient(145deg,var(--bg1)0%,var(--bg2)40%,var(--bg3)100%);
-color:#e0e0f0;
-font-family:'JetBrains Mono','Courier New',monospace;
-overflow-x:hidden;
-}
-
-.grid-bg{
-position:fixed;
-inset:0;
-background-image:
-linear-gradient(rgba(100,100,255,0.03)1px,transparent 1px),
-linear-gradient(90deg,rgba(100,100,255,0.03)1px,transparent 1px);
-background-size:40px 40px;
-pointer-events:none;
-z-index:0;
-}
-
-.container{
-position:relative;
-z-index:1;
+background:#0a0a1a;
+color:#eee;
+font-family:'JetBrains Mono',monospace;
 max-width:700px;
-margin:0 auto;
-padding:16px 12px;
+margin:auto;
+padding:20px;
 }
 
 .nhs-tag{
-font-size:10px;
-letter-spacing:6px;
-text-transform:uppercase;
-color:var(--pink);
-margin-bottom:4px;
-font-weight:700;
 text-align:center;
+color:#ff3e6c;
+letter-spacing:6px;
+font-size:11px;
+}
+
+.date{
+text-align:center;
+color:#777;
+margin-top:6px;
+font-size:12px;
 }
 
 .title{
-font-size:26px;
-font-weight:800;
-letter-spacing:2px;
 text-align:center;
-cursor:pointer;
-background:linear-gradient(90deg,var(--pink),var(--orange),var(--gold));
+font-size:28px;
+font-weight:800;
+margin:10px 0 20px;
+background:linear-gradient(90deg,#ff3e6c,#ff6b3e,#ffd700);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
-background-clip:text;
-text-transform:uppercase;
 }
 
-.subtitle{
-font-size:11px;
-color:#666;
-margin-top:4px;
-text-align:center;
-}
-
-.tabs{
-display:flex;
-gap:6px;
-justify-content:center;
-margin:16px 0;
-}
-
-.tab{
-padding:8px 20px;
-border-radius:6px;
-font-size:12px;
-font-weight:700;
-cursor:pointer;
-background:rgba(255,255,255,0.05);
-color:#888;
-border:1px solid rgba(255,255,255,0.1);
-}
-
-.tab.active{
-background:linear-gradient(135deg,var(--pink),var(--orange));
-color:#fff;
-border:none;
-}
+/* PLAYER CARD */
 
 .player-card{
-background:rgba(255,255,255,0.03);
-border:1px solid rgba(255,255,255,0.06);
+border:1px solid #222;
 border-radius:8px;
-padding:12px 14px;
+padding:12px;
+margin-bottom:8px;
 cursor:pointer;
-position:relative;
-overflow:hidden;
-margin-bottom:6px;
+transition:all .35s ease;
 }
 
 .player-card.leader{
-background:linear-gradient(135deg,rgba(255,62,108,0.15),rgba(255,215,0,0.1));
-border:1px solid rgba(255,62,108,0.4);
+border:1px solid #ffd70055;
+background:linear-gradient(135deg,#ffffff05,#ffd70008);
 }
 
 .player-row{
 display:flex;
+justify-content:space-between;
 align-items:center;
-gap:12px;
 }
 
 .rank{
-font-weight:900;
-min-width:36px;
-text-align:center;
-}
-
-.player-info{flex:1;}
-
-.player-name{
-font-size:16px;
-font-weight:700;
-color:#fff;
+width:55px;
+font-weight:800;
 }
 
 .player-role{
 font-size:11px;
-letter-spacing:1px;
-text-transform:uppercase;
+opacity:.6;
 }
 
 .player-pts{
 font-size:24px;
 font-weight:900;
-text-align:right;
+transition:all .25s ease;
 }
 
+/* POINT FLASH */
+
+.flash{
+animation:flashPts .35s ease;
+}
+
+@keyframes flashPts{
+0%{transform:scale(1.3);color:#ffd700;text-shadow:0 0 12px #ffd700;}
+100%{transform:scale(1);}
+}
+
+/* SCORE GRID */
+
 .score-grid{
-margin-top:12px;
-padding-top:12px;
-border-top:1px solid rgba(255,255,255,0.08);
 display:grid;
 grid-template-columns:repeat(4,1fr);
 gap:6px;
+margin-top:12px;
 }
 
 .score-btn{
-background:rgba(255,255,255,0.06);
-border:1px solid rgba(255,255,255,0.1);
-border-radius:6px;
 padding:8px;
+border-radius:6px;
+border:1px solid #333;
+background:#111;
+color:white;
 cursor:pointer;
-color:#fff;
-font-size:18px;
+}
+
+.score-label{
+font-size:10px;
+opacity:.7;
 }
 
 .undo-btn{
+font-size:10px;
 background:none;
 border:none;
 color:#777;
-font-size:10px;
 cursor:pointer;
 }
 
-.remove-btn{
-margin-top:10px;
-background:none;
-border:none;
-color:rgba(255,62,108,0.4);
-font-size:11px;
-cursor:pointer;
-}
-
-.reset-btn{
-background:none;
-border:1px solid rgba(255,62,108,0.3);
-color:rgba(255,62,108,0.6);
-padding:6px 16px;
-border-radius:6px;
-font-size:11px;
-cursor:pointer;
-margin-top:16px;
-}
-
-.hidden{display:none;}
-
-.footer{
-text-align:center;
-margin-top:24px;
-padding-bottom:20px;
-font-size:10px;
-color:#333;
-letter-spacing:1px;
+.hidden{
+display:none;
 }
 
 </style>
@@ -217,27 +134,12 @@ letter-spacing:1px;
 
 <body>
 
-<div class="grid-bg"></div>
-
-<div class="container">
-
 <div class="nhs-tag">⚕ NHS ACUTE MEDICINE ⚕</div>
+<div class="date" id="date"></div>
+
 <div class="title">ACUTE TAKE LEAGUE</div>
-<div class="subtitle">admissions & saves = 3pts · rest = 1pt</div>
 
-<div class="tabs">
-<button class="tab active" onclick="switchTab('table')">🏆 TABLE</button>
-<button class="tab" onclick="switchTab('stats')">📊 STATS</button>
-<button class="tab" onclick="switchTab('add')">+ ADD</button>
-</div>
-
-<div id="view-table"></div>
-<div id="view-stats" class="hidden"></div>
-<div id="view-add" class="hidden"></div>
-
-<div class="footer">ACUTE TAKE LEAGUE · TAP A PLAYER TO SCORE</div>
-
-</div>
+<div id="table"></div>
 
 <script>
 
@@ -254,37 +156,32 @@ appId:"1:1064553360872:web:64a44af9f834b6f2bb885d"
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
-const ROLES=["Med Reg","SHO","FY2","FY1"];
+/* SCORING CATEGORIES */
 
 const CATEGORIES=[
-{key:"admissions",emoji:"📋",points:3},
-{key:"cannulas",emoji:"💉",points:1},
-{key:"abgs",emoji:"🫁",points:1},
-{key:"tasks",emoji:"✅",points:1},
-{key:"saves",emoji:"🦸",points:3},
-{key:"quiz",emoji:"🧠",points:1},
-{key:"rest",emoji:"😴",points:1}
+{key:"admissions",emoji:"📋",label:"Admissions",points:3},
+{key:"cannulas",emoji:"💉",label:"Cannulas",points:1},
+{key:"abgs",emoji:"🫁",label:"ABGs",points:1},
+{key:"tasks",emoji:"✅",label:"Tasks",points:1},
+{key:"saves",emoji:"🦸",label:"Saves",points:3},
+{key:"quiz",emoji:"🧠",label:"Quiz",points:1},
+{key:"rest",emoji:"😴",label:"Rest",points:1}
 ];
-
-const ROLE_COLORS={
-"Med Reg":"#ff3e6c",
-"SHO":"#00d4ff",
-"FY2":"#ffd700",
-"FY1":"#7cff6b"
-};
 
 let players=[];
 let nextId=1;
-let selectedPlayer=null;
-let currentView="table";
-let newRole="SHO";
+let selected=null;
+
+/* FIREBASE SYNC */
 
 db.ref("players").on("value",snap=>{
-const data=snap.val();
+let data=snap.val();
+
 if(data){
 players=data.players||[];
 nextId=data.nextId||1;
 }
+
 render();
 });
 
@@ -292,157 +189,135 @@ function save(){
 db.ref("players").set({players,nextId});
 }
 
-function getPoints(stats){
+/* POINT CALC */
+
+function points(stats){
 return CATEGORIES.reduce((t,c)=>t+(stats?.[c.key]||0)*c.points,0);
 }
 
-function togglePlayer(id){
-selectedPlayer=selectedPlayer===id?null:id;
-render();
-}
+/* SCORING */
 
-function incrementStat(id,key,val){
-const p=players.find(x=>x.id===id);
+function inc(id,key,val){
+
+let p=players.find(p=>p.id===id);
+
 if(!p.stats)p.stats={};
+
 p.stats[key]=(p.stats[key]||0)+val;
+
 if(p.stats[key]<0)p.stats[key]=0;
+
 save();
+
+/* flash animation */
+
+let el=document.getElementById("pts-"+id);
+
+if(el){
+el.classList.remove("flash");
+void el.offsetWidth;
+el.classList.add("flash");
 }
 
-function removePlayer(id){
-players=players.filter(p=>p.id!==id);
-save();
 }
 
-function addPlayer(){
-const name=document.getElementById("nameInput").value.trim();
-if(!name)return;
+/* UI */
 
-players.push({id:nextId++,name,role:newRole,stats:{}});
-save();
-switchTab("table");
-}
-
-function switchTab(tab){
-currentView=tab;
-document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-document.querySelectorAll(".tab")[["table","stats","add"].indexOf(tab)].classList.add("active");
-
-document.getElementById("view-table").classList.toggle("hidden",tab!=="table");
-document.getElementById("view-stats").classList.toggle("hidden",tab!=="stats");
-document.getElementById("view-add").classList.toggle("hidden",tab!=="add");
-
+function toggle(id){
+selected=selected===id?null:id;
 render();
 }
+
+/* RENDER */
 
 function render(){
 
-if(currentView==="table"){
-
-const el=document.getElementById("view-table");
-const sorted=[...players].sort((a,b)=>getPoints(b.stats)-getPoints(a.stats));
+let sorted=[...players].sort((a,b)=>points(b.stats)-points(a.stats));
 
 let html="";
 
 sorted.forEach((p,i)=>{
 
-const pts=getPoints(p.stats);
-const expanded=selectedPlayer===p.id;
+let leader=i===0 && points(p.stats)>0;
+
+let expanded=selected===p.id;
 
 html+=`
-<div class="player-card" onclick="togglePlayer(${p.id})">
+<div class="player-card ${leader?'leader':''}" onclick="toggle(${p.id})">
 
 <div class="player-row">
-<div class="rank">${i+1}</div>
-<div class="player-info">
-<div class="player-name">${p.name}</div>
-<div class="player-role" style="color:${ROLE_COLORS[p.role]}">${p.role}</div>
+
+<div class="rank">
+${leader?'👑':''} ${i+1}
 </div>
-<div class="player-pts">${pts}</div>
+
+<div>
+<div>${p.name}</div>
+<div class="player-role">${p.role||""}</div>
+</div>
+
+<div id="pts-${p.id}" class="player-pts">
+${points(p.stats)}
+</div>
+
 </div>
 `;
 
 if(expanded){
 
 html+=`<div onclick="event.stopPropagation()">`;
+
 html+=`<div class="score-grid">`;
 
 CATEGORIES.forEach(c=>{
-const val=p.stats[c.key]||0;
+
+let val=p.stats?.[c.key]||0;
 
 html+=`
 <div>
+
 <button class="score-btn"
-onclick="event.stopPropagation();incrementStat(${p.id},'${c.key}',1)">
+onclick="event.stopPropagation();inc(${p.id},'${c.key}',1)">
 ${c.emoji}
 </button>
+
+<div class="score-label">${c.label}</div>
 
 <div>${val}</div>
 
 ${val>0?`<button class="undo-btn"
-onclick="event.stopPropagation();incrementStat(${p.id},'${c.key}',-1)">undo</button>`:""}
+onclick="event.stopPropagation();inc(${p.id},'${c.key}',-1)">
+undo
+</button>`:""}
 
 </div>
 `;
+
 });
 
 html+=`</div>`;
-
-html+=`
-<button class="remove-btn"
-onclick="event.stopPropagation();removePlayer(${p.id})">
-remove player
-</button>
-`;
-
 html+=`</div>`;
 }
 
 html+=`</div>`;
 });
 
-html+=`<button class="reset-btn" onclick="players.forEach(p=>p.stats={});save()">RESET SCORES</button>`;
-
-el.innerHTML=html;
-}
-
-if(currentView==="add"){
-
-document.getElementById("view-add").innerHTML=`
-<div class="add-panel">
-
-<div class="section-label">NEW PLAYER</div>
-
-<input id="nameInput" class="name-input" placeholder="Dr Smith">
-
-<div style="margin-top:20px">
-
-${ROLES.map(r=>`
-<button class="role-btn ${newRole===r?'active':''}"
-onclick="newRole='${r}';render()">${r}</button>
-`).join("")}
-
-</div>
-
-<button class="add-btn ready" onclick="addPlayer()">ADD TO ROSTER</button>
-
-</div>
-`;
-}
-
-if(currentView==="stats"){
-
-let total=players.reduce((s,p)=>s+getPoints(p.stats),0);
-
-document.getElementById("view-stats").innerHTML=`
-<div style="text-align:center;font-size:32px;font-weight:900">${total}</div>
-<div style="text-align:center;color:#666">TOTAL TEAM POINTS</div>
-`;
-}
+document.getElementById("table").innerHTML=html;
 
 }
 
 render();
+
+/* DATE */
+
+let d=new Date();
+
+document.getElementById("date").innerText=
+d.toLocaleDateString(undefined,{
+weekday:"long",
+day:"numeric",
+month:"long"
+});
 
 </script>
 
