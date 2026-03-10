@@ -216,10 +216,48 @@ cursor:pointer;
 
 /* STATS */
 
-.stats{
-text-align:center;
-font-size:32px;
-font-weight:900;
+if(currentView==="stats"){
+
+let totals={};
+
+CATEGORIES.forEach(c=>totals[c.key]=0);
+
+players.forEach(p=>{
+CATEGORIES.forEach(c=>{
+totals[c.key]+=p.stats?.[c.key]||0;
+});
+});
+
+let html=`<div style="margin-top:10px">`;
+
+CATEGORIES.forEach(c=>{
+
+html+=`
+<div style="
+display:flex;
+justify-content:space-between;
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,0.06);
+font-size:14px;
+">
+
+<div>
+${c.emoji} ${c.label}
+</div>
+
+<div style="font-weight:800">
+${totals[c.key]}
+</div>
+
+</div>
+`;
+
+});
+
+html+=`</div>`;
+
+document.getElementById("view-stats").innerHTML=html;
+
 }
 
 /* HIDDEN */
