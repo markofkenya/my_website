@@ -253,18 +253,20 @@ function renderTable() {
     html += `</div>`;
 
     if (expanded) {
+      html += `<div onclick="event.stopPropagation()">`;
       html += `<div class="score-grid">`;
       CATEGORIES.forEach(cat => {
         const val = player.stats[cat.key] || 0;
         html += `<div class="score-cell">`;
-        html += `<button class="score-btn" onclick="event.stopPropagation();incrementStat(${player.id},'${cat.key}',1)">${cat.emoji}</button>`;
+        html += `<button class="score-btn" onclick="incrementStat(${player.id},'${cat.key}',1)">${cat.emoji}</button>`;
         html += `<div class="score-label">${cat.label}</div>`;
         html += `<div class="score-val" style="color:${val > 0 ? '#fff' : '#333'}">${val}</div>`;
-        if (val > 0) html += `<button class="undo-btn" onclick="event.stopPropagation();incrementStat(${player.id},'${cat.key}',-1)">undo</button>`;
+        if (val > 0) html += `<button class="undo-btn" onclick="incrementStat(${player.id},'${cat.key}',-1)">undo</button>`;
         html += `</div>`;
       });
       html += `</div>`;
-      html += `<button class="remove-btn" onclick="event.stopPropagation();removePlayer(${player.id})">remove player</button>`;
+      html += `<button class="remove-btn" onclick="removePlayer(${player.id})">remove player</button>`;
+      html += `</div>`;
     }
 
     html += `</div>`;
