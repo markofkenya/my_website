@@ -410,6 +410,24 @@ html+=`</div>`;
 
 });
 
+html += `
+<div style="text-align:center;margin-top:18px">
+
+<button onclick="resetScores()" style="
+padding:8px 18px;
+border-radius:6px;
+border:1px solid rgba(255,255,255,0.15);
+background:#ffffff08;
+color:#aaa;
+cursor:pointer;
+font-size:11px;
+">
+RESET SCORES
+</button>
+
+</div>
+`;
+
 document.getElementById("view-table").innerHTML=html;
 
 }
@@ -542,6 +560,17 @@ stats:{}
 
 save();
 switchTab("table");
+
+}
+function resetScores(){
+
+if(!confirm("Reset all scores for the shift?")) return;
+
+players.forEach(p=>{
+p.stats={}
+})
+
+save()
 
 }
 
