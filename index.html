@@ -25,8 +25,6 @@
 --bg3:#1a0a2e;
 }
 
-*{box-sizing:border-box}
-
 body{
 margin:0;
 font-family:'JetBrains Mono',monospace;
@@ -39,8 +37,6 @@ max-width:700px;
 margin:auto;
 padding:16px;
 }
-
-/* HEADER */
 
 .nhs-tag{
 text-align:center;
@@ -60,13 +56,18 @@ margin-top:4px;
 text-align:center;
 font-size:26px;
 font-weight:800;
-margin:8px 0 16px;
+margin:8px 0 4px;
 background:linear-gradient(90deg,var(--pink),var(--orange),var(--gold));
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
 }
 
-/* TABS */
+.subtitle{
+text-align:center;
+font-size:11px;
+color:#666;
+margin-bottom:16px;
+}
 
 .tabs{
 display:flex;
@@ -91,16 +92,19 @@ color:white;
 border:none;
 }
 
-/* PLAYER CARD */
+#view-table{
+display:flex;
+flex-direction:column;
+gap:6px;
+}
 
 .player-card{
 background:#ffffff05;
 border:1px solid #ffffff14;
 border-radius:8px;
 padding:12px;
-margin-bottom:8px;
 cursor:pointer;
-transition:.3s;
+transition:transform .35s ease,background .35s ease,border .35s ease;
 }
 
 .player-card.leader{
@@ -145,8 +149,6 @@ animation:flash .35s;
 100%{transform:scale(1)}
 }
 
-/* SCORE GRID */
-
 .score-grid{
 display:grid;
 grid-template-columns:repeat(4,1fr);
@@ -175,8 +177,6 @@ border:none;
 color:#777;
 cursor:pointer;
 }
-
-/* ADD PANEL */
 
 .add-panel{
 text-align:center;
@@ -214,54 +214,6 @@ color:white;
 cursor:pointer;
 }
 
-/* STATS */
-
-if(currentView==="stats"){
-
-let totals={};
-
-CATEGORIES.forEach(c=>totals[c.key]=0);
-
-players.forEach(p=>{
-CATEGORIES.forEach(c=>{
-totals[c.key]+=p.stats?.[c.key]||0;
-});
-});
-
-let html=`<div style="margin-top:10px">`;
-
-CATEGORIES.forEach(c=>{
-
-html+=`
-<div style="
-display:flex;
-justify-content:space-between;
-padding:10px;
-border-bottom:1px solid rgba(255,255,255,0.06);
-font-size:14px;
-">
-
-<div>
-${c.emoji} ${c.label}
-</div>
-
-<div style="font-weight:800">
-${totals[c.key]}
-</div>
-
-</div>
-`;
-
-});
-
-html+=`</div>`;
-
-document.getElementById("view-stats").innerHTML=html;
-
-}
-
-/* HIDDEN */
-
 .hidden{display:none}
 
 </style>
@@ -274,7 +226,9 @@ document.getElementById("view-stats").innerHTML=html;
 
 <div class="nhs-tag">⚕ NHS ACUTE MEDICINE ⚕</div>
 <div class="date" id="date"></div>
+
 <div class="title">ACUTE TAKE LEAGUE</div>
+<div class="subtitle">admissions & saves = 2 pts · others = 1 pt</div>
 
 <div class="tabs">
 <div class="tab active" onclick="switchTab('table')">🏆 TABLE</div>
@@ -290,8 +244,6 @@ document.getElementById("view-stats").innerHTML=html;
 
 <script>
 
-/* FIREBASE */
-
 const firebaseConfig={
 apiKey:"AIzaSyCJEXL8F28S3_UCXil8cVU-4MXOEg4cpwI",
 authDomain:"acute-take-league.firebaseapp.com",
@@ -305,8 +257,6 @@ appId:"1:1064553360872:web:64a44af9f834b6f2bb885d"
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
-/* DATA */
-
 const ROLES=["Med Reg","SHO","FY2","FY1"];
 
 const ROLE_COLORS={
@@ -317,11 +267,11 @@ const ROLE_COLORS={
 };
 
 const CATEGORIES=[
-{key:"admissions",emoji:"📋",label:"Admissions",points:3},
+{key:"admissions",emoji:"📋",label:"Admissions",points:2},
 {key:"cannulas",emoji:"💉",label:"Cannulas",points:1},
 {key:"abgs",emoji:"🫁",label:"ABGs",points:1},
 {key:"tasks",emoji:"✅",label:"Tasks",points:1},
-{key:"saves",emoji:"🦸",label:"Saves",points:3},
+{key:"saves",emoji:"🦸",label:"Saves",points:2},
 {key:"quiz",emoji:"🧠",label:"Quiz",points:1},
 {key:"rest",emoji:"😴",label:"Rest",points:1}
 ];
@@ -331,8 +281,6 @@ let nextId=1;
 let selected=null;
 let currentView="table";
 let newRole="SHO";
-
-/* SYNC */
 
 db.ref("players").on("value",snap=>{
 let data=snap.val();
@@ -347,13 +295,9 @@ function save(){
 db.ref("players").set({players,nextId});
 }
 
-/* POINTS */
-
 function pts(stats){
 return CATEGORIES.reduce((t,c)=>t+(stats?.[c.key]||0)*c.points,0);
 }
-
-/* SCORE */
 
 function score(id,key,val){
 
@@ -376,8 +320,6 @@ el.classList.add("flash");
 
 }
 
-/* UI */
-
 function toggle(id){
 selected=selected===id?null:id;
 render();
@@ -398,11 +340,7 @@ render();
 
 }
 
-/* RENDER */
-
 function render(){
-
-/* TABLE */
 
 if(currentView==="table"){
 
@@ -476,7 +414,77 @@ document.getElementById("view-table").innerHTML=html;
 
 }
 
-/* ADD */
+if(currentView==="stats"){
+
+let totals={}
+CATEGORIES.forEach(c=>totals[c.key]=0)
+
+players.forEach(p=>{
+CATEGORIES.forEach(c=>{
+totals[c.key]+=p.stats?.[c.key]||0
+})
+})
+
+let html="<h3 style='text-align:center'>TEAM ACTIVITY</h3>"
+
+CATEGORIES.forEach(c=>{
+html+=`
+<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid rgba(255,255,255,0.06)">
+<div>${c.emoji} ${c.label}</div>
+<div><b>${totals[c.key]}</b></div>
+</div>`
+})
+
+html+="<h3 style='text-align:center;margin-top:20px'>CATEGORY LEADERS</h3>"
+
+CATEGORIES.forEach(c=>{
+
+let leader=null
+let best=0
+
+players.forEach(p=>{
+let val=p.stats?.[c.key]||0
+if(val>best){
+best=val
+leader=p
+}
+})
+
+if(best>0){
+html+=`
+<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid rgba(255,255,255,0.06)">
+<div>👑 ${c.label}</div>
+<div>${leader.name} — <b>${best}</b></div>
+</div>`
+}
+
+})
+
+let mvp=null
+let bestPts=0
+
+players.forEach(p=>{
+let score=pts(p.stats)
+if(score>bestPts){
+bestPts=score
+mvp=p
+}
+})
+
+if(mvp){
+html+=`
+<div style="text-align:center;margin-top:25px">
+<div style="font-size:12px;color:#888">🏆 SHIFT MVP</div>
+<div style="font-size:22px;font-weight:900;background:linear-gradient(90deg,#ffd700,#ff6b3e);-webkit-background-clip:text;-webkit-text-fill-color:transparent">
+${mvp.name}
+</div>
+<div>${bestPts} pts</div>
+</div>`
+}
+
+document.getElementById("view-stats").innerHTML=html;
+
+}
 
 if(currentView==="add"){
 
@@ -499,20 +507,6 @@ onclick="newRole='${r}';render()">${r}</button>
 
 </div>
 `;
-
-}
-
-/* STATS */
-
-if(currentView==="stats"){
-
-let total=players.reduce((s,p)=>s+pts(p.stats),0);
-
-document.getElementById("view-stats").innerHTML=`
-<div class="stats">${total}</div>
-<div style="text-align:center;color:#666">TOTAL TEAM POINTS</div>
-`;
-
 }
 
 }
@@ -531,21 +525,13 @@ stats:{}
 });
 
 save();
-
 switchTab("table");
 
 }
 
-/* DATE */
-
 let d=new Date();
-
 document.getElementById("date").innerText=
-d.toLocaleDateString(undefined,{
-weekday:"long",
-day:"numeric",
-month:"long"
-});
+d.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
 
 render();
 
