@@ -194,13 +194,18 @@ const ROLE_COLORS={"Med Reg":"#ff3e6c","SHO":"#00d4ff","FY2":"#ffd700","FY1":"#7
 let players=[], nextId=1, selectedPlayer=null, currentView="table", newRole="SHO";
 db.ref("players").on("value", snapshot=>{
   const data = snapshot.val();
-  if(data){ players = data.players || []; nextId = data.nextId || 1; }
+  if(data){
+    // Firebase drops empty objects (stats:{}) and may convert sparse arrays to objects
+    const raw = data.players || [];
+    players = Object.values(raw).filter(Boolean).map(p => ({...p, stats: p.stats || {}}));
+    nextId = data.nextId || 1;
+  }
   render();
 });
 function saveData(){ db.ref("players").set({players,nextId}); }
 
 // ─── Helpers ───
-function getPoints(stats){ return CATEGORIES.reduce((t,c)=>t+((stats[c.key]||0)*(c.points||1)),0); }
+function getPoints(stats){ return CATEGORIES.reduce((t,c)=>t+((stats?.[c.key]||0)*(c.points||1)),0); }
 function rankSuffix(n){ if(n%100>=11&&n%100<=13)return"th"; switch(n%10){case 1:return"st";case 2:return"nd";case 3:return"rd";default:return"th";} }
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
@@ -212,7 +217,7 @@ function finishEditTitle(){const d=document.getElementById('titleDisplay');const
 function switchTab(tab){currentView=tab;document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));['table','stats','add'].forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden',v!==tab));render();}
 
 // ─── Player Actions ───
-function incrementStat(playerId, catKey, amount){const p=players.find(x=>x.id===playerId);if(!p)return;const cur=p.stats[catKey]||0;p.stats[catKey]=Math.max(0,cur+amount);saveData();render();}
+function incrementStat(playerId, catKey, amount){const p=players.find(x=>x.id===playerId);if(!p)return;if(!p.stats)p.stats={};const cur=p.stats[catKey]||0;p.stats[catKey]=Math.max(0,cur+amount);saveData();render();}
 function removePlayer(id){players=players.filter(p=>p.id!==id);if(selectedPlayer===id)selectedPlayer=null;saveData();render();}
 function resetAll(){if(confirm("Reset all scores? This can't be undone.")){players.forEach(p=>p.stats={});saveData();render();}}
 function togglePlayer(id){selectedPlayer=selectedPlayer===id?null:id;render();}
