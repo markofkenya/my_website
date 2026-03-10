@@ -4,163 +4,136 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Acute Take League</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
+
 <style>
-  :root {
-    --pink: #ff3e6c;
-    --orange: #ff6b3e;
-    --gold: #ffd700;
-    --cyan: #00d4ff;
-    --green: #7cff6b;
-    --bg1: #0a0a1a;
-    --bg2: #111128;
-    --bg3: #1a0a2e;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body {
-    min-height: 100vh;
-    background: linear-gradient(145deg, var(--bg1) 0%, var(--bg2) 40%, var(--bg3) 100%);
-    color: #e0e0f0;
-    font-family: 'Courier New', Courier, monospace;
-    overflow-x: hidden;
-  }
-  .grid-bg {
-    position: fixed; inset: 0;
-    background-image:
-      linear-gradient(rgba(100,100,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(100,100,255,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none; z-index: 0;
-  }
-  .container { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; padding: 16px 12px; }
+:root {
+  --pink: #ff3e6c;
+  --orange: #ff6b3e;
+  --gold: #ffd700;
+  --cyan: #00d4ff;
+  --green: #7cff6b;
+  --bg1: #0a0a1a;
+  --bg2: #111128;
+  --bg3: #1a0a2e;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  min-height: 100vh;
+  background: linear-gradient(145deg, var(--bg1) 0%, var(--bg2) 40%, var(--bg3) 100%);
+  color: #e0e0f0;
+  font-family: 'JetBrains Mono','Courier New',monospace;
+  overflow-x: hidden;
+}
+.grid-bg {
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(100,100,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100,100,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none; z-index: 0;
+}
+.container { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; padding: 16px 12px; }
 
-  /* Header */
-  .nhs-tag { font-size: 10px; letter-spacing: 6px; text-transform: uppercase; color: var(--pink); margin-bottom: 4px; font-weight: 700; text-align: center; }
-  .date-tag { font-size: 12px; letter-spacing: 2px; color: #888; text-align: center; margin-bottom: 6px; font-weight: 700; }
-  .title {
-    font-size: 26px; font-weight: 900; letter-spacing: 2px; text-align: center; cursor: pointer;
-    color: var(--gold); text-transform: uppercase; line-height: 1.2;
-  }
-  .title-input {
-    background: transparent; border: 1px solid var(--pink); color: #fff;
-    font-size: 26px; font-weight: 900; text-align: center; width: 100%; padding: 4px 8px;
-    font-family: 'Courier New', Courier, monospace; letter-spacing: 2px;
-    outline: none; border-radius: 6px;
-  }
-  .subtitle { font-size: 11px; color: #666; margin-top: 4px; text-align: center; }
+/* Header */
+.nhs-tag { font-size: 10px; letter-spacing: 6px; text-transform: uppercase; color: var(--pink); margin-bottom: 4px; font-weight: 700; text-align: center; }
+.title {
+  font-size: 26px; font-weight: 800; letter-spacing: 2px; text-align: center; cursor: pointer;
+  background: linear-gradient(90deg, var(--pink), var(--orange), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; text-transform: uppercase; line-height: 1.2;
+}
+.title-input {
+  background: transparent; border: 1px solid var(--pink); color: #fff;
+  font-size: 26px; font-weight: 800; text-align: center; width: 100%; padding: 4px 8px;
+  font-family: 'JetBrains Mono','Courier New',monospace; letter-spacing: 2px;
+  outline: none;
+}
+.subtitle { font-size: 11px; color: #666; margin-top: 4px; text-align: center; }
 
-  /* Tabs */
-  .tabs { display: flex; gap: 6px; justify-content: center; margin: 16px 0; }
-  .tab {
-    padding: 8px 20px; border-radius: 6px; font-size: 12px; font-weight: 700;
-    font-family: inherit; letter-spacing: 1px; cursor: pointer; transition: all 0.2s ease;
-    background: rgba(255,255,255,0.05); color: #888; border: 1px solid rgba(255,255,255,0.1);
-  }
-  .tab.active {
-    background: linear-gradient(135deg, var(--pink), var(--orange));
-    color: #fff; border: none;
-  }
+/* Tabs */
+.tabs { display: flex; gap: 6px; justify-content: center; margin: 16px 0; }
+.tab {
+  padding: 8px 20px; border-radius: 6px; font-size: 12px; font-weight: 700;
+  font-family: inherit; letter-spacing: 1px; cursor: pointer; transition: all 0.2s ease;
+  background: rgba(255,255,255,0.05); color: #888; border: 1px solid rgba(255,255,255,0.1);
+}
+.tab.active {
+  background: linear-gradient(135deg, var(--pink), var(--orange));
+  color: #fff; border: none;
+}
 
-  /* Player cards */
-  .player-card {
-    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.2s ease;
-    position: relative; overflow: hidden; margin-bottom: 6px;
-    touch-action: manipulation;
-  }
-  .player-card.leader {
-    background: linear-gradient(135deg, rgba(255,62,108,0.15), rgba(255,215,0,0.1));
-    border: 1px solid rgba(255,62,108,0.4);
-  }
-  .player-bar {
-    position: absolute; left: 0; top: 0; bottom: 0;
-    transition: width 0.5s ease;
-  }
-  .player-row { position: relative; display: flex; align-items: center; gap: 12px; }
-  .rank { font-weight: 900; min-width: 36px; text-align: center; }
-  .player-info { flex: 1; }
-  .player-name { font-size: 16px; font-weight: 700; color: #fff; }
-  .player-role { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
-  .player-pts { font-size: 24px; font-weight: 900; text-align: right; }
-  .pts-label { font-size: 10px; color: #666; display: block; }
+/* Player cards */
+.player-card {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.2s ease;
+  position: relative; overflow: hidden; margin-bottom: 6px;
+}
+.player-card.leader {
+  background: linear-gradient(135deg, rgba(255,62,108,0.15), rgba(255,215,0,0.1));
+  border: 1px solid rgba(255,62,108,0.4);
+}
+.player-bar { position: absolute; left:0; top:0; bottom:0; transition: width 0.5s ease; }
+.player-row { position: relative; display: flex; align-items: center; gap: 12px; }
+.rank { font-weight: 900; min-width: 36px; text-align: center; }
+.player-info { flex:1; }
+.player-name { font-size: 16px; font-weight: 700; color: #fff; }
+.player-role { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.player-pts { font-size: 24px; font-weight: 900; text-align: right; }
+.pts-label { font-size: 10px; color: #666; display:block; }
 
-  /* Score grid */
-  .score-grid {
-    margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
-  }
-  .score-cell { text-align: center; }
-  .score-btn {
-    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 6px; padding: 8px 4px; cursor: pointer; width: 100%;
-    color: #fff; font-size: 18px; transition: transform 0.15s ease;
-    touch-action: manipulation;
-  }
-  .score-btn:active { transform: scale(0.93); }
-  .score-label { font-size: 10px; color: #888; margin-top: 2px; }
-  .score-val { font-size: 14px; font-weight: 700; }
-  .undo-btn {
-    background: none; border: none; color: #555; font-size: 10px;
-    cursor: pointer; padding: 0; font-family: inherit;
-  }
-  .remove-btn {
-    margin-top: 10px; background: none; border: none; color: rgba(255,62,108,0.3);
-    font-size: 11px; cursor: pointer; font-family: inherit;
-  }
+/* Score grid */
+.score-grid {
+  margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08);
+  display:grid; grid-template-columns: repeat(4,1fr); gap:6px;
+}
+.score-cell { text-align:center; }
+.score-btn {
+  background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+  border-radius:6px; padding:8px 4px; cursor:pointer; width:100%;
+  color:#fff; font-size:18px; transition: transform 0.15s ease;
+}
+.score-btn:active { transform: scale(0.93); }
+.score-label { font-size:10px; color:#888; margin-top:2px; }
+.score-val { font-size:14px; font-weight:700; }
+.undo-btn { background:none; border:none; color:#555; font-size:10px; cursor:pointer; padding:0; font-family: inherit; }
+.remove-btn { margin-top:10px; background:none; border:none; color: rgba(255,62,108,0.3); font-size:11px; cursor:pointer; font-family:inherit; }
 
-  /* Reset */
-  .reset-btn {
-    background: none; border: 1px solid rgba(255,62,108,0.2); color: rgba(255,62,108,0.5);
-    padding: 6px 16px; border-radius: 6px; font-size: 11px; cursor: pointer;
-    font-family: inherit; letter-spacing: 1px;
-  }
+/* Reset */
+.reset-btn { background:none; border:1px solid rgba(255,62,108,0.2); color:rgba(255,62,108,0.5); padding:6px 16px; border-radius:6px; font-size:11px; cursor:pointer; font-family:inherit; letter-spacing:1px; }
 
-  /* Stats view */
-  .stat-card {
-    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 8px; padding: 10px 14px; margin-bottom: 6px;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .stat-emoji { font-size: 22px; }
-  .stat-info { flex: 1; }
-  .stat-desc { font-size: 13px; font-weight: 700; color: #ccc; }
-  .stat-leader { font-size: 11px; color: #555; }
-  .stat-total { font-size: 20px; font-weight: 900; }
-  .team-total {
-    margin-top: 16px; padding: 16px; text-align: center; border-radius: 8px;
-    background: linear-gradient(135deg, rgba(255,62,108,0.08), rgba(0,212,255,0.08));
-    border: 1px solid rgba(255,255,255,0.1);
-  }
-  .team-total-label { font-size: 11px; color: #888; letter-spacing: 2px; margin-bottom: 4px; }
-  .team-total-num { font-size: 36px; font-weight: 900; color: #fff; }
-  .team-total-sub { font-size: 11px; color: #555; }
+/* Stats view */
+.stat-card { background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px 14px; margin-bottom:6px; display:flex; align-items:center; gap:12px; }
+.stat-emoji { font-size:22px; }
+.stat-info { flex:1; }
+.stat-desc { font-size:13px; font-weight:700; color:#ccc; }
+.stat-leader { font-size:11px; color:#555; }
+.stat-total { font-size:20px; font-weight:900; }
+.team-total { margin-top:16px; padding:16px; text-align:center; border-radius:8px; background:linear-gradient(135deg, rgba(255,62,108,0.08), rgba(0,212,255,0.08)); border:1px solid rgba(255,255,255,0.1); }
+.team-total-label { font-size:11px; color:#888; letter-spacing:2px; margin-bottom:4px; }
+.team-total-num { font-size:36px; font-weight:900; color:#fff; }
+.team-total-sub { font-size:11px; color:#555; }
 
-  /* Add player */
-  .add-panel {
-    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 10px; padding: 20px;
-  }
-  .field-label { font-size: 11px; color: #888; display: block; margin-bottom: 4px; }
-  .name-input {
-    width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 6px; color: #fff; padding: 10px 12px; font-size: 16px;
-    font-family: inherit; outline: none;
-  }
-  .role-btns { display: flex; gap: 6px; margin-top: 6px; }
-  .role-btn {
-    flex: 1; border-radius: 6px; padding: 8px 4px; font-size: 11px; font-weight: 700;
-    cursor: pointer; font-family: inherit; letter-spacing: 0.5px;
-    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: #555;
-  }
-  .role-btn.active { border-width: 2px; }
-  .add-btn {
-    width: 100%; border: none; border-radius: 8px; color: #fff; padding: 12px;
-    font-size: 14px; font-weight: 900; cursor: pointer; font-family: inherit;
-    letter-spacing: 2px; background: linear-gradient(135deg, var(--pink), var(--orange)); margin-top: 20px;
-  }
+/* Add player */
+.add-panel { background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:20px; }
+.field-label { font-size:11px; color:#888; display:block; margin-bottom:4px; }
+.name-input { width:100%; background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff; padding:10px 12px; font-size:16px; font-family:inherit; outline:none; }
+.role-btns { display:flex; gap:6px; margin-top:6px; }
+.role-btn { flex:1; border-radius:6px; padding:8px 4px; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit; letter-spacing:0.5px; background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); color:#555; }
+.role-btn.active { border-width:2px; }
+.add-btn { width:100%; border:none; border-radius:8px; color:#333; padding:12px; font-size:14px; font-weight:900; cursor:default; font-family:inherit; letter-spacing:2px; background: rgba(255,255,255,0.05); margin-top:20px; }
+.add-btn.ready { background: linear-gradient(135deg, var(--pink), var(--orange)); color:#fff; cursor:pointer; }
 
-  .footer { text-align: center; margin-top: 24px; padding-bottom: 20px; font-size: 10px; color: #333; letter-spacing: 1px; }
-  .section-label { font-size: 11px; color: #666; text-align: center; margin-bottom: 16px; letter-spacing: 2px; }
-  .hidden { display: none; }
+.footer { text-align:center; margin-top:24px; padding-bottom:20px; font-size:10px; color:#333; letter-spacing:1px; }
+.section-label { font-size:11px; color:#666; text-align:center; margin-bottom:16px; letter-spacing:2px; }
+
+.flash { animation: flashPts 0.4s ease; }
+@keyframes flashPts { 0% { color:#fff; text-shadow:0 0 12px rgba(255,255,255,0.8); } 100% { text-shadow:none; } }
+.hidden { display:none; }
 </style>
 </head>
 <body>
@@ -168,10 +141,9 @@
 <div class="container">
   <div style="text-align:center; margin-bottom:24px;">
     <div class="nhs-tag">⚕ NHS ACUTE MEDICINE ⚕</div>
-    <div class="date-tag" id="dateTag"></div>
     <div id="titleDisplay" class="title" onclick="startEditTitle()">ACUTE TAKE LEAGUE</div>
     <input id="titleInput" class="title-input hidden" onblur="finishEditTitle()" onkeydown="if(event.key==='Enter')finishEditTitle()">
-    <div class="subtitle">tap title to rename · admissions &amp; saves = 3pts · rest = 1pt</div>
+    <div class="subtitle">tap title to rename · admissions & saves = 3pts · rest = 1pt</div>
   </div>
 
   <div class="tabs">
@@ -188,116 +160,80 @@
 </div>
 
 <script>
-const ROLES = ["Med Reg", "SHO", "FY2", "FY1"];
+// ─── Firebase Setup ───
+const firebaseConfig = {
+  apiKey: "AIzaSyCJEXL8F28S3_UCXil8cVU-4MXOEg4cpwI",
+  authDomain: "acute-take-league.firebaseapp.com",
+  databaseURL: "https://acute-take-league-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "acute-take-league",
+  storageBucket: "acute-take-league.firebasestorage.app",
+  messagingSenderId: "1064553360872",
+  appId: "1:1064553360872:web:64a44af9f834b6f2bb885d"
+};
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ─── Core Data ───
+const ROLES = ["Med Reg","SHO","FY2","FY1"];
 const CATEGORIES = [
-  { key: "admissions", label: "Admissions", emoji: "📋", desc: "Patients admitted", points: 3 },
-  { key: "cannulas", label: "Cannulas", emoji: "💉", desc: "Cannulas inserted", points: 1 },
-  { key: "abgs", label: "ABGs", emoji: "🫁", desc: "ABGs done", points: 1 },
-  { key: "tasks", label: "Tasks", emoji: "✅", desc: "Taskboard tasks done", points: 1 },
-  { key: "saves", label: "Saves", emoji: "🦸", desc: "Great catches / saves", points: 3 },
-  { key: "quiz", label: "Quiz", emoji: "🧠", desc: "Reg's question answered", points: 1 },
-  { key: "rest", label: "Rest", emoji: "😴", desc: "Rest breaks taken", points: 1 },
+  {key:"admissions",label:"Admissions",emoji:"📋",desc:"Patients admitted",points:3},
+  {key:"cannulas",label:"Cannulas",emoji:"💉",desc:"Cannulas inserted",points:1},
+  {key:"abgs",label:"ABGs",emoji:"🫁",desc:"ABGs done",points:1},
+  {key:"tasks",label:"Tasks",emoji:"✅",desc:"Taskboard tasks done",points:1},
+  {key:"saves",label:"Saves",emoji:"🦸",desc:"Great catches / saves",points:3},
+  {key:"quiz",label:"Quiz",emoji:"🧠",desc:"Reg's question answered",points:1},
+  {key:"rest",label:"Rest",emoji:"😴",desc:"Rest breaks taken",points:1}
 ];
-const ROLE_COLORS = { "Med Reg": "#ff3e6c", "SHO": "#00d4ff", "FY2": "#ffd700", "FY1": "#7cff6b" };
+const ROLE_COLORS={"Med Reg":"#ff3e6c","SHO":"#00d4ff","FY2":"#ffd700","FY1":"#7cff6b"};
 
-let players = [{ id: 1, name: "Mark", role: "Med Reg", stats: {} }];
-let nextId = 2;
-let selectedPlayer = null;
-let currentView = "table";
-let newRole = "SHO";
-
-function setDate() {
-  const d = new Date();
-  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  document.getElementById('dateTag').textContent = days[d.getDay()] + " " + d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear();
-}
-setDate();
-
-function getPoints(stats) {
-  return CATEGORIES.reduce((t, c) => t + (stats[c.key] || 0) * (c.points || 1), 0);
-}
-function rankSuffix(n) {
-  if (n % 100 >= 11 && n % 100 <= 13) return "th";
-  switch (n % 10) { case 1: return "st"; case 2: return "nd"; case 3: return "rd"; default: return "th"; }
-}
-function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-
-function startEditTitle() {
-  const d = document.getElementById('titleDisplay');
-  const i = document.getElementById('titleInput');
-  i.value = d.textContent; d.classList.add('hidden'); i.classList.remove('hidden'); i.focus();
-}
-function finishEditTitle() {
-  const d = document.getElementById('titleDisplay');
-  const i = document.getElementById('titleInput');
-  const v = i.value.trim(); if (v) d.textContent = v;
-  i.classList.add('hidden'); d.classList.remove('hidden');
-}
-
-function switchTab(tab) {
-  currentView = tab;
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-  ['table', 'stats', 'add'].forEach(v => document.getElementById('view-' + v).classList.toggle('hidden', v !== tab));
+// ─── Firebase Data ───
+let players=[], nextId=1, selectedPlayer=null, currentView="table", newRole="SHO";
+db.ref("players").on("value", snapshot=>{
+  const data = snapshot.val();
+  if(data){ players = data.players || []; nextId = data.nextId || 1; }
   render();
-}
+});
+function saveData(){ db.ref("players").set({players,nextId}); }
 
-let lastActionTime = 0;
+// ─── Helpers ───
+function getPoints(stats){ return CATEGORIES.reduce((t,c)=>t+((stats[c.key]||0)*(c.points||1)),0); }
+function rankSuffix(n){ if(n%100>=11&&n%100<=13)return"th"; switch(n%10){case 1:return"st";case 2:return"nd";case 3:return"rd";default:return"th";} }
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-function guardedAction(fn) {
-  lastActionTime = Date.now();
-  fn();
-}
+// ─── Title Editing ───
+function startEditTitle(){const d=document.getElementById('titleDisplay');const i=document.getElementById('titleInput');i.value=d.textContent;d.classList.add('hidden');i.classList.remove('hidden');i.focus();}
+function finishEditTitle(){const d=document.getElementById('titleDisplay');const i=document.getElementById('titleInput');const v=i.value.trim();if(v)d.textContent=v;i.classList.add('hidden');d.classList.remove('hidden');}
 
-function incrementStat(playerId, catKey, amount) {
-  guardedAction(() => {
-    const p = players.find(x => x.id === playerId);
-    if (!p) return;
-    p.stats[catKey] = Math.max(0, (p.stats[catKey] || 0) + amount);
-    render();
-  });
-}
+// ─── Tab Switching ───
+function switchTab(tab){currentView=tab;document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));['table','stats','add'].forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden',v!==tab));render();}
 
-function removePlayer(id) {
-  guardedAction(() => {
-    players = players.filter(p => p.id !== id);
-    if (selectedPlayer === id) selectedPlayer = null;
-    render();
-  });
-}
+// ─── Player Actions ───
+function incrementStat(playerId, catKey, amount){const p=players.find(x=>x.id===playerId);if(!p)return;const cur=p.stats[catKey]||0;p.stats[catKey]=Math.max(0,cur+amount);saveData();render();}
+function removePlayer(id){players=players.filter(p=>p.id!==id);if(selectedPlayer===id)selectedPlayer=null;saveData();render();}
+function resetAll(){if(confirm("Reset all scores? This can't be undone.")){players.forEach(p=>p.stats={});saveData();render();}}
+function togglePlayer(id){selectedPlayer=selectedPlayer===id?null:id;render();}
+function addPlayer(){const input=document.getElementById('newNameInput');const name=input.value.trim();if(!name)return;players.push({id:nextId++,name,role:newRole,stats:{}});input.value='';saveData();switchTab('table');}
+function selectRole(role){newRole=role;renderAdd();}
 
-function resetAll() {
-  if (confirm("Reset all scores? This can't be undone.")) { players.forEach(p => p.stats = {}); render(); }
-}
-
-function togglePlayer(id) {
-  if (Date.now() - lastActionTime < 300) return;
-  selectedPlayer = selectedPlayer === id ? null : id;
-  render();
-}
-
-function addPlayer() {
-  const input = document.getElementById('newNameInput');
-  const name = input.value.trim();
-  if (!name) return;
-  players.push({ id: nextId++, name, role: newRole, stats: {} });
-  input.value = ''; switchTab('table');
-}
-
-function selectRole(role) { newRole = role; renderAdd(); }
-
-function renderTable() {
+// ──
+  function renderTable() {
   const el = document.getElementById('view-table');
   const sorted = [...players].sort((a, b) => getPoints(b.stats) - getPoints(a.stats));
   const leaderPts = sorted[0] ? getPoints(sorted[0].stats) : 0;
 
-  if (!sorted.length) { el.innerHTML = '<div style="text-align:center;color:#555;padding:40px;">No players yet. Add some to get started!</div>'; return; }
+  if (sorted.length === 0) {
+    el.innerHTML = '<div style="text-align:center;color:#555;padding:40px;">No players yet. Add some to get started!</div>';
+    return;
+  }
 
   let html = '';
   sorted.forEach((player, idx) => {
-    const pts = getPoints(player.stats), rank = idx + 1, isTop = rank === 1 && pts > 0;
+    const pts = getPoints(player.stats);
+    const rank = idx + 1;
+    const isTop = rank === 1 && pts > 0;
     const barWidth = leaderPts > 0 ? (pts / leaderPts) * 100 : 0;
-    const rc = ROLE_COLORS[player.role], expanded = selectedPlayer === player.id;
+    const rc = ROLE_COLORS[player.role];
+    const expanded = selectedPlayer === player.id;
 
     html += `<div class="player-card ${isTop ? 'leader' : ''}" onclick="togglePlayer(${player.id})">`;
     html += `<div class="player-bar" style="width:${barWidth}%;background:linear-gradient(90deg,${rc}15,${rc}08)"></div>`;
@@ -308,19 +244,20 @@ function renderTable() {
     html += `</div>`;
 
     if (expanded) {
-      html += `<div class="score-grid" onclick="event.stopPropagation()">`;
+      html += `<div class="score-grid">`;
       CATEGORIES.forEach(cat => {
         const val = player.stats[cat.key] || 0;
         html += `<div class="score-cell">`;
-        html += `<button class="score-btn" onclick="incrementStat(${player.id},'${cat.key}',1)">${cat.emoji}</button>`;
+        html += `<button class="score-btn" onclick="event.stopPropagation();incrementStat(${player.id},'${cat.key}',1)">${cat.emoji}</button>`;
         html += `<div class="score-label">${cat.label}</div>`;
         html += `<div class="score-val" style="color:${val > 0 ? '#fff' : '#333'}">${val}</div>`;
-        if (val > 0) html += `<button class="undo-btn" onclick="incrementStat(${player.id},'${cat.key}',-1)">undo</button>`;
+        if (val > 0) html += `<button class="undo-btn" onclick="event.stopPropagation();incrementStat(${player.id},'${cat.key}',-1)">undo</button>`;
         html += `</div>`;
       });
       html += `</div>`;
       html += `<button class="remove-btn" onclick="event.stopPropagation();removePlayer(${player.id})">remove player</button>`;
     }
+
     html += `</div>`;
   });
 
@@ -334,35 +271,45 @@ function renderStats() {
 
   CATEGORIES.forEach(cat => {
     const sorted = [...players].sort((a, b) => (b.stats[cat.key] || 0) - (a.stats[cat.key] || 0));
-    const leader = sorted[0], leaderVal = leader ? (leader.stats[cat.key] || 0) : 0;
+    const leader = sorted[0];
+    const leaderVal = leader ? (leader.stats[cat.key] || 0) : 0;
     const total = players.reduce((s, p) => s + (p.stats[cat.key] || 0), 0);
 
-    html += `<div class="stat-card"><div class="stat-emoji">${cat.emoji}</div>`;
+    html += `<div class="stat-card">`;
+    html += `<div class="stat-emoji">${cat.emoji}</div>`;
     html += `<div class="stat-info"><div class="stat-desc">${cat.desc}</div>`;
     html += `<div class="stat-leader">${leaderVal > 0 ? esc(leader.name) + ' leads (' + leaderVal + ')' : 'No entries yet'}`;
     if (cat.points > 1) html += ` · ${cat.points}pts each`;
     html += `</div></div>`;
-    html += `<div class="stat-total" style="color:${total > 0 ? '#fff' : '#333'}">${total}</div></div>`;
+    html += `<div class="stat-total" style="color:${total > 0 ? '#fff' : '#333'}">${total}</div>`;
+    html += `</div>`;
   });
 
   const teamTotal = players.reduce((s, p) => s + getPoints(p.stats), 0);
-  html += `<div class="team-total"><div class="team-total-label">TEAM TOTAL</div>`;
+  html += `<div class="team-total">`;
+  html += `<div class="team-total-label">TEAM TOTAL</div>`;
   html += `<div class="team-total-num">${teamTotal}</div>`;
-  html += `<div class="team-total-sub">points across ${players.length} player${players.length !== 1 ? 's' : ''}</div></div>`;
+  html += `<div class="team-total-sub">points across ${players.length} player${players.length !== 1 ? 's' : ''}</div>`;
+  html += `</div>`;
+
   el.innerHTML = html;
 }
 
 function renderAdd() {
   const el = document.getElementById('view-add');
-  let html = `<div class="add-panel"><div class="section-label">NEW PLAYER</div>`;
+  let html = `<div class="add-panel">`;
+  html += `<div class="section-label">NEW PLAYER</div>`;
   html += `<div style="margin-bottom:14px"><label class="field-label">NAME</label>`;
   html += `<input id="newNameInput" class="name-input" placeholder="e.g. Dr. Smith" onkeydown="if(event.key==='Enter')addPlayer()"></div>`;
   html += `<div style="margin-bottom:20px"><label class="field-label">ROLE</label><div class="role-btns">`;
   ROLES.forEach(role => {
-    const active = newRole === role, c = ROLE_COLORS[role];
+    const active = newRole === role;
+    const c = ROLE_COLORS[role];
     html += `<button class="role-btn ${active ? 'active' : ''}" style="${active ? `background:${c}22;border-color:${c};color:${c}` : ''}" onclick="selectRole('${role}')">${role}</button>`;
   });
-  html += `</div></div><button class="add-btn" onclick="addPlayer()">ADD TO ROSTER</button></div>`;
+  html += `</div></div>`;
+  html += `<button class="add-btn ready" onclick="addPlayer()">ADD TO ROSTER</button>`;
+  html += `</div>`;
   el.innerHTML = html;
 }
 
@@ -372,7 +319,6 @@ function render() {
   else if (currentView === 'add') renderAdd();
 }
 
+// Initial render
 render();
 </script>
-</body>
-</html>
