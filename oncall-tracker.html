@@ -381,6 +381,13 @@
       cursor: pointer; padding: 2px 6px; transition: all 0.1s;
     }
     .edt:hover { border-color: var(--amber2); color: var(--amber2); }
+    .dup {
+      background: none; border: 1px solid var(--amber5);
+      color: var(--amber4); font-family: var(--font);
+      font-size: 9px; letter-spacing: 0.08em;
+      cursor: pointer; padding: 2px 6px; transition: all 0.1s;
+    }
+    .dup:hover { border-color: var(--green); color: var(--green); }
     .del {
       background: none; border: none; color: var(--amber5);
       font-family: var(--font); font-size: 11px; cursor: pointer;
@@ -956,6 +963,35 @@ function deleteJob(id) {
 }
 function toggleExpand(id) {
   document.getElementById("tr-"+id)?.classList.toggle("expanded");
+  function duplicateJob(id) {
+  const t = tasks[id]; if (!t) return;
+  // Open drawer pre-filled with patient details, cleared task/notes/reminder
+  editingId = null;
+  const task = { ...t };
+
+  document.getElementById("drawer-mode-label").textContent = "job.create";
+  document.getElementById("drawer-exec-btn").textContent   = "EXECUTE ▸";
+
+  document.getElementById("f-patient").value  = task.patient  || "";
+  document.getElementById("f-dobyear").value  = task.dobYear  || "";
+  document.getElementById("f-location").value = task.location || "";
+  document.getElementById("f-time").value     = nowTimeStr();
+  document.getElementById("f-task").value     = "";
+  document.getElementById("f-notes").value    = "";
+  document.getElementById("f-remind-at").value = "";
+
+  selPriority = task.priority || "routine";
+  selType     = typeObj(task.type);
+  selRemind   = 0;
+  selRemindAt = null;
+
+  setPriority(selPriority);
+  buildTypeGrid();
+  setRemind(0);
+
+  document.getElementById("add-drawer").classList.add("open");
+  document.getElementById("f-task").focus();
+}
 }
 function clearShift() {
   if (!confirm("END_SHIFT: clear all tasks? This cannot be undone.")) return;
@@ -1211,9 +1247,11 @@ function buildRow(task) {
       <div class="time-age" id="age-${task.id}">${timeAgo(task.timeIn)}</div>
     </td>
     <td class="td-actions">
-      ${!task.completed?`<button class="edt" onclick="openDrawer('${task.id}')">EDIT</button>`:""}
+      ${!task.completed?`
+        <button class="edt" onclick="openDrawer('${task.id}')">EDIT</button>
+        <button class="dup" onclick="duplicateJob('${task.id}')">DUP</button>`:""}
       <button class="del" onclick="deleteJob('${task.id}')">✕</button>
-    </td>`;
+    </td>
   return tr;
 }
 
