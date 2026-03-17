@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -15,41 +14,27 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
 
-<script type="module">
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
+      authDomain: "task-monitor-bd7ee.firebaseapp.com",
+      databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "task-monitor-bd7ee",
+      storageBucket: "task-monitor-bd7ee.firebasestorage.app",
+      messagingSenderId: "544624731364",
+      appId: "1:544624731364:web:419d52fa061c5c7b4f38f1",
+      measurementId: "G-P38B50S1F3"
+    };
 
-  const firebaseConfig = {
-  apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
-  authDomain: "task-monitor-bd7ee.firebaseapp.com",
-  databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "task-monitor-bd7ee",
-  storageBucket: "task-monitor-bd7ee.firebasestorage.app",
-  messagingSenderId: "544624731364",
-  appId: "1:544624731364:web:419d52fa061c5c7b4f38f1",
-  measurementId: "G-P38B50S1F3"
-
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-const tasksRef = ref(db, "renalTasks");
-
-window._fb = {
-  db,
-  ref,
-  push,
-  onValue,
-  update,
-  remove,
-  tasksRef
-};
-
-window.dispatchEvent(new Event("firebase-ready"));
-
-</script>
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app);
+    const tasksRef = ref(db, "renalTasks");
+    window._fb = { db, ref, push, onValue, update, remove, tasksRef };
+    window.dispatchEvent(new Event("firebase-ready"));
+  </script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -531,12 +516,10 @@ window.dispatchEvent(new Event("firebase-ready"));
       #header, #cmdbar, #task-table, #statusbar, #add-drawer { font-size: 11px; }
     }
   </style>
-
 </head>
 <body>
 
 <!-- Config overlay -->
-
 <div id="config-overlay">
   <div class="config-box">
     <div class="config-title">FIREBASE_INIT</div>
@@ -571,7 +554,6 @@ window.dispatchEvent(new Event("firebase-ready"));
 </div>
 
 <!-- Header -->
-
 <div id="header">
   <div class="header-top">
     <div class="header-logo">
@@ -606,11 +588,9 @@ window.dispatchEvent(new Event("firebase-ready"));
 </div>
 
 <!-- Alert strip -->
-
 <div id="alert-strip"></div>
 
 <!-- Command bar -->
-
 <div id="cmdbar">
   <span class="cmd-prompt">rtm&gt;</span>
   <div id="status-filters">
@@ -638,7 +618,6 @@ window.dispatchEvent(new Event("firebase-ready"));
 </div>
 
 <!-- Add drawer -->
-
 <div id="add-drawer">
   <div class="drawer-head">
     <span class="drawer-prompt">rtm&gt; <strong>task.create</strong> --interactive</span>
@@ -688,7 +667,6 @@ window.dispatchEvent(new Event("firebase-ready"));
 </div>
 
 <!-- Task table -->
-
 <div id="loading"><div class="spinner"></div>CONNECTING TO FIREBASE...</div>
 <table id="task-table">
   <thead>
@@ -707,7 +685,6 @@ window.dispatchEvent(new Event("firebase-ready"));
 <div id="empty">no tasks match current filter</div>
 
 <!-- Status bar -->
-
 <div id="statusbar">
   <div class="status-left">
     <span class="status-item"><strong id="sb-active">0</strong> active</span>
@@ -1014,6 +991,5 @@ const mf = {name:"RTM Renal Tasks",short_name:"RTM",start_url:"./",display:"stan
   icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23080c08'/><text y='65' x='50' text-anchor='middle' font-size='42' font-family='monospace' fill='%2339ff14'>RTM</text></svg>",sizes:"192x192",type:"image/svg+xml"}]};
 document.getElementById("pwa-manifest").href=URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:"application/json"}));
 </script>
-
 </body>
 </html>
