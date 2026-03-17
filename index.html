@@ -20,14 +20,16 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-const firebaseConfig = {
+  const firebaseConfig = {
   apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
   authDomain: "task-monitor-bd7ee.firebaseapp.com",
-  databaseURL: "https://task-monitor-bd7ee-default-rtdb.firebaseio.com",
+  databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "task-monitor-bd7ee",
   storageBucket: "task-monitor-bd7ee.firebasestorage.app",
   messagingSenderId: "544624731364",
-  appId: "1:544624731364:web:6ed69578c4fdde234f38f1"
+  appId: "1:544624731364:web:419d52fa061c5c7b4f38f1",
+  measurementId: "G-P38B50S1F3"
+
 };
 
 const app = initializeApp(firebaseConfig);
