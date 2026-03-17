@@ -963,6 +963,7 @@ function deleteJob(id) {
 }
 function toggleExpand(id) {
   document.getElementById("tr-"+id)?.classList.toggle("expanded");
+}
   function duplicateJob(id) {
   const t = tasks[id]; if (!t) return;
   // Open drawer pre-filled with patient details, cleared task/notes/reminder
@@ -991,7 +992,6 @@ function toggleExpand(id) {
 
   document.getElementById("add-drawer").classList.add("open");
   document.getElementById("f-task").focus();
-}
 }
 function clearShift() {
   if (!confirm("END_SHIFT: clear all tasks? This cannot be undone.")) return;
