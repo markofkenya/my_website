@@ -31,8 +31,9 @@
 
     const app = initializeApp(firebaseConfig);
     const db  = getDatabase(app);
+   
     // Different path from renalTasks — same project, separate data
-    const tasksRef = ref(db, "apps/oncall/tasks");
+    const tasksRef = ref(db, "onCallTasks");
     window._fb = { db, ref, push, onValue, update, remove, set, tasksRef };
     window.dispatchEvent(new Event("firebase-ready"));
   </script>
