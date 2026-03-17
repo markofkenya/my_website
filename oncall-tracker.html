@@ -727,8 +727,9 @@ setInterval(tickClock, 1000);
 
 
 // ── Firebase ─────────────────────────────────────────────────
-window.addEventListener("firebase-ready", () => {
+function initFirebase() {
   const { onValue, tasksRef } = window._fb;
+
   document.getElementById("sync-live").style.display = "block";
   document.getElementById("sb-sync").textContent = "db: connected";
   document.getElementById("sb-sync").style.color = "var(--amber3)";
@@ -739,7 +740,14 @@ window.addEventListener("firebase-ready", () => {
     document.getElementById("loading").style.display = "none";
     document.getElementById("task-table").classList.add("show");
   });
-});
+}
+
+// 👇 THIS replaces the old listener
+if (window._fb) {
+  initFirebase();
+} else {
+  window.addEventListener("firebase-ready", initFirebase);
+}
 // ── Type grid ────────────────────────────────────────────────
 function buildTypeGrid() {
   const grid = document.getElementById("type-grid");
