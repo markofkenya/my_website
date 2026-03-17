@@ -714,6 +714,7 @@ let tasks = {}, filterStatus="active", filterPri="all", filterType="all";
 let selPriority  = "routine";
 let selType      = JOB_TYPES[0];
 let selRemind    = 0;
+let selRemindAt  = null; 
 let editingId    = null;
 let shiftStart   = Date.now();
 // ── Helpers ──────────────────────────────────────────────────
@@ -796,10 +797,23 @@ function setPriority(p) {
 }
 // -set reminder-----
 function setRemind(mins) {
-  selRemind = mins;
+  selRemind   = mins;
+  selRemindAt = null;
   document.querySelectorAll(".remind-btn").forEach(b => {
     b.classList.toggle("sel", parseInt(b.dataset.r) === mins);
   });
+  // Clear the time picker if a relative time is chosen
+  document.getElementById("f-remind-at").value = "";
+}
+
+function setRemindAt(timeStr) {
+  selRemindAt = timeStr || null;
+  // If a specific time is set, deselect the relative buttons
+  if (selRemindAt) {
+    selRemind = 0;
+    document.querySelectorAll(".remind-btn").forEach(b => b.classList.remove("sel"));
+    document.querySelector(".remind-btn[data-r='0']").classList.add("sel");
+  }
 }
 
 // ── Drawer ───────────────────────────────────────────────────
@@ -816,6 +830,17 @@ function openDrawer(taskId) {
     document.getElementById("f-time").value     = task.timeIn   || "";
     document.getElementById("f-task").value     = task.task     || "";
     document.getElementById("f-notes").value    = task.notes    || "";
+    // Pre-fill reminder time if it was a specific time
+    if (task.remindAt && !task.reminded) {
+      const d = new Date(task.remindAt);
+      const hh = String(d.getHours()).padStart(2,"0");
+      const mm = String(d.getMinutes()).padStart(2,"0");
+      document.getElementById("f-remind-at").value = `${hh}:${mm}`;
+      selRemindAt = `${hh}:${mm}`;
+    } else {
+      document.getElementById("f-remind-at").value = "";
+      selRemindAt = null;
+    }
     selPriority = task.priority || "routine";
     selType = typeObj(task.type);
     setPriority(selPriority);
@@ -826,8 +851,10 @@ function openDrawer(taskId) {
     selType = JOB_TYPES[0];
     setPriority("routine");
 
-    selRemind = 0;
+    selRemind   = 0;
+    selRemindAt = null;
     setRemind(0);
+    document.getElementById("f-remind-at").value = "";
   }
   buildTypeGrid();
   document.getElementById("add-drawer").classList.add("open");
@@ -836,7 +863,8 @@ function openDrawer(taskId) {
 function closeDrawer() {
   document.getElementById("add-drawer").classList.remove("open");
   editingId = null;
-  selRemind = 0;
+  selRemind   = 0;
+  selRemindAt = null;
 }
 
 // ── Save job ─────────────────────────────────────────────────
@@ -850,9 +878,19 @@ function saveJob() {
   }
 
   // Calculate absolute reminder time if set
-  const remindAt = selRemind > 0
-    ? Date.now() + (selRemind * 60 * 1000)
-    : null;
+// Specific time takes priority over relative offset
+  let remindAt = null;
+  if (selRemindAt) {
+    // Convert "HH:MM" to today's epoch ms
+    const [h, m] = selRemindAt.split(":").map(Number);
+    const t = new Date();
+    t.setHours(h, m, 0, 0);
+    // If the time has already passed today, assume they mean tomorrow
+    if (t.getTime() < Date.now()) t.setDate(t.getDate() + 1);
+    remindAt = t.getTime();
+  } else if (selRemind > 0) {
+    remindAt = Date.now() + (selRemind * 60 * 1000);
+  }
 
   const payload = {
     patient,
