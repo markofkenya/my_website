@@ -15,14 +15,10 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
 
   <script type="module">
-    // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Your config
 const firebaseConfig = {
   apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
   authDomain: "task-monitor-bd7ee.firebaseapp.com",
@@ -30,17 +26,19 @@ const firebaseConfig = {
   projectId: "task-monitor-bd7ee",
   storageBucket: "task-monitor-bd7ee.firebasestorage.app",
   messagingSenderId: "544624731364",
-  appId: "1:544624731364:web:419d52fa061c5c7b4f38f1",
-  measurementId: "G-P38B50S1F3"
+  appId: "1:544624731364:web:419d52fa061c5c7b4f38f1"
 };
 
-// Initialize Firebase
+// Init
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+const db = getDatabase(app);
+const tasksRef = ref(db, "renalTasks");
 
-    const tasksRef = ref(db, "renalTasks");
-    window._fb = { db, ref, push, onValue, update, remove, tasksRef };
-    window.dispatchEvent(new Event("firebase-ready"));
+// expose globally
+window._fb = { db, ref, push, onValue, update, remove, tasksRef };
+
+// signal ready
+window.dispatchEvent(new Event("firebase-ready"));
   </script>
 
   <style>
@@ -768,18 +766,6 @@ function saveConfig() {
   location.reload();
 }
 
-// ── Firebase init ────────────────────────────────────────────
-const cfg = loadConfig();
-
-if (!cfg) {
-  window.dispatchEvent(new Event("firebase-missing"));
-} else {
-  const app = initializeApp(cfg);
-  const db  = getDatabase(app);
-  const tasksRef = ref(db, "renalTasks");
-  window._fb = { db, ref, push, onValue, update, remove, tasksRef };
-  window.dispatchEvent(new Event("firebase-ready"));
-}
 
 // ── Template grid ────────────────────────────────────────────
 function buildTmplGrid() {
@@ -970,6 +956,20 @@ function buildRow(task) {
     </td>`;
   return tr;
 }
+  window.addEventListener("firebase-ready", () => {
+  const { onValue, tasksRef } = window._fb;
+
+  onValue(tasksRef, snap => {
+    tasks = snap.val() || {};
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("task-table").classList.add("show");
+
+    document.getElementById("sync-status").innerHTML = '<span class="sync-dot"></span>LIVE';
+    document.getElementById("sync-status").classList.add("live");
+
+    render();
+  });
+});
 
 // ── Controls ─────────────────────────────────────────────────
 document.getElementById("status-filters").addEventListener("click",e=>{
