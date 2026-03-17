@@ -1045,36 +1045,29 @@ function copyHandover() {
   btn.textContent = "SENDING...";
   btn.style.opacity = "0.6";
 
-  fetch(`${APPS_SCRIPT_URL}?action=handover`)
-    .then(r => r.json())
-    .then(data => {
-      if (data.ok) {
-        btn.textContent = "✓ SENT";
-        btn.style.borderColor = "var(--green)";
-        btn.style.color = "var(--green)";
-        setTimeout(() => {
-          btn.textContent = "EMAIL ▸";
-          btn.style.borderColor = "";
-          btn.style.color = "";
-          btn.style.opacity = "";
-        }, 3000);
-      } else {
-        btn.textContent = "FAILED";
-        btn.style.color = "var(--red)";
-        setTimeout(() => {
-          btn.textContent = "EMAIL ▸";
-          btn.style.color = "";
-          btn.style.opacity = "";
-        }, 3000);
-      }
+  // Use no-cors mode — Apps Script doesn't support CORS headers
+  // We can't read the response but the request still fires
+  fetch(`${APPS_SCRIPT_URL}?action=handover`, { mode: "no-cors" })
+    .then(() => {
+      // no-cors means we can't read the response
+      // but if we get here the request was sent
+      btn.textContent = "✓ SENT";
+      btn.style.borderColor = "var(--green)";
+      btn.style.color = "var(--green)";
+      btn.style.opacity = "1";
+      setTimeout(() => {
+        btn.textContent = "EMAIL ▸";
+        btn.style.borderColor = "";
+        btn.style.color = "";
+      }, 3000);
     })
     .catch(() => {
       btn.textContent = "ERROR";
       btn.style.color = "var(--red)";
+      btn.style.opacity = "1";
       setTimeout(() => {
         btn.textContent = "EMAIL ▸";
         btn.style.color = "";
-        btn.style.opacity = "";
       }, 3000);
     });
 }
