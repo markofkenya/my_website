@@ -966,7 +966,7 @@ function openHandover() {
     out += `!! OUTSTANDING (${pending.length})\n${"─".repeat(44)}\n`;
     pending.forEach(t => {
       out += `[${(t.priority||"routine").toUpperCase().padEnd(9)}] `;
-      out += `${(t.patient||"?").padEnd(6)} `;
+      out += `${(t.patient||"?").padEnd(6)}`;
       out += `${t.dobYear ? ""+t.dobYear+"" : "      "} `;
       out += `${(t.type||"other").padEnd(12)} `;
       out += `@${t.timeIn||"??:??"}\n`;
