@@ -15,10 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
 
   <script type="module">
-   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-// Your config
+   // Your config
 const firebaseConfig = {
   apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
   authDomain: "task-monitor-bd7ee.firebaseapp.com",
@@ -39,6 +36,7 @@ window._fb = { db, ref, push, onValue, update, remove, tasksRef };
 
 // signal ready
 window.dispatchEvent(new Event("firebase-ready"));
+
   </script>
 
   <style>
@@ -413,6 +411,13 @@ window.dispatchEvent(new Event("firebase-ready"));
       transition: all 0.1s;
     }
     .snz:hover { border-color: var(--green3); color: var(--green2); }
+    .edt {
+      background: none; border: 1px solid var(--green5);
+      color: var(--green4); font-family: var(--font);
+      font-size: 9px; letter-spacing: 0.08em;
+      cursor: pointer; padding: 2px 6px; transition: all 0.1s;
+    }
+    .edt:hover { border-color: var(--amber); color: var(--amber); }
     .del {
       background: none; border: none; color: var(--green5);
       font-family: var(--font); font-size: 11px; cursor: pointer;
@@ -622,10 +627,10 @@ window.dispatchEvent(new Event("firebase-ready"));
   </div>
 </div>
 
-<!-- Add drawer -->
+<!-- Add / Edit drawer -->
 <div id="add-drawer">
   <div class="drawer-head">
-    <span class="drawer-prompt">rtm&gt; <strong>task.create</strong> --interactive</span>
+    <span class="drawer-prompt">rtm&gt; <strong id="drawer-mode-label">task.create</strong> --interactive</span>
     <button class="btn-esc" onclick="closeDrawer()">ESC</button>
   </div>
   <div class="drawer-body">
@@ -667,7 +672,7 @@ window.dispatchEvent(new Event("firebase-ready"));
   </div>
   <div class="drawer-foot">
     <button class="btn-abort" onclick="closeDrawer()">ABORT</button>
-    <button class="btn-exec" onclick="addTask()">EXECUTE ▸</button>
+    <button class="btn-exec" id="drawer-exec-btn" onclick="saveTask()">EXECUTE ▸</button>
   </div>
 </div>
 
@@ -732,6 +737,7 @@ const CAT_LABEL = {
 
 let tasks = {}, filterStatus="active", filterCat="all", sortBy="dueDate";
 let selTmpl = TEMPLATES[0];
+let editingId = null; // null = new task, string = editing existing task id
 
 // ── Helpers ──────────────────────────────────────────────────
 const todayStr  = ()  => new Date().toISOString().split("T")[0];
@@ -766,7 +772,6 @@ function saveConfig() {
   location.reload();
 }
 
-
 // ── Template grid ────────────────────────────────────────────
 function buildTmplGrid() {
   const grid = document.getElementById("tmpl-grid");
@@ -787,33 +792,79 @@ function buildTmplGrid() {
 }
 
 // ── Drawer ───────────────────────────────────────────────────
-function openDrawer() {
-  selTmpl = TEMPLATES[0];
-  ["f-initials","f-dobyear","f-notes","f-custom"].forEach(id=>document.getElementById(id).value="");
-  document.getElementById("f-due").value = plusDays(selTmpl.days);
-  document.getElementById("f-category").value = selTmpl.cat;
-  document.getElementById("custom-field").style.display = "none";
+function openDrawer(taskId) {
+  editingId = taskId || null;
+  const task = editingId ? tasks[editingId] : null;
+
+  // Set drawer mode label and button text
+  document.getElementById("drawer-mode-label").textContent = task ? "task.edit" : "task.create";
+  document.getElementById("drawer-exec-btn").textContent   = task ? "UPDATE ▸" : "EXECUTE ▸";
+
+  if (task) {
+    // Pre-fill fields from existing task
+    document.getElementById("f-initials").value = task.patientInitials || "";
+    document.getElementById("f-dobyear").value  = task.dobYear || "";
+    document.getElementById("f-due").value      = task.dueDate || "";
+    document.getElementById("f-category").value = task.category || "custom";
+    document.getElementById("f-notes").value    = task.notes || "";
+
+    // Match template or fall back to custom
+    const matched = TEMPLATES.find(t => t.label === task.label);
+    selTmpl = matched || TEMPLATES[TEMPLATES.length - 1]; // last = "Custom task"
+    if (!matched) {
+      document.getElementById("f-custom").value = task.label;
+      document.getElementById("custom-field").style.display = "flex";
+    } else {
+      document.getElementById("f-custom").value = "";
+      document.getElementById("custom-field").style.display = "none";
+    }
+  } else {
+    // New task defaults
+    selTmpl = TEMPLATES[0];
+    ["f-initials","f-dobyear","f-notes","f-custom"].forEach(id=>document.getElementById(id).value="");
+    document.getElementById("f-due").value      = plusDays(selTmpl.days);
+    document.getElementById("f-category").value = selTmpl.cat;
+    document.getElementById("custom-field").style.display = "none";
+  }
+
   buildTmplGrid();
   document.getElementById("add-drawer").classList.add("open");
   document.getElementById("f-initials").focus();
 }
-function closeDrawer() { document.getElementById("add-drawer").classList.remove("open"); }
+function closeDrawer() {
+  document.getElementById("add-drawer").classList.remove("open");
+  editingId = null;
+}
 
-// ── Add task ─────────────────────────────────────────────────
-function addTask() {
+// ── Save task (handles both create and edit) ──────────────────
+function saveTask() {
   const initials = document.getElementById("f-initials").value.trim().toUpperCase();
   if (!initials) { document.getElementById("f-initials").focus(); return; }
-  const label = selTmpl.label==="Custom task"
-    ? (document.getElementById("f-custom").value.trim()||"Custom task")
+
+  const label = selTmpl.label === "Custom task"
+    ? (document.getElementById("f-custom").value.trim() || "Custom task")
     : selTmpl.label;
-  window._fb.push(window._fb.tasksRef, {
+
+  const payload = {
     patientInitials: initials,
-    dobYear:   document.getElementById("f-dobyear").value||"",
-    label, category: document.getElementById("f-category").value,
+    dobYear:   document.getElementById("f-dobyear").value || "",
+    label,
+    category:  document.getElementById("f-category").value,
     dueDate:   document.getElementById("f-due").value,
     notes:     document.getElementById("f-notes").value.trim(),
-    completed: false, createdAt: Date.now(), completedAt: null,
-  });
+  };
+
+  if (editingId) {
+    // Update existing task — preserve completed status and timestamps
+    const { db, ref, update } = window._fb;
+    update(ref(db, `renalTasks/${editingId}`), payload);
+  } else {
+    // Create new task
+    window._fb.push(window._fb.tasksRef, {
+      ...payload,
+      completed: false, createdAt: Date.now(), completedAt: null,
+    });
+  }
   closeDrawer();
 }
 
@@ -951,12 +1002,14 @@ function buildRow(task) {
           <button class="snz" onclick="snooze('${task.id}',1)">+1d</button>
           <button class="snz" onclick="snooze('${task.id}',2)">+2d</button>
           <button class="snz" onclick="snooze('${task.id}',5)">+5d</button>
-        </span>`:""}
+        </span>
+        <button class="edt" onclick="openDrawer('${task.id}')">EDIT</button>`:""}
       <button class="del" onclick="deleteTask('${task.id}')">✕</button>
     </td>`;
   return tr;
 }
-  window.addEventListener("firebase-ready", () => {
+  
+window.addEventListener("firebase-ready", () => {
   const { onValue, tasksRef } = window._fb;
 
   onValue(tasksRef, snap => {
@@ -969,7 +1022,7 @@ function buildRow(task) {
 
     render();
   });
-});
+
 
 // ── Controls ─────────────────────────────────────────────────
 document.getElementById("status-filters").addEventListener("click",e=>{
