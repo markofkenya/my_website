@@ -762,27 +762,17 @@ function saveConfig() {
 }
 
 // ── Firebase init ────────────────────────────────────────────
-window.addEventListener("firebase-ready", () => {
-  const cfg = loadConfig();
-  if (!cfg||!cfg.databaseURL) {
-    document.getElementById("config-overlay").classList.add("show");
-    document.getElementById("loading").style.display = "none";
-    return;
-  }
-  const { onValue, tasksRef } = window._fb;
-  const syncEl = document.getElementById("sync-status");
-  syncEl.innerHTML = `<span class="sync-dot"></span>LIVE`;
-  syncEl.classList.add("live");
-  document.getElementById("sb-sync").textContent = "db: connected";
-  document.getElementById("sb-sync").style.color = "var(--green3)";
+const cfg = loadConfig();
 
-  onValue(tasksRef, snap => {
-    tasks = snap.val() || {};
-    render();
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("task-table").classList.add("show");
-  });
-});
+if (!cfg) {
+  window.dispatchEvent(new Event("firebase-missing"));
+} else {
+  const app = initializeApp(cfg);
+  const db  = getDatabase(app);
+  const tasksRef = ref(db, "renalTasks");
+  window._fb = { db, ref, push, onValue, update, remove, tasksRef };
+  window.dispatchEvent(new Event("firebase-ready"));
+}
 
 // ── Template grid ────────────────────────────────────────────
 function buildTmplGrid() {
