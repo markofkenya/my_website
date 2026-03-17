@@ -602,14 +602,6 @@
       <label class="lbl">time_in</label>
       <input class="inp" id="f-time" type="time" />
     </div>
-    <div class="field">
-      <label class="lbl">on-call</label>
-      <select class="inp" id="f-oncall">
-        <option value="GIM">GIM</option>
-        <option value="Renal">Renal</option>
-        <option value="Both">Both</option>
-      </select>
-    </div>
     <!-- Row 2 — priority -->
     <div class="field s4">
       <label class="lbl">priority *</label>
@@ -783,7 +775,6 @@ function openDrawer(taskId) {
     document.getElementById("f-patient").value  = task.patient  || "";
     document.getElementById("f-location").value = task.location || "";
     document.getElementById("f-time").value     = task.timeIn   || "";
-    document.getElementById("f-oncall").value   = task.oncall   || "GIM";
     document.getElementById("f-task").value     = task.task     || "";
     document.getElementById("f-notes").value    = task.notes    || "";
     selPriority = task.priority || "routine";
@@ -797,7 +788,6 @@ function openDrawer(taskId) {
     selType = JOB_TYPES[0];
     setPriority("routine");
   }
-
   buildTypeGrid();
   document.getElementById("add-drawer").classList.add("open");
   document.getElementById("f-patient").focus();
@@ -821,12 +811,12 @@ function saveJob() {
     patient,
     location: document.getElementById("f-location").value.trim(),
     timeIn:   document.getElementById("f-time").value,
-    oncall:   document.getElementById("f-oncall").value,
     priority: selPriority,
     type:     selType.key,
     task,
     notes:    document.getElementById("f-notes").value.trim(),
   };
+
 
   if (editingId) {
     const { db, ref, update } = window._fb;
