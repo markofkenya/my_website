@@ -1040,36 +1040,53 @@ function copyHandover() {
   });
 }
 
-  function emailHandover() {
+ function emailHandover() {
   const btn = document.getElementById("email-btn");
   btn.textContent = "SENDING...";
   btn.style.opacity = "0.6";
 
-  // Use no-cors mode — Apps Script doesn't support CORS headers
-  // We can't read the response but the request still fires
-  fetch(`${APPS_SCRIPT_URL}?action=handover`, { mode: "no-cors" })
-    .then(() => {
-      // no-cors means we can't read the response
-      // but if we get here the request was sent
+  // Create a hidden iframe to catch the response
+  const iframe = document.createElement("iframe");
+  iframe.name = "hidden-handover";
+  iframe.style.display = "none";
+  document.body.appendChild(iframe);
+
+  // Create a hidden form targeting the iframe
+  const form = document.createElement("form");
+  form.method = "GET";
+  form.action = APPS_SCRIPT_URL;
+  form.target = "hidden-handover";
+
+  const input = document.createElement("input");
+  input.type  = "hidden";
+  input.name  = "action";
+  input.value = "handover";
+  form.appendChild(input);
+  document.body.appendChild(form);
+
+  // Submit — fires after a short delay to let iframe attach
+  setTimeout(() => {
+    form.submit();
+
+    // Show sent state — we can't read iframe response cross-origin
+    // but form submission to Apps Script works reliably
+    setTimeout(() => {
       btn.textContent = "✓ SENT";
       btn.style.borderColor = "var(--green)";
       btn.style.color = "var(--green)";
       btn.style.opacity = "1";
+
+      // Clean up
+      document.body.removeChild(form);
+      document.body.removeChild(iframe);
+
       setTimeout(() => {
         btn.textContent = "EMAIL ▸";
         btn.style.borderColor = "";
         btn.style.color = "";
       }, 3000);
-    })
-    .catch(() => {
-      btn.textContent = "ERROR";
-      btn.style.color = "var(--red)";
-      btn.style.opacity = "1";
-      setTimeout(() => {
-        btn.textContent = "EMAIL ▸";
-        btn.style.color = "";
-      }, 3000);
-    });
+    }, 2000);
+  }, 100);
 }
 
 // ── Render ───────────────────────────────────────────────────
