@@ -516,7 +516,7 @@
     </div>
     <div class="ho-foot">
   <button class="btn-ho-close" onclick="closeHandover()">CLOSE</button>
-  <button class="btn-copy" onclick="emailHandover()">EMAIL ▸</button>
+  <button class="btn-copy" id="email-btn" onclick="emailHandover()">EMAIL ▸</button>
   <button class="btn-copy" id="copy-btn" onclick="copyHandover()">COPY TO CLIPBOARD ▸</button>
     </div>
   </div>
@@ -710,7 +710,7 @@ const JOB_TYPES = [
   { label:"Escalation",   key:"escalation",   color:"#ff3333" },
   { label:"Other",        key:"other",        color:"#5a4a2a" },
 ];
-
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzUJg6KV5PQbcey8KEEru5vPRlPxx7mm9sw19K59fxUgb2LIXZvZVM4nT_BLXpOfPf/exec
 const PRI_ORDER = { emergency: 0, urgent: 1, routine: 2 };
 
 // ── State ────────────────────────────────────────────────────
@@ -1041,10 +1041,42 @@ function copyHandover() {
 }
 
   function emailHandover() {
-  const text    = document.getElementById("ho-text").textContent;
-  const subject = encodeURIComponent("On-Call Handover — " + new Date().toLocaleDateString("en-GB"));
-  const body    = encodeURIComponent(text);
-  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  const btn = document.getElementById("email-btn");
+  btn.textContent = "SENDING...";
+  btn.style.opacity = "0.6";
+
+  fetch(`${https://script.google.com/macros/s/AKfycbxzUJg6KV5PQbcey8KEEru5vPRlPxx7mm9sw19K59fxUgb2LIXZvZVM4nT_BLXpOfPf/exec}?action=handover`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        btn.textContent = "✓ SENT";
+        btn.style.borderColor = "var(--green)";
+        btn.style.color = "var(--green)";
+        setTimeout(() => {
+          btn.textContent = "EMAIL ▸";
+          btn.style.borderColor = "";
+          btn.style.color = "";
+          btn.style.opacity = "";
+        }, 3000);
+      } else {
+        btn.textContent = "FAILED";
+        btn.style.color = "var(--red)";
+        setTimeout(() => {
+          btn.textContent = "EMAIL ▸";
+          btn.style.color = "";
+          btn.style.opacity = "";
+        }, 3000);
+      }
+    })
+    .catch(() => {
+      btn.textContent = "ERROR";
+      btn.style.color = "var(--red)";
+      setTimeout(() => {
+        btn.textContent = "EMAIL ▸";
+        btn.style.color = "";
+        btn.style.opacity = "";
+      }, 3000);
+    });
 }
 
 // ── Render ───────────────────────────────────────────────────
