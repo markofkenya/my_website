@@ -189,6 +189,19 @@
       cursor: pointer; transition: all 0.12s;
     }
     .btn-new:hover { background: var(--amber3); }
+    .cmd-search {
+      padding: 9px 10px;
+      background: transparent; border: none;
+      border-right: 1px solid var(--amber5);
+      border-left: 1px solid var(--amber5);
+      color: var(--amber); font-family: var(--font);
+      font-size: 10px; letter-spacing: 0.08em;
+      outline: none; width: 130px;
+      caret-color: var(--amber);
+      text-transform: uppercase;
+    }
+    .cmd-search::placeholder { color: var(--amber4); }
+    .cmd-search:focus { background: var(--bg4); }
     .remind-grid { display: flex; gap: 6px; margin-top: 2px; }
 .remind-btn {
   flex: 1; padding: 6px 4px; background: var(--bg);
@@ -587,6 +600,10 @@
     <option value="other">--type=other</option>
   </select>
   <div class="cmd-right">
+    <input class="cmd-search" id="patient-search"
+      placeholder="search patient..."
+      oninput="render()"
+      maxlength="8" />
     <button class="btn-handover" onclick="openHandover()">HANDOVER ▸▸</button>
     <button class="btn-new" onclick="openDrawer()">NEW_JOB +</button>
   </div>
@@ -1099,6 +1116,8 @@ function render() {
   if (filterStatus==="completed") arr=arr.filter(t=> t.completed);
   if (filterPri!=="all")          arr=arr.filter(t=>t.priority===filterPri);
   if (filterType!=="all")         arr=arr.filter(t=>t.type===filterType);
+  const search = document.getElementById("patient-search").value.trim().toUpperCase();
+  if (search) arr = arr.filter(t => (t.patient||"").toUpperCase().includes(search));
 
   // Sort: emergency first, then urgent, then routine; within each by time
   arr.sort((a,b) => {
