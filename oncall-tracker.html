@@ -725,24 +725,9 @@ function tickClock() {
 tickClock();
 setInterval(tickClock, 1000);
 
-// ── Config ───────────────────────────────────────────────────
 
 // ── Firebase ─────────────────────────────────────────────────
 window.addEventListener("firebase-ready", () => {
-  const { onValue, tasksRef } = window._fb;
-
-  document.getElementById("sync-live").style.display = "block";
-  document.getElementById("sb-sync").textContent = "db: live";
-
-  onValue(tasksRef, snap => {
-    tasks = snap.val() || {};
-
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("task-table").classList.add("show");
-
-    render();
-  });
-});
   const { onValue, tasksRef } = window._fb;
   document.getElementById("sync-live").style.display = "block";
   document.getElementById("sb-sync").textContent = "db: connected";
@@ -755,7 +740,6 @@ window.addEventListener("firebase-ready", () => {
     document.getElementById("task-table").classList.add("show");
   });
 });
-
 // ── Type grid ────────────────────────────────────────────────
 function buildTypeGrid() {
   const grid = document.getElementById("type-grid");
