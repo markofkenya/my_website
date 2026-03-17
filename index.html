@@ -793,7 +793,7 @@ function buildTmplGrid() {
     b.textContent = t.label;
     b.onclick = () => {
       selTmpl = t;
-      document.getElementById("f-due").value = plusDays(t.days);
+      document.getElementById("f-due").value = t.label === "Custom task" ? todayStr() : plusDays(t.days);
       document.getElementById("f-category").value = t.cat;
       document.getElementById("custom-field").style.display = t.label==="Custom task"?"flex":"none";
       buildTmplGrid();
