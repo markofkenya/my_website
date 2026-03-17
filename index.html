@@ -891,7 +891,6 @@ function saveTask() {
     setTimeout(() => el.style.transform = "", 180);
   }
 }
-}
 function snooze(id,days) {
   const {db,ref,update}=window._fb;
   update(ref(db,`renalTasks/${id}`),{dueDate:plusDays(days)});
