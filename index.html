@@ -15,15 +15,18 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
 
   <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
    // Your config
-const firebaseConfig = {
-  apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
-  authDomain: "task-monitor-bd7ee.firebaseapp.com",
-  databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "task-monitor-bd7ee",
-  storageBucket: "task-monitor-bd7ee.firebasestorage.app",
-  messagingSenderId: "544624731364",
-  appId: "1:544624731364:web:419d52fa061c5c7b4f38f1"
+  const firebaseConfig = {
+        apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
+        authDomain: "task-monitor-bd7ee.firebaseapp.com",
+        databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "task-monitor-bd7ee",
+        storageBucket: "task-monitor-bd7ee.firebasestorage.app",
+        messagingSenderId: "544624731364",
+        appId: "1:544624731364:web:419d52fa061c5c7b4f38f1"
 };
 
 // Init
