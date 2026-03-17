@@ -189,6 +189,15 @@
       cursor: pointer; transition: all 0.12s;
     }
     .btn-new:hover { background: var(--amber3); }
+    .remind-grid { display: flex; gap: 6px; margin-top: 2px; }
+.remind-btn {
+  flex: 1; padding: 6px 4px; background: var(--bg);
+  border: 1px solid var(--amber5); color: var(--dim);
+  font-family: var(--font); font-size: 10px;
+  letter-spacing: 0.08em; cursor: pointer; transition: all 0.12s;
+  text-align: center;
+}
+.remind-btn.sel { background: var(--amber5); border-color: var(--amber); color: var(--amber); font-weight: 700; }
 
     /* ── Add / Edit drawer ───────────────────────────────── */
     #add-drawer {
@@ -627,6 +636,18 @@
       <textarea class="inp no-caps" id="f-notes" placeholder="// background, relevant history, actions taken so far..."></textarea>
     </div>
   </div>
+  <!-- Row 6 — reminder -->
+<div class="field s4">
+  <label class="lbl">remind_in</label>
+  <div class="remind-grid">
+    <button class="remind-btn" data-r="0"   onclick="setRemind(0)">NONE</button>
+    <button class="remind-btn" data-r="15"  onclick="setRemind(15)">15m</button>
+    <button class="remind-btn" data-r="30"  onclick="setRemind(30)">30m</button>
+    <button class="remind-btn" data-r="60"  onclick="setRemind(60)">1hr</button>
+    <button class="remind-btn" data-r="90"  onclick="setRemind(90)">90m</button>
+    <button class="remind-btn" data-r="120" onclick="setRemind(120)">2hr</button>
+  </div>
+</div>
   <div class="drawer-foot">
     <button class="btn-abort" onclick="closeDrawer()">ABORT</button>
     <button class="btn-exec" id="drawer-exec-btn" onclick="saveJob()">EXECUTE ▸</button>
@@ -679,11 +700,11 @@ const PRI_ORDER = { emergency: 0, urgent: 1, routine: 2 };
 
 // ── State ────────────────────────────────────────────────────
 let tasks = {}, filterStatus="active", filterPri="all", filterType="all";
-let selPriority = "routine";
-let selType     = JOB_TYPES[0];
-let editingId   = null;
-let shiftStart  = Date.now();
-
+let selPriority  = "routine";
+let selType      = JOB_TYPES[0];
+let selRemind    = 0;
+let editingId    = null;
+let shiftStart   = Date.now();
 // ── Helpers ──────────────────────────────────────────────────
 const nowTimeStr = () => new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
 const esc        = s  => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -762,6 +783,13 @@ function setPriority(p) {
     b.className = "pri-btn" + (bp===p ? ` sel-${bp}` : "");
   });
 }
+// -set reminder-----
+function setRemind(mins) {
+  selRemind = mins;
+  document.querySelectorAll(".remind-btn").forEach(b => {
+    b.classList.toggle("sel", parseInt(b.dataset.r) === mins);
+  });
+}
 
 // ── Drawer ───────────────────────────────────────────────────
 function openDrawer(taskId) {
@@ -787,6 +815,9 @@ function openDrawer(taskId) {
     selPriority = "routine";
     selType = JOB_TYPES[0];
     setPriority("routine");
+
+    selRemind = 0;
+    setRemind(0);
   }
   buildTypeGrid();
   document.getElementById("add-drawer").classList.add("open");
@@ -795,6 +826,7 @@ function openDrawer(taskId) {
 function closeDrawer() {
   document.getElementById("add-drawer").classList.remove("open");
   editingId = null;
+  selRemind = 0;
 }
 
 // ── Save job ─────────────────────────────────────────────────
@@ -807,6 +839,11 @@ function saveJob() {
     return;
   }
 
+  // Calculate absolute reminder time if set
+  const remindAt = selRemind > 0
+    ? Date.now() + (selRemind * 60 * 1000)
+    : null;
+
   const payload = {
     patient,
     location: document.getElementById("f-location").value.trim(),
@@ -815,6 +852,8 @@ function saveJob() {
     type:     selType.key,
     task,
     notes:    document.getElementById("f-notes").value.trim(),
+    remindAt,          // epoch ms, null if no reminder
+    reminded: false,   // flipped to true once Apps Script fires it
   };
 
 
