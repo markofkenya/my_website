@@ -605,6 +605,10 @@
       <input class="inp" id="f-patient" placeholder="JD" maxlength="8" />
     </div>
     <div class="field">
+      <label class="lbl">dob_year</label>
+      <input class="inp" id="f-dobyear" placeholder="1958" type="number" maxlength="4" />
+    </div>
+    <div class="field">
       <label class="lbl">location</label>
       <input class="inp no-caps" id="f-location" placeholder="Ward 5B" maxlength="20" />
     </div>
@@ -826,6 +830,7 @@ function openDrawer(taskId) {
 
   if (task) {
     document.getElementById("f-patient").value  = task.patient  || "";
+    document.getElementById("f-dobyear").value  = task.dobYear  || "";
     document.getElementById("f-location").value = task.location || "";
     document.getElementById("f-time").value     = task.timeIn   || "";
     document.getElementById("f-task").value     = task.task     || "";
@@ -845,7 +850,7 @@ function openDrawer(taskId) {
     selType = typeObj(task.type);
     setPriority(selPriority);
   } else {
-    ["f-patient","f-location","f-task","f-notes"].forEach(id=>document.getElementById(id).value="");
+    ["f-patient","f-dobyear","f-location","f-task","f-notes"].forEach(id=>document.getElementById(id).value="");
     document.getElementById("f-time").value   = nowTimeStr();
     selPriority = "routine";
     selType = JOB_TYPES[0];
@@ -894,6 +899,7 @@ function saveJob() {
 
   const payload = {
     patient,
+    dobYear:  document.getElementById("f-dobyear").value || "",
     location: document.getElementById("f-location").value.trim(),
     timeIn:   document.getElementById("f-time").value,
     priority: selPriority,
@@ -1106,6 +1112,7 @@ function buildRow(task) {
     </td>
     <td class="td-patient">
       <div class="patient-str">${esc(task.patient||"?")}</div>
+      ${task.dobYear?`<div style="font-size:9px;color:var(--amber4)">${esc(task.dobYear)}</div>`:""}
       ${task.location?`<div style="font-size:9px;color:var(--amber4)">${esc(task.location)}</div>`:""}
       ${task.oncall?`<div style="font-size:9px;color:var(--amber4)">${esc(task.oncall)}</div>`:""}
     </td>
