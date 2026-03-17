@@ -637,17 +637,27 @@
       <textarea class="inp no-caps" id="f-notes" placeholder="// background, relevant history, actions taken so far..."></textarea>
     </div>
    <!-- Row 6 — reminder -->
-<div class="field s4">
-  <label class="lbl">remind_in</label>
-  <div class="remind-grid">
-    <button class="remind-btn" data-r="0"   onclick="setRemind(0)">NONE</button>
-    <button class="remind-btn" data-r="15"  onclick="setRemind(15)">15m</button>
-    <button class="remind-btn" data-r="30"  onclick="setRemind(30)">30m</button>
-    <button class="remind-btn" data-r="60"  onclick="setRemind(60)">1hr</button>
-    <button class="remind-btn" data-r="90"  onclick="setRemind(90)">90m</button>
-    <button class="remind-btn" data-r="120" onclick="setRemind(120)">2hr</button>
-  </div>
-</div>
+<!-- Row 6 — reminder -->
+    <div class="field s2">
+      <label class="lbl">remind_in</label>
+      <div class="remind-grid">
+        <button class="remind-btn" data-r="0"   onclick="setRemind(0)">NONE</button>
+        <button class="remind-btn" data-r="15"  onclick="setRemind(15)">15m</button>
+        <button class="remind-btn" data-r="30"  onclick="setRemind(30)">30m</button>
+        <button class="remind-btn" data-r="60"  onclick="setRemind(60)">1hr</button>
+        <button class="remind-btn" data-r="90"  onclick="setRemind(90)">90m</button>
+        <button class="remind-btn" data-r="120" onclick="setRemind(120)">2hr</button>
+      </div>
+    </div>
+    <div class="field s2">
+      <label class="lbl">remind_at (specific time)</label>
+      <input class="inp" id="f-remind-at" type="time"
+        placeholder="e.g. 14:30"
+        oninput="setRemindAt(this.value)" />
+      <div style="font-size:9px;color:var(--amber4);margin-top:3px;letter-spacing:0.08em;">
+        // overrides remind_in if set
+      </div>
+    </div>
 </div>
   <div class="drawer-foot">
     <button class="btn-abort" onclick="closeDrawer()">ABORT</button>
