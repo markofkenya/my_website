@@ -493,21 +493,6 @@
 </head>
 <body>
 
-<!-- Config overlay -->
-<div id="config-overlay">
-  <div class="config-box">
-    <div class="config-title">FIREBASE_INIT</div>
-    <div class="config-sub">Same config as your renal task tracker — same project, different database path.</div>
-    <div class="config-fields">
-      <div class="config-field"><label class="config-lbl">DATABASE_URL</label><input class="config-inp" id="cfg-dburl" placeholder="https://your-project-default-rtdb.firebaseio.com" /></div>
-      <div class="config-field"><label class="config-lbl">API_KEY</label><input class="config-inp" id="cfg-apikey" placeholder="AIza..." /></div>
-      <div class="config-field"><label class="config-lbl">PROJECT_ID</label><input class="config-inp" id="cfg-projectid" placeholder="your-project-id" /></div>
-      <div class="config-field"><label class="config-lbl">APP_ID</label><input class="config-inp" id="cfg-appid" placeholder="1:123456:web:abc..." /></div>
-    </div>
-    <button class="btn-connect" onclick="saveConfig()">CONNECT ▸</button>
-    <div class="config-note">Same credentials as your renal tracker. Data stored under /onCallTasks — completely separate from /renalTasks.</div>
-  </div>
-</div>
 
 <!-- Handover overlay -->
 <div id="handover-overlay">
@@ -741,27 +726,23 @@ tickClock();
 setInterval(tickClock, 1000);
 
 // ── Config ───────────────────────────────────────────────────
-function loadConfig() { try { return JSON.parse(localStorage.getItem("onCallConfig")||"null"); } catch { return null; } }
-function saveConfig() {
-  const cfg = {
-    databaseURL: document.getElementById("cfg-dburl").value.trim(),
-    apiKey:      document.getElementById("cfg-apikey").value.trim(),
-    projectId:   document.getElementById("cfg-projectid").value.trim(),
-    appId:       document.getElementById("cfg-appid").value.trim(),
-  };
-  if (!cfg.databaseURL||!cfg.apiKey) { alert("DATABASE_URL and API_KEY required."); return; }
-  localStorage.setItem("onCallConfig", JSON.stringify(cfg));
-  location.reload();
-}
 
 // ── Firebase ─────────────────────────────────────────────────
 window.addEventListener("firebase-ready", () => {
-  const cfg = loadConfig();
-  if (!cfg||!cfg.databaseURL) {
-    document.getElementById("config-overlay").classList.add("show");
+  const { onValue, tasksRef } = window._fb;
+
+  document.getElementById("sync-live").style.display = "block";
+  document.getElementById("sb-sync").textContent = "db: live";
+
+  onValue(tasksRef, snap => {
+    tasks = snap.val() || {};
+
     document.getElementById("loading").style.display = "none";
-    return;
-  }
+    document.getElementById("task-table").classList.add("show");
+
+    render();
+  });
+});
   const { onValue, tasksRef } = window._fb;
   document.getElementById("sync-live").style.display = "block";
   document.getElementById("sb-sync").textContent = "db: connected";
