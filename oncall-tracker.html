@@ -515,8 +515,9 @@
       <div class="ho-text" id="ho-text"></div>
     </div>
     <div class="ho-foot">
-      <button class="btn-ho-close" onclick="closeHandover()">CLOSE</button>
-      <button class="btn-copy" id="copy-btn" onclick="copyHandover()">COPY TO CLIPBOARD ▸</button>
+  <button class="btn-ho-close" onclick="closeHandover()">CLOSE</button>
+  <button class="btn-copy" onclick="emailHandover()">EMAIL ▸</button>
+  <button class="btn-copy" id="copy-btn" onclick="copyHandover()">COPY TO CLIPBOARD ▸</button>
     </div>
   </div>
 </div>
@@ -962,6 +963,13 @@ function copyHandover() {
       btn.classList.remove("copied");
     }, 2500);
   });
+}
+
+  function emailHandover() {
+  const text    = document.getElementById("ho-text").textContent;
+  const subject = encodeURIComponent("On-Call Handover — " + new Date().toLocaleDateString("en-GB"));
+  const body    = encodeURIComponent(text);
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
 }
 
 // ── Render ───────────────────────────────────────────────────
