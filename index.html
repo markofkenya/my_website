@@ -32,7 +32,7 @@
 // Init
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const tasksRef = ref(db, "apps/renal/tasks");
+const tasksRef = ref(db, "renalTasks");
 // expose globally
 window._fb = { db, ref, push, onValue, update, remove, tasksRef };
 
