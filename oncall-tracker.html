@@ -19,15 +19,15 @@
     import { getDatabase, ref, push, onValue, update, remove, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     // ── Same Firebase project as renal tracker ─────────────
-    const firebaseConfig = {
-      apiKey:            "YOUR_API_KEY",
-      authDomain:        "YOUR_PROJECT.firebaseapp.com",
-      databaseURL:       "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-      projectId:         "YOUR_PROJECT",
-      storageBucket:     "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId:             "YOUR_APP_ID",
-    };
+     const firebaseConfig = {
+        apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
+        authDomain: "task-monitor-bd7ee.firebaseapp.com",
+        databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "task-monitor-bd7ee",
+        storageBucket: "task-monitor-bd7ee.firebasestorage.app",
+        messagingSenderId: "544624731364",
+        appId: "1:544624731364:web:419d52fa061c5c7b4f38f1"
+};
 
     const app = initializeApp(firebaseConfig);
     const db  = getDatabase(app);
