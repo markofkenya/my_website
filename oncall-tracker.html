@@ -812,7 +812,6 @@ function openDrawer(taskId) {
   } else {
     ["f-patient","f-location","f-task","f-notes"].forEach(id=>document.getElementById(id).value="");
     document.getElementById("f-time").value   = nowTimeStr();
-    document.getElementById("f-oncall").value = "GIM";
     selPriority = "routine";
     selType = JOB_TYPES[0];
     setPriority("routine");
