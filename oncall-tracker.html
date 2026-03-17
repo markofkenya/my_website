@@ -967,9 +967,9 @@ function openHandover() {
     pending.forEach(t => {
       out += `[${(t.priority||"routine").toUpperCase().padEnd(9)}] `;
       out += `${(t.patient||"?").padEnd(6)} `;
+      out += `${t.dobYear ? "("+t.dobYear+")" : "      "} `;
       out += `${(t.type||"other").padEnd(12)} `;
-      out += `@${t.timeIn||"??:??"} `;
-      out += `${t.oncall||""}\n`;
+      out += `@${t.timeIn||"??:??"}\n`;
       out += `  >> ${t.task}\n`;
       if (t.location) out += `  // ward: ${t.location}\n`;
       if (t.notes)    out += `  // ${t.notes}\n`;
@@ -982,6 +982,7 @@ function openHandover() {
     completed.forEach(t => {
       out += `[DONE      ] `;
       out += `${(t.patient||"?").padEnd(6)} `;
+      out += `${t.dobYear ? "("+t.dobYear+")" : "      "} `;
       out += `${(t.type||"other").padEnd(12)} `;
       out += `@${t.timeIn||"??:??"}\n`;
       out += `  >> ${t.task}\n`;
