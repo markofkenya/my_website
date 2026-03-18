@@ -1213,13 +1213,16 @@ window.addEventListener("arcp-firebase-ready", e => {
   indicator.textContent = ok ? "● LIVE" : "● OFFLINE";
   indicator.style.color = ok ? "var(--green)" : "var(--red)";
 
-  if (!window._arcp_ready) {
+    if (!window._arcp_ready) {
     window._arcp_ready = true;
     renderAll();
     setTab("gim");
   } else {
+    const activeTab = currentTab || "gim";
     renderAll();
+    setTab(activeTab);
   }
+
 });
 
 // Fallback: render from localStorage if Firebase hasn't responded in 8 seconds
