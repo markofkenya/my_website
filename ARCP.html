@@ -35,7 +35,13 @@
     onValue(dataRef, snap => {
       const data = snap.val();
       if (data) {
-        Object.entries(data).forEach(([k, v]) => localStorage.setItem(k, String(v)));
+        Object.entries(data).forEach(([k, v]) => {
+          if (v === "__reset__") {
+            localStorage.removeItem(k);
+          } else {
+            localStorage.setItem(k, String(v));
+          }
+        });
       }
       window.dispatchEvent(new CustomEvent("arcp-firebase-ready", { detail: { ok: true } }));
     }, err => {
@@ -667,6 +673,7 @@ function renderOutcomeSelector(el) {
       <option value="4" ${outcome==="4" ?"selected":""}>Outcome 4 — Released from programme</option>
       <option value="5" ${outcome==="5" ?"selected":""}>Outcome 5 — Incomplete evidence</option>
       <option value="6" ${outcome==="6" ?"selected":""}>Outcome 6 — Completion of training ✓</option>
+      <option value="7" ${outcome==="7" ?"selected":""}>Outcome 7 — ARCP not required</option>
       <option value="8" ${outcome==="8" ?"selected":""}>Outcome 8 — Out of programme ✓</option>
     </select>
     ${outcome ? `<button class="outcome-clear" onclick="setOutcome('${currentYear}','')">CLEAR</button>` : ""}
@@ -1179,13 +1186,13 @@ function resetYearData() {
     if (!REQS[id].cumulative) {
       const k = `pft_${currentYear}_${id}`;
       localStorage.removeItem(k);
-      updates[k] = null;
+      updates[k] = "__reset__";
     }
   });
   ADMIN_DOCS.forEach(doc => {
     const k = adminKey(doc.id);
     localStorage.removeItem(k);
-    updates[k] = null;
+    updates[k] = "__reset__";
   });
   if (window._arcp_fb) {
     const { update, dataRef } = window._arcp_fb;
@@ -1202,24 +1209,20 @@ window._arcp_ready = false;
 window.addEventListener("arcp-firebase-ready", e => {
   const ok = e.detail.ok;
   const indicator = document.getElementById("sync-indicator");
-  if (ok) {
-    indicator.textContent = "● LIVE";
-    indicator.style.color = "var(--green)";
-  } else {
-    indicator.textContent = "● OFFLINE";
-    indicator.style.color = "var(--red)";
-  }
+  // Always update indicator when Firebase responds
+  indicator.textContent = ok ? "● LIVE" : "● OFFLINE";
+  indicator.style.color = ok ? "var(--green)" : "var(--red)";
+
   if (!window._arcp_ready) {
     window._arcp_ready = true;
     renderAll();
     setTab("gim");
   } else {
-    // Re-render on subsequent Firebase updates (other device changes)
     renderAll();
   }
 });
 
-// Fallback: render from localStorage if Firebase hasn't responded in 4 seconds
+// Fallback: render from localStorage if Firebase hasn't responded in 8 seconds
 setTimeout(() => {
   if (!window._arcp_ready) {
     window._arcp_ready = true;
@@ -1228,7 +1231,7 @@ setTimeout(() => {
     renderAll();
     setTab("gim");
   }
-}, 4000);
+}, 8000);
 
 setInterval(updateCountdown, 60000);
 </script>
