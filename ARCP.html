@@ -30,23 +30,44 @@
     const db      = getDatabase(app);
     const dataRef = ref(db, "arcpData");
 
-    window._arcp_fb = { db, ref, update, dataRef };
+    window._arcp_fb = { update, dataRef };
 
     onValue(dataRef, snap => {
       const data = snap.val();
+      let changed = false;
+
       if (data) {
-        Object.entries(data).forEach(([k, v]) => {
-          if (v === "__reset__") {
+        Object.entries(data).forEach(([k, remote]) => {
+          // Reset sentinel — either plain string or timestamped object
+          if (remote === "__reset__" || (typeof remote === "object" && remote?.value === "__reset__")) {
             localStorage.removeItem(k);
-          } else {
-            localStorage.setItem(k, String(v));
+            localStorage.removeItem(k + "__ts");
+            changed = true;
+            return;
+          }
+          // Legacy plain string
+          if (typeof remote === "string") {
+            localStorage.setItem(k, remote);
+            localStorage.setItem(k + "__ts", "0");
+            changed = true;
+            return;
+          }
+          // Timestamped object — only apply if newer than local
+          if (!remote || typeof remote !== "object") return;
+          const remoteTs = remote.ts || 0;
+          const localTs  = parseInt(localStorage.getItem(k + "__ts") || "0");
+          if (remoteTs > localTs) {
+            localStorage.setItem(k, remote.value);
+            localStorage.setItem(k + "__ts", remoteTs);
+            changed = true;
           }
         });
       }
-      window.dispatchEvent(new CustomEvent("arcp-firebase-ready", { detail: { ok: true } }));
+
+      window.dispatchEvent(new CustomEvent("arcp-sync", { detail: { ok: true, changed } }));
     }, err => {
       console.error("Firebase error:", err);
-      window.dispatchEvent(new CustomEvent("arcp-firebase-ready", { detail: { ok: false } }));
+      window.dispatchEvent(new CustomEvent("arcp-sync", { detail: { ok: false } }));
     });
   </script>
 
@@ -467,12 +488,15 @@ function setOutcome(yr, v) {
 function isYearLocked(yr)  { return LOCKING_OUTCOMES.includes(getOutcome(yr)); }
 
 // ══════════════════════════════════════════════════════
-//  STORAGE — localStorage + Firebase sync
+//  STORAGE — localStorage + Firebase timestamped sync
 // ══════════════════════════════════════════════════════
 function fbPush(key, val) {
   if (!window._arcp_fb) return;
   const { update, dataRef } = window._arcp_fb;
-  update(dataRef, { [key]: String(val) }).catch(e => console.error("FB write error:", e));
+  const ts = Date.now();
+  localStorage.setItem(key + "__ts", ts);
+  update(dataRef, { [key]: { value: String(val), ts } })
+    .catch(e => console.error("FB write error:", e));
 }
 
 function sKey(reqId) {
@@ -596,24 +620,23 @@ function updateReadiness() {
     if (req.deadline === "annual") return true;
     return YEARS.indexOf(req.deadline) <= YEARS.indexOf(currentYear);
   });
-  const met       = relevant.filter(id => getStatus(id) === "met").length;
+  const met  = relevant.filter(id => getStatus(id) === "met").length;
   const dopsDone  = DOPS_PROCEDURES.filter(p => getDops(p)).length;
   const dopsTotal = DOPS_PROCEDURES.length;
-
-  // Admin docs — 3 docs + ALS
-  const docsMet   = ADMIN_DOCS.filter(d => getAdmin(d.id)).length;
-  const docsTotal = ADMIN_DOCS.length;
-  const alsMet    = getALS() ? 1 : 0;
-
-  const totalAll = relevant.length + dopsTotal + docsTotal + 1; // +1 for ALS
-  const metAll   = met + dopsDone + docsMet + alsMet;
+  const totalAll  = relevant.length + dopsTotal;
+  const metAll    = met + dopsDone;
   const pct = totalAll > 0 ? Math.round((metAll/totalAll)*100) : 0;
-
   document.getElementById("readiness-pct").textContent    = `${pct}%`;
-  document.getElementById("readiness-detail").textContent = `${metAll} of ${totalAll} requirements met (incl. DOPS + docs)`;
+  document.getElementById("readiness-detail").textContent = `${metAll} of ${totalAll} requirements met (incl. DOPS)`;
   const bar = document.getElementById("readiness-bar");
   bar.style.width = `${pct}%`;
   bar.className   = "bar-fill" + (pct >= 80 ? " good" : pct >= 50 ? "" : " warn");
+}
+
+function updateDopsCount() {
+  const done = DOPS_PROCEDURES.filter(p => getDops(p)).length;
+  const el   = document.getElementById("dops-count");
+  if (el) el.textContent = `${done} / ${DOPS_PROCEDURES.length} completed`;
 }
 
 // ══════════════════════════════════════════════════════
@@ -1182,17 +1205,20 @@ function refreshCard(reqId) {
 function resetYearData() {
   if (!confirm(`Reset all annual data for ${currentYear}? Cumulative and DOPS data will not be affected.`)) return;
   const updates = {};
+  const ts = Date.now();
   Object.keys(REQS).forEach(id => {
     if (!REQS[id].cumulative) {
       const k = `pft_${currentYear}_${id}`;
       localStorage.removeItem(k);
-      updates[k] = "__reset__";
+      localStorage.removeItem(k + "__ts");
+      updates[k] = { value: "__reset__", ts };
     }
   });
   ADMIN_DOCS.forEach(doc => {
     const k = adminKey(doc.id);
     localStorage.removeItem(k);
-    updates[k] = "__reset__";
+    localStorage.removeItem(k + "__ts");
+    updates[k] = { value: "__reset__", ts };
   });
   if (window._arcp_fb) {
     const { update, dataRef } = window._arcp_fb;
@@ -1202,39 +1228,24 @@ function resetYearData() {
 }
 
 // ══════════════════════════════════════════════════════
-//  INIT — Firebase drives first render, fallback after 4s
+//  INIT — render immediately from localStorage (no blank
+//          screen), update when Firebase responds
 // ══════════════════════════════════════════════════════
-window._arcp_ready = false;
+renderAll();
+setTab("gim");
 
-window.addEventListener("arcp-firebase-ready", e => {
-  const ok = e.detail.ok;
+window.addEventListener("arcp-sync", e => {
+  const { ok, changed } = e.detail;
   const indicator = document.getElementById("sync-indicator");
-  // Always update indicator when Firebase responds
   indicator.textContent = ok ? "● LIVE" : "● OFFLINE";
   indicator.style.color = ok ? "var(--green)" : "var(--red)";
-
-    if (!window._arcp_ready) {
-    window._arcp_ready = true;
-    renderAll();
-    setTab("gim");
-  } else {
+  // Only re-render if Firebase actually changed something
+  if (ok && changed) {
     const activeTab = currentTab || "gim";
     renderAll();
     setTab(activeTab);
   }
-
 });
-
-// Fallback: render from localStorage if Firebase hasn't responded in 8 seconds
-setTimeout(() => {
-  if (!window._arcp_ready) {
-    window._arcp_ready = true;
-    document.getElementById("sync-indicator").textContent = "● OFFLINE";
-    document.getElementById("sync-indicator").style.color = "var(--red)";
-    renderAll();
-    setTab("gim");
-  }
-}, 8000);
 
 setInterval(updateCountdown, 60000);
 </script>
