@@ -310,9 +310,8 @@ const ARCP_DATES = {
 };
 
 const YEARS = ["ST4","ST5","ST6","ST7"];
-let currentYear = localStorage.getItem("pft_current_year") || "ST4";
+let currentYear = "ST4";
 let currentTab  = "gim";
-
 
 // ══════════════════════════════════════════════════════
 //  GIM DOPS PROCEDURES (cumulative — once done, done)
@@ -621,17 +620,17 @@ function updateReadiness() {
     if (req.deadline === "annual") return true;
     return YEARS.indexOf(req.deadline) <= YEARS.indexOf(currentYear);
   });
-  const met       = relevant.filter(id => getStatus(id) === "met").length;
-  const dopsDone  = DOPS_PROCEDURES.filter(p => getDops(p)).length;
-  const dopsTotal = DOPS_PROCEDURES.length;
-  const adminDone = ADMIN_DOCS.filter(doc => getAdmin(doc.id)).length;
+  const met        = relevant.filter(id => getStatus(id) === "met").length;
+  const dopsDone   = DOPS_PROCEDURES.filter(p => getDops(p)).length;
+  const dopsTotal  = DOPS_PROCEDURES.length;
+  const adminDone  = ADMIN_DOCS.filter(doc => getAdmin(doc.id)).length;
   const adminTotal = ADMIN_DOCS.length;
-  const alsOk     = getALS() && (() => {
+  const alsOk      = getALS() && (() => {
     const d = Math.round((new Date(getALS()) - new Date()) / 86400000);
     return d > 0;
   })() ? 1 : 0;
-  const totalAll  = relevant.length + dopsTotal + adminTotal + 1; // +1 for ALS
-  const metAll    = met + dopsDone + adminDone + alsOk;
+  const totalAll = relevant.length + dopsTotal + adminTotal + 1; // +1 for ALS
+  const metAll   = met + dopsDone + adminDone + alsOk;
   const pct = totalAll > 0 ? Math.round((metAll/totalAll)*100) : 0;
   document.getElementById("readiness-pct").textContent    = `${pct}%`;
   document.getElementById("readiness-detail").textContent = `${metAll} of ${totalAll} requirements met`;
@@ -639,7 +638,6 @@ function updateReadiness() {
   bar.style.width = `${pct}%`;
   bar.className   = "bar-fill" + (pct >= 80 ? " good" : pct >= 50 ? "" : " warn");
 }
-
 
 function updateDopsCount() {
   const done = DOPS_PROCEDURES.filter(p => getDops(p)).length;
@@ -662,12 +660,10 @@ function renderYearBtns() {
 
 function setYear(yr) {
   currentYear = yr;
-  localStorage.setItem("pft_current_year", yr);
   renderYearBtns();
   document.getElementById("sb-year").textContent = yr;
   renderAll();
 }
-
 function setTab(tab) {
   currentTab = tab;
   const tabs = document.querySelectorAll(".tab");
@@ -707,6 +703,7 @@ function renderOutcomeSelector(el) {
       <option value="4" ${outcome==="4" ?"selected":""}>Outcome 4 — Released from programme</option>
       <option value="5" ${outcome==="5" ?"selected":""}>Outcome 5 — Incomplete evidence</option>
       <option value="6" ${outcome==="6" ?"selected":""}>Outcome 6 — Completion of training ✓</option>
+      <option value="7" ${outcome==="7" ?"selected":""}>Outcome 7 — ARCP not required</option>
       <option value="8" ${outcome==="8" ?"selected":""}>Outcome 8 — Out of programme ✓</option>
     </select>
     ${outcome ? `<button class="outcome-clear" onclick="setOutcome('${currentYear}','')">CLEAR</button>` : ""}
@@ -1243,8 +1240,6 @@ function resetYearData() {
 // ══════════════════════════════════════════════════════
 renderAll();
 setTab("gim");
-document.getElementById("sb-year").textContent = currentYear;
-
 
 window.addEventListener("arcp-sync", e => {
   const { ok, changed } = e.detail;
@@ -1260,6 +1255,34 @@ window.addEventListener("arcp-sync", e => {
 });
 
 setInterval(updateCountdown, 60000);
+
+// ── Service Worker registration ───────────────────────
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./arcp-sw.js").then(reg => {
+    // Check for updates every time the page loads
+    reg.update();
+
+    // When a new SW is waiting, activate it and reload
+    reg.addEventListener("updatefound", () => {
+      const newWorker = reg.installing;
+      newWorker.addEventListener("statechange", () => {
+        if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+          // New version available — tell it to skip waiting then reload
+          newWorker.postMessage("skipWaiting");
+        }
+      });
+    });
+  }).catch(err => console.warn("SW registration failed:", err));
+
+  // Reload page when new SW takes control
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
+}
 </script>
 
 </body>
