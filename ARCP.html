@@ -621,18 +621,25 @@ function updateReadiness() {
     if (req.deadline === "annual") return true;
     return YEARS.indexOf(req.deadline) <= YEARS.indexOf(currentYear);
   });
-  const met  = relevant.filter(id => getStatus(id) === "met").length;
+  const met       = relevant.filter(id => getStatus(id) === "met").length;
   const dopsDone  = DOPS_PROCEDURES.filter(p => getDops(p)).length;
   const dopsTotal = DOPS_PROCEDURES.length;
-  const totalAll  = relevant.length + dopsTotal;
-  const metAll    = met + dopsDone;
+  const adminDone = ADMIN_DOCS.filter(doc => getAdmin(doc.id)).length;
+  const adminTotal = ADMIN_DOCS.length;
+  const alsOk     = getALS() && (() => {
+    const d = Math.round((new Date(getALS()) - new Date()) / 86400000);
+    return d > 0;
+  })() ? 1 : 0;
+  const totalAll  = relevant.length + dopsTotal + adminTotal + 1; // +1 for ALS
+  const metAll    = met + dopsDone + adminDone + alsOk;
   const pct = totalAll > 0 ? Math.round((metAll/totalAll)*100) : 0;
   document.getElementById("readiness-pct").textContent    = `${pct}%`;
-  document.getElementById("readiness-detail").textContent = `${metAll} of ${totalAll} requirements met (incl. DOPS)`;
+  document.getElementById("readiness-detail").textContent = `${metAll} of ${totalAll} requirements met`;
   const bar = document.getElementById("readiness-bar");
   bar.style.width = `${pct}%`;
   bar.className   = "bar-fill" + (pct >= 80 ? " good" : pct >= 50 ? "" : " warn");
 }
+
 
 function updateDopsCount() {
   const done = DOPS_PROCEDURES.filter(p => getDops(p)).length;
