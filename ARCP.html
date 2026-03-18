@@ -596,23 +596,24 @@ function updateReadiness() {
     if (req.deadline === "annual") return true;
     return YEARS.indexOf(req.deadline) <= YEARS.indexOf(currentYear);
   });
-  const met  = relevant.filter(id => getStatus(id) === "met").length;
+  const met       = relevant.filter(id => getStatus(id) === "met").length;
   const dopsDone  = DOPS_PROCEDURES.filter(p => getDops(p)).length;
   const dopsTotal = DOPS_PROCEDURES.length;
-  const totalAll  = relevant.length + dopsTotal;
-  const metAll    = met + dopsDone;
+
+  // Admin docs — 3 docs + ALS
+  const docsMet   = ADMIN_DOCS.filter(d => getAdmin(d.id)).length;
+  const docsTotal = ADMIN_DOCS.length;
+  const alsMet    = getALS() ? 1 : 0;
+
+  const totalAll = relevant.length + dopsTotal + docsTotal + 1; // +1 for ALS
+  const metAll   = met + dopsDone + docsMet + alsMet;
   const pct = totalAll > 0 ? Math.round((metAll/totalAll)*100) : 0;
+
   document.getElementById("readiness-pct").textContent    = `${pct}%`;
-  document.getElementById("readiness-detail").textContent = `${metAll} of ${totalAll} requirements met (incl. DOPS)`;
+  document.getElementById("readiness-detail").textContent = `${metAll} of ${totalAll} requirements met (incl. DOPS + docs)`;
   const bar = document.getElementById("readiness-bar");
   bar.style.width = `${pct}%`;
   bar.className   = "bar-fill" + (pct >= 80 ? " good" : pct >= 50 ? "" : " warn");
-}
-
-function updateDopsCount() {
-  const done = DOPS_PROCEDURES.filter(p => getDops(p)).length;
-  const el   = document.getElementById("dops-count");
-  if (el) el.textContent = `${done} / ${DOPS_PROCEDURES.length} completed`;
 }
 
 // ══════════════════════════════════════════════════════
@@ -673,7 +674,6 @@ function renderOutcomeSelector(el) {
       <option value="4" ${outcome==="4" ?"selected":""}>Outcome 4 — Released from programme</option>
       <option value="5" ${outcome==="5" ?"selected":""}>Outcome 5 — Incomplete evidence</option>
       <option value="6" ${outcome==="6" ?"selected":""}>Outcome 6 — Completion of training ✓</option>
-      <option value="7" ${outcome==="7" ?"selected":""}>Outcome 7 — ARCP not required</option>
       <option value="8" ${outcome==="8" ?"selected":""}>Outcome 8 — Out of programme ✓</option>
     </select>
     ${outcome ? `<button class="outcome-clear" onclick="setOutcome('${currentYear}','')">CLEAR</button>` : ""}
