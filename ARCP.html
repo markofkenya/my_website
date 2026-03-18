@@ -310,8 +310,9 @@ const ARCP_DATES = {
 };
 
 const YEARS = ["ST4","ST5","ST6","ST7"];
-let currentYear = "ST4";
+let currentYear = localStorage.getItem("pft_current_year") || "ST4";
 let currentTab  = "gim";
+
 
 // ══════════════════════════════════════════════════════
 //  GIM DOPS PROCEDURES (cumulative — once done, done)
@@ -654,10 +655,12 @@ function renderYearBtns() {
 
 function setYear(yr) {
   currentYear = yr;
+  localStorage.setItem("pft_current_year", yr);
   renderYearBtns();
   document.getElementById("sb-year").textContent = yr;
   renderAll();
 }
+
 function setTab(tab) {
   currentTab = tab;
   const tabs = document.querySelectorAll(".tab");
