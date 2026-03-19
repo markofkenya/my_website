@@ -47,8 +47,6 @@ signInAnonymously(auth)
   .catch((error) => {
     console.error("Auth error:", error);
   });
-    window._stx_fb = { db, ref, push, update, remove, sessRef, topicRef };
-
     // ── Storage upload ────────────────────────────────
     window.uploadSessionFile = function(file, sessionId, onProgress, onDone, onError) {
       const path     = `studyNotes/${sessionId}/${Date.now()}_${file.name}`;
