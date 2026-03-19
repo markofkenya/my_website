@@ -302,12 +302,23 @@
 // ══════════════════════════════════════════════════════
 //  ARCP DATES — ST4 started Feb 2026
 // ══════════════════════════════════════════════════════
-const ARCP_DATES = {
-  ST4: new Date("2026-12-01"),
-  ST5: new Date("2027-12-01"),
-  ST6: new Date("2028-12-01"),
-  ST7: new Date("2029-12-01"),
+const ARCP_DEFAULTS = {
+  ST4: "2026-12-01",
+  ST5: "2027-12-01",
+  ST6: "2028-12-01",
+  ST7: "2029-12-01",
 };
+
+function getARCPDate(yr) {
+  const custom = localStorage.getItem(`pft_arcp_date_${yr}`);
+  return custom ? new Date(custom) : new Date(ARCP_DEFAULTS[yr]);
+}
+function setARCPDate(yr, val) {
+  localStorage.setItem(`pft_arcp_date_${yr}`, val);
+  fbPush(`pft_arcp_date_${yr}`, val);
+  updateCountdown();
+  renderAdmin();
+}
 
 const YEARS = ["ST4","ST5","ST6","ST7"];
 let currentYear = "ST4";
@@ -583,7 +594,7 @@ function deadlineClass(d) {
 //  ARCP COUNTDOWN
 // ══════════════════════════════════════════════════════
 function updateCountdown() {
-  const arcp  = ARCP_DATES[currentYear];
+  const arcp  = getARCPDate(currentYear);
   const today = new Date(); today.setHours(0,0,0,0);
   const days  = Math.round((arcp - today) / 86400000);
   const el    = document.getElementById("arcp-days");
@@ -897,9 +908,40 @@ function renderAdmin() {
   });
 
   el.appendChild(docGrid);
-}
 
-function renderOverview() {
+  // ARCP dates section
+  const arcpHead = document.createElement("div");
+  arcpHead.className = "sec-head";
+  arcpHead.style.marginTop = "24px";
+  arcpHead.innerHTML = `
+    <span class="sec-title both">ARCP DATES</span>
+    <span class="sec-rule"></span>
+    <span class="sec-note">Override defaults if going LTFT</span>`;
+  el.appendChild(arcpHead);
+
+  const arcpGrid = document.createElement("div");
+  arcpGrid.className = "req-grid";
+  YEARS.forEach(yr => {
+    const custom  = localStorage.getItem(`pft_arcp_date_${yr}`) || "";
+    const def     = ARCP_DEFAULTS[yr];
+    const card    = document.createElement("div");
+    card.className = "req-card met";
+    card.innerHTML = `
+      <div class="req-label">${yr} ARCP Date
+        <span class="badge badge-both">ARCP</span>
+      </div>
+      <div class="req-controls" style="margin-top:8px;">
+        <input class="req-input date-inp" type="date"
+          value="${custom || def}"
+          onchange="setARCPDate('${yr}', this.value)" />
+      </div>
+      <div class="req-deadline">
+        ${custom ? `// custom — ${new Date(custom).toLocaleDateString("en-GB",{month:"short",year:"numeric"})}` : `// default — update if LTFT`}
+      </div>`;
+    arcpGrid.appendChild(card);
+  });
+  el.appendChild(arcpGrid);
+}
   const el = document.getElementById("tab-overview");
   el.innerHTML = "";
 
