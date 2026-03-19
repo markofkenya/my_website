@@ -16,7 +16,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getDatabase, ref, onValue, update, push, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
     import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
     const firebaseConfig = {
       apiKey:            "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
       authDomain:        "task-monitor-bd7ee.firebaseapp.com",
@@ -27,35 +27,14 @@
       appId:             "1:544624731364:web:419d52fa061c5c7b4f38f1",
     };
 
-const app      = initializeApp(firebaseConfig);
-const db       = getDatabase(app);
-const storage  = getStorage(app);
-const auth     = getAuth(app);
-
-signInAnonymously(auth)
-  .then(() => {
-    console.log("Anonymous auth success");
-
+    const app      = initializeApp(firebaseConfig);
+    const db       = getDatabase(app);
+    const storage  = getStorage(app);
     const sessRef  = ref(db, "studySessions");
     const topicRef = ref(db, "studyTopics");
 
     window._stx_fb = { db, ref, push, update, remove, sessRef, topicRef };
 
-    // ✅ Attach listeners AFTER auth + refs exist
-    onValue(sessRef, snap => {
-      window._stx_sessions = snap.val() || {};
-      window.dispatchEvent(new CustomEvent("stx-sync"));
-    });
-
-    onValue(topicRef, snap => {
-      window._stx_topics = snap.val() || {};
-      window.dispatchEvent(new CustomEvent("stx-sync"));
-    });
-
-  })
-  .catch((error) => {
-    console.error("Auth error:", error);
-  });
     // ── Storage upload ────────────────────────────────
     window.uploadSessionFile = function(file, sessionId, onProgress, onDone, onError) {
       const path     = `studyNotes/${sessionId}/${Date.now()}_${file.name}`;
@@ -77,6 +56,15 @@ signInAnonymously(auth)
       const fileRef = sRef(storage, filePath);
       return deleteObject(fileRef).catch(e => console.warn("Storage delete:", e));
     };
+
+    onValue(sessRef, snap => {
+      window._stx_sessions = snap.val() || {};
+      window.dispatchEvent(new CustomEvent("stx-sync"));
+    });
+    onValue(topicRef, snap => {
+      window._stx_topics = snap.val() || {};
+      window.dispatchEvent(new CustomEvent("stx-sync"));
+    });
   </script>
 
   <style>
