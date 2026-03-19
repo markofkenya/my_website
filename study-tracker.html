@@ -36,13 +36,22 @@ signInAnonymously(auth)
   .then(() => {
     console.log("Anonymous auth success");
 
-    // ✅ Only set refs AFTER auth
     const sessRef  = ref(db, "studySessions");
     const topicRef = ref(db, "studyTopics");
 
     window._stx_fb = { db, ref, push, update, remove, sessRef, topicRef };
 
-    // attach listeners here if you want to be extra safe
+    // ✅ Attach listeners AFTER auth + refs exist
+    onValue(sessRef, snap => {
+      window._stx_sessions = snap.val() || {};
+      window.dispatchEvent(new CustomEvent("stx-sync"));
+    });
+
+    onValue(topicRef, snap => {
+      window._stx_topics = snap.val() || {};
+      window.dispatchEvent(new CustomEvent("stx-sync"));
+    });
+
   })
   .catch((error) => {
     console.error("Auth error:", error);
@@ -68,15 +77,6 @@ signInAnonymously(auth)
       const fileRef = sRef(storage, filePath);
       return deleteObject(fileRef).catch(e => console.warn("Storage delete:", e));
     };
-
-    onValue(sessRef, snap => {
-      window._stx_sessions = snap.val() || {};
-      window.dispatchEvent(new CustomEvent("stx-sync"));
-    });
-    onValue(topicRef, snap => {
-      window._stx_topics = snap.val() || {};
-      window.dispatchEvent(new CustomEvent("stx-sync"));
-    });
   </script>
 
   <style>
