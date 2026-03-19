@@ -15,9 +15,9 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
 
   <script type="module">
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
@@ -29,18 +29,28 @@
     appId: "1:544624731364:web:419d52fa061c5c7b4f38f1"
   };
 
-  const app = initializeApp(firebaseConfig);
+  const app      = initializeApp(firebaseConfig);
+  const auth     = getAuth(app);
+  const provider = new GoogleAuthProvider();
 
-  signInAnonymously(getAuth(app)).then(c => {
-    console.log("UID:", c.user.uid);
+  window.signInWithGoogle = () => {
+    signInWithPopup(auth, provider).catch(e => {
+      document.getElementById("auth-error").textContent = "Sign-in failed: " + e.message;
+    });
+  };
 
-    const db       = getDatabase(app);
-    const tasksRef = ref(db, "renalTasks");
-
-    window._fb = { db, ref, push, onValue, update, remove, tasksRef };
-    window.dispatchEvent(new Event("firebase-ready"));
-
-  }).catch(e => console.error("Auth failed:", e));
+  onAuthStateChanged(auth, user => {
+    const overlay = document.getElementById("auth-overlay");
+    if (user) {
+      overlay.classList.add("hidden");
+      const db       = getDatabase(app);
+      const tasksRef = ref(db, "renalTasks");
+      window._fb = { db, ref, push, onValue, update, remove, tasksRef };
+      window.dispatchEvent(new Event("firebase-ready"));
+    } else {
+      overlay.classList.remove("hidden");
+    }
+  });
 </script>
 
 
@@ -538,9 +548,42 @@
       .td-cat, .td-flag { display: none; }
       #header, #cmdbar, #task-table, #statusbar, #add-drawer { font-size: 11px; }
     }
+
+  /* ── Google Sign-in overlay ── */
+  #auth-overlay {
+    position:fixed; inset:0; z-index:9999;
+    background:var(--bg, #39ff1410);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:20px;
+  }
+  #auth-overlay.hidden { display:none; }
+  .auth-title { font-size:18px; font-weight:700; letter-spacing:0.08em; }
+  .auth-sub   { font-size:10px; letter-spacing:0.15em; opacity:0.5; }
+  .btn-google {
+    display:flex; align-items:center; gap:10px;
+    padding:12px 24px; background:#fff; border:none;
+    color:#1a1a1a; font-family:inherit; font-size:13px;
+    font-weight:600; cursor:pointer; letter-spacing:0.04em;
+    box-shadow:0 2px 8px rgba(0,0,0,0.4); transition:opacity 0.1s;
+  }
+  .btn-google:hover { opacity:0.9; }
+  .btn-google svg { width:18px; height:18px; flex-shrink:0; }
+  .auth-error { font-size:10px; color:#ff4444; letter-spacing:0.08em; }
+
   </style>
 </head>
 <body>
+
+<div id="auth-overlay">
+  <div class="auth-title" id="auth-app-title" style="color:#39ff14">RTM // RENAL TASK MONITOR</div>
+  <div class="auth-sub">SIGN IN TO CONTINUE</div>
+  <button class="btn-google" onclick="signInWithGoogle()">
+    <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.5 30.2 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.8 6C12.3 13 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 6.9-10 6.9-17z"/><path fill="#FBBC05" d="M10.4 28.7A14.6 14.6 0 019.5 24c0-1.6.3-3.2.8-4.7l-7.8-6A23.9 23.9 0 000 24c0 3.9.9 7.5 2.6 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.7 2.2-6.3 0-11.6-4.2-13.6-10l-7.8 6C6.6 42.6 14.6 48 24 48z"/></svg>
+    Sign in with Google
+  </button>
+  <div class="auth-error" id="auth-error"></div>
+</div>
+
 
 <!-- Config overlay -->
 <div id="config-overlay">
