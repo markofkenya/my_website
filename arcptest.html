@@ -537,6 +537,7 @@ function setTab(tab) {
   ["gim","renal","admin","overview","cips"].forEach(t => {
     document.getElementById(`tab-${t}`).style.display = t === tab ? "block" : "none";
   });
+  if (tab === "cips") renderCIPs();
 }
 
 function renderAll() {
