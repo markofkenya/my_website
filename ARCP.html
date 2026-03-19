@@ -254,16 +254,22 @@
       <div class="als-key">ALS EXPIRY</div>
     </div>
     <div class="readiness-bar-wrap">
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.2em;margin-bottom:8px;">ARCP READINESS</div>
       <div class="readiness-label">
-        <span>ARCP READINESS</span>
-        <span class="readiness-pct" id="readiness-pct">0%</span>
+        <span style="color:var(--gim)">GIM</span>
+        <span class="readiness-pct" id="readiness-pct-gim">0%</span>
       </div>
-      <div class="bar-track"><div class="bar-fill" id="readiness-bar" style="width:0%"></div></div>
+      <div class="bar-track"><div class="bar-fill" id="readiness-bar-gim" style="width:0%"></div></div>
+      <div class="readiness-label" style="margin-top:8px;">
+        <span style="color:var(--renal)">RENAL</span>
+        <span class="readiness-pct" id="readiness-pct-renal" style="color:var(--renal)">0%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="readiness-bar-renal" style="width:0%;background:linear-gradient(90deg,#5b21b6,var(--renal))"></div></div>
       <div style="font-size:8px;color:var(--dim);margin-top:5px;letter-spacing:0.08em;">
         <span id="readiness-detail">-- of -- requirements met</span>
       </div>
     </div>
-    <div class="year-sel-wrap">
+    <div class="year-sel-wrap" style="border-left:1px solid var(--blue5);padding:14px 20px;display:flex;flex-direction:column;justify-content:center;gap:8px;">
       <div class="year-label">TRAINING YEAR</div>
       <div class="year-btns" id="year-btns">
         <button class="year-btn active" data-year="ST4" onclick="setYear('ST4')">ST4</button>
@@ -514,6 +520,9 @@ function sKey(reqId) {
   const req = REQS[reqId];
   if (!req) return `pft_${currentYear}_${reqId}`;
   if (req.cumulative) return `pft_cum_${reqId}`;
+  // Milestones (checkbox with a specific year deadline) carry forward — use global key
+  if (req.type === "checkbox" && req.deadline !== "annual") return `pft_milestone_${reqId}`;
+  if (req.type === "eseneph") return `pft_milestone_${reqId}`;
   return `pft_${currentYear}_${reqId}`;
 }
 function dopsKey(proc) { return `pft_dops_${proc.replace(/\s+/g,'_').toLowerCase()}`; }
@@ -631,23 +640,53 @@ function updateReadiness() {
     if (req.deadline === "annual") return true;
     return YEARS.indexOf(req.deadline) <= YEARS.indexOf(currentYear);
   });
-  const met        = relevant.filter(id => getStatus(id) === "met").length;
-  const dopsDone   = DOPS_PROCEDURES.filter(p => getDops(p)).length;
-  const dopsTotal  = DOPS_PROCEDURES.length;
+
+  // ── GIM ───────────────────────────────────────────
+  const gimIds    = relevant.filter(id => REQS[id].stream === "gim");
+  const gimMet    = gimIds.filter(id => getStatus(id) === "met").length;
+  const dopsDone  = DOPS_PROCEDURES.filter(p => getDops(p)).length;
+  const dopsTotal = DOPS_PROCEDURES.length;
+  const gimTotal  = gimIds.length + dopsTotal;
+  const gimMetAll = gimMet + dopsDone;
+  const gimPct    = gimTotal > 0 ? Math.round((gimMetAll / gimTotal) * 100) : 0;
+
+  // ── Renal ──────────────────────────────────────────
+  const renalIds    = relevant.filter(id => REQS[id].stream === "renal");
+  const renalMet    = renalIds.filter(id => getStatus(id) === "met").length;
+  const renalTotal  = renalIds.length;
+  const renalPct    = renalTotal > 0 ? Math.round((renalMet / renalTotal) * 100) : 0;
+
+  // ── Admin ──────────────────────────────────────────
   const adminDone  = ADMIN_DOCS.filter(doc => getAdmin(doc.id)).length;
   const adminTotal = ADMIN_DOCS.length;
   const alsOk      = getALS() && (() => {
     const d = Math.round((new Date(getALS()) - new Date()) / 86400000);
     return d > 0;
   })() ? 1 : 0;
-  const totalAll = relevant.length + dopsTotal + adminTotal + 1; // +1 for ALS
-  const metAll   = met + dopsDone + adminDone + alsOk;
-  const pct = totalAll > 0 ? Math.round((metAll/totalAll)*100) : 0;
-  document.getElementById("readiness-pct").textContent    = `${pct}%`;
-  document.getElementById("readiness-detail").textContent = `${metAll} of ${totalAll} requirements met`;
-  const bar = document.getElementById("readiness-bar");
-  bar.style.width = `${pct}%`;
-  bar.className   = "bar-fill" + (pct >= 80 ? " good" : pct >= 50 ? "" : " warn");
+
+  // ── Overall detail line ────────────────────────────
+  const totalAll = relevant.length + dopsTotal + adminTotal + 1;
+  const metAll   = gimMet + dopsDone + renalMet + adminDone + alsOk;
+
+  // Update GIM bar
+  document.getElementById("readiness-pct-gim").textContent = `${gimPct}%`;
+  const gimBar = document.getElementById("readiness-bar-gim");
+  gimBar.style.width = `${gimPct}%`;
+  gimBar.className = "bar-fill" + (gimPct >= 80 ? " good" : gimPct >= 50 ? "" : " warn");
+
+  // Update Renal bar
+  document.getElementById("readiness-pct-renal").textContent = `${renalPct}%`;
+  const renalBar = document.getElementById("readiness-bar-renal");
+  renalBar.style.width = `${renalPct}%`;
+  renalBar.style.background = renalPct >= 80
+    ? "linear-gradient(90deg,#2d1b69,#39ff14)"
+    : renalPct >= 50
+    ? "linear-gradient(90deg,#5b21b6,var(--renal))"
+    : "linear-gradient(90deg,#7c2d12,#ff4444)";
+
+  // Detail line
+  document.getElementById("readiness-detail").textContent =
+    `GIM ${gimMetAll}/${gimTotal} · Renal ${renalMet}/${renalTotal} · Admin ${adminDone + alsOk}/${adminTotal + 1}`;
 }
 
 function updateDopsCount() {
@@ -1137,16 +1176,15 @@ function makeCard(reqId, req) {
     </div>`;
 
   if (req.type === "checkbox") {
-    const disabled = req.sharedWith ? 'style="opacity:0.6;cursor:default;"' : "";
     card.innerHTML = `
       <div class="req-label">${req.label} ${streamBadge}</div>
       ${sharedNote}
       <div class="req-check">
         <button class="chk ${val ? "checked" : ""}" id="chk-${reqId}"
-          ${disabled} onclick="${req.sharedWith ? '' : `toggleCheck('${reqId}')`}">
+          onclick="toggleCheck('${reqId}')">
           ${val ? "✓" : ""}
         </button>
-        <span class="chk-label" onclick="${req.sharedWith ? '' : `toggleCheck('${reqId}')`}">
+        <span class="chk-label" onclick="toggleCheck('${reqId}')">
           ${val ? "COMPLETE" : "NOT YET DONE"}
         </span>
       </div>
@@ -1278,10 +1316,6 @@ function resetYearData() {
   renderAll();
 }
 
-// ══════════════════════════════════════════════════════
-//  INIT — render immediately from localStorage (no blank
-//          screen), update when Firebase responds
-// ══════════════════════════════════════════════════════
 renderAll();
 setTab("gim");
 
