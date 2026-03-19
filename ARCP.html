@@ -256,15 +256,15 @@
     <div class="readiness-bar-wrap">
       <div style="font-size:8px;color:var(--blue3);letter-spacing:0.2em;margin-bottom:8px;">ARCP READINESS</div>
       <div class="readiness-label">
-        <span style="color:var(--gim)">GIM</span>
-        <span class="readiness-pct" id="readiness-pct-gim">0%</span>
-      </div>
-      <div class="bar-track"><div class="bar-fill" id="readiness-bar-gim" style="width:0%"></div></div>
-      <div class="readiness-label" style="margin-top:8px;">
         <span style="color:var(--renal)">RENAL</span>
         <span class="readiness-pct" id="readiness-pct-renal" style="color:var(--renal)">0%</span>
       </div>
       <div class="bar-track"><div class="bar-fill" id="readiness-bar-renal" style="width:0%;background:linear-gradient(90deg,#5b21b6,var(--renal))"></div></div>
+      <div class="readiness-label" style="margin-top:8px;">
+        <span style="color:var(--gim)">GIM</span>
+        <span class="readiness-pct" id="readiness-pct-gim">0%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="readiness-bar-gim" style="width:0%"></div></div>
       <div style="font-size:8px;color:var(--dim);margin-top:5px;letter-spacing:0.08em;">
         <span id="readiness-detail">-- of -- requirements met</span>
       </div>
@@ -282,8 +282,8 @@
 </div>
 
 <div id="tabbar">
-  <button class="tab gim-tab active"   onclick="setTab('gim')">GIM</button>
-  <button class="tab renal-tab"        onclick="setTab('renal')">RENAL</button>
+  <button class="tab renal-tab active" onclick="setTab('renal')">RENAL</button>
+  <button class="tab gim-tab"          onclick="setTab('gim')">GIM</button>
   <button class="tab"                  onclick="setTab('admin')">ADMIN / DOCS</button>
   <button class="tab"                  onclick="setTab('overview')">OVERVIEW</button>
 </div>
@@ -1317,7 +1317,7 @@ function resetYearData() {
 }
 
 renderAll();
-setTab("gim");
+setTab("renal");
 
 window.addEventListener("arcp-sync", e => {
   const { ok, changed } = e.detail;
