@@ -31,8 +31,9 @@
     const storage  = getStorage(app);
     const sessRef  = ref(db, "studySessions");
     const topicRef = ref(db, "studyTopics");
+    const planRef  = ref(db, "studyPlan");
 
-    window._stx_fb = { db, ref, push, update, remove, sessRef, topicRef };
+    window._stx_fb = { db, ref, push, update, remove, sessRef, topicRef, planRef };
 
     // ── Storage upload ────────────────────────────────
     window.uploadSessionFile = function(file, sessionId, onProgress, onDone, onError) {
@@ -62,6 +63,10 @@
     });
     onValue(topicRef, snap => {
       window._stx_topics = snap.val() || {};
+      window.dispatchEvent(new CustomEvent("stx-sync"));
+    });
+    onValue(planRef, snap => {
+      window._stx_plan = snap.val() || {};
       window.dispatchEvent(new CustomEvent("stx-sync"));
     });
   </script>
@@ -279,6 +284,7 @@
   <button class="tab" onclick="setTab('log')">LOG SESSION</button>
   <button class="tab" onclick="setTab('sessions')">SESSIONS</button>
   <button class="tab" onclick="setTab('retests')">RETESTS</button>
+  <button class="tab" onclick="setTab('plan')">PLAN</button>
   <button class="tab" onclick="setTab('topics')">TOPICS</button>
 </div>
 
@@ -288,6 +294,7 @@
   <div id="tab-log"      style="display:none"></div>
   <div id="tab-sessions" style="display:none"></div>
   <div id="tab-retests"  style="display:none"></div>
+  <div id="tab-plan"     style="display:none"></div>
   <div id="tab-topics"   style="display:none"></div>
 </div>
 
@@ -409,6 +416,7 @@ tickClock(); setInterval(tickClock, 1000);
 window.addEventListener("stx-sync", () => {
   sessions = window._stx_sessions || {};
   topics   = window._stx_topics   || {};
+  plan     = window._stx_plan     || {};
   const dot = document.getElementById("sync-dot");
   const sb  = document.getElementById("sb-sync");
   dot.textContent = "● LIVE"; dot.style.color = "var(--green)";
@@ -596,7 +604,7 @@ function setTab(tab) {
   currentTab = tab;
   document.querySelectorAll(".tab").forEach(b =>
     b.classList.toggle("active", b.getAttribute("onclick").includes(`'${tab}'`)));
-  ["today","log","sessions","retests","topics"].forEach(t =>
+  ["today","log","sessions","retests","plan","topics"].forEach(t =>
     document.getElementById(`tab-${t}`).style.display = t === tab ? "block" : "none");
   renderTab(tab);
 }
@@ -606,6 +614,7 @@ function renderTab(tab) {
   if (tab === "log")      renderLog();
   if (tab === "sessions") renderSessions();
   if (tab === "retests")  renderRetests();
+  if (tab === "plan")     renderPlan();
   if (tab === "topics")   renderTopics();
 }
 
@@ -1111,6 +1120,151 @@ function deleteTopic(id) {
     const { db, ref, remove } = window._stx_fb;
     remove(ref(db, `studyTopics/${id}`));
   }
+}
+
+// ══════════════════════════════════════════════════════
+//  PLAN
+// ══════════════════════════════════════════════════════
+let plan = {};
+
+function planList() {
+  return Object.entries(window._stx_plan || {})
+    .map(([id, p]) => ({ id, ...p }))
+    .sort((a, b) => a.createdAt - b.createdAt);
+}
+
+function renderPlan() {
+  const el   = document.getElementById("tab-plan");
+  const list = planList();
+  const tl   = topicList();
+  const MAX  = 5;
+  const topicOpts = tl.map(t =>
+    `<option value="${t.id}">[${STREAM_LABELS[t.stream]}] ${t.name}</option>`
+  ).join("");
+
+  let html = `
+    <div class="sec-head">
+      <span class="sec-title">PLANNED SESSIONS</span>
+      <span class="sec-rule"></span>
+      <span class="sec-note">${list.length} / ${MAX} slots used</span>
+    </div>`;
+
+  // Add form — only if under limit
+  if (list.length < MAX) {
+    html += `
+      <div class="log-form" style="margin-bottom:20px;">
+        <div style="font-size:8px;color:var(--grey);letter-spacing:0.12em;margin-bottom:10px;">
+          ── plan a future session · activate it when you're ready to study
+        </div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-label">topic *</label>
+            <select class="form-inp" id="plan-topic">
+              <option value="">-- select topic --</option>
+              ${topicOpts}
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">note (optional)</label>
+            <input class="form-inp" id="plan-note" placeholder="// e.g. focus on pathology" />
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+          <button class="btn-primary" onclick="addPlan()">ADD TO PLAN ▸</button>
+        </div>
+      </div>`;
+  } else {
+    html += `
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--yellow);
+        padding:10px 14px;margin-bottom:20px;font-size:10px;color:var(--yellow);">
+        // max ${MAX} planned sessions — activate or remove one before adding more
+      </div>`;
+  }
+
+  if (!list.length) {
+    html += `<div class="empty-msg">no planned sessions — add one above</div>`;
+  } else {
+    html += `<div class="session-grid">`;
+    list.forEach(p => {
+      const topic = topics[p.topicId] || { name: "Unknown", stream: "renal" };
+      html += `
+        <div class="sess-card stream-${topic.stream}" style="border-left-color:var(--cyan);opacity:${p.activated?0.45:1};">
+          <div class="sess-head">
+            <div class="sess-topic">${topic.name}</div>
+            <span class="sess-stream ${topic.stream}">${STREAM_LABELS[topic.stream]||topic.stream.toUpperCase()}</span>
+          </div>
+          <div class="sess-meta" style="color:var(--cyan);">
+            ▸ PLANNED · ${new Date(p.createdAt).toLocaleDateString("en-GB",{day:"2-digit",month:"short"})}
+          </div>
+          ${p.note ? `<div class="sess-notes">${p.note}</div>` : ""}
+          <div class="sess-footer" style="margin-top:8px;">
+            <div style="display:flex;gap:6px;">
+              ${!p.activated ? `
+                <button class="btn-primary" style="font-size:9px;padding:4px 12px;"
+                  onclick="activatePlan('${p.id}','${p.topicId}')">
+                  ▶ ACTIVATE
+                </button>` : `
+                <span style="font-size:9px;color:var(--green);letter-spacing:0.08em;">✓ ACTIVATED</span>`}
+            </div>
+            <button class="sess-btn danger" onclick="deletePlan('${p.id}')">✕</button>
+          </div>
+        </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Slot indicators
+  html += `
+    <div style="display:flex;gap:6px;margin-top:16px;">
+      ${Array.from({length:MAX}, (_,i) => `
+        <div style="flex:1;height:4px;border-radius:2px;background:${i < list.length ? "var(--cyan)" : "var(--border2)"}"></div>
+      `).join("")}
+    </div>
+    <div style="font-size:8px;color:var(--grey2);margin-top:5px;letter-spacing:0.08em;">
+      ${MAX - list.length} slot${MAX - list.length !== 1 ? "s" : ""} remaining
+    </div>`;
+
+  el.innerHTML = html;
+}
+
+function addPlan() {
+  const topicId = document.getElementById("plan-topic")?.value;
+  if (!topicId) { alert("Please select a topic"); return; }
+  const note = document.getElementById("plan-note")?.value.trim();
+  if (planList().length >= 5) { alert("Max 5 planned sessions"); return; }
+  if (window._stx_fb) {
+    window._stx_fb.push(window._stx_fb.planRef, {
+      topicId, note, createdAt: Date.now(), activated: false
+    });
+  }
+}
+
+function deletePlan(id) {
+  if (!confirm("Remove this planned session?")) return;
+  if (window._stx_fb) {
+    const { db, ref, remove } = window._stx_fb;
+    remove(ref(db, `studyPlan/${id}`));
+  }
+}
+
+function activatePlan(id, topicId) {
+  // Pre-fill log form with this topic, open timer, switch to log tab
+  if (window._stx_fb) {
+    const { db, ref, update } = window._stx_fb;
+    update(ref(db, `studyPlan/${id}`), { activated: true });
+  }
+  // Switch to log tab and pre-select topic
+  setTab("log");
+  setTimeout(() => {
+    const sel = document.getElementById("f-topic");
+    if (sel) { sel.value = topicId; }
+    // Open timer automatically
+    const panel = document.getElementById("timer-panel");
+    if (panel && !panel.classList.contains("show")) {
+      panel.classList.add("show");
+      updateTimerDisplay();
+    }
+  }, 50);
 }
 
 // ══════════════════════════════════════════════════════
