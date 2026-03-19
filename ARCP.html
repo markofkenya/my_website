@@ -309,17 +309,6 @@ const ARCP_DEFAULTS = {
   ST7: "2029-12-01",
 };
 
-function getARCPDate(yr) {
-  const custom = localStorage.getItem(`pft_arcp_date_${yr}`);
-  return custom ? new Date(custom) : new Date(ARCP_DEFAULTS[yr]);
-}
-function setARCPDate(yr, val) {
-  localStorage.setItem(`pft_arcp_date_${yr}`, val);
-  fbPush(`pft_arcp_date_${yr}`, val);
-  updateCountdown();
-  renderAdmin();
-}
-
 const YEARS = ["ST4","ST5","ST6","ST7"];
 let currentYear = "ST4";
 let currentTab  = "gim";
@@ -508,6 +497,17 @@ function fbPush(key, val) {
   localStorage.setItem(key + "__ts", ts);
   update(dataRef, { [key]: { value: String(val), ts } })
     .catch(e => console.error("FB write error:", e));
+}
+
+function getARCPDate(yr) {
+  const custom = localStorage.getItem(`pft_arcp_date_${yr}`);
+  return custom ? new Date(custom) : new Date(ARCP_DEFAULTS[yr]);
+}
+function setARCPDate(yr, val) {
+  localStorage.setItem(`pft_arcp_date_${yr}`, val);
+  fbPush(`pft_arcp_date_${yr}`, val);
+  updateCountdown();
+  renderAdmin();
 }
 
 function sKey(reqId) {
