@@ -27,12 +27,26 @@
       appId:             "1:544624731364:web:419d52fa061c5c7b4f38f1",
     };
 
-    const app      = initializeApp(firebaseConfig);
-    const db       = getDatabase(app);
-    const storage  = getStorage(app);
+const app      = initializeApp(firebaseConfig);
+const db       = getDatabase(app);
+const storage  = getStorage(app);
+const auth     = getAuth(app);
+
+signInAnonymously(auth)
+  .then(() => {
+    console.log("Anonymous auth success");
+
+    // ✅ Only set refs AFTER auth
     const sessRef  = ref(db, "studySessions");
     const topicRef = ref(db, "studyTopics");
 
+    window._stx_fb = { db, ref, push, update, remove, sessRef, topicRef };
+
+    // attach listeners here if you want to be extra safe
+  })
+  .catch((error) => {
+    console.error("Auth error:", error);
+  });
     window._stx_fb = { db, ref, push, update, remove, sessRef, topicRef };
 
     // ── Storage upload ────────────────────────────────
