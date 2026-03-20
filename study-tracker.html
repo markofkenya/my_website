@@ -36,7 +36,6 @@
 
     window._stx_fb = { db, ref, push, update, remove, sessRef, topicRef, planRef };
 
-    // ── Storage upload ────────────────────────────────
     window.uploadSessionFile = function(file, sessionId, onProgress, onDone, onError) {
       const path     = `studyNotes/${sessionId}/${Date.now()}_${file.name}`;
       const fileRef  = sRef(storage, path);
@@ -52,7 +51,6 @@
       );
     };
 
-    // ── Storage delete ────────────────────────────────
     window.deleteSessionFile = function(filePath) {
       const fileRef = sRef(storage, filePath);
       return deleteObject(fileRef).catch(e => console.warn("Storage delete:", e));
@@ -137,7 +135,6 @@
     #main{padding:14px 18px 100px;}
     .sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;padding:4px 0;border-bottom:1px solid var(--border);}
     .sec-title{font-size:11px;font-weight:500;color:var(--green);}
-    .sec-title::before{content:"";}
     .sec-rule{flex:1;}
     .sec-note{font-size:9px;color:var(--grey2);}
     .log-form{background:var(--bg2);border:1px solid var(--border2);border-top:2px solid var(--yellow);padding:12px 14px;margin-bottom:18px;}
@@ -145,7 +142,7 @@
     .form-field{display:flex;flex-direction:column;gap:3px;}
     .form-field.wide{grid-column:span 2;}
     .form-label{font-size:9px;color:var(--grey);letter-spacing:0.12em;}
-    .form-label::before{content:"── ";color:var(--grey2);}
+    .form-label::before{content:"\u2500\u2500 ";color:var(--grey2);}
     .form-inp{background:var(--bg);border:1px solid var(--border2);color:var(--white);font-family:var(--font);font-size:12px;padding:5px 8px;outline:none;transition:border-color 0.1s;caret-color:var(--green);}
     .form-inp:focus{border-color:var(--yellow);}
     .form-inp option{background:var(--bg2);color:var(--white);}
@@ -185,7 +182,6 @@
     .topic-card{background:transparent;border:none;border-bottom:1px solid var(--border);padding:5px 8px;display:flex;justify-content:space-between;align-items:center;}
     .topic-card:hover{background:var(--bg2);}
     .topic-name{font-size:11px;color:var(--white);}
-    .topic-name::before{content:"";}
     .topic-stream{font-size:8px;}
     .topic-stream.renal{color:var(--orange);}
     .topic-stream.gim{color:var(--blue);}
@@ -216,7 +212,6 @@
     .btn-timer:hover{border-color:var(--green);color:var(--green);}
     .empty-msg{padding:30px 0;color:var(--grey2);font-size:10px;letter-spacing:0.08em;}
     .empty-msg::before{content:"> ";}
-    /* ── Searchable topic ── */
     .topic-search-wrap{position:relative;}
     .topic-search-inp{background:var(--bg);border:1px solid var(--border2);color:var(--white);font-family:var(--font);font-size:12px;padding:5px 8px;width:100%;outline:none;caret-color:var(--green);transition:border-color 0.1s;}
     .topic-search-inp:focus{border-color:var(--yellow);}
@@ -237,14 +232,12 @@
 </head>
 <body>
 
-<!-- Header -->
-
 <div id="header">
   <div class="header-top">
     <div class="header-logo">
       <div class="logo-line1">STX<span>//</span>01</div>
       <div class="logo-line2">STUDY TRACKER</div>
-      <div class="logo-sub">RENAL · GIM</div>
+      <div class="logo-sub">RENAL &middot; GIM</div>
     </div>
     <div class="week-wrap">
       <div class="week-label">THIS WEEK</div>
@@ -269,12 +262,10 @@
     <div class="header-clock">
       <div class="clock-time" id="clock">00:00</div>
       <div class="clock-date" id="clock-date"></div>
-      <div class="sync-dot" id="sync-dot">● CONNECTING</div>
+      <div class="sync-dot" id="sync-dot">&#9679; CONNECTING</div>
     </div>
   </div>
 </div>
-
-<!-- Timer panel -->
 
 <div id="timer-panel">
   <div class="timer-display">
@@ -285,14 +276,12 @@
     <div class="timer-bar" id="timer-bar" style="width:100%"></div>
   </div>
   <div class="timer-btns">
-    <button class="timer-btn" id="timer-start-btn" onclick="timerStartPause()">▶ START</button>
-    <button class="timer-btn secondary" onclick="timerReset()">↺ RESET</button>
-    <button class="timer-btn secondary" onclick="switchPhase()">⇄ SWITCH TO REST</button>
-    <button class="timer-btn danger" onclick="toggleTimer()">✕ CLOSE</button>
+    <button class="timer-btn" id="timer-start-btn" onclick="timerStartPause()">&#9654; START</button>
+    <button class="timer-btn secondary" onclick="timerReset()">&#8634; RESET</button>
+    <button class="timer-btn secondary" id="switch-phase-btn" onclick="switchPhase()">&#8644; SWITCH TO REST</button>
+    <button class="timer-btn danger" onclick="toggleTimer()">&#10005; CLOSE</button>
   </div>
 </div>
-
-<!-- Tab bar -->
 
 <div id="tabbar">
   <button class="tab active" onclick="setTab('today')">TODAY</button>
@@ -303,8 +292,6 @@
   <button class="tab" onclick="setTab('topics')">TOPICS</button>
 </div>
 
-<!-- Main -->
-
 <div id="main">
   <div id="tab-today"    style="display:none"></div>
   <div id="tab-log"      style="display:none"></div>
@@ -314,14 +301,12 @@
   <div id="tab-topics"   style="display:none"></div>
 </div>
 
-<!-- Status bar -->
-
 <div id="statusbar">
   <div class="status-left">
     <span class="status-item">Sessions this week: <strong id="sb-week">0/2</strong></span>
-    <span class="status-item" id="sb-sync" style="color:var(--amber)">● CONNECTING</span>
+    <span class="status-item" id="sb-sync" style="color:var(--yellow)">&#9679; CONNECTING</span>
   </div>
-  <button class="btn-timer" onclick="toggleTimer()">⏱ TIMER</button>
+  <button class="btn-timer" onclick="toggleTimer()">&#9201; TIMER</button>
 </div>
 
 <script>
@@ -330,19 +315,19 @@
 // ══════════════════════════════════════════════════════
 const DEFAULT_TOPICS = {
   renal: [
-    "AKI — aetiology & management","CKD — staging & progression","Glomerulonephritis — overview",
+    "AKI \u2014 aetiology & management","CKD \u2014 staging & progression","Glomerulonephritis \u2014 overview",
     "IgA nephropathy","Lupus nephritis","Minimal change disease","FSGS","Membranous nephropathy",
     "ANCA vasculitis","Anti-GBM disease","Diabetic nephropathy","Hypertensive nephropathy",
     "Renovascular disease","Renal tubular acidosis","Hyperkalaemia management",
-    "Hyponatraemia","Acid-base disorders","Dialysis — HD principles","Dialysis — PD principles",
-    "Renal transplantation — basics","Immunosuppression in transplant","Rejection types",
+    "Hyponatraemia","Acid-base disorders","Dialysis \u2014 HD principles","Dialysis \u2014 PD principles",
+    "Renal transplantation \u2014 basics","Immunosuppression in transplant","Rejection types",
     "Nephrotic syndrome","Nephritic syndrome","Polycystic kidney disease",
     "Renal calculi","Obstruction & hydronephrosis","Renal anaemia","CKD-MBD",
     "Contrast nephropathy","Hepatorenal syndrome",
-    "Renal physiology — GFR & tubular function","Renal haemodynamics",
+    "Renal physiology \u2014 GFR & tubular function","Renal haemodynamics",
     "Water & sodium homeostasis","Potassium homeostasis","Calcium & phosphate",
-    "Acid-base — Henderson-Hasselbalch","Tubular transport mechanisms",
-    "Diuretics — mechanism & use","RAAS — physiology & pharmacology",
+    "Acid-base \u2014 Henderson-Hasselbalch","Tubular transport mechanisms",
+    "Diuretics \u2014 mechanism & use","RAAS \u2014 physiology & pharmacology",
     "Immunology of glomerulonephritis","Complement system in renal disease",
     "Transplant immunology","Pathology of diabetic nephropathy",
     "Pathology of FSGS","Pathology of membranous nephropathy",
@@ -350,11 +335,11 @@ const DEFAULT_TOPICS = {
     "Biomarkers in AKI","Drug dosing in renal impairment",
   ],
   gim: [
-    "Sepsis & septic shock","ACS — STEMI & NSTEMI","Heart failure — acute & chronic",
-    "AF management","Pneumonia — CAP & HAP","COPD exacerbation","Asthma — acute",
-    "PE & DVT","Stroke — ischaemic & haemorrhagic","Meningitis & encephalitis",
-    "Diabetic emergencies — DKA & HHS","Hypo & hyperglycaemia","Thyroid emergencies",
-    "Adrenal insufficiency","GI bleed — upper & lower","Acute liver failure",
+    "Sepsis & septic shock","ACS \u2014 STEMI & NSTEMI","Heart failure \u2014 acute & chronic",
+    "AF management","Pneumonia \u2014 CAP & HAP","COPD exacerbation","Asthma \u2014 acute",
+    "PE & DVT","Stroke \u2014 ischaemic & haemorrhagic","Meningitis & encephalitis",
+    "Diabetic emergencies \u2014 DKA & HHS","Hypo & hyperglycaemia","Thyroid emergencies",
+    "Adrenal insufficiency","GI bleed \u2014 upper & lower","Acute liver failure",
     "Hepatic encephalopathy","Pancreatitis","Electrolyte disturbances",
     "Approach to shock","Overdose & poisoning","Antimicrobial stewardship",
   ],
@@ -362,16 +347,15 @@ const DEFAULT_TOPICS = {
 
 const STREAM_LABELS = { renal:"RENAL", gim:"GIM" };
 
-// ── #1 Adaptive spaced repetition ─────────────────────
+// ── Adaptive spaced repetition ────────────────────────
 function nextRetestDays(conf, prevInterval) {
-  const prev = prevInterval || 7; // default for legacy sessions
-  if (conf <= 2) return 3;                      // failed → review soon
-  if (conf === 3) return Math.round(prev * 1.5); // ok → moderate growth
-  if (conf === 4) return Math.round(prev * 2);   // good → double
-  return Math.round(prev * 2.5);                 // great → aggressive growth
+  const prev = prevInterval || 7;
+  if (conf <= 2) return 3;
+  if (conf === 3) return Math.round(prev * 1.5);
+  if (conf === 4) return Math.round(prev * 2);
+  return Math.round(prev * 2.5);
 }
 
-// Legacy fixed mapping used only for hint display before first session
 function retestDaysFromConf(conf) {
   if (conf <= 2) return 3;
   if (conf === 3) return 14;
@@ -379,47 +363,52 @@ function retestDaysFromConf(conf) {
   return 28;
 }
 
-// ── #2 Weakest topics ─────────────────────────────────
-function weakestTopics(n = 5) {
-  const map = {};
-  sessionList().forEach(s => {
+// ── Weakest topics ────────────────────────────────────
+function weakestTopics(n) {
+  n = n || 5;
+  var map = {};
+  sessionList().forEach(function(s) {
     if (!s.topicId || !s.confidence) return;
     if (!map[s.topicId]) map[s.topicId] = [];
     map[s.topicId].push(s.confidence);
   });
   return Object.entries(map)
-    .map(([id, confs]) => ({
-      id,
-      name: (topics[id] || {}).name || "Unknown",
-      stream: (topics[id] || {}).stream || "renal",
-      avg: confs.reduce((a,b) => a+b, 0) / confs.length,
-      count: confs.length,
-    }))
-    .sort((a,b) => a.avg - b.avg)
+    .map(function(entry) {
+      var id = entry[0], confs = entry[1];
+      return {
+        id: id,
+        name: (topics[id] || {}).name || "Unknown",
+        stream: (topics[id] || {}).stream || "renal",
+        avg: confs.reduce(function(a,b){ return a+b; }, 0) / confs.length,
+        count: confs.length,
+      };
+    })
+    .sort(function(a,b){ return a.avg - b.avg; })
     .slice(0, n);
 }
 
 // ══════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════
-let sessions      = {};
-let topics        = {};
-let currentTab    = "today";
-let selConfidence = 3;
-let timerInterval = null;
-let timerRunning  = false;
-let timerCompleted = false;
-let timerStartTime = null;   // #3 track actual start time
-let pendingFile   = null;
-let timerPhase    = "study";
-let timerSeconds  = 90 * 60;
-let timerTotal    = 90 * 60;
+var sessions      = {};
+var topics        = {};
+var plan          = {};
+var currentTab    = "today";
+var selConfidence = 3;
+var timerInterval = null;
+var timerRunning  = false;
+var timerCompleted = false;
+var timerStartTime = null;
+var pendingFile   = null;
+var timerPhase    = "study";
+var timerSeconds  = 90 * 60;
+var timerTotal    = 90 * 60;
 
 // ══════════════════════════════════════════════════════
 //  CLOCK
 // ══════════════════════════════════════════════════════
 function tickClock() {
-  const now = new Date();
+  var now = new Date();
   document.getElementById("clock").textContent =
     now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
   document.getElementById("clock-date").textContent =
@@ -430,31 +419,33 @@ tickClock(); setInterval(tickClock, 1000);
 // ══════════════════════════════════════════════════════
 //  FIREBASE SYNC
 // ══════════════════════════════════════════════════════
-window.addEventListener("stx-sync", () => {
+window.addEventListener("stx-sync", function() {
   sessions = window._stx_sessions || {};
   topics   = window._stx_topics   || {};
   plan     = window._stx_plan     || {};
-  const dot = document.getElementById("sync-dot");
-  const sb  = document.getElementById("sb-sync");
-  dot.textContent = "● LIVE"; dot.style.color = "var(--green)";
-  sb.textContent  = "● LIVE"; sb.style.color  = "var(--green)";
+  var dot = document.getElementById("sync-dot");
+  var sb  = document.getElementById("sb-sync");
+  dot.textContent = "\u25CF LIVE"; dot.style.color = "var(--green)";
+  sb.textContent  = "\u25CF LIVE"; sb.style.color  = "var(--green)";
   renderAll();
 });
 
-window.addEventListener("stx-sync", () => {
-  const fbTopics = window._stx_topics || {};
+window.addEventListener("stx-sync", function() {
+  var fbTopics = window._stx_topics || {};
   if (!window._stx_seeded && window._stx_fb && Object.keys(fbTopics).length === 0) {
     window._stx_seeded = true;
-    const { push, topicRef } = window._stx_fb;
-    Object.entries(DEFAULT_TOPICS).forEach(([stream, list]) => {
-      list.forEach(name => push(topicRef, { name, stream }));
+    var pushFn = window._stx_fb.push;
+    var tRef = window._stx_fb.topicRef;
+    Object.entries(DEFAULT_TOPICS).forEach(function(entry) {
+      var stream = entry[0], list = entry[1];
+      list.forEach(function(name) { pushFn(tRef, { name: name, stream: stream }); });
     });
   } else if (Object.keys(fbTopics).length > 0) {
-    window._stx_seeded = true; // prevent any future seed attempt
+    window._stx_seeded = true;
   }
 }, { once: true });
 
-setTimeout(() => {
+setTimeout(function() {
   if (!document.getElementById("tab-today").innerHTML) {
     sessions = window._stx_sessions || {};
     topics   = window._stx_topics   || {};
@@ -466,7 +457,7 @@ setTimeout(() => {
 //  TIMER
 // ══════════════════════════════════════════════════════
 function toggleTimer() {
-  const panel = document.getElementById("timer-panel");
+  var panel = document.getElementById("timer-panel");
   panel.classList.toggle("show");
   if (panel.classList.contains("show")) updateTimerDisplay();
 }
@@ -475,13 +466,12 @@ function timerStartPause() {
   if (timerRunning) {
     clearInterval(timerInterval);
     timerRunning = false;
-    document.getElementById("timer-start-btn").textContent = "▶ RESUME";
+    document.getElementById("timer-start-btn").innerHTML = "&#9654; RESUME";
   } else {
-    // #3 Record start time on first start
     if (!timerStartTime && timerPhase === "study") timerStartTime = Date.now();
     timerRunning = true;
-    document.getElementById("timer-start-btn").textContent = "⏸ PAUSE";
-    timerInterval = setInterval(() => {
+    document.getElementById("timer-start-btn").innerHTML = "&#9208; PAUSE";
+    timerInterval = setInterval(function() {
       if (timerSeconds <= 0) {
         clearInterval(timerInterval);
         timerRunning = false;
@@ -491,7 +481,7 @@ function timerStartPause() {
           if (currentTab === "today") renderToday();
           switchPhase();
           document.getElementById("timer-clock").classList.add("alert-pulse");
-          setTimeout(() => document.getElementById("timer-clock").classList.remove("alert-pulse"), 5000);
+          setTimeout(function() { document.getElementById("timer-clock").classList.remove("alert-pulse"); }, 5000);
         } else {
           timerReset();
         }
@@ -509,7 +499,7 @@ function timerReset() {
   timerStartTime = null;
   timerSeconds  = timerPhase === "study" ? 90 * 60 : 20 * 60;
   timerTotal    = timerSeconds;
-  document.getElementById("timer-start-btn").textContent = "▶ START";
+  document.getElementById("timer-start-btn").innerHTML = "&#9654; START";
   document.getElementById("timer-clock").classList.remove("alert-pulse");
   updateTimerDisplay();
 }
@@ -521,23 +511,23 @@ function switchPhase() {
   timerSeconds = timerPhase === "study" ? 90 * 60 : 20 * 60;
   timerTotal   = timerSeconds;
   if (timerPhase === "study") timerStartTime = null;
-  document.getElementById("timer-start-btn").textContent = "▶ START";
+  document.getElementById("timer-start-btn").innerHTML = "&#9654; START";
   document.getElementById("timer-clock").classList.remove("alert-pulse");
-  const btn = document.querySelector(".timer-btn.secondary:nth-child(3)");
-  if (btn) btn.textContent = timerPhase === "study" ? "⇄ SWITCH TO REST" : "⇄ SWITCH TO STUDY";
+  var btn = document.getElementById("switch-phase-btn");
+  if (btn) btn.innerHTML = timerPhase === "study" ? "&#8644; SWITCH TO REST" : "&#8644; SWITCH TO STUDY";
   updateTimerDisplay();
 }
 
 function updateTimerDisplay() {
-  const m = Math.floor(timerSeconds / 60);
-  const s = timerSeconds % 60;
-  const pct = (timerSeconds / timerTotal) * 100;
-  const isRest = timerPhase === "rest";
+  var m = Math.floor(timerSeconds / 60);
+  var s = timerSeconds % 60;
+  var pct = (timerSeconds / timerTotal) * 100;
+  var isRest = timerPhase === "rest";
   document.getElementById("timer-phase").textContent = isRest ? "REST PERIOD" : "STUDY SESSION";
   document.getElementById("timer-clock").textContent =
-    `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+    String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
   document.getElementById("timer-clock").className = "timer-clock" + (isRest ? " rest" : "");
-  document.getElementById("timer-bar").style.width = `${pct}%`;
+  document.getElementById("timer-bar").style.width = pct + "%";
   document.getElementById("timer-bar").className = "timer-bar" + (isRest ? " rest" : "");
 }
 
@@ -545,51 +535,51 @@ function updateTimerDisplay() {
 //  HELPERS
 // ══════════════════════════════════════════════════════
 function topicList() {
-  return Object.entries(topics).map(([id,t]) => ({id,...t})).sort((a,b) => a.name.localeCompare(b.name));
+  return Object.entries(topics).map(function(e){ return Object.assign({id:e[0]}, e[1]); }).sort(function(a,b){ return a.name.localeCompare(b.name); });
 }
 function sessionList() {
-  return Object.entries(sessions).map(([id,s]) => ({id,...s})).sort((a,b) => b.date.localeCompare(a.date));
+  return Object.entries(sessions).map(function(e){ return Object.assign({id:e[0]}, e[1]); }).sort(function(a,b){ return b.date.localeCompare(a.date); });
 }
 function retestStatus(sess) {
   if (sess.retestDone) return "done";
   if (!sess.retestDate) return "ok";
-  const today = new Date(); today.setHours(0,0,0,0);
-  const due   = new Date(sess.retestDate);
-  const diff  = Math.round((due - today) / 86400000);
+  var today = new Date(); today.setHours(0,0,0,0);
+  var due   = new Date(sess.retestDate);
+  var diff  = Math.round((due - today) / 86400000);
   if (diff < 0)  return "due";
   if (diff <= 3) return "soon";
   return "ok";
 }
 function retestLabel(sess) {
-  if (sess.retestDone) return "✓ RETESTED";
+  if (sess.retestDone) return "\u2713 RETESTED";
   if (!sess.retestDate) return "no retest set";
-  const today = new Date(); today.setHours(0,0,0,0);
-  const due   = new Date(sess.retestDate);
-  const diff  = Math.round((due - today) / 86400000);
-  if (diff < 0)  return `!! OVERDUE ${Math.abs(diff)}d`;
+  var today = new Date(); today.setHours(0,0,0,0);
+  var due   = new Date(sess.retestDate);
+  var diff  = Math.round((due - today) / 86400000);
+  if (diff < 0)  return "!! OVERDUE " + Math.abs(diff) + "d";
   if (diff === 0) return "!! DUE TODAY";
-  if (diff <= 3) return `⚠ due in ${diff}d`;
-  return `retest ${due.toLocaleDateString("en-GB",{day:"2-digit",month:"short"})}`;
+  if (diff <= 3) return "\u26A0 due in " + diff + "d";
+  return "retest " + due.toLocaleDateString("en-GB",{day:"2-digit",month:"short"});
 }
 function weekSessions() {
-  const now    = new Date();
-  const day    = now.getDay() || 7;
-  const monday = new Date(now); monday.setDate(now.getDate() - day + 1); monday.setHours(0,0,0,0);
-  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); sunday.setHours(23,59,59,999);
-  return sessionList().filter(s => { const d = new Date(s.date); return d >= monday && d <= sunday; });
+  var now    = new Date();
+  var day    = now.getDay() || 7;
+  var monday = new Date(now); monday.setDate(now.getDate() - day + 1); monday.setHours(0,0,0,0);
+  var sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); sunday.setHours(23,59,59,999);
+  return sessionList().filter(function(s) { var d = new Date(s.date); return d >= monday && d <= sunday; });
 }
 function totalStudyHours() {
-  return sessionList().reduce((acc, s) => acc + (s.duration || 90), 0) / 60;
+  return sessionList().reduce(function(acc, s) { return acc + (s.duration || 90); }, 0) / 60;
 }
 function calcStreak() {
-  let streak = 0;
-  const now = new Date();
-  for (let w = 0; w < 52; w++) {
-    const refDate = new Date(now); refDate.setDate(now.getDate() - w * 7);
-    const day = refDate.getDay() || 7;
-    const mon = new Date(refDate); mon.setDate(refDate.getDate() - day + 1); mon.setHours(0,0,0,0);
-    const sun = new Date(mon); sun.setDate(mon.getDate() + 6); sun.setHours(23,59,59,999);
-    const count = sessionList().filter(s => { const d = new Date(s.date); return d >= mon && d <= sun; }).length;
+  var streak = 0;
+  var now = new Date();
+  for (var w = 0; w < 52; w++) {
+    var refDate = new Date(now); refDate.setDate(now.getDate() - w * 7);
+    var day = refDate.getDay() || 7;
+    var mon = new Date(refDate); mon.setDate(refDate.getDate() - day + 1); mon.setHours(0,0,0,0);
+    var sun = new Date(mon); sun.setDate(mon.getDate() + 6); sun.setHours(23,59,59,999);
+    var count = sessionList().filter(function(s) { var d = new Date(s.date); return d >= mon && d <= sun; }).length;
     if (count >= 2) streak++;
     else if (w > 0) break;
   }
@@ -600,20 +590,20 @@ function calcStreak() {
 //  RENDER
 // ══════════════════════════════════════════════════════
 function renderAll() {
-  const wk     = weekSessions();
-  const due    = sessionList().filter(s => retestStatus(s) === "due").length;
-  const soon   = sessionList().filter(s => retestStatus(s) === "soon").length;
-  const streak = calcStreak();
+  var wk     = weekSessions();
+  var due    = sessionList().filter(function(s){ return retestStatus(s) === "due"; }).length;
+  var soon   = sessionList().filter(function(s){ return retestStatus(s) === "soon"; }).length;
+  var streak = calcStreak();
 
-  document.getElementById("week-pips").querySelectorAll(".pip").forEach((p,i) => {
+  document.getElementById("week-pips").querySelectorAll(".pip").forEach(function(p,i) {
     p.classList.toggle("done", i < wk.length);
   });
-  document.getElementById("week-sub").textContent  = `${wk.length} / 2 sessions`;
-  document.getElementById("sb-week").textContent   = `${wk.length}/2`;
+  document.getElementById("week-sub").textContent  = wk.length + " / 2 sessions";
+  document.getElementById("sb-week").textContent   = wk.length + "/2";
   document.getElementById("total-sessions").textContent = sessionList().length;
   document.getElementById("streak-val").textContent = streak;
 
-  const retestEl = document.getElementById("retest-due-count");
+  var retestEl = document.getElementById("retest-due-count");
   retestEl.textContent = due + soon;
   retestEl.className = "retest-val" + (due > 0 ? " alert" : soon > 0 ? " warn" : "");
 
@@ -622,10 +612,12 @@ function renderAll() {
 
 function setTab(tab) {
   currentTab = tab;
-  document.querySelectorAll(".tab").forEach(b =>
-    b.classList.toggle("active", b.getAttribute("onclick").includes(`'${tab}'`)));
-  ["today","log","sessions","retests","plan","topics"].forEach(t =>
-    document.getElementById(`tab-${t}`).style.display = t === tab ? "block" : "none");
+  document.querySelectorAll(".tab").forEach(function(b) {
+    b.classList.toggle("active", b.getAttribute("onclick").indexOf("'" + tab + "'") !== -1);
+  });
+  ["today","log","sessions","retests","plan","topics"].forEach(function(t) {
+    document.getElementById("tab-" + t).style.display = t === tab ? "block" : "none";
+  });
   renderTab(tab);
 }
 
@@ -638,149 +630,150 @@ function renderTab(tab) {
   if (tab === "topics")   renderTopics();
 }
 
-// ── #4 TODAY view ──────────────────────────────────────
+// ── TODAY view ─────────────────────────────────────────
 function renderToday() {
-  const el     = document.getElementById("tab-today");
-  const wk     = weekSessions();
-  const due    = sessionList().filter(s => retestStatus(s) === "due");
-  const soon   = sessionList().filter(s => retestStatus(s) === "soon");
-  const sessNeeded = Math.max(0, 2 - wk.length);
-  const weak   = weakestTopics(3);
-  const hours  = totalStudyHours();
+  var el     = document.getElementById("tab-today");
+  var wk     = weekSessions();
+  var due    = sessionList().filter(function(s){ return retestStatus(s) === "due"; });
+  var soon   = sessionList().filter(function(s){ return retestStatus(s) === "soon"; });
+  var sessNeeded = Math.max(0, 2 - wk.length);
+  var weak   = weakestTopics(3);
+  var hours  = totalStudyHours();
 
-  // Suggest a topic — prefer weakest, or one not studied in a while
-  let suggested = null;
+  var suggested = null;
   if (weak.length) suggested = weak[0];
 
-  const c = (v, cls) => `<span style="color:var(--${cls})">${v}</span>`;
+  function c(v, cls) { return '<span style="color:var(--' + cls + ')">' + v + '</span>'; }
 
-  let html = `
-    <div class="sec-head">
-      <span class="sec-title">TODAY</span>
-      <span class="sec-rule"></span>
-      <span class="sec-note">${new Date().toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long"})}</span>
-    </div>
+  var html = '<div class="sec-head">' +
+    '<span class="sec-title">TODAY</span>' +
+    '<span class="sec-rule"></span>' +
+    '<span class="sec-note">' + new Date().toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long"}) + '</span>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin-bottom:20px;">' +
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin-bottom:20px;">
+    '<div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--' + (wk.length>=2?'green':'yellow') + ');padding:12px 14px;">' +
+      '<div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:6px;">WEEKLY GOAL</div>' +
+      '<div style="font-size:22px;font-weight:500;color:var(--' + (wk.length>=2?'green':'yellow') + ')">' + wk.length + ' / 2</div>' +
+      '<div style="font-size:10px;color:var(--grey2);margin-top:4px;">' +
+        (wk.length >= 2
+          ? '\u2713 goal met this week'
+          : sessNeeded + ' session' + (sessNeeded>1?'s':'') + ' needed this week') +
+      '</div>' +
+      (sessNeeded > 0 ? '<button class="btn-primary" style="margin-top:8px;font-size:9px;padding:4px 12px;" onclick="setTab(\'log\')">LOG SESSION \u25B8</button>' : '') +
+    '</div>' +
 
-      <!-- Sessions this week -->
-      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--${wk.length>=2?'green':'yellow'});padding:12px 14px;">
-        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:6px;">WEEKLY GOAL</div>
-        <div style="font-size:22px;font-weight:500;color:var(--${wk.length>=2?'green':'yellow'})">${wk.length} / 2</div>
-        <div style="font-size:10px;color:var(--grey2);margin-top:4px;">
-          ${wk.length >= 2
-            ? `✓ goal met this week`
-            : `${sessNeeded} session${sessNeeded>1?'s':''} needed this week`}
-        </div>
-        ${sessNeeded > 0 ? `<button class="btn-primary" style="margin-top:8px;font-size:9px;padding:4px 12px;" onclick="setTab('log')">LOG SESSION ▸</button>` : ""}
-      </div>
+    '<div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--' + (due.length>0?'pink':soon.length>0?'yellow':'border2') + ');padding:12px 14px;">' +
+      '<div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:6px;">RETESTS</div>' +
+      '<div style="font-size:22px;font-weight:500;color:var(--' + (due.length>0?'pink':soon.length>0?'yellow':'grey2') + ')">' + (due.length + soon.length) + '</div>' +
+      '<div style="font-size:10px;color:var(--grey2);margin-top:4px;">' +
+        (due.length > 0 ? c(due.length,'pink') + ' overdue \u00B7 ' + c(soon.length,'yellow') + ' due soon'
+          : soon.length > 0 ? c(soon.length,'yellow') + ' due within 3 days'
+          : 'no retests due') +
+      '</div>' +
+      (due.length + soon.length > 0 ? '<button class="btn-primary" style="margin-top:8px;font-size:9px;padding:4px 12px;" onclick="setTab(\'retests\')">VIEW RETESTS \u25B8</button>' : '') +
+    '</div>' +
 
-      <!-- Retests -->
-      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--${due.length>0?'pink':soon.length>0?'yellow':'border2'});padding:12px 14px;">
-        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:6px;">RETESTS</div>
-        <div style="font-size:22px;font-weight:500;color:var(--${due.length>0?'pink':soon.length>0?'yellow':'grey2'})">${due.length + soon.length}</div>
-        <div style="font-size:10px;color:var(--grey2);margin-top:4px;">
-          ${due.length > 0 ? `${c(due.length,'pink')} overdue · ${c(soon.length,'yellow')} due soon`
-            : soon.length > 0 ? `${c(soon.length,'yellow')} due within 3 days`
-            : `no retests due`}
-        </div>
-        ${due.length + soon.length > 0 ? `<button class="btn-primary" style="margin-top:8px;font-size:9px;padding:4px 12px;" onclick="setTab('retests')">VIEW RETESTS ▸</button>` : ""}
-      </div>
+    '<div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--cyan);padding:12px 14px;">' +
+      '<div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:6px;">TOTAL HOURS STUDIED</div>' +
+      '<div style="font-size:22px;font-weight:500;color:var(--cyan)">' + hours.toFixed(1) + 'h</div>' +
+      '<div style="font-size:10px;color:var(--grey2);margin-top:4px;">' + sessionList().length + ' sessions logged</div>' +
+    '</div>' +
 
-      <!-- Hours studied -->
-      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--cyan);padding:12px 14px;">
-        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:6px;">TOTAL HOURS STUDIED</div>
-        <div style="font-size:22px;font-weight:500;color:var(--cyan)">${hours.toFixed(1)}h</div>
-        <div style="font-size:10px;color:var(--grey2);margin-top:4px;">${sessionList().length} sessions logged</div>
-      </div>
+    '</div>';
 
-    </div>
+  if (suggested) {
+    html += '<div class="sec-head">' +
+      '<span class="sec-title">SUGGESTED FOCUS</span>' +
+      '<span class="sec-rule"></span>' +
+      '<span class="sec-note">based on confidence scores</span>' +
+    '</div>' +
+    '<div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--' + suggested.stream + ');padding:10px 14px;margin-bottom:20px;">' +
+      '<div style="font-size:12px;color:var(--white);font-weight:500;">' + suggested.name + '</div>' +
+      '<div style="font-size:9px;color:var(--grey2);margin-top:3px;">' +
+        'avg confidence ' + suggested.avg.toFixed(1) + '\u2605 across ' + suggested.count + ' session' + (suggested.count>1?'s':'') +
+        ' \u00B7 <span style="color:var(--' + suggested.stream + ')">' + STREAM_LABELS[suggested.stream] + '</span>' +
+      '</div>' +
+      '<button class="btn-primary" style="margin-top:8px;font-size:9px;padding:4px 12px;" onclick="setTab(\'log\')">STUDY THIS \u25B8</button>' +
+    '</div>';
+  }
 
-    ${suggested ? `
-    <div class="sec-head">
-      <span class="sec-title">SUGGESTED FOCUS</span>
-      <span class="sec-rule"></span>
-      <span class="sec-note">based on confidence scores</span>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--${suggested.stream});padding:10px 14px;margin-bottom:20px;">
-      <div style="font-size:12px;color:var(--white);font-weight:500;">${suggested.name}</div>
-      <div style="font-size:9px;color:var(--grey2);margin-top:3px;">
-        avg confidence ${suggested.avg.toFixed(1)}★ across ${suggested.count} session${suggested.count>1?'s':''}
-        &nbsp;·&nbsp; <span style="color:var(--${suggested.stream})">${STREAM_LABELS[suggested.stream]}</span>
-      </div>
-      <button class="btn-primary" style="margin-top:8px;font-size:9px;padding:4px 12px;"
-        onclick="setTab('log')">STUDY THIS ▸</button>
-    </div>` : ""}
+  if (weak.length) {
+    html += '<div class="sec-head">' +
+      '<span class="sec-title">WEAKEST TOPICS</span>' +
+      '<span class="sec-rule"></span>' +
+      '<span class="sec-note">lowest avg confidence</span>' +
+    '</div>' +
+    '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:20px;">';
+    weak.forEach(function(t,i) {
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:7px 12px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--' + t.stream + ');">' +
+        '<span style="font-size:10px;color:var(--grey2);min-width:16px;">' + (i+1) + '.</span>' +
+        '<span style="font-size:11px;color:var(--white);flex:1;">' + t.name + '</span>' +
+        '<span style="font-size:9px;color:var(--yellow);">' + t.avg.toFixed(1) + '\u2605</span>' +
+        '<span style="font-size:8px;color:var(--grey2);">' + t.count + ' sess</span>' +
+      '</div>';
+    });
+    html += '</div>';
+  }
 
-    ${weak.length ? `
-    <div class="sec-head">
-      <span class="sec-title">WEAKEST TOPICS</span>
-      <span class="sec-rule"></span>
-      <span class="sec-note">lowest avg confidence</span>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:20px;">
-      ${weak.map((t,i) => `
-        <div style="display:flex;align-items:center;gap:10px;padding:7px 12px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--${t.stream});">
-          <span style="font-size:10px;color:var(--grey2);min-width:16px;">${i+1}.</span>
-          <span style="font-size:11px;color:var(--white);flex:1;">${t.name}</span>
-          <span style="font-size:9px;color:var(--yellow);">${t.avg.toFixed(1)}★</span>
-          <span style="font-size:8px;color:var(--grey2);">${t.count} sess</span>
-        </div>`).join("")}
-    </div>` : ""}
-
-    <div class="sec-head">
-      <span class="sec-title">RECENT SESSIONS</span>
-      <span class="sec-rule"></span>
-    </div>
-    <div class="session-grid">
-      ${sessionList().slice(0,3).map(sessCard).join("") || `<div class="empty-msg">no sessions yet — start the timer and log your first session</div>`}
-    </div>`;
+  html += '<div class="sec-head">' +
+    '<span class="sec-title">RECENT SESSIONS</span>' +
+    '<span class="sec-rule"></span>' +
+  '</div>' +
+  '<div class="session-grid">' +
+    (sessionList().slice(0,3).map(sessCard).join("") || '<div class="empty-msg">no sessions yet \u2014 start the timer and log your first session</div>') +
+  '</div>';
 
   el.innerHTML = html;
 }
 
 // ── Searchable topic widget ───────────────────────────
 function makeTopicSearch(inputId, hiddenId) {
-  const tl = topicList();
-  return `
-    <div class="topic-search-wrap" id="wrap-${inputId}">
-      <input class="topic-search-inp" id="${inputId}" autocomplete="off"
-        placeholder="// type to search topics..."
-        oninput="filterTopics('${inputId}','${hiddenId}')"
-        onfocus="openTopicDrop('${inputId}')"
-        onblur="closeTopicDrop('${inputId}',300)" />
-      <input type="hidden" id="${hiddenId}" />
-      <div class="topic-dropdown" id="drop-${inputId}">
-        ${tl.map(t => `
-          <div class="topic-opt"
-            data-id="${t.id}" data-name="[${STREAM_LABELS[t.stream]}] ${t.name}"
-            onmousedown="selectTopic('${inputId}','${hiddenId}','${t.id}','[${STREAM_LABELS[t.stream]}] ${t.name.replace(/'/g,"\\'")}')">
-            ${t.name}<span class="topic-opt-stream">${STREAM_LABELS[t.stream]}</span>
-          </div>`).join("")}
-        <div class="topic-opt empty" style="display:none" id="no-results-${inputId}">no matches</div>
-      </div>
-    </div>`;
+  var tl = topicList();
+  var opts = '';
+  tl.forEach(function(t) {
+    var displayName = '[' + STREAM_LABELS[t.stream] + '] ' + t.name;
+    opts += '<div class="topic-opt" data-id="' + t.id + '" data-name="' + displayName.replace(/"/g,'&quot;') + '" ' +
+      'onmousedown="selectTopic(\'' + inputId + '\',\'' + hiddenId + '\',\'' + t.id + '\',\'' + displayName.replace(/'/g,"\\'") + '\')">' +
+      t.name + '<span class="topic-opt-stream">' + STREAM_LABELS[t.stream] + '</span></div>';
+  });
+  return '<div class="topic-search-wrap" id="wrap-' + inputId + '">' +
+    '<input class="topic-search-inp" id="' + inputId + '" autocomplete="off" ' +
+      'placeholder="// type to search topics..." ' +
+      'oninput="filterTopics(\'' + inputId + '\',\'' + hiddenId + '\')" ' +
+      'onfocus="openTopicDrop(\'' + inputId + '\')" ' +
+      'onblur="closeTopicDrop(\'' + inputId + '\',300)" />' +
+    '<input type="hidden" id="' + hiddenId + '" />' +
+    '<div class="topic-dropdown" id="drop-' + inputId + '">' +
+      opts +
+      '<div class="topic-opt empty" style="display:none" id="no-results-' + inputId + '">no matches</div>' +
+    '</div>' +
+  '</div>';
 }
 
 function openTopicDrop(inputId) {
-  document.getElementById(`drop-${inputId}`)?.classList.add("open");
+  var el = document.getElementById('drop-' + inputId);
+  if (el) el.classList.add("open");
 }
 function closeTopicDrop(inputId, delay) {
-  setTimeout(() => document.getElementById(`drop-${inputId}`)?.classList.remove("open"), delay || 0);
+  setTimeout(function() {
+    var el = document.getElementById('drop-' + inputId);
+    if (el) el.classList.remove("open");
+  }, delay || 0);
 }
 function filterTopics(inputId, hiddenId) {
-  const q    = document.getElementById(inputId)?.value.toLowerCase() || "";
-  const drop = document.getElementById(`drop-${inputId}`);
+  var q    = (document.getElementById(inputId) || {}).value || "";
+  q = q.toLowerCase();
+  var drop = document.getElementById('drop-' + inputId);
   if (!drop) return;
-  // clear hidden if text changed
   document.getElementById(hiddenId).value = "";
-  let any = false;
-  drop.querySelectorAll(".topic-opt:not(.empty)").forEach(opt => {
-    const match = opt.dataset.name.toLowerCase().includes(q);
+  var any = false;
+  drop.querySelectorAll(".topic-opt:not(.empty)").forEach(function(opt) {
+    var match = opt.dataset.name.toLowerCase().indexOf(q) !== -1;
     opt.style.display = match ? "" : "none";
     if (match) any = true;
   });
-  const noRes = document.getElementById(`no-results-${inputId}`);
+  var noRes = document.getElementById('no-results-' + inputId);
   if (noRes) noRes.style.display = any ? "none" : "";
   drop.classList.add("open");
 }
@@ -790,274 +783,311 @@ function selectTopic(inputId, hiddenId, topicId, topicName) {
   closeTopicDrop(inputId, 0);
 }
 
-
-// ── Log Session form ───────────────────────────────────
+// ── Log Session form ──────────────────────────────────
 function renderLog() {
-  const el = document.getElementById("tab-log");
+  var el = document.getElementById("tab-log");
+  var starsHtml = '';
+  for (var n = 1; n <= 5; n++) {
+    starsHtml += '<button class="star ' + (n<=selConfidence?'lit':'') + '" onclick="setConf(' + n + ')">' + (n<=selConfidence?'\u2605':'\u2606') + '</button>';
+  }
 
-  el.innerHTML = `
-    <div class="sec-head">
-      <span class="sec-title">LOG A SESSION</span>
-      <span class="sec-rule"></span>
-      <span class="sec-note">Record what you studied today</span>
-    </div>
-    <div class="log-form">
-      <div class="form-grid">
-        <div class="form-field">
-          <label class="form-label">date</label>
-          <input class="form-inp" id="f-date" type="date" value="${new Date().toISOString().split('T')[0]}" />
-        </div>
-        <div class="form-field">
-          <label class="form-label">topic *</label>
-          ${makeTopicSearch("f-topic-search", "f-topic")}
-        </div>
-        <div class="form-field">
-          <label class="form-label">session_type</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
-            ${["study","quiz","teach"].map(t => `
-              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:10px;color:var(--grey);letter-spacing:0.08em;">
-                <input type="checkbox" id="f-type-${t}" value="${t}"
-                  style="accent-color:var(--green);width:14px;height:14px;"
-                  ${t==='study'?'checked':''} />
-                ${t.toUpperCase()}
-              </label>`).join("")}
-          </div>
-        </div>
-        <div class="form-field wide">
-          <label class="form-label">notes</label>
-          <textarea class="form-inp" id="f-notes" placeholder="// key concepts, gaps identified, questions to follow up..."></textarea>
+  var recentHtml = sessionList().slice(0,5).map(sessCard).join("");
+  if (!recentHtml) recentHtml = '<div class="empty-msg">no sessions logged yet</div>';
+
+  el.innerHTML = '<div class="sec-head">' +
+    '<span class="sec-title">LOG A SESSION</span>' +
+    '<span class="sec-rule"></span>' +
+    '<span class="sec-note">Record what you studied today</span>' +
+  '</div>' +
+  '<div class="log-form">' +
+    '<div class="form-grid">' +
+      '<div class="form-field">' +
+        '<label class="form-label">date</label>' +
+        '<input class="form-inp" id="f-date" type="date" value="' + new Date().toISOString().split('T')[0] + '" />' +
+      '</div>' +
+      '<div class="form-field">' +
+        '<label class="form-label">topic *</label>' +
+        makeTopicSearch("f-topic-search", "f-topic") +
+      '</div>' +
+      '<div class="form-field">' +
+        '<label class="form-label">session_type</label>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">' +
+          '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:10px;color:var(--grey);letter-spacing:0.08em;">' +
+            '<input type="checkbox" id="f-type-study" value="study" style="accent-color:var(--green);width:14px;height:14px;" checked /> STUDY</label>' +
+          '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:10px;color:var(--grey);letter-spacing:0.08em;">' +
+            '<input type="checkbox" id="f-type-quiz" value="quiz" style="accent-color:var(--green);width:14px;height:14px;" /> QUIZ</label>' +
+          '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:10px;color:var(--grey);letter-spacing:0.08em;">' +
+            '<input type="checkbox" id="f-type-teach" value="teach" style="accent-color:var(--green);width:14px;height:14px;" /> TEACH</label>' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-field wide">' +
+        '<label class="form-label">notes</label>' +
+        '<textarea class="form-inp" id="f-notes" placeholder="// key concepts, gaps identified, questions to follow up..."></textarea>' +
 
 ```
-    </div>
-    <div class="form-field wide">
-      <label class="form-label">attach_file (optional)</label>
-      <div class="upload-area" onclick="document.getElementById('f-file').click()">
-        ▸ Click to attach a file — PDF, Word, image, any type
-        <div class="upload-progress" id="upload-progress">
-          <div class="upload-progress-bar" id="upload-progress-bar" style="width:0%"></div>
-        </div>
-      </div>
-      <input type="file" id="f-file" style="display:none" onchange="handleFileSelect(this)" />
-      <div id="attached-file-preview"></div>
-    </div>
-  </div>
-  <div class="form-footer">
-    <div>
-      <div class="form-label" style="margin-bottom:5px;">confidence (1–5)</div>
-      <div class="star-row" id="star-row">
-        ${[1,2,3,4,5].map(n => `<button class="star ${n<=selConfidence?'lit':''}" onclick="setConf(${n})">${n<=selConfidence?'★':'☆'}</button>`).join("")}
-      </div>
-      <div style="font-size:8px;color:var(--grey2);margin-top:4px;" id="retest-hint">
-        // retest in ~${retestDaysFromConf(selConfidence)} days
-      </div>
-    </div>
-    <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-      ${!timerCompleted ? `<span style="font-size:9px;color:var(--grey2);">// complete 90min timer to unlock</span>` : ""}
-      <button class="btn-secondary" onclick="clearForm()">CLEAR</button>
-      <button class="btn-primary" onclick="saveSession()"
-        ${!timerCompleted ? 'disabled' : ""}>
-        LOG SESSION ▸
-      </button>
-    </div>
-  </div>
-</div>
-
-<div class="sec-head" style="margin-top:8px;">
-  <span class="sec-title">RECENT SESSIONS</span>
-  <span class="sec-rule"></span>
-  <span class="sec-note">Last 5</span>
-</div>
-<div class="session-grid">
-  ${sessionList().slice(0,5).map(sessCard).join("") || `<div class="empty-msg">no sessions logged yet</div>`}
-</div>`;
+  '</div>' +
+  '<div class="form-field wide">' +
+    '<label class="form-label">attach_file (optional)</label>' +
+    '<div class="upload-area" onclick="document.getElementById(\'f-file\').click()">' +
+      '\u25B8 Click to attach a file \u2014 PDF, Word, image, any type' +
+      '<div class="upload-progress" id="upload-progress">' +
+        '<div class="upload-progress-bar" id="upload-progress-bar" style="width:0%"></div>' +
+      '</div>' +
+    '</div>' +
+    '<input type="file" id="f-file" style="display:none" onchange="handleFileSelect(this)" />' +
+    '<div id="attached-file-preview"></div>' +
+  '</div>' +
+'</div>' +
+'<div class="form-footer">' +
+  '<div>' +
+    '<div class="form-label" style="margin-bottom:5px;">confidence (1\u20135)</div>' +
+    '<div class="star-row" id="star-row">' + starsHtml + '</div>' +
+    '<div style="font-size:8px;color:var(--grey2);margin-top:4px;" id="retest-hint">// retest in ~' + retestDaysFromConf(selConfidence) + ' days</div>' +
+  '</div>' +
+  '<div style="margin-left:auto;display:flex;gap:8px;align-items:center;">' +
+    (!timerCompleted ? '<span style="font-size:9px;color:var(--grey2);">// complete 90min timer to unlock</span>' : '') +
+    '<button class="btn-secondary" onclick="clearForm()">CLEAR</button>' +
+    '<button class="btn-primary" onclick="saveSession()" ' + (!timerCompleted ? 'disabled' : '') + '>LOG SESSION \u25B8</button>' +
+  '</div>' +
+'</div>' +
 ```
 
+‘</div>’ +
+‘<div class="sec-head" style="margin-top:8px;">’ +
+‘<span class="sec-title">RECENT SESSIONS</span>’ +
+‘<span class="sec-rule"></span>’ +
+‘<span class="sec-note">Last 5</span>’ +
+‘</div>’ +
+‘<div class="session-grid">’ + recentHtml + ‘</div>’;
 }
 
 // ── All Sessions ──────────────────────────────────────
 function renderSessions() {
-const el   = document.getElementById(“tab-sessions”);
-const list = sessionList();
-const hours = totalStudyHours();
-let html = `<div style="font-size:9px;color:var(--grey2);margin-bottom:14px;">
-Total: ${list.length} sessions · ${hours.toFixed(1)}h studied
+var el   = document.getElementById(“tab-sessions”);
+var list = sessionList();
+var hours = totalStudyHours();
+var html = ’<div style="font-size:9px;color:var(--grey2);margin-bottom:14px;">Total: ’ + list.length + ’ sessions \u00B7 ’ + hours.toFixed(1) + ‘h studied</div>’;
 
-  </div>`;
-
-[“renal”,“gim”].forEach(stream => {
-const filtered = list.filter(s => { const t = topics[s.topicId]; return t && t.stream === stream; });
+[“renal”,“gim”].forEach(function(stream) {
+var filtered = list.filter(function(s) { var t = topics[s.topicId]; return t && t.stream === stream; });
 if (!filtered.length) return;
-html += ` <div class="sec-head"> <span class="sec-title" style="color:var(--${stream})">${STREAM_LABELS[stream]}</span> <span class="sec-rule"></span> <span class="sec-note">${filtered.length} sessions</span> </div> <div class="session-grid">${filtered.map(sessCard).join("")}</div>`;
+html += ‘<div class="sec-head">’ +
+‘<span class="sec-title" style="color:var(--' + stream + ')">’ + STREAM_LABELS[stream] + ‘</span>’ +
+‘<span class="sec-rule"></span>’ +
+‘<span class="sec-note">’ + filtered.length + ’ sessions</span>’ +
+‘</div>’ +
+‘<div class="session-grid">’ + filtered.map(sessCard).join(””) + ‘</div>’;
 });
 
-el.innerHTML = html || `<div class="empty-msg">no sessions logged yet</div>`;
+el.innerHTML = html || ‘<div class="empty-msg">no sessions logged yet</div>’;
 }
 
 // ── Retests ───────────────────────────────────────────
 function renderRetests() {
-const el   = document.getElementById(“tab-retests”);
-const due  = sessionList().filter(s => retestStatus(s) === “due”);
-const soon = sessionList().filter(s => retestStatus(s) === “soon”);
-const ok   = sessionList().filter(s => retestStatus(s) === “ok” && s.retestDate && !s.retestDone);
-const done = sessionList().filter(s => s.retestDone);
-let html = “”;
+var el   = document.getElementById(“tab-retests”);
+var due  = sessionList().filter(function(s){ return retestStatus(s) === “due”; });
+var soon = sessionList().filter(function(s){ return retestStatus(s) === “soon”; });
+var ok   = sessionList().filter(function(s){ return retestStatus(s) === “ok” && s.retestDate && !s.retestDone; });
+var done = sessionList().filter(function(s){ return s.retestDone; });
+var html = “”;
 
-if (due.length)  html += `<div class="sec-head"><span class="sec-title" style="color:var(--pink)">OVERDUE</span><span class="sec-rule"></span><span class="sec-note">${due.length} overdue</span></div><div class="session-grid">${due.map(sessCard).join("")}</div>`;
-if (soon.length) html += `<div class="sec-head"><span class="sec-title" style="color:var(--yellow)">DUE SOON</span><span class="sec-rule"></span><span class="sec-note">within 3 days</span></div><div class="session-grid">${soon.map(sessCard).join("")}</div>`;
-if (ok.length)   html += `<div class="sec-head"><span class="sec-title">UPCOMING</span><span class="sec-rule"></span></div><div class="session-grid">${ok.map(sessCard).join("")}</div>`;
-if (done.length) html += `<div class="sec-head"><span class="sec-title" style="color:var(--green)">COMPLETED</span><span class="sec-rule"></span><span class="sec-note">${done.length} done</span></div><div class="session-grid">${done.map(sessCard).join("")}</div>`;
+if (due.length)  html += ‘<div class="sec-head"><span class="sec-title" style="color:var(--pink)">OVERDUE</span><span class="sec-rule"></span><span class="sec-note">’ + due.length + ’ overdue</span></div><div class="session-grid">’ + due.map(sessCard).join(””) + ‘</div>’;
+if (soon.length) html += ‘<div class="sec-head"><span class="sec-title" style="color:var(--yellow)">DUE SOON</span><span class="sec-rule"></span><span class="sec-note">within 3 days</span></div><div class="session-grid">’ + soon.map(sessCard).join(””) + ‘</div>’;
+if (ok.length)   html += ‘<div class="sec-head"><span class="sec-title">UPCOMING</span><span class="sec-rule"></span></div><div class="session-grid">’ + ok.map(sessCard).join(””) + ‘</div>’;
+if (done.length) html += ‘<div class="sec-head"><span class="sec-title" style="color:var(--green)">COMPLETED</span><span class="sec-rule"></span><span class="sec-note">’ + done.length + ’ done</span></div><div class="session-grid">’ + done.map(sessCard).join(””) + ‘</div>’;
 
-el.innerHTML = html || `<div class="empty-msg">no retests scheduled</div>`;
+el.innerHTML = html || ‘<div class="empty-msg">no retests scheduled</div>’;
 }
 
-// ── Topics ─────────────────────────────────────────────
+// ── Topics ────────────────────────────────────────────
 function renderTopics() {
-const el = document.getElementById(“tab-topics”);
-const tl = topicList();
-let html = ` <div class="sec-head"><span class="sec-title">ADD TOPIC</span><span class="sec-rule"></span></div> <div class="add-topic-row"> <input class="form-inp" id="new-topic-name" placeholder="Topic name..." style="flex:1;min-width:200px;" /> <select class="form-inp" id="new-topic-stream" style="width:130px;"> <option value="renal">RENAL</option> <option value="gim">GIM</option> </select> <button class="btn-primary" onclick="addTopic()">ADD ▸</button> </div>`;
+var el = document.getElementById(“tab-topics”);
+var tl = topicList();
+var html = ‘<div class="sec-head"><span class="sec-title">ADD TOPIC</span><span class="sec-rule"></span></div>’ +
+‘<div class="add-topic-row">’ +
+‘<input class="form-inp" id="new-topic-name" placeholder="Topic name..." style="flex:1;min-width:200px;" />’ +
+‘<select class="form-inp" id="new-topic-stream" style="width:130px;">’ +
+‘<option value="renal">RENAL</option>’ +
+‘<option value="gim">GIM</option>’ +
+‘</select>’ +
+‘<button class="btn-primary" onclick="addTopic()">ADD \u25B8</button>’ +
+‘</div>’;
 
-[“renal”,“gim”].forEach(stream => {
-const filtered = tl.filter(t => t.stream === stream);
-html += `<div class="sec-head" style="margin-top:14px;"> <span class="sec-title" style="color:var(--${stream})">${STREAM_LABELS[stream]}</span> <span class="sec-rule"></span> <span class="sec-note">${filtered.length} topics</span> </div> <div class="topic-grid"> ${filtered.map(t =>`
-<div class="topic-card">
-<div>
-<div class="topic-name">${t.name}</div>
-<div class="topic-stream ${t.stream}">${STREAM_LABELS[t.stream]||t.stream.toUpperCase()}</div>
-</div>
-<button class="topic-del" onclick="deleteTopic('${t.id}')">✕</button>
-</div>`).join("")} </div>`;
+[“renal”,“gim”].forEach(function(stream) {
+var filtered = tl.filter(function(t){ return t.stream === stream; });
+html += ‘<div class="sec-head" style="margin-top:14px;">’ +
+‘<span class="sec-title" style="color:var(--' + stream + ')">’ + STREAM_LABELS[stream] + ‘</span>’ +
+‘<span class="sec-rule"></span>’ +
+‘<span class="sec-note">’ + filtered.length + ’ topics</span>’ +
+‘</div>’ +
+‘<div class="topic-grid">’;
+filtered.forEach(function(t) {
+html += ‘<div class="topic-card">’ +
+‘<div>’ +
+‘<div class="topic-name">’ + t.name + ‘</div>’ +
+‘<div class="topic-stream ' + t.stream + '">’ + (STREAM_LABELS[t.stream]||t.stream.toUpperCase()) + ‘</div>’ +
+‘</div>’ +
+‘<button class="topic-del" onclick="deleteTopic(\'' + t.id + '\')">\u2715</button>’ +
+‘</div>’;
+});
+html += ‘</div>’;
 });
 
 el.innerHTML = html;
 }
 
-// ── #6 Session card with badges ───────────────────────
+// ── Session card ──────────────────────────────────────
 function sessCard(s) {
-const topic = topics[s.topicId] || { name: s.topicId || “Unknown”, stream: “renal” };
-const rs    = retestStatus(s);
-const rl    = retestLabel(s);
-const stars = [1,2,3,4,5].map(n =>
-`<span class="conf-star ${n<=s.confidence?'lit':'dim'}">${n<=s.confidence?'★':'☆'}</span>`
-).join(””);
+var topic = topics[s.topicId] || { name: s.topicId || “Unknown”, stream: “renal” };
+var rs    = retestStatus(s);
+var rl    = retestLabel(s);
+var stars = ‘’;
+for (var n = 1; n <= 5; n++) {
+stars += ‘<span class="conf-star ' + (n<=s.confidence?'lit':'dim') + '">’ + (n<=s.confidence?’\u2605’:’\u2606’) + ‘</span>’;
+}
 
-// #6 Badge display for session types
-const typeArr = Array.isArray(s.sessionTypes)
+var typeArr = Array.isArray(s.sessionTypes)
 ? s.sessionTypes
 : s.sessionType ? [s.sessionType] : [“study”];
-const typeBadges = typeArr.map(t =>
-`<span style="font-size:8px;color:var(--grey);border:1px solid var(--border2);padding:1px 5px;margin-right:3px;">${t.toUpperCase()}</span>`
-).join(””);
+var typeBadges = typeArr.map(function(t) {
+return ‘<span style="font-size:8px;color:var(--grey);border:1px solid var(--border2);padding:1px 5px;margin-right:3px;">’ + t.toUpperCase() + ‘</span>’;
+}).join(””);
 
-// #3 Duration display
-const dur = s.duration ? `${s.duration}min` : “90min”;
+var dur = s.duration ? s.duration + “min” : “90min”;
 
-// Retest urgency styling
-const retestStyle = rs === “due”
-? `color:var(--pink);animation:tpulse 2s ease-in-out infinite;`
-: rs === “soon” ? `color:var(--yellow);` : `color:var(--grey2);`;
+var retestStyle = rs === “due”
+? “color:var(–pink);animation:tpulse 2s ease-in-out infinite;”
+: rs === “soon” ? “color:var(–yellow);” : “color:var(–grey2);”;
 
-return `<div class="sess-card stream-${topic.stream} ${rs==='due'?'retest-due':rs==='soon'?'retest-soon':''}"> <div class="sess-head"> <div class="sess-topic">${topic.name}</div> <span class="sess-stream ${topic.stream}">${STREAM_LABELS[topic.stream]||topic.stream.toUpperCase()}</span> </div> <div class="sess-meta"> ${new Date(s.date).toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})} &nbsp;·&nbsp; ${dur} &nbsp;·&nbsp; ${typeBadges} </div> ${s.notes ?`<div class="sess-notes">${s.notes}</div>`: ""} ${s.attachment ?`
-<a class="sess-attachment" href="${s.attachment.url}" target="_blank" rel="noopener">
-<span class="sess-attachment-icon">📎</span>
-<span class="sess-attachment-name">${s.attachment.name}</span>
-<span style="font-size:8px;color:var(--grey2)">${(s.attachment.size/1024).toFixed(0)}KB ↗</span>
-</a>`: ""} <div class="sess-footer"> <div> <div class="conf-stars">${stars}</div> <div class="sess-retest" style="${retestStyle}">${rl}</div> </div> <div class="sess-actions"> ${!s.retestDone && s.retestDate ?`<button class="sess-btn" onclick="markRetested('${s.id}')">✓ RETESTED</button>` : ""} <button class="sess-btn danger" onclick="deleteSession('${s.id}')">✕</button> </div> </div> </div>`;
+var cardClass = “sess-card stream-” + topic.stream + (rs===‘due’?’ retest-due’:rs===‘soon’?’ retest-soon’:’’);
+
+var html = ‘<div class="' + cardClass + '">’ +
+‘<div class="sess-head">’ +
+‘<div class="sess-topic">’ + topic.name + ‘</div>’ +
+‘<span class="sess-stream ' + topic.stream + '">’ + (STREAM_LABELS[topic.stream]||topic.stream.toUpperCase()) + ‘</span>’ +
+‘</div>’ +
+‘<div class="sess-meta">’ +
+new Date(s.date).toLocaleDateString(“en-GB”,{weekday:“short”,day:“2-digit”,month:“short”,year:“numeric”}) +
+’ \u00B7 ’ + dur + ’ \u00B7 ’ + typeBadges +
+‘</div>’;
+
+if (s.notes) {
+html += ‘<div class="sess-notes">’ + s.notes + ‘</div>’;
+}
+if (s.attachment) {
+html += ‘<a class="sess-attachment" href="' + s.attachment.url + '" target="_blank" rel="noopener">’ +
+‘<span class="sess-attachment-icon">\uD83D\uDCCE</span>’ +
+‘<span class="sess-attachment-name">’ + s.attachment.name + ‘</span>’ +
+‘<span style="font-size:8px;color:var(--grey2)">’ + (s.attachment.size/1024).toFixed(0) + ‘KB \u2197</span>’ +
+‘</a>’;
+}
+
+html += ‘<div class="sess-footer">’ +
+‘<div>’ +
+‘<div class="conf-stars">’ + stars + ‘</div>’ +
+‘<div class="sess-retest" style="' + retestStyle + '">’ + rl + ‘</div>’ +
+‘</div>’ +
+‘<div class="sess-actions">’;
+if (!s.retestDone && s.retestDate) {
+html += ‘<button class="sess-btn" onclick="markRetested(\'' + s.id + '\')">\u2713 RETESTED</button>’;
+}
+html += ‘<button class="sess-btn danger" onclick="deleteSession(\'' + s.id + '\')">\u2715</button>’ +
+‘</div></div></div>’;
+
+return html;
 }
 
 // ══════════════════════════════════════════════════════
 //  INTERACTIONS
 // ══════════════════════════════════════════════════════
 function handleFileSelect(input) {
-const file = input.files[0];
+var file = input.files[0];
 if (!file) return;
-const prog    = document.getElementById(“upload-progress”);
-const progBar = document.getElementById(“upload-progress-bar”);
-const preview = document.getElementById(“attached-file-preview”);
-prog.style.display = “block”;
-progBar.style.width = “0%”;
-preview.innerHTML = `<div style="font-size:9px;color:var(--grey2);margin-top:5px;">// uploading ${file.name}...</div>`;
+var prog    = document.getElementById(“upload-progress”);
+var progBar = document.getElementById(“upload-progress-bar”);
+var preview = document.getElementById(“attached-file-preview”);
 
-// #5 Store file temporarily — will use real session ID on save
 window._pendingFileData = file;
 pendingFile = { name: file.name, size: file.size, pending: true };
-prog.style.display = “none”;
-preview.innerHTML = ` <div class="attached-file"> <span class="attached-file-name">📎 ${file.name}</span> <span class="attached-file-size">${(file.size/1024).toFixed(0)}KB</span> <button class="attached-file-del" onclick="clearPendingFile()">✕</button> </div>`;
+if (prog) prog.style.display = “none”;
+preview.innerHTML = ‘<div class="attached-file">’ +
+’<span class="attached-file-name">\uD83D\uDCCE ’ + file.name + ‘</span>’ +
+‘<span class="attached-file-size">’ + (file.size/1024).toFixed(0) + ‘KB</span>’ +
+‘<button class="attached-file-del" onclick="clearPendingFile()">\u2715</button>’ +
+‘</div>’;
 }
 
 function clearPendingFile() {
 pendingFile = null;
 window._pendingFileData = null;
-const preview = document.getElementById(“attached-file-preview”);
+var preview = document.getElementById(“attached-file-preview”);
 if (preview) preview.innerHTML = “”;
-const input = document.getElementById(“f-file”);
+var input = document.getElementById(“f-file”);
 if (input) input.value = “”;
 }
 
 function setConf(n) {
 selConfidence = n;
-const row = document.getElementById(“star-row”);
+var row = document.getElementById(“star-row”);
 if (row) {
-row.querySelectorAll(”.star”).forEach((b, i) => {
+row.querySelectorAll(”.star”).forEach(function(b, i) {
 b.className = “star” + (i < n ? “ lit” : “”);
-b.textContent = i < n ? “★” : “☆”;
+b.textContent = i < n ? “\u2605” : “\u2606”;
 });
 }
-const hint = document.getElementById(“retest-hint”);
-if (hint) hint.textContent = `// retest in ~${retestDaysFromConf(n)} days`;
+var hint = document.getElementById(“retest-hint”);
+if (hint) hint.textContent = “// retest in ~“ + retestDaysFromConf(n) + “ days”;
 }
 
 function saveSession() {
-const topicId = document.getElementById(“f-topic”)?.value;
+var topicId = (document.getElementById(“f-topic”) || {}).value;
 if (!topicId) { alert(“Please select a topic”); return; }
 
-const date  = document.getElementById(“f-date”).value;
-const notes = document.getElementById(“f-notes”).value.trim();
-const sessionTypes = [“study”,“quiz”,“teach”].filter(t =>
-document.getElementById(`f-type-${t}`)?.checked
-);
+var date  = document.getElementById(“f-date”).value;
+var notes = (document.getElementById(“f-notes”).value || “”).trim();
+var sessionTypes = [“study”,“quiz”,“teach”].filter(function(t) {
+var cb = document.getElementById(“f-type-” + t);
+return cb && cb.checked;
+});
 if (!sessionTypes.length) sessionTypes.push(“study”);
 
-// #3 Capture actual duration from timer
-const duration = timerStartTime
+var duration = timerStartTime
 ? Math.round((Date.now() - timerStartTime) / 60000)
 : 90;
 
-// #1 Adaptive retest — find last session for this topic to get previous interval
-const prevSess = sessionList().find(s => s.topicId === topicId && s.interval);
-const prevInterval = prevSess?.interval || 7;
-const days = nextRetestDays(selConfidence, prevInterval);
-const d = new Date(date); d.setDate(d.getDate() + days);
-const retestDate = d.toISOString().split(“T”)[0];
+var prevSess = sessionList().find(function(s){ return s.topicId === topicId && s.interval; });
+var prevInterval = (prevSess && prevSess.interval) || 7;
+var days = nextRetestDays(selConfidence, prevInterval);
+var d = new Date(date); d.setDate(d.getDate() + days);
+var retestDate = d.toISOString().split(“T”)[0];
 
-const payload = {
-topicId, date, sessionTypes, notes, duration,
+var payload = {
+topicId: topicId, date: date, sessionTypes: sessionTypes, notes: notes, duration: duration,
 confidence: selConfidence,
-interval: days,       // #1 store interval for next session
-retestDate, retestDone: false,
+interval: days,
+retestDate: retestDate, retestDone: false,
 createdAt: Date.now(),
 };
 
 if (!window._stx_fb) return;
 
-// #5 Save session first, then upload file using real session ID
-const newRef = window._stx_fb.push(window._stx_fb.sessRef, payload);
-const sessionId = newRef.key;
+var newRef = window._stx_fb.push(window._stx_fb.sessRef, payload);
+var sessionId = newRef.key;
 
 if (window._pendingFileData && sessionId && window.uploadSessionFile) {
-const file = window._pendingFileData;
-const prog = document.getElementById(“upload-progress”);
+var file = window._pendingFileData;
+var prog = document.getElementById(“upload-progress”);
 if (prog) prog.style.display = “block”;
 
 ```
 window.uploadSessionFile(
   file, sessionId,
-  pct => { const bar = document.getElementById("upload-progress-bar"); if (bar) bar.style.width = `${pct}%`; },
-  fileData => {
-    // Attach file URL to saved session
-    const { db, ref, update } = window._stx_fb;
-    update(ref(db, `studySessions/${sessionId}`), { attachment: fileData });
+  function(pct) { var bar = document.getElementById("upload-progress-bar"); if (bar) bar.style.width = pct + "%"; },
+  function(fileData) {
+    var fb = window._stx_fb;
+    fb.update(fb.ref(fb.db, "studySessions/" + sessionId), { attachment: fileData });
   },
-  err => console.error("Upload failed:", err)
+  function(err) { console.error("Upload failed:", err); }
 );
 ```
 
@@ -1071,12 +1101,12 @@ clearForm();
 }
 
 function clearForm() {
-const d = document.getElementById(“f-date”);
-const t = document.getElementById(“f-topic”);
-const ts = document.getElementById(“f-topic-search”);
-const n = document.getElementById(“f-notes”);
-const f = document.getElementById(“f-file”);
-const p = document.getElementById(“attached-file-preview”);
+var d = document.getElementById(“f-date”);
+var t = document.getElementById(“f-topic”);
+var ts = document.getElementById(“f-topic-search”);
+var n = document.getElementById(“f-notes”);
+var f = document.getElementById(“f-file”);
+var p = document.getElementById(“attached-file-preview”);
 if (d) d.value = new Date().toISOString().split(“T”)[0];
 if (t) t.value = “”;
 if (ts) ts.value = “”;
@@ -1092,33 +1122,31 @@ renderLog();
 function deleteSession(id) {
 if (!confirm(“Delete this session?”)) return;
 if (window._stx_fb) {
-const { db, ref, remove } = window._stx_fb;
-remove(ref(db, `studySessions/${id}`));
+var fb = window._stx_fb;
+fb.remove(fb.ref(fb.db, “studySessions/” + id));
 }
 }
 
 function markRetested(id) {
-const sess = sessions[id];
+var sess = sessions[id];
 if (!sess) return;
-// #1 On retest, prompt for new confidence and compute next interval
-const newConf = parseInt(prompt(“Rate your recall (1–5):”) || “0”);
+var newConf = parseInt(prompt(“Rate your recall (1\u20135):”) || “0”);
 if (!newConf || newConf < 1 || newConf > 5) return;
-const nextDays = nextRetestDays(newConf, sess.interval || 7);
-const nd = new Date(); nd.setDate(nd.getDate() + nextDays);
-const nextDate = nd.toISOString().split(“T”)[0];
+var nextDays = nextRetestDays(newConf, sess.interval || 7);
+var nd = new Date(); nd.setDate(nd.getDate() + nextDays);
+var nextDate = nd.toISOString().split(“T”)[0];
 
 if (window._stx_fb) {
-const { db, ref, update } = window._stx_fb;
-update(ref(db, `studySessions/${id}`), {
+var fb = window._stx_fb;
+fb.update(fb.ref(fb.db, “studySessions/” + id), {
 retestDone: true, retestedAt: Date.now(),
 retestConfidence: newConf,
 });
-// Push a new session entry for the next interval
-window._stx_fb.push(window._stx_fb.sessRef, {
+fb.push(fb.sessRef, {
 topicId: sess.topicId,
 date: new Date().toISOString().split(“T”)[0],
 sessionTypes: [“quiz”],
-notes: `Retest of session from ${sess.date}`,
+notes: “Retest of session from “ + sess.date,
 confidence: newConf,
 interval: nextDays,
 retestDate: nextDate,
@@ -1131,79 +1159,118 @@ isRetest: true,
 }
 
 function addTopic() {
-const name   = document.getElementById(“new-topic-name”)?.value.trim();
-const stream = document.getElementById(“new-topic-stream”)?.value;
+var name   = (document.getElementById(“new-topic-name”) || {}).value;
+if (name) name = name.trim();
+var stream = (document.getElementById(“new-topic-stream”) || {}).value;
 if (!name) return;
-if (window._stx_fb) window._stx_fb.push(window._stx_fb.topicRef, { name, stream });
+if (window._stx_fb) window._stx_fb.push(window._stx_fb.topicRef, { name: name, stream: stream });
 document.getElementById(“new-topic-name”).value = “”;
 }
 
 function deleteTopic(id) {
 if (!confirm(“Delete this topic?”)) return;
 if (window._stx_fb) {
-const { db, ref, remove } = window._stx_fb;
-remove(ref(db, `studyTopics/${id}`));
+var fb = window._stx_fb;
+fb.remove(fb.ref(fb.db, “studyTopics/” + id));
 }
 }
 
 // ══════════════════════════════════════════════════════
 //  PLAN
 // ══════════════════════════════════════════════════════
-let plan = {};
-
 function planList() {
 return Object.entries(window._stx_plan || {})
-.map(([id, p]) => ({ id, …p }))
-.sort((a, b) => a.createdAt - b.createdAt);
+.map(function(e) { return Object.assign({id: e[0]}, e[1]); })
+.sort(function(a, b) { return a.createdAt - b.createdAt; });
 }
 
 function renderPlan() {
-const el   = document.getElementById(“tab-plan”);
-const list = planList();
-const tl   = topicList();
-const MAX  = 5;
+var el   = document.getElementById(“tab-plan”);
+var list = planList();
+var tl   = topicList();
+var MAX  = 5;
 
-let html = ` <div class="sec-head"> <span class="sec-title">PLANNED SESSIONS</span> <span class="sec-rule"></span> <span class="sec-note">${list.length} / ${MAX} slots used</span> </div>`;
+var html = ‘<div class="sec-head">’ +
+‘<span class="sec-title">PLANNED SESSIONS</span>’ +
+‘<span class="sec-rule"></span>’ +
+‘<span class="sec-note">’ + list.length + ’ / ’ + MAX + ’ slots used</span>’ +
+‘</div>’;
 
-// Add form — only if under limit
 if (list.length < MAX) {
-html += ` <div class="log-form" style="margin-bottom:20px;"> <div style="font-size:8px;color:var(--grey);letter-spacing:0.12em;margin-bottom:10px;"> ── plan a future session · activate it when you're ready to study </div> <div class="form-grid"> <div class="form-field"> <label class="form-label">topic *</label> ${makeTopicSearch("plan-topic-search", "plan-topic")} </div> <div class="form-field"> <label class="form-label">note (optional)</label> <input class="form-inp" id="plan-note" placeholder="// e.g. focus on pathology" /> </div> </div> <div style="display:flex;justify-content:flex-end;margin-top:10px;"> <button class="btn-primary" onclick="addPlan()">ADD TO PLAN ▸</button> </div> </div>`;
+html += ‘<div class="log-form" style="margin-bottom:20px;">’ +
+‘<div style="font-size:8px;color:var(--grey);letter-spacing:0.12em;margin-bottom:10px;">\u2500\u2500 plan a future session \u00B7 activate it when you're ready to study</div>’ +
+‘<div class="form-grid">’ +
+‘<div class="form-field">’ +
+‘<label class="form-label">topic *</label>’ +
+makeTopicSearch(“plan-topic-search”, “plan-topic”) +
+‘</div>’ +
+‘<div class="form-field">’ +
+‘<label class="form-label">note (optional)</label>’ +
+‘<input class="form-inp" id="plan-note" placeholder="// e.g. focus on pathology" />’ +
+‘</div>’ +
+‘</div>’ +
+‘<div style="display:flex;justify-content:flex-end;margin-top:10px;">’ +
+‘<button class="btn-primary" onclick="addPlan()">ADD TO PLAN \u25B8</button>’ +
+‘</div>’ +
+‘</div>’;
 } else {
-html += ` <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--yellow); padding:10px 14px;margin-bottom:20px;font-size:10px;color:var(--yellow);"> // max ${MAX} planned sessions — activate or remove one before adding more </div>`;
+html += ‘<div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--yellow);padding:10px 14px;margin-bottom:20px;font-size:10px;color:var(--yellow);">’ +
+‘// max ’ + MAX + ’ planned sessions \u2014 activate or remove one before adding more</div>’;
 }
 
 if (!list.length) {
-html += `<div class="empty-msg">no planned sessions — add one above</div>`;
+html += ‘<div class="empty-msg">no planned sessions \u2014 add one above</div>’;
 } else {
-html += `<div class="session-grid">`;
-list.forEach(p => {
-const topic = topics[p.topicId] || { name: “Unknown”, stream: “renal” };
-html += `<div class="sess-card stream-${topic.stream}" style="border-left-color:var(--cyan);opacity:${p.activated?0.45:1};"> <div class="sess-head"> <div class="sess-topic">${topic.name}</div> <span class="sess-stream ${topic.stream}">${STREAM_LABELS[topic.stream]||topic.stream.toUpperCase()}</span> </div> <div class="sess-meta" style="color:var(--cyan);"> ▸ PLANNED · ${new Date(p.createdAt).toLocaleDateString("en-GB",{day:"2-digit",month:"short"})} </div> ${p.note ?`<div class="sess-notes">${p.note}</div>`: ""} <div class="sess-footer" style="margin-top:8px;"> <div style="display:flex;gap:6px;"> ${!p.activated ?`
-<button class="btn-primary" style="font-size:9px;padding:4px 12px;"
-onclick="activatePlan('${p.id}','${p.topicId}')">
-▶ ACTIVATE
-</button>`:`
-<span style="font-size:9px;color:var(--green);letter-spacing:0.08em;">✓ ACTIVATED</span>`} </div> <button class="sess-btn danger" onclick="deletePlan('${p.id}')">✕</button> </div> </div>`;
+html += ‘<div class="session-grid">’;
+list.forEach(function(p) {
+var topic = topics[p.topicId] || { name: “Unknown”, stream: “renal” };
+html += ‘<div class="sess-card stream-' + topic.stream + '" style="border-left-color:var(--cyan);opacity:' + (p.activated?0.45:1) + ';">’ +
+‘<div class="sess-head">’ +
+‘<div class="sess-topic">’ + topic.name + ‘</div>’ +
+‘<span class="sess-stream ' + topic.stream + '">’ + (STREAM_LABELS[topic.stream]||topic.stream.toUpperCase()) + ‘</span>’ +
+‘</div>’ +
+‘<div class="sess-meta" style="color:var(--cyan);">’ +
+’\u25B8 PLANNED \u00B7 ’ + new Date(p.createdAt).toLocaleDateString(“en-GB”,{day:“2-digit”,month:“short”}) +
+‘</div>’;
+if (p.note) {
+html += ‘<div class="sess-notes">’ + p.note + ‘</div>’;
+}
+html += ‘<div class="sess-footer" style="margin-top:8px;">’ +
+‘<div style="display:flex;gap:6px;">’;
+if (!p.activated) {
+html += ‘<button class="btn-primary" style="font-size:9px;padding:4px 12px;" onclick="activatePlan(\'' + p.id + '\',\'' + p.topicId + '\')">\u25B6 ACTIVATE</button>’;
+} else {
+html += ‘<span style="font-size:9px;color:var(--green);letter-spacing:0.08em;">\u2713 ACTIVATED</span>’;
+}
+html += ‘</div>’ +
+‘<button class="sess-btn danger" onclick="deletePlan(\'' + p.id + '\')">\u2715</button>’ +
+‘</div></div>’;
 });
-html += `</div>`;
+html += ‘</div>’;
 }
 
 // Slot indicators
-html += `<div style="display:flex;gap:6px;margin-top:16px;"> ${Array.from({length:MAX}, (_,i) =>`
-<div style=“flex:1;height:4px;border-radius:2px;background:${i < list.length ? “var(–cyan)” : “var(–border2)”}”></div>
-`).join("")} </div> <div style="font-size:8px;color:var(--grey2);margin-top:5px;letter-spacing:0.08em;"> ${MAX - list.length} slot${MAX - list.length !== 1 ? "s" : ""} remaining </div>`;
+html += ‘<div style="display:flex;gap:6px;margin-top:16px;">’;
+for (var i = 0; i < MAX; i++) {
+html += ‘<div style="flex:1;height:4px;border-radius:2px;background:' + (i < list.length ? 'var(--cyan)' : 'var(--border2)') + '"></div>’;
+}
+html += ‘</div>’ +
+‘<div style="font-size:8px;color:var(--grey2);margin-top:5px;letter-spacing:0.08em;">’ +
+(MAX - list.length) + ’ slot’ + (MAX - list.length !== 1 ? ‘s’ : ‘’) + ’ remaining’ +
+‘</div>’;
 
 el.innerHTML = html;
 }
 
 function addPlan() {
-const topicId = document.getElementById(“plan-topic”)?.value;
+var topicId = (document.getElementById(“plan-topic”) || {}).value;
 if (!topicId) { alert(“Please select a topic”); return; }
-const note = document.getElementById(“plan-note”)?.value.trim();
+var note = (document.getElementById(“plan-note”) || {}).value;
+if (note) note = note.trim();
 if (planList().length >= 5) { alert(“Max 5 planned sessions”); return; }
 if (window._stx_fb) {
 window._stx_fb.push(window._stx_fb.planRef, {
-topicId, note, createdAt: Date.now(), activated: false
+topicId: topicId, note: note || “”, createdAt: Date.now(), activated: false
 });
 }
 }
@@ -1211,29 +1278,26 @@ topicId, note, createdAt: Date.now(), activated: false
 function deletePlan(id) {
 if (!confirm(“Remove this planned session?”)) return;
 if (window._stx_fb) {
-const { db, ref, remove } = window._stx_fb;
-remove(ref(db, `studyPlan/${id}`));
+var fb = window._stx_fb;
+fb.remove(fb.ref(fb.db, “studyPlan/” + id));
 }
 }
 
 function activatePlan(id, topicId) {
-// Pre-fill log form with this topic, open timer, switch to log tab
 if (window._stx_fb) {
-const { db, ref, update } = window._stx_fb;
-update(ref(db, `studyPlan/${id}`), { activated: true });
+var fb = window._stx_fb;
+fb.update(fb.ref(fb.db, “studyPlan/” + id), { activated: true });
 }
-// Switch to log tab and pre-select topic
 setTab(“log”);
-setTimeout(() => {
-const hidden = document.getElementById(“f-topic”);
-const search = document.getElementById(“f-topic-search”);
+setTimeout(function() {
+var hidden = document.getElementById(“f-topic”);
+var search = document.getElementById(“f-topic-search”);
 if (hidden) hidden.value = topicId;
 if (search) {
-const topic = topics[topicId];
-if (topic) search.value = `[${STREAM_LABELS[topic.stream]}] ${topic.name}`;
+var topic = topics[topicId];
+if (topic) search.value = “[” + STREAM_LABELS[topic.stream] + “] “ + topic.name;
 }
-// Open timer automatically
-const panel = document.getElementById(“timer-panel”);
+var panel = document.getElementById(“timer-panel”);
 if (panel && !panel.classList.contains(“show”)) {
 panel.classList.add(“show”);
 updateTimerDisplay();
