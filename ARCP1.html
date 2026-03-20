@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>ARCP // Portfolio Tracker</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="ARCP" />
+  <meta name="theme-color" content="#060810" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
+
+  <script type="module">
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
+      authDomain:        "task-monitor-bd7ee.firebaseapp.com",
+      databaseURL:       "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:         "task-monitor-bd7ee",
+      storageBucket:     "task-monitor-bd7ee.firebasestorage.app",
+      messagingSenderId: "544624731364",
+      appId:             "1:544624731364:web:419d52fa061c5c7b4f38f1",
+    };
+
+    const app     = initializeApp(firebaseConfig);
+    signInAnonymously(getAuth(app)).then(c => console.log("UID:", c.user.uid));
+    const db      = getDatabase(app);
+    const dataRef = ref(db, "arcpData");
+
+    window._arcp_fb = { update, dataRef };
+
+    onValue(dataRef, snap => {
+      const data = snap.val();
+      let changed = false;
+
+      if (data) {
+        Object.entries(data).forEach(([k, remote]) => {
+          if (remote === "__reset__" || (typeof remote === "object" && remote?.value === "__reset__")) {
+            localStorage.removeItem(k);
+            localStorage.removeItem(k + "__ts");
+            changed = true;
+            return;
+          }
+          if (typeof remote === "string") {
+            localStorage.setItem(k, remote);
+            localStorage.setItem(k + "__ts", "0");
+            changed = true;
+            return;
+          }
+          if (!remote || typeof remote !== "object") return;
+          const remoteTs = remote.ts || 0;
+          const localTs  = parseInt(localStorage.getItem(k + "__ts") || "0");
+          if (remoteTs > localTs) {
+            localStorage.setItem(k, remote.value);
+            localStorage.setItem(k + "__ts", remoteTs);
+            changed = true;
+          }
+        });
+      }
+
+      window.dispatchEvent(new CustomEvent("arcp-sync", { detail: { ok: true, changed } }));
+    }, err => {
+      console.error("Firebase error:", err);
+      window.dispatchEvent(new CustomEvent("arcp-sync", { detail: { ok: false } }));
+    });
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:    #060810; --bg2: #0a0d18; --bg3: #0f1220; --bg4: #141828;
+      --blue:  #4f9eff; --blue2: #3a7acc; --blue3: #264d8a; --blue4: #162d57; --blue5: #0a1a36;
+      --gim:   #4f9eff; --renal: #a78bfa;
+      --green: #39ff14; --amber: #ffb000; --red: #ff4444; --dim: #2a3560; --dimmest: #0d1020;
+      --font: 'JetBrains Mono', 'Courier New', monospace;
+      --scanline: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);
+    }
+    html, body { background:var(--bg); color:var(--blue); font-family:var(--font); font-size:13px; min-height:100vh; background-image:var(--scanline); }
+    body { text-shadow: 0 0 6px rgba(79,158,255,0.2); }
+    ::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-track { background:var(--bg); } ::-webkit-scrollbar-thumb { background:var(--blue4); }
+
+    #header { background:var(--bg2); border-bottom:2px solid var(--blue3); }
+    .header-top { display:flex; align-items:stretch; border-bottom:1px solid var(--blue5); flex-wrap:wrap; }
+    .header-logo { padding:14px 24px; border-right:1px solid var(--blue5); display:flex; flex-direction:column; justify-content:center; }
+    .logo-line1 { font-size:20px; font-weight:700; color:var(--blue); letter-spacing:0.08em; line-height:1; }
+    .logo-line1 span { color:var(--blue3); }
+    .logo-line2 { font-size:8px; color:var(--blue3); letter-spacing:0.3em; margin-top:4px; }
+    .logo-sub   { font-size:9px; color:var(--blue2); letter-spacing:0.12em; margin-top:3px; }
+    .arcp-countdown { padding:14px 20px; border-right:1px solid var(--blue5); display:flex; flex-direction:column; justify-content:center; }
+    .countdown-val { font-size:26px; font-weight:700; color:var(--blue); line-height:1; }
+    .countdown-val.warn  { color:var(--amber); text-shadow:0 0 8px rgba(255,176,0,0.4); }
+    .countdown-val.alert { color:var(--red);   text-shadow:0 0 8px rgba(255,68,68,0.4); }
+    .countdown-key { font-size:8px; color:var(--blue3); letter-spacing:0.18em; margin-top:3px; }
+    .als-status { padding:14px 20px; border-right:1px solid var(--blue5); display:flex; flex-direction:column; justify-content:center; }
+    .als-val { font-size:12px; font-weight:700; color:var(--blue); line-height:1.3; }
+    .als-val.warn  { color:var(--amber); }
+    .als-val.alert { color:var(--red); animation:pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+    .als-key { font-size:8px; color:var(--blue3); letter-spacing:0.15em; margin-top:3px; }
+    .readiness-bar-wrap { flex:1; padding:14px 20px; display:flex; flex-direction:column; justify-content:center; }
+    .readiness-label { display:flex; justify-content:space-between; font-size:9px; color:var(--blue3); letter-spacing:0.15em; margin-bottom:6px; }
+    .readiness-pct { color:var(--blue); font-weight:700; font-size:11px; }
+    .bar-track { height:6px; background:var(--blue5); border-radius:3px; overflow:hidden; }
+    .bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--blue3),var(--blue)); transition:width 0.5s ease; }
+    .bar-fill.warn { background:linear-gradient(90deg,#8a5500,var(--amber)); }
+    .bar-fill.good { background:linear-gradient(90deg,#0a4a1a,var(--green)); }
+    .year-sel-wrap { padding:14px 20px; border-left:1px solid var(--blue5); display:flex; flex-direction:column; justify-content:center; gap:6px; }
+    .year-label { font-size:8px; color:var(--blue3); letter-spacing:0.18em; }
+    .year-btns  { display:flex; gap:4px; }
+    .year-btn { padding:4px 10px; background:transparent; border:1px solid var(--blue5); color:var(--dim); font-family:var(--font); font-size:10px; cursor:pointer; transition:all 0.12s; }
+    .year-btn:hover { border-color:var(--blue3); color:var(--blue2); }
+    .year-btn.active { background:var(--blue4); border-color:var(--blue); color:var(--blue); font-weight:700; }
+    .year-btn.locked { border-color:var(--green); color:var(--green); opacity:0.7; }
+    .year-btn.locked.active { background:rgba(57,255,20,0.08); border-color:var(--green); color:var(--green); font-weight:700; opacity:1; }
+
+    .locked-banner { background:rgba(57,255,20,0.05); border:1px solid rgba(57,255,20,0.2); border-left:3px solid var(--green); padding:12px 18px; display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; cursor:pointer; }
+    .locked-banner:hover { background:rgba(57,255,20,0.08); }
+    .locked-banner-left { display:flex; flex-direction:column; gap:4px; }
+    .locked-outcome { font-size:11px; font-weight:700; color:var(--green); letter-spacing:0.1em; }
+    .locked-note    { font-size:9px; color:var(--dim); letter-spacing:0.08em; }
+    .locked-toggle  { font-size:10px; color:var(--dim); letter-spacing:0.1em; }
+
+    .outcome-selector { display:flex; align-items:center; gap:8px; margin-bottom:20px; padding:10px 14px; background:var(--bg2); border:1px solid var(--blue5); flex-wrap:wrap; }
+    .outcome-label { font-size:9px; color:var(--blue3); letter-spacing:0.15em; }
+    .outcome-select { background:var(--bg); border:1px solid var(--blue4); color:var(--blue); font-family:var(--font); font-size:11px; padding:5px 10px; outline:none; cursor:pointer; }
+    .outcome-select option { background:var(--bg2); }
+    .outcome-clear { background:none; border:1px solid var(--blue5); color:var(--dim); font-family:var(--font); font-size:9px; padding:4px 10px; cursor:pointer; letter-spacing:0.08em; transition:all 0.1s; }
+    .outcome-clear:hover { border-color:var(--red); color:var(--red); }
+
+    #tabbar { background:var(--bg3); border-bottom:1px solid var(--blue4); padding:0 24px; display:flex; align-items:stretch; overflow-x:auto; }
+    .tab { padding:10px 16px; background:transparent; border:none; border-bottom:2px solid transparent; color:var(--dim); font-family:var(--font); font-size:10px; letter-spacing:0.1em; cursor:pointer; transition:all 0.12s; white-space:nowrap; }
+    .tab:hover { color:var(--blue2); }
+    .tab.active { color:var(--blue); border-bottom-color:var(--blue); }
+    .tab.gim-tab.active   { color:var(--gim);   border-bottom-color:var(--gim); }
+    .tab.renal-tab.active { color:var(--renal); border-bottom-color:var(--renal); }
+
+    #main { padding:20px 24px 80px; }
+
+    .sec-head { display:flex; align-items:baseline; gap:12px; margin-bottom:12px; padding-bottom:6px; border-bottom:1px solid var(--blue5); }
+    .sec-title { font-size:10px; font-weight:700; letter-spacing:0.2em; color:var(--blue2); }
+    .sec-title.gim   { color:var(--gim); }
+    .sec-title.renal { color:var(--renal); }
+    .sec-title.both  { color:#aabbff; }
+    .sec-rule { flex:1; height:1px; background:var(--blue5); }
+    .sec-note { font-size:9px; color:var(--dim); letter-spacing:0.08em; }
+
+    .req-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:10px; margin-bottom:24px; }
+    .req-card { background:var(--bg2); border:1px solid var(--blue5); border-left:3px solid; padding:12px 14px; transition:background 0.1s; }
+    .req-card:hover { background:var(--bg3); }
+    .req-card.met     { border-left-color:var(--green); }
+    .req-card.partial { border-left-color:var(--amber); }
+    .req-card.unmet   { border-left-color:var(--red); }
+    .req-card.na      { border-left-color:var(--dim); opacity:0.45; }
+    .req-card.warn    { border-left-color:var(--amber); }
+
+    .req-label { font-size:11px; color:#c8d8ff; font-weight:500; margin-bottom:8px; line-height:1.3; }
+    .badge { font-size:8px; font-weight:700; letter-spacing:0.1em; padding:1px 5px; border-radius:2px; margin-left:5px; vertical-align:middle; }
+    .badge-gim   { background:rgba(79,158,255,0.15);  color:var(--gim);   border:1px solid rgba(79,158,255,0.3); }
+    .badge-renal { background:rgba(167,139,250,0.15); color:var(--renal); border:1px solid rgba(167,139,250,0.3); }
+    .badge-both  { background:rgba(170,187,255,0.1);  color:#aabbff;      border:1px solid rgba(170,187,255,0.25); }
+
+    .req-progress { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+    .req-track { flex:1; height:4px; background:var(--blue5); border-radius:2px; overflow:hidden; }
+    .req-fill { height:100%; border-radius:2px; transition:width 0.4s ease; }
+    .req-fill.met     { background:var(--green); }
+    .req-fill.partial { background:var(--amber); }
+    .req-fill.unmet   { background:var(--red); }
+
+    .req-count { font-size:11px; font-weight:700; white-space:nowrap; min-width:60px; text-align:right; }
+    .req-count.met     { color:var(--green); }
+    .req-count.partial { color:var(--amber); }
+    .req-count.unmet   { color:var(--red); }
+
+    .req-controls { display:flex; align-items:center; gap:6px; margin-top:8px; flex-wrap:wrap; }
+    .req-input { background:var(--bg); border:1px solid var(--blue4); color:var(--blue); font-family:var(--font); font-size:12px; padding:4px 8px; width:65px; outline:none; transition:border-color 0.12s; caret-color:var(--blue); }
+    .req-input:focus { border-color:var(--blue); }
+    .req-input.date-inp { width:130px; }
+    .req-unit   { font-size:9px; color:var(--dim); letter-spacing:0.08em; }
+    .req-target { font-size:9px; color:var(--blue3); letter-spacing:0.06em; }
+
+    .req-check { display:flex; align-items:center; gap:8px; margin-top:8px; }
+    .chk { width:16px; height:16px; border:1px solid var(--blue4); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--green); transition:all 0.15s; flex-shrink:0; }
+    .chk.checked { background:var(--blue4); border-color:var(--blue); box-shadow:0 0 6px rgba(79,158,255,0.3); }
+    .chk-label { font-size:10px; color:var(--dim); letter-spacing:0.06em; cursor:pointer; }
+
+    .req-deadline { font-size:8px; color:var(--dim); margin-top:5px; letter-spacing:0.08em; }
+    .req-deadline.soon { color:var(--amber); }
+    .req-deadline.past { color:var(--red); }
+
+    .dops-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:8px; margin-bottom:24px; }
+    .dops-card { background:var(--bg2); border:1px solid var(--blue5); border-left:3px solid var(--dim); padding:10px 12px; display:flex; align-items:center; gap:10px; transition:background 0.1s; }
+    .dops-card:hover { background:var(--bg3); }
+    .dops-card.done { border-left-color:var(--green); }
+    .dops-label { flex:1; font-size:11px; color:#c8d8ff; line-height:1.3; }
+    .dops-chk { width:16px; height:16px; border:1px solid var(--blue4); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--green); transition:all 0.15s; flex-shrink:0; }
+    .dops-chk.checked { background:var(--blue4); border-color:var(--blue); box-shadow:0 0 6px rgba(79,158,255,0.3); }
+
+    .summary-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:8px; margin-bottom:24px; }
+    .sum-cell { background:var(--bg2); border:1px solid var(--blue5); padding:12px 14px; text-align:center; }
+    .sum-val { font-size:26px; font-weight:700; line-height:1; }
+    .sum-val.green { color:var(--green); text-shadow:0 0 8px rgba(57,255,20,0.25); }
+    .sum-val.amber { color:var(--amber); }
+    .sum-val.red   { color:var(--red); }
+    .sum-val.blue  { color:var(--blue); }
+    .sum-key { font-size:8px; color:var(--blue3); letter-spacing:0.15em; margin-top:4px; }
+
+    #statusbar { position:fixed; bottom:0; left:0; right:0; background:var(--bg3); border-top:1px solid var(--blue4); padding:6px 24px; display:flex; justify-content:space-between; align-items:center; z-index:100; }
+    .status-left { display:flex; gap:16px; flex-wrap:wrap; }
+    .status-item { font-size:9px; color:var(--blue3); letter-spacing:0.1em; }
+    .status-item strong { color:var(--blue); }
+    .btn-reset { background:transparent; border:1px solid var(--blue5); color:var(--dim); font-family:var(--font); font-size:9px; letter-spacing:0.1em; padding:3px 10px; cursor:pointer; }
+    .btn-reset:hover { border-color:var(--red); color:var(--red); }
+
+    @media (max-width:640px) {
+      .req-grid, .dops-grid { grid-template-columns:1fr; }
+      .year-sel-wrap { display:none; }
+      #main { padding:14px 16px 80px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <div class="header-top">
+    <div class="header-logo">
+      <div class="logo-line1">ARCP<span>//</span>01</div>
+      <div class="logo-line2">PORTFOLIO TRACKER</div>
+      <div class="logo-sub">ST4–ST7 · GIM + RENAL</div>
+    </div>
+    <div class="arcp-countdown">
+      <div class="countdown-val" id="arcp-days">--</div>
+      <div class="countdown-key">DAYS TO ARCP</div>
+    </div>
+    <div class="als-status">
+      <div class="als-val" id="als-display">NOT SET</div>
+      <div class="als-key">ALS EXPIRY</div>
+    </div>
+    <div class="readiness-bar-wrap">
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.2em;margin-bottom:8px;">ARCP READINESS</div>
+      <div class="readiness-label">
+        <span style="color:var(--renal)">RENAL</span>
+        <span class="readiness-pct" id="readiness-pct-renal" style="color:var(--renal)">0%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="readiness-bar-renal" style="width:0%;background:linear-gradient(90deg,#5b21b6,var(--renal))"></div></div>
+      <div class="readiness-label" style="margin-top:8px;">
+        <span style="color:var(--gim)">GIM</span>
+        <span class="readiness-pct" id="readiness-pct-gim">0%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="readiness-bar-gim" style="width:0%"></div></div>
+      <div style="font-size:8px;color:var(--dim);margin-top:5px;letter-spacing:0.08em;">
+        <span id="readiness-detail">-- of -- requirements met</span>
+      </div>
+    </div>
+    <div class="year-sel-wrap" style="border-left:1px solid var(--blue5);padding:14px 20px;display:flex;flex-direction:column;justify-content:center;gap:8px;">
+      <div class="year-label">TRAINING YEAR</div>
+      <div class="year-btns" id="year-btns">
+        <button class="year-btn active" data-year="ST4" onclick="setYear('ST4')">ST4</button>
+        <button class="year-btn" data-year="ST5" onclick="setYear('ST5')">ST5</button>
+        <button class="year-btn" data-year="ST6" onclick="setYear('ST6')">ST6</button>
+        <button class="year-btn" data-year="ST7" onclick="setYear('ST7')">ST7</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tabbar">
+  <button class="tab renal-tab active" onclick="setTab('renal')">RENAL</button>
+  <button class="tab gim-tab"          onclick="setTab('gim')">GIM</button>
+  <button class="tab"                  onclick="setTab('admin')">ADMIN / DOCS</button>
+  <button class="tab"                  onclick="setTab('overview')">OVERVIEW</button>
+  <button class="tab"                  onclick="setTab('cips')">CiPs</button>
+</div>
+
+<div id="main">
+  <div id="tab-gim"      style="display:none"></div>
+  <div id="tab-renal"    style="display:none"></div>
+  <div id="tab-admin"    style="display:none"></div>
+  <div id="tab-overview" style="display:none"></div>
+  <div id="tab-cips"     style="display:none"></div>
+</div>
+
+<div id="statusbar">
+  <div class="status-left">
+    <span class="status-item">Year: <strong id="sb-year">ST4</strong></span>
+    <span class="status-item">ARCP: <strong id="sb-arcp">Dec 2026</strong></span>
+    <span class="status-item" id="sync-indicator" style="color:var(--amber)">● CONNECTING</span>
+  </div>
+  <button class="btn-reset" onclick="resetYearData()">RESET YEAR DATA</button>
+</div>
+
+<script>
+const ARCP_DEFAULTS = {
+  ST4: "2026-12-01",
+  ST5: "2027-12-01",
+  ST6: "2028-12-01",
+  ST7: "2029-12-01",
+};
+
+const YEARS = ["ST4","ST5","ST6","ST7"];
+let currentYear = localStorage.getItem("pft_current_year") || "ST4";
+let currentTab  = "gim";
+
+const DOPS_PROCEDURES = [
+  "Advanced cardiopulmonary resuscitation (CPR)",
+  "Direct current (DC) cardioversion",
+  "Temporary cardiac pacing using an external device",
+  "Central venous cannulation (internal jugular or subclavian)",
+  "Access to circulation for resuscitation (femoral vein or intraosseous)",
+  "Pleural aspiration for fluid (diagnostic)",
+  "Pleural aspiration (pneumothorax)",
+  "Intercostal drain for pneumothorax",
+  "Intercostal drain for effusion",
+  "Nasogastric (NG) tube",
+  "Ascitic tap",
+  "Abdominal paracentesis",
+  "Lumbar puncture",
+];
+
+const REQS = {
+  gim_acats: { label:"GIM ACATs", stream:"gim", type:"number", target:4, unit:"ACATs", deadline:"annual", note:"GIM consultants, labelled GIM" },
+  gim_mcrs:  { label:"GIM MCRs",  stream:"gim", type:"number", target:2, unit:"MCRs",  deadline:"annual", note:"GIM consultants only, labelled GIM" },
+  gim_sles:  { label:"GIM SLEs (miniCEX / CBD)", stream:"gim", type:"number", target:3, unit:"SLEs", deadline:"annual", note:"Labelled GIM by GIM consultants" },
+  gim_msf_raters: { label:"GIM MSF Raters", stream:"gim", type:"number", target:4, unit:"raters", deadline:"annual", note:"4 GIM raters in MSF (part of 12 total)" },
+  gim_es_report:  { label:"GIM Educational Supervisor Report", stream:"gim", type:"checkbox", deadline:"annual", note:"1 per year — even without a GIM placement" },
+  gim_clinics:       { label:"GIM Clinics",          stream:"gim", type:"number", target:20,  unit:"clinics",  deadline:"ST7", cumulative:true, note:"20 total by end of training" },
+  gim_cpd_hours:     { label:"IM Study Leave / CPD Hours", stream:"gim", type:"number", target:75,  unit:"hours",   deadline:"ST7", cumulative:true, note:"75hrs total, 20 in final year" },
+  gim_sim_hours:     { label:"Simulation Hours",     stream:"gim", type:"number", target:12,  unit:"hours",   deadline:"ST7", cumulative:true, note:"12hrs total (GIMME/NOTES), 4 in final year" },
+  gim_acute_patients:{ label:"Acute GIM Patients",   stream:"gim", type:"number", target:750, unit:"patients",deadline:"ST7", cumulative:true, note:"750 total, 100 in final year" },
+  gim_teaching_obs:  { label:"Teaching Observation", stream:"gim", type:"checkbox", deadline:"ST7", sharedWith:"renal_teaching_obs",   note:"Can be done in Renal — applies to GIM" },
+  gim_patient_survey:{ label:"Patient Survey",       stream:"gim", type:"checkbox", deadline:"ST7", sharedWith:"renal_patient_survey_st7", note:"Shared with Renal — only needed once" },
+  gim_qip:           { label:"GIM QIP + QIPAT",      stream:"gim", type:"checkbox", deadline:"ST7", note:"By end of ST7" },
+  renal_mcrs:         { label:"Renal MCRs", stream:"renal", type:"number", target:4,  unit:"MCRs",   deadline:"annual", note:"Renal consultants, labelled renal" },
+  renal_msf_raters:   { label:"Renal MSF Raters", stream:"renal", type:"number", target:8, unit:"raters", deadline:"annual", note:"8 renal raters + 4 GIM = 12 total (3 must be consultants)" },
+  renal_sles:         { label:"Renal SLEs (ACATs / CBD / miniCEX)", stream:"renal", type:"number", target:15, unit:"SLEs", deadline:"annual", note:"Minimum 15 per year across all SLE types" },
+  renal_teaching_log: { label:"Renal Teaching Hours Log", stream:"renal", type:"checkbox", deadline:"annual", note:"Log on spreadsheet in library" },
+  renal_teaching_involvement: { label:"Evidence of Teaching Involvement", stream:"renal", type:"checkbox", deadline:"annual", note:"Required every year" },
+  renal_es_report:    { label:"Renal Educational Supervisor Report", stream:"renal", type:"checkbox", deadline:"annual", note:"1 per year" },
+  renal_temp_lines:   { label:"Temporary Line Competency", stream:"renal", type:"checkbox", deadline:"ST4", note:"Competent by end of ST4" },
+  renal_eseneph:      { label:"ESENeph Exam", stream:"renal", type:"eseneph", deadline:"ST6", note:"Held once a year — book early. Alert 1 year before due." },
+  renal_patient_survey_st5: { label:"Patient Survey (ST5)", stream:"renal", type:"checkbox", deadline:"ST5", note:"With patient survey summary tool by ES" },
+  renal_qip:          { label:"Renal QIP + QIPAT", stream:"renal", type:"checkbox", deadline:"ST6", note:"By end of ST6" },
+  renal_teaching_obs: { label:"Teaching Observation", stream:"renal", type:"checkbox", deadline:"ST6", sharesTo:"gim_teaching_obs", note:"Applies to GIM — ticking this ticks GIM too" },
+  renal_patient_survey_st7: { label:"Patient Survey (ST7)", stream:"renal", type:"checkbox", deadline:"ST7", sharesTo:"gim_patient_survey", note:"Applies to GIM — ticking this ticks GIM too" },
+  renal_mgmt_course:  { label:"Management & Leadership Course", stream:"renal", type:"checkbox", deadline:"ST7", note:"By end of ST7" },
+  renal_teaching_course: { label:"Teaching Course", stream:"renal", type:"checkbox", deadline:"ST7", note:"By end of ST7" },
+};
+
+const ADMIN_DOCS = [
+  { id:"doc_form_r",   label:"Form R in Library",         note:"Required each year" },
+  { id:"doc_cct_calc", label:"CCT Calculator in Library", note:"Update each year (especially if LTFT)" },
+  { id:"doc_firth",    label:"Updated Firth Calculator",  note:"Update every year" },
+];
+
+const LOCKING_OUTCOMES = ["1","2","6","8"];
+function outcomeKey(yr)    { return `pft_arcp_outcome_${yr}`; }
+function getOutcome(yr)    { return localStorage.getItem(outcomeKey(yr)) || ""; }
+function setOutcome(yr, v) { localStorage.setItem(outcomeKey(yr), v); fbPush(outcomeKey(yr), v); renderYearBtns(); renderAll(); }
+function isYearLocked(yr)  { return LOCKING_OUTCOMES.includes(getOutcome(yr)); }
+
+function fbPush(key, val) {
+  if (!window._arcp_fb) return;
+  const { update, dataRef } = window._arcp_fb;
+  const ts = Date.now();
+  localStorage.setItem(key + "__ts", ts);
+  update(dataRef, { [key]: { value: String(val), ts } }).catch(e => console.error("FB write error:", e));
+}
+
+function getARCPDate(yr) {
+  const custom = localStorage.getItem(`pft_arcp_date_${yr}`);
+  return custom ? new Date(custom) : new Date(ARCP_DEFAULTS[yr]);
+}
+function setARCPDate(yr, val) {
+  localStorage.setItem(`pft_arcp_date_${yr}`, val);
+  fbPush(`pft_arcp_date_${yr}`, val);
+  updateCountdown();
+  renderAdmin();
+}
+
+function sKey(reqId) {
+  const req = REQS[reqId];
+  if (!req) return `pft_${currentYear}_${reqId}`;
+  if (req.cumulative) return `pft_cum_${reqId}`;
+  if (req.type === "checkbox" && req.deadline !== "annual") return `pft_milestone_${reqId}`;
+  if (req.type === "eseneph") return `pft_milestone_${reqId}`;
+  return `pft_${currentYear}_${reqId}`;
+}
+function dopsKey(proc) { return `pft_dops_${proc.replace(/\s+/g,'_').toLowerCase()}`; }
+function adminKey(id)  { return `pft_admin_${currentYear}_${id}`; }
+function alsKey()      { return "pft_als_expiry"; }
+
+function getVal(reqId) {
+  const req = REQS[reqId];
+  if (!req) return false;
+  const raw = localStorage.getItem(sKey(reqId));
+  if (req.type === "checkbox") return raw === "true";
+  return raw ? parseInt(raw) : 0;
+}
+function setVal(reqId, val) {
+  const k = sKey(reqId);
+  localStorage.setItem(k, String(val));
+  fbPush(k, val);
+  const req = REQS[reqId];
+  if (req && req.sharesTo) {
+    const k2 = sKey(req.sharesTo);
+    localStorage.setItem(k2, String(val));
+    fbPush(k2, val);
+  }
+  updateReadiness();
+}
+function getDops(proc)   { return localStorage.getItem(dopsKey(proc)) === "true"; }
+function setDops(proc,v) { const k = dopsKey(proc); localStorage.setItem(k, String(v)); fbPush(k, v); updateDopsCount(); }
+function getAdmin(id)    { return localStorage.getItem(adminKey(id)) === "true"; }
+function setAdmin(id,v)  { const k = adminKey(id); localStorage.setItem(k, String(v)); fbPush(k, v); }
+function getALS()        { return localStorage.getItem(alsKey()) || ""; }
+function setALS(val)     { localStorage.setItem(alsKey(), val); fbPush(alsKey(), val); updateALSDisplay(); }
+
+function getStatus(reqId) {
+  const req = REQS[reqId];
+  if (!req) return "unmet";
+  if (req.type === "eseneph") return esenephStatus();
+  const val = getVal(reqId);
+  if (req.type === "checkbox") {
+    if (isDeadlineFuture(req.deadline) && !val) return "na";
+    return val ? "met" : (isDeadlinePast(req.deadline) ? "unmet" : "partial");
+  }
+  if (val >= req.target) return "met";
+  if (val > 0)           return "partial";
+  return "unmet";
+}
+function isDeadlinePast(d)   { return d !== "annual" && YEARS.indexOf(d) < YEARS.indexOf(currentYear); }
+function isDeadlineFuture(d) { return d !== "annual" && YEARS.indexOf(d) > YEARS.indexOf(currentYear); }
+function deadlineLabel(d) {
+  if (d === "annual") return "// required this year";
+  if (isDeadlinePast(d)) return `// deadline was ${d}`;
+  if (YEARS.indexOf(d) === YEARS.indexOf(currentYear)) return `// due this year (${d})`;
+  return `// due by ${d}`;
+}
+function deadlineClass(d) {
+  if (d === "annual") return "";
+  if (isDeadlinePast(d)) return "past";
+  if (YEARS.indexOf(d) === YEARS.indexOf(currentYear)) return "soon";
+  return "";
+}
+
+function updateCountdown() {
+  const arcp  = getARCPDate(currentYear);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const days  = Math.round((arcp - today) / 86400000);
+  const el    = document.getElementById("arcp-days");
+  el.textContent = days > 0 ? days : "PAST";
+  el.className   = "countdown-val" + (days < 60 ? " alert" : days < 120 ? " warn" : "");
+  document.getElementById("sb-arcp").textContent = arcp.toLocaleDateString("en-GB",{month:"short",year:"numeric"});
+}
+
+function updateALSDisplay() {
+  const val = getALS();
+  const el  = document.getElementById("als-display");
+  if (!val) { el.textContent = "NOT SET"; el.className = "als-val"; return; }
+  const expiry = new Date(val);
+  const today  = new Date(); today.setHours(0,0,0,0);
+  const daysTo = Math.round((expiry - today) / 86400000);
+  const expired = daysTo < 0;
+  el.textContent = expired
+    ? `EXPIRED ${expiry.toLocaleDateString("en-GB",{month:"short",year:"numeric"})}`
+    : `${expiry.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})} (${daysTo}d)`;
+  el.className = "als-val" + (expired ? " alert" : daysTo < 183 ? " warn" : "");
+}
+
+function updateReadiness() {
+  const relevant = Object.keys(REQS).filter(id => {
+    const req = REQS[id];
+    if (req.deadline === "annual") return true;
+    return YEARS.indexOf(req.deadline) <= YEARS.indexOf(currentYear);
+  });
+  const gimIds    = relevant.filter(id => REQS[id].stream === "gim");
+  const gimMet    = gimIds.filter(id => getStatus(id) === "met").length;
+  const dopsDone  = DOPS_PROCEDURES.filter(p => getDops(p)).length;
+  const dopsTotal = DOPS_PROCEDURES.length;
+  const gimTotal  = gimIds.length + dopsTotal;
+  const gimMetAll = gimMet + dopsDone;
+  const gimPct    = gimTotal > 0 ? Math.round((gimMetAll / gimTotal) * 100) : 0;
+
+  const renalIds   = relevant.filter(id => REQS[id].stream === "renal");
+  const renalMet   = renalIds.filter(id => getStatus(id) === "met").length;
+  const renalTotal = renalIds.length;
+  const renalPct   = renalTotal > 0 ? Math.round((renalMet / renalTotal) * 100) : 0;
+
+  const adminDone  = ADMIN_DOCS.filter(doc => getAdmin(doc.id)).length;
+  const adminTotal = ADMIN_DOCS.length;
+  const alsOk      = getALS() && (() => { const d = Math.round((new Date(getALS()) - new Date()) / 86400000); return d > 0; })() ? 1 : 0;
+
+  document.getElementById("readiness-pct-gim").textContent = `${gimPct}%`;
+  const gimBar = document.getElementById("readiness-bar-gim");
+  gimBar.style.width = `${gimPct}%`;
+  gimBar.className = "bar-fill" + (gimPct >= 80 ? " good" : gimPct >= 50 ? "" : " warn");
+
+  document.getElementById("readiness-pct-renal").textContent = `${renalPct}%`;
+  const renalBar = document.getElementById("readiness-bar-renal");
+  renalBar.style.width = `${renalPct}%`;
+  renalBar.style.background = renalPct >= 80
+    ? "linear-gradient(90deg,#2d1b69,#39ff14)"
+    : renalPct >= 50
+    ? "linear-gradient(90deg,#5b21b6,var(--renal))"
+    : "linear-gradient(90deg,#7c2d12,#ff4444)";
+
+  document.getElementById("readiness-detail").textContent =
+    `GIM ${gimMetAll}/${gimTotal} · Renal ${renalMet}/${renalTotal} · Admin ${adminDone + alsOk}/${adminTotal + 1}`;
+}
+
+function updateDopsCount() {
+  const done = DOPS_PROCEDURES.filter(p => getDops(p)).length;
+  const el   = document.getElementById("dops-count");
+  if (el) el.textContent = `${done} / ${DOPS_PROCEDURES.length} completed`;
+}
+
+function renderYearBtns() {
+  document.querySelectorAll(".year-btn").forEach(b => {
+    const yr = b.dataset.year;
+    b.className = "year-btn" + (yr === currentYear ? " active" : "") + (isYearLocked(yr) ? " locked" : "");
+    b.title = isYearLocked(yr) ? `${yr} — Outcome ${getOutcome(yr)} (locked)` : "";
+  });
+}
+
+function setYear(yr) {
+  currentYear = yr;
+  localStorage.setItem("pft_current_year", yr);
+  renderYearBtns();
+  document.getElementById("sb-year").textContent = yr;
+  renderAll();
+}
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.getAttribute("onclick").includes(`'${tab}'`)));
+  ["gim","renal","admin","overview","cips"].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === tab ? "block" : "none";
+  });
+  if (tab === "cips") renderCIPs();
+}
+
+function renderAll() {
+  updateCountdown();
+  updateALSDisplay();
+  renderYearBtns();
+  renderGIM();
+  renderRenal();
+  renderAdmin();
+  renderOverview();
+  updateReadiness();
+  updateDopsCount();
+  if (currentTab === "cips") renderCIPs();
+}
+
+function renderOutcomeSelector(el) {
+  const outcome = getOutcome(currentYear);
+  const locked  = isYearLocked(currentYear);
+  const sel = document.createElement("div");
+  sel.className = "outcome-selector";
+  sel.innerHTML = `
+    <span class="outcome-label">ARCP OUTCOME</span>
+    <select class="outcome-select" onchange="setOutcome('${currentYear}', this.value)">
+      <option value=""  ${!outcome?"selected":""}>-- not yet --</option>
+      <option value="1" ${outcome==="1"?"selected":""}>Outcome 1 — Satisfactory progress ✓</option>
+      <option value="2" ${outcome==="2"?"selected":""}>Outcome 2 — Development needs identified ✓</option>
+      <option value="3" ${outcome==="3"?"selected":""}>Outcome 3 — Inadequate progress</option>
+      <option value="4" ${outcome==="4"?"selected":""}>Outcome 4 — Released from programme</option>
+      <option value="5" ${outcome==="5"?"selected":""}>Outcome 5 — Incomplete evidence</option>
+      <option value="6" ${outcome==="6"?"selected":""}>Outcome 6 — Completion of training ✓</option>
+      <option value="8" ${outcome==="8"?"selected":""}>Outcome 8 — Out of programme ✓</option>
+    </select>
+    ${outcome ? `<button class="outcome-clear" onclick="setOutcome('${currentYear}','')">CLEAR</button>` : ""}
+    ${locked  ? `<span style="font-size:9px;color:var(--green);letter-spacing:0.1em;">// year locked</span>` : ""}`;
+  el.appendChild(sel);
+}
+
+function renderLockedBanner(el, tabId) {
+  const outcome = getOutcome(currentYear);
+  const LABELS  = { "1":"Outcome 1 — Satisfactory progress","2":"Outcome 2 — Development needs identified","6":"Outcome 6 — Completion of training","8":"Outcome 8 — Out of programme" };
+  const storageKey = `pft_collapsed_${currentYear}_${tabId}`;
+  const collapsed  = localStorage.getItem(storageKey) !== "false";
+  const banner = document.createElement("div");
+  banner.className = "locked-banner";
+  banner.onclick = () => { localStorage.setItem(storageKey, String(!collapsed)); renderAll(); };
+  banner.innerHTML = `
+    <div class="locked-banner-left">
+      <div class="locked-outcome">✓ ${LABELS[outcome]}</div>
+      <div class="locked-note">// ${currentYear} ARCP complete · click to ${collapsed?"expand":"collapse"} details</div>
+    </div>
+    <span class="locked-toggle">${collapsed ? "▸ EXPAND" : "▾ COLLAPSE"}</span>`;
+  el.appendChild(banner);
+  return !collapsed;
+}
+
+function renderGIM() {
+  const el = document.getElementById("tab-gim");
+  el.innerHTML = "";
+  renderOutcomeSelector(el);
+  if (isYearLocked(currentYear)) { const show = renderLockedBanner(el, "gim"); if (!show) return; }
+  el.appendChild(makeSection("ANNUAL REQUIREMENTS","gim",`For ${currentYear} — resets each year`,["gim_mcrs","gim_acats","gim_sles","gim_msf_raters","gim_es_report"]));
+  el.appendChild(makeSection("CUMULATIVE TARGETS","gim","Tracks toward end-of-training total",["gim_clinics","gim_cpd_hours","gim_sim_hours","gim_acute_patients"]));
+  el.appendChild(makeSection("MILESTONES","gim","One-off requirements — carry forward once achieved",["gim_teaching_obs","gim_patient_survey","gim_qip"]));
+  const dopsDone = DOPS_PROCEDURES.filter(p => getDops(p)).length;
+  const dopsTotal = DOPS_PROCEDURES.length;
+  const dopsHead = document.createElement("div");
+  dopsHead.className = "sec-head";
+  dopsHead.innerHTML = `<span class="sec-title gim">GIM DOPS PROCEDURES</span><span class="sec-rule"></span><span class="sec-note" id="dops-count">${dopsDone} / ${dopsTotal} completed</span>`;
+  el.appendChild(dopsHead);
+  const dopsNote = document.createElement("div");
+  dopsNote.style.cssText = "font-size:9px;color:var(--dim);letter-spacing:0.08em;margin-bottom:14px;";
+  dopsNote.textContent = "// Competency once achieved is permanent — cumulative across all training years";
+  el.appendChild(dopsNote);
+  const dopsGrid = document.createElement("div");
+  dopsGrid.className = "dops-grid";
+  DOPS_PROCEDURES.forEach(proc => {
+    const done = getDops(proc);
+    const card = document.createElement("div");
+    card.className = `dops-card ${done ? "done" : ""}`;
+    card.id = `dops-${proc.replace(/\s+/g,'_')}`;
+    card.innerHTML = `<button class="dops-chk ${done?"checked":""}" onclick="toggleDops('${proc.replace(/'/g,"\\'")}')"> ${done?"✓":""}</button><span class="dops-label">${proc}</span>`;
+    dopsGrid.appendChild(card);
+  });
+  el.appendChild(dopsGrid);
+}
+
+function renderRenal() {
+  const el = document.getElementById("tab-renal");
+  el.innerHTML = "";
+  renderOutcomeSelector(el);
+  if (isYearLocked(currentYear)) { const show = renderLockedBanner(el, "renal"); if (!show) return; }
+  const sHead = document.createElement("div");
+  sHead.className = "sec-head";
+  sHead.innerHTML = `<span class="sec-title renal">ANNUAL REQUIREMENTS</span><span class="sec-rule"></span><span class="sec-note">For ${currentYear} — resets each year</span>`;
+  el.appendChild(sHead);
+  const annualGrid = document.createElement("div");
+  annualGrid.className = "req-grid";
+  ["renal_mcrs","renal_sles","renal_msf_raters","renal_teaching_log","renal_teaching_involvement","renal_es_report"].forEach(id => annualGrid.appendChild(makeCard(id, REQS[id])));
+  el.appendChild(annualGrid);
+  el.appendChild(makeSection("MILESTONES","renal","One-off requirements — deadlines shown",["renal_temp_lines","renal_eseneph","renal_patient_survey_st5","renal_qip","renal_teaching_obs","renal_patient_survey_st7","renal_mgmt_course","renal_teaching_course"]));
+}
+
+function renderAdmin() {
+  const el = document.getElementById("tab-admin");
+  el.innerHTML = "";
+  const alsHead = document.createElement("div");
+  alsHead.className = "sec-head";
+  alsHead.innerHTML = `<span class="sec-title both">ALS CERTIFICATE</span><span class="sec-rule"></span><span class="sec-note">6-month expiry alert</span>`;
+  el.appendChild(alsHead);
+  const alsCard = document.createElement("div");
+  const alsVal  = getALS();
+  const alsExpiry = alsVal ? new Date(alsVal) : null;
+  const today   = new Date(); today.setHours(0,0,0,0);
+  const daysTo  = alsExpiry ? Math.round((alsExpiry - today) / 86400000) : null;
+  const alsStatus = !alsVal ? "unmet" : daysTo < 0 ? "unmet" : daysTo < 183 ? "warn" : "met";
+  alsCard.className = `req-card ${alsStatus}`;
+  alsCard.innerHTML = `
+    <div class="req-label">ALS Certificate Expiry Date <span class="badge badge-both">GIM + RENAL</span></div>
+    <div class="req-controls" style="margin-top:8px;">
+      <input class="req-input date-inp" type="date" value="${alsVal}" onchange="setALS(this.value)" />
+      <span class="req-unit">expiry date</span>
+    </div>
+    <div class="req-deadline ${alsStatus==='warn'?'soon':alsStatus==='unmet'?'past':''}">
+      ${!alsVal ? "// not set — enter expiry date above" : daysTo < 0 ? `// !! EXPIRED ${Math.abs(daysTo)} days ago — renew immediately` : daysTo < 183 ? `// ⚠ expires in ${daysTo} days — renew within 6 months` : `// valid — expires in ${daysTo} days`}
+    </div>`;
+  el.appendChild(alsCard);
+  const docHead = document.createElement("div");
+  docHead.className = "sec-head";
+  docHead.style.marginTop = "24px";
+  docHead.innerHTML = `<span class="sec-title both">REQUIRED DOCUMENTS</span><span class="sec-rule"></span><span class="sec-note">For ${currentYear} — check each is up to date</span>`;
+  el.appendChild(docHead);
+  const docGrid = document.createElement("div");
+  docGrid.className = "req-grid";
+  ADMIN_DOCS.forEach(doc => {
+    const done = getAdmin(doc.id);
+    const card = document.createElement("div");
+    card.className = `req-card ${done?"met":"unmet"}`;
+    card.id = `admin-${doc.id}`;
+    card.innerHTML = `
+      <div class="req-label">${doc.label}<span class="badge badge-both">ANNUAL</span></div>
+      <div class="req-check">
+        <button class="chk ${done?"checked":""}" onclick="toggleAdmin('${doc.id}')">${done?"✓":""}</button>
+        <span class="chk-label" onclick="toggleAdmin('${doc.id}')">${done?"IN LIBRARY":"NOT YET DONE"}</span>
+      </div>
+      <div class="req-deadline">${doc.note}</div>`;
+    docGrid.appendChild(card);
+  });
+  el.appendChild(docGrid);
+  const arcpHead = document.createElement("div");
+  arcpHead.className = "sec-head";
+  arcpHead.style.marginTop = "24px";
+  arcpHead.innerHTML = `<span class="sec-title both">ARCP DATES</span><span class="sec-rule"></span><span class="sec-note">Override defaults if going LTFT</span>`;
+  el.appendChild(arcpHead);
+  const arcpGrid = document.createElement("div");
+  arcpGrid.className = "req-grid";
+  YEARS.forEach(yr => {
+    const custom = localStorage.getItem(`pft_arcp_date_${yr}`) || "";
+    const def    = ARCP_DEFAULTS[yr];
+    const card   = document.createElement("div");
+    card.className = "req-card met";
+    card.innerHTML = `
+      <div class="req-label">${yr} ARCP Date <span class="badge badge-both">ARCP</span></div>
+      <div class="req-controls" style="margin-top:8px;">
+        <input class="req-input date-inp" type="date" value="${custom||def}" onchange="setARCPDate('${yr}', this.value)" />
+      </div>
+      <div class="req-deadline">${custom?`// custom — ${new Date(custom).toLocaleDateString("en-GB",{month:"short",year:"numeric"})}`:"// default — update if LTFT"}</div>`;
+    arcpGrid.appendChild(card);
+  });
+  el.appendChild(arcpGrid);
+}
+
+function renderOverview() {
+  const el = document.getElementById("tab-overview");
+  el.innerHTML = "";
+  const allIds    = Object.keys(REQS);
+  const gimIds    = allIds.filter(id => REQS[id].stream === "gim");
+  const renalIds  = allIds.filter(id => REQS[id].stream === "renal");
+  const gimMet    = gimIds.filter(id => getStatus(id) === "met").length;
+  const renalMet  = renalIds.filter(id => getStatus(id) === "met").length;
+  const gimUnmet  = gimIds.filter(id => getStatus(id) === "unmet").length;
+  const renalUnmet= renalIds.filter(id => getStatus(id) === "unmet").length;
+  const dopsDone  = DOPS_PROCEDURES.filter(p => getDops(p)).length;
+  el.innerHTML = `
+    <div class="sec-head"><span class="sec-title">OVERVIEW — ${currentYear}</span><span class="sec-rule"></span></div>
+    <div class="summary-grid">
+      <div class="sum-cell"><div class="sum-val green">${gimMet}</div><div class="sum-key">GIM MET</div></div>
+      <div class="sum-cell"><div class="sum-val red">${gimUnmet}</div><div class="sum-key">GIM UNMET</div></div>
+      <div class="sum-cell"><div class="sum-val green">${renalMet}</div><div class="sum-key">RENAL MET</div></div>
+      <div class="sum-cell"><div class="sum-val red">${renalUnmet}</div><div class="sum-key">RENAL UNMET</div></div>
+      <div class="sum-cell"><div class="sum-val blue">${dopsDone}</div><div class="sum-key">DOPS DONE</div></div>
+      <div class="sum-cell"><div class="sum-val ${dopsDone===DOPS_PROCEDURES.length?'green':'amber'}">${DOPS_PROCEDURES.length-dopsDone}</div><div class="sum-key">DOPS LEFT</div></div>
+    </div>`;
+  const outstanding = allIds.filter(id => { const s = getStatus(id); return s==="unmet"||s==="partial"; });
+  if (outstanding.length > 0) {
+    el.appendChild(makeSection("OUTSTANDING / IN PROGRESS","gim","All items not yet fully met", outstanding));
+  } else {
+    el.innerHTML += `<div style="text-align:center;padding:40px;color:var(--green);font-size:13px;letter-spacing:0.1em;">✓ ALL REQUIREMENTS MET FOR ${currentYear}</div>`;
+  }
+}
+
+function makeSection(title, stream, note, reqIds) {
+  const wrap = document.createElement("div");
+  wrap.style.marginBottom = "24px";
+  const head = document.createElement("div");
+  head.className = "sec-head";
+  head.innerHTML = `<span class="sec-title ${stream}">${title}</span><span class="sec-rule"></span><span class="sec-note">${note}</span>`;
+  wrap.appendChild(head);
+  const grid = document.createElement("div");
+  grid.className = "req-grid";
+  reqIds.forEach(id => grid.appendChild(makeCard(id, REQS[id])));
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+function esenephKey() { return "pft_eseneph_date"; }
+function getEseneph() { return localStorage.getItem(esenephKey()) || ""; }
+function setEseneph(val) { localStorage.setItem(esenephKey(), val); fbPush(esenephKey(), val); updateReadiness(); renderRenal(); }
+
+function esenephStatus() {
+  if (currentYear === "ST4" || currentYear === "ST5") return "na";
+  const val = getEseneph();
+  if (currentYear === "ST7") return val ? "met" : "unmet";
+  if (!val) return "unmet";
+  const examDate = new Date(val);
+  const today    = new Date(); today.setHours(0,0,0,0);
+  return examDate <= today ? "met" : "partial";
+}
+
+function makeCard(reqId, req) {
+  if (req.type === "eseneph") {
+    const val    = getEseneph();
+    const status = esenephStatus();
+    const card   = document.createElement("div");
+    card.className = `req-card ${status}`;
+    card.id = `card-${reqId}`;
+    const today     = new Date(); today.setHours(0,0,0,0);
+    const alertDate = new Date("2027-12-01");
+    const daysToAlert = Math.round((alertDate - today) / 86400000);
+    const shouldAlert = daysToAlert < 366 && daysToAlert > 0;
+    const examDate  = val ? new Date(val) : null;
+    const examPast  = examDate && examDate <= today;
+    let statusNote = "// not yet booked", noteClass = "past";
+    if (examPast)         { statusNote = `// ✓ sat ${examDate.toLocaleDateString("en-GB",{month:"short",year:"numeric"})}`; noteClass = ""; }
+    else if (val)         { statusNote = `// booked ${examDate.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})}`; noteClass = "soon"; }
+    else if (shouldAlert) { statusNote = `// !! book now — exam within 1 year`; noteClass = "past"; }
+    let cardBody = "";
+    if (currentYear === "ST4" || currentYear === "ST5") {
+      cardBody = `<div class="req-controls" style="margin-top:8px;"><input class="req-input date-inp" type="date" value="${val}" placeholder="exam date" onchange="setEseneph(this.value)" /><span class="req-unit">exam date sat / to sit</span></div><div class="req-deadline ${noteClass}">${statusNote} · ${req.note}</div>`;
+    } else if (currentYear === "ST7") {
+      cardBody = `<div class="req-check" style="margin-top:8px;"><div class="chk ${val?"checked":""}" style="opacity:0.6;cursor:default;">${val?"✓":""}</div><span style="font-size:10px;color:${val?"var(--green)":"var(--red)"};letter-spacing:0.06em;">${val?`Sat ${examDate.toLocaleDateString("en-GB",{month:"short",year:"numeric"})}`:"!! Should have been completed in ST6"}</span></div><div class="req-deadline ${val?"":"past"}">// deadline was ST6 · ${req.note}</div>`;
+    } else {
+      cardBody = `${shouldAlert&&!val?`<div style="font-size:9px;color:var(--red);margin-bottom:6px;letter-spacing:0.08em;animation:pulse 2s ease-in-out infinite;">!! BOOK NOW — within 1 year of ST6 deadline</div>`:""}<div class="req-controls" style="margin-top:8px;"><input class="req-input date-inp" type="date" value="${val}" placeholder="exam date" onchange="setEseneph(this.value)" /><span class="req-unit">exam date sat / to sit</span></div><div class="req-deadline ${noteClass}">${statusNote} · ${req.note}</div>`;
+    }
+    card.innerHTML = `<div class="req-label">ESENeph Exam <span class="badge badge-renal">RENAL</span></div>${cardBody}`;
+    return card;
+  }
+  const val    = getVal(reqId);
+  const status = getStatus(reqId);
+  const card   = document.createElement("div");
+  card.className = `req-card ${status}`;
+  card.id = `card-${reqId}`;
+  const streamBadge = req.stream === "gim" ? `<span class="badge badge-gim">GIM</span>` : `<span class="badge badge-renal">RENAL</span>`;
+  const sharedNote  = req.sharesTo ? `<div style="font-size:8px;color:var(--renal);margin-top:3px;letter-spacing:0.08em;">// also applies to GIM</div>` : req.sharedWith ? `<div style="font-size:8px;color:var(--dim);margin-top:3px;letter-spacing:0.08em;">// auto-filled from Renal</div>` : "";
+  const deadlineHtml = `<div class="req-deadline ${deadlineClass(req.deadline)}">${deadlineLabel(req.deadline)}${req.note?` · ${req.note}`:""}</div>`;
+  if (req.type === "checkbox") {
+    card.innerHTML = `<div class="req-label">${req.label} ${streamBadge}</div>${sharedNote}<div class="req-check"><button class="chk ${val?"checked":""}" id="chk-${reqId}" onclick="toggleCheck('${reqId}')">${val?"✓":""}</button><span class="chk-label" onclick="toggleCheck('${reqId}')">${val?"COMPLETE":"NOT YET DONE"}</span></div>${deadlineHtml}`;
+  } else {
+    const pct    = Math.min(100, Math.round((val / req.target) * 100));
+    const cumTag = req.cumulative ? `<span style="font-size:8px;color:var(--dim);margin-left:4px;">(cumulative)</span>` : "";
+    card.innerHTML = `<div class="req-label">${req.label} ${streamBadge} ${cumTag}</div>${sharedNote}<div class="req-progress"><div class="req-track"><div class="req-fill ${status}" style="width:${pct}%"></div></div><span class="req-count ${status}">${val} / ${req.target}</span></div><div class="req-controls"><input class="req-input" type="number" min="0" value="${val}" onchange="updateNumber('${reqId}', this.value)" oninput="liveUpdate('${reqId}', this.value)" /><span class="req-unit">${req.unit}</span><span class="req-target">· target ${req.target}</span></div>${deadlineHtml}`;
+  }
+  return card;
+}
+
+function toggleCheck(reqId) {
+  const current = getVal(reqId);
+  setVal(reqId, !current);
+  refreshCard(reqId);
+  const req = REQS[reqId];
+  if (req && req.sharesTo) refreshCard(req.sharesTo);
+}
+
+function toggleDops(proc) {
+  const current = getDops(proc);
+  setDops(proc, !current);
+  const card = document.getElementById(`dops-${proc.replace(/\s+/g,'_')}`);
+  if (card) {
+    card.className = `dops-card ${!current?"done":""}`;
+    const chk = card.querySelector(".dops-chk");
+    if (chk) { chk.className = `dops-chk ${!current?"checked":""}`; chk.textContent = !current?"✓":""; }
+  }
+  updateDopsCount();
+}
+
+function toggleAdmin(id) {
+  const current = getAdmin(id);
+  setAdmin(id, !current);
+  const card = document.getElementById(`admin-${id}`);
+  if (card) {
+    const doc  = ADMIN_DOCS.find(d => d.id === id);
+    const done = !current;
+    const newCard = document.createElement("div");
+    newCard.className = `req-card ${done?"met":"unmet"}`;
+    newCard.id = `admin-${id}`;
+    newCard.innerHTML = `<div class="req-label">${doc.label}<span class="badge badge-both">ANNUAL</span></div><div class="req-check"><button class="chk ${done?"checked":""}" onclick="toggleAdmin('${id}')">${done?"✓":""}</button><span class="chk-label" onclick="toggleAdmin('${id}')">${done?"IN LIBRARY":"NOT YET DONE"}</span></div><div class="req-deadline">${doc.note}</div>`;
+    card.replaceWith(newCard);
+  }
+}
+
+function updateNumber(reqId, rawVal) { const val = Math.max(0, parseInt(rawVal)||0); setVal(reqId, val); refreshCard(reqId); }
+
+function liveUpdate(reqId, rawVal) {
+  const val    = Math.max(0, parseInt(rawVal)||0);
+  const req    = REQS[reqId];
+  const status = val >= req.target ? "met" : val > 0 ? "partial" : "unmet";
+  const pct    = Math.min(100, Math.round((val/req.target)*100));
+  const card   = document.getElementById(`card-${reqId}`);
+  if (!card) return;
+  const fill  = card.querySelector(".req-fill");
+  const count = card.querySelector(".req-count");
+  if (fill)  { fill.style.width = `${pct}%`; fill.className = `req-fill ${status}`; }
+  if (count) { count.textContent = `${val} / ${req.target}`; count.className = `req-count ${status}`; }
+  card.className = `req-card ${status}`;
+  setVal(reqId, val);
+}
+
+function refreshCard(reqId) {
+  const req  = REQS[reqId];
+  const card = document.getElementById(`card-${reqId}`);
+  if (card && req) card.replaceWith(makeCard(reqId, req));
+}
+
+function resetYearData() {
+  if (!confirm(`Reset all annual data for ${currentYear}? Cumulative and DOPS data will not be affected.`)) return;
+  const updates = {}, ts = Date.now();
+  Object.keys(REQS).forEach(id => {
+    if (!REQS[id].cumulative) {
+      const k = `pft_${currentYear}_${id}`;
+      localStorage.removeItem(k); localStorage.removeItem(k+"__ts");
+      updates[k] = { value:"__reset__", ts };
+    }
+  });
+  ADMIN_DOCS.forEach(doc => {
+    const k = adminKey(doc.id);
+    localStorage.removeItem(k); localStorage.removeItem(k+"__ts");
+    updates[k] = { value:"__reset__", ts };
+  });
+  if (window._arcp_fb) { const { update, dataRef } = window._arcp_fb; update(dataRef, updates).catch(e => console.error("FB reset error:", e)); }
+  renderAll();
+}
+
+renderAll();
+setTab("renal");
+document.getElementById("sb-year").textContent = currentYear;
+
+window.addEventListener("arcp-sync", e => {
+  const { ok, changed } = e.detail;
+  const indicator = document.getElementById("sync-indicator");
+  indicator.textContent = ok ? "● LIVE" : "● OFFLINE";
+  indicator.style.color = ok ? "var(--green)" : "var(--red)";
+  if (ok && changed) { const activeTab = currentTab || "gim"; renderAll(); setTab(activeTab); }
+});
+
+// ══════════════════════════════════════════════════════
+//  CiP DATA
+// ══════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════
+//  CiP DATA — JRCPTB Renal Medicine 2022 Curriculum
+// ══════════════════════════════════════════════════════
+
+// Entrustment level required per year (from ARCP decision aid)
+// GIM CiPs: m1-m8, Renal CiPs: r1-r6
+// Generic CiPs: no numeric level required — just "satisfactory"
+const CIP_YEAR_TARGETS = {
+  // GIM Clinical CiPs — from screenshot / ARCP decision aid
+  m1: { ST4:3, ST5:3, ST6:3, ST7:4 },
+  m2: { ST4:2, ST5:3, ST6:3, ST7:4 },
+  m3: { ST4:3, ST5:3, ST6:3, ST7:4 },
+  m4: { ST4:3, ST5:3, ST6:3, ST7:4 },
+  m5: { ST4:3, ST5:3, ST6:3, ST7:4 },
+  m6: { ST4:3, ST5:3, ST6:3, ST7:4 },
+  m7: { ST4:4, ST5:4, ST6:4, ST7:4 },
+  m8: { ST4:3, ST5:3, ST6:3, ST7:4 },
+  // Renal Specialty CiPs — from ARCP decision aid screenshot
+  r1: { ST4:2, ST5:2, ST6:3, ST7:4 },
+  r2: { ST4:2, ST5:2, ST6:3, ST7:4 },
+  r3: { ST4:2, ST5:2, ST6:3, ST7:4 },
+  r4: { ST4:2, ST5:2, ST6:3, ST7:4 },
+  r5: { ST4:2, ST5:2, ST6:3, ST7:4 },
+  r6: { ST4:2, ST5:2, ST6:3, ST7:4 },
+};
+
+// CiP definitions with curriculum-sourced evidence items
+const CIP_GROUPS = [
+  {
+    id: "generic",
+    label: "GENERIC CiPs",
+    tabId: "cips-generic-renal",
+    color: "var(--blue)",
+    entrustType: "satisfactory", // no numeric level
+    cips: [
+      {
+        id:"g1", label:"Function within NHS organisational & management systems",
+        evidence: ["MCR","MSF","Active role in governance structures","Management course","End of placement reports"]
+      },
+      {
+        id:"g2", label:"Deal with ethical and legal issues in clinical practice",
+        evidence: ["MCR","MSF","CbD","DOPS","Mini-CEX","ALS certificate","EOL care & capacity assessment","End of placement reports"]
+      },
+      {
+        id:"g3", label:"Communicate effectively & share decision making",
+        evidence: ["MCR","MSF","Patient survey","End of placement reports"]
+      },
+      {
+        id:"g4", label:"Patient safety & quality improvement",
+        evidence: ["MCR","MSF","QIPAT","End of placement reports"]
+      },
+      {
+        id:"g5", label:"Research & managing data appropriately",
+        evidence: ["MCR","MSF","GCP certificate","Literature search / critical appraisal","Use of clinical guidelines","QIP / audit","Evidence of research activity","End of placement reports"]
+      },
+      {
+        id:"g6", label:"Acting as a clinical teacher and clinical supervisor",
+        evidence: ["MCR","MSF","Teaching observation (TO)","Relevant teaching course","End of placement reports"]
+      },
+    ]
+  },
+  {
+    id: "renal",
+    label: "RENAL CiPs",
+    tabId: "cips-generic-renal",
+    color: "var(--renal)",
+    entrustType: "level",
+    cips: [
+      {
+        id:"r1", label:"Running a renal ward",
+        evidence: ["MCR","MSF","CbD","ACAT","Mini-CEX","Logbook of cases","Reflections"]
+      },
+      {
+        id:"r2", label:"Managing HD and PD programme",
+        evidence: ["MCR","MSF","CbD","Mini-CEX","DOPS (line insertion)","Logbook of cases","Reflections"]
+      },
+      {
+        id:"r3", label:"Running an acute renal referral service",
+        evidence: ["MCR","MSF","CbD","ACAT","Logbook of cases","Reflections"]
+      },
+      {
+        id:"r4", label:"Managing patients with CKD stage 1–5",
+        evidence: ["MCR","MSF","CbD","Mini-CEX","OPCAT / clinic letters","Patient survey","Logbook of cases"]
+      },
+      {
+        id:"r5", label:"Understanding of subspecialty clinical services",
+        evidence: ["MCR","MSF","CbD","Evidence of subspecialty exposure","Reflections"]
+      },
+      {
+        id:"r6", label:"Managing renal transplant patients",
+        evidence: ["MCR","MSF","CbD","Mini-CEX","Logbook of cases","Reflections"]
+      },
+    ]
+  },
+  {
+    id: "gim",
+    label: "GIM CiPs",
+    tabId: "cips-gim",
+    color: "var(--gim)",
+    entrustType: "level",
+    cips: [
+      {
+        id:"m1", label:"Managing an acute unselected take",
+        evidence: ["MCR","MSF","CbD","ACAT","Logbook of cases","Simulation training with assessment"]
+      },
+      {
+        id:"m2", label:"Managing acute care within a medical specialty service",
+        evidence: ["MCR","MSF","CbD","ACAT","Logbook of cases","Simulation training with assessment"]
+      },
+      {
+        id:"m3", label:"Continuity of care — comorbidities & cognitive impairment",
+        evidence: ["MCR","MSF","ACAT","Mini-CEX","DOPS"]
+      },
+      {
+        id:"m4", label:"Outpatient / ambulatory / community — long-term conditions",
+        evidence: ["MCR","ACAT","Mini-CEX","Patient survey","Clinic letters"]
+      },
+      {
+        id:"m5", label:"Medical problems in other specialties & special cases",
+        evidence: ["MCR","ACAT","CbD"]
+      },
+      {
+        id:"m6", label:"Managing MDT including effective discharge planning",
+        evidence: ["MCR","MSF","ACAT","Discharge summaries"]
+      },
+      {
+        id:"m7", label:"Effective resuscitation & managing the acutely deteriorating patient",
+        evidence: ["MCR","DOPS","ACAT","MSF","ALS certificate","Logbook of cases","Reflection","Simulation training with assessment"]
+      },
+      {
+        id:"m8", label:"Managing end of life & applying palliative care skills",
+        evidence: ["MCR","MSF","CbD","Mini-CEX","DOPS (syringe driver)","EOL care e-learning","Reflection","Logbook of cases"]
+      },
+    ]
+  }
+];
+
+// ══════════════════════════════════════════════════════
+//  CiP STORAGE
+// ══════════════════════════════════════════════════════
+function cipEvidKey(cipId, itemLabel) {
+  const safe = itemLabel.replace(/[^a-z0-9]/gi,'_').toLowerCase();
+  return `pft_cip_${currentYear}_${cipId}_${safe}`;
+}
+function cipEntrustKey(cipId) { return `pft_cip_entrust_${cipId}`; } // global — not year-specific
+function cipSatKey(cipId)     { return `pft_cip_sat_${currentYear}_${cipId}`; } // generic "satisfactory"
+
+function getCipEvid(cipId, itemLabel) {
+  return parseInt(localStorage.getItem(cipEvidKey(cipId, itemLabel)) || "0");
+}
+function setCipEvid(cipId, itemLabel, val) {
+  const k = cipEvidKey(cipId, itemLabel);
+  localStorage.setItem(k, String(val));
+  fbPush(k, val);
+}
+function getCipEntrust(cipId)    { return localStorage.getItem(cipEntrustKey(cipId)) || ""; }
+function setCipEntrust(cipId, v) {
+  const k = cipEntrustKey(cipId);
+  localStorage.setItem(k, v);
+  fbPush(k, v);
+}
+function getCipSat(cipId)        { return localStorage.getItem(cipSatKey(cipId)) === "true"; }
+function setCipSat(cipId, v)     {
+  const k = cipSatKey(cipId);
+  localStorage.setItem(k, String(v));
+  fbPush(k, v);
+}
+
+// Total evidence count across all items for a CiP
+function cipEvidTotal(cipId, evidenceList) {
+  return evidenceList.reduce((acc, item) => acc + getCipEvid(cipId, item), 0);
+}
+
+// Interpolate red→amber→green based on count 0–10
+function evidBarColor(count) {
+  const t = Math.min(count, 5) / 5;
+  // 0=red #ff4444, 5=amber #ffb000, 10=green #39ff14
+  if (t <= 0.5) {
+    const u = t * 2;
+    const r = Math.round(255 + (255 - 255) * u);
+    const g = Math.round(68  + (176 - 68)  * u);
+    const b = Math.round(68  + (0   - 68)  * u);
+    return `rgb(${r},${g},${b})`;
+  } else {
+    const u = (t - 0.5) * 2;
+    const r = Math.round(255 + (57  - 255) * u);
+    const g = Math.round(176 + (255 - 176) * u);
+    const b = Math.round(0   + (20  - 0)   * u);
+    return `rgb(${r},${g},${b})`;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  CiP RENDER — two tabs: Generic+Renal and GIM
+// ══════════════════════════════════════════════════════
+let cipSubTab = "cips-generic-renal";
+
+function renderCIPs() {
+  const el = document.getElementById("tab-cips");
+  el.innerHTML = "";
+
+  // Sub-tab bar
+  const subTabBar = document.createElement("div");
+  subTabBar.style.cssText = "display:flex;border-bottom:1px solid var(--blue4);margin-bottom:20px;";
+  [
+    { id:"cips-generic-renal", label:"GENERIC + RENAL" },
+    { id:"cips-gim",           label:"GIM" },
+  ].forEach(st => {
+    const btn = document.createElement("button");
+    btn.style.cssText = `
+      padding:8px 18px;background:transparent;border:none;
+      border-bottom:2px solid ${cipSubTab===st.id?"var(--blue)":"transparent"};
+      color:${cipSubTab===st.id?"var(--blue)":"var(--dim)"};
+      font-family:var(--font);font-size:10px;letter-spacing:0.1em;
+      cursor:pointer;transition:all 0.1s;`;
+    btn.textContent = st.label;
+    btn.onclick = () => { cipSubTab = st.id; renderCIPs(); };
+    subTabBar.appendChild(btn);
+  });
+  el.appendChild(subTabBar);
+
+  // Summary counts
+  const allCips    = CIP_GROUPS.flatMap(g => g.cips);
+  const level4     = allCips.filter(c => getCipEntrust(c.id) === "4").length;
+  const satisfied  = allCips.filter(c => {
+    const g = CIP_GROUPS.find(gr => gr.cips.includes(c));
+    return g?.entrustType === "satisfactory" ? getCipSat(c.id) : false;
+  }).length;
+  const targetMet  = allCips.filter(c => {
+    const entrust = getCipEntrust(c.id);
+    const target  = CIP_YEAR_TARGETS[c.id]?.[currentYear];
+    return entrust && target && parseInt(entrust) >= target;
+  }).length;
+  const gimRenalTotal = CIP_GROUPS.filter(g => g.entrustType==="level").flatMap(g=>g.cips).length;
+
+  const summaryDiv = document.createElement("div");
+  summaryDiv.style.cssText = "display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;";
+  summaryDiv.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--green);padding:10px 16px;flex:1;min-width:100px;">
+      <div style="font-size:20px;font-weight:700;color:var(--green);">${level4 + satisfied}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">SIGNED OFF / SATISFACTORY</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--amber);padding:10px 16px;flex:1;min-width:100px;">
+      <div style="font-size:20px;font-weight:700;color:var(--amber);">${targetMet}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">AT/ABOVE TARGET FOR ${currentYear}</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--blue);padding:10px 16px;flex:1;min-width:100px;">
+      <div style="font-size:20px;font-weight:700;color:var(--blue);">${allCips.length}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">TOTAL CiPs</div>
+    </div>`;
+  el.appendChild(summaryDiv);
+
+  // Render groups for current sub-tab
+  CIP_GROUPS.filter(g => g.tabId === cipSubTab).forEach(group => {
+    const groupHead = document.createElement("div");
+    groupHead.className = "sec-head";
+    groupHead.innerHTML = `
+      <span class="sec-title" style="color:${group.color}">${group.label}</span>
+      <span class="sec-rule"></span>
+      <span class="sec-note">${group.cips.length} capabilities · ${group.entrustType === "level" ? "entrustment levels L1–L4" : "satisfactory sign-off"}</span>`;
+    el.appendChild(groupHead);
+
+    const stack = document.createElement("div");
+    stack.style.cssText = "display:flex;flex-direction:column;gap:6px;margin-bottom:24px;";
+    group.cips.forEach(cip => stack.appendChild(makeCipCard(cip, group)));
+    el.appendChild(stack);
+  });
+}
+
+function makeCipCard(cip, group) {
+  const isLevel      = group.entrustType === "level";
+  const entrust      = getCipEntrust(cip.id);
+  const sat          = getCipSat(cip.id);
+  const target       = CIP_YEAR_TARGETS[cip.id]?.[currentYear];
+  const currentLevel = entrust ? parseInt(entrust) : 0;
+  const atTarget     = isLevel ? (target && currentLevel >= target) : sat;
+  const collapsed    = localStorage.getItem(`pft_cip_open_${cip.id}`) !== "true";
+  const evidTotal    = cipEvidTotal(cip.id, cip.evidence);
+  const evidColor    = evidBarColor(evidTotal);
+  const evidWidth    = Math.min(100, evidTotal * 20);
+
+  const ENTRUST_LABELS = {
+    "":"— not assessed","1":"L1 · Observe only","2":"L2 · Direct supervision",
+    "3":"L3 · Indirect supervision","4":"L4 · Unsupervised ✓"
+  };
+  const levelColor = currentLevel === 4 ? "var(--green)"
+    : currentLevel === 3 ? "var(--amber)"
+    : currentLevel > 0  ? "var(--blue)"
+    : "var(--dim)";
+  const borderColor = atTarget ? "var(--green)" : group.color;
+
+  const card = document.createElement("div");
+  card.style.cssText = `background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${borderColor};`;
+
+  // ── Header row ──────────────────────────────────────
+  const header = document.createElement("div");
+  header.style.cssText = "display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;";
+  header.onclick = () => {
+    localStorage.setItem(`pft_cip_open_${cip.id}`, String(collapsed));
+    card.replaceWith(makeCipCard(cip, group));
+  };
+
+  // Spectrum bar in header — red→green, 0–10
+  const evidBar = `
+    <div style="width:60px;">
+      <div style="height:4px;background:var(--blue5);border-radius:2px;overflow:hidden;">
+        <div style="height:100%;width:${evidWidth}%;background:${evidColor};transition:width 0.3s,background 0.3s;"></div>
+      </div>
+      <div style="font-size:7px;color:var(--dim);margin-top:2px;text-align:center;letter-spacing:0.06em;">${evidTotal}/5</div>
+    </div>`;
+
+  // Target indicator
+  const targetBadge = isLevel && target
+    ? `<div style="font-size:8px;color:var(--dim);letter-spacing:0.06em;">target:L${target}</div>`
+    : "";
+
+  const levelBadge = isLevel
+    ? `<div style="font-size:10px;font-weight:700;color:${levelColor};min-width:28px;text-align:right;">${entrust ? "L"+entrust : "—"}</div>`
+    : `<div style="font-size:9px;font-weight:700;color:${sat?"var(--green)":"var(--dim)"};">${sat?"✓ SAT":"—"}</div>`;
+
+  header.innerHTML = `
+    <div style="flex:1;font-size:11px;color:#c8d8ff;font-weight:500;line-height:1.3;">${cip.label}</div>
+    ${evidBar}
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
+      ${targetBadge}
+      ${levelBadge}
+    </div>
+    <div style="font-size:10px;color:var(--dim);margin-left:2px;">${collapsed?"▸":"▾"}</div>`;
+  card.appendChild(header);
+
+  if (!collapsed) {
+    const body = document.createElement("div");
+    body.style.cssText = "padding:0 14px 14px;border-top:1px solid var(--blue5);";
+
+    // ── Entrustment / satisfactory selector ────────────
+    const assessDiv = document.createElement("div");
+    assessDiv.style.cssText = "display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--blue5);margin-bottom:14px;flex-wrap:wrap;";
+
+    if (isLevel) {
+      // Show entrustment levels + year target indicator
+      const targetRow = target
+        ? `<span style="font-size:9px;color:var(--dim);">// ${currentYear} target: L${target} · ${currentLevel >= target ? '<span style="color:var(--green)">✓ met</span>' : '<span style="color:var(--amber)">not yet</span>'}</span>`
+        : "";
+      assessDiv.innerHTML = `
+        <span style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">ES ENTRUSTMENT</span>
+        <select style="background:var(--bg);border:1px solid var(--blue4);color:var(--blue);font-family:var(--font);font-size:10px;padding:4px 8px;outline:none;cursor:pointer;"
+          onchange="setCipEntrust('${cip.id}',this.value);renderCIPs();">
+          <option value=""  ${!entrust    ?"selected":""}>— not yet assessed —</option>
+          <option value="1" ${entrust==="1"?"selected":""}>Level 1 — Observe only</option>
+          <option value="2" ${entrust==="2"?"selected":""}>Level 2 — Direct supervision</option>
+          <option value="3" ${entrust==="3"?"selected":""}>Level 3 — Indirect supervision</option>
+          <option value="4" ${entrust==="4"?"selected":""}>Level 4 — Unsupervised ✓</option>
+        </select>
+        ${targetRow}`;
+    } else {
+      // Generic CiPs — satisfactory checkbox
+      assessDiv.innerHTML = `
+        <span style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">GENERIC CiP STATUS</span>
+        <button class="chk ${sat?"checked":""}" onclick="setCipSat('${cip.id}',${!sat});renderCIPs();">
+          ${sat?"✓":""}
+        </button>
+        <span style="font-size:10px;color:${sat?"var(--green)":"var(--dim)"};letter-spacing:0.06em;cursor:pointer;"
+          onclick="setCipSat('${cip.id}',${!sat});renderCIPs();">
+          ${sat?"SATISFACTORY — signed off":"NOT YET SIGNED OFF"}
+        </span>`;
+    }
+    body.appendChild(assessDiv);
+
+    // ── Evidence items ─────────────────────────────────
+    const evidHead = document.createElement("div");
+    evidHead.style.cssText = "font-size:9px;color:var(--blue3);letter-spacing:0.15em;margin-bottom:8px;";
+    evidHead.textContent = "EVIDENCE TO INFORM DECISION";
+    body.appendChild(evidHead);
+
+    const evidNote = document.createElement("div");
+    evidNote.style.cssText = "font-size:8px;color:var(--dim);letter-spacing:0.06em;margin-bottom:10px;";
+    evidNote.textContent = "// count each type — bar fills as evidence accumulates";
+    body.appendChild(evidNote);
+
+    const evidGrid = document.createElement("div");
+    evidGrid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;";
+
+    cip.evidence.forEach(item => {
+      const val     = getCipEvid(cip.id, item);
+      const hasEvid = val > 0;
+      const itemDiv = document.createElement("div");
+      itemDiv.style.cssText = `
+        background:var(--bg3);border:1px solid ${hasEvid?"var(--blue4)":"var(--blue5)"};
+        border-left:2px solid ${hasEvid?group.color:"var(--blue5)"};
+        padding:6px 8px;`;
+      itemDiv.innerHTML = `
+        <div style="font-size:9px;color:${hasEvid?"#c8d8ff":"var(--dim)"};margin-bottom:5px;line-height:1.3;">${item}</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="number" min="0" value="${val}"
+            style="background:var(--bg);border:1px solid var(--blue4);color:var(--blue);
+              font-family:var(--font);font-size:11px;padding:2px 5px;width:44px;outline:none;"
+            onchange="setCipEvid('${cip.id}','${item.replace(/'/g,"\\'")}',Math.max(0,parseInt(this.value)||0));renderCIPs();" />
+          <div style="flex:1;height:2px;background:var(--blue5);overflow:hidden;">
+            <div style="height:100%;width:${hasEvid?100:0}%;background:${group.color};"></div>
+          </div>
+          ${hasEvid?`<span style="font-size:8px;color:${group.color};">✓</span>`:""}
+        </div>`;
+      evidGrid.appendChild(itemDiv);
+    });
+    body.appendChild(evidGrid);
+    card.appendChild(body);
+  }
+
+  return card;
+}
+
+
+
+setInterval(updateCountdown, 60000);
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./arcp-sw.js").then(reg => {
+    reg.update();
+    reg.addEventListener("updatefound", () => {
+      const nw = reg.installing;
+      nw.addEventListener("statechange", () => {
+        if (nw.state === "installed" && navigator.serviceWorker.controller) nw.postMessage("skipWaiting");
+      });
+    });
+  }).catch(err => console.warn("SW registration failed:", err));
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (!refreshing) { refreshing = true; window.location.reload(); } });
+}
+</script>
+</body>
+</html>
