@@ -14,33 +14,60 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
 
-  <script type="module">
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+ <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
-    authDomain: "task-monitor-bd7ee.firebaseapp.com",
-    databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "task-monitor-bd7ee",
-    storageBucket: "task-monitor-bd7ee.firebasestorage.app",
-    messagingSenderId: "544624731364",
-    appId: "1:544624731364:web:419d52fa061c5c7b4f38f1"
-  };
+// ── Load config (or fallback) ───────────────────────────────
+function loadConfig() {
+  try { return JSON.parse(localStorage.getItem("renalTaskConfig") || "null"); }
+  catch { return null; }
+}
 
-  const app = initializeApp(firebaseConfig);
+const saved = loadConfig();
 
-  signInAnonymously(getAuth(app)).then(c => {
-    console.log("UID:", c.user.uid);
+const firebaseConfig = saved || {
+  apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
+  authDomain: "task-monitor-bd7ee.firebaseapp.com",
+  databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "task-monitor-bd7ee",
+  storageBucket: "task-monitor-bd7ee.appspot.com",
+  messagingSenderId: "544624731364",
+  appId: "1:544624731364:web:419d52fa061c5c7b4f38f1"
+};
 
-    const db       = getDatabase(app);
-    const tasksRef = ref(db, "renalTasks");
+// Show config UI if none saved
+if (!saved) {
+  document.getElementById("config-overlay")?.classList.add("show");
+}
 
-    window._fb = { db, ref, push, onValue, update, remove, tasksRef };
-    window.dispatchEvent(new Event("firebase-ready"));
+// ── Init Firebase ──────────────────────────────────────────
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getDatabase(app);
 
-  }).catch(e => console.error("Auth failed:", e));
+// ── Auth flow ──────────────────────────────────────────────
+signInAnonymously(auth).catch(e => {
+  console.error("Auth failed:", e);
+  alert("Firebase auth failed: " + e.message);
+});
+
+// Wait until auth is READY before touching DB
+onAuthStateChanged(auth, user => {
+  if (!user) return;
+
+  console.log("UID:", user.uid);
+
+  // 🔐 SIMPLE RULE COMPATIBLE PATH
+  const tasksRef = ref(db, "renalTasks");
+
+  // expose globally for your existing app code
+  window._fb = { db, ref, push, onValue, update, remove, tasksRef };
+
+  // notify app
+  window.dispatchEvent(new Event("firebase-ready"));
+});
 </script>
 
 
