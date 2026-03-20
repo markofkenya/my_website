@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -215,6 +216,16 @@
     .btn-timer:hover{border-color:var(--green);color:var(--green);}
     .empty-msg{padding:30px 0;color:var(--grey2);font-size:10px;letter-spacing:0.08em;}
     .empty-msg::before{content:"> ";}
+    /* ── Searchable topic ── */
+    .topic-search-wrap{position:relative;}
+    .topic-search-inp{background:var(--bg);border:1px solid var(--border2);color:var(--white);font-family:var(--font);font-size:12px;padding:5px 8px;width:100%;outline:none;caret-color:var(--green);transition:border-color 0.1s;}
+    .topic-search-inp:focus{border-color:var(--yellow);}
+    .topic-dropdown{position:absolute;top:100%;left:0;right:0;z-index:500;background:var(--bg2);border:1px solid var(--yellow);border-top:none;max-height:180px;overflow-y:auto;display:none;}
+    .topic-dropdown.open{display:block;}
+    .topic-opt{padding:7px 10px;font-size:11px;color:var(--white);cursor:pointer;border-bottom:1px solid var(--border);}
+    .topic-opt:hover,.topic-opt.active{background:var(--bg3);color:var(--yellow);}
+    .topic-opt-stream{font-size:8px;color:var(--grey2);margin-left:6px;}
+    .topic-opt.empty{color:var(--grey2);cursor:default;font-style:italic;}
     @media(max-width:640px){
       .session-grid,.topic-grid{grid-template-columns:1fr;}
       .header-clock{display:none;}
@@ -222,10 +233,12 @@
       #main{padding:10px 12px 100px;}
     }
   </style>
+
 </head>
 <body>
 
 <!-- Header -->
+
 <div id="header">
   <div class="header-top">
     <div class="header-logo">
@@ -262,6 +275,7 @@
 </div>
 
 <!-- Timer panel -->
+
 <div id="timer-panel">
   <div class="timer-display">
     <div class="timer-phase" id="timer-phase">STUDY SESSION</div>
@@ -279,6 +293,7 @@
 </div>
 
 <!-- Tab bar -->
+
 <div id="tabbar">
   <button class="tab active" onclick="setTab('today')">TODAY</button>
   <button class="tab" onclick="setTab('log')">LOG SESSION</button>
@@ -289,6 +304,7 @@
 </div>
 
 <!-- Main -->
+
 <div id="main">
   <div id="tab-today"    style="display:none"></div>
   <div id="tab-log"      style="display:none"></div>
@@ -299,6 +315,7 @@
 </div>
 
 <!-- Status bar -->
+
 <div id="statusbar">
   <div class="status-left">
     <span class="status-item">Sessions this week: <strong id="sb-week">0/2</strong></span>
@@ -425,12 +442,15 @@ window.addEventListener("stx-sync", () => {
 });
 
 window.addEventListener("stx-sync", () => {
-  if (!window._stx_seeded && window._stx_fb && Object.keys(topics).length === 0) {
+  const fbTopics = window._stx_topics || {};
+  if (!window._stx_seeded && window._stx_fb && Object.keys(fbTopics).length === 0) {
     window._stx_seeded = true;
     const { push, topicRef } = window._stx_fb;
     Object.entries(DEFAULT_TOPICS).forEach(([stream, list]) => {
       list.forEach(name => push(topicRef, { name, stream }));
     });
+  } else if (Object.keys(fbTopics).length > 0) {
+    window._stx_seeded = true; // prevent any future seed attempt
   }
 }, { once: true });
 
@@ -722,10 +742,6 @@ function renderToday() {
 // ── Log Session form ───────────────────────────────────
 function renderLog() {
   const el = document.getElementById("tab-log");
-  const tl = topicList();
-  const topicOpts = tl.map(t =>
-    `<option value="${t.id}">[${STREAM_LABELS[t.stream]}] ${t.name}</option>`
-  ).join("");
 
   el.innerHTML = `
     <div class="sec-head">
@@ -741,10 +757,7 @@ function renderLog() {
         </div>
         <div class="form-field">
           <label class="form-label">topic *</label>
-          <select class="form-inp" id="f-topic">
-            <option value="">-- select topic --</option>
-            ${topicOpts}
-          </select>
+          ${makeTopicSearch("f-topic-search", "f-topic")}
         </div>
         <div class="form-field">
           <label class="form-label">session_type</label>
@@ -761,365 +774,324 @@ function renderLog() {
         <div class="form-field wide">
           <label class="form-label">notes</label>
           <textarea class="form-inp" id="f-notes" placeholder="// key concepts, gaps identified, questions to follow up..."></textarea>
-        </div>
-        <div class="form-field wide">
-          <label class="form-label">attach_file (optional)</label>
-          <div class="upload-area" onclick="document.getElementById('f-file').click()">
-            ▸ Click to attach a file — PDF, Word, image, any type
-            <div class="upload-progress" id="upload-progress">
-              <div class="upload-progress-bar" id="upload-progress-bar" style="width:0%"></div>
-            </div>
-          </div>
-          <input type="file" id="f-file" style="display:none" onchange="handleFileSelect(this)" />
-          <div id="attached-file-preview"></div>
-        </div>
-      </div>
-      <div class="form-footer">
-        <div>
-          <div class="form-label" style="margin-bottom:5px;">confidence (1–5)</div>
-          <div class="star-row" id="star-row">
-            ${[1,2,3,4,5].map(n => `<button class="star ${n<=selConfidence?'lit':''}" onclick="setConf(${n})">${n<=selConfidence?'★':'☆'}</button>`).join("")}
-          </div>
-          <div style="font-size:8px;color:var(--grey2);margin-top:4px;" id="retest-hint">
-            // retest in ~${retestDaysFromConf(selConfidence)} days
-          </div>
-        </div>
-        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-          ${!timerCompleted ? `<span style="font-size:9px;color:var(--grey2);">// complete 90min timer to unlock</span>` : ""}
-          <button class="btn-secondary" onclick="clearForm()">CLEAR</button>
-          <button class="btn-primary" onclick="saveSession()"
-            ${!timerCompleted ? 'disabled' : ""}>
-            LOG SESSION ▸
-          </button>
-        </div>
-      </div>
-    </div>
 
-    <div class="sec-head" style="margin-top:8px;">
-      <span class="sec-title">RECENT SESSIONS</span>
-      <span class="sec-rule"></span>
-      <span class="sec-note">Last 5</span>
+```
     </div>
-    <div class="session-grid">
-      ${sessionList().slice(0,5).map(sessCard).join("") || `<div class="empty-msg">no sessions logged yet</div>`}
-    </div>`;
+    <div class="form-field wide">
+      <label class="form-label">attach_file (optional)</label>
+      <div class="upload-area" onclick="document.getElementById('f-file').click()">
+        ▸ Click to attach a file — PDF, Word, image, any type
+        <div class="upload-progress" id="upload-progress">
+          <div class="upload-progress-bar" id="upload-progress-bar" style="width:0%"></div>
+        </div>
+      </div>
+      <input type="file" id="f-file" style="display:none" onchange="handleFileSelect(this)" />
+      <div id="attached-file-preview"></div>
+    </div>
+  </div>
+  <div class="form-footer">
+    <div>
+      <div class="form-label" style="margin-bottom:5px;">confidence (1–5)</div>
+      <div class="star-row" id="star-row">
+        ${[1,2,3,4,5].map(n => `<button class="star ${n<=selConfidence?'lit':''}" onclick="setConf(${n})">${n<=selConfidence?'★':'☆'}</button>`).join("")}
+      </div>
+      <div style="font-size:8px;color:var(--grey2);margin-top:4px;" id="retest-hint">
+        // retest in ~${retestDaysFromConf(selConfidence)} days
+      </div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+      ${!timerCompleted ? `<span style="font-size:9px;color:var(--grey2);">// complete 90min timer to unlock</span>` : ""}
+      <button class="btn-secondary" onclick="clearForm()">CLEAR</button>
+      <button class="btn-primary" onclick="saveSession()"
+        ${!timerCompleted ? 'disabled' : ""}>
+        LOG SESSION ▸
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="sec-head" style="margin-top:8px;">
+  <span class="sec-title">RECENT SESSIONS</span>
+  <span class="sec-rule"></span>
+  <span class="sec-note">Last 5</span>
+</div>
+<div class="session-grid">
+  ${sessionList().slice(0,5).map(sessCard).join("") || `<div class="empty-msg">no sessions logged yet</div>`}
+</div>`;
+```
+
 }
 
 // ── All Sessions ──────────────────────────────────────
 function renderSessions() {
-  const el   = document.getElementById("tab-sessions");
-  const list = sessionList();
-  const hours = totalStudyHours();
-  let html = `<div style="font-size:9px;color:var(--grey2);margin-bottom:14px;">
-    Total: ${list.length} sessions · ${hours.toFixed(1)}h studied
+const el   = document.getElementById(“tab-sessions”);
+const list = sessionList();
+const hours = totalStudyHours();
+let html = `<div style="font-size:9px;color:var(--grey2);margin-bottom:14px;">
+Total: ${list.length} sessions · ${hours.toFixed(1)}h studied
+
   </div>`;
 
-  ["renal","gim"].forEach(stream => {
-    const filtered = list.filter(s => { const t = topics[s.topicId]; return t && t.stream === stream; });
-    if (!filtered.length) return;
-    html += `
-      <div class="sec-head">
-        <span class="sec-title" style="color:var(--${stream})">${STREAM_LABELS[stream]}</span>
-        <span class="sec-rule"></span>
-        <span class="sec-note">${filtered.length} sessions</span>
-      </div>
-      <div class="session-grid">${filtered.map(sessCard).join("")}</div>`;
-  });
+[“renal”,“gim”].forEach(stream => {
+const filtered = list.filter(s => { const t = topics[s.topicId]; return t && t.stream === stream; });
+if (!filtered.length) return;
+html += ` <div class="sec-head"> <span class="sec-title" style="color:var(--${stream})">${STREAM_LABELS[stream]}</span> <span class="sec-rule"></span> <span class="sec-note">${filtered.length} sessions</span> </div> <div class="session-grid">${filtered.map(sessCard).join("")}</div>`;
+});
 
-  el.innerHTML = html || `<div class="empty-msg">no sessions logged yet</div>`;
+el.innerHTML = html || `<div class="empty-msg">no sessions logged yet</div>`;
 }
 
 // ── Retests ───────────────────────────────────────────
 function renderRetests() {
-  const el   = document.getElementById("tab-retests");
-  const due  = sessionList().filter(s => retestStatus(s) === "due");
-  const soon = sessionList().filter(s => retestStatus(s) === "soon");
-  const ok   = sessionList().filter(s => retestStatus(s) === "ok" && s.retestDate && !s.retestDone);
-  const done = sessionList().filter(s => s.retestDone);
-  let html = "";
+const el   = document.getElementById(“tab-retests”);
+const due  = sessionList().filter(s => retestStatus(s) === “due”);
+const soon = sessionList().filter(s => retestStatus(s) === “soon”);
+const ok   = sessionList().filter(s => retestStatus(s) === “ok” && s.retestDate && !s.retestDone);
+const done = sessionList().filter(s => s.retestDone);
+let html = “”;
 
-  if (due.length)  html += `<div class="sec-head"><span class="sec-title" style="color:var(--pink)">OVERDUE</span><span class="sec-rule"></span><span class="sec-note">${due.length} overdue</span></div><div class="session-grid">${due.map(sessCard).join("")}</div>`;
-  if (soon.length) html += `<div class="sec-head"><span class="sec-title" style="color:var(--yellow)">DUE SOON</span><span class="sec-rule"></span><span class="sec-note">within 3 days</span></div><div class="session-grid">${soon.map(sessCard).join("")}</div>`;
-  if (ok.length)   html += `<div class="sec-head"><span class="sec-title">UPCOMING</span><span class="sec-rule"></span></div><div class="session-grid">${ok.map(sessCard).join("")}</div>`;
-  if (done.length) html += `<div class="sec-head"><span class="sec-title" style="color:var(--green)">COMPLETED</span><span class="sec-rule"></span><span class="sec-note">${done.length} done</span></div><div class="session-grid">${done.map(sessCard).join("")}</div>`;
+if (due.length)  html += `<div class="sec-head"><span class="sec-title" style="color:var(--pink)">OVERDUE</span><span class="sec-rule"></span><span class="sec-note">${due.length} overdue</span></div><div class="session-grid">${due.map(sessCard).join("")}</div>`;
+if (soon.length) html += `<div class="sec-head"><span class="sec-title" style="color:var(--yellow)">DUE SOON</span><span class="sec-rule"></span><span class="sec-note">within 3 days</span></div><div class="session-grid">${soon.map(sessCard).join("")}</div>`;
+if (ok.length)   html += `<div class="sec-head"><span class="sec-title">UPCOMING</span><span class="sec-rule"></span></div><div class="session-grid">${ok.map(sessCard).join("")}</div>`;
+if (done.length) html += `<div class="sec-head"><span class="sec-title" style="color:var(--green)">COMPLETED</span><span class="sec-rule"></span><span class="sec-note">${done.length} done</span></div><div class="session-grid">${done.map(sessCard).join("")}</div>`;
 
-  el.innerHTML = html || `<div class="empty-msg">no retests scheduled</div>`;
+el.innerHTML = html || `<div class="empty-msg">no retests scheduled</div>`;
 }
 
 // ── Topics ─────────────────────────────────────────────
 function renderTopics() {
-  const el = document.getElementById("tab-topics");
-  const tl = topicList();
-  let html = `
-    <div class="sec-head"><span class="sec-title">ADD TOPIC</span><span class="sec-rule"></span></div>
-    <div class="add-topic-row">
-      <input class="form-inp" id="new-topic-name" placeholder="Topic name..." style="flex:1;min-width:200px;" />
-      <select class="form-inp" id="new-topic-stream" style="width:130px;">
-        <option value="renal">RENAL</option>
-        <option value="gim">GIM</option>
-      </select>
-      <button class="btn-primary" onclick="addTopic()">ADD ▸</button>
-    </div>`;
+const el = document.getElementById(“tab-topics”);
+const tl = topicList();
+let html = ` <div class="sec-head"><span class="sec-title">ADD TOPIC</span><span class="sec-rule"></span></div> <div class="add-topic-row"> <input class="form-inp" id="new-topic-name" placeholder="Topic name..." style="flex:1;min-width:200px;" /> <select class="form-inp" id="new-topic-stream" style="width:130px;"> <option value="renal">RENAL</option> <option value="gim">GIM</option> </select> <button class="btn-primary" onclick="addTopic()">ADD ▸</button> </div>`;
 
-  ["renal","gim"].forEach(stream => {
-    const filtered = tl.filter(t => t.stream === stream);
-    html += `
-      <div class="sec-head" style="margin-top:14px;">
-        <span class="sec-title" style="color:var(--${stream})">${STREAM_LABELS[stream]}</span>
-        <span class="sec-rule"></span>
-        <span class="sec-note">${filtered.length} topics</span>
-      </div>
-      <div class="topic-grid">
-        ${filtered.map(t => `
-          <div class="topic-card">
-            <div>
-              <div class="topic-name">${t.name}</div>
-              <div class="topic-stream ${t.stream}">${STREAM_LABELS[t.stream]||t.stream.toUpperCase()}</div>
-            </div>
-            <button class="topic-del" onclick="deleteTopic('${t.id}')">✕</button>
-          </div>`).join("")}
-      </div>`;
-  });
+[“renal”,“gim”].forEach(stream => {
+const filtered = tl.filter(t => t.stream === stream);
+html += `<div class="sec-head" style="margin-top:14px;"> <span class="sec-title" style="color:var(--${stream})">${STREAM_LABELS[stream]}</span> <span class="sec-rule"></span> <span class="sec-note">${filtered.length} topics</span> </div> <div class="topic-grid"> ${filtered.map(t =>`
+<div class="topic-card">
+<div>
+<div class="topic-name">${t.name}</div>
+<div class="topic-stream ${t.stream}">${STREAM_LABELS[t.stream]||t.stream.toUpperCase()}</div>
+</div>
+<button class="topic-del" onclick="deleteTopic('${t.id}')">✕</button>
+</div>`).join("")} </div>`;
+});
 
-  el.innerHTML = html;
+el.innerHTML = html;
 }
 
 // ── #6 Session card with badges ───────────────────────
 function sessCard(s) {
-  const topic = topics[s.topicId] || { name: s.topicId || "Unknown", stream: "renal" };
-  const rs    = retestStatus(s);
-  const rl    = retestLabel(s);
-  const stars = [1,2,3,4,5].map(n =>
-    `<span class="conf-star ${n<=s.confidence?'lit':'dim'}">${n<=s.confidence?'★':'☆'}</span>`
-  ).join("");
+const topic = topics[s.topicId] || { name: s.topicId || “Unknown”, stream: “renal” };
+const rs    = retestStatus(s);
+const rl    = retestLabel(s);
+const stars = [1,2,3,4,5].map(n =>
+`<span class="conf-star ${n<=s.confidence?'lit':'dim'}">${n<=s.confidence?'★':'☆'}</span>`
+).join(””);
 
-  // #6 Badge display for session types
-  const typeArr = Array.isArray(s.sessionTypes)
-    ? s.sessionTypes
-    : s.sessionType ? [s.sessionType] : ["study"];
-  const typeBadges = typeArr.map(t =>
-    `<span style="font-size:8px;color:var(--grey);border:1px solid var(--border2);padding:1px 5px;margin-right:3px;">${t.toUpperCase()}</span>`
-  ).join("");
+// #6 Badge display for session types
+const typeArr = Array.isArray(s.sessionTypes)
+? s.sessionTypes
+: s.sessionType ? [s.sessionType] : [“study”];
+const typeBadges = typeArr.map(t =>
+`<span style="font-size:8px;color:var(--grey);border:1px solid var(--border2);padding:1px 5px;margin-right:3px;">${t.toUpperCase()}</span>`
+).join(””);
 
-  // #3 Duration display
-  const dur = s.duration ? `${s.duration}min` : "90min";
+// #3 Duration display
+const dur = s.duration ? `${s.duration}min` : “90min”;
 
-  // Retest urgency styling
-  const retestStyle = rs === "due"
-    ? `color:var(--pink);animation:tpulse 2s ease-in-out infinite;`
-    : rs === "soon" ? `color:var(--yellow);` : `color:var(--grey2);`;
+// Retest urgency styling
+const retestStyle = rs === “due”
+? `color:var(--pink);animation:tpulse 2s ease-in-out infinite;`
+: rs === “soon” ? `color:var(--yellow);` : `color:var(--grey2);`;
 
-  return `
-    <div class="sess-card stream-${topic.stream} ${rs==='due'?'retest-due':rs==='soon'?'retest-soon':''}">
-      <div class="sess-head">
-        <div class="sess-topic">${topic.name}</div>
-        <span class="sess-stream ${topic.stream}">${STREAM_LABELS[topic.stream]||topic.stream.toUpperCase()}</span>
-      </div>
-      <div class="sess-meta">
-        ${new Date(s.date).toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})}
-        &nbsp;·&nbsp; ${dur}
-        &nbsp;·&nbsp; ${typeBadges}
-      </div>
-      ${s.notes ? `<div class="sess-notes">${s.notes}</div>` : ""}
-      ${s.attachment ? `
-        <a class="sess-attachment" href="${s.attachment.url}" target="_blank" rel="noopener">
-          <span class="sess-attachment-icon">📎</span>
-          <span class="sess-attachment-name">${s.attachment.name}</span>
-          <span style="font-size:8px;color:var(--grey2)">${(s.attachment.size/1024).toFixed(0)}KB ↗</span>
-        </a>` : ""}
-      <div class="sess-footer">
-        <div>
-          <div class="conf-stars">${stars}</div>
-          <div class="sess-retest" style="${retestStyle}">${rl}</div>
-        </div>
-        <div class="sess-actions">
-          ${!s.retestDone && s.retestDate ? `<button class="sess-btn" onclick="markRetested('${s.id}')">✓ RETESTED</button>` : ""}
-          <button class="sess-btn danger" onclick="deleteSession('${s.id}')">✕</button>
-        </div>
-      </div>
-    </div>`;
+return `<div class="sess-card stream-${topic.stream} ${rs==='due'?'retest-due':rs==='soon'?'retest-soon':''}"> <div class="sess-head"> <div class="sess-topic">${topic.name}</div> <span class="sess-stream ${topic.stream}">${STREAM_LABELS[topic.stream]||topic.stream.toUpperCase()}</span> </div> <div class="sess-meta"> ${new Date(s.date).toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})} &nbsp;·&nbsp; ${dur} &nbsp;·&nbsp; ${typeBadges} </div> ${s.notes ?`<div class="sess-notes">${s.notes}</div>`: ""} ${s.attachment ?`
+<a class="sess-attachment" href="${s.attachment.url}" target="_blank" rel="noopener">
+<span class="sess-attachment-icon">📎</span>
+<span class="sess-attachment-name">${s.attachment.name}</span>
+<span style="font-size:8px;color:var(--grey2)">${(s.attachment.size/1024).toFixed(0)}KB ↗</span>
+</a>`: ""} <div class="sess-footer"> <div> <div class="conf-stars">${stars}</div> <div class="sess-retest" style="${retestStyle}">${rl}</div> </div> <div class="sess-actions"> ${!s.retestDone && s.retestDate ?`<button class="sess-btn" onclick="markRetested('${s.id}')">✓ RETESTED</button>` : ""} <button class="sess-btn danger" onclick="deleteSession('${s.id}')">✕</button> </div> </div> </div>`;
 }
 
 // ══════════════════════════════════════════════════════
 //  INTERACTIONS
 // ══════════════════════════════════════════════════════
 function handleFileSelect(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const prog    = document.getElementById("upload-progress");
-  const progBar = document.getElementById("upload-progress-bar");
-  const preview = document.getElementById("attached-file-preview");
-  prog.style.display = "block";
-  progBar.style.width = "0%";
-  preview.innerHTML = `<div style="font-size:9px;color:var(--grey2);margin-top:5px;">// uploading ${file.name}...</div>`;
+const file = input.files[0];
+if (!file) return;
+const prog    = document.getElementById(“upload-progress”);
+const progBar = document.getElementById(“upload-progress-bar”);
+const preview = document.getElementById(“attached-file-preview”);
+prog.style.display = “block”;
+progBar.style.width = “0%”;
+preview.innerHTML = `<div style="font-size:9px;color:var(--grey2);margin-top:5px;">// uploading ${file.name}...</div>`;
 
-  // #5 Store file temporarily — will use real session ID on save
-  window._pendingFileData = file;
-  pendingFile = { name: file.name, size: file.size, pending: true };
-  prog.style.display = "none";
-  preview.innerHTML = `
-    <div class="attached-file">
-      <span class="attached-file-name">📎 ${file.name}</span>
-      <span class="attached-file-size">${(file.size/1024).toFixed(0)}KB</span>
-      <button class="attached-file-del" onclick="clearPendingFile()">✕</button>
-    </div>`;
+// #5 Store file temporarily — will use real session ID on save
+window._pendingFileData = file;
+pendingFile = { name: file.name, size: file.size, pending: true };
+prog.style.display = “none”;
+preview.innerHTML = ` <div class="attached-file"> <span class="attached-file-name">📎 ${file.name}</span> <span class="attached-file-size">${(file.size/1024).toFixed(0)}KB</span> <button class="attached-file-del" onclick="clearPendingFile()">✕</button> </div>`;
 }
 
 function clearPendingFile() {
-  pendingFile = null;
-  window._pendingFileData = null;
-  const preview = document.getElementById("attached-file-preview");
-  if (preview) preview.innerHTML = "";
-  const input = document.getElementById("f-file");
-  if (input) input.value = "";
+pendingFile = null;
+window._pendingFileData = null;
+const preview = document.getElementById(“attached-file-preview”);
+if (preview) preview.innerHTML = “”;
+const input = document.getElementById(“f-file”);
+if (input) input.value = “”;
 }
 
 function setConf(n) {
-  selConfidence = n;
-  const row = document.getElementById("star-row");
-  if (row) {
-    row.querySelectorAll(".star").forEach((b, i) => {
-      b.className = "star" + (i < n ? " lit" : "");
-      b.textContent = i < n ? "★" : "☆";
-    });
-  }
-  const hint = document.getElementById("retest-hint");
-  if (hint) hint.textContent = `// retest in ~${retestDaysFromConf(n)} days`;
+selConfidence = n;
+const row = document.getElementById(“star-row”);
+if (row) {
+row.querySelectorAll(”.star”).forEach((b, i) => {
+b.className = “star” + (i < n ? “ lit” : “”);
+b.textContent = i < n ? “★” : “☆”;
+});
+}
+const hint = document.getElementById(“retest-hint”);
+if (hint) hint.textContent = `// retest in ~${retestDaysFromConf(n)} days`;
 }
 
 function saveSession() {
-  const topicId = document.getElementById("f-topic")?.value;
-  if (!topicId) { alert("Please select a topic"); return; }
+const topicId = document.getElementById(“f-topic”)?.value;
+if (!topicId) { alert(“Please select a topic”); return; }
 
-  const date  = document.getElementById("f-date").value;
-  const notes = document.getElementById("f-notes").value.trim();
-  const sessionTypes = ["study","quiz","teach"].filter(t =>
-    document.getElementById(`f-type-${t}`)?.checked
-  );
-  if (!sessionTypes.length) sessionTypes.push("study");
+const date  = document.getElementById(“f-date”).value;
+const notes = document.getElementById(“f-notes”).value.trim();
+const sessionTypes = [“study”,“quiz”,“teach”].filter(t =>
+document.getElementById(`f-type-${t}`)?.checked
+);
+if (!sessionTypes.length) sessionTypes.push(“study”);
 
-  // #3 Capture actual duration from timer
-  const duration = timerStartTime
-    ? Math.round((Date.now() - timerStartTime) / 60000)
-    : 90;
+// #3 Capture actual duration from timer
+const duration = timerStartTime
+? Math.round((Date.now() - timerStartTime) / 60000)
+: 90;
 
-  // #1 Adaptive retest — find last session for this topic to get previous interval
-  const prevSess = sessionList().find(s => s.topicId === topicId && s.interval);
-  const prevInterval = prevSess?.interval || 7;
-  const days = nextRetestDays(selConfidence, prevInterval);
-  const d = new Date(date); d.setDate(d.getDate() + days);
-  const retestDate = d.toISOString().split("T")[0];
+// #1 Adaptive retest — find last session for this topic to get previous interval
+const prevSess = sessionList().find(s => s.topicId === topicId && s.interval);
+const prevInterval = prevSess?.interval || 7;
+const days = nextRetestDays(selConfidence, prevInterval);
+const d = new Date(date); d.setDate(d.getDate() + days);
+const retestDate = d.toISOString().split(“T”)[0];
 
-  const payload = {
-    topicId, date, sessionTypes, notes, duration,
-    confidence: selConfidence,
-    interval: days,       // #1 store interval for next session
-    retestDate, retestDone: false,
-    createdAt: Date.now(),
-  };
+const payload = {
+topicId, date, sessionTypes, notes, duration,
+confidence: selConfidence,
+interval: days,       // #1 store interval for next session
+retestDate, retestDone: false,
+createdAt: Date.now(),
+};
 
-  if (!window._stx_fb) return;
+if (!window._stx_fb) return;
 
-  // #5 Save session first, then upload file using real session ID
-  const newRef = window._stx_fb.push(window._stx_fb.sessRef, payload);
-  const sessionId = newRef.key;
+// #5 Save session first, then upload file using real session ID
+const newRef = window._stx_fb.push(window._stx_fb.sessRef, payload);
+const sessionId = newRef.key;
 
-  if (window._pendingFileData && sessionId && window.uploadSessionFile) {
-    const file = window._pendingFileData;
-    const prog = document.getElementById("upload-progress");
-    if (prog) prog.style.display = "block";
+if (window._pendingFileData && sessionId && window.uploadSessionFile) {
+const file = window._pendingFileData;
+const prog = document.getElementById(“upload-progress”);
+if (prog) prog.style.display = “block”;
 
-    window.uploadSessionFile(
-      file, sessionId,
-      pct => { const bar = document.getElementById("upload-progress-bar"); if (bar) bar.style.width = `${pct}%`; },
-      fileData => {
-        // Attach file URL to saved session
-        const { db, ref, update } = window._stx_fb;
-        update(ref(db, `studySessions/${sessionId}`), { attachment: fileData });
-      },
-      err => console.error("Upload failed:", err)
-    );
-  }
+```
+window.uploadSessionFile(
+  file, sessionId,
+  pct => { const bar = document.getElementById("upload-progress-bar"); if (bar) bar.style.width = `${pct}%`; },
+  fileData => {
+    // Attach file URL to saved session
+    const { db, ref, update } = window._stx_fb;
+    update(ref(db, `studySessions/${sessionId}`), { attachment: fileData });
+  },
+  err => console.error("Upload failed:", err)
+);
+```
 
-  timerCompleted = false;
-  timerStartTime = null;
-  pendingFile    = null;
-  window._pendingFileData = null;
-  clearForm();
+}
+
+timerCompleted = false;
+timerStartTime = null;
+pendingFile    = null;
+window._pendingFileData = null;
+clearForm();
 }
 
 function clearForm() {
-  const d = document.getElementById("f-date");
-  const t = document.getElementById("f-topic");
-  const n = document.getElementById("f-notes");
-  const f = document.getElementById("f-file");
-  const p = document.getElementById("attached-file-preview");
-  if (d) d.value = new Date().toISOString().split("T")[0];
-  if (t) t.value = "";
-  if (n) n.value = "";
-  if (f) f.value = "";
-  if (p) p.innerHTML = "";
-  pendingFile = null;
-  selConfidence = 3;
-  setConf(3);
-  renderLog();
+const d = document.getElementById(“f-date”);
+const t = document.getElementById(“f-topic”);
+const ts = document.getElementById(“f-topic-search”);
+const n = document.getElementById(“f-notes”);
+const f = document.getElementById(“f-file”);
+const p = document.getElementById(“attached-file-preview”);
+if (d) d.value = new Date().toISOString().split(“T”)[0];
+if (t) t.value = “”;
+if (ts) ts.value = “”;
+if (n) n.value = “”;
+if (f) f.value = “”;
+if (p) p.innerHTML = “”;
+pendingFile = null;
+selConfidence = 3;
+setConf(3);
+renderLog();
 }
 
 function deleteSession(id) {
-  if (!confirm("Delete this session?")) return;
-  if (window._stx_fb) {
-    const { db, ref, remove } = window._stx_fb;
-    remove(ref(db, `studySessions/${id}`));
-  }
+if (!confirm(“Delete this session?”)) return;
+if (window._stx_fb) {
+const { db, ref, remove } = window._stx_fb;
+remove(ref(db, `studySessions/${id}`));
+}
 }
 
 function markRetested(id) {
-  const sess = sessions[id];
-  if (!sess) return;
-  // #1 On retest, prompt for new confidence and compute next interval
-  const newConf = parseInt(prompt("Rate your recall (1–5):") || "0");
-  if (!newConf || newConf < 1 || newConf > 5) return;
-  const nextDays = nextRetestDays(newConf, sess.interval || 7);
-  const nd = new Date(); nd.setDate(nd.getDate() + nextDays);
-  const nextDate = nd.toISOString().split("T")[0];
+const sess = sessions[id];
+if (!sess) return;
+// #1 On retest, prompt for new confidence and compute next interval
+const newConf = parseInt(prompt(“Rate your recall (1–5):”) || “0”);
+if (!newConf || newConf < 1 || newConf > 5) return;
+const nextDays = nextRetestDays(newConf, sess.interval || 7);
+const nd = new Date(); nd.setDate(nd.getDate() + nextDays);
+const nextDate = nd.toISOString().split(“T”)[0];
 
-  if (window._stx_fb) {
-    const { db, ref, update } = window._stx_fb;
-    update(ref(db, `studySessions/${id}`), {
-      retestDone: true, retestedAt: Date.now(),
-      retestConfidence: newConf,
-    });
-    // Push a new session entry for the next interval
-    window._stx_fb.push(window._stx_fb.sessRef, {
-      topicId: sess.topicId,
-      date: new Date().toISOString().split("T")[0],
-      sessionTypes: ["quiz"],
-      notes: `Retest of session from ${sess.date}`,
-      confidence: newConf,
-      interval: nextDays,
-      retestDate: nextDate,
-      retestDone: false,
-      duration: 20,
-      createdAt: Date.now(),
-      isRetest: true,
-    });
-  }
+if (window._stx_fb) {
+const { db, ref, update } = window._stx_fb;
+update(ref(db, `studySessions/${id}`), {
+retestDone: true, retestedAt: Date.now(),
+retestConfidence: newConf,
+});
+// Push a new session entry for the next interval
+window._stx_fb.push(window._stx_fb.sessRef, {
+topicId: sess.topicId,
+date: new Date().toISOString().split(“T”)[0],
+sessionTypes: [“quiz”],
+notes: `Retest of session from ${sess.date}`,
+confidence: newConf,
+interval: nextDays,
+retestDate: nextDate,
+retestDone: false,
+duration: 20,
+createdAt: Date.now(),
+isRetest: true,
+});
+}
 }
 
 function addTopic() {
-  const name   = document.getElementById("new-topic-name")?.value.trim();
-  const stream = document.getElementById("new-topic-stream")?.value;
-  if (!name) return;
-  if (window._stx_fb) window._stx_fb.push(window._stx_fb.topicRef, { name, stream });
-  document.getElementById("new-topic-name").value = "";
+const name   = document.getElementById(“new-topic-name”)?.value.trim();
+const stream = document.getElementById(“new-topic-stream”)?.value;
+if (!name) return;
+if (window._stx_fb) window._stx_fb.push(window._stx_fb.topicRef, { name, stream });
+document.getElementById(“new-topic-name”).value = “”;
 }
 
 function deleteTopic(id) {
-  if (!confirm("Delete this topic?")) return;
-  if (window._stx_fb) {
-    const { db, ref, remove } = window._stx_fb;
-    remove(ref(db, `studyTopics/${id}`));
-  }
+if (!confirm(“Delete this topic?”)) return;
+if (window._stx_fb) {
+const { db, ref, remove } = window._stx_fb;
+remove(ref(db, `studyTopics/${id}`));
+}
 }
 
 // ══════════════════════════════════════════════════════
@@ -1128,149 +1100,139 @@ function deleteTopic(id) {
 let plan = {};
 
 function planList() {
-  return Object.entries(window._stx_plan || {})
-    .map(([id, p]) => ({ id, ...p }))
-    .sort((a, b) => a.createdAt - b.createdAt);
+return Object.entries(window._stx_plan || {})
+.map(([id, p]) => ({ id, …p }))
+.sort((a, b) => a.createdAt - b.createdAt);
 }
 
 function renderPlan() {
-  const el   = document.getElementById("tab-plan");
-  const list = planList();
-  const tl   = topicList();
-  const MAX  = 5;
-  const topicOpts = tl.map(t =>
-    `<option value="${t.id}">[${STREAM_LABELS[t.stream]}] ${t.name}</option>`
-  ).join("");
+const el   = document.getElementById(“tab-plan”);
+const list = planList();
+const tl   = topicList();
+const MAX  = 5;
 
-  let html = `
-    <div class="sec-head">
-      <span class="sec-title">PLANNED SESSIONS</span>
-      <span class="sec-rule"></span>
-      <span class="sec-note">${list.length} / ${MAX} slots used</span>
-    </div>`;
+let html = ` <div class="sec-head"> <span class="sec-title">PLANNED SESSIONS</span> <span class="sec-rule"></span> <span class="sec-note">${list.length} / ${MAX} slots used</span> </div>`;
 
-  // Add form — only if under limit
-  if (list.length < MAX) {
-    html += `
-      <div class="log-form" style="margin-bottom:20px;">
-        <div style="font-size:8px;color:var(--grey);letter-spacing:0.12em;margin-bottom:10px;">
-          ── plan a future session · activate it when you're ready to study
-        </div>
-        <div class="form-grid">
-          <div class="form-field">
-            <label class="form-label">topic *</label>
-            <select class="form-inp" id="plan-topic">
-              <option value="">-- select topic --</option>
-              ${topicOpts}
-            </select>
-          </div>
-          <div class="form-field">
-            <label class="form-label">note (optional)</label>
-            <input class="form-inp" id="plan-note" placeholder="// e.g. focus on pathology" />
-          </div>
-        </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:10px;">
-          <button class="btn-primary" onclick="addPlan()">ADD TO PLAN ▸</button>
-        </div>
-      </div>`;
-  } else {
-    html += `
-      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--yellow);
-        padding:10px 14px;margin-bottom:20px;font-size:10px;color:var(--yellow);">
-        // max ${MAX} planned sessions — activate or remove one before adding more
-      </div>`;
-  }
+// Add form — only if under limit
+if (list.length < MAX) {
+html += ` <div class="log-form" style="margin-bottom:20px;"> <div style="font-size:8px;color:var(--grey);letter-spacing:0.12em;margin-bottom:10px;"> ── plan a future session · activate it when you're ready to study </div> <div class="form-grid"> <div class="form-field"> <label class="form-label">topic *</label> ${makeTopicSearch("plan-topic-search", "plan-topic")} </div> <div class="form-field"> <label class="form-label">note (optional)</label> <input class="form-inp" id="plan-note" placeholder="// e.g. focus on pathology" /> </div> </div> <div style="display:flex;justify-content:flex-end;margin-top:10px;"> <button class="btn-primary" onclick="addPlan()">ADD TO PLAN ▸</button> </div> </div>`;
+} else {
+html += ` <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--yellow); padding:10px 14px;margin-bottom:20px;font-size:10px;color:var(--yellow);"> // max ${MAX} planned sessions — activate or remove one before adding more </div>`;
+}
 
-  if (!list.length) {
-    html += `<div class="empty-msg">no planned sessions — add one above</div>`;
-  } else {
-    html += `<div class="session-grid">`;
-    list.forEach(p => {
-      const topic = topics[p.topicId] || { name: "Unknown", stream: "renal" };
-      html += `
-        <div class="sess-card stream-${topic.stream}" style="border-left-color:var(--cyan);opacity:${p.activated?0.45:1};">
-          <div class="sess-head">
-            <div class="sess-topic">${topic.name}</div>
-            <span class="sess-stream ${topic.stream}">${STREAM_LABELS[topic.stream]||topic.stream.toUpperCase()}</span>
-          </div>
-          <div class="sess-meta" style="color:var(--cyan);">
-            ▸ PLANNED · ${new Date(p.createdAt).toLocaleDateString("en-GB",{day:"2-digit",month:"short"})}
-          </div>
-          ${p.note ? `<div class="sess-notes">${p.note}</div>` : ""}
-          <div class="sess-footer" style="margin-top:8px;">
-            <div style="display:flex;gap:6px;">
-              ${!p.activated ? `
-                <button class="btn-primary" style="font-size:9px;padding:4px 12px;"
-                  onclick="activatePlan('${p.id}','${p.topicId}')">
-                  ▶ ACTIVATE
-                </button>` : `
-                <span style="font-size:9px;color:var(--green);letter-spacing:0.08em;">✓ ACTIVATED</span>`}
-            </div>
-            <button class="sess-btn danger" onclick="deletePlan('${p.id}')">✕</button>
-          </div>
-        </div>`;
-    });
-    html += `</div>`;
-  }
+if (!list.length) {
+html += `<div class="empty-msg">no planned sessions — add one above</div>`;
+} else {
+html += `<div class="session-grid">`;
+list.forEach(p => {
+const topic = topics[p.topicId] || { name: “Unknown”, stream: “renal” };
+html += `<div class="sess-card stream-${topic.stream}" style="border-left-color:var(--cyan);opacity:${p.activated?0.45:1};"> <div class="sess-head"> <div class="sess-topic">${topic.name}</div> <span class="sess-stream ${topic.stream}">${STREAM_LABELS[topic.stream]||topic.stream.toUpperCase()}</span> </div> <div class="sess-meta" style="color:var(--cyan);"> ▸ PLANNED · ${new Date(p.createdAt).toLocaleDateString("en-GB",{day:"2-digit",month:"short"})} </div> ${p.note ?`<div class="sess-notes">${p.note}</div>`: ""} <div class="sess-footer" style="margin-top:8px;"> <div style="display:flex;gap:6px;"> ${!p.activated ?`
+<button class="btn-primary" style="font-size:9px;padding:4px 12px;"
+onclick="activatePlan('${p.id}','${p.topicId}')">
+▶ ACTIVATE
+</button>`:`
+<span style="font-size:9px;color:var(--green);letter-spacing:0.08em;">✓ ACTIVATED</span>`} </div> <button class="sess-btn danger" onclick="deletePlan('${p.id}')">✕</button> </div> </div>`;
+});
+html += `</div>`;
+}
 
-  // Slot indicators
-  html += `
-    <div style="display:flex;gap:6px;margin-top:16px;">
-      ${Array.from({length:MAX}, (_,i) => `
-        <div style="flex:1;height:4px;border-radius:2px;background:${i < list.length ? "var(--cyan)" : "var(--border2)"}"></div>
-      `).join("")}
-    </div>
-    <div style="font-size:8px;color:var(--grey2);margin-top:5px;letter-spacing:0.08em;">
-      ${MAX - list.length} slot${MAX - list.length !== 1 ? "s" : ""} remaining
-    </div>`;
+// Slot indicators
+html += `<div style="display:flex;gap:6px;margin-top:16px;"> ${Array.from({length:MAX}, (_,i) =>`
+<div style=“flex:1;height:4px;border-radius:2px;background:${i < list.length ? “var(–cyan)” : “var(–border2)”}”></div>
+`).join("")} </div> <div style="font-size:8px;color:var(--grey2);margin-top:5px;letter-spacing:0.08em;"> ${MAX - list.length} slot${MAX - list.length !== 1 ? "s" : ""} remaining </div>`;
 
-  el.innerHTML = html;
+el.innerHTML = html;
 }
 
 function addPlan() {
-  const topicId = document.getElementById("plan-topic")?.value;
-  if (!topicId) { alert("Please select a topic"); return; }
-  const note = document.getElementById("plan-note")?.value.trim();
-  if (planList().length >= 5) { alert("Max 5 planned sessions"); return; }
-  if (window._stx_fb) {
-    window._stx_fb.push(window._stx_fb.planRef, {
-      topicId, note, createdAt: Date.now(), activated: false
-    });
-  }
+const topicId = document.getElementById(“plan-topic”)?.value;
+if (!topicId) { alert(“Please select a topic”); return; }
+const note = document.getElementById(“plan-note”)?.value.trim();
+if (planList().length >= 5) { alert(“Max 5 planned sessions”); return; }
+if (window._stx_fb) {
+window._stx_fb.push(window._stx_fb.planRef, {
+topicId, note, createdAt: Date.now(), activated: false
+});
+}
 }
 
 function deletePlan(id) {
-  if (!confirm("Remove this planned session?")) return;
-  if (window._stx_fb) {
-    const { db, ref, remove } = window._stx_fb;
-    remove(ref(db, `studyPlan/${id}`));
-  }
+if (!confirm(“Remove this planned session?”)) return;
+if (window._stx_fb) {
+const { db, ref, remove } = window._stx_fb;
+remove(ref(db, `studyPlan/${id}`));
+}
 }
 
 function activatePlan(id, topicId) {
-  // Pre-fill log form with this topic, open timer, switch to log tab
-  if (window._stx_fb) {
-    const { db, ref, update } = window._stx_fb;
-    update(ref(db, `studyPlan/${id}`), { activated: true });
-  }
-  // Switch to log tab and pre-select topic
-  setTab("log");
-  setTimeout(() => {
-    const sel = document.getElementById("f-topic");
-    if (sel) { sel.value = topicId; }
-    // Open timer automatically
-    const panel = document.getElementById("timer-panel");
-    if (panel && !panel.classList.contains("show")) {
-      panel.classList.add("show");
-      updateTimerDisplay();
-    }
-  }, 50);
+// Pre-fill log form with this topic, open timer, switch to log tab
+if (window._stx_fb) {
+const { db, ref, update } = window._stx_fb;
+update(ref(db, `studyPlan/${id}`), { activated: true });
+}
+// Switch to log tab and pre-select topic
+setTab(“log”);
+setTimeout(() => {
+const hidden = document.getElementById(“f-topic”);
+const search = document.getElementById(“f-topic-search”);
+if (hidden) hidden.value = topicId;
+if (search) {
+const topic = topics[topicId];
+if (topic) search.value = `[${STREAM_LABELS[topic.stream]}] ${topic.name}`;
+}
+// Open timer automatically
+const panel = document.getElementById(“timer-panel”);
+if (panel && !panel.classList.contains(“show”)) {
+panel.classList.add(“show”);
+updateTimerDisplay();
+}
+}, 50);
+}
+
+// ── Searchable topic widget ───────────────────────────
+function makeTopicSearch(inputId, hiddenId) {
+const tl = topicList();
+return `<div class="topic-search-wrap" id="wrap-${inputId}"> <input class="topic-search-inp" id="${inputId}" autocomplete="off" placeholder="// type to search topics..." oninput="filterTopics('${inputId}','${hiddenId}')" onfocus="openTopicDrop('${inputId}')" onblur="closeTopicDrop('${inputId}',300)" /> <input type="hidden" id="${hiddenId}" /> <div class="topic-dropdown" id="drop-${inputId}"> ${tl.map(t =>`
+<div class=“topic-opt”
+data-id=”${t.id}” data-name=”[${STREAM_LABELS[t.stream]}] ${t.name}”
+onmousedown=“selectTopic(’${inputId}’,’${hiddenId}’,’${t.id}’,’[${STREAM_LABELS[t.stream]}] ${t.name.replace(/’/g,”\’”)}’)”>
+${t.name}<span class="topic-opt-stream">${STREAM_LABELS[t.stream]}</span>
+</div>`).join("")} <div class="topic-opt empty" style="display:none" id="no-results-${inputId}">no matches</div> </div> </div>`;
+}
+
+function openTopicDrop(inputId) {
+document.getElementById(`drop-${inputId}`)?.classList.add(“open”);
+}
+function closeTopicDrop(inputId, delay) {
+setTimeout(() => document.getElementById(`drop-${inputId}`)?.classList.remove(“open”), delay || 0);
+}
+function filterTopics(inputId, hiddenId) {
+const q    = document.getElementById(inputId)?.value.toLowerCase() || “”;
+const drop = document.getElementById(`drop-${inputId}`);
+if (!drop) return;
+// clear hidden if text changed
+document.getElementById(hiddenId).value = “”;
+let any = false;
+drop.querySelectorAll(”.topic-opt:not(.empty)”).forEach(opt => {
+const match = opt.dataset.name.toLowerCase().includes(q);
+opt.style.display = match ? “” : “none”;
+if (match) any = true;
+});
+const noRes = document.getElementById(`no-results-${inputId}`);
+if (noRes) noRes.style.display = any ? “none” : “”;
+drop.classList.add(“open”);
+}
+function selectTopic(inputId, hiddenId, topicId, topicName) {
+document.getElementById(inputId).value  = topicName;
+document.getElementById(hiddenId).value = topicId;
+closeTopicDrop(inputId, 0);
 }
 
 // ══════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════
 renderAll();
-setTab("today");
+setTab(“today”);
 </script>
+
 </html>
