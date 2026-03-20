@@ -35,7 +35,7 @@
     window._fb = { db, ref, push, onValue, update, remove, tasksRef };
     window.dispatchEvent(new Event("firebase-ready"));
 
-  }).catch(e => console.error("Auth failed:", e));
+  .catch(e => console.error("Auth failed:", e));
 </script>
 
 
