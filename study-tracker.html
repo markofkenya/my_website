@@ -739,6 +739,58 @@ function renderToday() {
   el.innerHTML = html;
 }
 
+// ── Searchable topic widget ───────────────────────────
+function makeTopicSearch(inputId, hiddenId) {
+  const tl = topicList();
+  return `
+    <div class="topic-search-wrap" id="wrap-${inputId}">
+      <input class="topic-search-inp" id="${inputId}" autocomplete="off"
+        placeholder="// type to search topics..."
+        oninput="filterTopics('${inputId}','${hiddenId}')"
+        onfocus="openTopicDrop('${inputId}')"
+        onblur="closeTopicDrop('${inputId}',300)" />
+      <input type="hidden" id="${hiddenId}" />
+      <div class="topic-dropdown" id="drop-${inputId}">
+        ${tl.map(t => `
+          <div class="topic-opt"
+            data-id="${t.id}" data-name="[${STREAM_LABELS[t.stream]}] ${t.name}"
+            onmousedown="selectTopic('${inputId}','${hiddenId}','${t.id}','[${STREAM_LABELS[t.stream]}] ${t.name.replace(/'/g,"\\'")}')">
+            ${t.name}<span class="topic-opt-stream">${STREAM_LABELS[t.stream]}</span>
+          </div>`).join("")}
+        <div class="topic-opt empty" style="display:none" id="no-results-${inputId}">no matches</div>
+      </div>
+    </div>`;
+}
+
+function openTopicDrop(inputId) {
+  document.getElementById(`drop-${inputId}`)?.classList.add("open");
+}
+function closeTopicDrop(inputId, delay) {
+  setTimeout(() => document.getElementById(`drop-${inputId}`)?.classList.remove("open"), delay || 0);
+}
+function filterTopics(inputId, hiddenId) {
+  const q    = document.getElementById(inputId)?.value.toLowerCase() || "";
+  const drop = document.getElementById(`drop-${inputId}`);
+  if (!drop) return;
+  // clear hidden if text changed
+  document.getElementById(hiddenId).value = "";
+  let any = false;
+  drop.querySelectorAll(".topic-opt:not(.empty)").forEach(opt => {
+    const match = opt.dataset.name.toLowerCase().includes(q);
+    opt.style.display = match ? "" : "none";
+    if (match) any = true;
+  });
+  const noRes = document.getElementById(`no-results-${inputId}`);
+  if (noRes) noRes.style.display = any ? "none" : "";
+  drop.classList.add("open");
+}
+function selectTopic(inputId, hiddenId, topicId, topicName) {
+  document.getElementById(inputId).value  = topicName;
+  document.getElementById(hiddenId).value = topicId;
+  closeTopicDrop(inputId, 0);
+}
+
+
 // ── Log Session form ───────────────────────────────────
 function renderLog() {
   const el = document.getElementById("tab-log");
@@ -1187,45 +1239,6 @@ panel.classList.add(“show”);
 updateTimerDisplay();
 }
 }, 50);
-}
-
-// ── Searchable topic widget ───────────────────────────
-function makeTopicSearch(inputId, hiddenId) {
-const tl = topicList();
-return `<div class="topic-search-wrap" id="wrap-${inputId}"> <input class="topic-search-inp" id="${inputId}" autocomplete="off" placeholder="// type to search topics..." oninput="filterTopics('${inputId}','${hiddenId}')" onfocus="openTopicDrop('${inputId}')" onblur="closeTopicDrop('${inputId}',300)" /> <input type="hidden" id="${hiddenId}" /> <div class="topic-dropdown" id="drop-${inputId}"> ${tl.map(t =>`
-<div class=“topic-opt”
-data-id=”${t.id}” data-name=”[${STREAM_LABELS[t.stream]}] ${t.name}”
-onmousedown=“selectTopic(’${inputId}’,’${hiddenId}’,’${t.id}’,’[${STREAM_LABELS[t.stream]}] ${t.name.replace(/’/g,”\’”)}’)”>
-${t.name}<span class="topic-opt-stream">${STREAM_LABELS[t.stream]}</span>
-</div>`).join("")} <div class="topic-opt empty" style="display:none" id="no-results-${inputId}">no matches</div> </div> </div>`;
-}
-
-function openTopicDrop(inputId) {
-document.getElementById(`drop-${inputId}`)?.classList.add(“open”);
-}
-function closeTopicDrop(inputId, delay) {
-setTimeout(() => document.getElementById(`drop-${inputId}`)?.classList.remove(“open”), delay || 0);
-}
-function filterTopics(inputId, hiddenId) {
-const q    = document.getElementById(inputId)?.value.toLowerCase() || “”;
-const drop = document.getElementById(`drop-${inputId}`);
-if (!drop) return;
-// clear hidden if text changed
-document.getElementById(hiddenId).value = “”;
-let any = false;
-drop.querySelectorAll(”.topic-opt:not(.empty)”).forEach(opt => {
-const match = opt.dataset.name.toLowerCase().includes(q);
-opt.style.display = match ? “” : “none”;
-if (match) any = true;
-});
-const noRes = document.getElementById(`no-results-${inputId}`);
-if (noRes) noRes.style.display = any ? “none” : “”;
-drop.classList.add(“open”);
-}
-function selectTopic(inputId, hiddenId, topicId, topicName) {
-document.getElementById(inputId).value  = topicName;
-document.getElementById(hiddenId).value = topicId;
-closeTopicDrop(inputId, 0);
 }
 
 // ══════════════════════════════════════════════════════
