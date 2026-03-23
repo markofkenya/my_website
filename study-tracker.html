@@ -403,19 +403,20 @@ const DEFAULT_TOPICS = {
 const STREAM_LABELS = { renal:"RENAL", gim:"GIM" };
 
 function nextRetestDays(conf, prevInterval) {
-  const prev = prevInterval || 7;
   if (conf <= 2) return 3;
-  if (conf === 3) return Math.round(prev * 1.5);
-  if (conf === 4) return Math.round(prev * 2);
-  return Math.round(prev * 2.5);
+  if (conf === 3) return 5;
+  if (conf === 4) return 10;
+  return 14;
 }
+
 
 function retestDaysFromConf(conf) {
   if (conf <= 2) return 3;
-  if (conf === 3) return 14;
-  if (conf === 4) return 21;
-  return 28;
+  if (conf === 3) return 4;
+  if (conf === 4) return 5;
+  return 7;
 }
+
 
 function weakestTopics(n = 5) {
   const map = {};
