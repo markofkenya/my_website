@@ -448,8 +448,8 @@ let timerCompleted = false;
 let timerStartTime = null;
 let pendingFile    = null;
 let timerPhase     = "study";
-let timerSeconds   = 60 * 60;
-let timerTotal     = 60 * 60;
+let timerSeconds   = 90 * 60;
+let timerTotal     = 90 * 60;
 let activePlanId   = null;
 
 function tickClock() {
@@ -530,7 +530,7 @@ function timerReset() {
   clearInterval(timerInterval);
   timerRunning  = false;
   timerStartTime = null;
-  timerSeconds  = timerPhase === "study" ? 60 * 60 : 20 * 60;
+  timerSeconds  = timerPhase === "study" ? 90 * 60 : 20 * 60;
   timerTotal    = timerSeconds;
   document.getElementById("timer-start-btn").textContent = "▶ START";
   document.getElementById("timer-clock").classList.remove("alert-pulse");
@@ -541,7 +541,7 @@ function switchPhase() {
   clearInterval(timerInterval);
   timerRunning = false;
   timerPhase   = timerPhase === "study" ? "rest" : "study";
-  timerSeconds = timerPhase === "study" ? 60 * 60 : 20 * 60;
+  timerSeconds = timerPhase === "study" ? 90 * 60 : 20 * 60;
   timerTotal   = timerSeconds;
   if (timerPhase === "study") timerStartTime = null;
   document.getElementById("timer-start-btn").textContent = "▶ START";
