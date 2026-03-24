@@ -498,8 +498,14 @@ function timerStartPause() {
     timerRunning = true;
     document.getElementById("timer-start-btn").textContent = "⏸ PAUSE";
     timerInterval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
-    timerSeconds  = Math.max(0, timerTotal - elapsed);
+  const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+  timerSeconds  = Math.max(0, timerTotal - elapsed);
+
+  if (!timerCompleted && elapsed >= 60 * 60) {
+    timerCompleted = true;
+    if (currentTab === "log") renderLog();
+    if (currentTab === "today") renderToday();
+  }
       if (timerSeconds <= 0) {
         clearInterval(timerInterval);
         timerRunning = false;
