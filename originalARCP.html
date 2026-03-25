@@ -381,7 +381,9 @@ function setARCPDate(yr, val) {
   localStorage.setItem(`pft_arcp_date_${yr}`, val);
   fbPush(`pft_arcp_date_${yr}`, val);
   updateCountdown();
-  renderAdmin();
+  // Update just the deadline note in place without re-rendering whole admin tab
+  const noteEl = document.getElementById(`arcp-note-${yr}`);
+  if (noteEl) noteEl.textContent = val ? `// custom — ${new Date(val).toLocaleDateString("en-GB",{month:"short",year:"numeric"})}` : "// default — update if LTFT";
 }
 
 function sKey(reqId) {
@@ -710,7 +712,7 @@ function renderAdmin() {
       <div class="req-controls" style="margin-top:8px;">
         <input class="req-input date-inp" type="date" value="${custom||def}" onchange="setARCPDate('${yr}', this.value)" />
       </div>
-      <div class="req-deadline">${custom?`// custom — ${new Date(custom).toLocaleDateString("en-GB",{month:"short",year:"numeric"})}`:"// default — update if LTFT"}</div>`;
+      <div class="req-deadline" id="arcp-note-${yr}">${custom?`// custom — ${new Date(custom).toLocaleDateString("en-GB",{month:"short",year:"numeric"})}`:"// default — update if LTFT"}</div>`;
     arcpGrid.appendChild(card);
   });
   el.appendChild(arcpGrid);
@@ -1580,17 +1582,16 @@ function renderLbCPD(el) {
   const sumDiv = document.createElement("div");
   sumDiv.style.cssText = "display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;";
   sumDiv.innerHTML = `
-    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--gim);padding:12px 16px;flex:1;min-width:130px;">
-      <div style="font-size:20px;font-weight:700;color:var(--gim);">${cpd.total}<span style="font-size:10px;color:var(--dim);"> / ${totalTarget}h</span></div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${cpd.total>=totalTarget?'var(--green)':'var(--gim)'};padding:12px 16px;flex:1;min-width:130px;">
+      <div style="font-size:20px;font-weight:700;color:${cpd.total>=totalTarget?'var(--green)':'var(--gim)'};">${cpd.total}<span style="font-size:10px;color:var(--dim);"> / ${totalTarget}h</span></div>
       <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">TOTAL GIM CPD HRS</div>
       <div style="height:3px;background:var(--blue5);margin-top:6px;border-radius:2px;overflow:hidden;">
-        <div style="height:100%;width:${totalPct}%;background:var(--gim);"></div>
+        <div style="height:100%;width:${totalPct}%;background:${cpd.total>=totalTarget?'var(--green)':'var(--gim)'};"></div>
       </div>
     </div>
-    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${cpd.overOnline ? "var(--red)" : "var(--amber)"};padding:12px 16px;flex:1;min-width:130px;">
-      <div style="font-size:20px;font-weight:700;color:${cpd.overOnline ? "var(--red)" : "var(--amber)"};">${cpd.onlineHrs}<span style="font-size:10px;color:var(--dim);"> / ${onlineLimit}h max</span></div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${cpd.onlineHrs>=onlineLimit?'var(--green)':'var(--amber)'};padding:12px 16px;flex:1;min-width:130px;">
+      <div style="font-size:20px;font-weight:700;color:${cpd.onlineHrs>=onlineLimit?'var(--green)':'var(--amber)'};">${cpd.onlineCapped}<span style="font-size:10px;color:var(--dim);"> / ${onlineLimit}h max</span></div>
       <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">ONLINE CPD (MAX 15h)</div>
-      ${cpd.overOnline ? `<div style="font-size:8px;color:var(--red);margin-top:4px;">!! ${cpd.onlineHrs - onlineLimit}h over limit — only 15h counted in total</div>` : ""}
     </div>
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${currentYear==='ST7'?(cpd.st7Hrs>=finalYrTarget?'var(--green)':'var(--amber)'):'var(--dim)'};padding:12px 16px;flex:1;min-width:130px;">
       <div style="font-size:20px;font-weight:700;color:${currentYear==='ST7'?(cpd.st7Hrs>=finalYrTarget?'var(--green)':'var(--amber)'):'var(--blue)'};">${cpd.st7Hrs}<span style="font-size:10px;color:var(--dim);"> / 20h</span></div>
