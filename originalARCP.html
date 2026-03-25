@@ -1465,19 +1465,6 @@ function renderLbClinics(el) {
     </div>`;
   el.appendChild(sumDiv);
 
-  // GIM Add form
-  el.appendChild(makeLbForm("clinics_gim", "ADD GIM CLINIC", "gim", [
-    { id:"date",        label:"Date",                    type:"date" },
-    { id:"type",        label:"Clinic type",             type:"select_other", options: CLINIC_TYPES_GIM, otherId:"type_other", otherLabel:"Specify clinic type" },
-    { id:"supervisor",  label:"Supervisor",              type:"text",   placeholder:"Consultant name" },
-    { id:"patients",    label:"Patients seen / observed",type:"number", placeholder:"e.g. 8" },
-    { id:"notes",       label:"Notes",                   type:"text",   placeholder:"Optional" },
-  ]));
-
-  // GIM entries
-  el.appendChild(makeLbSection("GIM CLINICS", "gim", gimEntries, "clinics_gim",
-    e => `${e.type || "Clinic"} · ${e.supervisor || "—"}${e.patients ? " · " + e.patients + " pts" : ""}`, true));
-
   // Renal Add form
   el.appendChild(makeLbForm("clinics_renal", "ADD RENAL CLINIC", "renal", [
     { id:"date",        label:"Date",                    type:"date" },
@@ -1490,6 +1477,19 @@ function renderLbClinics(el) {
   // Renal entries
   el.appendChild(makeLbSection("RENAL CLINICS", "renal", renalEntries, "clinics_renal",
     e => `${e.type || "Clinic"} · ${e.supervisor || "—"}${e.patients ? " · " + e.patients + " pts" : ""}`, false));
+
+  // GIM Add form
+  el.appendChild(makeLbForm("clinics_gim", "ADD GIM CLINIC", "gim", [
+    { id:"date",        label:"Date",                    type:"date" },
+    { id:"type",        label:"Clinic type",             type:"select_other", options: CLINIC_TYPES_GIM, otherId:"type_other", otherLabel:"Specify clinic type" },
+    { id:"supervisor",  label:"Supervisor",              type:"text",   placeholder:"Consultant name" },
+    { id:"patients",    label:"Patients seen / observed",type:"number", placeholder:"e.g. 8" },
+    { id:"notes",       label:"Notes",                   type:"text",   placeholder:"Optional" },
+  ]));
+
+  // GIM entries
+  el.appendChild(makeLbSection("GIM CLINICS", "gim", gimEntries, "clinics_gim",
+    e => `${e.type || "Clinic"} · ${e.supervisor || "—"}${e.patients ? " · " + e.patients + " pts" : ""}`, true));
 }
 
 // ════════════════════════════════════════════════════
@@ -1572,19 +1572,8 @@ function renderLbCPD(el) {
     </div>`;
   el.appendChild(sumDiv);
 
-  // GIM CPD add form
-  el.appendChild(makeLbForm("cpd_gim", "ADD GIM CPD / STUDY LEAVE", "gim", [
-    { id:"date",    label:"Date",         type:"date" },
-    { id:"type",    label:"CPD type",     type:"select", options: CPD_TYPES_GIM },
-    { id:"title",   label:"Title / event",type:"text", placeholder:"e.g. GIM training day — cardiology" },
-    { id:"hours",   label:"Hours",        type:"number", placeholder:"e.g. 6" },
-    { id:"year",    label:"Training year",type:"select", options:["ST4","ST5","ST6","ST7"] },
-    { id:"notes",   label:"Notes",        type:"text", placeholder:"Optional" },
-  ], currentYear));
-  el.appendChild(makeLbSection("GIM CPD ENTRIES", "gim", gimEntries, "cpd_gim",
-    e => `${e.type || "CPD"} · ${e.title || "—"} · ${e.hours || 0}h · ${e.year || ""}`, true));
-
   // Renal CPD
+// Renal CPD
   el.appendChild(makeLbForm("cpd_renal", "ADD RENAL CPD / STUDY LEAVE", "renal", [
     { id:"date",    label:"Date",         type:"date" },
     { id:"type",    label:"CPD type",     type:"select", options: CPD_TYPES_RENAL },
@@ -1596,6 +1585,21 @@ function renderLbCPD(el) {
   el.appendChild(makeLbSection("RENAL CPD ENTRIES", "renal", renalEntries, "cpd_renal",
     e => `${e.type || "CPD"} · ${e.title || "—"} · ${e.hours || 0}h · ${e.year || ""}`, false));
 }
+
+  // GIM CPD add form
+// GIM CPD add form
+  el.appendChild(makeLbForm("cpd_gim", "ADD GIM CPD / STUDY LEAVE", "gim", [
+    { id:"date",    label:"Date",         type:"date" },
+    { id:"type",    label:"CPD type",     type:"select", options: CPD_TYPES_GIM },
+    { id:"title",   label:"Title / event",type:"text", placeholder:"e.g. GIM training day — cardiology" },
+    { id:"hours",   label:"Hours",        type:"number", placeholder:"e.g. 6" },
+    { id:"year",    label:"Training year",type:"select", options:["ST4","ST5","ST6","ST7"] },
+    { id:"notes",   label:"Notes",        type:"text", placeholder:"Optional" },
+  ], currentYear));
+  el.appendChild(makeLbSection("GIM CPD ENTRIES", "gim", gimEntries, "cpd_gim",
+    e => `${e.type || "CPD"} · ${e.title || "—"} · ${e.hours || 0}h · ${e.year || ""}`, true));
+
+
 
 // ════════════════════════════════════════════════════
 //  TEACHING
@@ -1671,7 +1675,17 @@ function makeLbForm(type, title, stream, fields, defaultYear) {
   // Add button
   const btnWrap = document.createElement("div");
   btnWrap.style.cssText = "grid-column:1/-1;display:flex;justify-content:flex-end;margin-top:4px;";
-  btnWrap.innerHTML = `<button class="btn-reset" style="border-color:${streamColor};color:${streamColor};" onclick="submitLbForm('${type}','${formId}',${JSON.stringify(fields.map(f=>f.id))})">ADD ENTRY ▸</button>`;
+  const btn = document.createElement("button");
+  btn.className = "btn-reset";
+  btn.style.cssText = "border-color:" + streamColor + ";color:" + streamColor + ";";
+  btn.textContent = "ADD ENTRY ▸";
+  btn.dataset.lbtype  = type;
+  btn.dataset.lbform  = formId;
+  btn.dataset.lbfields = fields.map(f => f.id).join(",");
+  btn.onclick = function() {
+    submitLbForm(this.dataset.lbtype, this.dataset.lbform, this.dataset.lbfields.split(","));
+  };
+  btnWrap.appendChild(btn);
   form.appendChild(btnWrap);
 
   wrap.appendChild(form);
