@@ -452,9 +452,13 @@ let timerPhase     = "study";
 let timerSeconds   = 90 * 60;
 let timerTotal     = 90 * 60;
   if (timerStartTime) {
-  const _e = timerElapsedBeforePause + Math.floor((Date.now() - timerStartTime) / 1000);
+  const _running = localStorage.getItem("stx_timer_running") === "true";
+  const _e = _running
+    ? timerElapsedBeforePause + Math.floor((Date.now() - timerStartTime) / 1000)
+    : timerElapsedBeforePause;
   timerSeconds = Math.max(0, timerTotal - _e);
 }
+
 
 let activePlanId   = null;
 
