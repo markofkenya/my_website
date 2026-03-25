@@ -2104,6 +2104,7 @@ teaching.sort((a,b)=>(b.date||””).localeCompare(a.date||””)).map(e=>[fmt
 </html>`;
 
 const w = window.open(””, “_blank”);
+if (!w) { alert(“Please allow popups for this site to use the print view.”); return; }
 w.document.write(html);
 w.document.close();
 }
