@@ -446,7 +446,7 @@ let timerInterval  = null;
 let timerRunning   = false;
 let timerCompleted = localStorage.getItem("stx_timer_completed") === "true";
 let timerStartTime = parseInt(localStorage.getItem("stx_timer_start") || "0") || null;
-let timerElapsedBeforePause = 0;
+let timerElapsedBeforePause = parseInt(localStorage.getItem("stx_timer_elapsed") || "0");
 let pendingFile    = null;
 let timerPhase     = "study";
 let timerSeconds   = 90 * 60;
@@ -493,13 +493,16 @@ function timerStartPause() {
   if (timerRunning) {
     clearInterval(timerInterval);
     timerRunning = false;
+    localStorage.setItem("stx_timer_running", "false");
     timerElapsedBeforePause += Math.floor((Date.now() - timerStartTime) / 1000);
+    localStorage.setItem("stx_timer_elapsed", timerElapsedBeforePause);
     document.getElementById("timer-start-btn").textContent = "▶ RESUME";
     
   } else {
     timerStartTime = Date.now();
     if (timerPhase === "study") localStorage.setItem("stx_timer_start", timerStartTime);
     timerRunning = true;
+    localStorage.setItem("stx_timer_running", "true");
     document.getElementById("timer-start-btn").textContent = "⏸ PAUSE";
     timerInterval = setInterval(() => {
   const elapsed = timerElapsedBeforePause + Math.floor((Date.now() - timerStartTime) / 1000);
@@ -535,8 +538,10 @@ function timerStartPause() {
 function timerReset() {
   clearInterval(timerInterval);
   timerRunning  = false;
+  localStorage.removeItem("stx_timer_running");
   timerStartTime = null;
   timerElapsedBeforePause = 0;
+  localStorage.removeItem("stx_timer_elapsed");
   localStorage.removeItem("stx_timer_completed");
   localStorage.removeItem("stx_timer_start");
 
@@ -904,8 +909,13 @@ function filterTopics(inputId, hiddenId) {
 function selectTopic(inputId, hiddenId, topicId, topicName) {
   document.getElementById(inputId).value  = topicName;
   document.getElementById(hiddenId).value = topicId;
+  if (hiddenId === "f-topic") {
+    localStorage.setItem("stx_session_topic", topicId);
+    localStorage.setItem("stx_session_topic_name", topicName);
+  }
   closeTopicDrop(inputId, 0);
 }
+
 
 function renderLog() {
   const el = document.getElementById("tab-log");
@@ -940,7 +950,8 @@ function renderLog() {
         </div>
         <div class="form-field wide">
           <label class="form-label">notes</label>
-          <textarea class="form-inp" id="f-notes" placeholder="// key concepts, gaps identified, questions to follow up..."></textarea>
+          <textarea class="form-inp" id="f-notes" placeholder="// key concepts, gaps identified, questions to follow up..."
+                oninput="localStorage.setItem('stx_session_notes', this.value)"></textarea>
         </div>
         <div class="form-field wide">
           <label class="form-label">attach_file (optional)</label>
@@ -980,6 +991,14 @@ function renderLog() {
     <div class="session-grid">
       ${sessionList().slice(0,5).map(sessCard).join("") || `<div class="empty-msg">no sessions logged yet</div>`}
     </div>`;
+  const savedTopicId   = localStorage.getItem("stx_session_topic");
+  const savedTopicName = localStorage.getItem("stx_session_topic_name");
+  const savedNotes     = localStorage.getItem("stx_session_notes");
+  if (savedTopicId)   { document.getElementById("f-topic").value        = savedTopicId; }
+  if (savedTopicName) { document.getElementById("f-topic-search").value  = savedTopicName; }
+  if (savedNotes)     { document.getElementById("f-notes").value         = savedNotes; }
+}
+
 }
 
 function renderSessions() {
@@ -1231,6 +1250,9 @@ function saveSession() {
   timerStartTime = null;
   localStorage.removeItem("stx_timer_completed");
   localStorage.removeItem("stx_timer_start");
+  localStorage.removeItem("stx_session_topic");
+  localStorage.removeItem("stx_session_notes");
+  
 
   pendingFile    = null;
   window._pendingFileData = null;
@@ -1452,6 +1474,19 @@ function activatePlan(id, topicId) {
 
 renderAll();
 setTab("today");
+if (timerStartTime && localStorage.getItem("stx_timer_running") === "true") {
+  const panel = document.getElementById("timer-panel");
+  panel.classList.add("show");
+  updateTimerDisplay();
+  timerStartPause();
+} else if (timerStartTime) {
+  // Was paused — just show the timer panel at correct time
+  const panel = document.getElementById("timer-panel");
+  panel.classList.add("show");
+  updateTimerDisplay();
+}
+
+
 </script>
 </body>
 </html>
