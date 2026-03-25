@@ -451,6 +451,11 @@ let pendingFile    = null;
 let timerPhase     = "study";
 let timerSeconds   = 90 * 60;
 let timerTotal     = 90 * 60;
+  if (timerStartTime) {
+  const _e = timerElapsedBeforePause + Math.floor((Date.now() - timerStartTime) / 1000);
+  timerSeconds = Math.max(0, timerTotal - _e);
+}
+
 let activePlanId   = null;
 
 function tickClock() {
@@ -976,7 +981,7 @@ function renderLog() {
           </div>
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-          ${!timerCompleted ? `<span style="font-size:9px;color:var(--grey2);">// complete 90min timer to unlock</span>` : ""}
+          ${!timerCompleted ? `<span style="font-size:9px;color:var(--grey2);">// complete 60min timer to unlock</span>` : ""}
           <button class="btn-secondary" onclick="clearForm()">CLEAR</button>
           <button class="btn-primary" onclick="saveSession()" ${!timerCompleted ? 'disabled' : ""}>LOG SESSION ▸</button>
         </div>
