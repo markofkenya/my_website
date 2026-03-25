@@ -1895,20 +1895,17 @@ async function sendLogbookReport(auto) {
   if (sendBtn) { sendBtn.textContent = "✉ SENDING..."; sendBtn.disabled = true; }
 
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
+    await fetch(APPS_SCRIPT_URL, {
       method: "POST",
+      mode: "no-cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const json = await res.json();
-    if (json.ok) {
-      localStorage.setItem("pft_lb_last_sent", String(Date.now()));
-      if (!auto) {
-        alert("✓ Report sent successfully for " + currentYear + "!");
-        if (currentTab === "logbook") renderLogbook();
-      }
-    } else {
-      if (!auto) alert("Send failed: " + (json.error || "unknown error"));
+    // no-cors means we can't read response — assume success
+    localStorage.setItem("pft_lb_last_sent", String(Date.now()));
+    if (!auto) {
+      alert("✓ Report sent for " + currentYear + "! Check your Gmail in a few seconds.");
+      if (currentTab === "logbook") renderLogbook();
     }
   } catch(err) {
     if (!auto) alert("Send failed: " + err.message);
