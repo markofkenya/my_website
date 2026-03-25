@@ -499,7 +499,6 @@ function timerStartPause() {
   } else {
     timerStartTime = Date.now();
     if (timerPhase === "study") localStorage.setItem("stx_timer_start", timerStartTime);
-    }
     timerRunning = true;
     document.getElementById("timer-start-btn").textContent = "⏸ PAUSE";
     timerInterval = setInterval(() => {
