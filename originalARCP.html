@@ -1466,6 +1466,12 @@ function renderLogbook() {
     ? `<span style="font-size:9px;color:var(--dim);letter-spacing:0.08em;">last sent ${new Date(parseInt(lastSent)).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})}</span>`
     : `<span style="font-size:9px;color:var(--dim);letter-spacing:0.08em;">not yet sent</span>`;
   sendWrap.innerHTML = lastSentLabel;
+  const printBtn = document.createElement("button");
+  printBtn.className = "btn-reset";
+  printBtn.style.cssText = "border-color:var(--blue);color:var(--blue);font-size:9px;padding:4px 12px;";
+  printBtn.textContent = "⎙ PRINT REPORT";
+  printBtn.onclick = () => printLogbookReport();
+  sendWrap.appendChild(printBtn);
   const sendBtn = document.createElement("button");
   sendBtn.className = "btn-reset";
   sendBtn.style.cssText = "border-color:var(--green);color:var(--green);font-size:9px;padding:4px 12px;";
@@ -1917,20 +1923,205 @@ async function sendLogbookReport(auto) {
 // Auto-send check on load — fires if new month since last send
 setTimeout(() => sendLogbookReport(true), 5000);
 
+// ══════════════════════════════════════════════════════
+//  PRINT REPORT
+// ══════════════════════════════════════════════════════
+function printLogbookReport() {
+  const yr = currentYear;
+  const yearMap = { ST4:2026, ST5:2027, ST6:2028, ST7:2029 };
+  const fmt = d => {
+    if (!d) return "—";
+    const p = d.split("-");
+    return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : d;
+  };
+  const filterByYear = entries => entries.filter(e => {
+    if (e.year) return e.year === yr;
+    if (!e.date) return true;
+    return new Date(e.date).getFullYear() === yearMap[yr];
+  });
+
+  const gimClinics   = getLbEntries("clinics_gim");
+  const renalClinics = filterByYear(getLbEntries("clinics_renal"));
+  const renalProcs   = filterByYear(getLbEntries("procedures_renal"));
+  const gimProcs     = filterByYear(getLbEntries("procedures_gim"));
+  const renalCpd     = filterByYear(getLbEntries("cpd_renal"));
+  const gimCpd       = getLbEntries("cpd_gim");
+  const teaching     = filterByYear(getLbEntries("teaching"));
+
+  const totalCpdHrs  = gimCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const onlineHrs    = gimCpd.filter(e => e.type==="Online CPD (approved)").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const onlineCapped = Math.min(onlineHrs, 15);
+  const countedTotal = (totalCpdHrs - onlineHrs) + onlineCapped;
+
+  const tbl = (headers, rows, accentColor) => {
+    if (!rows.length) return `<p class="empty-note">No entries logged</p>`;
+    const ths = headers.map(h => `<th>${h}</th>`).join("");
+    const trs = rows.map((r,i) => `<tr class="${i%2===0?'even':'odd'}">${r.map(c=>`<td>${c||"—"}</td>`).join("")}</tr>`).join("");
+    return `<table><thead style="--ac:${accentColor}"><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
+  };
+
+  const secHead = (title) => `<div class="section-head"><h2>${title}</h2><div class="rule"></div></div>`;
+  const badge = (t, cls) => `<span class="stream-badge ${cls}">${t}</span>`;
+  const note  = (t) => `<span class="badge-note">${t}</span>`;
+  const subHead = (badges, noteText) => `<div class="sub-head">${badges} ${note(noteText)}</div>`;
+
+  const today = new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"2-digit",year:"numeric"}).replace(/\//g,"-");
+  const fullDate = new Date().toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>ARCP Logbook Report — ${yr}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111;background:#e8e8e8;padding:20px;}
+    .page{background:#fff;max-width:210mm;margin:0 auto;padding:18mm 16mm;box-shadow:0 2px 12px rgba(0,0,0,0.15);}
+    .doc-header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:10px;border-bottom:3px solid #003087;margin-bottom:14px;}
+    .doc-header h1{font-size:15pt;font-weight:700;color:#003087;letter-spacing:0.02em;}
+    .doc-header .subtitle{font-size:8.5pt;color:#555;margin-top:3px;text-transform:uppercase;letter-spacing:0.05em;}
+    .doc-meta{text-align:right;font-size:8.5pt;color:#555;line-height:1.7;}
+    .doc-meta strong{color:#003087;}
+    .info-box{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #003087;margin-bottom:16px;}
+    .info-cell{padding:7px 11px;border-right:1px solid #ccd6e8;}
+    .info-cell:last-child{border-right:none;}
+    .info-cell .lbl{font-size:7pt;text-transform:uppercase;letter-spacing:0.1em;color:#666;margin-bottom:2px;}
+    .info-cell .val{font-size:10.5pt;font-weight:700;color:#003087;}
+    .summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;}
+    .sum-box{border:1px solid #ddd;border-top:3px solid var(--c);padding:7px 10px;text-align:center;}
+    .sum-box .num{font-size:18pt;font-weight:700;color:var(--c);line-height:1;}
+    .sum-box .key{font-size:7pt;text-transform:uppercase;letter-spacing:0.1em;color:#666;margin-top:3px;}
+    .section-head{display:flex;align-items:center;gap:10px;margin:16px 0 7px;page-break-after:avoid;}
+    .section-head h2{font-size:9.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#003087;white-space:nowrap;}
+    .section-head .rule{flex:1;height:1px;background:#003087;}
+    .sub-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+    .stream-badge{font-size:7pt;font-weight:700;padding:2px 6px;border-radius:2px;letter-spacing:0.08em;text-transform:uppercase;}
+    .badge-gim{background:#e8f0ff;color:#003087;border:1px solid #b3c6f0;}
+    .badge-renal{background:#f3eeff;color:#5b21b6;border:1px solid #c4b0e8;}
+    .badge-note{font-size:7.5pt;color:#666;font-style:italic;}
+    .empty-note{font-style:italic;color:#999;font-size:8.5pt;padding:6px 0;margin-bottom:12px;}
+    table{width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:12px;page-break-inside:auto;}
+    thead tr{background:var(--ac,#003087);color:#fff;}
+    thead th{padding:5px 7px;text-align:left;font-size:7.5pt;letter-spacing:0.05em;text-transform:uppercase;font-weight:600;}
+    tr.even{background:#f5f8ff;}
+    tr.odd{background:#fff;}
+    td{padding:4px 7px;border-bottom:1px solid #e8eef8;vertical-align:top;}
+    .dops-yes{color:#166534;font-weight:700;}
+    .cpd-summary{background:#f8f9ff;border:1px solid #ccd6e8;padding:7px 11px;margin-bottom:9px;font-size:8.5pt;color:#333;}
+    .doc-footer{margin-top:20px;padding-top:8px;border-top:1px solid #ccd6e8;display:flex;justify-content:space-between;font-size:7pt;color:#888;}
+    @media print{
+      body{background:#fff;padding:0;}
+      .page{box-shadow:none;padding:12mm 14mm;max-width:100%;}
+      .section-head{page-break-after:avoid;}
+      tr{page-break-inside:avoid;}
+      .no-print{display:none;}
+    }
+  </style>
+
+</head>
+<body>
+<div class="page">
+
+  <div class="no-print" style="text-align:right;margin-bottom:12px;">
+    <button onclick="window.print()" style="background:#003087;color:#fff;border:none;padding:8px 20px;font-size:10pt;cursor:pointer;border-radius:3px;">⎙ Print / Save as PDF</button>
+  </div>
+
+  <div class="doc-header">
+    <div>
+      <h1>ARCP Logbook Report</h1>
+      <div class="subtitle">Renal Medicine &amp; General Internal Medicine · Dual CCT Training</div>
+    </div>
+    <div class="doc-meta">
+      <div><strong>Generated:</strong> ${today}</div>
+      <div><strong>Training Year:</strong> ${yr}</div>
+      <div><strong>Programme:</strong> Renal + GIM ST4–ST7</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="info-cell"><div class="lbl">Programme</div><div class="val">Renal Medicine + GIM</div></div>
+    <div class="info-cell"><div class="lbl">Current Year</div><div class="val">${yr}</div></div>
+    <div class="info-cell"><div class="lbl">CCT Date</div><div class="val">Dec 2030</div></div>
+  </div>
+
+  <div class="summary-strip">
+    <div class="sum-box" style="--c:#003087"><div class="num">${gimClinics.length}</div><div class="key">GIM Clinics (total)</div></div>
+    <div class="sum-box" style="--c:#5b21b6"><div class="num">${renalClinics.length}</div><div class="key">Renal Clinics (${yr})</div></div>
+    <div class="sum-box" style="--c:#166534"><div class="num">${renalProcs.length + gimProcs.length}</div><div class="key">Procedures (${yr})</div></div>
+    <div class="sum-box" style="--c:#92400e"><div class="num">${teaching.length}</div><div class="key">Teaching (${yr})</div></div>
+  </div>
+
+${secHead(“Clinics”)}
+${subHead(badge(“Renal”,“badge-renal”), `${renalClinics.length} entries · ${yr}`)}
+${tbl([“Date”,“Type”,“Hospital”,“Supervisor”,“Patients”,“Notes”],
+renalClinics.sort((a,b)=>(b.date||””).localeCompare(a.date||””)).map(e=>[fmt(e.date),e.type,e.hospital,e.supervisor,e.patients?e.patients+” pts”:”—”,e.notes]),
+“#5b21b6”)}
+${subHead(badge(“GIM”,“badge-gim”), `${gimClinics.length} total entries · all years · cumulative target 20`)}
+${tbl([“Date”,“Type”,“Hospital”,“Supervisor”,“Patients”,“Year”,“Notes”],
+gimClinics.sort((a,b)=>(b.date||””).localeCompare(a.date||””)).map(e=>[fmt(e.date),e.type,e.hospital,e.supervisor,e.patients?e.patients+” pts”:”—”,e.year||”—”,e.notes]),
+“#003087”)}
+
+${secHead(“Procedures”)}
+${subHead(badge(“Renal”,“badge-renal”), `${renalProcs.length} entries · ${yr}`)}
+${tbl([“Date”,“Procedure”,“Supervisor”,“DOPS”,“Notes”],
+renalProcs.sort((a,b)=>(b.date||””).localeCompare(a.date||””)).map(e=>[fmt(e.date),e.type,e.supervisor,e.dops===“Yes”?’<span class="dops-yes">✓ Yes</span>’:“No”,e.notes]),
+“#5b21b6”)}
+${subHead(badge(“GIM”,“badge-gim”), `${gimProcs.length} entries · ${yr}`)}
+${tbl([“Date”,“Procedure”,“Supervisor”,“DOPS”,“Notes”],
+gimProcs.sort((a,b)=>(b.date||””).localeCompare(a.date||””)).map(e=>[fmt(e.date),e.type,e.supervisor,e.dops===“Yes”?’<span class="dops-yes">✓ Yes</span>’:“No”,e.notes]),
+“#003087”)}
+
+${secHead(“CPD / Study Leave”)}
+
+  <div class="cpd-summary">
+    <strong>GIM CPD Summary:</strong> &nbsp;
+    Counted total: <strong style="color:#003087">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
+    Online: <strong>${onlineCapped.toFixed(1)}h</strong> / 15h max &nbsp;·&nbsp;
+    External: <strong>${(totalCpdHrs-onlineHrs).toFixed(1)}h</strong>
+  </div>
+  ${subHead(badge("Renal","badge-renal"), `${renalCpd.length} entries · ${yr}`)}
+  ${tbl(["Date","Type","Title / Event","Hours","Notes"],
+    renalCpd.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.title,e.hours?e.hours+"h":"—",e.notes]),
+    "#5b21b6")}
+  ${subHead(badge("GIM","badge-gim"), `${gimCpd.length} total entries · all years · cumulative target 100h`)}
+  ${tbl(["Date","Type","Title / Event","Hours","Year","Notes"],
+    gimCpd.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.title,e.hours?e.hours+"h":"—",e.year||"—",e.notes]),
+    "#003087")}
+
+${secHead(“Teaching”)}
+${subHead(””, `${teaching.length} sessions · ${yr}`)}
+${tbl([“Date”,“Type”,“Topic”,“Audience”,“Observed by”,“Sign-off”,“Notes”],
+teaching.sort((a,b)=>(b.date||””).localeCompare(a.date||””)).map(e=>[fmt(e.date),e.type,e.topic,e.audience,e.supervisor||”—”,e.signoff,e.notes]),
+“#92400e”)}
+
+  <div class="doc-footer">
+    <span>ARCP Portfolio Tracker · Auto-generated document</span>
+    <span>Generated ${fullDate} · Confidential</span>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+const w = window.open(””, “_blank”);
+w.document.write(html);
+w.document.close();
+}
+
 setInterval(updateCountdown, 60000);
 
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./arcp-sw.js").then(reg => {
-    reg.update();
-    reg.addEventListener("updatefound", () => {
-      const nw = reg.installing;
-      nw.addEventListener("statechange", () => {
-        if (nw.state === "installed" && navigator.serviceWorker.controller) nw.postMessage("skipWaiting");
-      });
-    });
-  }).catch(err => console.warn("SW registration failed:", err));
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => { if (!refreshing) { refreshing = true; window.location.reload(); } });
+if (“serviceWorker” in navigator) {
+navigator.serviceWorker.register(”./arcp-sw.js”).then(reg => {
+reg.update();
+reg.addEventListener(“updatefound”, () => {
+const nw = reg.installing;
+nw.addEventListener(“statechange”, () => {
+if (nw.state === “installed” && navigator.serviceWorker.controller) nw.postMessage(“skipWaiting”);
+});
+});
+}).catch(err => console.warn(“SW registration failed:”, err));
+let refreshing = false;
+navigator.serviceWorker.addEventListener(“controllerchange”, () => { if (!refreshing) { refreshing = true; window.location.reload(); } });
 }
 </script>
 
