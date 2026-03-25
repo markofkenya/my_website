@@ -1458,6 +1458,22 @@ function renderLogbook() {
   });
   el.appendChild(subBar);
 
+  // Send report button
+  const sendWrap = document.createElement("div");
+  sendWrap.style.cssText = "display:flex;justify-content:flex-end;margin-bottom:16px;gap:8px;align-items:center;";
+  const lastSent = localStorage.getItem("pft_lb_last_sent");
+  const lastSentLabel = lastSent
+    ? `<span style="font-size:9px;color:var(--dim);letter-spacing:0.08em;">last sent ${new Date(parseInt(lastSent)).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})}</span>`
+    : `<span style="font-size:9px;color:var(--dim);letter-spacing:0.08em;">not yet sent</span>`;
+  sendWrap.innerHTML = lastSentLabel;
+  const sendBtn = document.createElement("button");
+  sendBtn.className = "btn-reset";
+  sendBtn.style.cssText = "border-color:var(--green);color:var(--green);font-size:9px;padding:4px 12px;";
+  sendBtn.textContent = "✉ SEND REPORT";
+  sendBtn.onclick = () => sendLogbookReport(false);
+  sendWrap.appendChild(sendBtn);
+  el.appendChild(sendWrap);
+
   if (lbSubTab === "clinics")    renderLbClinics(el);
   if (lbSubTab === "procedures") renderLbProcedures(el);
   if (lbSubTab === "cpd")        renderLbCPD(el);
@@ -1819,6 +1835,90 @@ function makeLbSection(title, stream, entries, type, summaryFn, showCount) {
   return wrap;
 }
 
+
+// ══════════════════════════════════════════════════════
+//  LOGBOOK EMAIL REPORT
+// ══════════════════════════════════════════════════════
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwAnJ3jPghuJUnQ3XysTDCfTFpror-Lv6IpmyS4Pc6e4BrSMUN_rT29mUMtyFZvYDyH/exec";
+
+function buildLogbookPayload() {
+  const yr = currentYear;
+  const yearMap = { ST4:2026, ST5:2027, ST6:2028, ST7:2029 };
+
+  function filterByYear(entries) {
+    return entries.filter(e => {
+      if (e.year) return e.year === yr;
+      if (!e.date) return true;
+      return new Date(e.date).getFullYear() === yearMap[yr];
+    });
+  }
+
+  return {
+    year:        yr,
+    month:       new Date().toLocaleDateString("en-GB",{month:"long",year:"numeric"}),
+    generatedOn: new Date().toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}),
+    clinics_gim:      filterByYear(getLbEntries("clinics_gim")),
+    clinics_renal:    filterByYear(getLbEntries("clinics_renal")),
+    procedures_renal: filterByYear(getLbEntries("procedures_renal")),
+    procedures_gim:   filterByYear(getLbEntries("procedures_gim")),
+    cpd_renal:        filterByYear(getLbEntries("cpd_renal")),
+    cpd_gim:          filterByYear(getLbEntries("cpd_gim")),
+    teaching:         filterByYear(getLbEntries("teaching")),
+  };
+}
+
+async function sendLogbookReport(auto) {
+  // Auto: only send once per month
+  if (auto) {
+    const last = localStorage.getItem("pft_lb_last_sent");
+    if (last) {
+      const lastDate = new Date(parseInt(last));
+      const now = new Date();
+      if (lastDate.getMonth() === now.getMonth() && lastDate.getFullYear() === now.getFullYear()) return;
+    }
+  }
+
+  const payload = buildLogbookPayload();
+  const totalEntries = [
+    payload.clinics_gim, payload.clinics_renal,
+    payload.procedures_renal, payload.procedures_gim,
+    payload.cpd_renal, payload.cpd_gim, payload.teaching
+  ].reduce((acc, arr) => acc + arr.length, 0);
+
+  if (!auto && totalEntries === 0) {
+    alert("No logbook entries for " + currentYear + " to send.");
+    return;
+  }
+
+  // Show sending state
+  const sendBtn = document.querySelector(".btn-reset[style*='var(--green)']");
+  if (sendBtn) { sendBtn.textContent = "✉ SENDING..."; sendBtn.disabled = true; }
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (json.ok) {
+      localStorage.setItem("pft_lb_last_sent", String(Date.now()));
+      if (!auto) {
+        alert("✓ Report sent successfully for " + currentYear + "!");
+        if (currentTab === "logbook") renderLogbook();
+      }
+    } else {
+      if (!auto) alert("Send failed: " + (json.error || "unknown error"));
+    }
+  } catch(err) {
+    if (!auto) alert("Send failed: " + err.message);
+  } finally {
+    if (sendBtn) { sendBtn.textContent = "✉ SEND REPORT"; sendBtn.disabled = false; }
+  }
+}
+
+// Auto-send check on load — fires if new month since last send
+setTimeout(() => sendLogbookReport(true), 5000);
 
 setInterval(updateCountdown, 60000);
 
