@@ -1369,7 +1369,8 @@ function saveLbEntries(type, entries) {
   const k = lbKey(type, "entries");
   const val = JSON.stringify(entries);
   localStorage.setItem(k, val);
-  fbPush(k, val);
+  // Note: logbook entries stored in localStorage only (Firebase sync of raw JSON
+  // would overwrite with string on next load, breaking delete)
   // If GIM clinics — sync cumulative target
   if (type === "clinics_gim") {
     const gimCount = entries.length;
@@ -1493,8 +1494,9 @@ function renderLbClinics(el) {
     { id:"type",        label:"Clinic type",             type:"select_other", options: CLINIC_TYPES_RENAL, otherId:"type_other", otherLabel:"Specify clinic type" },
     { id:"supervisor",  label:"Supervisor",              type:"text",   placeholder:"Consultant name" },
     { id:"patients",    label:"Patients seen / observed",type:"number", placeholder:"e.g. 8" },
+    { id:"year",        label:"Training year",           type:"select", options:["ST4","ST5","ST6","ST7"] },
     { id:"notes",       label:"Notes",                   type:"text",   placeholder:"Optional" },
-  ]));
+  ], currentYear));
 
   // Renal entries
   el.appendChild(makeLbSection("RENAL CLINICS", "renal", renalEntries, "clinics_renal",
@@ -1506,8 +1508,9 @@ function renderLbClinics(el) {
     { id:"type",        label:"Clinic type",             type:"select_other", options: CLINIC_TYPES_GIM, otherId:"type_other", otherLabel:"Specify clinic type" },
     { id:"supervisor",  label:"Supervisor",              type:"text",   placeholder:"Consultant name" },
     { id:"patients",    label:"Patients seen / observed",type:"number", placeholder:"e.g. 8" },
+    { id:"year",        label:"Training year",           type:"select", options:["ST4","ST5","ST6","ST7"] },
     { id:"notes",       label:"Notes",                   type:"text",   placeholder:"Optional" },
-  ]));
+  ], currentYear));
 
   // GIM entries
   el.appendChild(makeLbSection("GIM CLINICS", "gim", gimEntries, "clinics_gim",
@@ -1537,23 +1540,25 @@ function renderLbProcedures(el) {
 
   // Renal
   el.appendChild(makeLbForm("procedures_renal", "ADD RENAL PROCEDURE", "renal", [
-    { id:"date",       label:"Date",       type:"date" },
-    { id:"type",       label:"Procedure",  type:"select", options: LOGBOOK_PROCEDURES_RENAL },
-    { id:"supervisor", label:"Supervisor", type:"text", placeholder:"Supervising consultant" },
-    { id:"dops",       label:"DOPS signed off", type:"select", options:["No","Yes"] },
-    { id:"notes",      label:"Notes",      type:"text", placeholder:"Optional" },
-  ]));
+    { id:"date",       label:"Date",             type:"date" },
+    { id:"type",       label:"Procedure",        type:"select", options: LOGBOOK_PROCEDURES_RENAL },
+    { id:"supervisor", label:"Supervisor",       type:"text",   placeholder:"Supervising consultant" },
+    { id:"dops",       label:"DOPS signed off",  type:"select", options:["No","Yes"] },
+    { id:"year",       label:"Training year",    type:"select", options:["ST4","ST5","ST6","ST7"] },
+    { id:"notes",      label:"Notes",            type:"text",   placeholder:"Optional" },
+  ], currentYear));
   el.appendChild(makeLbSection("RENAL PROCEDURES", "renal", renalEntries, "procedures_renal",
     e => `${e.type || "Procedure"} · ${e.supervisor || "—"} · DOPS: ${e.dops || "No"}`, false));
 
   // GIM
   el.appendChild(makeLbForm("procedures_gim", "ADD GIM PROCEDURE", "gim", [
-    { id:"date",       label:"Date",       type:"date" },
-    { id:"type",       label:"Procedure",  type:"select", options: LOGBOOK_PROCEDURES_GIM },
-    { id:"supervisor", label:"Supervisor", type:"text", placeholder:"Supervising consultant" },
-    { id:"dops",       label:"DOPS signed off", type:"select", options:["No","Yes"] },
-    { id:"notes",      label:"Notes",      type:"text", placeholder:"Optional" },
-  ]));
+    { id:"date",       label:"Date",             type:"date" },
+    { id:"type",       label:"Procedure",        type:"select", options: LOGBOOK_PROCEDURES_GIM },
+    { id:"supervisor", label:"Supervisor",       type:"text",   placeholder:"Supervising consultant" },
+    { id:"dops",       label:"DOPS signed off",  type:"select", options:["No","Yes"] },
+    { id:"year",       label:"Training year",    type:"select", options:["ST4","ST5","ST6","ST7"] },
+    { id:"notes",      label:"Notes",            type:"text",   placeholder:"Optional" },
+  ], currentYear));
   el.appendChild(makeLbSection("GIM PROCEDURES", "gim", gimEntries, "procedures_gim",
     e => `${e.type || "Procedure"} · ${e.supervisor || "—"} · DOPS: ${e.dops || "No"}`, false));
 }
@@ -1644,8 +1649,9 @@ function renderLbTeaching(el) {
     { id:"topic",      label:"Topic",        type:"text", placeholder:"e.g. AKI management" },
     { id:"supervisor", label:"Supervisor / observed by", type:"text", placeholder:"Name (if observed)" },
     { id:"signoff",    label:"Sign-off",     type:"select", options:["Informal — not observed","Formally observed — signed off"] },
+    { id:"year",       label:"Training year",type:"select", options:["ST4","ST5","ST6","ST7"] },
     { id:"notes",      label:"Notes",        type:"text", placeholder:"Reflection, feedback received" },
-  ]));
+  ], currentYear));
 
   el.appendChild(makeLbSection("TEACHING LOG", "both", entries, "teaching",
     e => `${e.type || "Teaching"} · ${e.topic || "—"} · ${e.audience || ""}`, false));
