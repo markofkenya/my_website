@@ -1584,10 +1584,8 @@ function renderLbCPD(el) {
   ], currentYear));
   el.appendChild(makeLbSection("RENAL CPD ENTRIES", "renal", renalEntries, "cpd_renal",
     e => `${e.type || "CPD"} · ${e.title || "—"} · ${e.hours || 0}h · ${e.year || ""}`, false));
-}
 
   // GIM CPD add form
-// GIM CPD add form
   el.appendChild(makeLbForm("cpd_gim", "ADD GIM CPD / STUDY LEAVE", "gim", [
     { id:"date",    label:"Date",         type:"date" },
     { id:"type",    label:"CPD type",     type:"select", options: CPD_TYPES_GIM },
@@ -1598,6 +1596,7 @@ function renderLbCPD(el) {
   ], currentYear));
   el.appendChild(makeLbSection("GIM CPD ENTRIES", "gim", gimEntries, "cpd_gim",
     e => `${e.type || "CPD"} · ${e.title || "—"} · ${e.hours || 0}h · ${e.year || ""}`, true));
+}
 
 
 
