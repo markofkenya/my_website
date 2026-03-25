@@ -1857,12 +1857,12 @@ function buildLogbookPayload() {
     year:        yr,
     month:       new Date().toLocaleDateString("en-GB",{month:"long",year:"numeric"}),
     generatedOn: new Date().toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}),
-    clinics_gim:      filterByYear(getLbEntries("clinics_gim")),
+    clinics_gim:      getLbEntries("clinics_gim"),        // all entries — cumulative target
     clinics_renal:    filterByYear(getLbEntries("clinics_renal")),
     procedures_renal: filterByYear(getLbEntries("procedures_renal")),
     procedures_gim:   filterByYear(getLbEntries("procedures_gim")),
     cpd_renal:        filterByYear(getLbEntries("cpd_renal")),
-    cpd_gim:          filterByYear(getLbEntries("cpd_gim")),
+    cpd_gim:          getLbEntries("cpd_gim"),             // all entries — cumulative 100h target
     teaching:         filterByYear(getLbEntries("teaching")),
   };
 }
