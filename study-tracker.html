@@ -446,6 +446,7 @@ let timerInterval  = null;
 let timerRunning   = false;
 let timerCompleted = localStorage.getItem("stx_timer_completed") === "true";
 let timerStartTime = parseInt(localStorage.getItem("stx_timer_start") || "0") || null;
+let timerElapsedBeforePause = 0;
 let pendingFile    = null;
 let timerPhase     = "study";
 let timerSeconds   = 90 * 60;
@@ -492,16 +493,17 @@ function timerStartPause() {
   if (timerRunning) {
     clearInterval(timerInterval);
     timerRunning = false;
+    timerElapsedBeforePause += Math.floor((Date.now() - timerStartTime) / 1000);
     document.getElementById("timer-start-btn").textContent = "▶ RESUME";
+    
   } else {
-    if (!timerStartTime && timerPhase === "study") {
-  timerStartTime = Date.now();
-  localStorage.setItem("stx_timer_start", timerStartTime);
+    timerStartTime = Date.now();
+    if (timerPhase === "study") localStorage.setItem("stx_timer_start", timerStartTime);
     }
     timerRunning = true;
     document.getElementById("timer-start-btn").textContent = "⏸ PAUSE";
     timerInterval = setInterval(() => {
-  const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+  const elapsed = timerElapsedBeforePause + Math.floor((Date.now() - timerStartTime) / 1000);
   timerSeconds  = Math.max(0, timerTotal - elapsed);
 
   if (!timerCompleted && elapsed >= 60 * 60) {
@@ -535,6 +537,7 @@ function timerReset() {
   clearInterval(timerInterval);
   timerRunning  = false;
   timerStartTime = null;
+  timerElapsedBeforePause = 0;
   localStorage.removeItem("stx_timer_completed");
   localStorage.removeItem("stx_timer_start");
 
