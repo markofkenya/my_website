@@ -696,11 +696,13 @@ function weekSessions() {
   const day    = now.getDay() || 7;
   const monday = new Date(now); monday.setDate(now.getDate() - day + 1); monday.setHours(0,0,0,0);
   const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); sunday.setHours(23,59,59,999);
-  return sessionList().filter(s => {
+    return sessionList().filter(s => {
     if (!s.date) return false;
+    if (s.isRetest) return false;
     const d = new Date(s.date);
     return d >= monday && d <= sunday;
   });
+
 }
 function totalStudyHours() {
   return sessionList().reduce((acc, s) => acc + (s.duration || 90), 0) / 60;
