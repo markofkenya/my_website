@@ -517,7 +517,7 @@ function timerStartPause() {
   const elapsed = timerElapsedBeforePause + Math.floor((Date.now() - timerStartTime) / 1000);
   timerSeconds  = Math.max(0, timerTotal - elapsed);
 
-  if (!timerCompleted && elapsed >= 40 * 60) {
+  if (!timerCompleted && elapsed >= 30 * 60) {
     timerCompleted = true;
     localStorage.setItem("stx_timer_completed", "true");
 
@@ -992,7 +992,7 @@ function renderLog() {
           </div>
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-          ${!timerCompleted ? `<span style="font-size:9px;color:var(--grey2);">// complete 60min timer to unlock</span>` : ""}
+          ${!timerCompleted ? `<span style="font-size:9px;color:var(--grey2);">// complete 30min timer to unlock</span>` : ""}
           <button class="btn-secondary" onclick="clearForm()">CLEAR</button>
           <button class="btn-primary" onclick="saveSession()" ${!timerCompleted ? 'disabled' : ""}>LOG SESSION ▸</button>
 
