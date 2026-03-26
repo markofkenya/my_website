@@ -1287,6 +1287,11 @@ function saveSession() {
 
 
   const isRetestSession = sessionTypes.includes("quiz") && !sessionTypes.includes("study");
+  if (!timerCompleted && !isRetestSession) {
+    alert("Please complete 30 minutes of study first, or select Quiz without Study for a retest.");
+    return;
+  }
+
   const payload = {
     topicId, date, sessionTypes, notes, duration,
     confidence: selConfidence,
@@ -1297,12 +1302,6 @@ function saveSession() {
     isRetest: isRetestSession,
   };
 
-
-  const isRetestSession = sessionTypes.includes("quiz") && !sessionTypes.includes("study");
-  if (!timerCompleted && !isRetestSession) {
-    alert("Please complete 60 minutes of study first, or select Quiz without Study for a retest.");
-    return;
-  }
 
   if (!window._stx_fb) return;
 
