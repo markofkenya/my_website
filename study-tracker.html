@@ -824,7 +824,9 @@ function renderToday() {
         avg confidence ${suggested.avg.toFixed(1)}★ across ${suggested.count} session${suggested.count>1?'s':''}
         &nbsp;·&nbsp; <span style="color:var(--${suggested.stream})">${STREAM_LABELS[suggested.stream]}</span>
       </div>
-      <button class="btn-primary" style="margin-top:8px;font-size:9px;padding:4px 12px;" onclick="setTab('log')">STUDY THIS ▸</button>
+      <button class="btn-primary" style="margin-top:8px;font-size:9px;padding:4px 12px;" onclick="activateSuggested('${suggested.id}','${suggested.name}','${suggested.stream}')">STUDY THIS ▸</button>
+
+
     </div>` : ""}
 
     ${weak.length ? `
@@ -1494,6 +1496,23 @@ function activatePlan(id, topicId) {
     }
   }, 50);
 }
+  function activateSuggested(topicId, topicName, stream) {
+  setTab("log");
+  setTimeout(() => {
+    const hidden = document.getElementById("f-topic");
+    const search = document.getElementById("f-topic-search");
+    if (hidden) hidden.value = topicId;
+    if (search) search.value = `[${STREAM_LABELS[stream]}] ${topicName}`;
+    localStorage.setItem("stx_session_topic", topicId);
+    localStorage.setItem("stx_session_topic_name", `[${STREAM_LABELS[stream]}] ${topicName}`);
+    const panel = document.getElementById("timer-panel");
+    if (panel && !panel.classList.contains("show")) {
+      panel.classList.add("show");
+      updateTimerDisplay();
+    }
+  }, 50);
+}
+
 
 renderAll();
 setTab("today");
