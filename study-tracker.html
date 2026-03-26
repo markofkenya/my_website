@@ -735,11 +735,13 @@ function calcStreak() {
     const day = refDate.getDay() || 7;
     const mon = new Date(refDate); mon.setDate(refDate.getDate() - day + 1); mon.setHours(0,0,0,0);
     const sun = new Date(mon); sun.setDate(mon.getDate() + 6); sun.setHours(23,59,59,999);
-    const count = sessionList().filter(s => {
+        const count = sessionList().filter(s => {
       if (!s.date) return false;
+      if (s.isRetest) return false;
       const d = new Date(s.date);
       return d >= mon && d <= sun;
     }).length;
+
     if (count >= 2) streak++;
     else if (w > 0) break;
   }
@@ -1284,14 +1286,17 @@ function saveSession() {
   const retestDate = mastered ? null : d.toISOString().split("T")[0];
 
 
-    const payload = {
+  const isRetestSession = sessionTypes.includes("quiz") && !sessionTypes.includes("study");
+  const payload = {
     topicId, date, sessionTypes, notes, duration,
     confidence: selConfidence,
     interval: days,
     easiness,
     retestDate, retestDone: false,
     createdAt: Date.now(),
+    isRetest: isRetestSession,
   };
+
 
   const isRetestSession = sessionTypes.includes("quiz") && !sessionTypes.includes("study");
   if (!timerCompleted && !isRetestSession) {
