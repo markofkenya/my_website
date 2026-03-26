@@ -1250,7 +1250,11 @@ function saveSession() {
   );
   if (!sessionTypes.length) sessionTypes.push("study");
 
-  const duration = timerStartTime ? Math.max(1, Math.round((Date.now() - timerStartTime) / 60000)) : 90;
+    const elapsed = timerRunning
+    ? timerElapsedBeforePause + Math.floor((Date.now() - timerStartTime) / 1000)
+    : timerElapsedBeforePause;
+  const duration = elapsed > 0 ? Math.max(1, Math.round(elapsed / 60)) : 90;
+
 
   const prevSess = sessionList().find(s => s.topicId === topicId && s.interval);
   const prevInterval = prevSess?.interval || 7;
