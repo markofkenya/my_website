@@ -1021,7 +1021,9 @@ function renderSessions() {
     return;
   }
 
-  const searchVal = document.getElementById("sess-search")?.value.toLowerCase() || "";
+
+  const searchVal = (localStorage.getItem("stx_sess_search") || "").toLowerCase();
+
   const filtered = searchVal
     ? list.filter(s => (topics[s.topicId]?.name || "").toLowerCase().includes(searchVal))
     : list;
@@ -1031,7 +1033,7 @@ function renderSessions() {
       <input class="form-inp" id="sess-search" placeholder="// search by topic name..."
         style="width:100%;max-width:400px;"
         value="${searchVal}"
-        oninput="renderSessions()" />
+        oninput="filterSessions(this.value)" />
     </div>
     <div style="font-size:9px;color:var(--grey2);margin-bottom:14px;">
       ${filtered.length} of ${list.length} sessions · ${hours.toFixed(1)}h studied
@@ -1056,8 +1058,15 @@ function renderSessions() {
   });
 
 
-  el.innerHTML = html;
+    el.innerHTML = html;
+  const searchEl = document.getElementById("sess-search");
+  if (searchEl) {
+    searchEl.focus();
+    const len = searchEl.value.length;
+    searchEl.setSelectionRange(len, len);
+  }
 }
+
 
 function renderRetests() {
   const el   = document.getElementById("tab-retests");
@@ -1527,6 +1536,11 @@ function activatePlan(id, topicId) {
       updateTimerDisplay();
     }
   }, 50);
+}
+
+function filterSessions(val) {
+  localStorage.setItem("stx_sess_search", val);
+  renderSessions();
 }
 
 
