@@ -931,6 +931,9 @@ function selectTopic(inputId, hiddenId, topicId, topicName) {
 function renderLog() {
   const el = document.getElementById("tab-log");
 
+    const isRetest = document.getElementById("f-type-quiz")?.checked && 
+    !document.getElementById("f-type-study")?.checked;
+
   el.innerHTML = `
     <div class="sec-head">
       <span class="sec-title">LOG A SESSION</span>
@@ -988,9 +991,10 @@ function renderLog() {
           </div>
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-          ${!timerCompleted ? `<span style="font-size:9px;color:var(--grey2);">// complete 60min timer to unlock</span>` : ""}
+          ${!timerCompleted && !isRetest ? `<span style="font-size:9px;color:var(--grey2);">// complete 60min timer to unlock</span>` : ""}
           <button class="btn-secondary" onclick="clearForm()">CLEAR</button>
-          <button class="btn-primary" onclick="saveSession()" ${!timerCompleted ? 'disabled' : ""}>LOG SESSION ▸</button>
+          <button class="btn-primary" onclick="saveSession()" ${!timerCompleted && !isRetest ? 'disabled' : ""}>LOG SESSION ▸</button>
+
         </div>
       </div>
     </div>
