@@ -953,12 +953,14 @@ function renderLog() {
           <label class="form-label">session_type</label>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
             ${["study","quiz","teach"].map(t => `
-              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:10px;color:var(--grey);letter-spacing:0.08em;">
-                <input type="checkbox" id="f-type-${t}" value="${t}"
-                  style="accent-color:var(--green);width:14px;height:14px;"
-                  ${t==='study'?'checked':''} />
-                ${t.toUpperCase()}
-              </label>`).join("")}
+  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:10px;color:var(--grey);letter-spacing:0.08em;">
+    <input type="checkbox" id="f-type-${t}" value="${t}"
+      style="accent-color:var(--green);width:14px;height:14px;"
+      ${localStorage.getItem('stx_type_'+t) === 'false' ? '' : (t==='study' || localStorage.getItem('stx_type_'+t) === 'true') ? 'checked' : ''} 
+      onchange="localStorage.setItem('stx_type_${t}', this.checked)" />
+    ${t.toUpperCase()}
+  </label>`).join("")}
+
           </div>
         </div>
         <div class="form-field wide">
