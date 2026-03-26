@@ -517,7 +517,7 @@ function timerStartPause() {
   const elapsed = timerElapsedBeforePause + Math.floor((Date.now() - timerStartTime) / 1000);
   timerSeconds  = Math.max(0, timerTotal - elapsed);
 
-  if (!timerCompleted && elapsed >= 60 * 60) {
+  if (!timerCompleted && elapsed >= 40 * 60) {
     timerCompleted = true;
     localStorage.setItem("stx_timer_completed", "true");
 
