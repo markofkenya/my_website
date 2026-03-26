@@ -1336,6 +1336,9 @@ function clearForm() {
   pendingFiles = [];
   selConfidence = 3;
   setConf(3);
+  localStorage.setItem("stx_type_study", "true");
+  localStorage.setItem("stx_type_quiz", "false");
+  localStorage.setItem("stx_type_teach", "false");
   renderLog();
 }
 
