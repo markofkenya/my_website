@@ -1021,24 +1021,40 @@ function renderSessions() {
     return;
   }
 
-  let html = `<div style="font-size:9px;color:var(--grey2);margin-bottom:14px;">Total: ${list.length} sessions · ${hours.toFixed(1)}h studied</div>`;
+  const searchVal = document.getElementById("sess-search")?.value.toLowerCase() || "";
+  const filtered = searchVal
+    ? list.filter(s => (topics[s.topicId]?.name || "").toLowerCase().includes(searchVal))
+    : list;
 
-  ["renal","gim"].forEach(stream => {
-    const filtered = list.filter(s => {
+  let html = `
+    <div style="margin-bottom:14px;">
+      <input class="form-inp" id="sess-search" placeholder="// search by topic name..."
+        style="width:100%;max-width:400px;"
+        value="${searchVal}"
+        oninput="renderSessions()" />
+    </div>
+    <div style="font-size:9px;color:var(--grey2);margin-bottom:14px;">
+      ${filtered.length} of ${list.length} sessions · ${hours.toFixed(1)}h studied
+    </div>`;
+
+
+    ["renal","gim"].forEach(stream => {
+    const streamFiltered = filtered.filter(s => {
       const t = topics[s.topicId];
       return t && t.stream === stream;
     });
 
-    if (!filtered.length) return;
+    if (!streamFiltered.length) return;
 
     html += `
       <div class="sec-head">
         <span class="sec-title" style="color:var(--${stream})">${STREAM_LABELS[stream]}</span>
         <span class="sec-rule"></span>
-        <span class="sec-note">${filtered.length} sessions</span>
+        <span class="sec-note">${streamFiltered.length} sessions</span>
       </div>
-      <div class="session-grid">${filtered.map(sessCard).join("")}</div>`;
+      <div class="session-grid">${streamFiltered.map(sessCard).join("")}</div>`;
   });
+
 
   el.innerHTML = html;
 }
