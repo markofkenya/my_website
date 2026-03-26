@@ -447,7 +447,7 @@ let timerRunning   = false;
 let timerCompleted = localStorage.getItem("stx_timer_completed") === "true";
 let timerStartTime = parseInt(localStorage.getItem("stx_timer_start") || "0") || null;
 let timerElapsedBeforePause = parseInt(localStorage.getItem("stx_timer_elapsed") || "0");
-let pendingFile    = null;
+let pendingFiles   = [];
 let timerPhase     = "study";
 let timerSeconds   = 90 * 60;
 let timerTotal     = 90 * 60;
@@ -970,7 +970,8 @@ function renderLog() {
               <div class="upload-progress-bar" id="upload-progress-bar" style="width:0%"></div>
             </div>
           </div>
-          <input type="file" id="f-file" style="display:none" onchange="handleFileSelect(this)" />
+          <input type="file" id="f-file" style="display:none" multiple onchange="handleFileSelect(this)" />
+
           <div id="attached-file-preview"></div>
         </div>
       </div>
@@ -1128,12 +1129,13 @@ function sessCard(s) {
         <span>${typeBadges}</span>
       </div>
       ${s.notes ? `<div class="sess-notes">${escapeHtml(s.notes)}</div>` : ""}
-      ${s.attachment ? `
-        <a class="sess-attachment" href="${s.attachment.url}" target="_blank" rel="noopener">
+        ${(s.attachments || (s.attachment ? [s.attachment] : [])).map(a => `
+        <a class="sess-attachment" href="${a.url}" target="_blank" rel="noopener">
           <span class="sess-attachment-icon">📎</span>
-          <span class="sess-attachment-name">${s.attachment.name}</span>
-          <span style="font-size:8px;color:var(--grey2)">${(s.attachment.size/1024).toFixed(0)}KB ↗</span>
-        </a>` : ""}
+          <span class="sess-attachment-name">${a.name}</span>
+          <span style="font-size:8px;color:var(--grey2)">${(a.size/1024).toFixed(0)}KB ↗</span>
+        </a>`).join("")}
+        
       <div class="sess-footer">
         <div>
           <div class="conf-stars">${stars}</div>
@@ -1154,34 +1156,42 @@ function escapeHtml(text) {
 }
 
 function handleFileSelect(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const prog    = document.getElementById("upload-progress");
-  const progBar = document.getElementById("upload-progress-bar");
-  const preview = document.getElementById("attached-file-preview");
-  prog.style.display = "block";
-  progBar.style.width = "0%";
-  preview.innerHTML = `<div style="font-size:9px;color:var(--grey2);margin-top:5px;">// ready to upload ${file.name}</div>`;
-
-  window._pendingFileData = file;
-  pendingFile = { name: file.name, size: file.size, pending: true };
-  prog.style.display = "none";
-  preview.innerHTML = `
-    <div class="attached-file">
-      <span class="attached-file-name">📎 ${file.name}</span>
-      <span class="attached-file-size">${(file.size/1024).toFixed(0)}KB</span>
-      <button class="attached-file-del" onclick="clearPendingFile()">✕</button>
-    </div>`;
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  files.forEach(file => {
+    if (!pendingFiles.find(f => f.name === file.name))
+      pendingFiles.push({ name: file.name, size: file.size, file });
+  });
+  renderPendingFiles();
+  input.value = "";
 }
 
+function renderPendingFiles() {
+  const preview = document.getElementById("attached-file-preview");
+  if (!preview) return;
+  if (!pendingFiles.length) { preview.innerHTML = ""; return; }
+  preview.innerHTML = pendingFiles.map((f, i) => `
+    <div class="attached-file">
+      <span class="attached-file-name">📎 ${f.name}</span>
+      <span class="attached-file-size">${(f.size/1024).toFixed(0)}KB</span>
+      <button class="attached-file-del" onclick="removePendingFile(${i})">✕</button>
+    </div>`).join("");
+}
+
+function removePendingFile(idx) {
+  pendingFiles.splice(idx, 1);
+  renderPendingFiles();
+}
+
+
 function clearPendingFile() {
-  pendingFile = null;
-  window._pendingFileData = null;
+  pendingFiles = [];
   const preview = document.getElementById("attached-file-preview");
   if (preview) preview.innerHTML = "";
   const input = document.getElementById("f-file");
   if (input) input.value = "";
 }
+
 
 function setConf(n) {
   selConfidence = n;
@@ -1228,24 +1238,30 @@ function saveSession() {
   const newRef = window._stx_fb.push(window._stx_fb.sessRef, payload);
   const sessionId = newRef.key;
 
-  if (window._pendingFileData && sessionId && window.uploadSessionFile) {
-    const file = window._pendingFileData;
-    const prog = document.getElementById("upload-progress");
-    if (prog) prog.style.display = "block";
-
-    window.uploadSessionFile(
-      file, sessionId,
-      pct => {
-        const bar = document.getElementById("upload-progress-bar");
-        if (bar) bar.style.width = `${pct}%`;
-      },
-      fileData => {
-        const { db, ref, update } = window._stx_fb;
-        update(ref(db, `studySessions/${sessionId}`), { attachment: fileData });
-      },
-      err => console.error("Upload failed:", err)
-    );
+    if (pendingFiles.length && sessionId && window.uploadSessionFile) {
+    const filesToUpload = [...pendingFiles];
+    const attachments = [];
+    let completed = 0;
+    filesToUpload.forEach((pf, i) => {
+      window.uploadSessionFile(
+        pf.file, sessionId,
+        pct => {
+          const bar = document.getElementById("upload-progress-bar");
+          if (bar) bar.style.width = `${Math.round(((i + pct/100) / filesToUpload.length) * 100)}%`;
+        },
+        fileData => {
+          attachments.push(fileData);
+          completed++;
+          if (completed === filesToUpload.length) {
+            const { db, ref, update } = window._stx_fb;
+            update(ref(db, `studySessions/${sessionId}`), { attachments });
+          }
+        },
+        err => console.error("Upload failed:", err)
+      );
+    });
   }
+
 
   if (activePlanId && window._stx_fb) {
     const { db, ref, remove } = window._stx_fb;
@@ -1261,8 +1277,8 @@ function saveSession() {
   localStorage.removeItem("stx_session_notes");
   
 
-  pendingFile    = null;
-  window._pendingFileData = null;
+  pendingFiles   = [];
+
   clearForm();
 }
 
@@ -1279,7 +1295,7 @@ function clearForm() {
   if (n) n.value = "";
   if (f) f.value = "";
   if (p) p.innerHTML = "";
-  pendingFile = null;
+  pendingFiles = [];
   selConfidence = 3;
   setConf(3);
   renderLog();
