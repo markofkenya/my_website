@@ -751,7 +751,13 @@ function calcStreak() {
 function renderAll() {
   const wk     = weekSessions();
   const due    = sessionList().filter(s => retestStatus(s) === "due").length;
+  const today  = sessionList().filter(s => retestStatus(s) === "soon" && (() => {
+    const diff = Math.round((new Date(s.retestDate) - new Date().setHours(0,0,0,0)) / 86400000);
+    return diff === 0;
+  })()).length;
   const soon   = sessionList().filter(s => retestStatus(s) === "soon").length;
+
+  
   const streak = calcStreak();
 
   document.getElementById("week-pips").querySelectorAll(".pip").forEach((p,i) => {
@@ -763,9 +769,10 @@ function renderAll() {
   document.getElementById("streak-val").textContent = streak;
 
   const retestEl = document.getElementById("retest-due-count");
-  retestEl.textContent = due + soon;
-  retestEl.className = "retest-val" + (due > 0 ? " alert" : soon > 0 ? " warn" : "");
+  retestEl.textContent = due + today;
+  retestEl.className = "retest-val" + (due > 0 ? " alert" : today > 0 ? " warn" : "");
 
+  
   renderTab(currentTab);
 }
 
