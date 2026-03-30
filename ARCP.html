@@ -2013,18 +2013,22 @@ setTimeout(() => sendLogbookReport(true), 5000);
 //  PRINT REPORT
 // ══════════════════════════════════════════════════════
 function printLogbookReport() {
-  const yr = currentYear;
+  const input = prompt("Print which year? ST4 / ST5 / ST6 / ST7\n(press Cancel or leave blank for current: " + currentYear + ")");
+  const yr = (input && ["ST4","ST5","ST6","ST7"].includes(input.trim().toUpperCase()))
+    ? input.trim().toUpperCase()
+    : currentYear;
+
   const yearMap = { ST4:2026, ST5:2027, ST6:2028, ST7:2029 };
   const fmt = d => {
     if (!d) return "—";
     const p = d.split("-");
     return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : d;
   };
-  const filterByYear = entries => entries.filter(e => {
+    const filterByYear = entries => entries.filter(e => {
     if (e.year) return e.year === yr;
-    if (!e.date) return true;
-    return new Date(e.date).getFullYear() === yearMap[yr];
+    return true;
   });
+
 
   const gimClinics   = getLbEntries("clinics_gim");
   const renalClinics = filterByYear(getLbEntries("clinics_renal"));
