@@ -447,6 +447,8 @@ function weakestTopics(n = 5) {
   const map = {};
   sessionList().forEach(s => {
     if (!s.topicId || !s.confidence) return;
+    if (s.buried) return;
+
     if (!map[s.topicId]) map[s.topicId] = [];
     map[s.topicId].push(s.confidence);
   });
@@ -1209,8 +1211,9 @@ function sessCard(s) {
           <div class="sess-retest" style="${retestStyle}">${rl}</div>
         </div>
            <div class="sess-actions">
-          ${!s.retestDone && s.retestDate ? `<button class="sess-btn" onclick="markRetested('${s.id}')">✓ RETESTED</button>` : ""}
+                   ${!s.retestDone && s.retestDate ? `<button class="sess-btn" onclick="markRetested('${s.id}')">✓ RETESTED</button>` : ""}
           ${!s.buried ? `<button class="sess-btn" onclick="burySession('${s.id}')" title="Mark as finished — removes from retest queue">✓ FINISHED</button>` : `<button class="sess-btn" onclick="unburySession('${s.id}')" title="Reactivate for retesting">↩ REACTIVATE</button>`}
+          <button class="sess-btn" onclick="openEditSession('${s.id}')">✎ EDIT</button>
           <button class="sess-btn danger" onclick="deleteSession('${s.id}')">✕</button>
         </div>
 
@@ -1433,6 +1436,95 @@ function markRetested(id) {
       retestCount:    (sess.retestCount || 0) + 1,
       lastRetestDate: new Date().toISOString().split("T")[0],
     });
+  }
+}
+
+function openEditSession(id) {
+  const sess = sessions[id];
+  if (!sess) return;
+
+  const existing = document.getElementById(`edit-form-${id}`);
+  if (existing) { existing.remove(); return; } // toggle off
+
+  const card = document.querySelector(`[onclick="openEditSession('${id}')"]`)?.closest(".sess-card");
+  if (!card) return;
+
+  const form = document.createElement("div");
+  form.id = `edit-form-${id}`;
+  form.style.cssText = "border-top:1px solid var(--border2);margin-top:8px;padding-top:8px;";
+  form.innerHTML = `
+    <div style="font-size:9px;color:var(--grey);letter-spacing:0.1em;margin-bottom:6px;">── EDIT SESSION</div>
+    <textarea id="edit-notes-${id}" class="form-inp" rows="3" placeholder="// notes..."
+      style="width:100%;margin-bottom:6px;color:var(--yellow);">${escapeHtml(sess.notes || "")}</textarea>
+    <div class="upload-area" onclick="document.getElementById('edit-file-${id}').click()"
+      style="margin-bottom:6px;">
+      ▸ Add / replace attachments
+    </div>
+    <input type="file" id="edit-file-${id}" style="display:none" multiple
+      onchange="handleEditFileSelect(this, '${id}')" />
+    <div id="edit-file-preview-${id}"></div>
+    <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px;">
+      <button class="btn-secondary" onclick="document.getElementById('edit-form-${id}').remove()">CANCEL</button>
+      <button class="btn-primary" onclick="saveEditSession('${id}')">SAVE ▸</button>
+    </div>`;
+
+  card.appendChild(form);
+}
+
+function handleEditFileSelect(input, id) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  window._editPendingFiles = window._editPendingFiles || {};
+  window._editPendingFiles[id] = window._editPendingFiles[id] || [];
+  files.forEach(file => {
+    if (!window._editPendingFiles[id].find(f => f.name === file.name))
+      window._editPendingFiles[id].push({ name: file.name, size: file.size, file });
+  });
+  const preview = document.getElementById(`edit-file-preview-${id}`);
+  if (preview) {
+    preview.innerHTML = window._editPendingFiles[id].map((f, i) => `
+      <div class="attached-file">
+        <span class="attached-file-name">📎 ${f.name}</span>
+        <span class="attached-file-size">${(f.size/1024).toFixed(0)}KB</span>
+        <button class="attached-file-del" onclick="window._editPendingFiles['${id}'].splice(${i},1);handleEditFileSelect({files:[]}, '${id}')">✕</button>
+      </div>`).join("");
+  }
+  input.value = "";
+}
+
+function saveEditSession(id) {
+  const sess = sessions[id];
+  if (!sess || !window._stx_fb) return;
+
+  const notes = document.getElementById(`edit-notes-${id}`)?.value.trim();
+  const { db, ref, update } = window._stx_fb;
+
+  const updates = { notes };
+
+  const pendingFiles = (window._editPendingFiles || {})[id] || [];
+
+  if (pendingFiles.length && window.uploadSessionFile) {
+    const attachments = [...(sess.attachments || (sess.attachment ? [sess.attachment] : []))];
+    let completed = 0;
+    pendingFiles.forEach((pf, i) => {
+      window.uploadSessionFile(
+        pf.file, id,
+        () => {},
+        fileData => {
+          attachments.push(fileData);
+          completed++;
+          if (completed === pendingFiles.length) {
+            update(ref(db, `studySessions/${id}`), { ...updates, attachments });
+            if (window._editPendingFiles) delete window._editPendingFiles[id];
+            document.getElementById(`edit-form-${id}`)?.remove();
+          }
+        },
+        err => console.error("Edit upload failed:", err)
+      );
+    });
+  } else {
+    update(ref(db, `studySessions/${id}`), updates);
+    document.getElementById(`edit-form-${id}`)?.remove();
   }
 }
 
