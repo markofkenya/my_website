@@ -1026,9 +1026,9 @@ function renderLog() {
           </div>
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-          ${!timerCompleted ? `<span style="font-size:9px;color:var(--grey2);">// complete 30min timer to unlock</span>` : ""}
-          <button class="btn-secondary" onclick="clearForm()">CLEAR</button>
-          <button class="btn-primary" onclick="saveSession()" ${!timerCompleted ? 'disabled' : ""}>LOG SESSION ▸</button>
+                    <button class="btn-secondary" onclick="clearForm()">CLEAR</button>
+          <button class="btn-primary" onclick="saveSession()">LOG SESSION ▸</button>
+
 
 
         </div>
@@ -1208,10 +1208,12 @@ function sessCard(s) {
           <div class="conf-stars">${stars}</div>
           <div class="sess-retest" style="${retestStyle}">${rl}</div>
         </div>
-        <div class="sess-actions">
+           <div class="sess-actions">
           ${!s.retestDone && s.retestDate ? `<button class="sess-btn" onclick="markRetested('${s.id}')">✓ RETESTED</button>` : ""}
+          ${!s.buried ? `<button class="sess-btn" onclick="burySession('${s.id}')" title="Mark as finished — removes from retest queue">✓ FINISHED</button>` : `<button class="sess-btn" onclick="unburySession('${s.id}')" title="Reactivate for retesting">↩ REACTIVATE</button>`}
           <button class="sess-btn danger" onclick="deleteSession('${s.id}')">✕</button>
         </div>
+
       </div>
     </div>`;
 }
@@ -1301,11 +1303,6 @@ function saveSession() {
   const retestDate = mastered ? null : d.toISOString().split("T")[0];
 
 
-  const isRetestSession = sessionTypes.includes("quiz") && !sessionTypes.includes("study");
-  if (!timerCompleted && !isRetestSession) {
-    alert("Please complete 30 minutes of study first, or select Quiz without Study for a retest.");
-    return;
-  }
 
   const payload = {
     topicId, date, sessionTypes, notes, duration,
@@ -1387,6 +1384,17 @@ function clearForm() {
   localStorage.setItem("stx_type_quiz", "false");
   localStorage.setItem("stx_type_teach", "false");
   renderLog();
+}
+function burySession(id) {
+  if (!window._stx_fb) return;
+  const { db, ref, update } = window._stx_fb;
+  update(ref(db, `studySessions/${id}`), { buried: true, retestDone: true });
+}
+
+function unburySession(id) {
+  if (!window._stx_fb) return;
+  const { db, ref, update } = window._stx_fb;
+  update(ref(db, `studySessions/${id}`), { buried: false, retestDone: false });
 }
 
 function deleteSession(id) {
