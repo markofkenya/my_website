@@ -1301,7 +1301,7 @@ function saveSession() {
 
 
 
-  cconst isRetestSession = sessionTypes.includes("quiz") && !sessionTypes.includes("study");
+  const isRetestSession = sessionTypes.includes("quiz") && !sessionTypes.includes("study");
   const payload = {
     topicId, date, sessionTypes, notes, duration,
     confidence: selConfidence,
