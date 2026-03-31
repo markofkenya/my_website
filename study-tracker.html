@@ -726,6 +726,8 @@ function weekSessions() {
     return sessionList().filter(s => {
     if (!s.date) return false;
     if (s.isRetest) return false;
+    if (s.buried) return false;
+
     const d = new Date(s.date);
     return d >= monday && d <= sunday;
   });
@@ -745,6 +747,8 @@ function calcStreak() {
         const count = sessionList().filter(s => {
       if (!s.date) return false;
       if (s.isRetest) return false;
+      if (s.buried) return false;
+
       const d = new Date(s.date);
       return d >= mon && d <= sun;
     }).length;
