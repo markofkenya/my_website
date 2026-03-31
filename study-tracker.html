@@ -1292,9 +1292,6 @@ function saveSession() {
   const duration = elapsed > 0 ? Math.max(1, Math.round(elapsed / 60)) : 90;
 
 
-  const prevSess     = sessionList().find(s => s.topicId === topicId && s.interval);
-  const prevInterval = prevSess?.interval || 0;
-  const prevEasiness = prevSess?.easiness || 2.5;
   const sessionCount = sessionList().filter(s => s.topicId === topicId).length;
   const { interval: days, mastered } = study2Intervals(selConfidence, sessionCount);
   const easiness = 2.5; // kept for data compatibility
@@ -1304,6 +1301,7 @@ function saveSession() {
 
 
 
+  cconst isRetestSession = sessionTypes.includes("quiz") && !sessionTypes.includes("study");
   const payload = {
     topicId, date, sessionTypes, notes, duration,
     confidence: selConfidence,
@@ -1421,33 +1419,20 @@ function markRetested(id) {
   if (!newConf || newConf < 1 || newConf > 5) return;
   const sessionCount = sessionList().filter(s => s.topicId === sess.topicId).length;
   const { interval: nextDays, mastered } = study2Intervals(newConf, sessionCount);
-  const easiness = 2.5;
-
   const nd = new Date(); nd.setDate(nd.getDate() + nextDays);
   const nextDate = nd.toISOString().split("T")[0];
-
 
   if (window._stx_fb) {
     const { db, ref, update } = window._stx_fb;
     update(ref(db, `studySessions/${id}`), {
-      retestDone: true, retestedAt: Date.now(),
-      retestConfidence: newConf,
+      retestDone:     mastered,
+      retestDate:     mastered ? null : nextDate,
+      confidence:     newConf,
+      interval:       nextDays,
+      retestedAt:     Date.now(),
+      retestCount:    (sess.retestCount || 0) + 1,
+      lastRetestDate: new Date().toISOString().split("T")[0],
     });
-    window._stx_fb.push(window._stx_fb.sessRef, {
-      topicId: sess.topicId,
-      date: new Date().toISOString().split("T")[0],
-      sessionTypes: ["quiz"],
-      notes: `Retest of session from ${sess.date}`,
-      confidence: newConf,
-      interval: nextDays,
-      easiness,
-      retestDate: mastered ? null : nextDate,
-      retestDone: false,
-      duration: 20,
-      createdAt: Date.now(),
-      isRetest: true,
-    });
-
   }
 }
 
