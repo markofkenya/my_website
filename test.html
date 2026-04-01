@@ -163,6 +163,7 @@
       #main { padding:10px 10px 80px; }
       .hdr-stat { min-width:80px; padding:8px 12px; }
     }
+    [id^="reassign-"] div:hover { background:var(--bg3) !important; color:var(--yellow) !important; }
   </style>
 
 </head>
@@ -787,11 +788,8 @@ window.addEventListener("sce-sync", () => {
   sceData = window._sce_data || {};
   document.getElementById("sync-dot").textContent = "● LIVE";
   document.getElementById("sync-dot").style.color = "var(--green)";
-  document.getElementById("sb-sync").textContent = "● LIVE";
-  document.getElementById("sb-sync").style.color = "var(--green)";
   renderAll();
 });
-
 
 function qKey(code) { return code.replace(/[^a-zA-Z0-9]/g, "_"); }
 function stKey(cat, topic, sub) { return `st_${cat}_${topic}_${sub}`.replace(/[^a-zA-Z0-9]/g,"_").slice(0,100); }
