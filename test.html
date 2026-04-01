@@ -787,8 +787,11 @@ window.addEventListener("sce-sync", () => {
   sceData = window._sce_data || {};
   document.getElementById("sync-dot").textContent = "● LIVE";
   document.getElementById("sync-dot").style.color = "var(--green)";
+  document.getElementById("sb-sync").textContent = "● LIVE";
+  document.getElementById("sb-sync").style.color = "var(--green)";
   renderAll();
 });
+
 
 function qKey(code) { return code.replace(/[^a-zA-Z0-9]/g, "_"); }
 function stKey(cat, topic, sub) { return `st_${cat}_${topic}_${sub}`.replace(/[^a-zA-Z0-9]/g,"_").slice(0,100); }
