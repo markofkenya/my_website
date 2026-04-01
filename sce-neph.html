@@ -1088,8 +1088,13 @@ function qRow(q, pass) {
   const flagged = d.flagged || false;
   const cats = [...new Set(KSAP.map(q => q.category))].sort();
 
-  const isCorrect = curCorrect;
-  const rowBg = flagged ? 'background:rgba(244,114,182,0.03);' : isCorrect ? 'background:rgba(74,222,128,0.04);' : '';
+  const isCorrect   = curCorrect;
+  const isIncorrect = curIncorrect;
+  const rowBg = flagged     ? 'background:rgba(244,114,182,0.03);' 
+              : isCorrect   ? 'background:rgba(74,222,128,0.04);' 
+              : isIncorrect ? 'background:rgba(248,113,113,0.04);' 
+              : '';
+
   return `<div class="q-row" style="${rowBg}">
     <span class="q-code" style="color:${color}">${q.code}</span>
     <span style="display:flex;gap:3px;">${p1badge}${p2badge}${flagged?'<span class="pass-badge flagged">⚑</span>':''}</span>
