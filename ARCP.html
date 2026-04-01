@@ -1445,15 +1445,15 @@ function cpdSummary() {
   const onlineCapped = Math.min(onlineHrs, ONLINE_LIMIT);
   const externalHrs  = gimEntries.filter(e => GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
   const total        = externalHrs + onlineCapped;
-  const currentYrHrs = gimEntries.filter(e => e.year === currentYear).reduce((acc,e) => {
+    const currentYrHrs = gimEntries.filter(e => e.year === currentYear && GIM_COUNTED_TYPES.includes(e.type)).reduce((acc,e) => {
     const h = parseFloat(e.hours) || 0;
-    // For online in current year, pro-rate the cap
     if (e.type === "Online CPD") {
       const allOnlineYr = gimEntries.filter(x => x.type === "Online CPD" && x.year === currentYear).reduce((a,x) => a+(parseFloat(x.hours)||0),0);
       return acc + (allOnlineYr > ONLINE_LIMIT ? h * (ONLINE_LIMIT / allOnlineYr) : h);
     }
     return acc + h;
   }, 0);
+
   const st7OnlineHrs = gimEntries.filter(e => e.year === "ST7" && e.type === "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
   const st7ExternalHrs = gimEntries.filter(e => e.year === "ST7" && GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
   const st7Hrs = st7ExternalHrs + Math.min(st7OnlineHrs, ONLINE_LIMIT);
