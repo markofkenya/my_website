@@ -1414,15 +1414,17 @@ function saveLbEntries(type, entries) {
     fbPush(cumK, Math.round(totalSim*10)/10);
   }
   // If GIM CPD — sync cumulative target (online capped at 15h)
-  if (type === "cpd_gim") {
+    if (type === "cpd_gim") {
+    const GIM_COUNTED_TYPES = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
     const ONLINE_LIMIT = 15;
-    const onlineHrs   = entries.filter(e => e.type === "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
-    const externalHrs = entries.filter(e => e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+    const onlineHrs    = entries.filter(e => e.type === "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+    const externalHrs  = entries.filter(e => GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
     const countedTotal = externalHrs + Math.min(onlineHrs, ONLINE_LIMIT);
     const cumK = sKey("gim_cpd_hours");
     localStorage.setItem(cumK, String(Math.round(countedTotal)));
     fbPush(cumK, Math.round(countedTotal));
   }
+
 }
 function addLbEntry(type, entry) {
   const entries = getLbEntries(type);
@@ -1438,9 +1440,10 @@ function deleteLbEntry(type, id) {
 function cpdSummary() {
   const gimEntries   = getLbEntries("cpd_gim");
   const ONLINE_LIMIT = 15;
+  const GIM_COUNTED_TYPES = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
   const onlineHrs    = gimEntries.filter(e => e.type === "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
-  const onlineCapped = Math.min(onlineHrs, ONLINE_LIMIT); // excess online hrs don't count toward total
-  const externalHrs  = gimEntries.filter(e => e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+  const onlineCapped = Math.min(onlineHrs, ONLINE_LIMIT);
+  const externalHrs  = gimEntries.filter(e => GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
   const total        = externalHrs + onlineCapped;
   const currentYrHrs = gimEntries.filter(e => e.year === currentYear).reduce((acc,e) => {
     const h = parseFloat(e.hours) || 0;
@@ -1643,7 +1646,7 @@ function renderLbCPD(el) {
   sumDiv.innerHTML = `
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${cpd.total>=totalTarget?'var(--green)':'var(--gim)'};padding:12px 16px;flex:1;min-width:130px;">
       <div style="font-size:20px;font-weight:700;color:${cpd.total>=totalTarget?'var(--green)':'var(--gim)'};">${cpd.total}<span style="font-size:10px;color:var(--dim);"> / ${totalTarget}h</span></div>
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">TOTAL GIM CPD HRS</div>
+        <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">TOTAL EXTERNAL GIM CPD HRS</div>
       <div style="height:3px;background:var(--blue5);margin-top:6px;border-radius:2px;overflow:hidden;">
         <div style="height:100%;width:${totalPct}%;background:${cpd.total>=totalTarget?'var(--green)':'var(--gim)'};"></div>
       </div>
@@ -2165,9 +2168,11 @@ function printLogbookReport() {
   ${secHead("CPD / Study Leave")}
   <div class="cpd-summary">
     <strong>GIM CPD Summary:</strong> &nbsp;
-    Counted total: <strong style="color:#003087">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
-    Online: <strong>${onlineCapped.toFixed(1)}h</strong> / 15h max &nbsp;·&nbsp;
-    External: <strong>${(totalCpdHrs-onlineHrs).toFixed(1)}h</strong>
+    External counted: <strong style="color:#003087">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
+    Online (capped): <strong>${onlineCapped.toFixed(1)}h</strong> / 15h max &nbsp;·&nbsp;
+    Formal external: <strong>${(totalCpdHrs-onlineHrs).toFixed(1)}h</strong> &nbsp;·&nbsp;
+    <span style="color:#666;font-style:italic;">Grand rounds / M&amp;M / departmental teaching excluded from total</span>
+
   </div>
   ${subHead(badge("Renal","badge-renal"), `${renalCpd.length} entries · ${yr}`)}
   ${tbl(["Date","Type","Title / Event","Hours","Notes"],
