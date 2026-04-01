@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <title>SCE·NEP // Nephrology Tracker</title>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="theme-color" content="#080c14"/>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, update, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
+      authDomain: "task-monitor-bd7ee.firebaseapp.com",
+      databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "task-monitor-bd7ee",
+      storageBucket: "task-monitor-bd7ee.firebasestorage.app",
+      messagingSenderId: "544624731364",
+      appId: "1:544624731364:web:419d52fa061c5c7b4f38f1",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app);
+    const sceRef = ref(db, "sceData");
+
+    window._sce_fb = { db, ref, update, set, sceRef };
+
+    onValue(sceRef, snap => {
+      window._sce_data = snap.val() || {};
+      window.dispatchEvent(new CustomEvent("sce-sync"));
+    });
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    :root {
+      --bg:#080c14; --bg2:#0e1420; --bg3:#141c2c; --bg4:#1a2438;
+      --border:#1e2a3a; --border2:#263445;
+      --white:#dde6f0; --grey:#6a7d92; --grey2:#3d5068;
+      --green:#4ade80; --yellow:#fbbf24; --cyan:#22d3ee;
+      --pink:#f472b6; --red:#f87171; --blue:#60a5fa;
+      --orange:#fb923c; --purple:#a78bfa;
+      --accent:#22d3ee;
+      --font:'Fira Code',monospace;
+    }
+    html,body { background:var(--bg); color:var(--white); font-family:var(--font); font-size:12px; min-height:100vh; line-height:1.5; }
+    ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--bg2);} ::-webkit-scrollbar-thumb{background:var(--border2);}
+
+    /* ── HEADER ── */
+    #header { background:var(--bg2); border-bottom:1px solid var(--border2); }
+    .hdr-top { display:flex; align-items:stretch; flex-wrap:wrap; }
+    .hdr-logo { padding:12px 20px; border-right:1px solid var(--border); display:flex; flex-direction:column; justify-content:center; }
+    .logo-main { font-size:16px; font-weight:600; color:var(--cyan); letter-spacing:0.04em; }
+    .logo-main span { color:var(--grey); }
+    .logo-sub { font-size:8px; color:var(--grey); letter-spacing:0.18em; margin-top:2px; }
+    .hdr-stat { padding:10px 18px; border-right:1px solid var(--border); display:flex; flex-direction:column; justify-content:center; min-width:100px; }
+    .stat-val { font-size:20px; font-weight:500; line-height:1; }
+    .stat-key { font-size:8px; color:var(--grey); letter-spacing:0.12em; margin-top:3px; }
+    .readiness-wrap { padding:10px 20px; display:flex; flex-direction:column; justify-content:center; flex:1; min-width:200px; }
+    .readiness-label { font-size:8px; color:var(--grey); letter-spacing:0.15em; margin-bottom:6px; }
+    .readiness-bar-bg { height:6px; background:var(--border2); overflow:hidden; }
+    .readiness-bar { height:100%; transition:width 0.6s ease; }
+    .readiness-pct { font-size:18px; font-weight:600; margin-top:4px; }
+    .sync-wrap { padding:10px 16px; border-left:1px solid var(--border); display:flex; align-items:center; }
+    .sync-dot { font-size:8px; color:var(--grey2); letter-spacing:0.08em; }
+
+    /* ── TABBAR ── */
+    #tabbar { background:var(--bg2); border-bottom:1px solid var(--border2); display:flex; overflow-x:auto; }
+    .tab { padding:8px 18px; background:transparent; border:none; border-right:1px solid var(--border); border-bottom:2px solid transparent; color:var(--grey); font-family:var(--font); font-size:10px; cursor:pointer; letter-spacing:0.06em; white-space:nowrap; transition:all 0.1s; }
+    .tab:hover { color:var(--white); background:var(--bg3); }
+    .tab.active { color:var(--cyan); border-bottom-color:var(--cyan); background:var(--bg3); }
+    .tab::before { content:"[ "; color:var(--grey2); }
+    .tab::after { content:" ]"; color:var(--grey2); }
+
+    /* ── SUBTAB (Pass 1 / Pass 2) ── */
+    .subtab-row { display:flex; gap:0; background:var(--bg3); border-bottom:1px solid var(--border); padding:0 18px; }
+    .subtab { padding:6px 14px; background:transparent; border:none; border-bottom:2px solid transparent; color:var(--grey); font-family:var(--font); font-size:9px; cursor:pointer; letter-spacing:0.08em; }
+    .subtab.active { color:var(--yellow); border-bottom-color:var(--yellow); }
+
+    /* ── MAIN ── */
+    #main { padding:14px 18px 80px; }
+
+    /* ── CATEGORY CARDS ── */
+    .cat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:8px; margin-bottom:20px; }
+    .cat-card { background:var(--bg2); border:1px solid var(--border2); border-left:3px solid var(--border2); padding:12px 14px; cursor:pointer; transition:all 0.1s; }
+    .cat-card:hover { background:var(--bg3); }
+    .cat-card.expanded { border-left-color:var(--cyan); }
+    .cat-name { font-size:11px; font-weight:500; color:var(--white); margin-bottom:6px; }
+    .cat-stats { display:flex; gap:12px; font-size:9px; color:var(--grey); margin-bottom:6px; }
+    .cat-stat strong { color:var(--yellow); }
+    .cat-bar-bg { height:3px; background:var(--border2); overflow:hidden; }
+    .cat-bar { height:100%; background:var(--cyan); transition:width 0.4s; }
+
+    /* ── QUESTION LIST ── */
+    .q-list { background:var(--bg3); border:1px solid var(--border); border-top:none; padding:0; }
+    .q-row { display:flex; align-items:center; gap:10px; padding:7px 12px; border-bottom:1px solid var(--border); font-size:10px; transition:background 0.1s; }
+    .q-row:hover { background:var(--bg4); }
+    .q-row:last-child { border-bottom:none; }
+    .q-code { color:var(--cyan); font-size:9px; min-width:90px; letter-spacing:0.04em; }
+    .q-pass-label { font-size:8px; color:var(--grey2); min-width:40px; }
+    .q-actions { display:flex; gap:6px; align-items:center; margin-left:auto; }
+    .q-btn { padding:2px 8px; border:1px solid var(--border2); background:transparent; color:var(--grey2); font-family:var(--font); font-size:9px; cursor:pointer; transition:all 0.1s; }
+    .q-btn.correct { border-color:var(--green); color:var(--green); background:rgba(74,222,128,0.08); }
+    .q-btn.incorrect { border-color:var(--red); color:var(--red); background:rgba(248,113,113,0.08); }
+    .q-btn:hover:not(.correct):not(.incorrect) { border-color:var(--cyan); color:var(--cyan); }
+    .conf-dots { display:flex; gap:3px; }
+    .conf-dot { width:8px; height:8px; border-radius:50%; border:1px solid var(--border2); background:transparent; cursor:pointer; transition:all 0.1s; }
+    .conf-dot.lit { background:var(--yellow); border-color:var(--yellow); }
+    .note-inp { background:var(--bg); border:1px solid var(--border2); color:var(--grey); font-family:var(--font); font-size:9px; padding:2px 6px; width:140px; outline:none; }
+    .note-inp:focus { border-color:var(--yellow); color:var(--white); }
+    .pass-badge { font-size:7px; padding:1px 4px; letter-spacing:0.06em; border:1px solid; }
+    .pass-badge.p1 { color:var(--blue); border-color:rgba(96,165,250,0.3); }
+    .pass-badge.p1done { color:var(--green); border-color:rgba(74,222,128,0.3); }
+    .pass-badge.p2 { color:var(--purple); border-color:rgba(167,139,250,0.3); }
+    .pass-badge.p2done { color:var(--orange); border-color:rgba(251,146,60,0.3); }
+
+    /* ── TOPIC COVERAGE ── */
+    .topic-section { margin-bottom:20px; }
+    .topic-hdr { display:flex; align-items:center; gap:10px; padding:8px 12px; background:var(--bg2); border:1px solid var(--border2); cursor:pointer; }
+    .topic-hdr:hover { background:var(--bg3); }
+    .topic-hdr-name { font-size:11px; font-weight:500; color:var(--white); flex:1; }
+    .topic-hdr-stats { font-size:9px; color:var(--grey); }
+    .topic-hdr-pct { font-size:11px; font-weight:500; }
+    .subtopic-list { background:var(--bg3); border:1px solid var(--border2); border-top:none; }
+    .st-row { display:flex; align-items:center; gap:10px; padding:6px 14px; border-bottom:1px solid var(--border); font-size:10px; }
+    .st-row:last-child { border-bottom:none; }
+    .st-name { flex:1; color:var(--grey); }
+    .st-name.read { color:var(--white); }
+    .st-actions { display:flex; gap:6px; align-items:center; }
+    .st-btn { padding:1px 7px; border:1px solid var(--border2); background:transparent; color:var(--grey2); font-family:var(--font); font-size:9px; cursor:pointer; }
+    .st-btn.read { border-color:var(--green); color:var(--green); background:rgba(74,222,128,0.06); }
+    .st-btn.reviewed { border-color:var(--cyan); color:var(--cyan); background:rgba(34,211,238,0.06); }
+
+    /* ── SEC HEADS ── */
+    .sec-head { display:flex; align-items:baseline; gap:10px; margin-bottom:10px; padding:4px 0; border-bottom:1px solid var(--border); }
+    .sec-title { font-size:10px; font-weight:500; color:var(--cyan); letter-spacing:0.08em; }
+    .sec-rule { flex:1; }
+    .sec-note { font-size:9px; color:var(--grey2); }
+    .empty-msg { padding:30px 0; color:var(--grey2); font-size:10px; letter-spacing:0.08em; }
+    .empty-msg::before { content:"> "; }
+
+    /* ── OVERVIEW ── */
+    .overview-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:6px; margin-bottom:20px; }
+    .ov-card { background:var(--bg2); border:1px solid var(--border2); border-left:3px solid var(--border2); padding:10px 14px; }
+    .ov-cat { font-size:10px; color:var(--white); font-weight:500; margin-bottom:6px; }
+    .ov-row { display:flex; justify-content:space-between; font-size:9px; color:var(--grey); margin-bottom:3px; }
+    .ov-row strong { color:var(--yellow); }
+    .ov-bar-bg { height:2px; background:var(--border2); margin-top:6px; overflow:hidden; }
+    .ov-bar { height:100%; }
+
+    /* ── STATUS BAR ── */
+    #statusbar { position:fixed; bottom:0; left:0; right:0; background:var(--bg2); border-top:1px solid var(--border2); padding:5px 18px; display:flex; justify-content:space-between; align-items:center; font-size:9px; color:var(--grey2); z-index:100; }
+    .sb-items { display:flex; gap:18px; flex-wrap:wrap; }
+    .sb-item strong { color:var(--yellow); }
+
+    @media(max-width:640px) {
+      .cat-grid,.overview-grid { grid-template-columns:1fr; }
+      .note-inp { width:80px; }
+      #main { padding:10px 10px 80px; }
+      .hdr-stat { min-width:80px; padding:8px 12px; }
+    }
+    [id^="reassign-"] div:hover { background:var(--bg3) !important; color:var(--yellow) !important; }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <div class="hdr-top">
+    <div class="hdr-logo">
+      <div class="logo-main">SCE<span>·</span>NEP</div>
+      <div class="logo-sub">NEPHROLOGY TRACKER</div>
+    </div>
+    <div class="hdr-stat">
+      <div class="stat-val" id="hdr-ksap-pct" style="color:var(--cyan)">0%</div>
+      <div class="stat-key">KSAP CORRECT</div>
+    </div>
+    <div class="hdr-stat">
+      <div class="stat-val" id="hdr-topic-pct" style="color:var(--green)">0%</div>
+      <div class="stat-key">TOPICS COVERED</div>
+    </div>
+    <div class="hdr-stat">
+      <div class="stat-val" id="hdr-attempted" style="color:var(--grey)">0</div>
+      <div class="stat-key">KSAP ATTEMPTED</div>
+    </div>
+    <div class="readiness-wrap">
+      <div class="readiness-label">SCE READINESS</div>
+      <div class="readiness-bar-bg">
+        <div class="readiness-bar" id="readiness-bar" style="width:0%"></div>
+      </div>
+      <div class="readiness-pct" id="readiness-pct">0%</div>
+    </div>
+    <div class="sync-wrap">
+      <div class="sync-dot" id="sync-dot">● CONNECTING</div>
+    </div>
+  </div>
+</div>
+
+<div id="tabbar">
+  <button class="tab active" onclick="setTab('overview')">OVERVIEW</button>
+  <button class="tab" onclick="setTab('ksap')">KSAP BANK</button>
+  <button class="tab" onclick="setTab('topics')">TOPIC COVERAGE</button>
+</div>
+
+<div id="main">
+  <div id="tab-overview" style="display:none"></div>
+  <div id="tab-ksap"     style="display:none"></div>
+  <div id="tab-topics"   style="display:none"></div>
+</div>
+
+<div id="statusbar">
+  <div class="sb-items">
+    <span class="sb-item">P1 complete: <strong id="sb-p1">0/675</strong></span>
+    <span class="sb-item">P2 complete: <strong id="sb-p2">0/675</strong></span>
+    <span class="sb-item" id="sb-sync" style="color:var(--grey2)">● CONNECTING</span>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════════════════
+const KSAP = [{"code":"V7M1-Q10","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q19","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q2","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q30","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q5","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q51","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q59","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q70","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q71","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q17","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M1"},{"code":"V7M1-Q25","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M1"},{"code":"V7M1-Q33","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M1"},{"code":"V7M1-Q40","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M1"},{"code":"V7M1-Q46","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M1"},{"code":"V7M1-Q49","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M1"},{"code":"V7M1-Q57","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M1"},{"code":"V7M1-Q58","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M1"},{"code":"V7M1-Q61","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M1"},{"code":"V7M1-Q62","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M1"},{"code":"V7M1-Q65","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M1"},{"code":"V7M1-Q72","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M1"},{"code":"V7M1-Q74","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M1"},{"code":"V7M1-Q11","category":"Ca, Po4, Mg disorders & Stones","module":"V7M1"},{"code":"V7M1-Q27","category":"Ca, Po4, Mg disorders & Stones","module":"V7M1"},{"code":"V7M1-Q39","category":"Ca, Po4, Mg disorders & Stones","module":"V7M1"},{"code":"V7M1-Q56","category":"Ca, Po4, Mg disorders & Stones","module":"V7M1"},{"code":"V7M1-Q75","category":"Ca, Po4, Mg disorders & Stones","module":"V7M1"},{"code":"V7M1-Q1","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q13","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q14","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q15","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q16","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q20","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q22","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q24","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q28","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q3","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q31","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q35","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q38","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q4","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q41","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q44","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q45","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q47","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q52","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q55","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q36","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q37","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q42","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q43","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q54","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q64","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q66","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q8","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q6","category":"Hypertension","module":"V7M1"},{"code":"V7M1-Q63","category":"Hypertension","module":"V7M1"},{"code":"V7M1-Q73","category":"Hypertension","module":"V7M1"},{"code":"V7M1-Q48","category":"Kidney Transplantation","module":"V7M1"},{"code":"V7M1-Q60","category":"Kidney Transplantation","module":"V7M1"},{"code":"V7M1-Q69","category":"Kidney Transplantation","module":"V7M1"},{"code":"V7M1-Q9","category":"Kidney Transplantation","module":"V7M1"},{"code":"V7M1-Q21","category":"Pharmacology","module":"V7M1"},{"code":"V7M1-Q23","category":"Pharmacology","module":"V7M1"},{"code":"V7M1-Q29","category":"Pharmacology","module":"V7M1"},{"code":"V7M1-Q32","category":"Pharmacology","module":"V7M1"},{"code":"V7M1-Q68","category":"Pharmacology","module":"V7M1"},{"code":"V7M1-Q7","category":"Pharmacology","module":"V7M1"},{"code":"V7M1-Q18","category":"Sodium and Water Abnormalities","module":"V7M1"},{"code":"V7M1-Q26","category":"Sodium and Water Abnormalities","module":"V7M1"},{"code":"V7M1-Q50","category":"Sodium and Water Abnormalities","module":"V7M1"},{"code":"V7M1-Q67","category":"Sodium and Water Abnormalities","module":"V7M1"},{"code":"V7M1-Q12","category":"Tubular, Interstitial and Cystic Disorders","module":"V7M1"},{"code":"V7M1-Q34","category":"Tubular, Interstitial and Cystic Disorders","module":"V7M1"},{"code":"V7M1-Q53","category":"Tubular, Interstitial and Cystic Disorders","module":"V7M1"},{"code":"V7M2-Q1","category":"Acid\u2013Base and Potassium Disorders","module":"V7M2"},{"code":"V7M2-Q23","category":"Acid\u2013Base and Potassium Disorders","module":"V7M2"},{"code":"V7M2-Q25","category":"Acid\u2013Base and Potassium Disorders","module":"V7M2"},{"code":"V7M2-Q40","category":"Acid\u2013Base and Potassium Disorders","module":"V7M2"},{"code":"V7M2-Q41","category":"Acid\u2013Base and Potassium Disorders","module":"V7M2"},{"code":"V7M2-Q64","category":"Acid\u2013Base and Potassium Disorders","module":"V7M2"},{"code":"V7M2-Q9","category":"Acid\u2013Base and Potassium Disorders","module":"V7M2"},{"code":"V7M2-Q13","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M2"},{"code":"V7M2-Q16","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M2"},{"code":"V7M2-Q3","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M2"},{"code":"V7M2-Q31","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M2"},{"code":"V7M2-Q32","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M2"},{"code":"V7M2-Q44","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M2"},{"code":"V7M2-Q50","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M2"},{"code":"V7M2-Q53","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M2"},{"code":"V7M2-Q66","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M2"},{"code":"V7M2-Q73","category":"Acute Kidney Injury and ICU Nephrology","module":"V7M2"},{"code":"V7M2-Q19","category":"Ca, Po4, Mg disorders & Stones","module":"V7M2"},{"code":"V7M2-Q36","category":"Ca, Po4, Mg disorders & Stones","module":"V7M2"},{"code":"V7M2-Q49","category":"Ca, Po4, Mg disorders & Stones","module":"V7M2"},{"code":"V7M2-Q51","category":"Ca, Po4, Mg disorders & Stones","module":"V7M2"},{"code":"V7M2-Q59","category":"Ca, Po4, Mg disorders & Stones","module":"V7M2"},{"code":"V7M2-Q15","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q2","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q22","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q27","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q29","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q33","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q38","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q43","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q5","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q57","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q62","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q67","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q7","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q8","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q10","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q11","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q12","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q14","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q20","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q21","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q24","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q28","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q45","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q55","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q58","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q17","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q18","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q39","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q6","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q61","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q68","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q70","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q72","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q74","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q75","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q34","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q35","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q37","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q42","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q46","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q47","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q48","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q54","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q56","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q30","category":"Pharmacology","module":"V7M2"},{"code":"V7M2-Q4","category":"Sodium and Water Abnormalities","module":"V7M2"},{"code":"V7M2-Q52","category":"Sodium and Water Abnormalities","module":"V7M2"},{"code":"V7M2-Q63","category":"Sodium and Water Abnormalities","module":"V7M2"},{"code":"V7M2-Q69","category":"Sodium and Water Abnormalities","module":"V7M2"},{"code":"V7M2-Q71","category":"Sodium and Water Abnormalities","module":"V7M2"},{"code":"V7M2-Q26","category":"Tubular, Interstitial and Cystic Disorders","module":"V7M2"},{"code":"V7M2-Q60","category":"Tubular, Interstitial and Cystic Disorders","module":"V7M2"},{"code":"V7M2-Q65","category":"Tubular, Interstitial and Cystic Disorders","module":"V7M2"},{"code":"V8M1-Q26","category":"Acid\u2013Base and Potassium Disorders","module":"V8M1"},{"code":"V8M1-Q28","category":"Acid\u2013Base and Potassium Disorders","module":"V8M1"},{"code":"V8M1-Q29","category":"Acid\u2013Base and Potassium Disorders","module":"V8M1"},{"code":"V8M1-Q41","category":"Acid\u2013Base and Potassium Disorders","module":"V8M1"},{"code":"V8M1-Q45","category":"Acid\u2013Base and Potassium Disorders","module":"V8M1"},{"code":"V8M1-Q53","category":"Acid\u2013Base and Potassium Disorders","module":"V8M1"},{"code":"V8M1-Q11","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M1"},{"code":"V8M1-Q23","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M1"},{"code":"V8M1-Q35","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M1"},{"code":"V8M1-Q36","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M1"},{"code":"V8M1-Q42","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M1"},{"code":"V8M1-Q43","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M1"},{"code":"V8M1-Q48","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M1"},{"code":"V8M1-Q63","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M1"},{"code":"V8M1-Q69","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M1"},{"code":"V8M1-Q75","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M1"},{"code":"V8M1-Q7","category":"Ca, Po4, Mg disorders & Stones","module":"V8M1"},{"code":"V8M1-Q10","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q15","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q16","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q17","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q18","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q20","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q21","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q25","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q3","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q40","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q52","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q58","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q59","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q6","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q60","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q67","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q68","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q70","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q71","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q74","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q19","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q22","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q31","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q32","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q34","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q46","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q57","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q62","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q65","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q73","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q8","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q9","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q12","category":"Hypertension","module":"V8M1"},{"code":"V8M1-Q13","category":"Hypertension","module":"V8M1"},{"code":"V8M1-Q24","category":"Hypertension","module":"V8M1"},{"code":"V8M1-Q4","category":"Hypertension","module":"V8M1"},{"code":"V8M1-Q44","category":"Hypertension","module":"V8M1"},{"code":"V8M1-Q50","category":"Hypertension","module":"V8M1"},{"code":"V8M1-Q66","category":"Hypertension","module":"V8M1"},{"code":"V8M1-Q14","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q30","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q33","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q37","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q38","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q39","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q64","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q72","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q61","category":"Pharmacology","module":"V8M1"},{"code":"V8M1-Q1","category":"Sodium and Water Abnormalities","module":"V8M1"},{"code":"V8M1-Q27","category":"Sodium and Water Abnormalities","module":"V8M1"},{"code":"V8M1-Q47","category":"Sodium and Water Abnormalities","module":"V8M1"},{"code":"V8M1-Q5","category":"Sodium and Water Abnormalities","module":"V8M1"},{"code":"V8M1-Q51","category":"Sodium and Water Abnormalities","module":"V8M1"},{"code":"V8M1-Q55","category":"Sodium and Water Abnormalities","module":"V8M1"},{"code":"V8M1-Q2","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M1"},{"code":"V8M1-Q49","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M1"},{"code":"V8M1-Q54","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M1"},{"code":"V8M1-Q56","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M1"},{"code":"V8M2-Q20","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q26","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q35","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q45","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q47","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q48","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q73","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q9","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q15","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M2"},{"code":"V8M2-Q18","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M2"},{"code":"V8M2-Q22","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M2"},{"code":"V8M2-Q41","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M2"},{"code":"V8M2-Q50","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M2"},{"code":"V8M2-Q52","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M2"},{"code":"V8M2-Q53","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M2"},{"code":"V8M2-Q55","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M2"},{"code":"V8M2-Q59","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M2"},{"code":"V8M2-Q61","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M2"},{"code":"V8M2-Q62","category":"Acute Kidney Injury and ICU Nephrology","module":"V8M2"},{"code":"V8M2-Q1","category":"Ca, Po4, Mg disorders & Stones","module":"V8M2"},{"code":"V8M2-Q5","category":"Ca, Po4, Mg disorders & Stones","module":"V8M2"},{"code":"V8M2-Q6","category":"Ca, Po4, Mg disorders & Stones","module":"V8M2"},{"code":"V8M2-Q74","category":"Ca, Po4, Mg disorders & Stones","module":"V8M2"},{"code":"V8M2-Q75","category":"Ca, Po4, Mg disorders & Stones","module":"V8M2"},{"code":"V8M2-Q8","category":"Ca, Po4, Mg disorders & Stones","module":"V8M2"},{"code":"V8M2-Q10","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q13","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q14","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q16","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q19","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q21","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q28","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q3","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q38","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q40","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q42","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q46","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q58","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q63","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q68","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q7","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q17","category":"Glomerular and Vascular Disorders","module":"V8M2"},{"code":"V8M2-Q33","category":"Glomerular and Vascular Disorders","module":"V8M2"},{"code":"V8M2-Q51","category":"Glomerular and Vascular Disorders","module":"V8M2"},{"code":"V8M2-Q60","category":"Glomerular and Vascular Disorders","module":"V8M2"},{"code":"V8M2-Q64","category":"Glomerular and Vascular Disorders","module":"V8M2"},{"code":"V8M2-Q69","category":"Glomerular and Vascular Disorders","module":"V8M2"},{"code":"V8M2-Q11","category":"Hypertension","module":"V8M2"},{"code":"V8M2-Q36","category":"Hypertension","module":"V8M2"},{"code":"V8M2-Q39","category":"Hypertension","module":"V8M2"},{"code":"V8M2-Q49","category":"Hypertension","module":"V8M2"},{"code":"V8M2-Q56","category":"Hypertension","module":"V8M2"},{"code":"V8M2-Q65","category":"Hypertension","module":"V8M2"},{"code":"V8M2-Q23","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q25","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q27","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q29","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q37","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q44","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q54","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q72","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q12","category":"Pharmacology","module":"V8M2"},{"code":"V8M2-Q43","category":"Pharmacology","module":"V8M2"},{"code":"V8M2-Q66","category":"Pharmacology","module":"V8M2"},{"code":"V8M2-Q71","category":"Pharmacology","module":"V8M2"},{"code":"V8M2-Q24","category":"Sodium and Water Abnormalities","module":"V8M2"},{"code":"V8M2-Q31","category":"Sodium and Water Abnormalities","module":"V8M2"},{"code":"V8M2-Q34","category":"Sodium and Water Abnormalities","module":"V8M2"},{"code":"V8M2-Q57","category":"Sodium and Water Abnormalities","module":"V8M2"},{"code":"V8M2-Q67","category":"Sodium and Water Abnormalities","module":"V8M2"},{"code":"V8M2-Q70","category":"Sodium and Water Abnormalities","module":"V8M2"},{"code":"V8M2-Q2","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M2"},{"code":"V8M2-Q30","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M2"},{"code":"V8M2-Q32","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M2"},{"code":"V8M2-Q4","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M2"},{"code":"V9M1-Q19","category":"Acid\u2013Base and Potassium Disorders","module":"V9M1"},{"code":"V9M1-Q2","category":"Acid\u2013Base and Potassium Disorders","module":"V9M1"},{"code":"V9M1-Q32","category":"Acid\u2013Base and Potassium Disorders","module":"V9M1"},{"code":"V9M1-Q37","category":"Acid\u2013Base and Potassium Disorders","module":"V9M1"},{"code":"V9M1-Q44","category":"Acid\u2013Base and Potassium Disorders","module":"V9M1"},{"code":"V9M1-Q51","category":"Acid\u2013Base and Potassium Disorders","module":"V9M1"},{"code":"V9M1-Q72","category":"Acid\u2013Base and Potassium Disorders","module":"V9M1"},{"code":"V9M1-Q31","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M1"},{"code":"V9M1-Q39","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M1"},{"code":"V9M1-Q45","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M1"},{"code":"V9M1-Q53","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M1"},{"code":"V9M1-Q54","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M1"},{"code":"V9M1-Q73","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M1"},{"code":"V9M1-Q8","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M1"},{"code":"V9M1-Q9","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M1"},{"code":"V9M1-Q16","category":"Ca, Po4, Mg disorders & Stones","module":"V9M1"},{"code":"V9M1-Q29","category":"Ca, Po4, Mg disorders & Stones","module":"V9M1"},{"code":"V9M1-Q3","category":"Ca, Po4, Mg disorders & Stones","module":"V9M1"},{"code":"V9M1-Q75","category":"Ca, Po4, Mg disorders & Stones","module":"V9M1"},{"code":"V9M1-Q10","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q12","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q18","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q20","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q23","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q27","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q28","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q30","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q38","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q41","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q43","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q47","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q48","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q50","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q57","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q6","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q66","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q7","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q71","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q1","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q15","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q24","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q25","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q36","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q4","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q42","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q5","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q61","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q65","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q21","category":"Hypertension","module":"V9M1"},{"code":"V9M1-Q26","category":"Hypertension","module":"V9M1"},{"code":"V9M1-Q46","category":"Hypertension","module":"V9M1"},{"code":"V9M1-Q55","category":"Hypertension","module":"V9M1"},{"code":"V9M1-Q59","category":"Hypertension","module":"V9M1"},{"code":"V9M1-Q60","category":"Hypertension","module":"V9M1"},{"code":"V9M1-Q63","category":"Hypertension","module":"V9M1"},{"code":"V9M1-Q49","category":"Kidney Transplantation","module":"V9M1"},{"code":"V9M1-Q52","category":"Kidney Transplantation","module":"V9M1"},{"code":"V9M1-Q56","category":"Kidney Transplantation","module":"V9M1"},{"code":"V9M1-Q62","category":"Kidney Transplantation","module":"V9M1"},{"code":"V9M1-Q67","category":"Kidney Transplantation","module":"V9M1"},{"code":"V9M1-Q69","category":"Kidney Transplantation","module":"V9M1"},{"code":"V9M1-Q70","category":"Kidney Transplantation","module":"V9M1"},{"code":"V9M1-Q11","category":"Pharmacology","module":"V9M1"},{"code":"V9M1-Q34","category":"Pharmacology","module":"V9M1"},{"code":"V9M1-Q58","category":"Pharmacology","module":"V9M1"},{"code":"V9M1-Q64","category":"Pharmacology","module":"V9M1"},{"code":"V9M1-Q68","category":"Pharmacology","module":"V9M1"},{"code":"V9M1-Q74","category":"Pharmacology","module":"V9M1"},{"code":"V9M1-Q17","category":"Sodium and Water Abnormalities","module":"V9M1"},{"code":"V9M1-Q22","category":"Sodium and Water Abnormalities","module":"V9M1"},{"code":"V9M1-Q33","category":"Sodium and Water Abnormalities","module":"V9M1"},{"code":"V9M1-Q35","category":"Sodium and Water Abnormalities","module":"V9M1"},{"code":"V9M1-Q40","category":"Sodium and Water Abnormalities","module":"V9M1"},{"code":"V9M1-Q13","category":"Tubular, Interstitial and Cystic Disorders","module":"V9M1"},{"code":"V9M1-Q14","category":"Tubular, Interstitial and Cystic Disorders","module":"V9M1"},{"code":"V9M2-Q12","category":"Acid\u2013Base and Potassium Disorders","module":"V9M2"},{"code":"V9M2-Q48","category":"Acid\u2013Base and Potassium Disorders","module":"V9M2"},{"code":"V9M2-Q51","category":"Acid\u2013Base and Potassium Disorders","module":"V9M2"},{"code":"V9M2-Q64","category":"Acid\u2013Base and Potassium Disorders","module":"V9M2"},{"code":"V9M2-Q8","category":"Acid\u2013Base and Potassium Disorders","module":"V9M2"},{"code":"V9M2-Q14","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q15","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q33","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q35","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q36","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q37","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q41","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q42","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q49","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q6","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q62","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q65","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q73","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q75","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q9","category":"Acute Kidney Injury and ICU Nephrology","module":"V9M2"},{"code":"V9M2-Q1","category":"Ca, Po4, Mg disorders & Stones","module":"V9M2"},{"code":"V9M2-Q18","category":"Ca, Po4, Mg disorders & Stones","module":"V9M2"},{"code":"V9M2-Q45","category":"Ca, Po4, Mg disorders & Stones","module":"V9M2"},{"code":"V9M2-Q67","category":"Ca, Po4, Mg disorders & Stones","module":"V9M2"},{"code":"V9M2-Q17","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q19","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q2","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q22","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q23","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q26","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q29","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q32","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q44","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q46","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q52","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q53","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q58","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q60","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q61","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q13","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q20","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q24","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q27","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q30","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q39","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q40","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q50","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q55","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q66","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q34","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q38","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q43","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q47","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q54","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q56","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q57","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q70","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q71","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q10","category":"Kidney Transplantation","module":"V9M2"},{"code":"V9M2-Q3","category":"Kidney Transplantation","module":"V9M2"},{"code":"V9M2-Q63","category":"Kidney Transplantation","module":"V9M2"},{"code":"V9M2-Q68","category":"Kidney Transplantation","module":"V9M2"},{"code":"V9M2-Q69","category":"Kidney Transplantation","module":"V9M2"},{"code":"V9M2-Q72","category":"Kidney Transplantation","module":"V9M2"},{"code":"V9M2-Q74","category":"Kidney Transplantation","module":"V9M2"},{"code":"V9M2-Q11","category":"Pharmacology","module":"V9M2"},{"code":"V9M2-Q16","category":"Pharmacology","module":"V9M2"},{"code":"V9M2-Q28","category":"Pharmacology","module":"V9M2"},{"code":"V9M2-Q21","category":"Sodium and Water Abnormalities","module":"V9M2"},{"code":"V9M2-Q25","category":"Sodium and Water Abnormalities","module":"V9M2"},{"code":"V9M2-Q31","category":"Sodium and Water Abnormalities","module":"V9M2"},{"code":"V9M2-Q4","category":"Sodium and Water Abnormalities","module":"V9M2"},{"code":"V9M2-Q59","category":"Sodium and Water Abnormalities","module":"V9M2"},{"code":"V9M2-Q5","category":"Tubular, Interstitial and Cystic Disorders","module":"V9M2"},{"code":"V9M2-Q7","category":"Tubular, Interstitial and Cystic Disorders","module":"V9M2"},{"code":"V10M1-Q12","category":"Acid\u2013Base and Potassium Disorders","module":"V10M1"},{"code":"V10M1-Q16","category":"Acid\u2013Base and Potassium Disorders","module":"V10M1"},{"code":"V10M1-Q22","category":"Acid\u2013Base and Potassium Disorders","module":"V10M1"},{"code":"V10M1-Q35","category":"Acid\u2013Base and Potassium Disorders","module":"V10M1"},{"code":"V10M1-Q52","category":"Acid\u2013Base and Potassium Disorders","module":"V10M1"},{"code":"V10M1-Q73","category":"Acid\u2013Base and Potassium Disorders","module":"V10M1"},{"code":"V10M1-Q8","category":"Acid\u2013Base and Potassium Disorders","module":"V10M1"},{"code":"V10M1-Q10","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q13","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q18","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q21","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q29","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q30","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q37","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q38","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q46","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q48","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q53","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q54","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q58","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q60","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q70","category":"Acute Kidney Injury and ICU Nephrology","module":"V10M1"},{"code":"V10M1-Q51","category":"Ca, Po4, Mg disorders & Stones","module":"V10M1"},{"code":"V10M1-Q74","category":"Ca, Po4, Mg disorders & Stones","module":"V10M1"},{"code":"V10M1-Q11","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q14","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q25","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q34","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q41","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q42","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q43","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q45","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q47","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q49","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q59","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q64","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q66","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q7","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q71","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q17","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q2","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q23","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q24","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q26","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q27","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q28","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q39","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q4","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q40","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q56","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q69","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q72","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q32","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q50","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q62","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q63","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q65","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q67","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q68","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q75","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q3","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q33","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q36","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q44","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q55","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q57","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q6","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q61","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q9","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q15","category":"Pharmacology","module":"V10M1"},{"code":"V10M1-Q5","category":"Pharmacology","module":"V10M1"},{"code":"V10M1-Q1","category":"Sodium and Water Abnormalities","module":"V10M1"},{"code":"V10M1-Q19","category":"Sodium and Water Abnormalities","module":"V10M1"},{"code":"V10M1-Q31","category":"Sodium and Water Abnormalities","module":"V10M1"},{"code":"V10M1-Q20","category":"Tubular, Interstitial and Cystic Disorders","module":"V10M1"},{"code":"V11M1-Q35","category":"Acid\u2013Base and Potassium Disorders","module":"V11M1"},{"code":"V11M1-Q43","category":"Acid\u2013Base and Potassium Disorders","module":"V11M1"},{"code":"V11M1-Q5","category":"Acid\u2013Base and Potassium Disorders","module":"V11M1"},{"code":"V11M1-Q51","category":"Acid\u2013Base and Potassium Disorders","module":"V11M1"},{"code":"V11M1-Q69","category":"Acid\u2013Base and Potassium Disorders","module":"V11M1"},{"code":"V11M1-Q73","category":"Acid\u2013Base and Potassium Disorders","module":"V11M1"},{"code":"V11M1-Q12","category":"Acute Kidney Injury and ICU Nephrology","module":"V11M1"},{"code":"V11M1-Q22","category":"Acute Kidney Injury and ICU Nephrology","module":"V11M1"},{"code":"V11M1-Q34","category":"Acute Kidney Injury and ICU Nephrology","module":"V11M1"},{"code":"V11M1-Q40","category":"Acute Kidney Injury and ICU Nephrology","module":"V11M1"},{"code":"V11M1-Q44","category":"Acute Kidney Injury and ICU Nephrology","module":"V11M1"},{"code":"V11M1-Q48","category":"Acute Kidney Injury and ICU Nephrology","module":"V11M1"},{"code":"V11M1-Q6","category":"Acute Kidney Injury and ICU Nephrology","module":"V11M1"},{"code":"V11M1-Q62","category":"Acute Kidney Injury and ICU Nephrology","module":"V11M1"},{"code":"V11M1-Q63","category":"Acute Kidney Injury and ICU Nephrology","module":"V11M1"},{"code":"V11M1-Q66","category":"Acute Kidney Injury and ICU Nephrology","module":"V11M1"},{"code":"V11M1-Q70","category":"Acute Kidney Injury and ICU Nephrology","module":"V11M1"},{"code":"V11M1-Q8","category":"Acute Kidney Injury and ICU Nephrology","module":"V11M1"},{"code":"V11M1-Q9","category":"Acute Kidney Injury and ICU Nephrology","module":"V11M1"},{"code":"V11M1-Q27","category":"Ca, Po4, Mg disorders & Stones","module":"V11M1"},{"code":"V11M1-Q46","category":"Ca, Po4, Mg disorders & Stones","module":"V11M1"},{"code":"V11M1-Q1","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q10","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q11","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q15","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q21","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q24","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q28","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q3","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q32","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q36","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q41","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q45","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q52","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q55","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q57","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q60","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q61","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q64","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q68","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q72","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q75","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q14","category":"Glomerular and Vascular Disorders","module":"V11M1"},{"code":"V11M1-Q19","category":"Glomerular and Vascular Disorders","module":"V11M1"},{"code":"V11M1-Q33","category":"Glomerular and Vascular Disorders","module":"V11M1"},{"code":"V11M1-Q39","category":"Glomerular and Vascular Disorders","module":"V11M1"},{"code":"V11M1-Q49","category":"Glomerular and Vascular Disorders","module":"V11M1"},{"code":"V11M1-Q67","category":"Glomerular and Vascular Disorders","module":"V11M1"},{"code":"V11M1-Q13","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q17","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q2","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q25","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q29","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q38","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q4","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q42","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q54","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q7","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q18","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q20","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q26","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q47","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q58","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q65","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q71","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q74","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q37","category":"Pharmacology","module":"V11M1"},{"code":"V11M1-Q16","category":"Sodium and Water Abnormalities","module":"V11M1"},{"code":"V11M1-Q23","category":"Sodium and Water Abnormalities","module":"V11M1"},{"code":"V11M1-Q30","category":"Sodium and Water Abnormalities","module":"V11M1"},{"code":"V11M1-Q50","category":"Sodium and Water Abnormalities","module":"V11M1"},{"code":"V11M1-Q53","category":"Sodium and Water Abnormalities","module":"V11M1"},{"code":"V11M1-Q31","category":"Tubular, Interstitial and Cystic Disorders","module":"V11M1"},{"code":"V11M1-Q56","category":"Tubular, Interstitial and Cystic Disorders","module":"V11M1"},{"code":"V11M1-Q59","category":"Tubular, Interstitial and Cystic Disorders","module":"V11M1"},{"code":"V6M1-Q6","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q30","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q31","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q44","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q46","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q67","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q69","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q73","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q15","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q18","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q33","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q43","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q49","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q51","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q53","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q55","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q57","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q7","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q11","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q17","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q36","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q39","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q41","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q45","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q54","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q66","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q2","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q9","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q10","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q12","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q14","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q16","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q19","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q21","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q22","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q24","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q50","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q52","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q56","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q60","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q63","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q64","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q65","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q72","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q74","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q26","category":"Glomerular and Vascular Disorders","module":"V6M1"},{"code":"V6M1-Q27","category":"Glomerular and Vascular Disorders","module":"V6M1"},{"code":"V6M1-Q38","category":"Glomerular and Vascular Disorders","module":"V6M1"},{"code":"V6M1-Q58","category":"Glomerular and Vascular Disorders","module":"V6M1"},{"code":"V6M1-Q59","category":"Glomerular and Vascular Disorders","module":"V6M1"},{"code":"V6M1-Q71","category":"Glomerular and Vascular Disorders","module":"V6M1"},{"code":"V6M1-Q1","category":"Hypertension","module":"V6M1"},{"code":"V6M1-Q4","category":"Hypertension","module":"V6M1"},{"code":"V6M1-Q35","category":"Hypertension","module":"V6M1"},{"code":"V6M1-Q37","category":"Hypertension","module":"V6M1"},{"code":"V6M1-Q61","category":"Hypertension","module":"V6M1"},{"code":"V6M1-Q5","category":"Kidney Transplantation","module":"V6M1"},{"code":"V6M1-Q8","category":"Kidney Transplantation","module":"V6M1"},{"code":"V6M1-Q29","category":"Kidney Transplantation","module":"V6M1"},{"code":"V6M1-Q32","category":"Kidney Transplantation","module":"V6M1"},{"code":"V6M1-Q42","category":"Kidney Transplantation","module":"V6M1"},{"code":"V6M1-Q75","category":"Kidney Transplantation","module":"V6M1"},{"code":"V6M1-Q28","category":"Pharmacology","module":"V6M1"},{"code":"V6M1-Q47","category":"Pharmacology","module":"V6M1"},{"code":"V6M1-Q13","category":"Sodium and Water Abnormalities","module":"V6M1"},{"code":"V6M1-Q20","category":"Sodium and Water Abnormalities","module":"V6M1"},{"code":"V6M1-Q23","category":"Sodium and Water Abnormalities","module":"V6M1"},{"code":"V6M1-Q34","category":"Sodium and Water Abnormalities","module":"V6M1"},{"code":"V6M1-Q48","category":"Sodium and Water Abnormalities","module":"V6M1"},{"code":"V6M1-Q3","category":"Tubular, Interstitial and Cystic Disorders","module":"V6M1"},{"code":"V6M1-Q25","category":"Tubular, Interstitial and Cystic Disorders","module":"V6M1"},{"code":"V6M1-Q40","category":"Tubular, Interstitial and Cystic Disorders","module":"V6M1"},{"code":"V6M1-Q62","category":"Tubular, Interstitial and Cystic Disorders","module":"V6M1"},{"code":"V6M1-Q68","category":"Tubular, Interstitial and Cystic Disorders","module":"V6M1"},{"code":"V6M1-Q70","category":"Tubular, Interstitial and Cystic Disorders","module":"V6M1"}];
+
+const TOPICS = {
+  "Sodium and Water Abnormalities": {
+    "Hyponatremia": [
+      "Hypotonic — SIADH",
+      "Hypotonic — Hypervolemic hyponatremia",
+      "Hypotonic — Low solute intake",
+      "Hypotonic — Thiazide-induced",
+      "Hypotonic — Secondary adrenal insufficiency",
+      "Hypertonic hyponatremia",
+      "Isotonic hyponatremia (pseudohyponatremia)"
+    ],
+    "Hypernatremia or Serum Hyperosmolality": [
+      "Osmotic diuresis — Urea",
+      "Osmotic diuresis — Glucose",
+      "Water diuresis — Central diabetes insipidus",
+      "Water diuresis — Nephrogenic diabetes insipidus",
+      "Physiologic saline diuresis",
+      "Hypodipsia",
+      "Extrarenal water loss"
+    ],
+    "Salt Excess (Edema)": [
+      "Heart failure",
+      "Cirrhosis",
+      "Nephrotic syndrome",
+      "Chronic kidney disease"
+    ],
+    "Salt Depletion": [
+      "Renal sodium losses — Postobstructive diuresis",
+      "Renal sodium losses — Post-AKI diuresis",
+      "Renal sodium losses — Diuretics",
+      "Renal sodium losses — Salt-wasting nephropathy",
+      "Renal sodium losses — Chemotherapy-induced",
+      "Extrarenal sodium losses"
+    ],
+    "Polyuria": [
+      "Primary polydipsia",
+      "Iatrogenic polyuria"
+    ]
+  },
+  "Acid–Base and Potassium Disorders": {
+    "Metabolic Acidosis (Normal AG)": [
+      "RTA — Distal (type 1)",
+      "RTA — Proximal (type 2)",
+      "RTA — Hyperkalemic (type 4)",
+      "Nonrenal causes of normal AG acidosis"
+    ],
+    "Metabolic Acidosis (Elevated AG)": [
+      "Lactic acidosis",
+      "Ketoacidosis",
+      "Toxin-related acidosis",
+      "Uremic acidosis",
+      "Low anion gap (e.g., multiple myeloma)"
+    ],
+    "Metabolic Alkalosis": [
+      "Normal/low BP — Renal origin",
+      "Normal/low BP — Chemotherapy-induced",
+      "Normal/low BP — Hypokalemia-associated",
+      "Normal/low BP — Post-hypercapnic",
+      "High BP — Adrenal etiologies",
+      "High BP — Malignant hypertension–associated"
+    ],
+    "Respiratory Acid–Base Disturbances": [
+      "Respiratory acidosis",
+      "Respiratory alkalosis",
+      "Mixed acid–base disorders"
+    ],
+    "Potassium Disturbances — Hyperkalemia": [
+      "Hyperkalemia — Pseudohyperkalemia",
+      "Hyperkalemia — Transcellular shifts",
+      "Hyperkalemia — Medication-induced",
+      "Hyperkalemia — Genetic abnormalities",
+      "Hyperkalemia — Postsurgical",
+      "Hyperkalemia — Peritoneal dialysis–related"
+    ],
+    "Potassium Disturbances — Hypokalemia": [
+      "Hypokalemia — Pseudohypokalemia",
+      "Hypokalemia — Transcellular shifts",
+      "Hypokalemia — Renal losses",
+      "Hypokalemia — Nonrenal losses",
+      "Hypokalemia — Therapeutic hypothermia + barbiturate coma"
+    ]
+  },
+  "Calcium, Phosphorus, and Magnesium Disorders and Stones": {
+    "Disorders of Calcium Metabolism — Hypercalcemia": [
+      "Primary hyperparathyroidism",
+      "Granulomatous diseases",
+      "Malignancy-related hypercalcemia",
+      "Familial hypocalciuric hypercalcemia (FHH)",
+      "Vitamin D toxicity",
+      "Medication- or vitamin-induced",
+      "Milk-alkali syndrome"
+    ],
+    "Disorders of Calcium Metabolism — Hypocalcemia": [
+      "Hypoparathyroidism",
+      "Pseudohypoparathyroidism",
+      "Medication-induced hypocalcemia",
+      "Tissue deposition",
+      "Vitamin D deficiency"
+    ],
+    "Disorders of Phosphate Metabolism — Hyperphosphatemia": [
+      "Decreased renal excretion (hyperphosphatemia)",
+      "Increased intake (hyperphosphatemia)",
+      "Tissue redistribution (hyperphosphatemia)",
+      "Genetic causes (hyperphosphatemia)"
+    ],
+    "Disorders of Phosphate Metabolism — Hypophosphatemia": [
+      "Increased renal excretion (hypophosphatemia)",
+      "Decreased intake/GI absorption (hypophosphatemia)",
+      "Tissue redistribution (hypophosphatemia)"
+    ],
+    "Disorders of Magnesium Metabolism": [
+      "Hypermagnesemia — Decreased renal excretion",
+      "Hypermagnesemia — Increased intake",
+      "Hypomagnesemia — Increased renal excretion",
+      "Hypomagnesemia — Decreased GI absorption"
+    ],
+    "Nephrolithiasis — Calcium Stones": [
+      "Idiopathic hypercalciuria",
+      "Hypocitraturia",
+      "Hyperoxaluria",
+      "Primary hyperparathyroidism (calcium stones)",
+      "Distal RTA (calcium stones)",
+      "Medullary sponge kidney (calcium stones)",
+      "Hypercalciuria in hypoparathyroidism (calcium stones)"
+    ],
+    "Nephrolithiasis — Uric Acid Stones": [
+      "Idiopathic uric acid stones",
+      "Post-ileostomy uric acid stones"
+    ],
+    "Nephrolithiasis — Other Stones": [
+      "Struvite stones",
+      "Cystine stones",
+      "Drug-induced stones"
+    ]
+  },
+  "Chronic Kidney Disease": {
+    "Kidney Function Parameters": [
+      "GFR (measured/estimated)",
+      "Proteinuria",
+      "Kidney Biopsy"
+    ],
+    "Etiologies of CKD": [
+      "Diabetic kidney disease",
+      "Nondiabetic kidney disease",
+      "Chronic glomerulonephritis",
+      "Hypertensive nephropathy",
+      "Chronic interstitial nephritis",
+      "Genetic diseases"
+    ],
+    "Progression of CKD": [
+      "Risk factors and progression of CKD"
+    ],
+    "CKD Complications": [
+      "Hypertension in CKD",
+      "Fluid overload",
+      "Anemia and iron deficiency",
+      "Hyperkalemia (CKD complication)",
+      "Metabolic acidosis (CKD complication)",
+      "Protein-energy wasting",
+      "CKD-MBD: Hyperparathyroidism",
+      "CKD-MBD: Hyperphosphatemia"
+    ],
+    "Stage 4 and 5 CKD": [
+      "Advanced uremic symptoms",
+      "Preparation for ESKD",
+      "Initiation of maintenance dialysis",
+      "Discontinuation of maintenance dialysis",
+      "PTH monitoring in advanced CKD"
+    ],
+    "End-Stage Kidney Disease — Hemodialysis": [
+      "Adequacy and prescription (HD)",
+      "Dialyzers and dialysate (HD)",
+      "Vascular access (HD)",
+      "Water treatment (HD)",
+      "Hypertension on HD",
+      "Hypotension on HD",
+      "Interdialytic weight gain (HD)",
+      "Electrolyte abnormalities (HD)",
+      "Access complications — clotting/dysfunction/infection",
+      "Other HD complications — embolism/HIT/residual function loss/hypoalbuminemia"
+    ],
+    "End-Stage Kidney Disease — Peritoneal Dialysis": [
+      "Adequacy and prescription (PD)",
+      "Dialysate (PD)",
+      "Catheters (PD)",
+      "Hypokalemia and hyperkalemia (PD)",
+      "Peritonitis and infections (PD)",
+      "Ultrafiltration failure (PD)",
+      "Other PD complications — hernia/AF/peripheral edema"
+    ],
+    "End-Stage Kidney Disease — Home Hemodialysis": [
+      "Home hemodialysis (general)"
+    ],
+    "End-Stage Kidney Disease — General Complications": [
+      "Anemia in ESKD",
+      "Cardiovascular disease in ESKD",
+      "Blood pressure abnormalities in ESKD",
+      "Other ESKD complications — hemolysis/hypoalbuminemia/thrombosis/calciphylaxis/uremic polyneuropathy"
+    ],
+    "Mineral Bone Disease — Labs": [
+      "Hyperphosphatemia (labs)",
+      "Hyperparathyroidism (labs)",
+      "Calcium balance abnormalities (labs)"
+    ],
+    "Mineral Bone Disease — Renal Osteodystrophy": [
+      "Osteitis fibrosa",
+      "Adynamic bone disease",
+      "Osteomalacia",
+      "Mixed uremic osteodystrophy",
+      "Low bone mass / Osteoporosis in CKD"
+    ],
+    "Mineral Bone Disease — Extraosseous/Vascular Calcification": [
+      "Medial calcification",
+      "Calciphylaxis",
+      "Visceral organ calcification"
+    ],
+    "Special Topics in CKD": [
+      "Epidemiology of CKD",
+      "Ethical considerations in CKD",
+      "Pregnancy and CKD",
+      "Dermatology in CKD",
+      "Environmental nephrotoxicity — Lead",
+      "Environmental nephrotoxicity — Organic solvents",
+      "Environmental nephrotoxicity — Cadmium",
+      "Environmental nephrotoxicity — Mercury",
+      "Obesity in CKD"
+    ]
+  },
+  "Hypertension": {
+    "Essential Hypertension": [
+      "Isolated systolic hypertension",
+      "Severe hypertension",
+      "Resistant hypertension",
+      "White coat hypertension",
+      "Pseudohypertension",
+      "Masked hypertension",
+      "General essential hypertension"
+    ],
+    "Secondary Causes — Renovascular": [
+      "Renal vascular disease — Atherosclerotic",
+      "Renal vascular disease — Dissection"
+    ],
+    "Secondary Causes — Endocrine/Genetic": [
+      "Hyperaldosteronism — Adrenal adenoma",
+      "Hyperaldosteronism — Adrenal hyperplasia",
+      "Genetic — Liddle syndrome",
+      "Genetic — Dexamethasone-suppressible hyperaldosteronism",
+      "Genetic — Other (fibromuscular dysplasia context)"
+    ],
+    "Secondary Causes — Miscellaneous": [
+      "Renin-secreting (juxtaglomerular) tumor",
+      "Apparent mineralocorticoid excess",
+      "Coarctation",
+      "Vasculitis and arteritis (secondary HTN)",
+      "Tuberous sclerosis",
+      "Sleep apnea",
+      "Drug-induced hypertension",
+      "Obstructive uropathy (secondary HTN)",
+      "Renal compression (Page kidney)",
+      "Cushing syndrome",
+      "CKD-related hypertension",
+      "Obesity-related hypertension",
+      "Hypothyroidism-related hypertension"
+    ],
+    "End-Organ Damage": [
+      "Acute kidney injury (hypertensive)",
+      "CNS/ophthalmologic damage (hypertensive)",
+      "Cardiac — LVH/heart failure"
+    ],
+    "Special Situations": [
+      "Pregnancy-associated hypertension",
+      "Stroke or subarachnoid bleeding with hypertension",
+      "Other special situations in hypertension"
+    ]
+  },
+  "Tubular, Interstitial, and Cystic Disorders": {
+    "Renal Tubular Disorders and Fanconi": [
+      "Drug-induced Fanconi/tubular disorders",
+      "Crystal deposition tubular disorders",
+      "Genetic tubular disorders (Fanconi)"
+    ],
+    "Acute Tubulointerstitial Nephritis": [
+      "AIN — Drug-induced",
+      "AIN — Immune-mediated",
+      "AIN — Infectious",
+      "AIN — Multifactorial"
+    ],
+    "Chronic Tubulointerstitial Nephritis": [
+      "Chronic TIN — Drug-induced",
+      "Chronic TIN — Immune-mediated",
+      "Chronic TIN — Granulomatous",
+      "Chronic TIN — Toxins",
+      "Chronic TIN — Hemoglobinopathy",
+      "Chronic TIN — Recurrent UTI",
+      "Chronic TIN — Hypokalemic nephropathy",
+      "Chronic TIN — Medullary cystic kidney"
+    ],
+    "Renal Cystic Disease": [
+      "ADPKD — Genetics",
+      "ADPKD — Renal manifestations",
+      "ADPKD — Nonrenal manifestations",
+      "ADPKD — ESKD progression",
+      "Drug-induced cystic disease",
+      "ARPKD / Acquired cystic kidney disease"
+    ],
+    "Renal Mass": [
+      "Evaluation of renal mass"
+    ]
+  },
+  "Glomerular and Vascular Disorders": {
+    "Nephritic / Vasculitic / Vasculopathy": [
+      "IgA nephropathy",
+      "IgA-associated vasculitis (Henoch–Schönlein)",
+      "ANCA-associated vasculitis",
+      "Anti-GBM disease",
+      "Lupus nephritis",
+      "Postinfectious GN",
+      "MPGN and C3 glomerulopathies",
+      "Cryoglobulinemic GN",
+      "Crescentic GN",
+      "Rapidly progressive GN (other)"
+    ],
+    "Nephrotic / Heavy-Proteinuric": [
+      "Minimal change disease — Primary",
+      "Minimal change disease — Secondary",
+      "FSGS — Primary",
+      "FSGS — Secondary",
+      "FSGS — Genetic",
+      "Membranous nephropathy — Primary",
+      "Membranous nephropathy — Secondary",
+      "Paraprotein — AL amyloidosis",
+      "Paraprotein — AA amyloidosis",
+      "Paraprotein — LCDD / Myeloma",
+      "Paraprotein — Other paraprotein disorders",
+      "Fibrillary / Immunotactoid GN",
+      "Fabry disease",
+      "Biopsy complication (other)"
+    ],
+    "Thin Basement Membrane / Alport": [
+      "Thin basement membrane nephropathy",
+      "Alport syndrome"
+    ],
+    "Thrombotic Microangiopathies": [
+      "TMA — general",
+      "HUS — Shiga toxin–mediated",
+      "Complement-mediated TMA (aHUS)",
+      "Drug-associated complement-mediated TMA",
+      "Pregnancy-associated complement-mediated TMA"
+    ],
+    "Scleroderma Renal Disease": [
+      "Scleroderma renal crisis/disease"
+    ]
+  },
+  "Kidney Transplantation": {
+    "Pre-Transplantation — Candidate & Immunologic": [
+      "Transplant immunology",
+      "Detection of pre-transplant alloreactivity",
+      "Recipient eval — GFR listing",
+      "Recipient eval — Cancer",
+      "Recipient eval — Infection",
+      "Recipient eval — Cardiac",
+      "Recipient eval — Age",
+      "Recipient eval — Comorbidities",
+      "Recipient eval — Recurrent autoimmune disease"
+    ],
+    "Pre-Transplantation — Living Donor & Allocation": [
+      "Living donor — Evaluation",
+      "Living donor — Risks",
+      "Living donor — Ethics",
+      "Organ allocation — Deceased donor wait list",
+      "Organ allocation — Shortage strategies",
+      "Organ allocation — Paired donation and chains"
+    ],
+    "Transplantation": [
+      "Indications for transplant",
+      "Contraindications to transplant",
+      "Deceased donor — Types/Outcomes",
+      "Living donor — Types/Outcomes"
+    ],
+    "Post-Transplantation — Early": [
+      "Immunosuppression — Induction",
+      "Immunosuppression — Maintenance",
+      "Perioperative management/complications",
+      "Early graft dysfunction"
+    ],
+    "Post-Transplantation — Long-Term": [
+      "Long-term graft dysfunction",
+      "Long-term complications",
+      "Graft failure (long-term)",
+      "Rejection — Hyperacute",
+      "Rejection — T-cell",
+      "Rejection — Antibody-mediated",
+      "Fertility — Pregnancy",
+      "Fertility — Male fertility"
+    ],
+    "Multiorgan / Extrarenal / Ethics": [
+      "Multiorgan and extrarenal transplantation",
+      "Ethics, society, and public policy (transplant)"
+    ]
+  },
+  "Pharmacology": {
+    "Basic Pharmacology": [
+      "Pharmacokinetics and basic concepts",
+      "Renal handling of drugs",
+      "Principles of dialytic drug removal"
+    ],
+    "Drug Selection in Kidney Disease": [
+      "Antibiotics — Vancomycin",
+      "Antibiotics — Aminoglycosides",
+      "Antibiotics — Cephalosporins and others",
+      "Antineoplastic agents (selection)",
+      "Antiviral agents (selection)",
+      "Other drugs — Metformin",
+      "Other drugs — Fentanyl"
+    ],
+    "Nephrotoxicity — Antimicrobials": [
+      "Aminoglycosides — nephrotoxicity",
+      "Vancomycin — nephrotoxicity",
+      "Antiviral agents — nephrotoxicity",
+      "Antifungal agents — nephrotoxicity",
+      "Antiparasitic agents — nephrotoxicity",
+      "Additional antimicrobials — nephrotoxicity"
+    ],
+    "Nephrotoxicity — Other Drug Classes": [
+      "NSAIDs — nephrotoxicity",
+      "Fentanyl (safety)",
+      "Gabapentin (renal dosing)",
+      "Tramadol (renal dosing)",
+      "Propofol considerations",
+      "RAAS blockade — ACEi/ARB/renin inhibitors",
+      "Aldosterone antagonists",
+      "Beta-blockers (renal dosing)",
+      "Calcium channel blockers (renal dosing)",
+      "Minoxidil",
+      "Interferon",
+      "Cisplatin",
+      "Methotrexate",
+      "VEGF inhibitors",
+      "Immune checkpoint inhibitors",
+      "Iodinated contrast",
+      "Lithium",
+      "Aristolochic acid",
+      "SGLT2 inhibitors",
+      "Cardiac glycosides",
+      "Bisphosphonates"
+    ],
+    "Illicit Drugs": [
+      "Heroin and other IV drugs",
+      "Ecstasy (MDMA)",
+      "Cocaine"
+    ],
+    "Drug Interactions & Non-renal Adverse Effects": [
+      "Drug–drug interactions",
+      "Adverse effects (non-nephrotoxic)"
+    ],
+    "Dialysis & Toxic Substances": [
+      "Ethylene glycol — dialysis",
+      "Methanol — dialysis",
+      "Other alcohols — dialysis",
+      "Lithium — dialysis in toxicity",
+      "Salicylates — dialysis duration prescription"
+    ]
+  },
+  "Acute Kidney Injury and ICU Nephrology": {
+    "Prerenal AKI — True Volume Depletion": [
+      "Renal fluid losses",
+      "Extrarenal fluid losses"
+    ],
+    "Prerenal AKI — Effective Volume Depletion": [
+      "Heart failure",
+      "Cirrhosis",
+      "Nephrotic syndrome"
+    ],
+    "Prerenal AKI — Drugs/Other": [
+      "NSAIDs",
+      "Calcineurin inhibitors",
+      "ACEi/ARB",
+      "Radiocontrast agents",
+      "Tenofovir",
+      "Cisplatin",
+      "Abdominal compartment syndrome"
+    ],
+    "Intrinsic AKI — Vascular": [
+      "Systemic diseases and vasculitis",
+      "Atheroemboli",
+      "Renal vein thrombosis"
+    ],
+    "Intrinsic AKI — Glomerular": [
+      "Drug-induced glomerular AKI",
+      "Infectious glomerular AKI",
+      "Other glomerular parenchymal AKI"
+    ],
+    "Intrinsic AKI — Tubular": [
+      "Ischemic ATN",
+      "Nephrotoxic ATN"
+    ],
+    "Intrinsic AKI — Interstitial/Systemic": [
+      "Interstitial — Drugs",
+      "Interstitial — Systemic disease",
+      "Interstitial — Malignancy (infiltrative)"
+    ],
+    "Postrenal AKI": [
+      "Retroperitoneal/ureteral obstruction",
+      "Idiopathic retroperitoneal fibrosis",
+      "Malignancy-related obstruction",
+      "Crystals and stones",
+      "Intrarenal hemorrhage",
+      "Bladder/bladder outlet/BPH"
+    ],
+    "Kidney Replacement Therapy (AKI)": [
+      "Indications — Solute accumulation",
+      "Indications — Hemodynamic",
+      "Indications — Intoxication",
+      "Indications — Tumor lysis syndrome",
+      "Techniques — Intermittent hemodialysis (IHD)",
+      "Techniques — Continuous KRT (CRRT)",
+      "Prescription — Dialysate/replacement fluids",
+      "Prescription — Anticoagulation",
+      "Complications — Hemodynamic",
+      "Complications — Disequilibrium/electrolyte issues"
+    ],
+    "ICU Nephrology (General)": [
+      "Hemodynamic measures",
+      "Intravenous fluids and volume status",
+      "Ethics and palliative care"
+    ]
+  }
+};
+
+const MODULES = ["V6M1","V7M1","V7M2","V8M1","V8M2","V9M1","V9M2","V10M1","V11M1"];
+const CAT_COLORS = {
+  "Acid–Base and Potassium Disorders": "var(--orange)",
+  "Acute Kidney Injury and ICU Nephrology": "var(--red)",
+  "Acute Kidney Injury and ICU Nephrology": "var(--red)",
+  "Ca, Po4, Mg disorders & Stones": "var(--purple)",
+  "Calcium, Phosphorus, and Magnesium Disorders and Stones": "var(--purple)",
+  "Chronic Kidney Disease": "var(--blue)",
+  "Glomerular and Vascular Disorders": "var(--pink)",
+  "Hypertension": "var(--yellow)",
+  "Kidney Transplantation": "var(--green)",
+  "Pharmacology": "var(--cyan)",
+  "Sodium and Water Abnormalities": "var(--orange)",
+  "Tubular, Interstitial and Cystic Disorders": "var(--grey)",
+  "Tubular, Interstitial, and Cystic Disorders": "var(--grey)",
+};
+
+// ══════════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════════
+let sceData = {};
+let currentTab = "overview";
+let ksapMode = "category"; // "category" | "module"
+let expandedCats = new Set();
+let expandedTopics = new Set();
+
+// ══════════════════════════════════════════════════════════════════════
+// FIREBASE SYNC
+// ══════════════════════════════════════════════════════════════════════
+window.addEventListener("sce-sync", () => {
+  sceData = window._sce_data || {};
+  document.getElementById("sync-dot").textContent = "● LIVE";
+  document.getElementById("sync-dot").style.color = "var(--green)";
+  renderAll();
+});
+
+function qKey(code) { return code.replace(/[^a-zA-Z0-9]/g, "_"); }
+function stKey(cat, topic, sub) { return `st_${cat}_${topic}_${sub}`.replace(/[^a-zA-Z0-9]/g,"_").slice(0,100); }
+function getQ(code) { return sceData.ksap?.[qKey(code)] || {}; }
+function getST(cat, topic, sub) { return sceData.topics?.[stKey(cat,topic,sub)] || {}; }
+
+function saveQ(code, updates) {
+  if (!window._sce_fb) return;
+  const { db, ref, update } = window._sce_fb;
+  update(ref(db, `sceData/ksap/${qKey(code)}`), updates);
+}
+
+function saveST(cat, topic, sub, updates) {
+  if (!window._sce_fb) return;
+  const { db, ref, update } = window._sce_fb;
+  update(ref(db, `sceData/topics/${stKey(cat,topic,sub)}`), updates);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// COMPUTED STATS
+// ══════════════════════════════════════════════════════════════════════
+function computeStats() {
+  let attempted = 0, correct = 0, p1done = 0, p2done = 0;
+  KSAP.forEach(q => {
+    const d = getQ(q.code);
+    if (d.p1correct || d.p1incorrect) { attempted++; p1done++; }
+    if (d.p2correct || d.p2incorrect) p2done++;
+    if (d.p1correct) correct++;
+  });
+  const ksapPct = attempted > 0 ? Math.round(correct / attempted * 100) : 0;
+
+  let stTotal = 0, stRead = 0;
+  Object.entries(TOPICS).forEach(([cat, topics]) => {
+    Object.entries(topics).forEach(([topic, subs]) => {
+      subs.forEach(sub => {
+        stTotal++;
+        const d = getST(cat, topic, sub);
+        if (d.read || d.reviewed) stRead++;
+      });
+    });
+  });
+  const topicPct = stTotal > 0 ? Math.round(stRead / stTotal * 100) : 0;
+  const readiness = Math.round(ksapPct * 0.6 + topicPct * 0.4);
+  return { attempted, correct, ksapPct, topicPct, readiness, p1done, p2done, stTotal, stRead };
+}
+
+function computeCatStats(cat) {
+  const qs = KSAP.filter(q => {
+    const d = getQ(q.code);
+    return (d.reassignedCategory || q.category) === cat;
+  });
+  let attempted = 0, correct = 0, p1done = 0, p2done = 0;
+  qs.forEach(q => {
+    const d = getQ(q.code);
+    if (d.p1correct || d.p1incorrect) { attempted++; p1done++; }
+    if (d.p2correct || d.p2incorrect) p2done++;
+    if (d.p1correct) correct++;
+  });
+  return { total: qs.length, attempted, correct, p1done, p2done,
+    pct: attempted > 0 ? Math.round(correct/attempted*100) : 0 };
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════════════
+function renderAll() {
+  const s = computeStats();
+  const rPct = s.readiness;
+  const rColor = rPct >= 70 ? "var(--green)" : rPct >= 40 ? "var(--yellow)" : "var(--red)";
+
+  document.getElementById("hdr-ksap-pct").textContent = `${s.ksapPct}%`;
+  document.getElementById("hdr-topic-pct").textContent = `${s.topicPct}%`;
+  document.getElementById("hdr-attempted").textContent = s.attempted;
+  document.getElementById("readiness-bar").style.width = `${rPct}%`;
+  document.getElementById("readiness-bar").style.background = rColor;
+  document.getElementById("readiness-pct").textContent = `${rPct}%`;
+  document.getElementById("readiness-pct").style.color = rColor;
+  document.getElementById("sb-p1").textContent = `${s.p1done}/675`;
+  document.getElementById("sb-p2").textContent = `${s.p2done}/675`;
+
+  renderTab(currentTab);
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".tab").forEach(b =>
+    b.classList.toggle("active", b.getAttribute("onclick").includes(`'${tab}'`)));
+  ["overview","ksap","topics"].forEach(t =>
+    document.getElementById(`tab-${t}`).style.display = t === tab ? "block" : "none");
+  renderTab(tab);
+}
+
+function renderTab(tab) {
+  if (tab === "overview") renderOverview();
+  if (tab === "ksap")     renderKSAP();
+  if (tab === "topics")   renderTopics();
+}
+
+// ── OVERVIEW ──────────────────────────────────────────────────────────
+function renderOverview() {
+  const el = document.getElementById("tab-overview");
+  const s = computeStats();
+  const cats = [...new Set(KSAP.map(q => q.category))].sort();
+
+  // Find weakest
+  let weakest = null, weakestPct = 101;
+  cats.forEach(cat => {
+    const cs = computeCatStats(cat);
+    if (cs.attempted > 0 && cs.pct < weakestPct) { weakest = cat; weakestPct = cs.pct; }
+  });
+
+  let html = `
+    <div class="sec-head">
+      <span class="sec-title">SCE READINESS OVERVIEW</span>
+      <span class="sec-rule"></span>
+      <span class="sec-note">${new Date().toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long"})}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:20px;">
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--cyan);padding:12px 14px;">
+        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">KSAP PROGRESS — PASS 1</div>
+        <div style="font-size:20px;font-weight:500;color:var(--cyan)">${s.p1done} <span style="font-size:11px;color:var(--grey)">/ 675</span></div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${Math.round(s.p1done/675*100)}% of questions attempted</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--purple);padding:12px 14px;">
+        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">KSAP PROGRESS — PASS 2</div>
+        <div style="font-size:20px;font-weight:500;color:var(--purple)">${s.p2done} <span style="font-size:11px;color:var(--grey)">/ 675</span></div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${Math.round(s.p2done/675*100)}% of module review done</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--green);padding:12px 14px;">
+        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">TOPIC COVERAGE</div>
+        <div style="font-size:20px;font-weight:500;color:var(--green)">${s.stRead} <span style="font-size:11px;color:var(--grey)">/ ${s.stTotal}</span></div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${s.topicPct}% subtopics read or reviewed</div>
+      </div>
+      ${weakest ? `
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--red);padding:12px 14px;">
+        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">WEAKEST CATEGORY</div>
+        <div style="font-size:11px;font-weight:500;color:var(--red);line-height:1.3;">${weakest}</div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${weakestPct}% correct on attempted</div>
+      </div>` : ""}
+    </div>
+
+    <div class="sec-head">
+      <span class="sec-title">BY CATEGORY</span>
+      <span class="sec-rule"></span>
+    </div>
+    <div class="overview-grid">
+      ${cats.map(cat => {
+        const cs = computeCatStats(cat);
+        const color = CAT_COLORS[cat] || "var(--cyan)";
+        const pct = cs.attempted > 0 ? cs.pct : null;
+        return `
+          <div class="ov-card" style="border-left-color:${color}">
+            <div class="ov-cat">${cat}</div>
+            <div class="ov-row"><span>P1 attempted</span><strong>${cs.p1done} / ${cs.total}</strong></div>
+            <div class="ov-row"><span>P2 attempted</span><strong>${cs.p2done} / ${cs.total}</strong></div>
+            <div class="ov-row"><span>% correct</span><strong style="color:${pct !== null ? (pct>=70?"var(--green)":pct>=50?"var(--yellow)":"var(--red)") : "var(--grey2)"}">${pct !== null ? pct+"%" : "—"}</strong></div>
+            <div class="ov-bar-bg"><div class="ov-bar" style="width:${Math.round(cs.p1done/cs.total*100)}%;background:${color}"></div></div>
+          </div>`;
+      }).join("")}
+    </div>`;
+
+  el.innerHTML = html;
+}
+
+// ── KSAP ──────────────────────────────────────────────────────────────
+function renderKSAP() {
+  const el = document.getElementById("tab-ksap");
+  const isModule = ksapMode === "module";
+
+  let html = `
+    <div class="subtab-row">
+      <button class="subtab ${!isModule?'active':''}" onclick="setKsapMode('category')">PASS 1 — BY CATEGORY</button>
+      <button class="subtab ${isModule?'active':''}" onclick="setKsapMode('module')">PASS 2 — BY MODULE</button>
+    </div>`;
+
+  if (!isModule) {
+    // Category view
+    const cats = [...new Set(KSAP.map(q => q.category))].sort();
+    html += `<div style="padding-top:10px;">`;
+    cats.forEach(cat => {
+      const qs = KSAP.filter(q => q.category === cat);
+      const cs = computeCatStats(cat);
+      const color = CAT_COLORS[cat] || "var(--cyan)";
+      const expanded = expandedCats.has(cat);
+      html += `
+        <div style="margin-bottom:6px;">
+          <div class="cat-card ${expanded?'expanded':''}" onclick="toggleCat('${cat.replace(/'/g,"\\'")}')">
+            <div class="cat-name">${cat}</div>
+            <div class="cat-stats">
+              <span>P1: <strong>${cs.p1done}/${cs.total}</strong></span>
+              <span>P2: <strong>${cs.p2done}/${cs.total}</strong></span>
+              <span>Correct: <strong style="color:${cs.pct>=70?'var(--green)':cs.pct>=50?'var(--yellow)':'var(--red)'}">${cs.attempted>0?cs.pct+'%':'—'}</strong></span>
+            </div>
+            <div class="cat-bar-bg"><div class="cat-bar" style="width:${Math.round(cs.p1done/cs.total*100)}%;background:${color}"></div></div>
+          </div>
+          ${expanded ? `<div class="q-list">${qs.map(q => qRow(q, "p1")).join("")}</div>` : ""}
+        </div>`;
+    });
+    html += `</div>`;
+  } else {
+    // Module view
+    html += `<div style="padding-top:10px;">`;
+    MODULES.forEach(mod => {
+      const qs = KSAP.filter(q => q.module === mod);
+      let p2done = 0;
+      qs.forEach(q => { const d = getQ(q.code); if(d.p2correct||d.p2incorrect) p2done++; });
+      const expanded = expandedCats.has(mod);
+      html += `
+        <div style="margin-bottom:6px;">
+          <div class="cat-card ${expanded?'expanded':''}" onclick="toggleCat('${mod}')">
+            <div class="cat-name">${mod}</div>
+            <div class="cat-stats"><span>P2 progress: <strong>${p2done}/${qs.length}</strong></span></div>
+            <div class="cat-bar-bg"><div class="cat-bar" style="width:${Math.round(p2done/qs.length*100)}%"></div></div>
+          </div>
+          ${expanded ? `<div class="q-list">${qs.map(q => qRow(q, "p2")).join("")}</div>` : ""}
+        </div>`;
+    });
+    html += `</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function qRow(q, pass) {
+  const d = getQ(q.code);
+  const p1c = d.p1correct, p1i = d.p1incorrect;
+  const p2c = d.p2correct, p2i = d.p2incorrect;
+  const conf = d.confidence || 0;
+  const note = d.note || "";
+  const d2 = getQ(q.code);
+  const effectiveCat = d2.reassignedCategory || q.category;
+  const color = CAT_COLORS[effectiveCat] || "var(--cyan)";
+
+  const p1badge = p1c ? `<span class="pass-badge p1done">P1✓</span>` :
+                  p1i ? `<span class="pass-badge p1">P1✗</span>` :
+                  `<span class="pass-badge" style="color:var(--grey2);border-color:var(--border2)">P1·</span>`;
+  const p2badge = p2c ? `<span class="pass-badge p2done">P2✓</span>` :
+                  p2i ? `<span class="pass-badge p2">P2✗</span>` :
+                  `<span class="pass-badge" style="color:var(--grey2);border-color:var(--border2)">P2·</span>`;
+
+  const isP1 = pass === "p1";
+  const curCorrect = isP1 ? p1c : p2c;
+  const curIncorrect = isP1 ? p1i : p2i;
+  const correctField = isP1 ? "p1correct" : "p2correct";
+  const incorrectField = isP1 ? "p1incorrect" : "p2incorrect";
+
+  const flagged = d.flagged || false;
+  const cats = [...new Set(KSAP.map(q => q.category))].sort();
+
+  return `<div class="q-row" style="${flagged?'background:rgba(244,114,182,0.03);':''}">
+    <span class="q-code" style="color:${color}">${q.code}</span>
+    <span style="display:flex;gap:3px;">${p1badge}${p2badge}${flagged?'<span class="pass-badge flagged">⚑</span>':''}</span>
+    <div class="q-actions">
+      <button class="q-btn ${curCorrect?'correct':''}" onclick="toggleQ('${q.code}','${correctField}','${incorrectField}',${curCorrect||false})">✓</button>
+      <button class="q-btn ${curIncorrect?'incorrect':''}" onclick="toggleQ('${q.code}','${incorrectField}','${correctField}',${curIncorrect||false})">✗</button>
+      <button class="q-btn ${flagged?'flagged':''}" onclick="saveQ('${q.code}',{flagged:${!flagged}});renderKSAP();" title="Flag for review">⚑</button>
+      <div class="conf-dots">
+        ${[1,2,3].map(n => `<div class="conf-dot ${conf>=n?'lit':''}" onclick="setQConf('${q.code}',${n})"></div>`).join("")}
+      </div>
+      <input class="note-inp" value="${escHtml(note)}" placeholder="why wrong..."
+        onchange="saveQ('${q.code}',{note:this.value})" />
+      <select class="q-reassign" title="Reassign to different category"
+        onchange="reassignQ('${q.code}',this.value);renderKSAP();">
+        ${cats.map(c => `<option value="${c.replace(/"/g,'&quot;')}" ${c===q.category?'selected':''}>${c}</option>`).join('')}
+      </select>
+    </div>
+  </div>`;
+}
+
+function setKsapFilter(f) {
+  ksapFilter = f;
+  renderKSAP();
+}
+
+function reassignQ(code, newCategory) {
+  // Update in KSAP array in place
+  const q = KSAP.find(q => q.code === code);
+  if (q) q.category = newCategory;
+  saveQ(code, { reassignedCategory: newCategory });
+}
+
+function toggleQ(code, field, otherField, current) {
+  const updates = { [field]: !current };
+  if (!current) updates[otherField] = false; // untick the other
+  saveQ(code, updates);
+}
+
+function setQConf(code, n) {
+  const d = getQ(code);
+  saveQ(code, { confidence: d.confidence === n ? 0 : n });
+}
+
+function toggleCat(cat) {
+  if (expandedCats.has(cat)) expandedCats.delete(cat);
+  else expandedCats.add(cat);
+  renderKSAP();
+}
+
+function setKsapMode(mode) {
+  ksapMode = mode;
+  expandedCats.clear();
+  renderKSAP();
+}
+
+// ── TOPICS ────────────────────────────────────────────────────────────
+function renderTopics() {
+  const el = document.getElementById("tab-topics");
+  let html = "";
+
+  Object.entries(TOPICS).forEach(([cat, topicsObj]) => {
+    const color = CAT_COLORS[cat] || "var(--cyan)";
+    let catRead = 0, catTotal = 0;
+    Object.entries(topicsObj).forEach(([topic, subs]) => {
+      subs.forEach(sub => {
+        catTotal++;
+        const d = getST(cat, topic, sub);
+        if (d.read || d.reviewed) catRead++;
+      });
+    });
+
+    html += `
+      <div class="topic-section">
+        <div class="topic-hdr" style="border-left:3px solid ${color}" onclick="toggleTopicCat('${escAttr(cat)}')">
+          <div class="topic-hdr-name">${cat}</div>
+          <div class="topic-hdr-stats">${catRead}/${catTotal} subtopics</div>
+          <div class="topic-hdr-pct" style="color:${color};margin-left:12px;">${Math.round(catRead/catTotal*100)}%</div>
+        </div>`;
+
+    if (expandedTopics.has(cat)) {
+      Object.entries(topicsObj).forEach(([topic, subs]) => {
+        let topicRead = 0;
+        subs.forEach(sub => { const d = getST(cat, topic, sub); if (d.read || d.reviewed) topicRead++; });
+
+        html += `
+          <div style="background:var(--bg2);border:1px solid var(--border2);border-top:none;padding:6px 14px;font-size:9px;color:var(--cyan);letter-spacing:0.1em;">
+            ${topic} · <span style="color:var(--grey2)">${topicRead}/${subs.length}</span>
+          </div>
+          <div class="subtopic-list">
+            ${subs.map(sub => {
+              const d = getST(cat, topic, sub);
+              const k = `'${escAttr(cat)}','${escAttr(topic)}','${escAttr(sub)}'`;
+              return `<div class="st-row">
+                <div class="st-name ${d.read||d.reviewed?'read':''}">${sub}</div>
+                <div class="st-actions">
+                  <button class="st-btn ${d.read?'read':''}" onclick="toggleST(${k},'read')">READ</button>
+                  <button class="st-btn ${d.reviewed?'reviewed':''}" onclick="toggleST(${k},'reviewed')">REVIEWED</button>
+                </div>
+              </div>`;
+            }).join("")}
+          </div>`;
+      });
+    }
+
+    html += `</div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+function toggleTopicCat(cat) {
+  if (expandedTopics.has(cat)) expandedTopics.delete(cat);
+  else expandedTopics.add(cat);
+  renderTopics();
+}
+
+function toggleST(cat, topic, sub, field) {
+  const d = getST(cat, topic, sub);
+  saveST(cat, topic, sub, { [field]: !d[field] });
+}
+
+function escHtml(t) {
+  return String(t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function escAttr(t) {
+  return String(t||"").replace(/'/g,"\\'");
+}
+
+// Init
+setTab("overview");
+setTimeout(() => {
+  if (!window._sce_data) {
+    sceData = {};
+    renderAll();
+  }
+}, 3000);
+</script>
+</body>
+</html>
