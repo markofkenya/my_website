@@ -1454,7 +1454,10 @@ function cpdSummary() {
     }
     return acc + h;
   }, 0);
-  const st7Hrs = gimEntries.filter(e => e.year === "ST7").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+  const st7OnlineHrs = gimEntries.filter(e => e.year === "ST7" && e.type === "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+  const st7ExternalHrs = gimEntries.filter(e => e.year === "ST7" && GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+  const st7Hrs = st7ExternalHrs + Math.min(st7OnlineHrs, ONLINE_LIMIT);
+
   return {
     total:       Math.round(total*10)/10,
     onlineHrs:   Math.round(onlineHrs*10)/10,
