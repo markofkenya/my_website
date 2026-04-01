@@ -2050,8 +2050,10 @@ function printLogbookReport() {
   const onlineCapped = Math.min(onlineHrs, 15);
   const externalHrs  = gimCpd.filter(e => GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
   const countedTotal = externalHrs + onlineCapped;
-  const renalCpdHrs  = renalCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
-  const combinedCpdHrs = countedTotal + renalCpdHrs;
+  const renalCpdHrs    = renalCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const gimAllHrs      = gimCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const combinedCpdHrs = gimAllHrs + renalCpdHrs;
+
 
 
 
