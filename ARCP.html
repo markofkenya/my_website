@@ -2042,10 +2042,12 @@ function printLogbookReport() {
   const totalSimHrs  = simulation.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
   const st7SimHrs    = simulation.filter(e => e.year==="ST7").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
 
-  const totalCpdHrs  = gimCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const GIM_COUNTED_TYPES = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
   const onlineHrs    = gimCpd.filter(e => e.type==="Online CPD").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
   const onlineCapped = Math.min(onlineHrs, 15);
-  const countedTotal = (totalCpdHrs - onlineHrs) + onlineCapped;
+  const externalHrs  = gimCpd.filter(e => GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const countedTotal = externalHrs + onlineCapped;
+
 
   const tbl = (headers, rows, accentColor) => {
     if (!rows.length) return `<p class="empty-note">No entries logged</p>`;
@@ -2168,10 +2170,10 @@ function printLogbookReport() {
   ${secHead("CPD / Study Leave")}
   <div class="cpd-summary">
     <strong>GIM CPD Summary:</strong> &nbsp;
-    External counted: <strong style="color:#003087">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
-    Online (capped): <strong>${onlineCapped.toFixed(1)}h</strong> / 15h max &nbsp;·&nbsp;
-    Formal external: <strong>${(totalCpdHrs-onlineHrs).toFixed(1)}h</strong> &nbsp;·&nbsp;
-    <span style="color:#666;font-style:italic;">Grand rounds / M&amp;M / departmental teaching excluded from total</span>
+    Counted total: <strong style="color:#003087">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
+    Online: <strong>${onlineCapped.toFixed(1)}h</strong> / 15h max &nbsp;·&nbsp;
+    External: <strong>${externalHrs.toFixed(1)}h</strong>
+
 
   </div>
   ${subHead(badge("Renal","badge-renal"), `${renalCpd.length} entries · ${yr}`)}
