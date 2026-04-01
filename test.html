@@ -2,622 +2,342 @@
 
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>STX // Study Tracker</title>
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-  <meta name="apple-mobile-web-app-title" content="STX" />
-  <meta name="theme-color" content="#06080f" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <title>SCE·NEP // Nephrology Tracker</title>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="theme-color" content="#080c14"/>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 
   <script type="module">
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, onValue, update, push, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-    import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+    import { getDatabase, ref, onValue, update, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     const firebaseConfig = {
-      apiKey:            "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
-      authDomain:        "task-monitor-bd7ee.firebaseapp.com",
-      databaseURL:       "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId:         "task-monitor-bd7ee",
-      storageBucket:     "task-monitor-bd7ee.firebasestorage.app",
+      apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
+      authDomain: "task-monitor-bd7ee.firebaseapp.com",
+      databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "task-monitor-bd7ee",
+      storageBucket: "task-monitor-bd7ee.firebasestorage.app",
       messagingSenderId: "544624731364",
-      appId:             "1:544624731364:web:419d52fa061c5c7b4f38f1",
+      appId: "1:544624731364:web:419d52fa061c5c7b4f38f1",
     };
 
-    const app      = initializeApp(firebaseConfig);
-    signInAnonymously(getAuth(app)).then(c => console.log("UID:", c.user.uid));
-    const db       = getDatabase(app);
-    const storage  = getStorage(app);
-    const sessRef  = ref(db, "studySessions");
-    const topicRef = ref(db, "studyTopics");
-    const planRef  = ref(db, "studyPlan");
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app);
+    const sceRef = ref(db, "sceData");
 
-    window._stx_fb = { db, ref, push, update, remove, sessRef, topicRef, planRef };
+    window._sce_fb = { db, ref, update, set, sceRef };
 
-    // ── Storage upload ────────────────────────────────
-    window.uploadSessionFile = function(file, sessionId, onProgress, onDone, onError) {
-      const path     = `studyNotes/${sessionId}/${Date.now()}_${file.name}`;
-      const fileRef  = sRef(storage, path);
-      const task     = uploadBytesResumable(fileRef, file);
-
-      task.on("state_changed",
-        snap => onProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
-        onError,
-        async () => {
-          const url = await getDownloadURL(task.snapshot.ref);
-          onDone({ url, name: file.name, path, size: file.size });
-        }
-      );
-    };
-
-    // ── Storage delete ────────────────────────────────
-    window.deleteSessionFile = function(filePath) {
-      const fileRef = sRef(storage, filePath);
-      return deleteObject(fileRef).catch(e => console.warn("Storage delete:", e));
-    };
-
-    onValue(sessRef, snap => {
-      window._stx_sessions = snap.val() || {};
-      window.dispatchEvent(new CustomEvent("stx-sync"));
-    });
-    onValue(topicRef, snap => {
-      window._stx_topics = snap.val() || {};
-      window.dispatchEvent(new CustomEvent("stx-sync"));
-    });
-    onValue(planRef, snap => {
-      window._stx_plan = snap.val() || {};
-      window.dispatchEvent(new CustomEvent("stx-sync"));
+    onValue(sceRef, snap => {
+      window._sce_data = snap.val() || {};
+      window.dispatchEvent(new CustomEvent("sce-sync"));
     });
   </script>
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&display=swap');
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
     :root {
-      --bg:#0d0d0d; --bg2:#141414; --bg3:#1a1a1a; --bg4:#222222;
-      --border:#2a2a2a; --border2:#333333;
-      --white:#e8e8e8; --grey:#888888; --grey2:#555555;
-      --green:#98c379; --yellow:#e5c07b; --cyan:#56b6c2;
-      --magenta:#ff79c6; --pink:#e06c75; --blue:#61afef;
-      --orange:#d19a66; --purple:#c678dd;
-      --renal:#d19a66; --gim:#61afef;
-      --font:'Fira Code','Cascadia Code','Courier New',monospace;
+      --bg:#080c14; --bg2:#0e1420; --bg3:#141c2c; --bg4:#1a2438;
+      --border:#1e2a3a; --border2:#263445;
+      --white:#dde6f0; --grey:#6a7d92; --grey2:#3d5068;
+      --green:#4ade80; --yellow:#fbbf24; --cyan:#22d3ee;
+      --pink:#f472b6; --red:#f87171; --blue:#60a5fa;
+      --orange:#fb923c; --purple:#a78bfa;
+      --accent:#22d3ee;
+      --font:'Fira Code',monospace;
     }
-    html,body { background:var(--bg); color:var(--white); font-family:var(--font); font-size:13px; min-height:100vh; line-height:1.5; }
-    ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-track{background:var(--bg2);} ::-webkit-scrollbar-thumb{background:var(--border2);}
-    #header{background:var(--bg2);border-bottom:1px solid var(--border2);}
-    .header-top{display:flex;align-items:stretch;flex-wrap:wrap;border-bottom:1px solid var(--border);}
-    .header-logo{padding:10px 18px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;}
-    .logo-line1{font-size:14px;font-weight:600;line-height:1;color:var(--green);}
-    .logo-line1::before{content:"~/";color:var(--grey);}
-    .logo-line1 span{color:var(--grey);}
-    .logo-line2{font-size:9px;color:var(--grey);margin-top:3px;letter-spacing:0.12em;}
-    .logo-sub{font-size:9px;color:var(--grey2);margin-top:2px;}
-    .week-wrap{padding:10px 16px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;}
-    .week-label{font-size:9px;color:var(--grey);letter-spacing:0.1em;margin-bottom:5px;}
-    .week-pips{display:flex;gap:5px;}
-    .pip{width:24px;height:24px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--grey2);}
-    .pip.done{background:rgba(152,195,121,0.12);border-color:var(--green);color:var(--green);}
-    .week-sub{font-size:8px;color:var(--grey2);margin-top:4px;}
-    .retest-wrap,.stat-cell{padding:10px 16px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;}
-    .retest-val,.stat-val{font-size:22px;font-weight:500;line-height:1;color:var(--yellow);}
-    .retest-val.alert{color:var(--pink);}
-    .retest-val.warn{color:var(--orange);}
-    .retest-key,.stat-key{font-size:8px;color:var(--grey);letter-spacing:0.12em;margin-top:3px;}
-    .header-clock{padding:10px 16px;margin-left:auto;border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;align-items:flex-end;}
-    .clock-time{font-size:16px;font-weight:500;color:var(--cyan);}
-    .clock-date{font-size:9px;color:var(--grey);margin-top:2px;}
-    .sync-dot{font-size:8px;color:var(--grey2);margin-top:3px;}
-    #tabbar{background:var(--bg2);border-bottom:1px solid var(--border2);padding:0;display:flex;overflow-x:auto;}
-    .tab{padding:8px 16px;background:transparent;border:none;border-right:1px solid var(--border);border-bottom:2px solid transparent;color:var(--grey);font-family:var(--font);font-size:11px;cursor:pointer;transition:all 0.1s;white-space:nowrap;}
-    .tab:hover{color:var(--white);background:var(--bg3);}
-    .tab.active{color:var(--yellow);border-bottom-color:var(--yellow);background:var(--bg3);}
-    .tab::before{content:"[ ";color:var(--grey2);}
-    .tab::after{content:" ]";color:var(--grey2);}
-    #timer-panel{background:var(--bg2);border-bottom:1px solid var(--border2);padding:20px 24px;display:none;}
-    #timer-panel.show{display:block;}
-    .timer-display{text-align:center;margin-bottom:12px;}
-    .timer-phase{font-size:9px;letter-spacing:0.2em;color:var(--grey);margin-bottom:6px;}
-    .timer-phase::before{content:"# ";color:var(--grey2);}
-    .timer-clock{font-size:72px;font-weight:300;color:var(--green);letter-spacing:0.04em;line-height:1;font-variant-numeric:tabular-nums;}
-    .timer-clock.rest{color:var(--cyan);}
-    .timer-clock.alert-pulse{animation:tpulse 1s ease-in-out infinite;}
-    @keyframes tpulse{0%,100%{opacity:1}50%{opacity:0.4}}
-    .timer-bar-wrap{height:2px;background:var(--border2);margin-bottom:14px;overflow:hidden;}
-    .timer-bar{height:100%;background:var(--green);transition:width 1s linear;}
-    .timer-bar.rest{background:var(--cyan);}
-    .timer-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
-    .timer-btn{padding:5px 16px;background:transparent;border:1px solid var(--border2);color:var(--grey);font-family:var(--font);font-size:10px;font-weight:500;letter-spacing:0.08em;cursor:pointer;transition:all 0.1s;}
-    .timer-btn:hover{border-color:var(--green);color:var(--green);}
-    .timer-btn.secondary:hover{border-color:var(--cyan);color:var(--cyan);}
-    .timer-btn.danger{color:var(--pink);}
-    .timer-btn.danger:hover{border-color:var(--pink);}
-    #main{padding:14px 18px 100px;}
-    .sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;padding:4px 0;border-bottom:1px solid var(--border);}
-    .sec-title{font-size:11px;font-weight:500;color:var(--green);}
-    .sec-title::before{content:"";}
-    .sec-rule{flex:1;}
-    .sec-note{font-size:9px;color:var(--grey2);}
-    .log-form{background:var(--bg2);border:1px solid var(--border2);border-top:2px solid var(--yellow);padding:12px 14px;margin-bottom:18px;}
-    .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:10px;}
-    .form-field{display:flex;flex-direction:column;gap:3px;}
-    .form-field.wide{grid-column:span 2;}
-    .form-label{font-size:9px;color:var(--grey);letter-spacing:0.12em;}
-    .form-label::before{content:"── ";color:var(--grey2);}
-    .form-inp{background:var(--bg);border:1px solid var(--border2);color:var(--white);font-family:var(--font);font-size:12px;padding:5px 8px;outline:none;transition:border-color 0.1s;caret-color:var(--green);}
-    .form-inp:focus{border-color:var(--yellow);}
-    .form-inp option{background:var(--bg2);color:var(--white);}
-    textarea.form-inp{resize:vertical;min-height:52px;color:var(--yellow);}
-    .form-footer{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-    .star-row{display:flex;gap:3px;}
-    .star{width:22px;height:22px;border:1px solid var(--border2);background:transparent;color:var(--grey2);font-family:var(--font);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.1s;}
-    .star.lit{color:var(--yellow);border-color:var(--yellow);background:rgba(229,192,123,0.08);}
-    .session-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:6px;margin-bottom:18px;}
-    .sess-card{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--border2);padding:10px 12px;transition:background 0.1s;}
-    .sess-card:hover{background:var(--bg3);}
-    .sess-card.stream-renal{border-left-color:var(--orange);}
-    .sess-card.stream-gim{border-left-color:var(--blue);}
-    .sess-card.retest-due{border-left-color:var(--pink);background:rgba(224,108,117,0.03);}
-    .sess-card.retest-soon{border-left-color:var(--yellow);}
-    .sess-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px;}
-    .sess-topic{font-size:12px;font-weight:500;color:var(--white);}
-    .sess-stream{font-size:8px;font-weight:500;padding:1px 5px;letter-spacing:0.06em;}
-    .sess-stream.renal{color:var(--orange);border:1px solid rgba(209,154,102,0.3);}
-    .sess-stream.gim{color:var(--blue);border:1px solid rgba(97,175,239,0.3);}
-    .sess-meta{font-size:9px;color:var(--grey2);margin-bottom:5px;}
-    .sess-notes{font-size:10px;color:var(--grey);padding:3px 8px;border-left:2px solid var(--border2);margin-bottom:6px;line-height:1.6;}
-    .sess-footer{display:flex;justify-content:space-between;align-items:center;}
-    .sess-retest{font-size:9px;font-weight:500;}
-    .sess-retest.due{color:var(--pink);}
-    .sess-retest.soon{color:var(--yellow);}
-    .sess-retest.ok{color:var(--grey2);}
-    .sess-retest.done{color:var(--green);}
-    .sess-actions{display:flex;gap:3px;}
-    .sess-btn{background:none;border:1px solid var(--border2);color:var(--grey2);font-family:var(--font);font-size:9px;padding:2px 7px;cursor:pointer;transition:all 0.1s;}
-    .sess-btn:hover{border-color:var(--cyan);color:var(--cyan);}
-    .sess-btn.danger:hover{border-color:var(--pink);color:var(--pink);}
-    .conf-stars{display:flex;gap:2px;margin-bottom:2px;}
-    .conf-star.lit{color:var(--yellow);}
-    .conf-star.dim{color:var(--grey2);}
-    .topic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:3px;margin-bottom:18px;}
-    .topic-card{background:transparent;border:none;border-bottom:1px solid var(--border);padding:5px 8px;display:flex;justify-content:space-between;align-items:center;}
-    .topic-card:hover{background:var(--bg2);}
-    .topic-name{font-size:11px;color:var(--white);}
-    .topic-name::before{content:"";}
-    .topic-stream{font-size:8px;}
-    .topic-stream.renal{color:var(--orange);}
-    .topic-stream.gim{color:var(--blue);}
-    .topic-del{background:none;border:none;color:var(--grey2);font-size:10px;cursor:pointer;padding:2px 4px;}
-    .topic-del:hover{color:var(--pink);}
-    .add-topic-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
-    .btn-primary{padding:5px 16px;background:transparent;border:1px solid var(--green);color:var(--green);font-family:var(--font);font-size:10px;font-weight:500;letter-spacing:0.08em;cursor:pointer;transition:all 0.1s;}
-    .btn-primary:hover{background:rgba(152,195,121,0.1);}
-    .btn-primary:disabled{border-color:var(--grey2);color:var(--grey2);cursor:not-allowed;opacity:0.5;}
-    .btn-secondary{padding:5px 12px;background:transparent;border:1px solid var(--border2);color:var(--grey);font-family:var(--font);font-size:10px;letter-spacing:0.06em;cursor:pointer;}
-    .btn-secondary:hover{border-color:var(--grey);color:var(--white);}
-    .upload-area{border:1px dashed var(--border2);padding:8px 12px;margin-top:5px;cursor:pointer;transition:all 0.1s;color:var(--grey2);font-size:10px;}
-    .upload-area:hover{border-color:var(--cyan);color:var(--cyan);}
-    .upload-progress{height:2px;background:var(--border2);margin-top:5px;overflow:hidden;display:none;}
-    .upload-progress-bar{height:100%;background:var(--green);transition:width 0.2s;}
-    .attached-file{display:flex;align-items:center;gap:8px;padding:3px 8px;background:var(--bg3);border:1px solid var(--border2);margin-top:4px;font-size:10px;}
-    .attached-file-name{color:var(--yellow);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-    .attached-file-size{color:var(--grey2);font-size:8px;}
-    .attached-file-del{background:none;border:none;color:var(--grey2);cursor:pointer;}
-    .attached-file-del:hover{color:var(--pink);}
-    .sess-attachment{display:flex;align-items:center;gap:6px;margin-top:4px;padding:3px 8px;background:var(--bg3);border:1px solid var(--border);text-decoration:none;border-left:2px solid var(--cyan);}
-    .sess-attachment-name{font-size:10px;color:var(--cyan);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-    .sess-attachment-icon{color:var(--grey2);font-size:9px;}
-    #statusbar{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border2);padding:5px 18px;display:flex;justify-content:space-between;align-items:center;z-index:100;font-size:9px;}
-    .status-left{display:flex;gap:18px;color:var(--grey2);}
-    .status-item strong{color:var(--yellow);}
-    .btn-timer{padding:3px 12px;background:transparent;border:1px solid var(--border2);color:var(--grey);font-family:var(--font);font-size:9px;cursor:pointer;letter-spacing:0.06em;}
-    .btn-timer:hover{border-color:var(--green);color:var(--green);}
-    .empty-msg{padding:30px 0;color:var(--grey2);font-size:10px;letter-spacing:0.08em;}
-    .empty-msg::before{content:"> ";}
-    @media(max-width:640px){
-      .session-grid,.topic-grid{grid-template-columns:1fr;}
-      .header-clock{display:none;}
-      .form-field.wide{grid-column:span 1;}
-      #main{padding:10px 12px 100px;}
-    }
+    html,body { background:var(--bg); color:var(--white); font-family:var(--font); font-size:12px; min-height:100vh; line-height:1.5; }
+    ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--bg2);} ::-webkit-scrollbar-thumb{background:var(--border2);}
 
-    .topic-search-wrap{position:relative;}
-    .topic-search-row{position:relative;display:flex;align-items:stretch;}
-    .topic-search-inp{background:var(--bg);border:1px solid var(--border2);color:var(--white);font-family:var(--font);font-size:12px;padding:5px 36px 5px 8px;width:100%;outline:none;caret-color:var(--green);transition:border-color 0.1s;}
-    .topic-search-inp:focus{border-color:var(--yellow);}
-    .topic-drop-btn{position:absolute;right:0;top:0;bottom:0;width:32px;border:none;border-left:1px solid var(--border2);background:transparent;color:var(--grey);font-family:var(--font);font-size:11px;cursor:pointer;}
-    .topic-drop-btn:hover{color:var(--yellow);background:var(--bg3);}
-    .topic-dropdown{position:absolute;top:100%;left:0;right:0;z-index:500;background:var(--bg2);border:1px solid var(--yellow);border-top:none;max-height:180px;overflow-y:auto;display:none;}
-    .topic-dropdown.open{display:block;}
-    .topic-opt{padding:7px 10px;font-size:11px;color:var(--white);cursor:pointer;border-bottom:1px solid var(--border);}
-    .topic-opt:hover,.topic-opt.active{background:var(--bg3);color:var(--yellow);}
-    .topic-opt-stream{font-size:8px;color:var(--grey2);margin-left:6px;}
-    .topic-opt.empty{color:var(--grey2);cursor:default;font-style:italic;}
+    /* ── HEADER ── */
+    #header { background:var(--bg2); border-bottom:1px solid var(--border2); }
+    .hdr-top { display:flex; align-items:stretch; flex-wrap:wrap; }
+    .hdr-logo { padding:12px 20px; border-right:1px solid var(--border); display:flex; flex-direction:column; justify-content:center; }
+    .logo-main { font-size:16px; font-weight:600; color:var(--cyan); letter-spacing:0.04em; }
+    .logo-main span { color:var(--grey); }
+    .logo-sub { font-size:8px; color:var(--grey); letter-spacing:0.18em; margin-top:2px; }
+    .hdr-stat { padding:10px 18px; border-right:1px solid var(--border); display:flex; flex-direction:column; justify-content:center; min-width:100px; }
+    .stat-val { font-size:20px; font-weight:500; line-height:1; }
+    .stat-key { font-size:8px; color:var(--grey); letter-spacing:0.12em; margin-top:3px; }
+    .readiness-wrap { padding:10px 20px; display:flex; flex-direction:column; justify-content:center; flex:1; min-width:200px; }
+    .readiness-label { font-size:8px; color:var(--grey); letter-spacing:0.15em; margin-bottom:6px; }
+    .readiness-bar-bg { height:6px; background:var(--border2); overflow:hidden; }
+    .readiness-bar { height:100%; transition:width 0.6s ease; }
+    .readiness-pct { font-size:18px; font-weight:600; margin-top:4px; }
+    .sync-wrap { padding:10px 16px; border-left:1px solid var(--border); display:flex; align-items:center; }
+    .sync-dot { font-size:8px; color:var(--grey2); letter-spacing:0.08em; }
+
+    /* ── TABBAR ── */
+    #tabbar { background:var(--bg2); border-bottom:1px solid var(--border2); display:flex; overflow-x:auto; }
+    .tab { padding:8px 18px; background:transparent; border:none; border-right:1px solid var(--border); border-bottom:2px solid transparent; color:var(--grey); font-family:var(--font); font-size:10px; cursor:pointer; letter-spacing:0.06em; white-space:nowrap; transition:all 0.1s; }
+    .tab:hover { color:var(--white); background:var(--bg3); }
+    .tab.active { color:var(--cyan); border-bottom-color:var(--cyan); background:var(--bg3); }
+    .tab::before { content:"[ "; color:var(--grey2); }
+    .tab::after { content:" ]"; color:var(--grey2); }
+
+    /* ── SUBTAB (Pass 1 / Pass 2) ── */
+    .subtab-row { display:flex; gap:0; background:var(--bg3); border-bottom:1px solid var(--border); padding:0 18px; }
+    .subtab { padding:6px 14px; background:transparent; border:none; border-bottom:2px solid transparent; color:var(--grey); font-family:var(--font); font-size:9px; cursor:pointer; letter-spacing:0.08em; }
+    .subtab.active { color:var(--yellow); border-bottom-color:var(--yellow); }
+
+    /* ── MAIN ── */
+    #main { padding:14px 18px 80px; }
+
+    /* ── CATEGORY CARDS ── */
+    .cat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:8px; margin-bottom:20px; }
+    .cat-card { background:var(--bg2); border:1px solid var(--border2); border-left:3px solid var(--border2); padding:12px 14px; cursor:pointer; transition:all 0.1s; }
+    .cat-card:hover { background:var(--bg3); }
+    .cat-card.expanded { border-left-color:var(--cyan); }
+    .cat-name { font-size:11px; font-weight:500; color:var(--white); margin-bottom:6px; }
+    .cat-stats { display:flex; gap:12px; font-size:9px; color:var(--grey); margin-bottom:6px; }
+    .cat-stat strong { color:var(--yellow); }
+    .cat-bar-bg { height:3px; background:var(--border2); overflow:hidden; }
+    .cat-bar { height:100%; background:var(--cyan); transition:width 0.4s; }
+
+    /* ── QUESTION LIST ── */
+    .q-list { background:var(--bg3); border:1px solid var(--border); border-top:none; padding:0; }
+    .q-row { display:flex; align-items:center; gap:10px; padding:7px 12px; border-bottom:1px solid var(--border); font-size:10px; transition:background 0.1s; }
+    .q-row:hover { background:var(--bg4); }
+    .q-row:last-child { border-bottom:none; }
+    .q-code { color:var(--cyan); font-size:9px; min-width:90px; letter-spacing:0.04em; }
+    .q-pass-label { font-size:8px; color:var(--grey2); min-width:40px; }
+    .q-actions { display:flex; gap:6px; align-items:center; margin-left:auto; }
+    .q-btn { padding:2px 8px; border:1px solid var(--border2); background:transparent; color:var(--grey2); font-family:var(--font); font-size:9px; cursor:pointer; transition:all 0.1s; }
+    .q-btn.correct { border-color:var(--green); color:var(--green); background:rgba(74,222,128,0.08); }
+    .q-btn.incorrect { border-color:var(--red); color:var(--red); background:rgba(248,113,113,0.08); }
+    .q-btn:hover:not(.correct):not(.incorrect) { border-color:var(--cyan); color:var(--cyan); }
+    .conf-dots { display:flex; gap:3px; }
+    .conf-dot { width:8px; height:8px; border-radius:50%; border:1px solid var(--border2); background:transparent; cursor:pointer; transition:all 0.1s; }
+    .conf-dot.lit { background:var(--yellow); border-color:var(--yellow); }
+    .note-inp { background:var(--bg); border:1px solid var(--border2); color:var(--grey); font-family:var(--font); font-size:9px; padding:2px 6px; width:140px; outline:none; }
+    .note-inp:focus { border-color:var(--yellow); color:var(--white); }
+    .pass-badge { font-size:7px; padding:1px 4px; letter-spacing:0.06em; border:1px solid; }
+    .pass-badge.p1 { color:var(--blue); border-color:rgba(96,165,250,0.3); }
+    .pass-badge.p1done { color:var(--green); border-color:rgba(74,222,128,0.3); }
+    .pass-badge.p2 { color:var(--purple); border-color:rgba(167,139,250,0.3); }
+    .pass-badge.p2done { color:var(--orange); border-color:rgba(251,146,60,0.3); }
+
+    /* ── TOPIC COVERAGE ── */
+    .topic-section { margin-bottom:20px; }
+    .topic-hdr { display:flex; align-items:center; gap:10px; padding:8px 12px; background:var(--bg2); border:1px solid var(--border2); cursor:pointer; }
+    .topic-hdr:hover { background:var(--bg3); }
+    .topic-hdr-name { font-size:11px; font-weight:500; color:var(--white); flex:1; }
+    .topic-hdr-stats { font-size:9px; color:var(--grey); }
+    .topic-hdr-pct { font-size:11px; font-weight:500; }
+    .subtopic-list { background:var(--bg3); border:1px solid var(--border2); border-top:none; }
+    .st-row { display:flex; align-items:center; gap:10px; padding:6px 14px; border-bottom:1px solid var(--border); font-size:10px; }
+    .st-row:last-child { border-bottom:none; }
+    .st-name { flex:1; color:var(--grey); }
+    .st-name.read { color:var(--white); }
+    .st-actions { display:flex; gap:6px; align-items:center; }
+    .st-btn { padding:1px 7px; border:1px solid var(--border2); background:transparent; color:var(--grey2); font-family:var(--font); font-size:9px; cursor:pointer; }
+    .st-btn.read { border-color:var(--green); color:var(--green); background:rgba(74,222,128,0.06); }
+    .st-btn.reviewed { border-color:var(--cyan); color:var(--cyan); background:rgba(34,211,238,0.06); }
+
+    /* ── SEC HEADS ── */
+    .sec-head { display:flex; align-items:baseline; gap:10px; margin-bottom:10px; padding:4px 0; border-bottom:1px solid var(--border); }
+    .sec-title { font-size:10px; font-weight:500; color:var(--cyan); letter-spacing:0.08em; }
+    .sec-rule { flex:1; }
+    .sec-note { font-size:9px; color:var(--grey2); }
+    .empty-msg { padding:30px 0; color:var(--grey2); font-size:10px; letter-spacing:0.08em; }
+    .empty-msg::before { content:"> "; }
+
+    /* ── OVERVIEW ── */
+    .overview-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:6px; margin-bottom:20px; }
+    .ov-card { background:var(--bg2); border:1px solid var(--border2); border-left:3px solid var(--border2); padding:10px 14px; }
+    .ov-cat { font-size:10px; color:var(--white); font-weight:500; margin-bottom:6px; }
+    .ov-row { display:flex; justify-content:space-between; font-size:9px; color:var(--grey); margin-bottom:3px; }
+    .ov-row strong { color:var(--yellow); }
+    .ov-bar-bg { height:2px; background:var(--border2); margin-top:6px; overflow:hidden; }
+    .ov-bar { height:100%; }
+
+    /* ── STATUS BAR ── */
+    #statusbar { position:fixed; bottom:0; left:0; right:0; background:var(--bg2); border-top:1px solid var(--border2); padding:5px 18px; display:flex; justify-content:space-between; align-items:center; font-size:9px; color:var(--grey2); z-index:100; }
+    .sb-items { display:flex; gap:18px; flex-wrap:wrap; }
+    .sb-item strong { color:var(--yellow); }
+
+    @media(max-width:640px) {
+      .cat-grid,.overview-grid { grid-template-columns:1fr; }
+      .note-inp { width:80px; }
+      #main { padding:10px 10px 80px; }
+      .hdr-stat { min-width:80px; padding:8px 12px; }
+    }
   </style>
 
 </head>
 <body>
 
-<!-- Header -->
-
 <div id="header">
-  <div class="header-top">
-    <div class="header-logo">
-      <div class="logo-line1">STX<span>//</span>01</div>
-      <div class="logo-line2">STUDY TRACKER</div>
-      <div class="logo-sub">RENAL · GIM</div>
+  <div class="hdr-top">
+    <div class="hdr-logo">
+      <div class="logo-main">SCE<span>·</span>NEP</div>
+      <div class="logo-sub">NEPHROLOGY TRACKER</div>
     </div>
-    <div class="week-wrap">
-      <div class="week-label">THIS WEEK</div>
-      <div class="week-pips" id="week-pips">
-        <div class="pip" id="pip-1">1</div>
-        <div class="pip" id="pip-2">2</div>
+    <div class="hdr-stat">
+      <div class="stat-val" id="hdr-ksap-pct" style="color:var(--cyan)">0%</div>
+      <div class="stat-key">KSAP CORRECT</div>
+    </div>
+    <div class="hdr-stat">
+      <div class="stat-val" id="hdr-topic-pct" style="color:var(--green)">0%</div>
+      <div class="stat-key">TOPICS COVERED</div>
+    </div>
+    <div class="hdr-stat">
+      <div class="stat-val" id="hdr-attempted" style="color:var(--grey)">0</div>
+      <div class="stat-key">KSAP ATTEMPTED</div>
+    </div>
+    <div class="readiness-wrap">
+      <div class="readiness-label">SCE READINESS</div>
+      <div class="readiness-bar-bg">
+        <div class="readiness-bar" id="readiness-bar" style="width:0%"></div>
       </div>
-      <div class="week-sub" id="week-sub">0 / 2 sessions</div>
+      <div class="readiness-pct" id="readiness-pct">0%</div>
     </div>
-    <div class="retest-wrap">
-      <div class="retest-val" id="retest-due-count">0</div>
-      <div class="retest-key">RETESTS DUE</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-val" id="total-sessions">0</div>
-      <div class="stat-key">TOTAL SESSIONS</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-val" id="streak-val">0</div>
-      <div class="stat-key">WEEK STREAK</div>
-    </div>
-    <div class="header-clock">
-      <div class="clock-time" id="clock">00:00</div>
-      <div class="clock-date" id="clock-date"></div>
+    <div class="sync-wrap">
       <div class="sync-dot" id="sync-dot">● CONNECTING</div>
     </div>
   </div>
 </div>
 
-<!-- Timer panel -->
-
-<div id="timer-panel">
-  <div class="timer-display">
-    <div class="timer-phase" id="timer-phase">STUDY SESSION</div>
-    <div class="timer-clock" id="timer-clock">90:00</div>
-  </div>
-  <div class="timer-bar-wrap">
-    <div class="timer-bar" id="timer-bar" style="width:100%"></div>
-  </div>
-  <div class="timer-btns">
-    <button class="timer-btn" id="timer-start-btn" onclick="timerStartPause()">▶ START</button>
-    <button class="timer-btn secondary" onclick="timerReset()">↺ RESET</button>
-    <button class="timer-btn secondary" onclick="switchPhase()">⇄ SWITCH TO REST</button>
-    <button class="timer-btn danger" onclick="toggleTimer()">✕ CLOSE</button>
-  </div>
-</div>
-
-<!-- Tab bar -->
-
 <div id="tabbar">
-  <button class="tab active" onclick="setTab('today')">TODAY</button>
-  <button class="tab" onclick="setTab('log')">LOG SESSION</button>
-  <button class="tab" onclick="setTab('sessions')">SESSIONS</button>
-  <button class="tab" onclick="setTab('retests')">RETESTS</button>
-  <button class="tab" onclick="setTab('plan')">PLAN</button>
-  <button class="tab" onclick="setTab('topics')">TOPICS</button>
+  <button class="tab active" onclick="setTab('overview')">OVERVIEW</button>
+  <button class="tab" onclick="setTab('ksap')">KSAP BANK</button>
+  <button class="tab" onclick="setTab('topics')">TOPIC COVERAGE</button>
 </div>
-
-<!-- Main -->
 
 <div id="main">
-  <div id="tab-today"    style="display:none"></div>
-  <div id="tab-log"      style="display:none"></div>
-  <div id="tab-sessions" style="display:none"></div>
-  <div id="tab-retests"  style="display:none"></div>
-  <div id="tab-plan"     style="display:none"></div>
+  <div id="tab-overview" style="display:none"></div>
+  <div id="tab-ksap"     style="display:none"></div>
   <div id="tab-topics"   style="display:none"></div>
 </div>
 
-<!-- Status bar -->
-
 <div id="statusbar">
-  <div class="status-left">
-    <span class="status-item">Sessions this week: <strong id="sb-week">0/2</strong></span>
-    <span class="status-item" id="sb-sync" style="color:var(--amber)">● CONNECTING</span>
+  <div class="sb-items">
+    <span class="sb-item">P1 complete: <strong id="sb-p1">0/675</strong></span>
+    <span class="sb-item">P2 complete: <strong id="sb-p2">0/675</strong></span>
+    <span class="sb-item" id="sb-sync" style="color:var(--grey2)">● CONNECTING</span>
   </div>
-  <button class="btn-timer" onclick="toggleTimer()">⏱ TIMER</button>
 </div>
 
 <script>
-// ══════════════════════════════════════════════════════
-//  DEFAULT TOPICS
-// ══════════════════════════════════════════════════════
-const DEFAULT_TOPICS = {
-  renal: [
-    "AKI — aetiology & management","CKD — staging & progression","Glomerulonephritis — overview",
-    "IgA nephropathy","Lupus nephritis","Minimal change disease","FSGS","Membranous nephropathy",
-    "ANCA vasculitis","Anti-GBM disease","Diabetic nephropathy","Hypertensive nephropathy",
-    "Renovascular disease","Renal tubular acidosis","Hyperkalaemia management",
-    "Hyponatraemia","Acid-base disorders","Dialysis — HD principles","Dialysis — PD principles",
-    "Renal transplantation — basics","Immunosuppression in transplant","Rejection types",
-    "Nephrotic syndrome","Nephritic syndrome","Polycystic kidney disease",
-    "Renal calculi","Obstruction & hydronephrosis","Renal anaemia","CKD-MBD",
-    "Contrast nephropathy","Hepatorenal syndrome",
-    "Renal physiology — GFR & tubular function","Renal haemodynamics",
-    "Water & sodium homeostasis","Potassium homeostasis","Calcium & phosphate",
-    "Acid-base — Henderson-Hasselbalch","Tubular transport mechanisms",
-    "Diuretics — mechanism & use","RAAS — physiology & pharmacology",
-    "Immunology of glomerulonephritis","Complement system in renal disease",
-    "Transplant immunology","Pathology of diabetic nephropathy",
-    "Pathology of FSGS","Pathology of membranous nephropathy",
-    "Renal biopsy interpretation","Urinalysis & urine microscopy",
-    "Biomarkers in AKI","Drug dosing in renal impairment",
-  ],
-  gim: [
-    "Sepsis & septic shock","ACS — STEMI & NSTEMI","Heart failure — acute & chronic",
-    "AF management","Pneumonia — CAP & HAP","COPD exacerbation","Asthma — acute",
-    "PE & DVT","Stroke — ischaemic & haemorrhagic","Meningitis & encephalitis",
-    "Diabetic emergencies — DKA & HHS","Hypo & hyperglycaemia","Thyroid emergencies",
-    "Adrenal insufficiency","GI bleed — upper & lower","Acute liver failure",
-    "Hepatic encephalopathy","Pancreatitis","Electrolyte disturbances",
-    "Approach to shock","Overdose & poisoning","Antimicrobial stewardship",
-  ],
+// ══════════════════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════════════════
+const KSAP = [{"code":"V7M1-Q10","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q19","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q2","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q30","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q5","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q51","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q59","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q70","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q71","category":"Acid\u2013Base and Potassium Disorders","module":"V7M1"},{"code":"V7M1-Q17","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M1"},{"code":"V7M1-Q25","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M1"},{"code":"V7M1-Q33","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M1"},{"code":"V7M1-Q40","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M1"},{"code":"V7M1-Q46","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M1"},{"code":"V7M1-Q49","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M1"},{"code":"V7M1-Q57","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M1"},{"code":"V7M1-Q58","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M1"},{"code":"V7M1-Q61","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M1"},{"code":"V7M1-Q62","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M1"},{"code":"V7M1-Q65","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M1"},{"code":"V7M1-Q72","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M1"},{"code":"V7M1-Q74","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M1"},{"code":"V7M1-Q11","category":"Ca, Po4, Mg disorders & Stones","module":"V7M1"},{"code":"V7M1-Q27","category":"Ca, Po4, Mg disorders & Stones","module":"V7M1"},{"code":"V7M1-Q39","category":"Ca, Po4, Mg disorders & Stones","module":"V7M1"},{"code":"V7M1-Q56","category":"Ca, Po4, Mg disorders & Stones","module":"V7M1"},{"code":"V7M1-Q75","category":"Ca, Po4, Mg disorders & Stones","module":"V7M1"},{"code":"V7M1-Q1","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q13","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q14","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q15","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q16","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q20","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q22","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q24","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q28","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q3","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q31","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q35","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q38","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q4","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q41","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q44","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q45","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q47","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q52","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q55","category":"Chronic Kidney Disease","module":"V7M1"},{"code":"V7M1-Q36","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q37","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q42","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q43","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q54","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q64","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q66","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q8","category":"Glomerular and Vascular Disorders","module":"V7M1"},{"code":"V7M1-Q6","category":"Hypertension","module":"V7M1"},{"code":"V7M1-Q63","category":"Hypertension","module":"V7M1"},{"code":"V7M1-Q73","category":"Hypertension","module":"V7M1"},{"code":"V7M1-Q48","category":"Kidney Transplantation","module":"V7M1"},{"code":"V7M1-Q60","category":"Kidney Transplantation","module":"V7M1"},{"code":"V7M1-Q69","category":"Kidney Transplantation","module":"V7M1"},{"code":"V7M1-Q9","category":"Kidney Transplantation","module":"V7M1"},{"code":"V7M1-Q21","category":"Pharmacology","module":"V7M1"},{"code":"V7M1-Q23","category":"Pharmacology","module":"V7M1"},{"code":"V7M1-Q29","category":"Pharmacology","module":"V7M1"},{"code":"V7M1-Q32","category":"Pharmacology","module":"V7M1"},{"code":"V7M1-Q68","category":"Pharmacology","module":"V7M1"},{"code":"V7M1-Q7","category":"Pharmacology","module":"V7M1"},{"code":"V7M1-Q18","category":"Sodium and Water Abnormalities","module":"V7M1"},{"code":"V7M1-Q26","category":"Sodium and Water Abnormalities","module":"V7M1"},{"code":"V7M1-Q50","category":"Sodium and Water Abnormalities","module":"V7M1"},{"code":"V7M1-Q67","category":"Sodium and Water Abnormalities","module":"V7M1"},{"code":"V7M1-Q12","category":"Tubular, Interstitial and Cystic Disorders","module":"V7M1"},{"code":"V7M1-Q34","category":"Tubular, Interstitial and Cystic Disorders","module":"V7M1"},{"code":"V7M1-Q53","category":"Tubular, Interstitial and Cystic Disorders","module":"V7M1"},{"code":"V7M2-Q1","category":"Acid\u2013Base and Potassium Disorders","module":"V7M2"},{"code":"V7M2-Q23","category":"Acid\u2013Base and Potassium Disorders","module":"V7M2"},{"code":"V7M2-Q25","category":"Acid\u2013Base and Potassium Disorders","module":"V7M2"},{"code":"V7M2-Q40","category":"Acid\u2013Base and Potassium Disorders","module":"V7M2"},{"code":"V7M2-Q41","category":"Acid\u2013Base and Potassium Disorders","module":"V7M2"},{"code":"V7M2-Q64","category":"Acid\u2013Base and Potassium Disorders","module":"V7M2"},{"code":"V7M2-Q9","category":"Acid\u2013Base and Potassium Disorders","module":"V7M2"},{"code":"V7M2-Q13","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M2"},{"code":"V7M2-Q16","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M2"},{"code":"V7M2-Q3","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M2"},{"code":"V7M2-Q31","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M2"},{"code":"V7M2-Q32","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M2"},{"code":"V7M2-Q44","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M2"},{"code":"V7M2-Q50","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M2"},{"code":"V7M2-Q53","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M2"},{"code":"V7M2-Q66","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M2"},{"code":"V7M2-Q73","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V7M2"},{"code":"V7M2-Q19","category":"Ca, Po4, Mg disorders & Stones","module":"V7M2"},{"code":"V7M2-Q36","category":"Ca, Po4, Mg disorders & Stones","module":"V7M2"},{"code":"V7M2-Q49","category":"Ca, Po4, Mg disorders & Stones","module":"V7M2"},{"code":"V7M2-Q51","category":"Ca, Po4, Mg disorders & Stones","module":"V7M2"},{"code":"V7M2-Q59","category":"Ca, Po4, Mg disorders & Stones","module":"V7M2"},{"code":"V7M2-Q15","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q2","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q22","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q27","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q29","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q33","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q38","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q43","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q5","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q57","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q62","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q67","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q7","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q8","category":"Chronic Kidney Disease","module":"V7M2"},{"code":"V7M2-Q10","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q11","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q12","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q14","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q20","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q21","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q24","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q28","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q45","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q55","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q58","category":"Glomerular and Vascular Disorders","module":"V7M2"},{"code":"V7M2-Q17","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q18","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q39","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q6","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q61","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q68","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q70","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q72","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q74","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q75","category":"Hypertension","module":"V7M2"},{"code":"V7M2-Q34","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q35","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q37","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q42","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q46","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q47","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q48","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q54","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q56","category":"Kidney Transplantation","module":"V7M2"},{"code":"V7M2-Q30","category":"Pharmacology","module":"V7M2"},{"code":"V7M2-Q4","category":"Sodium and Water Abnormalities","module":"V7M2"},{"code":"V7M2-Q52","category":"Sodium and Water Abnormalities","module":"V7M2"},{"code":"V7M2-Q63","category":"Sodium and Water Abnormalities","module":"V7M2"},{"code":"V7M2-Q69","category":"Sodium and Water Abnormalities","module":"V7M2"},{"code":"V7M2-Q71","category":"Sodium and Water Abnormalities","module":"V7M2"},{"code":"V7M2-Q26","category":"Tubular, Interstitial and Cystic Disorders","module":"V7M2"},{"code":"V7M2-Q60","category":"Tubular, Interstitial and Cystic Disorders","module":"V7M2"},{"code":"V7M2-Q65","category":"Tubular, Interstitial and Cystic Disorders","module":"V7M2"},{"code":"V8M1-Q26","category":"Acid\u2013Base and Potassium Disorders","module":"V8M1"},{"code":"V8M1-Q28","category":"Acid\u2013Base and Potassium Disorders","module":"V8M1"},{"code":"V8M1-Q29","category":"Acid\u2013Base and Potassium Disorders","module":"V8M1"},{"code":"V8M1-Q41","category":"Acid\u2013Base and Potassium Disorders","module":"V8M1"},{"code":"V8M1-Q45","category":"Acid\u2013Base and Potassium Disorders","module":"V8M1"},{"code":"V8M1-Q53","category":"Acid\u2013Base and Potassium Disorders","module":"V8M1"},{"code":"V8M1-Q11","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M1"},{"code":"V8M1-Q23","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M1"},{"code":"V8M1-Q35","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M1"},{"code":"V8M1-Q36","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M1"},{"code":"V8M1-Q42","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M1"},{"code":"V8M1-Q43","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M1"},{"code":"V8M1-Q48","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M1"},{"code":"V8M1-Q63","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M1"},{"code":"V8M1-Q69","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M1"},{"code":"V8M1-Q75","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M1"},{"code":"V8M1-Q7","category":"Ca, Po4, Mg disorders & Stones","module":"V8M1"},{"code":"V8M1-Q10","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q15","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q16","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q17","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q18","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q20","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q21","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q25","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q3","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q40","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q52","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q58","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q59","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q6","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q60","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q67","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q68","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q70","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q71","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q74","category":"Chronic Kidney Disease","module":"V8M1"},{"code":"V8M1-Q19","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q22","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q31","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q32","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q34","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q46","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q57","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q62","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q65","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q73","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q8","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q9","category":"Glomerular and Vascular Disorders","module":"V8M1"},{"code":"V8M1-Q12","category":"Hypertension","module":"V8M1"},{"code":"V8M1-Q13","category":"Hypertension","module":"V8M1"},{"code":"V8M1-Q24","category":"Hypertension","module":"V8M1"},{"code":"V8M1-Q4","category":"Hypertension","module":"V8M1"},{"code":"V8M1-Q44","category":"Hypertension","module":"V8M1"},{"code":"V8M1-Q50","category":"Hypertension","module":"V8M1"},{"code":"V8M1-Q66","category":"Hypertension","module":"V8M1"},{"code":"V8M1-Q14","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q30","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q33","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q37","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q38","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q39","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q64","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q72","category":"Kidney Transplantation","module":"V8M1"},{"code":"V8M1-Q61","category":"Pharmacology","module":"V8M1"},{"code":"V8M1-Q1","category":"Sodium and Water Abnormalities","module":"V8M1"},{"code":"V8M1-Q27","category":"Sodium and Water Abnormalities","module":"V8M1"},{"code":"V8M1-Q47","category":"Sodium and Water Abnormalities","module":"V8M1"},{"code":"V8M1-Q5","category":"Sodium and Water Abnormalities","module":"V8M1"},{"code":"V8M1-Q51","category":"Sodium and Water Abnormalities","module":"V8M1"},{"code":"V8M1-Q55","category":"Sodium and Water Abnormalities","module":"V8M1"},{"code":"V8M1-Q2","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M1"},{"code":"V8M1-Q49","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M1"},{"code":"V8M1-Q54","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M1"},{"code":"V8M1-Q56","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M1"},{"code":"V8M2-Q20","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q26","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q35","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q45","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q47","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q48","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q73","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q9","category":"Acid\u2013Base and Potassium Disorders","module":"V8M2"},{"code":"V8M2-Q15","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M2"},{"code":"V8M2-Q18","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M2"},{"code":"V8M2-Q22","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M2"},{"code":"V8M2-Q41","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M2"},{"code":"V8M2-Q50","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M2"},{"code":"V8M2-Q52","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M2"},{"code":"V8M2-Q53","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M2"},{"code":"V8M2-Q55","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M2"},{"code":"V8M2-Q59","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M2"},{"code":"V8M2-Q61","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M2"},{"code":"V8M2-Q62","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V8M2"},{"code":"V8M2-Q1","category":"Ca, Po4, Mg disorders & Stones","module":"V8M2"},{"code":"V8M2-Q5","category":"Ca, Po4, Mg disorders & Stones","module":"V8M2"},{"code":"V8M2-Q6","category":"Ca, Po4, Mg disorders & Stones","module":"V8M2"},{"code":"V8M2-Q74","category":"Ca, Po4, Mg disorders & Stones","module":"V8M2"},{"code":"V8M2-Q75","category":"Ca, Po4, Mg disorders & Stones","module":"V8M2"},{"code":"V8M2-Q8","category":"Ca, Po4, Mg disorders & Stones","module":"V8M2"},{"code":"V8M2-Q10","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q13","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q14","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q16","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q19","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q21","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q28","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q3","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q38","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q40","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q42","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q46","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q58","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q63","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q68","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q7","category":"Chronic Kidney Disease","module":"V8M2"},{"code":"V8M2-Q17","category":"Glomerular and Vascular Disorders","module":"V8M2"},{"code":"V8M2-Q33","category":"Glomerular and Vascular Disorders","module":"V8M2"},{"code":"V8M2-Q51","category":"Glomerular and Vascular Disorders","module":"V8M2"},{"code":"V8M2-Q60","category":"Glomerular and Vascular Disorders","module":"V8M2"},{"code":"V8M2-Q64","category":"Glomerular and Vascular Disorders","module":"V8M2"},{"code":"V8M2-Q69","category":"Glomerular and Vascular Disorders","module":"V8M2"},{"code":"V8M2-Q11","category":"Hypertension","module":"V8M2"},{"code":"V8M2-Q36","category":"Hypertension","module":"V8M2"},{"code":"V8M2-Q39","category":"Hypertension","module":"V8M2"},{"code":"V8M2-Q49","category":"Hypertension","module":"V8M2"},{"code":"V8M2-Q56","category":"Hypertension","module":"V8M2"},{"code":"V8M2-Q65","category":"Hypertension","module":"V8M2"},{"code":"V8M2-Q23","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q25","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q27","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q29","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q37","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q44","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q54","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q72","category":"Kidney Transplantation","module":"V8M2"},{"code":"V8M2-Q12","category":"Pharmacology","module":"V8M2"},{"code":"V8M2-Q43","category":"Pharmacology","module":"V8M2"},{"code":"V8M2-Q66","category":"Pharmacology","module":"V8M2"},{"code":"V8M2-Q71","category":"Pharmacology","module":"V8M2"},{"code":"V8M2-Q24","category":"Sodium and Water Abnormalities","module":"V8M2"},{"code":"V8M2-Q31","category":"Sodium and Water Abnormalities","module":"V8M2"},{"code":"V8M2-Q34","category":"Sodium and Water Abnormalities","module":"V8M2"},{"code":"V8M2-Q57","category":"Sodium and Water Abnormalities","module":"V8M2"},{"code":"V8M2-Q67","category":"Sodium and Water Abnormalities","module":"V8M2"},{"code":"V8M2-Q70","category":"Sodium and Water Abnormalities","module":"V8M2"},{"code":"V8M2-Q2","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M2"},{"code":"V8M2-Q30","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M2"},{"code":"V8M2-Q32","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M2"},{"code":"V8M2-Q4","category":"Tubular, Interstitial and Cystic Disorders","module":"V8M2"},{"code":"V9M1-Q19","category":"Acid\u2013Base and Potassium Disorders","module":"V9M1"},{"code":"V9M1-Q2","category":"Acid\u2013Base and Potassium Disorders","module":"V9M1"},{"code":"V9M1-Q32","category":"Acid\u2013Base and Potassium Disorders","module":"V9M1"},{"code":"V9M1-Q37","category":"Acid\u2013Base and Potassium Disorders","module":"V9M1"},{"code":"V9M1-Q44","category":"Acid\u2013Base and Potassium Disorders","module":"V9M1"},{"code":"V9M1-Q51","category":"Acid\u2013Base and Potassium Disorders","module":"V9M1"},{"code":"V9M1-Q72","category":"Acid\u2013Base and Potassium Disorders","module":"V9M1"},{"code":"V9M1-Q31","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M1"},{"code":"V9M1-Q39","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M1"},{"code":"V9M1-Q45","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M1"},{"code":"V9M1-Q53","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M1"},{"code":"V9M1-Q54","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M1"},{"code":"V9M1-Q73","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M1"},{"code":"V9M1-Q8","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M1"},{"code":"V9M1-Q9","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M1"},{"code":"V9M1-Q16","category":"Ca, Po4, Mg disorders & Stones","module":"V9M1"},{"code":"V9M1-Q29","category":"Ca, Po4, Mg disorders & Stones","module":"V9M1"},{"code":"V9M1-Q3","category":"Ca, Po4, Mg disorders & Stones","module":"V9M1"},{"code":"V9M1-Q75","category":"Ca, Po4, Mg disorders & Stones","module":"V9M1"},{"code":"V9M1-Q10","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q12","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q18","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q20","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q23","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q27","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q28","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q30","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q38","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q41","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q43","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q47","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q48","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q50","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q57","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q6","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q66","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q7","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q71","category":"Chronic Kidney Disease","module":"V9M1"},{"code":"V9M1-Q1","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q15","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q24","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q25","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q36","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q4","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q42","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q5","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q61","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q65","category":"Glomerular and Vascular Disorders","module":"V9M1"},{"code":"V9M1-Q21","category":"Hypertension","module":"V9M1"},{"code":"V9M1-Q26","category":"Hypertension","module":"V9M1"},{"code":"V9M1-Q46","category":"Hypertension","module":"V9M1"},{"code":"V9M1-Q55","category":"Hypertension","module":"V9M1"},{"code":"V9M1-Q59","category":"Hypertension","module":"V9M1"},{"code":"V9M1-Q60","category":"Hypertension","module":"V9M1"},{"code":"V9M1-Q63","category":"Hypertension","module":"V9M1"},{"code":"V9M1-Q49","category":"Kidney Transplantation","module":"V9M1"},{"code":"V9M1-Q52","category":"Kidney Transplantation","module":"V9M1"},{"code":"V9M1-Q56","category":"Kidney Transplantation","module":"V9M1"},{"code":"V9M1-Q62","category":"Kidney Transplantation","module":"V9M1"},{"code":"V9M1-Q67","category":"Kidney Transplantation","module":"V9M1"},{"code":"V9M1-Q69","category":"Kidney Transplantation","module":"V9M1"},{"code":"V9M1-Q70","category":"Kidney Transplantation","module":"V9M1"},{"code":"V9M1-Q11","category":"Pharmacology","module":"V9M1"},{"code":"V9M1-Q34","category":"Pharmacology","module":"V9M1"},{"code":"V9M1-Q58","category":"Pharmacology","module":"V9M1"},{"code":"V9M1-Q64","category":"Pharmacology","module":"V9M1"},{"code":"V9M1-Q68","category":"Pharmacology","module":"V9M1"},{"code":"V9M1-Q74","category":"Pharmacology","module":"V9M1"},{"code":"V9M1-Q17","category":"Sodium and Water Abnormalities","module":"V9M1"},{"code":"V9M1-Q22","category":"Sodium and Water Abnormalities","module":"V9M1"},{"code":"V9M1-Q33","category":"Sodium and Water Abnormalities","module":"V9M1"},{"code":"V9M1-Q35","category":"Sodium and Water Abnormalities","module":"V9M1"},{"code":"V9M1-Q40","category":"Sodium and Water Abnormalities","module":"V9M1"},{"code":"V9M1-Q13","category":"Tubular, Interstitial and Cystic Disorders","module":"V9M1"},{"code":"V9M1-Q14","category":"Tubular, Interstitial and Cystic Disorders","module":"V9M1"},{"code":"V9M2-Q12","category":"Acid\u2013Base and Potassium Disorders","module":"V9M2"},{"code":"V9M2-Q48","category":"Acid\u2013Base and Potassium Disorders","module":"V9M2"},{"code":"V9M2-Q51","category":"Acid\u2013Base and Potassium Disorders","module":"V9M2"},{"code":"V9M2-Q64","category":"Acid\u2013Base and Potassium Disorders","module":"V9M2"},{"code":"V9M2-Q8","category":"Acid\u2013Base and Potassium Disorders","module":"V9M2"},{"code":"V9M2-Q14","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q15","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q33","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q35","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q36","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q37","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q41","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q42","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q49","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q6","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q62","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q65","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q73","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q75","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q9","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V9M2"},{"code":"V9M2-Q1","category":"Ca, Po4, Mg disorders & Stones","module":"V9M2"},{"code":"V9M2-Q18","category":"Ca, Po4, Mg disorders & Stones","module":"V9M2"},{"code":"V9M2-Q45","category":"Ca, Po4, Mg disorders & Stones","module":"V9M2"},{"code":"V9M2-Q67","category":"Ca, Po4, Mg disorders & Stones","module":"V9M2"},{"code":"V9M2-Q17","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q19","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q2","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q22","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q23","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q26","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q29","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q32","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q44","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q46","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q52","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q53","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q58","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q60","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q61","category":"Chronic Kidney Disease","module":"V9M2"},{"code":"V9M2-Q13","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q20","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q24","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q27","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q30","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q39","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q40","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q50","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q55","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q66","category":"Glomerular and Vascular Disorders","module":"V9M2"},{"code":"V9M2-Q34","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q38","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q43","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q47","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q54","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q56","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q57","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q70","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q71","category":"Hypertension","module":"V9M2"},{"code":"V9M2-Q10","category":"Kidney Transplantation","module":"V9M2"},{"code":"V9M2-Q3","category":"Kidney Transplantation","module":"V9M2"},{"code":"V9M2-Q63","category":"Kidney Transplantation","module":"V9M2"},{"code":"V9M2-Q68","category":"Kidney Transplantation","module":"V9M2"},{"code":"V9M2-Q69","category":"Kidney Transplantation","module":"V9M2"},{"code":"V9M2-Q72","category":"Kidney Transplantation","module":"V9M2"},{"code":"V9M2-Q74","category":"Kidney Transplantation","module":"V9M2"},{"code":"V9M2-Q11","category":"Pharmacology","module":"V9M2"},{"code":"V9M2-Q16","category":"Pharmacology","module":"V9M2"},{"code":"V9M2-Q28","category":"Pharmacology","module":"V9M2"},{"code":"V9M2-Q21","category":"Sodium and Water Abnormalities","module":"V9M2"},{"code":"V9M2-Q25","category":"Sodium and Water Abnormalities","module":"V9M2"},{"code":"V9M2-Q31","category":"Sodium and Water Abnormalities","module":"V9M2"},{"code":"V9M2-Q4","category":"Sodium and Water Abnormalities","module":"V9M2"},{"code":"V9M2-Q59","category":"Sodium and Water Abnormalities","module":"V9M2"},{"code":"V9M2-Q5","category":"Tubular, Interstitial and Cystic Disorders","module":"V9M2"},{"code":"V9M2-Q7","category":"Tubular, Interstitial and Cystic Disorders","module":"V9M2"},{"code":"V10M1-Q12","category":"Acid\u2013Base and Potassium Disorders","module":"V10M1"},{"code":"V10M1-Q16","category":"Acid\u2013Base and Potassium Disorders","module":"V10M1"},{"code":"V10M1-Q22","category":"Acid\u2013Base and Potassium Disorders","module":"V10M1"},{"code":"V10M1-Q35","category":"Acid\u2013Base and Potassium Disorders","module":"V10M1"},{"code":"V10M1-Q52","category":"Acid\u2013Base and Potassium Disorders","module":"V10M1"},{"code":"V10M1-Q73","category":"Acid\u2013Base and Potassium Disorders","module":"V10M1"},{"code":"V10M1-Q8","category":"Acid\u2013Base and Potassium Disorders","module":"V10M1"},{"code":"V10M1-Q10","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q13","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q18","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q21","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q29","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q30","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q37","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q38","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q46","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q48","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q53","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q54","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q58","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q60","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q70","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V10M1"},{"code":"V10M1-Q51","category":"Ca, Po4, Mg disorders & Stones","module":"V10M1"},{"code":"V10M1-Q74","category":"Ca, Po4, Mg disorders & Stones","module":"V10M1"},{"code":"V10M1-Q11","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q14","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q25","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q34","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q41","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q42","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q43","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q45","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q47","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q49","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q59","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q64","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q66","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q7","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q71","category":"Chronic Kidney Disease","module":"V10M1"},{"code":"V10M1-Q17","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q2","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q23","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q24","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q26","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q27","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q28","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q39","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q4","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q40","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q56","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q69","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q72","category":"Glomerular and Vascular Disorders","module":"V10M1"},{"code":"V10M1-Q32","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q50","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q62","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q63","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q65","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q67","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q68","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q75","category":"Hypertension","module":"V10M1"},{"code":"V10M1-Q3","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q33","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q36","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q44","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q55","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q57","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q6","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q61","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q9","category":"Kidney Transplantation","module":"V10M1"},{"code":"V10M1-Q15","category":"Pharmacology","module":"V10M1"},{"code":"V10M1-Q5","category":"Pharmacology","module":"V10M1"},{"code":"V10M1-Q1","category":"Sodium and Water Abnormalities","module":"V10M1"},{"code":"V10M1-Q19","category":"Sodium and Water Abnormalities","module":"V10M1"},{"code":"V10M1-Q31","category":"Sodium and Water Abnormalities","module":"V10M1"},{"code":"V10M1-Q20","category":"Tubular, Interstitial and Cystic Disorders","module":"V10M1"},{"code":"V11M1-Q35","category":"Acid\u2013Base and Potassium Disorders","module":"V11M1"},{"code":"V11M1-Q43","category":"Acid\u2013Base and Potassium Disorders","module":"V11M1"},{"code":"V11M1-Q5","category":"Acid\u2013Base and Potassium Disorders","module":"V11M1"},{"code":"V11M1-Q51","category":"Acid\u2013Base and Potassium Disorders","module":"V11M1"},{"code":"V11M1-Q69","category":"Acid\u2013Base and Potassium Disorders","module":"V11M1"},{"code":"V11M1-Q73","category":"Acid\u2013Base and Potassium Disorders","module":"V11M1"},{"code":"V11M1-Q12","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V11M1"},{"code":"V11M1-Q22","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V11M1"},{"code":"V11M1-Q34","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V11M1"},{"code":"V11M1-Q40","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V11M1"},{"code":"V11M1-Q44","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V11M1"},{"code":"V11M1-Q48","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V11M1"},{"code":"V11M1-Q6","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V11M1"},{"code":"V11M1-Q62","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V11M1"},{"code":"V11M1-Q63","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V11M1"},{"code":"V11M1-Q66","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V11M1"},{"code":"V11M1-Q70","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V11M1"},{"code":"V11M1-Q8","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V11M1"},{"code":"V11M1-Q9","category":"Acute Kidney Injury and Intensive Care Unit Nephrology","module":"V11M1"},{"code":"V11M1-Q27","category":"Ca, Po4, Mg disorders & Stones","module":"V11M1"},{"code":"V11M1-Q46","category":"Ca, Po4, Mg disorders & Stones","module":"V11M1"},{"code":"V11M1-Q1","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q10","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q11","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q15","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q21","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q24","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q28","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q3","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q32","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q36","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q41","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q45","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q52","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q55","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q57","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q60","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q61","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q64","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q68","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q72","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q75","category":"Chronic Kidney Disease","module":"V11M1"},{"code":"V11M1-Q14","category":"Glomerular and Vascular Disorders","module":"V11M1"},{"code":"V11M1-Q19","category":"Glomerular and Vascular Disorders","module":"V11M1"},{"code":"V11M1-Q33","category":"Glomerular and Vascular Disorders","module":"V11M1"},{"code":"V11M1-Q39","category":"Glomerular and Vascular Disorders","module":"V11M1"},{"code":"V11M1-Q49","category":"Glomerular and Vascular Disorders","module":"V11M1"},{"code":"V11M1-Q67","category":"Glomerular and Vascular Disorders","module":"V11M1"},{"code":"V11M1-Q13","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q17","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q2","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q25","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q29","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q38","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q4","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q42","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q54","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q7","category":"Hypertension","module":"V11M1"},{"code":"V11M1-Q18","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q20","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q26","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q47","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q58","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q65","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q71","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q74","category":"Kidney Transplantation","module":"V11M1"},{"code":"V11M1-Q37","category":"Pharmacology","module":"V11M1"},{"code":"V11M1-Q16","category":"Sodium and Water Abnormalities","module":"V11M1"},{"code":"V11M1-Q23","category":"Sodium and Water Abnormalities","module":"V11M1"},{"code":"V11M1-Q30","category":"Sodium and Water Abnormalities","module":"V11M1"},{"code":"V11M1-Q50","category":"Sodium and Water Abnormalities","module":"V11M1"},{"code":"V11M1-Q53","category":"Sodium and Water Abnormalities","module":"V11M1"},{"code":"V11M1-Q31","category":"Tubular, Interstitial and Cystic Disorders","module":"V11M1"},{"code":"V11M1-Q56","category":"Tubular, Interstitial and Cystic Disorders","module":"V11M1"},{"code":"V11M1-Q59","category":"Tubular, Interstitial and Cystic Disorders","module":"V11M1"},{"code":"V6M1-Q6","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q30","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q31","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q44","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q46","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q67","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q69","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q73","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q15","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q18","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q33","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q43","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q49","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q51","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q53","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q55","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q57","category":"Acid\u2013Base and Potassium Disorders","module":"V6M1"},{"code":"V6M1-Q7","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q11","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q17","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q36","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q39","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q41","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q45","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q54","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q66","category":"Ca, Po4, Mg disorders & Stones","module":"V6M1"},{"code":"V6M1-Q2","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q9","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q10","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q12","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q14","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q16","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q19","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q21","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q22","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q24","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q50","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q52","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q56","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q60","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q63","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q64","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q65","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q72","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q74","category":"Chronic Kidney Disease","module":"V6M1"},{"code":"V6M1-Q26","category":"Glomerular and Vascular Disorders","module":"V6M1"},{"code":"V6M1-Q27","category":"Glomerular and Vascular Disorders","module":"V6M1"},{"code":"V6M1-Q38","category":"Glomerular and Vascular Disorders","module":"V6M1"},{"code":"V6M1-Q58","category":"Glomerular and Vascular Disorders","module":"V6M1"},{"code":"V6M1-Q59","category":"Glomerular and Vascular Disorders","module":"V6M1"},{"code":"V6M1-Q71","category":"Glomerular and Vascular Disorders","module":"V6M1"},{"code":"V6M1-Q1","category":"Hypertension","module":"V6M1"},{"code":"V6M1-Q4","category":"Hypertension","module":"V6M1"},{"code":"V6M1-Q35","category":"Hypertension","module":"V6M1"},{"code":"V6M1-Q37","category":"Hypertension","module":"V6M1"},{"code":"V6M1-Q61","category":"Hypertension","module":"V6M1"},{"code":"V6M1-Q5","category":"Kidney Transplantation","module":"V6M1"},{"code":"V6M1-Q8","category":"Kidney Transplantation","module":"V6M1"},{"code":"V6M1-Q29","category":"Kidney Transplantation","module":"V6M1"},{"code":"V6M1-Q32","category":"Kidney Transplantation","module":"V6M1"},{"code":"V6M1-Q42","category":"Kidney Transplantation","module":"V6M1"},{"code":"V6M1-Q75","category":"Kidney Transplantation","module":"V6M1"},{"code":"V6M1-Q28","category":"Pharmacology","module":"V6M1"},{"code":"V6M1-Q47","category":"Pharmacology","module":"V6M1"},{"code":"V6M1-Q13","category":"Sodium and Water Abnormalities","module":"V6M1"},{"code":"V6M1-Q20","category":"Sodium and Water Abnormalities","module":"V6M1"},{"code":"V6M1-Q23","category":"Sodium and Water Abnormalities","module":"V6M1"},{"code":"V6M1-Q34","category":"Sodium and Water Abnormalities","module":"V6M1"},{"code":"V6M1-Q48","category":"Sodium and Water Abnormalities","module":"V6M1"},{"code":"V6M1-Q3","category":"Tubular, Interstitial and Cystic Disorders","module":"V6M1"},{"code":"V6M1-Q25","category":"Tubular, Interstitial and Cystic Disorders","module":"V6M1"},{"code":"V6M1-Q40","category":"Tubular, Interstitial and Cystic Disorders","module":"V6M1"},{"code":"V6M1-Q62","category":"Tubular, Interstitial and Cystic Disorders","module":"V6M1"},{"code":"V6M1-Q68","category":"Tubular, Interstitial and Cystic Disorders","module":"V6M1"},{"code":"V6M1-Q70","category":"Tubular, Interstitial and Cystic Disorders","module":"V6M1"}];
+
+const TOPICS = {"Sodium and Water Abnormalities":{"Hyponatremia":["Hypotonic \u2014 SIADH","Hypotonic \u2014 Hypervolemic hyponatremia","Hypotonic \u2014 Low solute intake","Hypotonic \u2014 Thiazide-induced","Hypotonic \u2014 Secondary adrenal insufficiency","Hypertonic hyponatremia","Isotonic hyponatremia (pseudohyponatremia)"],"Hypernatremia or Serum Hyperosmolality":["Osmotic diuresis \u2014 Urea","Osmotic diuresis \u2014 Glucose","Water diuresis \u2014 Central diabetes insipidus","Water diuresis \u2014 Nephrogenic diabetes insipidus","Physiologic saline diuresis","Hypodipsia","Extrarenal water loss"],"Salt Excess (Edema)":["Heart failure","Cirrhosis","Nephrotic syndrome","Chronic kidney disease"],"Salt Depletion":["Renal sodium losses \u2014 Postobstructive diuresis","Renal sodium losses \u2014 Post-AKI diuresis","Renal sodium losses \u2014 Diuretics","Renal sodium losses \u2014 Salt-wasting nephropathy","Renal sodium losses \u2014 Chemotherapy-induced","Extrarenal sodium losses"],"Polyuria":["Primary polydipsia","Iatrogenic polyuria"]},"Acid\u2013Base and Potassium Disorders":{"Metabolic Acidosis (Normal AG)":["RTA \u2014 Distal (type 1)","RTA \u2014 Proximal (type 2)","RTA \u2014 Hyperkalemic (type 4)","Nonrenal causes of normal AG acidosis"],"Metabolic Acidosis (Elevated AG)":["Lactic acidosis","Ketoacidosis","Toxin-related acidosis","Uremic acidosis","Low anion gap (e.g., multiple myeloma)"],"Metabolic Alkalosis":["Normal/low BP \u2014 Renal origin","Normal/low BP \u2014 Chemotherapy-induced","Normal/low BP \u2014 Hypokalemia-associated","Normal/low BP \u2014 Post-hypercapnic","High BP \u2014 Adrenal etiologies","High BP \u2014 Malignant hypertension\u2013associated"],"Respiratory Acid\u2013Base Disturbances":["Respiratory acidosis","Respiratory alkalosis","Mixed acid\u2013base disorders"],"Potassium Disturbances \u2014 Hyperkalemia":["Hyperkalemia \u2014 Pseudohyperkalemia","Hyperkalemia \u2014 Transcellular shifts","Hyperkalemia \u2014 Medication-induced","Hyperkalemia \u2014 Genetic abnormalities","Hyperkalemia \u2014 Postsurgical","Hyperkalemia \u2014 Peritoneal dialysis\u2013related"],"Potassium Disturbances \u2014 Hypokalemia":["Hypokalemia \u2014 Pseudohypokalemia","Hypokalemia \u2014 Transcellular shifts","Hypokalemia \u2014 Renal losses","Hypokalemia \u2014 Nonrenal losses","Hypokalemia \u2014 Therapeutic hypothermia + barbiturate coma"]},"Calcium, Phosphorus, and Magnesium Disorders and Stones":{"Disorders of Calcium Metabolism":["Hypercalcemia \u2014 Primary hyperparathyroidism","Hypercalcemia \u2014 Granulomatous disease","Hypercalcemia \u2014 Vitamin D toxicity","Hypercalcemia \u2014 Milk-alkali syndrome","Hypercalcemia \u2014 Malignancy-related","Hypercalcemia \u2014 FHH","Hypocalcemia \u2014 Hypoparathyroidism","Hypocalcemia \u2014 Vitamin D deficiency","Hypocalcemia \u2014 CKD-related"],"Disorders of Phosphorus Metabolism":["Hyperphosphatemia \u2014 CKD-related","Hyperphosphatemia \u2014 Tumor lysis / rhabdomyolysis","Hyperphosphatemia \u2014 Hypoparathyroidism","Hyperphosphatemia \u2014 Bisphosphonate use","Hypophosphatemia \u2014 Nutritional / refeeding","Hypophosphatemia \u2014 FGF23-mediated (e.g., oncogenic osteomalacia)","Hypophosphatemia \u2014 Vitamin D-related","Hypophosphatemia \u2014 PHPT-related"],"Disorders of Magnesium Metabolism":["Hypermagnesemia \u2014 CKD / ESRD","Hypermagnesemia \u2014 Medication-induced","Hypomagnesemia \u2014 GI losses","Hypomagnesemia \u2014 Renal wasting","Hypomagnesemia \u2014 Medication-induced (e.g., PPI, cisplatin)"],"Nephrolithiasis \u2014 Calcium Stones":["Calcium oxalate stones \u2014 Hypercalciuria","Calcium oxalate stones \u2014 Hyperoxaluria","Calcium oxalate stones \u2014 Hypocitraturia","Calcium phosphate stones \u2014 dRTA","Calcium phosphate stones \u2014 Primary hyperparathyroidism"],"Nephrolithiasis \u2014 Non-Calcium Stones":["Uric acid stones","Struvite / infection stones","Cystine stones","Drug-related stones"],"Medical Management of Stones":["Thiazide diuretics for recurrent calcium stones","Allopurinol / urine alkalinization for uric acid stones","Potassium citrate use","Dietary counseling"],"CKD-Mineral and Bone Disorder":["Secondary hyperparathyroidism","Renal osteodystrophy types","Calciphylaxis","Adynamic bone disease","Vascular calcification"],"Vitamin D in CKD":["25-OH vitamin D deficiency vs 1,25-OH deficiency","Ergocalciferol vs calcitriol use","Paricalcitol / doxercalciferol"]},"Chronic Kidney Disease":{"CKD Classification and Staging":["GFR staging (G1\u2013G5)","Albuminuria staging (A1\u2013A3)","Risk prediction / heat map","CKD-EPI vs MDRD equations","Adjusting for race in GFR estimation"],"Progression and Monitoring":["Rate of GFR decline","Proteinuria targets","BP targets in CKD","ACEi/ARB use and contraindications","SGLT2 inhibitors in CKD","Finerenone in CKD + T2DM"],"CKD Complications \u2014 Anaemia":["Anaemia workup in CKD","EPO resistance causes","ESA therapy thresholds and targets","Iron supplementation (oral vs IV)","Roxadustat / HIF-PHI agents"],"CKD Complications \u2014 Metabolic Acidosis":["Bicarbonate supplementation indications","Effect on CKD progression","Veverimer"],"CKD Complications \u2014 Hyperkalemia":["Dietary potassium restriction","Patiromer / ZS-9","ACEi continuation strategies"],"CKD Complications \u2014 Hypertension":["RAAS blockade","Dihydropyridine CCBs","Mineralocorticoid receptor antagonists"],"CKD Complications \u2014 CVD":["Cardiovascular risk in CKD","Statin use in CKD","Aspirin / antiplatelet therapy"],"CKD in Special Populations":["CKD in elderly","CKD in pregnancy","CKD in HIV","CKD and cancer"],"AKI on CKD":["Definition and staging","Causes of AKI superimposed on CKD","Recovery and non-recovery"],"Haemodialysis \u2014 Principles":["KT/V and adequacy","Diffusion vs convection","Anticoagulation during HD","HD membrane types","Intradialytic hypotension management"],"Haemodialysis \u2014 Access":["AVF vs AVG vs tunnelled CVC","Maturation criteria","Complications (thrombosis, infection, steal syndrome)"],"Haemodialysis \u2014 Complications":["Dialysis disequilibrium syndrome","Dialyser reactions","Air embolism","Cramping and restless legs"],"Peritoneal Dialysis":["CAPD vs APD","PD adequacy (KT/V, creatinine clearance)","Peritonitis: organisms, treatment, empirical antibiotics","PD catheter complications","Ultrafiltration failure","Encapsulating peritoneal sclerosis"]},"Hypertension":{"Diagnosis and Classification":["Office vs ambulatory vs home BP measurement","White coat and masked hypertension","Resistant hypertension definition"],"Secondary Hypertension":["Renal artery stenosis \u2014 FMD vs atherosclerotic","Primary aldosteronism \u2014 workup and subtypes","Phaeochromocytoma / paraganglioma","Cushing syndrome","Obstructive sleep apnoea","Coarctation of the aorta","Drug-induced hypertension"],"Hypertensive Emergencies":["Hypertensive encephalopathy","Posterior reversible encephalopathy syndrome (PRES)","Aortic dissection","Acute HF / pulmonary oedema","Acute coronary syndromes","Eclampsia / pre-eclampsia","Microangiopathic haemolytic anaemia (MAHA)"],"Treatment Targets and Drug Selection":["JNC / NICE / ACC/AHA targets","First-line agents by indication","Combination therapy","Resistant hypertension management","Renal denervation"],"Hypertension in Special Populations":["Hypertension in CKD","Hypertension in diabetes","Hypertension in pregnancy","Hypertension in elderly"],"Renovascular Hypertension":["Imaging workup (Doppler, CTA, MRA)","Revascularisation indications","Medical management"]},"Tubular, Interstitial, and Cystic Disorders":{"Tubulopathies \u2014 Proximal":["Fanconi syndrome causes","cystinosis","Wilson disease","Proximal RTA isolated"],"Tubulopathies \u2014 Distal":["Distal RTA \u2014 primary vs secondary","Hypokalemia in dRTA","Nephrocalcinosis / nephrolithiasis in dRTA"],"Acute Interstitial Nephritis":["Drug-induced AIN \u2014 NSAIDs, antibiotics, PPIs","Immune checkpoint inhibitor AIN","Granulomatous AIN (sarcoid, TB)","AIN vs ATN on biopsy","Treatment (steroids \u2014 indications and timing)"],"Chronic Interstitial Nephritis":["Analgesic nephropathy","Aristolochic acid nephropathy","Heavy metal nephrotoxicity","Radiation nephritis"],"Cystic Kidney Disease":["ADPKD \u2014 genetics (PKD1 vs PKD2)","ADPKD \u2014 complications (pain, haematuria, UTI, cysts in other organs)","ADPKD \u2014 tolvaptan: indications and monitoring","ARPKD","Medullary sponge kidney","Medullary cystic kidney disease / UMOD mutations","Nephronophthisis"]},"Glomerular and Vascular Disorders":{"Nephrotic Syndrome":["Minimal change disease \u2014 primary and secondary causes","FSGS \u2014 primary vs secondary vs genetic","Membranous nephropathy \u2014 anti-PLA2R, secondary causes","Membranoproliferative GN \u2014 complement-mediated vs immune complex","Amyloidosis \u2014 AL vs AA"],"Nephritic Syndrome":["IgA nephropathy \u2014 Oxford classification, MEST-C","IgA vasculitis (HSP)","Lupus nephritis \u2014 ISN/RPS classification","Anti-GBM disease \u2014 Goodpasture","ANCA vasculitis \u2014 GPA vs MPA vs EGPA","Post-streptococcal GN","Fibrillary / immunotactoid GN"],"Complement-Mediated GN":["C3 glomerulopathy \u2014 C3GN vs DDD","aHUS \u2014 genetics and eculizumab","MPGN type I"],"Thrombotic Microangiopathy":["TTP \u2014 ADAMTS13 and treatment","HUS \u2014 typical (STEC) vs atypical","Drug-induced TMA","Pregnancy-associated TMA","Secondary TMA (malignancy, drugs, transplant)"],"Renal Vascular Disease":["Atherosclerotic renovascular disease","Cholesterol emboli","Renal vein thrombosis","Sickle cell nephropathy"]},"Kidney Transplantation":{"Pre-transplant Assessment":["Recipient workup \u2014 cardiovascular, infectious, immunological","Living vs deceased donor","Donor-specific antibodies (DSA) \u2014 crossmatch","Extended criteria donors","Paired kidney exchange"],"Immunosuppression":["Induction agents \u2014 basiliximab, ATG","Maintenance: calcineurin inhibitors (tacrolimus vs ciclosporin)","Maintenance: mycophenolate, azathioprine","Maintenance: steroids and steroid minimisation","mTOR inhibitors \u2014 sirolimus / everolimus","Belatacept"],"Rejection":["Hyperacute rejection","T cell-mediated rejection (TCMR) \u2014 Banff criteria","Antibody-mediated rejection (ABMR)","Mixed rejection","Chronic allograft nephropathy"],"Post-transplant Complications":["BK virus nephropathy","CMV disease and prophylaxis","EBV and PTLD","Recurrent disease in transplant","Calcineurin inhibitor toxicity","Post-transplant diabetes mellitus","Post-transplant hypertension","Post-transplant erythrocytosis"],"Delayed Graft Function":["Definition and risk factors","Management of DGF","Primary non-function"],"Long-term Outcomes":["Allograft survival data","Death-censored graft survival","Cardiovascular risk post-transplant","Malignancy screening post-transplant"]},"Pharmacology":{"Immunosuppressants":["Calcineurin inhibitors \u2014 mechanism and toxicity","mTOR inhibitors \u2014 mechanism and toxicity","Mycophenolate mofetil","Azathioprine","Corticosteroids in nephrology","Rituximab in nephrology","Eculizumab / ravulizumab","Belimumab in lupus nephritis","Voclosporin in lupus nephritis"],"Diuretics":["Loop diuretics \u2014 mechanism, dosing in CKD","Thiazides \u2014 mechanism and use in CKD","Potassium-sparing diuretics","SGLT2 inhibitors as diuretics","Acetazolamide","Combination diuretic therapy"],"Nephrotoxins":["NSAIDs in CKD","Contrast-induced AKI \u2014 risk and prevention","Aminoglycosides","Vancomycin","Cisplatin nephrotoxicity","Calcineurin inhibitor nephrotoxicity","Checkpoint inhibitor nephrotoxicity"],"Drug Dosing in Kidney Disease":["GFR thresholds for drug dose adjustment","Metformin in CKD","DOAC dosing in CKD","LMWH in CKD","Antibiotics requiring renal dose adjustment","Lithium toxicity and monitoring"],"Antihypertensives in Renal Disease":["ACEi/ARB: indications, contraindications, monitoring","Dihydropyridine vs non-dihydropyridine CCBs","Beta-blockers in CKD","Hydralazine / minoxidil","Clonidine in ESRD"],"Novel and Emerging Therapies":["SGLT2 inhibitors \u2014 renal and CV outcomes","Finerenone in CKD","Sparsentan in FSGS / IgAN","Iptacopan in C3G / aHUS","Sparsentan vs irbesartan","Atrasentan in IgAN"],"Acid-base and electrolyte pharmacology":["Sodium bicarbonate use","Veverimer","Patiromer mechanism and use","Sodium zirconium cyclosilicate (ZS-9)","Tolvaptan in ADPKD and hyponatremia","Cinacalcet vs etelcalcetide"]},"Acute Kidney Injury \/ ICU Nephrology":{"AKI Definition and Staging":["KDIGO AKI criteria (creatinine + urine output)","AKIN vs RIFLE vs KDIGO comparison","Limitations of serum creatinine"],"AKI Aetiology \u2014 Pre-renal":["Volume depletion","Hepatorenal syndrome","Cardiorenal syndrome","NSAID-induced haemodynamic AKI","ACEi/ARB in haemodynamic AKI"],"AKI Aetiology \u2014 Intrinsic":["ATN \u2014 ischaemic","ATN \u2014 nephrotoxic (contrast, aminoglycosides, myoglobin)","AIN \u2014 drug-induced","Glomerulonephritis causing AKI","Crystalline nephropathy (oxalate, uric acid, drug)","Myeloma cast nephropathy"],"AKI Aetiology \u2014 Post-renal":["Bilateral obstruction","Unilateral obstruction in solitary kidney","BPH","Malignancy-related obstruction","Retroperitoneal fibrosis"],"AKI in Specific Contexts":["Contrast-associated AKI (CA-AKI) \u2014 prevention","Sepsis-associated AKI","Post-cardiac surgery AKI","Crush injury / rhabdomyolysis","Tumour lysis syndrome","Hepatorenal syndrome type 1 vs 2","Abdominal compartment syndrome"],"AKI Biomarkers":["NGAL","KIM-1","Cystatin C","TIMP-2 x IGFBP-7 (NephroCheck)","Limitations and clinical application"],"Renal Replacement Therapy in AKI":["Indications for RRT (AEIOU)","CVVH vs CVVHD vs CVVHDF \u2014 mechanisms","Intermittent HD vs CRRT \u2014 when to use","Anticoagulation in CRRT (heparin vs citrate vs no anticoagulation)","RRT dose (Kt/V for IHD, effluent dose for CRRT)","Timing of RRT initiation (AKIKI vs STARRT-AKI)","Recovery from AKI-requiring RRT"],"AKI Recovery and Long-term Outcomes":["AKI to CKD transition","Incomplete recovery predictors","Follow-up after AKI"],"Drug Dosing in AKI":["Antibiotic dosing (vancomycin, aminoglycosides) in AKI","Dosing during CRRT","TDM-guided dosing"],"Electrolyte Emergencies in ICU":["Severe hyponatremia management (3% saline)","Severe hyperkalemia \u2014 ECG changes and treatment ladder","Hypophosphataemia in refeeding","Magnesium replacement in ICU","Citrate toxicity in CRRT"]}};
+
+const MODULES = ["V6M1","V7M1","V7M2","V8M1","V8M2","V9M1","V9M2","V10M1","V11M1"];
+const CAT_COLORS = {
+  "Acid–Base and Potassium Disorders": "var(--orange)",
+  "Acute Kidney Injury and Intensive Care Unit Nephrology": "var(--red)",
+  "Acute Kidney Injury / ICU Nephrology": "var(--red)",
+  "Ca, Po4, Mg disorders & Stones": "var(--purple)",
+  "Calcium, Phosphorus, and Magnesium Disorders and Stones": "var(--purple)",
+  "Chronic Kidney Disease": "var(--blue)",
+  "Glomerular and Vascular Disorders": "var(--pink)",
+  "Hypertension": "var(--yellow)",
+  "Kidney Transplantation": "var(--green)",
+  "Pharmacology": "var(--cyan)",
+  "Sodium and Water Abnormalities": "var(--orange)",
+  "Tubular, Interstitial and Cystic Disorders": "var(--grey)",
+  "Tubular, Interstitial, and Cystic Disorders": "var(--grey)",
 };
 
-const STREAM_LABELS = { renal:"RENAL", gim:"GIM" };
+// ══════════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════════
+let sceData = {};
+let currentTab = "overview";
+let ksapMode = "category"; // "category" | "module"
+let expandedCats = new Set();
+let expandedTopics = new Set();
 
-// ── #1 Adaptive spaced repetition ─────────────────────
-function nextRetestDays(conf, prevInterval) {
-  const prev = prevInterval || 7; // default for legacy sessions
-  if (conf <= 2) return 3;                      // failed → review soon
-  if (conf === 3) return Math.round(prev * 1.5); // ok → moderate growth
-  if (conf === 4) return Math.round(prev * 2);   // good → double
-  return Math.round(prev * 2.5);                 // great → aggressive growth
-}
-
-// Legacy fixed mapping used only for hint display before first session
-function retestDaysFromConf(conf) {
-  if (conf <= 2) return 3;
-  if (conf === 3) return 14;
-  if (conf === 4) return 21;
-  return 28;
-}
-
-// ── #2 Weakest topics ─────────────────────────────────
-function weakestTopics(n = 5) {
-  const map = {};
-  sessionList().forEach(s => {
-    if (!s.topicId || !s.confidence) return;
-    if (!map[s.topicId]) map[s.topicId] = [];
-    map[s.topicId].push(s.confidence);
-  });
-  return Object.entries(map)
-    .map(([id, confs]) => ({
-      id,
-      name: (topics[id] || {}).name || "Unknown",
-      stream: (topics[id] || {}).stream || "renal",
-      avg: confs.reduce((a,b) => a+b, 0) / confs.length,
-      count: confs.length,
-    }))
-    .sort((a,b) => a.avg - b.avg)
-    .slice(0, n);
-}
-
-// ══════════════════════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════════════════════
-let sessions      = {};
-let topics        = {};
-let currentTab    = "today";
-let selConfidence = 3;
-let timerInterval = null;
-let timerRunning  = false;
-let timerCompleted = false;
-let timerStartTime = null;   // #3 track actual start time
-let pendingFiles  = [];
-let timerPhase    = "study";
-let timerSeconds  = 90 * 60;
-let timerTotal    = 90 * 60;
-
-// ══════════════════════════════════════════════════════
-//  CLOCK
-// ══════════════════════════════════════════════════════
-function tickClock() {
-  const now = new Date();
-  document.getElementById("clock").textContent =
-    now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
-  document.getElementById("clock-date").textContent =
-    now.toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short"}).toUpperCase();
-}
-tickClock(); setInterval(tickClock, 1000);
-
-// ══════════════════════════════════════════════════════
-//  FIREBASE SYNC
-// ══════════════════════════════════════════════════════
-window.addEventListener("stx-sync", () => {
-  sessions = window._stx_sessions || {};
-  topics   = window._stx_topics   || {};
-  plan     = window._stx_plan     || {};
-  const dot = document.getElementById("sync-dot");
-  const sb  = document.getElementById("sb-sync");
-  dot.textContent = "● LIVE"; dot.style.color = "var(--green)";
-  sb.textContent  = "● LIVE"; sb.style.color  = "var(--green)";
+// ══════════════════════════════════════════════════════════════════════
+// FIREBASE SYNC
+// ══════════════════════════════════════════════════════════════════════
+window.addEventListener("sce-sync", () => {
+  sceData = window._sce_data || {};
+  document.getElementById("sync-dot").textContent = "● LIVE";
+  document.getElementById("sync-dot").style.color = "var(--green)";
   renderAll();
 });
 
-window.addEventListener("stx-sync", () => {
-  if (!window._stx_seeded && window._stx_fb && Object.keys(topics).length === 0) {
-    window._stx_seeded = true;
-    const { push, topicRef } = window._stx_fb;
-    Object.entries(DEFAULT_TOPICS).forEach(([stream, list]) => {
-      list.forEach(name => push(topicRef, { name, stream }));
-    });
-  }
-}, { once: true });
+function qKey(code) { return code.replace(/[^a-zA-Z0-9]/g, "_"); }
+function stKey(cat, topic, sub) { return `st_${cat}_${topic}_${sub}`.replace(/[^a-zA-Z0-9]/g,"_").slice(0,100); }
+function getQ(code) { return sceData.ksap?.[qKey(code)] || {}; }
+function getST(cat, topic, sub) { return sceData.topics?.[stKey(cat,topic,sub)] || {}; }
 
-setTimeout(() => {
-  if (!document.getElementById("tab-today").innerHTML) {
-    sessions = window._stx_sessions || {};
-    topics   = window._stx_topics   || {};
-    renderAll();
-  }
-}, 3000);
-
-// ══════════════════════════════════════════════════════
-//  TIMER
-// ══════════════════════════════════════════════════════
-function toggleTimer() {
-  const panel = document.getElementById("timer-panel");
-  panel.classList.toggle("show");
-  if (panel.classList.contains("show")) updateTimerDisplay();
+function saveQ(code, updates) {
+  if (!window._sce_fb) return;
+  const { db, ref, update } = window._sce_fb;
+  update(ref(db, `sceData/ksap/${qKey(code)}`), updates);
 }
 
-function timerStartPause() {
-  if (timerRunning) {
-    clearInterval(timerInterval);
-    timerRunning = false;
-    document.getElementById("timer-start-btn").textContent = "▶ RESUME";
-  } else {
-    // #3 Record start time on first start
-    if (!timerStartTime && timerPhase === "study") timerStartTime = Date.now();
-    timerRunning = true;
-    document.getElementById("timer-start-btn").textContent = "⏸ PAUSE";
-    timerInterval = setInterval(() => {
-      if (timerSeconds <= 0) {
-        clearInterval(timerInterval);
-        timerRunning = false;
-        if (timerPhase === "study") {
-          timerCompleted = true;
-          if (currentTab === "log") renderLog();
-          if (currentTab === "today") renderToday();
-          switchPhase();
-          document.getElementById("timer-clock").classList.add("alert-pulse");
-          setTimeout(() => document.getElementById("timer-clock").classList.remove("alert-pulse"), 5000);
-        } else {
-          timerReset();
-        }
-        return;
-      }
-      timerSeconds--;
-      updateTimerDisplay();
-    }, 1000);
-  }
+function saveST(cat, topic, sub, updates) {
+  if (!window._sce_fb) return;
+  const { db, ref, update } = window._sce_fb;
+  update(ref(db, `sceData/topics/${stKey(cat,topic,sub)}`), updates);
 }
 
-function timerReset() {
-  clearInterval(timerInterval);
-  timerRunning  = false;
-  timerStartTime = null;
-  timerSeconds  = timerPhase === "study" ? 90 * 60 : 20 * 60;
-  timerTotal    = timerSeconds;
-  document.getElementById("timer-start-btn").textContent = "▶ START";
-  document.getElementById("timer-clock").classList.remove("alert-pulse");
-  updateTimerDisplay();
-}
-
-function switchPhase() {
-  clearInterval(timerInterval);
-  timerRunning = false;
-  timerPhase   = timerPhase === "study" ? "rest" : "study";
-  timerSeconds = timerPhase === "study" ? 90 * 60 : 20 * 60;
-  timerTotal   = timerSeconds;
-  if (timerPhase === "study") timerStartTime = null;
-  document.getElementById("timer-start-btn").textContent = "▶ START";
-  document.getElementById("timer-clock").classList.remove("alert-pulse");
-  const btn = document.querySelector(".timer-btn.secondary:nth-child(3)");
-  if (btn) btn.textContent = timerPhase === "study" ? "⇄ SWITCH TO REST" : "⇄ SWITCH TO STUDY";
-  updateTimerDisplay();
-}
-
-function updateTimerDisplay() {
-  const m = Math.floor(timerSeconds / 60);
-  const s = timerSeconds % 60;
-  const pct = (timerSeconds / timerTotal) * 100;
-  const isRest = timerPhase === "rest";
-  document.getElementById("timer-phase").textContent = isRest ? "REST PERIOD" : "STUDY SESSION";
-  document.getElementById("timer-clock").textContent =
-    `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
-  document.getElementById("timer-clock").className = "timer-clock" + (isRest ? " rest" : "");
-  document.getElementById("timer-bar").style.width = `${pct}%`;
-  document.getElementById("timer-bar").className = "timer-bar" + (isRest ? " rest" : "");
-}
-
-// ══════════════════════════════════════════════════════
-//  HELPERS
-// ══════════════════════════════════════════════════════
-function topicList() {
-  return Object.entries(topics).map(([id,t]) => ({id,...t})).sort((a,b) => a.name.localeCompare(b.name));
-}
-function sessionList() {
-  return Object.entries(sessions).map(([id,s]) => ({id,...s})).sort((a,b) => b.date.localeCompare(a.date));
-}
-function retestStatus(sess) {
-  if (sess.retestDone) return "done";
-  if (!sess.retestDate) return "ok";
-  const today = new Date(); today.setHours(0,0,0,0);
-  const due   = new Date(sess.retestDate);
-  const diff  = Math.round((due - today) / 86400000);
-  if (diff < 0)  return "due";
-  if (diff <= 3) return "soon";
-  return "ok";
-}
-function retestLabel(sess) {
-  if (sess.retestDone) return "✓ RETESTED";
-  if (!sess.retestDate) return "no retest set";
-  const today = new Date(); today.setHours(0,0,0,0);
-  const due   = new Date(sess.retestDate);
-  const diff  = Math.round((due - today) / 86400000);
-  if (diff < 0)  return `!! OVERDUE ${Math.abs(diff)}d`;
-  if (diff === 0) return "!! DUE TODAY";
-  if (diff <= 3) return `⚠ due in ${diff}d`;
-  return `retest ${due.toLocaleDateString("en-GB",{day:"2-digit",month:"short"})}`;
-}
-function weekSessions() {
-  const now    = new Date();
-  const day    = now.getDay() || 7;
-  const monday = new Date(now); monday.setDate(now.getDate() - day + 1); monday.setHours(0,0,0,0);
-  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); sunday.setHours(23,59,59,999);
-  return sessionList().filter(s => { const d = new Date(s.date); return d >= monday && d <= sunday; });
-}
-function totalStudyHours() {
-  return sessionList().reduce((acc, s) => acc + (s.duration || 90), 0) / 60;
-}
-function calcStreak() {
-  let streak = 0;
-  const now = new Date();
-  for (let w = 0; w < 52; w++) {
-    const refDate = new Date(now); refDate.setDate(now.getDate() - w * 7);
-    const day = refDate.getDay() || 7;
-    const mon = new Date(refDate); mon.setDate(refDate.getDate() - day + 1); mon.setHours(0,0,0,0);
-    const sun = new Date(mon); sun.setDate(mon.getDate() + 6); sun.setHours(23,59,59,999);
-    const count = sessionList().filter(s => { const d = new Date(s.date); return d >= mon && d <= sun; }).length;
-    if (count >= 2) streak++;
-    else if (w > 0) break;
-  }
-  return streak;
-}
-
-// ══════════════════════════════════════════════════════
-//  RENDER
-// ══════════════════════════════════════════════════════
-function renderAll() {
-  const wk     = weekSessions();
-  const due    = sessionList().filter(s => retestStatus(s) === "due").length;
-  const soon   = sessionList().filter(s => retestStatus(s) === "soon").length;
-  const streak = calcStreak();
-
-  document.getElementById("week-pips").querySelectorAll(".pip").forEach((p,i) => {
-    p.classList.toggle("done", i < wk.length);
+// ══════════════════════════════════════════════════════════════════════
+// COMPUTED STATS
+// ══════════════════════════════════════════════════════════════════════
+function computeStats() {
+  let attempted = 0, correct = 0, p1done = 0, p2done = 0;
+  KSAP.forEach(q => {
+    const d = getQ(q.code);
+    if (d.p1correct || d.p1incorrect) { attempted++; p1done++; }
+    if (d.p2correct || d.p2incorrect) p2done++;
+    if (d.p1correct) correct++;
   });
-  document.getElementById("week-sub").textContent  = `${wk.length} / 2 sessions`;
-  document.getElementById("sb-week").textContent   = `${wk.length}/2`;
-  document.getElementById("total-sessions").textContent = sessionList().length;
-  document.getElementById("streak-val").textContent = streak;
+  const ksapPct = attempted > 0 ? Math.round(correct / attempted * 100) : 0;
 
-  const retestEl = document.getElementById("retest-due-count");
-  retestEl.textContent = due + soon;
-  retestEl.className = "retest-val" + (due > 0 ? " alert" : soon > 0 ? " warn" : "");
+  let stTotal = 0, stRead = 0;
+  Object.entries(TOPICS).forEach(([cat, topics]) => {
+    Object.entries(topics).forEach(([topic, subs]) => {
+      subs.forEach(sub => {
+        stTotal++;
+        const d = getST(cat, topic, sub);
+        if (d.read || d.reviewed) stRead++;
+      });
+    });
+  });
+  const topicPct = stTotal > 0 ? Math.round(stRead / stTotal * 100) : 0;
+  const readiness = Math.round(ksapPct * 0.6 + topicPct * 0.4);
+  return { attempted, correct, ksapPct, topicPct, readiness, p1done, p2done, stTotal, stRead };
+}
+
+function computeCatStats(cat) {
+  const qs = KSAP.filter(q => q.category === cat);
+  let attempted = 0, correct = 0, p1done = 0, p2done = 0;
+  qs.forEach(q => {
+    const d = getQ(q.code);
+    if (d.p1correct || d.p1incorrect) { attempted++; p1done++; }
+    if (d.p2correct || d.p2incorrect) p2done++;
+    if (d.p1correct) correct++;
+  });
+  return { total: qs.length, attempted, correct, p1done, p2done,
+    pct: attempted > 0 ? Math.round(correct/attempted*100) : 0 };
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════════════
+function renderAll() {
+  const s = computeStats();
+  const rPct = s.readiness;
+  const rColor = rPct >= 70 ? "var(--green)" : rPct >= 40 ? "var(--yellow)" : "var(--red)";
+
+  document.getElementById("hdr-ksap-pct").textContent = `${s.ksapPct}%`;
+  document.getElementById("hdr-topic-pct").textContent = `${s.topicPct}%`;
+  document.getElementById("hdr-attempted").textContent = s.attempted;
+  document.getElementById("readiness-bar").style.width = `${rPct}%`;
+  document.getElementById("readiness-bar").style.background = rColor;
+  document.getElementById("readiness-pct").textContent = `${rPct}%`;
+  document.getElementById("readiness-pct").style.color = rColor;
+  document.getElementById("sb-p1").textContent = `${s.p1done}/675`;
+  document.getElementById("sb-p2").textContent = `${s.p2done}/675`;
 
   renderTab(currentTab);
 }
@@ -626,648 +346,283 @@ function setTab(tab) {
   currentTab = tab;
   document.querySelectorAll(".tab").forEach(b =>
     b.classList.toggle("active", b.getAttribute("onclick").includes(`'${tab}'`)));
-  ["today","log","sessions","retests","plan","topics"].forEach(t =>
+  ["overview","ksap","topics"].forEach(t =>
     document.getElementById(`tab-${t}`).style.display = t === tab ? "block" : "none");
   renderTab(tab);
 }
 
 function renderTab(tab) {
-  if (tab === "today")    renderToday();
-  if (tab === "log")      renderLog();
-  if (tab === "sessions") renderSessions();
-  if (tab === "retests")  renderRetests();
-  if (tab === "plan")     renderPlan();
+  if (tab === "overview") renderOverview();
+  if (tab === "ksap")     renderKSAP();
   if (tab === "topics")   renderTopics();
 }
 
-// ── #4 TODAY view ──────────────────────────────────────
-function renderToday() {
-  const el     = document.getElementById("tab-today");
-  const wk     = weekSessions();
-  const due    = sessionList().filter(s => retestStatus(s) === "due");
-  const soon   = sessionList().filter(s => retestStatus(s) === "soon");
-  const sessNeeded = Math.max(0, 2 - wk.length);
-  const weak   = weakestTopics(3);
-  const hours  = totalStudyHours();
+// ── OVERVIEW ──────────────────────────────────────────────────────────
+function renderOverview() {
+  const el = document.getElementById("tab-overview");
+  const s = computeStats();
+  const cats = [...new Set(KSAP.map(q => q.category))].sort();
 
-  // Suggest a topic — prefer weakest, or one not studied in a while
-  let suggested = null;
-  if (weak.length) suggested = weak[0];
-
-  const c = (v, cls) => `<span style="color:var(--${cls})">${v}</span>`;
+  // Find weakest
+  let weakest = null, weakestPct = 101;
+  cats.forEach(cat => {
+    const cs = computeCatStats(cat);
+    if (cs.attempted > 0 && cs.pct < weakestPct) { weakest = cat; weakestPct = cs.pct; }
+  });
 
   let html = `
     <div class="sec-head">
-      <span class="sec-title">TODAY</span>
+      <span class="sec-title">SCE READINESS OVERVIEW</span>
       <span class="sec-rule"></span>
       <span class="sec-note">${new Date().toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long"})}</span>
     </div>
-
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin-bottom:20px;">
-
-      <!-- Sessions this week -->
-      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--${wk.length>=2?'green':'yellow'});padding:12px 14px;">
-        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:6px;">WEEKLY GOAL</div>
-        <div style="font-size:22px;font-weight:500;color:var(--${wk.length>=2?'green':'yellow'})">${wk.length} / 2</div>
-        <div style="font-size:10px;color:var(--grey2);margin-top:4px;">
-          ${wk.length >= 2
-            ? `✓ goal met this week`
-            : `${sessNeeded} session${sessNeeded>1?'s':''} needed this week`}
-        </div>
-        ${sessNeeded > 0 ? `<button class="btn-primary" style="margin-top:8px;font-size:9px;padding:4px 12px;" onclick="setTab('log')">LOG SESSION ▸</button>` : ""}
-      </div>
-
-      <!-- Retests -->
-      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--${due.length>0?'pink':soon.length>0?'yellow':'border2'});padding:12px 14px;">
-        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:6px;">RETESTS</div>
-        <div style="font-size:22px;font-weight:500;color:var(--${due.length>0?'pink':soon.length>0?'yellow':'grey2'})">${due.length + soon.length}</div>
-        <div style="font-size:10px;color:var(--grey2);margin-top:4px;">
-          ${due.length > 0 ? `${c(due.length,'pink')} overdue · ${c(soon.length,'yellow')} due soon`
-            : soon.length > 0 ? `${c(soon.length,'yellow')} due within 3 days`
-            : `no retests due`}
-        </div>
-        ${due.length + soon.length > 0 ? `<button class="btn-primary" style="margin-top:8px;font-size:9px;padding:4px 12px;" onclick="setTab('retests')">VIEW RETESTS ▸</button>` : ""}
-      </div>
-
-      <!-- Hours studied -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:20px;">
       <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--cyan);padding:12px 14px;">
-        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:6px;">TOTAL HOURS STUDIED</div>
-        <div style="font-size:22px;font-weight:500;color:var(--cyan)">${hours.toFixed(1)}h</div>
-        <div style="font-size:10px;color:var(--grey2);margin-top:4px;">${sessionList().length} sessions logged</div>
+        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">KSAP PROGRESS — PASS 1</div>
+        <div style="font-size:20px;font-weight:500;color:var(--cyan)">${s.p1done} <span style="font-size:11px;color:var(--grey)">/ 675</span></div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${Math.round(s.p1done/675*100)}% of questions attempted</div>
       </div>
-
-    </div>
-
-    ${suggested ? `
-    <div class="sec-head">
-      <span class="sec-title">SUGGESTED FOCUS</span>
-      <span class="sec-rule"></span>
-      <span class="sec-note">based on confidence scores</span>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--${suggested.stream});padding:10px 14px;margin-bottom:20px;">
-      <div style="font-size:12px;color:var(--white);font-weight:500;">${suggested.name}</div>
-      <div style="font-size:9px;color:var(--grey2);margin-top:3px;">
-        avg confidence ${suggested.avg.toFixed(1)}★ across ${suggested.count} session${suggested.count>1?'s':''}
-        &nbsp;·&nbsp; <span style="color:var(--${suggested.stream})">${STREAM_LABELS[suggested.stream]}</span>
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--purple);padding:12px 14px;">
+        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">KSAP PROGRESS — PASS 2</div>
+        <div style="font-size:20px;font-weight:500;color:var(--purple)">${s.p2done} <span style="font-size:11px;color:var(--grey)">/ 675</span></div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${Math.round(s.p2done/675*100)}% of module review done</div>
       </div>
-      <button class="btn-primary" style="margin-top:8px;font-size:9px;padding:4px 12px;"
-        onclick="setTab('log')">STUDY THIS ▸</button>
-    </div>` : ""}
-
-    ${weak.length ? `
-    <div class="sec-head">
-      <span class="sec-title">WEAKEST TOPICS</span>
-      <span class="sec-rule"></span>
-      <span class="sec-note">lowest avg confidence</span>
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--green);padding:12px 14px;">
+        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">TOPIC COVERAGE</div>
+        <div style="font-size:20px;font-weight:500;color:var(--green)">${s.stRead} <span style="font-size:11px;color:var(--grey)">/ ${s.stTotal}</span></div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${s.topicPct}% subtopics read or reviewed</div>
+      </div>
+      ${weakest ? `
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--red);padding:12px 14px;">
+        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">WEAKEST CATEGORY</div>
+        <div style="font-size:11px;font-weight:500;color:var(--red);line-height:1.3;">${weakest}</div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${weakestPct}% correct on attempted</div>
+      </div>` : ""}
     </div>
-    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:20px;">
-      ${weak.map((t,i) => `
-        <div style="display:flex;align-items:center;gap:10px;padding:7px 12px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--${t.stream});">
-          <span style="font-size:10px;color:var(--grey2);min-width:16px;">${i+1}.</span>
-          <span style="font-size:11px;color:var(--white);flex:1;">${t.name}</span>
-          <span style="font-size:9px;color:var(--yellow);">${t.avg.toFixed(1)}★</span>
-          <span style="font-size:8px;color:var(--grey2);">${t.count} sess</span>
-        </div>`).join("")}
-    </div>` : ""}
 
     <div class="sec-head">
-      <span class="sec-title">RECENT SESSIONS</span>
+      <span class="sec-title">BY CATEGORY</span>
       <span class="sec-rule"></span>
     </div>
-    <div class="session-grid">
-      ${sessionList().slice(0,3).map(sessCard).join("") || `<div class="empty-msg">no sessions yet — start the timer and log your first session</div>`}
+    <div class="overview-grid">
+      ${cats.map(cat => {
+        const cs = computeCatStats(cat);
+        const color = CAT_COLORS[cat] || "var(--cyan)";
+        const pct = cs.attempted > 0 ? cs.pct : null;
+        return `
+          <div class="ov-card" style="border-left-color:${color}">
+            <div class="ov-cat">${cat}</div>
+            <div class="ov-row"><span>P1 attempted</span><strong>${cs.p1done} / ${cs.total}</strong></div>
+            <div class="ov-row"><span>P2 attempted</span><strong>${cs.p2done} / ${cs.total}</strong></div>
+            <div class="ov-row"><span>% correct</span><strong style="color:${pct !== null ? (pct>=70?"var(--green)":pct>=50?"var(--yellow)":"var(--red)") : "var(--grey2)"}">${pct !== null ? pct+"%" : "—"}</strong></div>
+            <div class="ov-bar-bg"><div class="ov-bar" style="width:${Math.round(cs.p1done/cs.total*100)}%;background:${color}"></div></div>
+          </div>`;
+      }).join("")}
     </div>`;
 
   el.innerHTML = html;
 }
 
-// ── Log Session form ───────────────────────────────────
-function makeTopicSearch(inputId, hiddenId) {
-  const tl = topicList();
-  return `
-    <div class="topic-search-wrap" id="wrap-${inputId}">
-      <div class="topic-search-row">
-        <input class="topic-search-inp" id="${inputId}" autocomplete="off"
-          placeholder="// search or open dropdown..."
-          oninput="filterTopics('${inputId}','${hiddenId}')"
-          onfocus="openTopicDrop('${inputId}')"
-          onblur="closeTopicDrop('${inputId}',300)" />
-        <button type="button" class="topic-drop-btn" onclick="toggleTopicDrop('${inputId}')">▾</button>
-      </div>
-      <input type="hidden" id="${hiddenId}" />
-      <div class="topic-dropdown" id="drop-${inputId}">
-        ${tl.map(t => `
-          <div class="topic-opt"
-            data-id="${t.id}" data-name="[${STREAM_LABELS[t.stream]}] ${t.name.replace(/"/g, '&quot;')}"
-            onmousedown="selectTopic('${inputId}','${hiddenId}','${t.id}','[${STREAM_LABELS[t.stream]}] ${t.name.replace(/'/g,"\\'")}')">
-            ${t.name}<span class="topic-opt-stream">${STREAM_LABELS[t.stream]}</span>
-          </div>`).join("")}
-        <div class="topic-opt empty" style="display:none" id="no-results-${inputId}">no matches</div>
-      </div>
+// ── KSAP ──────────────────────────────────────────────────────────────
+function renderKSAP() {
+  const el = document.getElementById("tab-ksap");
+  const isModule = ksapMode === "module";
+
+  let html = `
+    <div class="subtab-row">
+      <button class="subtab ${!isModule?'active':''}" onclick="setKsapMode('category')">PASS 1 — BY CATEGORY</button>
+      <button class="subtab ${isModule?'active':''}" onclick="setKsapMode('module')">PASS 2 — BY MODULE</button>
     </div>`;
-}
-function openTopicDrop(inputId) { document.getElementById(`drop-${inputId}`)?.classList.add("open"); }
-function toggleTopicDrop(inputId) {
-  const drop = document.getElementById(`drop-${inputId}`);
-  const input = document.getElementById(inputId);
-  const wrap = document.getElementById(`wrap-${inputId}`);
-  const hidden = wrap?.querySelector('input[type="hidden"]');
-  if (!drop) return;
-  if (drop.classList.contains("open")) { drop.classList.remove("open"); }
-  else { if (input) input.focus(); filterTopics(inputId, hidden?.id || ""); drop.classList.add("open"); }
-}
-function closeTopicDrop(inputId, delay) {
-  setTimeout(() => document.getElementById(`drop-${inputId}`)?.classList.remove("open"), delay || 0);
-}
-function filterTopics(inputId, hiddenId) {
-  const q = document.getElementById(inputId)?.value.toLowerCase() || "";
-  const drop = document.getElementById(`drop-${inputId}`);
-  if (!drop) return;
-  const hidden = hiddenId ? document.getElementById(hiddenId) : null;
-  if (hidden) hidden.value = "";
-  let any = false;
-  drop.querySelectorAll(".topic-opt:not(.empty)").forEach(opt => {
-    const match = opt.dataset.name.toLowerCase().includes(q);
-    opt.style.display = match ? "" : "none";
-    if (match) any = true;
-  });
-  const noRes = document.getElementById(`no-results-${inputId}`);
-  if (noRes) noRes.style.display = any ? "none" : "";
-  drop.classList.add("open");
-}
-function selectTopic(inputId, hiddenId, topicId, topicName) {
-  document.getElementById(inputId).value  = topicName;
-  document.getElementById(hiddenId).value = topicId;
-  if (hiddenId === "f-topic") {
-    localStorage.setItem("stx_session_topic", topicId);
-    localStorage.setItem("stx_session_topic_name", topicName);
-  }
-  closeTopicDrop(inputId, 0);
-}
 
-function renderLog() {
-  const el = document.getElementById("tab-log");
-  const tl = topicList();
-  const topicOpts = tl.map(t =>
-    `<option value="${t.id}">[${STREAM_LABELS[t.stream]}] ${t.name}</option>`
-  ).join("");
-
-  el.innerHTML = `
-    <div class="sec-head">
-      <span class="sec-title">LOG A SESSION</span>
-      <span class="sec-rule"></span>
-      <span class="sec-note">Record what you studied today</span>
-    </div>
-    <div class="log-form">
-      <div class="form-grid">
-        <div class="form-field">
-          <label class="form-label">date</label>
-          <input class="form-inp" id="f-date" type="date" value="${new Date().toISOString().split('T')[0]}" />
-        </div>
-        <div class="form-field">
-          <label class="form-label">topic *</label>
-          ${makeTopicSearch("f-topic-search", "f-topic")}
-        </div>
-        <div class="form-field">
-          <label class="form-label">session_type</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
-            ${["study","quiz","teach"].map(t => `
-              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:10px;color:var(--grey);letter-spacing:0.08em;">
-                <input type="checkbox" id="f-type-${t}" value="${t}"
-                  style="accent-color:var(--green);width:14px;height:14px;"
-                  ${t==='study'?'checked':''} />
-                ${t.toUpperCase()}
-              </label>`).join("")}
+  if (!isModule) {
+    // Category view
+    const cats = [...new Set(KSAP.map(q => q.category))].sort();
+    html += `<div style="padding-top:10px;">`;
+    cats.forEach(cat => {
+      const qs = KSAP.filter(q => q.category === cat);
+      const cs = computeCatStats(cat);
+      const color = CAT_COLORS[cat] || "var(--cyan)";
+      const expanded = expandedCats.has(cat);
+      html += `
+        <div style="margin-bottom:6px;">
+          <div class="cat-card ${expanded?'expanded':''}" onclick="toggleCat('${cat.replace(/'/g,"\\'")}')">
+            <div class="cat-name">${cat}</div>
+            <div class="cat-stats">
+              <span>P1: <strong>${cs.p1done}/${cs.total}</strong></span>
+              <span>P2: <strong>${cs.p2done}/${cs.total}</strong></span>
+              <span>Correct: <strong style="color:${cs.pct>=70?'var(--green)':cs.pct>=50?'var(--yellow)':'var(--red)'}">${cs.attempted>0?cs.pct+'%':'—'}</strong></span>
+            </div>
+            <div class="cat-bar-bg"><div class="cat-bar" style="width:${Math.round(cs.p1done/cs.total*100)}%;background:${color}"></div></div>
           </div>
-        </div>
-        <div class="form-field wide">
-          <label class="form-label">notes</label>
-          <textarea class="form-inp" id="f-notes" oninput="localStorage.setItem('stx_session_notes', this.value)" placeholder="// key concepts, gaps identified, questions to follow up..."></textarea>
+          ${expanded ? `<div class="q-list">${qs.map(q => qRow(q, "p1")).join("")}</div>` : ""}
+        </div>`;
+    });
+    html += `</div>`;
+  } else {
+    // Module view
+    html += `<div style="padding-top:10px;">`;
+    MODULES.forEach(mod => {
+      const qs = KSAP.filter(q => q.module === mod);
+      let p2done = 0;
+      qs.forEach(q => { const d = getQ(q.code); if(d.p2correct||d.p2incorrect) p2done++; });
+      const expanded = expandedCats.has(mod);
+      html += `
+        <div style="margin-bottom:6px;">
+          <div class="cat-card ${expanded?'expanded':''}" onclick="toggleCat('${mod}')">
+            <div class="cat-name">${mod}</div>
+            <div class="cat-stats"><span>P2 progress: <strong>${p2done}/${qs.length}</strong></span></div>
+            <div class="cat-bar-bg"><div class="cat-bar" style="width:${Math.round(p2done/qs.length*100)}%"></div></div>
+          </div>
+          ${expanded ? `<div class="q-list">${qs.map(q => qRow(q, "p2")).join("")}</div>` : ""}
+        </div>`;
+    });
+    html += `</div>`;
+  }
 
-```
-    </div>
-    <div class="form-field wide">
-      <label class="form-label">attach_file (optional)</label>
-      <div class="upload-area" onclick="document.getElementById('f-file').click()">
-        ▸ Click to attach files — PDF, Word, image, any type (multiple allowed)
-        <div class="upload-progress" id="upload-progress">
-          <div class="upload-progress-bar" id="upload-progress-bar" style="width:0%"></div>
-        </div>
-      </div>
-      <input type="file" id="f-file" style="display:none" multiple onchange="handleFileSelect(this)" />
-      <div id="attached-file-preview"></div>
-    </div>
-  </div>
-  <div class="form-footer">
-    <div>
-      <div class="form-label" style="margin-bottom:5px;">confidence (1–5)</div>
-      <div class="star-row" id="star-row">
-        ${[1,2,3,4,5].map(n => `<button class="star ${n<=selConfidence?'lit':''}" onclick="setConf(${n})">${n<=selConfidence?'★':'☆'}</button>`).join("")}
-      </div>
-      <div style="font-size:8px;color:var(--grey2);margin-top:4px;" id="retest-hint">
-        // retest in ~${retestDaysFromConf(selConfidence)} days
-      </div>
-    </div>
-    <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-      ${!timerCompleted ? `<span style="font-size:9px;color:var(--grey2);">// complete 90min timer to unlock</span>` : ""}
-      <button class="btn-secondary" onclick="clearForm()">CLEAR</button>
-      <button class="btn-primary" onclick="saveSession()"
-        ${!timerCompleted ? 'disabled' : ""}>
-        LOG SESSION ▸
-      </button>
-    </div>
-  </div>
-</div>
-
-<div class="sec-head" style="margin-top:8px;">
-  <span class="sec-title">RECENT SESSIONS</span>
-  <span class="sec-rule"></span>
-  <span class="sec-note">Last 5</span>
-</div>
-<div class="session-grid">
-  ${sessionList().slice(0,5).map(sessCard).join("") || `<div class="empty-msg">no sessions logged yet</div>`}
-</div>`;
-```
-
-const savedTopicId   = localStorage.getItem(“stx_session_topic”);
-const savedTopicName = localStorage.getItem(“stx_session_topic_name”);
-const savedNotes     = localStorage.getItem(“stx_session_notes”);
-if (savedTopicId)   { const _t  = document.getElementById(“f-topic”);        if(_t)  _t.value  = savedTopicId;   }
-if (savedTopicName) { const _ts = document.getElementById(“f-topic-search”); if(_ts) _ts.value = savedTopicName; }
-if (savedNotes)     { const _n  = document.getElementById(“f-notes”);        if(_n)  _n.value  = savedNotes;     }
+  el.innerHTML = html;
 }
 
-// ── All Sessions ──────────────────────────────────────
-function renderSessions() {
-const el   = document.getElementById(“tab-sessions”);
-const list = sessionList();
-const hours = totalStudyHours();
-let html = `<div style="font-size:9px;color:var(--grey2);margin-bottom:14px;">
-Total: ${list.length} sessions · ${hours.toFixed(1)}h studied
+function qRow(q, pass) {
+  const d = getQ(q.code);
+  const p1c = d.p1correct, p1i = d.p1incorrect;
+  const p2c = d.p2correct, p2i = d.p2incorrect;
+  const conf = d.confidence || 0;
+  const note = d.note || "";
+  const color = CAT_COLORS[q.category] || "var(--cyan)";
 
+  const p1badge = p1c ? `<span class="pass-badge p1done">P1✓</span>` :
+                  p1i ? `<span class="pass-badge p1">P1✗</span>` :
+                  `<span class="pass-badge" style="color:var(--grey2);border-color:var(--border2)">P1·</span>`;
+  const p2badge = p2c ? `<span class="pass-badge p2done">P2✓</span>` :
+                  p2i ? `<span class="pass-badge p2">P2✗</span>` :
+                  `<span class="pass-badge" style="color:var(--grey2);border-color:var(--border2)">P2·</span>`;
+
+  const isP1 = pass === "p1";
+  const curCorrect = isP1 ? p1c : p2c;
+  const curIncorrect = isP1 ? p1i : p2i;
+  const correctField = isP1 ? "p1correct" : "p2correct";
+  const incorrectField = isP1 ? "p1incorrect" : "p2incorrect";
+
+  return `<div class="q-row">
+    <span class="q-code" style="color:${color}">${q.code}</span>
+    <span style="display:flex;gap:3px;">${p1badge}${p2badge}</span>
+    <div class="q-actions">
+      <button class="q-btn ${curCorrect?'correct':''}" onclick="toggleQ('${q.code}','${correctField}','${incorrectField}',${curCorrect||false})">✓</button>
+      <button class="q-btn ${curIncorrect?'incorrect':''}" onclick="toggleQ('${q.code}','${incorrectField}','${correctField}',${curIncorrect||false})">✗</button>
+      <div class="conf-dots">
+        ${[1,2,3].map(n => `<div class="conf-dot ${conf>=n?'lit':''}" onclick="setQConf('${q.code}',${n})"></div>`).join("")}
+      </div>
+      <input class="note-inp" value="${escHtml(note)}" placeholder="why wrong..."
+        onchange="saveQ('${q.code}',{note:this.value})" />
+    </div>
   </div>`;
-
-[“renal”,“gim”].forEach(stream => {
-const filtered = list.filter(s => { const t = topics[s.topicId]; return t && t.stream === stream; });
-if (!filtered.length) return;
-html += ` <div class="sec-head"> <span class="sec-title" style="color:var(--${stream})">${STREAM_LABELS[stream]}</span> <span class="sec-rule"></span> <span class="sec-note">${filtered.length} sessions</span> </div> <div class="session-grid">${filtered.map(sessCard).join("")}</div>`;
-});
-
-el.innerHTML = html || `<div class="empty-msg">no sessions logged yet</div>`;
 }
 
-// ── Retests ───────────────────────────────────────────
-function renderRetests() {
-const el   = document.getElementById(“tab-retests”);
-const due  = sessionList().filter(s => retestStatus(s) === “due”);
-const soon = sessionList().filter(s => retestStatus(s) === “soon”);
-const ok   = sessionList().filter(s => retestStatus(s) === “ok” && s.retestDate && !s.retestDone);
-const done = sessionList().filter(s => s.retestDone);
-let html = “”;
-
-if (due.length)  html += `<div class="sec-head"><span class="sec-title" style="color:var(--pink)">OVERDUE</span><span class="sec-rule"></span><span class="sec-note">${due.length} overdue</span></div><div class="session-grid">${due.map(sessCard).join("")}</div>`;
-if (soon.length) html += `<div class="sec-head"><span class="sec-title" style="color:var(--yellow)">DUE SOON</span><span class="sec-rule"></span><span class="sec-note">within 3 days</span></div><div class="session-grid">${soon.map(sessCard).join("")}</div>`;
-if (ok.length)   html += `<div class="sec-head"><span class="sec-title">UPCOMING</span><span class="sec-rule"></span></div><div class="session-grid">${ok.map(sessCard).join("")}</div>`;
-if (done.length) html += `<div class="sec-head"><span class="sec-title" style="color:var(--green)">COMPLETED</span><span class="sec-rule"></span><span class="sec-note">${done.length} done</span></div><div class="session-grid">${done.map(sessCard).join("")}</div>`;
-
-el.innerHTML = html || `<div class="empty-msg">no retests scheduled</div>`;
+function toggleQ(code, field, otherField, current) {
+  const updates = { [field]: !current };
+  if (!current) updates[otherField] = false; // untick the other
+  saveQ(code, updates);
 }
 
-// ── Topics ─────────────────────────────────────────────
+function setQConf(code, n) {
+  const d = getQ(code);
+  saveQ(code, { confidence: d.confidence === n ? 0 : n });
+}
+
+function toggleCat(cat) {
+  if (expandedCats.has(cat)) expandedCats.delete(cat);
+  else expandedCats.add(cat);
+  renderKSAP();
+}
+
+function setKsapMode(mode) {
+  ksapMode = mode;
+  expandedCats.clear();
+  renderKSAP();
+}
+
+// ── TOPICS ────────────────────────────────────────────────────────────
 function renderTopics() {
-const el = document.getElementById(“tab-topics”);
-const tl = topicList();
-let html = ` <div class="sec-head"><span class="sec-title">ADD TOPIC</span><span class="sec-rule"></span></div> <div class="add-topic-row"> <input class="form-inp" id="new-topic-name" placeholder="Topic name..." style="flex:1;min-width:200px;" /> <select class="form-inp" id="new-topic-stream" style="width:130px;"> <option value="renal">RENAL</option> <option value="gim">GIM</option> </select> <button class="btn-primary" onclick="addTopic()">ADD ▸</button> </div>`;
+  const el = document.getElementById("tab-topics");
+  let html = "";
 
-[“renal”,“gim”].forEach(stream => {
-const filtered = tl.filter(t => t.stream === stream);
-html += `<div class="sec-head" style="margin-top:14px;"> <span class="sec-title" style="color:var(--${stream})">${STREAM_LABELS[stream]}</span> <span class="sec-rule"></span> <span class="sec-note">${filtered.length} topics</span> </div> <div class="topic-grid"> ${filtered.map(t =>`
-<div class="topic-card">
-<div>
-<div class="topic-name">${t.name}</div>
-<div class="topic-stream ${t.stream}">${STREAM_LABELS[t.stream]||t.stream.toUpperCase()}</div>
-</div>
-<button class="topic-del" onclick="deleteTopic('${t.id}')">✕</button>
-</div>`).join("")} </div>`;
-});
+  Object.entries(TOPICS).forEach(([cat, topicsObj]) => {
+    const color = CAT_COLORS[cat] || "var(--cyan)";
+    let catRead = 0, catTotal = 0;
+    Object.entries(topicsObj).forEach(([topic, subs]) => {
+      subs.forEach(sub => {
+        catTotal++;
+        const d = getST(cat, topic, sub);
+        if (d.read || d.reviewed) catRead++;
+      });
+    });
 
-el.innerHTML = html;
+    html += `
+      <div class="topic-section">
+        <div class="topic-hdr" style="border-left:3px solid ${color}" onclick="toggleTopicCat('${escAttr(cat)}')">
+          <div class="topic-hdr-name">${cat}</div>
+          <div class="topic-hdr-stats">${catRead}/${catTotal} subtopics</div>
+          <div class="topic-hdr-pct" style="color:${color};margin-left:12px;">${Math.round(catRead/catTotal*100)}%</div>
+        </div>`;
+
+    if (expandedTopics.has(cat)) {
+      Object.entries(topicsObj).forEach(([topic, subs]) => {
+        let topicRead = 0;
+        subs.forEach(sub => { const d = getST(cat, topic, sub); if (d.read || d.reviewed) topicRead++; });
+
+        html += `
+          <div style="background:var(--bg2);border:1px solid var(--border2);border-top:none;padding:6px 14px;font-size:9px;color:var(--cyan);letter-spacing:0.1em;">
+            ${topic} · <span style="color:var(--grey2)">${topicRead}/${subs.length}</span>
+          </div>
+          <div class="subtopic-list">
+            ${subs.map(sub => {
+              const d = getST(cat, topic, sub);
+              const k = `'${escAttr(cat)}','${escAttr(topic)}','${escAttr(sub)}'`;
+              return `<div class="st-row">
+                <div class="st-name ${d.read||d.reviewed?'read':''}">${sub}</div>
+                <div class="st-actions">
+                  <button class="st-btn ${d.read?'read':''}" onclick="toggleST(${k},'read')">READ</button>
+                  <button class="st-btn ${d.reviewed?'reviewed':''}" onclick="toggleST(${k},'reviewed')">REVIEWED</button>
+                </div>
+              </div>`;
+            }).join("")}
+          </div>`;
+      });
+    }
+
+    html += `</div>`;
+  });
+
+  el.innerHTML = html;
 }
 
-// ── #6 Session card with badges ───────────────────────
-function sessCard(s) {
-const topic = topics[s.topicId] || { name: s.topicId || “Unknown”, stream: “renal” };
-const rs    = retestStatus(s);
-const rl    = retestLabel(s);
-const stars = [1,2,3,4,5].map(n =>
-`<span class="conf-star ${n<=s.confidence?'lit':'dim'}">${n<=s.confidence?'★':'☆'}</span>`
-).join(””);
-
-// #6 Badge display for session types
-const typeArr = Array.isArray(s.sessionTypes)
-? s.sessionTypes
-: s.sessionType ? [s.sessionType] : [“study”];
-const typeBadges = typeArr.map(t =>
-`<span style="font-size:8px;color:var(--grey);border:1px solid var(--border2);padding:1px 5px;margin-right:3px;">${t.toUpperCase()}</span>`
-).join(””);
-
-// #3 Duration display
-const dur = s.duration ? `${s.duration}min` : “90min”;
-
-// Retest urgency styling
-const retestStyle = rs === “due”
-? `color:var(--pink);animation:tpulse 2s ease-in-out infinite;`
-: rs === “soon” ? `color:var(--yellow);` : `color:var(--grey2);`;
-
-return `<div class="sess-card stream-${topic.stream} ${rs==='due'?'retest-due':rs==='soon'?'retest-soon':''}"> <div class="sess-head"> <div class="sess-topic">${topic.name}</div> <span class="sess-stream ${topic.stream}">${STREAM_LABELS[topic.stream]||topic.stream.toUpperCase()}</span> </div> <div class="sess-meta"> ${new Date(s.date).toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})} &nbsp;·&nbsp; ${dur} &nbsp;·&nbsp; ${typeBadges} </div> ${s.notes ?`<div class="sess-notes">${s.notes}</div>`: ""} ${(s.attachments || (s.attachment ? [s.attachment] : [])).map(a =>`
-<a class="sess-attachment" href="${a.url}" target="_blank" rel="noopener">
-<span class="sess-attachment-icon">📎</span>
-<span class="sess-attachment-name">${a.name}</span>
-<span style="font-size:8px;color:var(--grey2)">${(a.size/1024).toFixed(0)}KB ↗</span>
-</a>`).join("")} <div class="sess-footer"> <div> <div class="conf-stars">${stars}</div> <div class="sess-retest" style="${retestStyle}">${rl}</div> </div> <div class="sess-actions"> ${!s.retestDone && s.retestDate ? `<button class="sess-btn" onclick="markRetested('${s.id}')">✓ RETESTED</button>` : ""} <button class="sess-btn danger" onclick="deleteSession('${s.id}')">✕</button> </div> </div> </div>`;
+function toggleTopicCat(cat) {
+  if (expandedTopics.has(cat)) expandedTopics.delete(cat);
+  else expandedTopics.add(cat);
+  renderTopics();
 }
 
-// ══════════════════════════════════════════════════════
-//  INTERACTIONS
-// ══════════════════════════════════════════════════════
-function handleFileSelect(input) {
-const files = Array.from(input.files);
-if (!files.length) return;
-files.forEach(file => {
-if (!pendingFiles.find(f => f.name === file.name)) pendingFiles.push({ name: file.name, size: file.size, file });
-});
-renderPendingFiles();
-input.value = “”;
+function toggleST(cat, topic, sub, field) {
+  const d = getST(cat, topic, sub);
+  saveST(cat, topic, sub, { [field]: !d[field] });
 }
 
-function renderPendingFiles() {
-const preview = document.getElementById(“attached-file-preview”);
-if (!preview) return;
-if (!pendingFiles.length) { preview.innerHTML = “”; return; }
-preview.innerHTML = pendingFiles.map((f, i) => ` <div class="attached-file"> <span class="attached-file-name">📎 ${f.name}</span> <span class="attached-file-size">${(f.size/1024).toFixed(0)}KB</span> <button class="attached-file-del" onclick="removePendingFile(${i})">✕</button> </div>`).join(””);
+function escHtml(t) {
+  return String(t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function escAttr(t) {
+  return String(t||"").replace(/'/g,"\\'");
 }
 
-function removePendingFile(idx) {
-pendingFiles.splice(idx, 1);
-renderPendingFiles();
-}
-function clearPendingFile() {
-pendingFiles = [];
-const preview = document.getElementById(“attached-file-preview”);
-if (preview) preview.innerHTML = “”;
-const input = document.getElementById(“f-file”);
-if (input) input.value = “”;
-}
-function setConf(n) {
-selConfidence = n;
-const row = document.getElementById(“star-row”);
-if (row) {
-row.querySelectorAll(”.star”).forEach((b, i) => {
-b.className = “star” + (i < n ? “ lit” : “”);
-b.textContent = i < n ? “★” : “☆”;
-});
-}
-const hint = document.getElementById(“retest-hint”);
-if (hint) hint.textContent = `// retest in ~${retestDaysFromConf(n)} days`;
-}
-
-function saveSession() {
-const topicId = document.getElementById(“f-topic”)?.value;
-if (!topicId) { alert(“Please select a topic”); return; }
-
-const date  = document.getElementById(“f-date”).value;
-const notes = document.getElementById(“f-notes”).value.trim();
-const sessionTypes = [“study”,“quiz”,“teach”].filter(t =>
-document.getElementById(`f-type-${t}`)?.checked
-);
-if (!sessionTypes.length) sessionTypes.push(“study”);
-
-// #3 Capture actual duration from timer
-const duration = timerStartTime
-? Math.round((Date.now() - timerStartTime) / 60000)
-: 90;
-
-// #1 Adaptive retest — find last session for this topic to get previous interval
-const prevSess = sessionList().find(s => s.topicId === topicId && s.interval);
-const prevInterval = prevSess?.interval || 7;
-const days = nextRetestDays(selConfidence, prevInterval);
-const d = new Date(date); d.setDate(d.getDate() + days);
-const retestDate = d.toISOString().split(“T”)[0];
-
-const payload = {
-topicId, date, sessionTypes, notes, duration,
-confidence: selConfidence,
-interval: days,       // #1 store interval for next session
-retestDate, retestDone: false,
-createdAt: Date.now(),
-};
-
-if (!window._stx_fb) return;
-
-// #5 Save session first, then upload file using real session ID
-const newRef = window._stx_fb.push(window._stx_fb.sessRef, payload);
-const sessionId = newRef.key;
-
-if (pendingFiles.length && sessionId && window.uploadSessionFile) {
-const filesToUpload = […pendingFiles];
-const attachments = [];
-let completed = 0;
-filesToUpload.forEach((pf, i) => {
-window.uploadSessionFile(
-pf.file, sessionId,
-pct => {
-const bar = document.getElementById(“upload-progress-bar”);
-if (bar) bar.style.width = `${Math.round(((i + pct/100) / filesToUpload.length) * 100)}%`;
-},
-fileData => {
-attachments.push(fileData);
-completed++;
-if (completed === filesToUpload.length) {
-const { db, ref, update } = window._stx_fb;
-update(ref(db, `studySessions/${sessionId}`), { attachments });
-}
-},
-err => console.error(“Upload failed:”, err)
-);
-});
-}
-pendingFiles   = [];
-clearForm();
-}
-
-function clearForm() {
-const d = document.getElementById(“f-date”);
-const t = document.getElementById(“f-topic”);
-const n = document.getElementById(“f-notes”);
-const f = document.getElementById(“f-file”);
-const p = document.getElementById(“attached-file-preview”);
-if (d) d.value = new Date().toISOString().split(“T”)[0];
-if (t) t.value = “”;
-const ts = document.getElementById(“f-topic-search”); if (ts) ts.value = “”;
-if (n) n.value = “”;
-if (f) f.value = “”;
-if (p) p.innerHTML = “”;
-pendingFiles = [];
-selConfidence = 3;
-setConf(3);
-renderLog();
-}
-
-function deleteSession(id) {
-if (!confirm(“Delete this session?”)) return;
-if (window._stx_fb) {
-const { db, ref, remove } = window._stx_fb;
-remove(ref(db, `studySessions/${id}`));
-}
-}
-
-function markRetested(id) {
-const sess = sessions[id];
-if (!sess) return;
-// #1 On retest, prompt for new confidence and compute next interval
-const newConf = parseInt(prompt(“Rate your recall (1–5):”) || “0”);
-if (!newConf || newConf < 1 || newConf > 5) return;
-const nextDays = nextRetestDays(newConf, sess.interval || 7);
-const nd = new Date(); nd.setDate(nd.getDate() + nextDays);
-const nextDate = nd.toISOString().split(“T”)[0];
-
-if (window._stx_fb) {
-const { db, ref, update } = window._stx_fb;
-update(ref(db, `studySessions/${id}`), {
-retestDone: true, retestedAt: Date.now(),
-retestConfidence: newConf,
-});
-// Push a new session entry for the next interval
-window._stx_fb.push(window._stx_fb.sessRef, {
-topicId: sess.topicId,
-date: new Date().toISOString().split(“T”)[0],
-sessionTypes: [“quiz”],
-notes: `Retest of session from ${sess.date}`,
-confidence: newConf,
-interval: nextDays,
-retestDate: nextDate,
-retestDone: false,
-duration: 20,
-createdAt: Date.now(),
-isRetest: true,
-});
-}
-}
-
-function addTopic() {
-const name   = document.getElementById(“new-topic-name”)?.value.trim();
-const stream = document.getElementById(“new-topic-stream”)?.value;
-if (!name) return;
-if (window._stx_fb) window._stx_fb.push(window._stx_fb.topicRef, { name, stream });
-document.getElementById(“new-topic-name”).value = “”;
-}
-
-function deleteTopic(id) {
-if (!confirm(“Delete this topic?”)) return;
-if (window._stx_fb) {
-const { db, ref, remove } = window._stx_fb;
-remove(ref(db, `studyTopics/${id}`));
-}
-}
-
-// ══════════════════════════════════════════════════════
-//  PLAN
-// ══════════════════════════════════════════════════════
-let plan = {};
-
-function planList() {
-return Object.entries(window._stx_plan || {})
-.map(([id, p]) => ({ id, …p }))
-.sort((a, b) => a.createdAt - b.createdAt);
-}
-
-function renderPlan() {
-const el   = document.getElementById(“tab-plan”);
-const list = planList();
-const tl   = topicList();
-const MAX  = 5;
-const topicOpts = tl.map(t =>
-`<option value="${t.id}">[${STREAM_LABELS[t.stream]}] ${t.name}</option>`
-).join(””);
-
-let html = ` <div class="sec-head"> <span class="sec-title">PLANNED SESSIONS</span> <span class="sec-rule"></span> <span class="sec-note">${list.length} / ${MAX} slots used</span> </div>`;
-
-// Add form — only if under limit
-if (list.length < MAX) {
-html += ` <div class="log-form" style="margin-bottom:20px;"> <div style="font-size:8px;color:var(--grey);letter-spacing:0.12em;margin-bottom:10px;"> ── plan a future session · activate it when you're ready to study </div> <div class="form-grid"> <div class="form-field"> <label class="form-label">topic *</label> ${makeTopicSearch("plan-topic-search", "plan-topic")} </div> <div class="form-field"> <label class="form-label">note (optional)</label> <input class="form-inp" id="plan-note" placeholder="// e.g. focus on pathology" /> </div> </div> <div style="display:flex;justify-content:flex-end;margin-top:10px;"> <button class="btn-primary" onclick="addPlan()">ADD TO PLAN ▸</button> </div> </div>`;
-} else {
-html += ` <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--yellow); padding:10px 14px;margin-bottom:20px;font-size:10px;color:var(--yellow);"> // max ${MAX} planned sessions — activate or remove one before adding more </div>`;
-}
-
-if (!list.length) {
-html += `<div class="empty-msg">no planned sessions — add one above</div>`;
-} else {
-html += `<div class="session-grid">`;
-list.forEach(p => {
-const topic = topics[p.topicId] || { name: “Unknown”, stream: “renal” };
-html += `<div class="sess-card stream-${topic.stream}" style="border-left-color:var(--cyan);opacity:${p.activated?0.45:1};"> <div class="sess-head"> <div class="sess-topic">${topic.name}</div> <span class="sess-stream ${topic.stream}">${STREAM_LABELS[topic.stream]||topic.stream.toUpperCase()}</span> </div> <div class="sess-meta" style="color:var(--cyan);"> ▸ PLANNED · ${new Date(p.createdAt).toLocaleDateString("en-GB",{day:"2-digit",month:"short"})} </div> ${p.note ?`<div class="sess-notes">${p.note}</div>`: ""} <div class="sess-footer" style="margin-top:8px;"> <div style="display:flex;gap:6px;"> ${!p.activated ?`
-<button class="btn-primary" style="font-size:9px;padding:4px 12px;"
-onclick="activatePlan('${p.id}','${p.topicId}')">
-▶ ACTIVATE
-</button>`:`
-<span style="font-size:9px;color:var(--green);letter-spacing:0.08em;">✓ ACTIVATED</span>`} </div> <button class="sess-btn danger" onclick="deletePlan('${p.id}')">✕</button> </div> </div>`;
-});
-html += `</div>`;
-}
-
-// Slot indicators
-html += `<div style="display:flex;gap:6px;margin-top:16px;"> ${Array.from({length:MAX}, (_,i) =>`
-<div style=“flex:1;height:4px;border-radius:2px;background:${i < list.length ? “var(–cyan)” : “var(–border2)”}”></div>
-`).join("")} </div> <div style="font-size:8px;color:var(--grey2);margin-top:5px;letter-spacing:0.08em;"> ${MAX - list.length} slot${MAX - list.length !== 1 ? "s" : ""} remaining </div>`;
-
-el.innerHTML = html;
-}
-
-function addPlan() {
-const topicId = document.getElementById(“plan-topic”)?.value;
-if (!topicId) { alert(“Please select a topic”); return; }
-const note = document.getElementById(“plan-note”)?.value.trim();
-if (planList().length >= 5) { alert(“Max 5 planned sessions”); return; }
-if (window._stx_fb) {
-window._stx_fb.push(window._stx_fb.planRef, {
-topicId, note, createdAt: Date.now(), activated: false
-});
-}
-}
-
-function deletePlan(id) {
-if (!confirm(“Remove this planned session?”)) return;
-if (window._stx_fb) {
-const { db, ref, remove } = window._stx_fb;
-remove(ref(db, `studyPlan/${id}`));
-}
-}
-
-function activatePlan(id, topicId) {
-// Pre-fill log form with this topic, open timer, switch to log tab
-if (window._stx_fb) {
-const { db, ref, update } = window._stx_fb;
-update(ref(db, `studyPlan/${id}`), { activated: true });
-}
-// Switch to log tab and pre-select topic
-setTab(“log”);
+// Init
+setTab("overview");
 setTimeout(() => {
-const sel = document.getElementById(“f-topic”);
-if (sel) { sel.value = topicId; }
-// Open timer automatically
-const panel = document.getElementById(“timer-panel”);
-if (panel && !panel.classList.contains(“show”)) {
-panel.classList.add(“show”);
-updateTimerDisplay();
-}
-}, 50);
-}
-
-// ══════════════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════════════
-renderAll();
-setTab(“today”);
+  if (!window._sce_data) {
+    sceData = {};
+    renderAll();
+  }
+}, 3000);
 </script>
 
+</body>
 </html>
