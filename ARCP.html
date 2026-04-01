@@ -1416,8 +1416,8 @@ function saveLbEntries(type, entries) {
   // If GIM CPD — sync cumulative target (online capped at 15h)
   if (type === "cpd_gim") {
     const ONLINE_LIMIT = 15;
-    const onlineHrs   = entries.filter(e => e.type === "Online CPD (approved)").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
-    const externalHrs = entries.filter(e => e.type !== "Online CPD (approved)").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+    const onlineHrs   = entries.filter(e => e.type === "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+    const externalHrs = entries.filter(e => e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
     const countedTotal = externalHrs + Math.min(onlineHrs, ONLINE_LIMIT);
     const cumK = sKey("gim_cpd_hours");
     localStorage.setItem(cumK, String(Math.round(countedTotal)));
@@ -1438,15 +1438,15 @@ function deleteLbEntry(type, id) {
 function cpdSummary() {
   const gimEntries   = getLbEntries("cpd_gim");
   const ONLINE_LIMIT = 15;
-  const onlineHrs    = gimEntries.filter(e => e.type === "Online CPD (approved)").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+  const onlineHrs    = gimEntries.filter(e => e.type === "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
   const onlineCapped = Math.min(onlineHrs, ONLINE_LIMIT); // excess online hrs don't count toward total
-  const externalHrs  = gimEntries.filter(e => e.type !== "Online CPD (approved)").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+  const externalHrs  = gimEntries.filter(e => e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
   const total        = externalHrs + onlineCapped;
   const currentYrHrs = gimEntries.filter(e => e.year === currentYear).reduce((acc,e) => {
     const h = parseFloat(e.hours) || 0;
     // For online in current year, pro-rate the cap
-    if (e.type === "Online CPD (approved)") {
-      const allOnlineYr = gimEntries.filter(x => x.type === "Online CPD (approved)" && x.year === currentYear).reduce((a,x) => a+(parseFloat(x.hours)||0),0);
+    if (e.type === "Online CPD") {
+      const allOnlineYr = gimEntries.filter(x => x.type === "Online CPD" && x.year === currentYear).reduce((a,x) => a+(parseFloat(x.hours)||0),0);
       return acc + (allOnlineYr > ONLINE_LIMIT ? h * (ONLINE_LIMIT / allOnlineYr) : h);
     }
     return acc + h;
@@ -2040,7 +2040,7 @@ function printLogbookReport() {
   const st7SimHrs    = simulation.filter(e => e.year==="ST7").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
 
   const totalCpdHrs  = gimCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
-  const onlineHrs    = gimCpd.filter(e => e.type==="Online CPD (approved)").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const onlineHrs    = gimCpd.filter(e => e.type==="Online CPD").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
   const onlineCapped = Math.min(onlineHrs, 15);
   const countedTotal = (totalCpdHrs - onlineHrs) + onlineCapped;
 
