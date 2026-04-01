@@ -836,7 +836,10 @@ function computeStats() {
 }
 
 function computeCatStats(cat) {
-  const qs = KSAP.filter(q => q.category === cat);
+  const qs = KSAP.filter(q => {
+    const d = getQ(q.code);
+    return (d.reassignedCategory || q.category) === cat;
+  });
   let attempted = 0, correct = 0, p1done = 0, p2done = 0;
   qs.forEach(q => {
     const d = getQ(q.code);
@@ -1015,7 +1018,9 @@ function qRow(q, pass) {
   const p2c = d.p2correct, p2i = d.p2incorrect;
   const conf = d.confidence || 0;
   const note = d.note || "";
-  const color = CAT_COLORS[q.category] || "var(--cyan)";
+  const d2 = getQ(q.code);
+  const effectiveCat = d2.reassignedCategory || q.category;
+  const color = CAT_COLORS[effectiveCat] || "var(--cyan)";
 
   const p1badge = p1c ? `<span class="pass-badge p1done">P1✓</span>` :
                   p1i ? `<span class="pass-badge p1">P1✗</span>` :
@@ -1030,19 +1035,39 @@ function qRow(q, pass) {
   const correctField = isP1 ? "p1correct" : "p2correct";
   const incorrectField = isP1 ? "p1incorrect" : "p2incorrect";
 
-  return `<div class="q-row">
+  const flagged = d.flagged || false;
+  const cats = [...new Set(KSAP.map(q => q.category))].sort();
+
+  return `<div class="q-row" style="${flagged?'background:rgba(244,114,182,0.03);':''}">
     <span class="q-code" style="color:${color}">${q.code}</span>
-    <span style="display:flex;gap:3px;">${p1badge}${p2badge}</span>
+    <span style="display:flex;gap:3px;">${p1badge}${p2badge}${flagged?'<span class="pass-badge flagged">⚑</span>':''}</span>
     <div class="q-actions">
       <button class="q-btn ${curCorrect?'correct':''}" onclick="toggleQ('${q.code}','${correctField}','${incorrectField}',${curCorrect||false})">✓</button>
       <button class="q-btn ${curIncorrect?'incorrect':''}" onclick="toggleQ('${q.code}','${incorrectField}','${correctField}',${curIncorrect||false})">✗</button>
+      <button class="q-btn ${flagged?'flagged':''}" onclick="saveQ('${q.code}',{flagged:${!flagged}});renderKSAP();" title="Flag for review">⚑</button>
       <div class="conf-dots">
         ${[1,2,3].map(n => `<div class="conf-dot ${conf>=n?'lit':''}" onclick="setQConf('${q.code}',${n})"></div>`).join("")}
       </div>
       <input class="note-inp" value="${escHtml(note)}" placeholder="why wrong..."
         onchange="saveQ('${q.code}',{note:this.value})" />
+      <select class="q-reassign" title="Reassign to different category"
+        onchange="reassignQ('${q.code}',this.value);renderKSAP();">
+        ${cats.map(c => `<option value="${c.replace(/"/g,'&quot;')}" ${c===q.category?'selected':''}>${c}</option>`).join('')}
+      </select>
     </div>
   </div>`;
+}
+
+function setKsapFilter(f) {
+  ksapFilter = f;
+  renderKSAP();
+}
+
+function reassignQ(code, newCategory) {
+  // Update in KSAP array in place
+  const q = KSAP.find(q => q.code === code);
+  if (q) q.category = newCategory;
+  saveQ(code, { reassignedCategory: newCategory });
 }
 
 function toggleQ(code, field, otherField, current) {
