@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -162,8 +163,15 @@
       #main { padding:10px 10px 80px; }
       .hdr-stat { min-width:80px; padding:8px 12px; }
     }
+    .pass-badge.flagged { color:var(--pink); border-color:rgba(244,114,182,0.4); background:rgba(244,114,182,0.06); }
+    .q-btn.flagged { border-color:var(--pink); color:var(--pink); background:rgba(244,114,182,0.08); }
+    .filter-row { display:flex; gap:8px; align-items:center; padding:8px 18px; background:var(--bg2); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+    .filter-btn { padding:2px 10px; border:1px solid var(--border2); background:transparent; color:var(--grey); font-family:var(--font); font-size:9px; cursor:pointer; transition:all 0.1s; letter-spacing:0.06em; }
+    .filter-btn.active { border-color:var(--cyan); color:var(--cyan); background:rgba(34,211,238,0.06); }
+    .filter-btn.flag-filter.active { border-color:var(--pink); color:var(--pink); background:rgba(244,114,182,0.06); }
     [id^="reassign-"] div:hover { background:var(--bg3) !important; color:var(--yellow) !important; }
   </style>
+
 </head>
 <body>
 
@@ -778,6 +786,7 @@ let currentTab = "overview";
 let ksapMode = "category"; // "category" | "module"
 let expandedCats = new Set();
 let expandedTopics = new Set();
+let ksapFilter = "all";
 
 // ══════════════════════════════════════════════════════════════════════
 // FIREBASE SYNC
@@ -786,6 +795,8 @@ window.addEventListener("sce-sync", () => {
   sceData = window._sce_data || {};
   document.getElementById("sync-dot").textContent = "● LIVE";
   document.getElementById("sync-dot").style.color = "var(--green)";
+  document.getElementById("sb-sync").textContent = "● LIVE";
+  document.getElementById("sb-sync").style.color = "var(--green)";
   renderAll();
 });
 
@@ -830,7 +841,8 @@ function computeStats() {
     });
   });
   const topicPct = stTotal > 0 ? Math.round(stRead / stTotal * 100) : 0;
-  const readiness = Math.round(ksapPct * 0.6 + topicPct * 0.4);
+  const ksapScore = Math.round((correct / KSAP.length) * 100);
+  const readiness  = Math.round(ksapScore * 0.6 + topicPct * 0.4);
   return { attempted, correct, ksapPct, topicPct, readiness, p1done, p2done, stTotal, stRead };
 }
 
@@ -961,6 +973,13 @@ function renderKSAP() {
     <div class="subtab-row">
       <button class="subtab ${!isModule?'active':''}" onclick="setKsapMode('category')">PASS 1 — BY CATEGORY</button>
       <button class="subtab ${isModule?'active':''}" onclick="setKsapMode('module')">PASS 2 — BY MODULE</button>
+    </div>
+    <div class="filter-row">
+      <span style="font-size:9px;color:var(--grey);letter-spacing:0.1em;">FILTER:</span>
+      <button class="filter-btn ${ksapFilter==='all'?'active':''}" onclick="setKsapFilter('all')">ALL</button>
+      <button class="filter-btn ${ksapFilter==='unattempted'?'active':''}" onclick="setKsapFilter('unattempted')">UNATTEMPTED</button>
+      <button class="filter-btn ${ksapFilter==='incorrect'?'active':''}" onclick="setKsapFilter('incorrect')">INCORRECT</button>
+      <button class="filter-btn flag-filter ${ksapFilter==='flagged'?'active':''}" onclick="setKsapFilter('flagged')">⚑ FLAGGED</button>
     </div>`;
 
   if (!isModule) {
@@ -968,7 +987,15 @@ function renderKSAP() {
     const cats = [...new Set(KSAP.map(q => q.category))].sort();
     html += `<div style="padding-top:10px;">`;
     cats.forEach(cat => {
-      const qs = KSAP.filter(q => q.category === cat);
+      const allQs = KSAP.filter(q => q.category === cat);
+      const qs = allQs.filter(q => {
+        const d = getQ(q.code);
+        const attempted = d.p1correct || d.p1incorrect || d.p2correct || d.p2incorrect;
+        if (ksapFilter === 'unattempted') return !attempted;
+        if (ksapFilter === 'flagged') return d.flagged;
+        if (ksapFilter === 'incorrect') return d.p1incorrect || d.p2incorrect;
+        return true;
+      });
       const cs = computeCatStats(cat);
       const color = CAT_COLORS[cat] || "var(--cyan)";
       const expanded = expandedCats.has(cat);
@@ -991,7 +1018,15 @@ function renderKSAP() {
     // Module view
     html += `<div style="padding-top:10px;">`;
     MODULES.forEach(mod => {
-      const qs = KSAP.filter(q => q.module === mod);
+      const allQs = KSAP.filter(q => q.module === mod);
+      const qs = allQs.filter(q => {
+        const d = getQ(q.code);
+        const attempted = d.p1correct || d.p1incorrect || d.p2correct || d.p2incorrect;
+        if (ksapFilter === 'unattempted') return !attempted;
+        if (ksapFilter === 'flagged') return d.flagged;
+        if (ksapFilter === 'incorrect') return d.p1incorrect || d.p2incorrect;
+        return true;
+      });
       let p2done = 0;
       qs.forEach(q => { const d = getQ(q.code); if(d.p2correct||d.p2incorrect) p2done++; });
       const expanded = expandedCats.has(mod);
@@ -1049,12 +1084,29 @@ function qRow(q, pass) {
       </div>
       <input class="note-inp" value="${escHtml(note)}" placeholder="why wrong..."
         onchange="saveQ('${q.code}',{note:this.value})" />
-      <select class="q-reassign" title="Reassign to different category"
-        onchange="reassignQ('${q.code}',this.value);renderKSAP();">
-        ${cats.map(c => `<option value="${c.replace(/"/g,'&quot;')}" ${c===q.category?'selected':''}>${c}</option>`).join('')}
-      </select>
+      <div style="position:relative;display:inline-block;">
+        <button class="q-btn" onclick="toggleReassign('${q.code}')" title="Reassign category">✎</button>
+        <div id="reassign-${q.code}" style="display:none;position:absolute;right:0;top:100%;z-index:200;background:var(--bg2);border:1px solid var(--yellow);min-width:220px;max-height:200px;overflow-y:auto;">
+          ${cats.map(c => `<div style="padding:6px 10px;font-size:10px;cursor:pointer;color:${c===effectiveCat?'var(--yellow)':'var(--white)'};border-bottom:1px solid var(--border);"
+            onmousedown="reassignQ('${q.code}','${c.replace(/'/g,"\\'")}');document.getElementById('reassign-${q.code}').style.display='none';renderKSAP();"
+            >${c}</div>`).join('')}
+        </div>
+      </div>
     </div>
   </div>`;
+}
+
+function setKsapFilter(f) {
+  ksapFilter = f;
+  renderKSAP();
+}
+
+function toggleReassign(code) {
+  const el = document.getElementById('reassign-' + code);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  document.querySelectorAll('[id^="reassign-"]').forEach(d => d.style.display = 'none');
+  el.style.display = isOpen ? 'none' : 'block';
 }
 
 function setKsapFilter(f) {
@@ -1174,5 +1226,6 @@ setTimeout(() => {
   }
 }, 3000);
 </script>
+
 </body>
 </html>
