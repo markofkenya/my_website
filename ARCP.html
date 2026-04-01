@@ -2152,8 +2152,9 @@ function printLogbookReport() {
     <div class="sum-box" style="--c:#5b21b6"><div class="num">${renalClinics.length}</div><div class="key">Renal Clinics (${yr})</div></div>
     <div class="sum-box" style="--c:#166534"><div class="num">${renalProcs.length + gimProcs.length}</div><div class="key">Procedures (${yr})</div></div>
     <div class="sum-box" style="--c:#92400e"><div class="num">${teaching.length}</div><div class="key">Teaching (${yr})</div></div>
-    <div class="sum-box" style="--c:#166534"><div class="num">${combinedCpdHrs.toFixed(1)}h</div><div class="key">CPD — GIM + Renal (${yr})</div></div>
-    <div class="sum-box" style="--c:#0e7490"><div class="num">${totalSimHrs.toFixed(1)}h</div><div class="key">Simulation (total)</div></div>
+    <div class="sum-box" style="--c:#166534"><div class="num">${Math.round(combinedCpdHrs)}h</div><div class="key">CPD — GIM + Renal (${yr})</div></div>
+    <div class="sum-box" style="--c:#0e7490"><div class="num">${Math.round(totalSimHrs)}h</div><div class="key">Simulation (total)</div></div>
+
   </div>
 
   ${secHead("Clinics")}
