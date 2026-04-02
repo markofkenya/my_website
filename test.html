@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -208,7 +209,18 @@
     .q-admin-row:hover { background:var(--bg3); }
     .st-admin-row { display:flex; align-items:center; gap:8px; padding:4px 10px; border-bottom:1px solid var(--border); font-size:10px; }
     .st-admin-row:hover { background:var(--bg3); }
+    .err-row { background:var(--bg2); border:1px solid var(--border2); border-left:3px solid var(--red); margin-bottom:6px; }
+    .err-header { display:flex; align-items:center; gap:10px; padding:8px 12px; }
+    .err-code { font-size:9px; color:var(--cyan); min-width:90px; letter-spacing:0.04em; }
+    .err-cat { font-size:9px; color:var(--grey); flex:1; }
+    .err-conf { display:flex; gap:3px; }
+    .err-note-wrap { padding:0 12px 10px; border-top:1px solid var(--border); }
+    .err-note-text { font-size:10px; color:var(--white); padding:6px 0; line-height:1.5; font-style:italic; }
+    .err-resolved { font-size:8px; padding:2px 8px; border:1px solid var(--grey2); background:transparent; color:var(--grey2); font-family:var(--font); cursor:pointer; letter-spacing:0.06em; }
+    .err-resolved.done { border-color:var(--green); color:var(--green); background:rgba(74,222,128,0.06); }
+    .err-filter-bar { display:flex; gap:8px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
   </style>
+
 </head>
 <body>
 
@@ -248,6 +260,7 @@
   <button class="tab" onclick="setTab('ksap')">KSAP BANK</button>
   <button class="tab" onclick="setTab('topics')">TOPIC COVERAGE</button>
   <button class="tab" onclick="setTab('admin')">ADMIN</button>
+  <button class="tab" onclick="setTab('errorlog')">ERROR LOG</button>
 </div>
 
 <div id="main">
@@ -255,6 +268,7 @@
   <div id="tab-ksap"     style="display:none"></div>
   <div id="tab-topics"   style="display:none"></div>
   <div id="tab-admin"    style="display:none"></div>
+  <div id="tab-errorlog" style="display:none"></div>
 </div>
 
 <div id="statusbar">
@@ -966,7 +980,7 @@ function setTab(tab) {
   currentTab = tab;
   document.querySelectorAll(".tab").forEach(b =>
     b.classList.toggle("active", b.getAttribute("onclick").includes(`'${tab}'`)));
-  ["overview","ksap","topics","admin"].forEach(t =>
+  ["overview","ksap","topics","admin","errorlog"].forEach(t =>
     document.getElementById(`tab-${t}`).style.display = t === tab ? "block" : "none");
   renderTab(tab);
 }
@@ -976,6 +990,7 @@ function renderTab(tab) {
   if (tab === "ksap")     renderKSAP();
   if (tab === "topics")   renderTopics();
   if (tab === "admin")    renderAdmin();
+  if (tab === "errorlog") renderErrorLog();
 }
 
 // ── OVERVIEW ──────────────────────────────────────────────────────────
@@ -1098,7 +1113,12 @@ function renderKSAP() {
     // Module view
     html += `<div style="padding-top:10px;">`;
     MODULES.forEach(mod => {
-      const allQs = KSAP.filter(q => q.module === mod);
+      const allQs = KSAP.filter(q => q.module === mod)
+        .slice().sort((a,b) => {
+          const na = parseInt(a.code.split('-Q')[1]) || 0;
+          const nb = parseInt(b.code.split('-Q')[1]) || 0;
+          return na - nb;
+        });
       const qs = allQs.filter(q => {
         const d = getQ(q.code);
         const attempted = d.p1correct || d.p1incorrect || d.p2correct || d.p2incorrect;
@@ -1309,6 +1329,131 @@ function saveTopicsToFirebase() {
   if (!window._sce_fb) return;
   const { db, ref, set } = window._sce_fb;
   set(ref(db, "sceConfig/topics"), TOPICS);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// ERROR LOG
+// ══════════════════════════════════════════════════════════════════════
+let errFilter = "all"; // "all" | "flagged" | "unresolved"
+let errSort   = "cat"; // "cat" | "conf"
+
+function renderErrorLog() {
+  const el = document.getElementById("tab-errorlog");
+  el.innerHTML = "";
+
+  // Collect all questions with notes
+  const entries = KSAP
+    .map(q => ({ q, d: getQ(q.code) }))
+    .filter(({ d }) => d.note && d.note.trim().length > 0);
+
+  // Apply filter
+  const filtered = entries.filter(({ q, d }) => {
+    if (errFilter === "flagged")    return d.flagged;
+    if (errFilter === "unresolved") return !d.resolved;
+    return true;
+  });
+
+  // Sort
+  const sorted = [...filtered].sort((a, b) => {
+    if (errSort === "conf") {
+      const ca = a.d.confidence || 0;
+      const cb = b.d.confidence || 0;
+      return ca - cb; // lowest confidence first
+    }
+    return a.q.category.localeCompare(b.q.category);
+  });
+
+  // Header
+  const headDiv = document.createElement("div");
+  headDiv.className = "sec-head";
+  headDiv.innerHTML = `<span class="sec-title" style="color:var(--red)">ERROR LOG</span><span class="sec-rule"></span><span class="sec-note">${filtered.length} entries with notes · ${entries.filter(({d})=>!d.resolved).length} unresolved</span>`;
+  el.appendChild(headDiv);
+
+  if (entries.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-msg";
+    empty.textContent = "no notes logged yet — add 'why wrong' notes in the KSAP bank";
+    el.appendChild(empty);
+    return;
+  }
+
+  // Filter + sort bar
+  const barDiv = document.createElement("div");
+  barDiv.className = "err-filter-bar";
+  barDiv.innerHTML = `
+    <span style="font-size:9px;color:var(--grey);letter-spacing:0.1em;">FILTER:</span>
+    <button class="filter-btn ${errFilter==='all'?'active':''}" onclick="errFilter='all';renderErrorLog()">ALL (${entries.length})</button>
+    <button class="filter-btn ${errFilter==='unresolved'?'active':''}" onclick="errFilter='unresolved';renderErrorLog()">UNRESOLVED (${entries.filter(({d})=>!d.resolved).length})</button>
+    <button class="filter-btn flag-filter ${errFilter==='flagged'?'active':''}" onclick="errFilter='flagged';renderErrorLog()">⚑ FLAGGED (${entries.filter(({d})=>d.flagged).length})</button>
+    <span style="font-size:9px;color:var(--grey);letter-spacing:0.1em;margin-left:8px;">SORT:</span>
+    <button class="filter-btn ${errSort==='cat'?'active':''}" onclick="errSort='cat';renderErrorLog()">BY CATEGORY</button>
+    <button class="filter-btn ${errSort==='conf'?'active':''}" onclick="errSort='conf';renderErrorLog()">BY CONFIDENCE ↑</button>`;
+  el.appendChild(barDiv);
+
+  if (filtered.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-msg";
+    empty.textContent = "no entries match current filter";
+    el.appendChild(empty);
+    return;
+  }
+
+  // Group by category if sorting by cat
+  if (errSort === "cat") {
+    const byCat = {};
+    sorted.forEach(({ q, d }) => {
+      if (!byCat[q.category]) byCat[q.category] = [];
+      byCat[q.category].push({ q, d });
+    });
+
+    Object.entries(byCat).forEach(([cat, items]) => {
+      const color = CAT_COLORS[cat] || "var(--cyan)";
+      const catHead = document.createElement("div");
+      catHead.style.cssText = `font-size:9px;color:${color};letter-spacing:0.12em;padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:8px;font-weight:500;`;
+      catHead.textContent = `${cat} · ${items.length} error${items.length>1?'s':''}`;
+      el.appendChild(catHead);
+      items.forEach(({ q, d }) => el.appendChild(makeErrRow(q, d)));
+    });
+  } else {
+    sorted.forEach(({ q, d }) => el.appendChild(makeErrRow(q, d)));
+  }
+}
+
+function makeErrRow(q, d) {
+  const color    = CAT_COLORS[q.category] || "var(--cyan)";
+  const conf     = d.confidence || 0;
+  const resolved = d.resolved || false;
+  const flagged  = d.flagged  || false;
+
+  const row = document.createElement("div");
+  row.className = "err-row";
+  row.style.borderLeftColor = resolved ? "var(--green)" : flagged ? "var(--pink)" : "var(--red)";
+  row.style.opacity = resolved ? "0.55" : "1";
+
+  row.innerHTML = `
+    <div class="err-header">
+      <span class="err-code" style="color:${color}">${q.code}</span>
+      <span class="err-cat">${q.category}</span>
+      <span style="font-size:8px;color:var(--grey2);">${q.module}</span>
+      <div class="err-conf">
+        ${[1,2,3].map(n => `<div class="conf-dot ${conf>=n?'lit':''}" style="pointer-events:none;"></div>`).join("")}
+      </div>
+      ${flagged ? '<span class="pass-badge flagged">⚑</span>' : ""}
+      <button class="err-resolved ${resolved?'done':''}"
+        onclick="saveQ('${q.code}',{resolved:${!resolved}});renderErrorLog();">
+        ${resolved ? "✓ RESOLVED" : "MARK RESOLVED"}
+      </button>
+      <button class="filter-btn" style="font-size:8px;padding:1px 8px;"
+        onclick="setTab('ksap');setKsapMode('category');expandedCats.clear();expandedCats.add('${q.category.replace(/'/g,"\'")}');renderKSAP();">
+        → KSAP
+      </button>
+    </div>
+    <div class="err-note-wrap">
+      <div class="err-note-text">"${escHtml(d.note)}"</div>
+      <input class="note-inp" style="width:100%;margin-top:4px;" value="${escHtml(d.note)}" placeholder="edit note..."
+        onchange="saveQ('${q.code}',{note:this.value});renderErrorLog();" />
+    </div>`;
+  return row;
 }
 
 function clearAllProgress() {
@@ -1631,5 +1776,6 @@ setTimeout(() => {
   }
 }, 3000);
 </script>
+
 </body>
 </html>
