@@ -36,17 +36,22 @@
     window._arcp_fb = { update, dataRef, logbookRef, db, ref };
 
     // ── Logbook sync — separate path, raw JSON per type ──────────────────────
-    onValue(logbookRef, snap => {
+        onValue(logbookRef, snap => {
       const data = snap.val();
       if (!data) return;
       let changed = false;
       Object.entries(data).forEach(([k, val]) => {
-        if (typeof val === "string") {
+        if (typeof val === "string" && !k.endsWith("_ts")) {
           const localKey = "pft_lb_" + k + "_entries";
-          const current  = localStorage.getItem(localKey);
-          if (current !== val) {
-            localStorage.setItem(localKey, val);
-            changed = true;
+          const localTs  = parseInt(localStorage.getItem(`pft_lb_${k}_ts`) || "0");
+          const remoteTs = parseInt(data[`${k}_ts`] || "0");
+          if (remoteTs >= localTs) {
+            const current = localStorage.getItem(localKey);
+            if (current !== val) {
+              localStorage.setItem(localKey, val);
+              localStorage.setItem(`pft_lb_${k}_ts`, String(remoteTs));
+              changed = true;
+            }
           }
         }
       });
@@ -54,6 +59,7 @@
         window.dispatchEvent(new CustomEvent("arcp-sync", { detail: { ok: true, changed: true } }));
       }
     });
+
 
     onValue(dataRef, snap => {
       const data = snap.val();
@@ -923,6 +929,31 @@ renderAll();
 setTab("renal");
 document.getElementById("sb-year").textContent = currentYear;
 
+
+// Seed logbook timestamps on first load if missing
+(function seedLbTimestamps() {
+  const types = ["clinics_gim","clinics_renal","procedures_gim","procedures_renal","cpd_gim","cpd_renal","simulation","teaching"];
+  types.forEach(type => {
+    const tsKey = `pft_lb_${type}_ts`;
+    if (!localStorage.getItem(tsKey)) {
+      const entries = localStorage.getItem(`pft_lb_${type}_entries`);
+      if (entries) {
+        const ts = Date.now();
+        localStorage.setItem(tsKey, String(ts));
+        if (window._arcp_fb) {
+          const { update, db, ref } = window._arcp_fb;
+          update(ref(db, "logbookData"), { [`${type}_ts`]: ts })
+            .catch(e => console.error("Logbook ts seed error:", e));
+        }
+      }
+    }
+  });
+})();
+
+window.addEventListener("arcp-sync", e => {
+
+
+  
 window.addEventListener("arcp-sync", e => {
   const { ok, changed } = e.detail;
   const indicator = document.getElementById("sync-indicator");
@@ -1394,11 +1425,14 @@ function saveLbEntries(type, entries) {
   const val = JSON.stringify(entries);
   localStorage.setItem(k, val);
   // Sync to Firebase logbookData path (separate from arcpData to avoid corruption)
-  if (window._arcp_fb && window._arcp_fb.logbookRef) {
+    if (window._arcp_fb && window._arcp_fb.logbookRef) {
     const { update, db, ref } = window._arcp_fb;
-    update(ref(db, "logbookData"), { [type]: val })
+    const ts = Date.now();
+    localStorage.setItem(`pft_lb_${type}_ts`, String(ts));
+    update(ref(db, "logbookData"), { [type]: val, [`${type}_ts`]: ts })
       .catch(e => console.error("Logbook FB sync error:", e));
   }
+
   // If GIM clinics — sync cumulative target
   if (type === "clinics_gim") {
     const gimCount = entries.length;
