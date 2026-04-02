@@ -259,8 +259,8 @@
 
 <div id="statusbar">
   <div class="sb-items">
-    <span class="sb-item">P1 complete: <strong id="sb-p1">0/675</strong></span>
-    <span class="sb-item">P2 complete: <strong id="sb-p2">0/675</strong></span>
+    <span class="sb-item">P1 complete: <strong id="sb-p1">0/600</strong></span>
+    <span class="sb-item">P2 complete: <strong id="sb-p2">0/600</strong></span>
     <span class="sb-item" id="sb-sync" style="color:var(--grey2)">● CONNECTING</span>
   </div>
   <button onclick="clearAllProgress()" style="background:transparent;border:1px solid var(--border2);color:var(--grey2);font-family:var(--font);font-size:9px;padding:3px 10px;cursor:pointer;letter-spacing:0.06em;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--grey2)'">CLEAR PROGRESS</button>
@@ -956,8 +956,8 @@ function renderAll() {
   document.getElementById("readiness-bar").style.background = rColor;
   document.getElementById("readiness-pct").textContent = `${rPct}%`;
   document.getElementById("readiness-pct").style.color = rColor;
-  document.getElementById("sb-p1").textContent = `${s.p1done}/675`;
-  document.getElementById("sb-p2").textContent = `${s.p2done}/675`;
+  document.getElementById("sb-p1").textContent = `${s.p1done}/${KSAP.length}`;
+  document.getElementById("sb-p2").textContent = `${s.p2done}/${KSAP.length}`;
 
   renderTab(currentTab);
 }
@@ -1000,13 +1000,13 @@ function renderOverview() {
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:20px;">
       <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--cyan);padding:12px 14px;">
         <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">KSAP PROGRESS — PASS 1</div>
-        <div style="font-size:20px;font-weight:500;color:var(--cyan)">${s.p1done} <span style="font-size:11px;color:var(--grey)">/ 675</span></div>
-        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${Math.round(s.p1done/675*100)}% of questions attempted</div>
+        <div style="font-size:20px;font-weight:500;color:var(--cyan)">${s.p1done} <span style="font-size:11px;color:var(--grey)">/ ${KSAP.length}</span></div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${Math.round(s.p1done/KSAP.length*100)}% of questions attempted</div>
       </div>
       <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--purple);padding:12px 14px;">
         <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">KSAP PROGRESS — PASS 2</div>
-        <div style="font-size:20px;font-weight:500;color:var(--purple)">${s.p2done} <span style="font-size:11px;color:var(--grey)">/ 675</span></div>
-        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${Math.round(s.p2done/675*100)}% of module review done</div>
+        <div style="font-size:20px;font-weight:500;color:var(--purple)">${s.p2done} <span style="font-size:11px;color:var(--grey)">/ ${KSAP.length}</span></div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${Math.round(s.p2done/KSAP.length*100)}% of module review done</div>
       </div>
       <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--green);padding:12px 14px;">
         <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">TOPIC COVERAGE</div>
