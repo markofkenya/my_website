@@ -427,10 +427,25 @@ function study2Intervals(confidence, sessionCount) {
   return { interval: 3, mastered: false };
 }
 
-function nextRetestDays(conf, prevInterval, prevEasiness) {
-  const { interval } = study2Intervals(conf, 0);
-  return interval;
+function nextRetestDays(conf, retestCount, track) {
+  if (conf <= 3 && (track === "B" || track === "R")) {
+    if (retestCount === 0) return { days: 7,   newTrack: "R" };
+    if (retestCount === 1) return { days: 30,  newTrack: "R" };
+    if (retestCount === 2) return { days: 180, newTrack: "R" };
+    return { days: null, newTrack: "R" };
+  }
+  if (conf <= 3) {
+    if (retestCount === 0) return { days: 3,  newTrack: "A" };
+    if (retestCount === 1) return { days: 14, newTrack: "A" };
+    if (retestCount === 2) return { days: 90, newTrack: "A" };
+    return { days: null, newTrack: "A" };
+  }
+  if (retestCount === 0) return { days: 5,   newTrack: "B" };
+  if (retestCount === 1) return { days: 30,  newTrack: "B" };
+  if (retestCount === 2) return { days: 180, newTrack: "B" };
+  return { days: null, newTrack: "B" };
 }
+
 
 
 
@@ -1425,24 +1440,49 @@ function markRetested(id) {
   if (!sess) return;
   const newConf = parseInt(prompt("Rate your recall (1–5):") || "0", 10);
   if (!newConf || newConf < 1 || newConf > 5) return;
-  const sessionCount = sessionList().filter(s => s.topicId === sess.topicId).length;
-  const { interval: nextDays, mastered } = study2Intervals(newConf, sessionCount);
-  const nd = new Date(); nd.setDate(nd.getDate() + nextDays);
-  const nextDate = nd.toISOString().split("T")[0];
+
+  const retestCount = sess.retestCount || 0;
+  const track       = sess.track || (newConf <= 3 ? "A" : "B");
+  const result      = nextRetestDays(newConf, retestCount, track);
+  const nextDays    = result.days;
+  const newTrack    = result.newTrack;
+  const mature      = nextDays === null;
 
   if (window._stx_fb) {
-    const { db, ref, update } = window._stx_fb;
+    const { db, ref, update, push } = window._stx_fb;
     update(ref(db, `studySessions/${id}`), {
-      retestDone:     mastered,
-      retestDate:     mastered ? null : nextDate,
-      confidence:     newConf,
-      interval:       nextDays,
+      retestDone:     true,
       retestedAt:     Date.now(),
-      retestCount:    (sess.retestCount || 0) + 1,
-      lastRetestDate: new Date().toISOString().split("T")[0],
+      retestConfidence: newConf,
+      retestCount:    retestCount + 1,
+      track:          newTrack,
+      mastered:       mature,
+    });
+    if (mature) {
+      alert("✓ Card matured — add to Anki for long-term retention.");
+      renderAll();
+      return;
+    }
+    const nd = new Date(); nd.setDate(nd.getDate() + nextDays);
+    const nextDate = nd.toISOString().split("T")[0];
+    push(window._stx_fb.sessRef, {
+      topicId:      sess.topicId,
+      date:         new Date().toISOString().split("T")[0],
+      sessionTypes: ["quiz"],
+      notes:        `Retest of session from ${sess.date}`,
+      confidence:   newConf,
+      interval:     nextDays,
+      retestDate:   nextDate,
+      retestDone:   false,
+      duration:     20,
+      createdAt:    Date.now(),
+      isRetest:     true,
+      retestCount:  retestCount + 1,
+      track:        newTrack,
     });
   }
 }
+
 
 function openEditSession(id) {
   const sess = sessions[id];
