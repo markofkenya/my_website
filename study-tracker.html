@@ -1204,8 +1204,8 @@ function sessCard(s) {
     ? `color:var(--pink);animation:tpulse 2s ease-in-out infinite;`
     : rs === "soon" ? `color:var(--yellow);` : `color:var(--grey2);`;
 
-  return `
-    <div class="sess-card stream-${topic.stream} ${rs==='due'?'retest-due':rs==='soon'?'retest-soon':''}">
+    return `
+    <div id="card-${s.id}" class="sess-card stream-${topic.stream} ${rs==='due'?'retest-due':rs==='soon'?'retest-soon':''}">
       <div class="sess-head">
         <div class="sess-topic">${topic.name}</div>
         <span class="sess-stream ${topic.stream}">${STREAM_LABELS[topic.stream]||topic.stream.toUpperCase()}</span>
@@ -1483,16 +1483,17 @@ function markRetested(id) {
   }
 }
 
-
-function openEditSession(id) {
+ function openEditSession(id) {
   const sess = sessions[id];
   if (!sess) return;
 
   const existing = document.getElementById(`edit-form-${id}`);
   if (existing) { existing.remove(); return; } // toggle off
 
-  const card = document.querySelector(`[onclick="openEditSession('${id}')"]`)?.closest(".sess-card");
+  const card = document.getElementById(`card-${id}`);
   if (!card) return;
+
+
 
   const form = document.createElement("div");
   form.id = `edit-form-${id}`;
