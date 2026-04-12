@@ -1132,10 +1132,11 @@ function renderSessions() {
 
 function renderRetests() {
   const el   = document.getElementById("tab-retests");
-  const due  = sessionList().filter(s => retestStatus(s) === "due");
-  const soon = sessionList().filter(s => retestStatus(s) === "soon");
-  const ok   = sessionList().filter(s => retestStatus(s) === "ok" && s.retestDate && !s.retestDone);
+    const due  = sessionList().filter(s => retestStatus(s) === "due").sort((a,b) => a.retestDate.localeCompare(b.retestDate));
+  const soon = sessionList().filter(s => retestStatus(s) === "soon").sort((a,b) => a.retestDate.localeCompare(b.retestDate));
+  const ok   = sessionList().filter(s => retestStatus(s) === "ok" && s.retestDate && !s.retestDone).sort((a,b) => a.retestDate.localeCompare(b.retestDate));
   const done = sessionList().filter(s => s.retestDone);
+
   let html = "";
 
   if (due.length)  html += `<div class="sec-head"><span class="sec-title" style="color:var(--pink)">OVERDUE</span><span class="sec-rule"></span><span class="sec-note">${due.length} overdue</span></div><div class="session-grid">${due.map(sessCard).join("")}</div>`;
