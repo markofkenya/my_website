@@ -1132,10 +1132,13 @@ function renderSessions() {
 
 function renderRetests() {
   const el   = document.getElementById("tab-retests");
-    const due  = sessionList().filter(s => retestStatus(s) === "due").sort((a,b) => a.retestDate.localeCompare(b.retestDate));
-  const soon = sessionList().filter(s => retestStatus(s) === "soon").sort((a,b) => a.retestDate.localeCompare(b.retestDate));
-  const ok   = sessionList().filter(s => retestStatus(s) === "ok" && s.retestDate && !s.retestDone).sort((a,b) => a.retestDate.localeCompare(b.retestDate));
+      const today = new Date(); today.setHours(0,0,0,0);
+  const daysDiff = s => Math.round((new Date(s.retestDate) - today) / 86400000);
+  const due  = sessionList().filter(s => retestStatus(s) === "due").sort((a,b) => daysDiff(b) - daysDiff(a));
+  const soon = sessionList().filter(s => retestStatus(s) === "soon").sort((a,b) => daysDiff(a) - daysDiff(b));
+  const ok   = sessionList().filter(s => retestStatus(s) === "ok" && s.retestDate && !s.retestDone).sort((a,b) => daysDiff(a) - daysDiff(b));
   const done = sessionList().filter(s => s.retestDone);
+
 
   let html = "";
 
