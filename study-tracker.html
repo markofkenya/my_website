@@ -1469,20 +1469,13 @@ function markRetested(id) {
     }
     const nd = new Date(); nd.setDate(nd.getDate() + nextDays);
     const nextDate = nd.toISOString().split("T")[0];
-    push(window._stx_fb.sessRef, {
-      topicId:      sess.topicId,
-      date:         new Date().toISOString().split("T")[0],
-      sessionTypes: ["quiz"],
-      notes:        `Retest of session from ${sess.date}`,
+        update(ref(db, `studySessions/${id}`), {
+      retestDone:   false,
+      retestDate:   nextDate,
       confidence:   newConf,
       interval:     nextDays,
-      retestDate:   nextDate,
-      retestDone:   false,
-      duration:     20,
-      createdAt:    Date.now(),
-      isRetest:     true,
-      retestCount:  retestCount + 1,
       track:        newTrack,
+      retestCount:  retestCount + 1,
     });
   }
 }
