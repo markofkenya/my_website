@@ -188,7 +188,6 @@
     #main{padding:14px 18px 100px;}
     .sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;padding:4px 0;border-bottom:1px solid var(--border);}
     .sec-title{font-size:11px;font-weight:500;color:var(--green);}
-    .sec-title::before{content:"";}
     .sec-rule{flex:1;}
     .sec-note{font-size:9px;color:var(--grey2);}
     .log-form{background:var(--bg2);border:1px solid var(--border2);border-top:2px solid var(--yellow);padding:12px 14px;margin-bottom:18px;}
@@ -210,7 +209,7 @@
     .sess-card:hover{background:var(--bg3);}
     .sess-card.stream-renal{border-left-color:var(--orange);}
     .sess-card.stream-gim{border-left-color:var(--blue);}
-    .sess-card.retest-due{border-left-color:var(--pink);background:rgba(224,108,117,0.03);}
+    .sess-card.retest-due{background:rgba(224,108,117,0.03);}
     .sess-card.retest-soon{border-left-color:var(--yellow);}
     .sess-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px;gap:8px;}
     .sess-topic{font-size:12px;font-weight:500;color:var(--white);}
@@ -236,7 +235,6 @@
     .topic-card{background:transparent;border:none;border-bottom:1px solid var(--border);padding:5px 8px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
     .topic-card:hover{background:var(--bg2);}
     .topic-name{font-size:11px;color:var(--white);}
-    .topic-name::before{content:"";}
     .topic-stream{font-size:8px;}
     .topic-stream.renal{color:var(--orange);}
     .topic-stream.gim{color:var(--blue);}
@@ -279,6 +277,24 @@
     .topic-opt:hover,.topic-opt.active{background:var(--bg3);color:var(--yellow);}
     .topic-opt-stream{font-size:8px;color:var(--grey2);margin-left:6px;}
     .topic-opt.empty{color:var(--grey2);cursor:default;font-style:italic;}
+
+    /* Color coding for SRS Tracks */
+    .sess-card.track-HIGH { border-left: 4px solid var(--green) !important; }
+    .sess-card.track-LOW { border-left: 4px solid var(--orange) !important; }
+    .sess-card.track-RECOVERY { border-left: 4px solid var(--purple) !important; }
+    .sess-card.track-MATURE { border-left: 4px solid var(--cyan) !important; opacity: 0.8; }
+
+    /* A small badge to show the step number */
+    .step-badge {
+      font-size: 8px;
+      background: var(--bg3);
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: var(--grey);
+      margin-left: 5px;
+      border: 1px solid var(--border);
+    }
+
     @media(max-width:640px){
       .session-grid,.topic-grid{grid-template-columns:1fr;}
       .header-clock{display:none;}
@@ -403,66 +419,6 @@ const DEFAULT_TOPICS = {
 
 const STREAM_LABELS = { renal:"RENAL", gim:"GIM" };
 
-function calculateSRS(currentConf, topicId) {
-  // Find the VERY LAST session for this topic to see the track/step
-  const history = sessionList()
-    .filter(s => s.topicId === topicId)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  const last = history[0] || null;
-
-  // 1. RECOVERY TRACK: If confidence drops to <= 3 on a topic you've studied before
-  if (last && currentConf <= 3) {
-    return { days: 7, track: 'RECOVERY', step: 1 };
-  }
-
-  // 2. INITIAL SESSIONS: First time studying this topic
-  if (!last) {
-    if (currentConf <= 3) return { days: 3, track: 'LOW', step: 1 };
-    return { days: 5, track: 'HIGH', step: 1 };
-  }
-
-  // 3. PROGRESSION: Moving forward on a track
-  const nextStep = (last.step || 1) + 1;
-  const currentTrack = last.track || 'LOW';
-
-  if (currentTrack === 'LOW') {
-    if (nextStep === 2) return { days: 14, track: 'LOW', step: 2 };
-    if (nextStep === 3) return { days: 90, track: 'LOW', step: 3 };
-    return { days: null, track: 'MATURE', step: 4 };
-  }
-
-  if (currentTrack === 'HIGH' || currentTrack === 'RECOVERY') {
-    if (nextStep === 2) return { days: 30, track: 'HIGH', step: 2 };
-    if (nextStep === 3) return { days: 180, track: 'HIGH', step: 3 };
-    return { days: null, track: 'MATURE', step: 4 };
-  }
-
-  return { days: null, track: 'MATURE', step: 99 };
-}
-
-
-function weakestTopics(n = 5) {
-  const map = {};
-  sessionList().forEach(s => {
-    if (!s.topicId || !s.confidence) return;
-    if (s.buried) return;
-
-    if (!map[s.topicId]) map[s.topicId] = [];
-    map[s.topicId].push(s.confidence);
-  });
-  return Object.entries(map)
-    .map(([id, confs]) => ({
-      id,
-      name: (topics[id] || {}).name || "Unknown",
-      stream: (topics[id] || {}).stream || "renal",
-      avg: confs.reduce((a,b) => a+b, 0) / confs.length,
-      count: confs.length,
-    }))
-    .sort((a,b) => a.avg - b.avg)
-    .slice(0, n);
-}
-
 let sessions       = {};
 let topics         = {};
 let plan           = {};
@@ -474,19 +430,20 @@ let timerCompleted = localStorage.getItem("stx_timer_completed") === "true";
 let timerStartTime = parseInt(localStorage.getItem("stx_timer_start") || "0") || null;
 let timerElapsedBeforePause = parseInt(localStorage.getItem("stx_timer_elapsed") || "0");
 let pendingFiles   = [];
-let timerPhase     = "study";
-let timerSeconds   = 90 * 60;
-let timerTotal     = 90 * 60;
-  if (timerStartTime) {
+let timerPhase     = localStorage.getItem("stx_timer_phase") || "study";
+let timerSeconds   = timerPhase === "study" ? 90 * 60 : 20 * 60;
+let timerTotal     = timerSeconds;
+let activePlanId   = null;
+
+if (timerStartTime) {
   const _running = localStorage.getItem("stx_timer_running") === "true";
+  const _total = timerPhase === "study" ? 90 * 60 : 20 * 60;
+  timerTotal = _total;
   const _e = _running
     ? timerElapsedBeforePause + Math.floor((Date.now() - timerStartTime) / 1000)
     : timerElapsedBeforePause;
   timerSeconds = Math.max(0, timerTotal - _e);
 }
-
-
-let activePlanId   = null;
 
 function tickClock() {
   const now = new Date();
@@ -495,16 +452,21 @@ function tickClock() {
   document.getElementById("clock-date").textContent =
     now.toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short"}).toUpperCase();
 }
-tickClock(); setInterval(tickClock, 1000);
+tickClock();
+setInterval(tickClock, 1000);
 
 window.addEventListener("stx-sync", () => {
   sessions = window._stx_sessions || {};
   topics   = window._stx_topics   || {};
   plan     = window._stx_plan     || {};
+
   const dot = document.getElementById("sync-dot");
   const sb  = document.getElementById("sb-sync");
-  dot.textContent = "● LIVE"; dot.style.color = "var(--green)";
-  sb.textContent  = "● LIVE"; sb.style.color  = "var(--green)";
+  dot.textContent = "● LIVE";
+  dot.style.color = "var(--green)";
+  sb.textContent  = "● LIVE";
+  sb.style.color  = "var(--green)";
+
   dedupeTopicsInFirebase();
   renderAll();
 });
@@ -532,29 +494,33 @@ function timerStartPause() {
     timerElapsedBeforePause += Math.floor((Date.now() - timerStartTime) / 1000);
     localStorage.setItem("stx_timer_elapsed", timerElapsedBeforePause);
     document.getElementById("timer-start-btn").textContent = "▶ RESUME";
-    
   } else {
     timerStartTime = Date.now();
-    if (timerPhase === "study") localStorage.setItem("stx_timer_start", timerStartTime);
+    localStorage.setItem("stx_timer_start", timerStartTime);
+    localStorage.setItem("stx_timer_phase", timerPhase);
     timerRunning = true;
     localStorage.setItem("stx_timer_running", "true");
     document.getElementById("timer-start-btn").textContent = "⏸ PAUSE";
+
     timerInterval = setInterval(() => {
-  const elapsed = timerElapsedBeforePause + Math.floor((Date.now() - timerStartTime) / 1000);
-  timerSeconds  = Math.max(0, timerTotal - elapsed);
+      const elapsed = timerElapsedBeforePause + Math.floor((Date.now() - timerStartTime) / 1000);
+      timerSeconds  = Math.max(0, timerTotal - elapsed);
 
-  if (!timerCompleted && elapsed >= 30 * 60) {
-    timerCompleted = true;
-    localStorage.setItem("stx_timer_completed", "true");
+      if (!timerCompleted && timerPhase === "study" && elapsed >= 30 * 60) {
+        timerCompleted = true;
+        localStorage.setItem("stx_timer_completed", "true");
+        if (currentTab === "log") renderLog();
+        if (currentTab === "today") renderToday();
+      }
 
-    if (currentTab === "log") renderLog();
-    if (currentTab === "today") renderToday();
-  }
       if (timerSeconds <= 0) {
         clearInterval(timerInterval);
         timerRunning = false;
+        localStorage.setItem("stx_timer_running", "false");
+
         if (timerPhase === "study") {
           timerCompleted = true;
+          localStorage.setItem("stx_timer_completed", "true");
           if (currentTab === "log") renderLog();
           if (currentTab === "today") renderToday();
           switchPhase();
@@ -565,6 +531,7 @@ function timerStartPause() {
         }
         return;
       }
+
       updateTimerDisplay();
     }, 1000);
   }
@@ -572,32 +539,47 @@ function timerStartPause() {
 
 function timerReset() {
   clearInterval(timerInterval);
-  timerRunning  = false;
-  localStorage.removeItem("stx_timer_running");
+  timerRunning = false;
   timerStartTime = null;
   timerElapsedBeforePause = 0;
+  timerPhase = "study";
+  timerSeconds = 90 * 60;
+  timerTotal = 90 * 60;
+
+  localStorage.removeItem("stx_timer_running");
+  localStorage.removeItem("stx_timer_start");
   localStorage.removeItem("stx_timer_elapsed");
   localStorage.removeItem("stx_timer_completed");
-  localStorage.removeItem("stx_timer_start");
+  localStorage.removeItem("stx_timer_phase");
 
-  timerSeconds  = timerPhase === "study" ? 90 * 60 : 20 * 60;
-  timerTotal    = timerSeconds;
   document.getElementById("timer-start-btn").textContent = "▶ START";
   document.getElementById("timer-clock").classList.remove("alert-pulse");
+  const btn = document.getElementById("timer-switch-btn");
+  if (btn) btn.textContent = "⇄ SWITCH TO REST";
   updateTimerDisplay();
 }
 
 function switchPhase() {
   clearInterval(timerInterval);
   timerRunning = false;
-  timerPhase   = timerPhase === "study" ? "rest" : "study";
+  localStorage.setItem("stx_timer_running", "false");
+
+  timerPhase = timerPhase === "study" ? "rest" : "study";
   timerSeconds = timerPhase === "study" ? 90 * 60 : 20 * 60;
   timerTotal   = timerSeconds;
-  if (timerPhase === "study") timerStartTime = null;
+  timerStartTime = null;
+  timerElapsedBeforePause = 0;
+
+  localStorage.removeItem("stx_timer_start");
+  localStorage.removeItem("stx_timer_elapsed");
+  localStorage.setItem("stx_timer_phase", timerPhase);
+
   document.getElementById("timer-start-btn").textContent = "▶ START";
   document.getElementById("timer-clock").classList.remove("alert-pulse");
+
   const btn = document.getElementById("timer-switch-btn");
   if (btn) btn.textContent = timerPhase === "study" ? "⇄ SWITCH TO REST" : "⇄ SWITCH TO STUDY";
+
   updateTimerDisplay();
 }
 
@@ -606,9 +588,9 @@ function updateTimerDisplay() {
   const s = timerSeconds % 60;
   const pct = timerTotal ? (timerSeconds / timerTotal) * 100 : 0;
   const isRest = timerPhase === "rest";
+
   document.getElementById("timer-phase").textContent = isRest ? "REST PERIOD" : "STUDY SESSION";
-  document.getElementById("timer-clock").textContent =
-    `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  document.getElementById("timer-clock").textContent = `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
   document.getElementById("timer-clock").className = "timer-clock" + (isRest ? " rest" : "");
   document.getElementById("timer-bar").style.width = `${pct}%`;
   document.getElementById("timer-bar").className = "timer-bar" + (isRest ? " rest" : "");
@@ -618,16 +600,18 @@ function normalizeTopicName(name) {
   return String(name || "")
     .normalize('NFKC')
     .toLowerCase()
-    .replace(/[‐‑‒–—―]/g, "-")
+    .replace(/[‐-‒–—―]/g, "-")
     .replace(/[‘’`]/g, "'")
     .replace(/[“”]/g, '"')
     .replace(/\s+/g, " ")
     .replace(/\s*([-/:,;])\s*/g, "$1")
     .trim();
 }
+
 function topicKey(topic) {
   return `${String(topic.stream || "renal").trim().toLowerCase()}::${normalizeTopicName(topic.name)}`;
 }
+
 function topicList() {
   const seen = new Set();
   return Object.entries(topics)
@@ -640,6 +624,7 @@ function topicList() {
     })
     .sort((a,b) => a.name.localeCompare(b.name));
 }
+
 async function dedupeTopicsInFirebase() {
   if (window._stx_deduping || !window._stx_fb) return;
   const loaded = window._stx_loaded || {};
@@ -653,6 +638,7 @@ async function dedupeTopicsInFirebase() {
 
   const keeperByKey = {};
   const duplicateMap = {};
+
   topicEntries
     .sort((a,b) => ((a[1]?.createdAt || 0) - (b[1]?.createdAt || 0)) || a[0].localeCompare(b[0]))
     .forEach(([id, topic]) => {
@@ -691,63 +677,93 @@ async function dedupeTopicsInFirebase() {
     window._stx_deduping = false;
   }
 }
+
 function sessionList() {
   return Object.entries(sessions)
     .map(([id,s]) => ({id,...s}))
-    .sort((a,b) => (b.date || "").localeCompare(a.date || ""));
+    .sort((a,b) => {
+      const dateComp = (b.date || "").localeCompare(a.date || "");
+      if (dateComp !== 0) return dateComp;
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
 }
+
 function retestStatus(sess) {
+  if (sess.buried || sess.mastered || sess.track === "MATURE") return "done";
   if (sess.retestDone) return "done";
   if (!sess.retestDate) return "ok";
-  const today = new Date(); today.setHours(0,0,0,0);
-  const due   = new Date(sess.retestDate);
-  const diff  = Math.round((due - today) / 86400000);
-  if (diff < 0)  return "due";
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const due = new Date(sess.retestDate);
+  const diff = Math.round((due - today) / 86400000);
+
+  if (diff < 0) return "due";
   if (diff <= 3) return "soon";
   return "ok";
 }
+
 function retestLabel(sess) {
+  if (sess.buried || sess.mastered || sess.track === "MATURE") return "✓ MATURE";
   if (sess.retestDone) return "✓ RETESTED";
   if (!sess.retestDate) return "no retest set";
-  const today = new Date(); today.setHours(0,0,0,0);
-  const due   = new Date(sess.retestDate);
-  const diff  = Math.round((due - today) / 86400000);
-  if (diff < 0)  return `!! OVERDUE ${Math.abs(diff)}d`;
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const due = new Date(sess.retestDate);
+  const diff = Math.round((due - today) / 86400000);
+
+  if (diff < 0) return `!! OVERDUE ${Math.abs(diff)}d`;
   if (diff === 0) return "!! DUE TODAY";
   if (diff <= 3) return `⚠ due in ${diff}d`;
   return `retest ${due.toLocaleDateString("en-GB",{day:"2-digit",month:"short"})}`;
 }
+
 function weekSessions() {
   const now    = new Date();
   const day    = now.getDay() || 7;
-  const monday = new Date(now); monday.setDate(now.getDate() - day + 1); monday.setHours(0,0,0,0);
-  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); sunday.setHours(23,59,59,999);
-    return sessionList().filter(s => {
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - day + 1);
+  monday.setHours(0,0,0,0);
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23,59,59,999);
+
+  return sessionList().filter(s => {
     if (!s.date) return false;
     if (s.isRetest) return false;
     if (s.buried) return false;
-
     const d = new Date(s.date);
     return d >= monday && d <= sunday;
   });
-
 }
+
 function totalStudyHours() {
   return sessionList().reduce((acc, s) => acc + (s.duration || 90), 0) / 60;
 }
+
 function calcStreak() {
   let streak = 0;
   const now = new Date();
+
   for (let w = 0; w < 52; w++) {
-    const refDate = new Date(now); refDate.setDate(now.getDate() - w * 7);
+    const refDate = new Date(now);
+    refDate.setDate(now.getDate() - w * 7);
+
     const day = refDate.getDay() || 7;
-    const mon = new Date(refDate); mon.setDate(refDate.getDate() - day + 1); mon.setHours(0,0,0,0);
-    const sun = new Date(mon); sun.setDate(mon.getDate() + 6); sun.setHours(23,59,59,999);
-        const count = sessionList().filter(s => {
+    const mon = new Date(refDate);
+    mon.setDate(refDate.getDate() - day + 1);
+    mon.setHours(0,0,0,0);
+
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    sun.setHours(23,59,59,999);
+
+    const count = sessionList().filter(s => {
       if (!s.date) return false;
       if (s.isRetest) return false;
       if (s.buried) return false;
-
       const d = new Date(s.date);
       return d >= mon && d <= sun;
     }).length;
@@ -758,23 +774,110 @@ function calcStreak() {
   return streak;
 }
 
+function weakestTopics(n = 5) {
+  const map = {};
+
+  sessionList().forEach(s => {
+    if (!s.topicId || !s.confidence) return;
+    if (s.buried) return;
+    if (!map[s.topicId]) map[s.topicId] = [];
+    map[s.topicId].push(s.confidence);
+  });
+
+  return Object.entries(map)
+    .map(([id, confs]) => ({
+      id,
+      name: (topics[id] || {}).name || "Unknown",
+      stream: (topics[id] || {}).stream || "renal",
+      avg: confs.reduce((a,b) => a+b, 0) / confs.length,
+      count: confs.length,
+    }))
+    .sort((a,b) => a.avg - b.avg)
+    .slice(0, n);
+}
+
+function retestDaysFromConf(conf) {
+  return conf <= 3 ? 3 : 5;
+}
+
+/*
+SRS protocol:
+LOW start      : 3 -> 14 -> 90 -> mature
+HIGH start     : 5 -> 30 -> 180 -> mature
+RECOVERY track : 7 -> 30 -> 180 -> mature
+
+Rules:
+- First ever session:
+    conf <=3 => LOW step 1
+    conf 4/5 => HIGH step 1
+- Any later confidence drop to <=3:
+    if already on RECOVERY, continue it
+    else start RECOVERY at 7 days
+*/
+function calculateSRS(currentConf, topicId) {
+  const history = sessionList()
+    .filter(s => s.topicId === topicId)
+    .sort((a, b) => {
+      const dateComp = (b.date || "").localeCompare(a.date || "");
+      if (dateComp !== 0) return dateComp;
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+
+  const last = history[0] || null;
+
+  if (!last) {
+    if (currentConf <= 3) return { days: 3, track: "LOW", step: 1 };
+    return { days: 5, track: "HIGH", step: 1 };
+  }
+
+  if (currentConf <= 3) {
+    if (last.track === "RECOVERY") {
+      if (last.step === 1) return { days: 30, track: "RECOVERY", step: 2 };
+      if (last.step === 2) return { days: 180, track: "RECOVERY", step: 3 };
+      return { days: null, track: "MATURE", step: 4 };
+    }
+    return { days: 7, track: "RECOVERY", step: 1 };
+  }
+
+  if (last.track === "LOW") {
+    if (last.step === 1) return { days: 14, track: "LOW", step: 2 };
+    if (last.step === 2) return { days: 90, track: "LOW", step: 3 };
+    return { days: null, track: "MATURE", step: 4 };
+  }
+
+  if (last.track === "HIGH") {
+    if (last.step === 1) return { days: 30, track: "HIGH", step: 2 };
+    if (last.step === 2) return { days: 180, track: "HIGH", step: 3 };
+    return { days: null, track: "MATURE", step: 4 };
+  }
+
+  if (last.track === "RECOVERY") {
+    if (last.step === 1) return { days: 30, track: "RECOVERY", step: 2 };
+    if (last.step === 2) return { days: 180, track: "RECOVERY", step: 3 };
+    return { days: null, track: "MATURE", step: 4 };
+  }
+
+  return { days: null, track: "MATURE", step: 4 };
+}
+
 function renderAll() {
-  const wk     = weekSessions();
-  const due    = sessionList().filter(s => retestStatus(s) === "due").length;
-  const today  = sessionList().filter(s => retestStatus(s) === "soon" && (() => {
-    const diff = Math.round((new Date(s.retestDate) - new Date().setHours(0,0,0,0)) / 86400000);
+  const wk = weekSessions();
+  const due = sessionList().filter(s => retestStatus(s) === "due").length;
+  const today = sessionList().filter(s => retestStatus(s) === "soon" && (() => {
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    const retestDate = new Date(s.retestDate);
+    const diff = Math.round((retestDate - now) / 86400000);
     return diff === 0;
   })()).length;
-  const soon   = sessionList().filter(s => retestStatus(s) === "soon").length;
 
-  
   const streak = calcStreak();
 
   document.getElementById("week-pips").querySelectorAll(".pip").forEach((p,i) => {
     p.classList.toggle("done", i < wk.length);
   });
-  document.getElementById("week-sub").textContent  = `${wk.length} / 2 sessions`;
-  document.getElementById("sb-week").textContent   = `${wk.length}/2`;
+  document.getElementById("week-sub").textContent = `${wk.length} / 2 sessions`;
+  document.getElementById("sb-week").textContent = `${wk.length}/2`;
   document.getElementById("total-sessions").textContent = sessionList().length;
   document.getElementById("streak-val").textContent = streak;
 
@@ -782,7 +885,6 @@ function renderAll() {
   retestEl.textContent = due + today;
   retestEl.className = "retest-val" + (due > 0 ? " alert" : today > 0 ? " warn" : "");
 
-  
   renderTab(currentTab);
 }
 
@@ -805,13 +907,13 @@ function renderTab(tab) {
 }
 
 function renderToday() {
-  const el     = document.getElementById("tab-today");
-  const wk     = weekSessions();
-  const due    = sessionList().filter(s => retestStatus(s) === "due");
-  const soon   = sessionList().filter(s => retestStatus(s) === "soon");
+  const el = document.getElementById("tab-today");
+  const wk = weekSessions();
+  const due = sessionList().filter(s => retestStatus(s) === "due");
+  const soon = sessionList().filter(s => retestStatus(s) === "soon");
   const sessNeeded = Math.max(0, 2 - wk.length);
-  const weak   = weakestTopics(3);
-  const hours  = totalStudyHours();
+  const weak = weakestTopics(3);
+  const hours = totalStudyHours();
 
   let suggested = null;
   if (weak.length) suggested = weak[0];
@@ -839,9 +941,11 @@ function renderToday() {
         <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:6px;">RETESTS</div>
         <div style="font-size:22px;font-weight:500;color:var(--${due.length>0?'pink':soon.length>0?'yellow':'grey2'})">${due.length + soon.length}</div>
         <div style="font-size:10px;color:var(--grey2);margin-top:4px;">
-          ${due.length > 0 ? `${c(due.length,'pink')} overdue · ${c(soon.length,'yellow')} due soon`
-            : soon.length > 0 ? `${c(soon.length,'yellow')} due within 3 days`
-            : `no retests due`}
+          ${due.length > 0
+            ? `${c(due.length,'pink')} overdue · ${c(soon.length,'yellow')} due soon`
+            : soon.length > 0
+              ? `${c(soon.length,'yellow')} due within 3 days`
+              : `no retests due`}
         </div>
         ${due.length + soon.length > 0 ? `<button class="btn-primary" style="margin-top:8px;font-size:9px;padding:4px 12px;" onclick="setTab('retests')">VIEW RETESTS ▸</button>` : ""}
       </div>
@@ -865,9 +969,7 @@ function renderToday() {
         avg confidence ${suggested.avg.toFixed(1)}★ across ${suggested.count} session${suggested.count>1?'s':''}
         &nbsp;·&nbsp; <span style="color:var(--${suggested.stream})">${STREAM_LABELS[suggested.stream]}</span>
       </div>
-      <button class="btn-primary" style="margin-top:8px;font-size:9px;padding:4px 12px;" onclick="activateSuggested('${suggested.id}','${suggested.name}','${suggested.stream}')">STUDY THIS ▸</button>
-
-
+      <button class="btn-primary" style="margin-top:8px;font-size:9px;padding:4px 12px;" onclick="activateSuggested('${suggested.id}','${suggested.name.replace(/'/g,"\\'")}','${suggested.stream}')">STUDY THIS ▸</button>
     </div>` : ""}
 
     ${weak.length ? `
@@ -892,7 +994,8 @@ function renderToday() {
     </div>
     <div class="session-grid">
       ${sessionList().slice(0,3).map(sessCard).join("") || `<div class="empty-msg">no sessions yet — start the timer and log your first session</div>`}
-    </div>`;
+    </div>
+  `;
 
   el.innerHTML = html;
 }
@@ -913,9 +1016,10 @@ function makeTopicSearch(inputId, hiddenId) {
       <div class="topic-dropdown" id="drop-${inputId}">
         ${tl.map(t => `
           <div class="topic-opt"
-            data-id="${t.id}" data-name="[${STREAM_LABELS[t.stream]}] ${t.name.replace(/"/g, '&quot;')}"
-            onmousedown="selectTopic('${inputId}','${hiddenId}','${t.id}','[${STREAM_LABELS[t.stream]}] ${t.name.replace(/'/g,"\\'")}')">
-            ${t.name}<span class="topic-opt-stream">${STREAM_LABELS[t.stream]}</span>
+            data-id="${t.id}"
+            data-name="[${STREAM_LABELS[t.stream]}] ${escapeAttr(t.name)}"
+            onmousedown="selectTopic('${inputId}','${hiddenId}','${t.id}','[${STREAM_LABELS[t.stream]}] ${escapeJs(t.name)}')">
+            ${escapeHtml(t.name)}<span class="topic-opt-stream">${STREAM_LABELS[t.stream]}</span>
           </div>`).join("")}
         <div class="topic-opt empty" style="display:none" id="no-results-${inputId}">no matches</div>
       </div>
@@ -925,12 +1029,15 @@ function makeTopicSearch(inputId, hiddenId) {
 function openTopicDrop(inputId) {
   document.getElementById(`drop-${inputId}`)?.classList.add("open");
 }
+
 function toggleTopicDrop(inputId) {
   const drop = document.getElementById(`drop-${inputId}`);
   const input = document.getElementById(inputId);
   const wrap = document.getElementById(`wrap-${inputId}`);
   const hidden = wrap?.querySelector('input[type="hidden"]');
+
   if (!drop) return;
+
   if (drop.classList.contains("open")) {
     drop.classList.remove("open");
   } else {
@@ -939,35 +1046,42 @@ function toggleTopicDrop(inputId) {
     drop.classList.add("open");
   }
 }
+
 function closeTopicDrop(inputId, delay) {
   setTimeout(() => document.getElementById(`drop-${inputId}`)?.classList.remove("open"), delay || 0);
 }
+
 function filterTopics(inputId, hiddenId) {
-  const q    = document.getElementById(inputId)?.value.toLowerCase() || "";
+  const q = document.getElementById(inputId)?.value.toLowerCase() || "";
   const drop = document.getElementById(`drop-${inputId}`);
   if (!drop) return;
+
   const hidden = hiddenId ? document.getElementById(hiddenId) : null;
   if (hidden) hidden.value = "";
+
   let any = false;
   drop.querySelectorAll(".topic-opt:not(.empty)").forEach(opt => {
     const match = opt.dataset.name.toLowerCase().includes(q);
     opt.style.display = match ? "" : "none";
     if (match) any = true;
   });
+
   const noRes = document.getElementById(`no-results-${inputId}`);
   if (noRes) noRes.style.display = any ? "none" : "";
   drop.classList.add("open");
 }
+
 function selectTopic(inputId, hiddenId, topicId, topicName) {
   document.getElementById(inputId).value  = topicName;
   document.getElementById(hiddenId).value = topicId;
+
   if (hiddenId === "f-topic") {
     localStorage.setItem("stx_session_topic", topicId);
     localStorage.setItem("stx_session_topic_name", topicName);
   }
+
   closeTopicDrop(inputId, 0);
 }
-
 
 function renderLog() {
   const el = document.getElementById("tab-log");
@@ -992,20 +1106,19 @@ function renderLog() {
           <label class="form-label">session_type</label>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
             ${["study","quiz","teach"].map(t => `
-  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:10px;color:var(--grey);letter-spacing:0.08em;">
-    <input type="checkbox" id="f-type-${t}" value="${t}"
-      style="accent-color:var(--green);width:14px;height:14px;"
-      ${localStorage.getItem('stx_type_'+t) === 'false' ? '' : (t==='study' || localStorage.getItem('stx_type_'+t) === 'true') ? 'checked' : ''} 
-      onchange="localStorage.setItem('stx_type_${t}', this.checked)" />
-    ${t.toUpperCase()}
-  </label>`).join("")}
-
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:10px;color:var(--grey);letter-spacing:0.08em;">
+                <input type="checkbox" id="f-type-${t}" value="${t}"
+                  style="accent-color:var(--green);width:14px;height:14px;"
+                  ${localStorage.getItem('stx_type_'+t) === 'false' ? '' : (t==='study' || localStorage.getItem('stx_type_'+t) === 'true') ? 'checked' : ''} 
+                  onchange="localStorage.setItem('stx_type_${t}', this.checked)" />
+                ${t.toUpperCase()}
+              </label>`).join("")}
           </div>
         </div>
         <div class="form-field wide">
           <label class="form-label">notes</label>
           <textarea class="form-inp" id="f-notes" placeholder="// key concepts, gaps identified, questions to follow up..."
-                oninput="localStorage.setItem('stx_session_notes', this.value)"></textarea>
+            oninput="localStorage.setItem('stx_session_notes', this.value)"></textarea>
         </div>
         <div class="form-field wide">
           <label class="form-label">attach_files (optional)</label>
@@ -1016,10 +1129,10 @@ function renderLog() {
             </div>
           </div>
           <input type="file" id="f-file" style="display:none" multiple onchange="handleFileSelect(this)" />
-
           <div id="attached-file-preview"></div>
         </div>
       </div>
+
       <div class="form-footer">
         <div>
           <div class="form-label" style="margin-bottom:5px;">confidence (1–5)</div>
@@ -1027,15 +1140,12 @@ function renderLog() {
             ${[1,2,3,4,5].map(n => `<button type="button" class="star ${n<=selConfidence?'lit':''}" onclick="setConf(${n})">${n<=selConfidence?'★':'☆'}</button>`).join("")}
           </div>
           <div style="font-size:8px;color:var(--grey2);margin-top:4px;" id="retest-hint">
-            // retest in ~${retestDaysFromConf(selConfidence)} days
+            // first retest in ~${retestDaysFromConf(selConfidence)} days
           </div>
         </div>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-                    <button class="btn-secondary" onclick="clearForm()">CLEAR</button>
+          <button class="btn-secondary" onclick="clearForm()">CLEAR</button>
           <button class="btn-primary" onclick="saveSession()">LOG SESSION ▸</button>
-
-
-
         </div>
       </div>
     </div>
@@ -1047,17 +1157,22 @@ function renderLog() {
     </div>
     <div class="session-grid">
       ${sessionList().slice(0,5).map(sessCard).join("") || `<div class="empty-msg">no sessions logged yet</div>`}
-    </div>`;
+    </div>
+  `;
+
   const savedTopicId   = localStorage.getItem("stx_session_topic");
   const savedTopicName = localStorage.getItem("stx_session_topic_name");
   const savedNotes     = localStorage.getItem("stx_session_notes");
-  if (savedTopicId)   { document.getElementById("f-topic").value        = savedTopicId; }
-  if (savedTopicName) { document.getElementById("f-topic-search").value  = savedTopicName; }
-  if (savedNotes)     { document.getElementById("f-notes").value         = savedNotes; }
+
+  if (savedTopicId)   document.getElementById("f-topic").value = savedTopicId;
+  if (savedTopicName) document.getElementById("f-topic-search").value = savedTopicName;
+  if (savedNotes)     document.getElementById("f-notes").value = savedNotes;
+
+  renderPendingFiles();
 }
 
 function renderSessions() {
-  const el   = document.getElementById("tab-sessions");
+  const el = document.getElementById("tab-sessions");
   const list = sessionList();
   const hours = totalStudyHours();
 
@@ -1065,7 +1180,6 @@ function renderSessions() {
     el.innerHTML = `<div class="empty-msg">no sessions logged yet</div>`;
     return;
   }
-
 
   const searchVal = (localStorage.getItem("stx_sess_search") || "").toLowerCase();
 
@@ -1077,15 +1191,14 @@ function renderSessions() {
     <div style="margin-bottom:14px;">
       <input class="form-inp" id="sess-search" placeholder="// search by topic name..."
         style="width:100%;max-width:400px;"
-        value="${searchVal}"
+        value="${escapeAttr(searchVal)}"
         oninput="filterSessions(this.value)" />
     </div>
     <div style="font-size:9px;color:var(--grey2);margin-bottom:14px;">
       ${filtered.length} of ${list.length} sessions · ${hours.toFixed(1)}h studied
     </div>`;
 
-
-    ["renal","gim"].forEach(stream => {
+  ["renal","gim"].forEach(stream => {
     const streamFiltered = filtered.filter(s => {
       const t = topics[s.topicId];
       return t && t.stream === stream;
@@ -1102,8 +1215,8 @@ function renderSessions() {
       <div class="session-grid">${streamFiltered.map(sessCard).join("")}</div>`;
   });
 
+  el.innerHTML = html;
 
-    el.innerHTML = html;
   const searchEl = document.getElementById("sess-search");
   if (searchEl) {
     searchEl.focus();
@@ -1112,23 +1225,32 @@ function renderSessions() {
   }
 }
 
-
 function renderRetests() {
-  const el   = document.getElementById("tab-retests");
-      const today = new Date(); today.setHours(0,0,0,0);
+  const el = document.getElementById("tab-retests");
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
   const daysDiff = s => Math.round((new Date(s.retestDate) - today) / 86400000);
+
   const due  = sessionList().filter(s => retestStatus(s) === "due").sort((a,b) => daysDiff(b) - daysDiff(a));
   const soon = sessionList().filter(s => retestStatus(s) === "soon").sort((a,b) => daysDiff(a) - daysDiff(b));
-  const ok   = sessionList().filter(s => retestStatus(s) === "ok" && s.retestDate && !s.retestDone).sort((a,b) => daysDiff(a) - daysDiff(b));
-  const done = sessionList().filter(s => s.retestDone);
-
+  const ok   = sessionList().filter(s => retestStatus(s) === "ok" && s.retestDate && !s.retestDone && !s.buried).sort((a,b) => daysDiff(a) - daysDiff(b));
+  const done = sessionList().filter(s => retestStatus(s) === "done");
 
   let html = "";
 
-  if (due.length)  html += `<div class="sec-head"><span class="sec-title" style="color:var(--pink)">OVERDUE</span><span class="sec-rule"></span><span class="sec-note">${due.length} overdue</span></div><div class="session-grid">${due.map(sessCard).join("")}</div>`;
-  if (soon.length) html += `<div class="sec-head"><span class="sec-title" style="color:var(--yellow)">DUE SOON</span><span class="sec-rule"></span><span class="sec-note">within 3 days</span></div><div class="session-grid">${soon.map(sessCard).join("")}</div>`;
-  if (ok.length)   html += `<div class="sec-head"><span class="sec-title">UPCOMING</span><span class="sec-rule"></span></div><div class="session-grid">${ok.map(sessCard).join("")}</div>`;
-  if (done.length) html += `<div class="sec-head"><span class="sec-title" style="color:var(--green)">COMPLETED</span><span class="sec-rule"></span><span class="sec-note">${done.length} done</span></div><div class="session-grid">${done.map(sessCard).join("")}</div>`;
+  if (due.length) {
+    html += `<div class="sec-head"><span class="sec-title" style="color:var(--pink)">OVERDUE</span><span class="sec-rule"></span><span class="sec-note">${due.length} overdue</span></div><div class="session-grid">${due.map(sessCard).join("")}</div>`;
+  }
+  if (soon.length) {
+    html += `<div class="sec-head"><span class="sec-title" style="color:var(--yellow)">DUE SOON</span><span class="sec-rule"></span><span class="sec-note">within 3 days</span></div><div class="session-grid">${soon.map(sessCard).join("")}</div>`;
+  }
+  if (ok.length) {
+    html += `<div class="sec-head"><span class="sec-title">UPCOMING</span><span class="sec-rule"></span></div><div class="session-grid">${ok.map(sessCard).join("")}</div>`;
+  }
+  if (done.length) {
+    html += `<div class="sec-head"><span class="sec-title" style="color:var(--green)">COMPLETED / MATURE</span><span class="sec-rule"></span><span class="sec-note">${done.length}</span></div><div class="session-grid">${done.map(sessCard).join("")}</div>`;
+  }
 
   el.innerHTML = html || `<div class="empty-msg">no retests scheduled</div>`;
 }
@@ -1136,6 +1258,7 @@ function renderRetests() {
 function renderTopics() {
   const el = document.getElementById("tab-topics");
   const tl = topicList();
+
   let html = `
     <div class="sec-head"><span class="sec-title">ADD TOPIC</span><span class="sec-rule"></span></div>
     <div class="add-topic-row">
@@ -1159,7 +1282,7 @@ function renderTopics() {
         ${filtered.map(t => `
           <div class="topic-card">
             <div>
-              <div class="topic-name">${t.name}</div>
+              <div class="topic-name">${escapeHtml(t.name)}</div>
               <div class="topic-stream ${t.stream}">${STREAM_LABELS[t.stream]||t.stream.toUpperCase()}</div>
             </div>
             <button class="topic-del" onclick="deleteTopic('${t.id}')">✕</button>
@@ -1172,8 +1295,10 @@ function renderTopics() {
 
 function sessCard(s) {
   const topic = topics[s.topicId] || { name: s.topicId || "Unknown", stream: "renal" };
-  const rs    = retestStatus(s);
-  const rl    = retestLabel(s);
+  const rs = retestStatus(s);
+  const rl = retestLabel(s);
+  const track = s.track || "";
+  const step = s.step || "";
   const stars = [1,2,3,4,5].map(n =>
     `<span class="conf-star ${n<=s.confidence?'lit':'dim'}">${n<=s.confidence?'★':'☆'}</span>`
   ).join("");
@@ -1181,6 +1306,7 @@ function sessCard(s) {
   const typeArr = Array.isArray(s.sessionTypes)
     ? s.sessionTypes
     : s.sessionType ? [s.sessionType] : ["study"];
+
   const typeBadges = typeArr.map(t =>
     `<span style="font-size:8px;color:var(--grey);border:1px solid var(--border2);padding:1px 5px;margin-right:3px;">${String(t).toUpperCase()}</span>`
   ).join("");
@@ -1189,27 +1315,40 @@ function sessCard(s) {
 
   const retestStyle = rs === "due"
     ? `color:var(--pink);animation:tpulse 2s ease-in-out infinite;`
-    : rs === "soon" ? `color:var(--yellow);` : `color:var(--grey2);`;
+    : rs === "soon"
+      ? `color:var(--yellow);`
+      : rs === "done"
+        ? `color:var(--green);`
+        : `color:var(--grey2);`;
 
-    return `
-    <div id="card-${s.id}" class="sess-card stream-${topic.stream} ${rs==='due'?'retest-due':rs==='soon'?'retest-soon':''}">
+  const attachments = s.attachments || (s.attachment ? [s.attachment] : []);
+
+  return `
+    <div id="card-${s.id}" class="sess-card stream-${topic.stream} track-${track} ${rs==='due'?'retest-due':rs==='soon'?'retest-soon':''}">
       <div class="sess-head">
-        <div class="sess-topic">${topic.name}</div>
+        <div class="sess-topic">
+          ${escapeHtml(topic.name)}
+          ${step ? `<span class="step-badge">STEP ${step}</span>` : ""}
+        </div>
         <span class="sess-stream ${topic.stream}">${STREAM_LABELS[topic.stream]||topic.stream.toUpperCase()}</span>
       </div>
+
       <div class="sess-meta">
         <span>${s.date ? new Date(s.date).toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short",year:"numeric"}) : "No date"}</span>
         <span>&nbsp;·&nbsp;</span>
         <span>${dur}</span>
         <span>&nbsp;·&nbsp;</span>
         <span>${typeBadges}</span>
+        ${track ? `<span style="font-size:8px;color:var(--grey);border:1px solid var(--border2);padding:1px 5px;">${track}</span>` : ""}
       </div>
+
       ${s.notes ? `<div class="sess-notes">${escapeHtml(s.notes)}</div>` : ""}
-        ${(s.attachments || (s.attachment ? [s.attachment] : [])).map(a => `
+
+      ${attachments.map(a => `
         <a class="sess-attachment" href="${a.url}" target="_blank" rel="noopener">
           <span class="sess-attachment-icon">📎</span>
-          <span class="sess-attachment-name">${a.name}</span>
-          <span style="font-size:8px;color:var(--grey2)">${(a.size/1024).toFixed(0)}KB ↗</span>
+          <span class="sess-attachment-name">${escapeHtml(a.name)}</span>
+          <span style="font-size:8px;color:var(--grey2)">${((a.size || 0)/1024).toFixed(0)}KB ↗</span>
         </a>`).join("")}
         
       <div class="sess-footer">
@@ -1217,30 +1356,41 @@ function sessCard(s) {
           <div class="conf-stars">${stars}</div>
           <div class="sess-retest" style="${retestStyle}">${rl}</div>
         </div>
-           <div class="sess-actions">
-                   ${!s.retestDone && s.retestDate ? `<button class="sess-btn" onclick="markRetested('${s.id}')">✓ RETESTED</button>` : ""}
+
+        <div class="sess-actions">
+          ${(!s.retestDone && s.retestDate && !s.buried && track !== "MATURE") ? `<button class="sess-btn" onclick="markRetested('${s.id}')">✓ RETESTED</button>` : ""}
           ${!s.buried ? `<button class="sess-btn" onclick="burySession('${s.id}')" title="Mark as finished — removes from retest queue">✓ FINISHED</button>` : `<button class="sess-btn" onclick="unburySession('${s.id}')" title="Reactivate for retesting">↩ REACTIVATE</button>`}
           <button class="sess-btn" onclick="openEditSession('${s.id}')">✎ EDIT</button>
           <button class="sess-btn danger" onclick="deleteSession('${s.id}')">✕</button>
         </div>
-
       </div>
     </div>`;
 }
 
 function escapeHtml(text) {
   const div = document.createElement('div');
-  div.textContent = text;
+  div.textContent = text == null ? "" : String(text);
   return div.innerHTML;
+}
+
+function escapeAttr(text) {
+  return escapeHtml(text).replace(/"/g, "&quot;");
+}
+
+function escapeJs(text) {
+  return String(text || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
 function handleFileSelect(input) {
   const files = Array.from(input.files);
   if (!files.length) return;
+
   files.forEach(file => {
-    if (!pendingFiles.find(f => f.name === file.name))
+    if (!pendingFiles.find(f => f.name === file.name && f.size === file.size)) {
       pendingFiles.push({ name: file.name, size: file.size, file });
+    }
   });
+
   renderPendingFiles();
   input.value = "";
 }
@@ -1248,10 +1398,15 @@ function handleFileSelect(input) {
 function renderPendingFiles() {
   const preview = document.getElementById("attached-file-preview");
   if (!preview) return;
-  if (!pendingFiles.length) { preview.innerHTML = ""; return; }
+
+  if (!pendingFiles.length) {
+    preview.innerHTML = "";
+    return;
+  }
+
   preview.innerHTML = pendingFiles.map((f, i) => `
     <div class="attached-file">
-      <span class="attached-file-name">📎 ${f.name}</span>
+      <span class="attached-file-name">📎 ${escapeHtml(f.name)}</span>
       <span class="attached-file-size">${(f.size/1024).toFixed(0)}KB</span>
       <button class="attached-file-del" onclick="removePendingFile(${i})">✕</button>
     </div>`).join("");
@@ -1262,7 +1417,6 @@ function removePendingFile(idx) {
   renderPendingFiles();
 }
 
-
 function clearPendingFile() {
   pendingFiles = [];
   const preview = document.getElementById("attached-file-preview");
@@ -1270,7 +1424,6 @@ function clearPendingFile() {
   const input = document.getElementById("f-file");
   if (input) input.value = "";
 }
-
 
 function setConf(n) {
   selConfidence = n;
@@ -1281,70 +1434,82 @@ function setConf(n) {
       b.textContent = i < n ? "★" : "☆";
     });
   }
+
   const hint = document.getElementById("retest-hint");
-  if (hint) hint.textContent = `// retest in ~${retestDaysFromConf(n)} days`;
+  if (hint) hint.textContent = `// first retest in ~${retestDaysFromConf(n)} days`;
 }
 
 function saveSession() {
   const topicId = document.getElementById("f-topic")?.value;
-  if (!topicId) { alert("Please select a topic"); return; }
+  if (!topicId) {
+    alert("Please select a topic");
+    return;
+  }
 
-  const date  = document.getElementById("f-date").value;
+  const date = document.getElementById("f-date").value;
   const notes = document.getElementById("f-notes").value.trim();
-  const sessionTypes = ["study","quiz","teach"].filter(t =>
-    document.getElementById(`f-type-${t}`)?.checked
-  );
+  const sessionTypes = ["study","quiz","teach"].filter(t => document.getElementById(`f-type-${t}`)?.checked);
   if (!sessionTypes.length) sessionTypes.push("study");
 
-    const elapsed = timerRunning
+  const elapsed = timerRunning
     ? timerElapsedBeforePause + Math.floor((Date.now() - timerStartTime) / 1000)
     : timerElapsedBeforePause;
+
   const duration = elapsed > 0 ? Math.max(1, Math.round(elapsed / 60)) : 90;
 
+  const srs = calculateSRS(selConfidence, topicId);
+  const days = srs.days;
+  const matured = days === null;
 
-  // NEW SRS LOGIC
-const srs = calculateSRS(selConfidence, topicId);
-const days = srs.days;
-const mastered = (days === null);
-
-let retestDate = null;
-if (!mastered) {
-  const d = new Date(date); 
-  d.setDate(d.getDate() + days);
-  retestDate = d.toISOString().split("T")[0];
-}
-
-
+  let retestDate = null;
+  if (!matured) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + days);
+    retestDate = d.toISOString().split("T")[0];
+  }
 
   const isRetestSession = sessionTypes.includes("quiz") && !sessionTypes.includes("study");
-  const payload = {
-  topicId, date, sessionTypes, notes, duration,
-  confidence: selConfidence,
-  interval: days,
-  track: srs.track, // SAVE THE TRACK
-  step: srs.step,   // SAVE THE STEP
-  retestDate, 
-  retestDone: false,
-  createdAt: Date.now(),
-  isRetest: isRetestSession,
-};
 
+  const payload = {
+    topicId,
+    date,
+    sessionTypes,
+    notes,
+    duration,
+    confidence: selConfidence,
+    interval: days,
+    track: srs.track,
+    step: srs.step,
+    retestDate,
+    retestDone: matured,
+    mastered: matured,
+    buried: false,
+    createdAt: Date.now(),
+    isRetest: isRetestSession,
+  };
 
   if (!window._stx_fb) return;
 
   const newRef = window._stx_fb.push(window._stx_fb.sessRef, payload);
   const sessionId = newRef.key;
 
-    if (pendingFiles.length && sessionId && window.uploadSessionFile) {
+  if (pendingFiles.length && sessionId && window.uploadSessionFile) {
     const filesToUpload = [...pendingFiles];
     const attachments = [];
     let completed = 0;
+
+    const progressWrap = document.getElementById("upload-progress");
+    const progressBar = document.getElementById("upload-progress-bar");
+    if (progressWrap) progressWrap.style.display = "block";
+
     filesToUpload.forEach((pf, i) => {
       window.uploadSessionFile(
-        pf.file, sessionId,
+        pf.file,
+        sessionId,
         pct => {
-          const bar = document.getElementById("upload-progress-bar");
-          if (bar) bar.style.width = `${Math.round(((i + pct/100) / filesToUpload.length) * 100)}%`;
+          if (progressBar) {
+            progressBar.style.width = `${Math.round(((i + pct / 100) / filesToUpload.length) * 100)}%`;
+          }
         },
         fileData => {
           attachments.push(fileData);
@@ -1352,13 +1517,17 @@ if (!mastered) {
           if (completed === filesToUpload.length) {
             const { db, ref, update } = window._stx_fb;
             update(ref(db, `studySessions/${sessionId}`), { attachments });
+            if (progressWrap) progressWrap.style.display = "none";
+            if (progressBar) progressBar.style.width = "0%";
           }
         },
-        err => console.error("Upload failed:", err)
+        err => {
+          console.error("Upload failed:", err);
+          if (progressWrap) progressWrap.style.display = "none";
+        }
       );
     });
   }
-
 
   if (activePlanId && window._stx_fb) {
     const { db, ref, remove } = window._stx_fb;
@@ -1368,14 +1537,15 @@ if (!mastered) {
 
   timerCompleted = false;
   timerStartTime = null;
+  timerElapsedBeforePause = 0;
   localStorage.removeItem("stx_timer_completed");
   localStorage.removeItem("stx_timer_start");
+  localStorage.removeItem("stx_timer_elapsed");
   localStorage.removeItem("stx_session_topic");
+  localStorage.removeItem("stx_session_topic_name");
   localStorage.removeItem("stx_session_notes");
-  
 
-  pendingFiles   = [];
-
+  pendingFiles = [];
   clearForm();
 }
 
@@ -1386,20 +1556,26 @@ function clearForm() {
   const n = document.getElementById("f-notes");
   const f = document.getElementById("f-file");
   const p = document.getElementById("attached-file-preview");
+
   if (d) d.value = new Date().toISOString().split("T")[0];
   if (t) t.value = "";
   if (ts) ts.value = "";
   if (n) n.value = "";
   if (f) f.value = "";
   if (p) p.innerHTML = "";
+
   pendingFiles = [];
   selConfidence = 3;
-  setConf(3);
+  localStorage.removeItem("stx_session_topic");
+  localStorage.removeItem("stx_session_topic_name");
+  localStorage.removeItem("stx_session_notes");
   localStorage.setItem("stx_type_study", "true");
   localStorage.setItem("stx_type_quiz", "false");
   localStorage.setItem("stx_type_teach", "false");
+  setConf(3);
   renderLog();
 }
+
 function burySession(id) {
   if (!window._stx_fb) return;
   const { db, ref, update } = window._stx_fb;
@@ -1419,68 +1595,137 @@ function deleteSession(id) {
   if (!window._stx_fb) return;
 
   const { db, ref, remove } = window._stx_fb;
+  const attachments = sess?.attachments || (sess?.attachment ? [sess.attachment] : []);
+  const deletions = attachments
+    .filter(a => a?.path)
+    .map(a => window.deleteSessionFile ? window.deleteSessionFile(a.path) : Promise.resolve());
 
-  if (sess?.attachment?.path && window.deleteSessionFile) {
-    window.deleteSessionFile(sess.attachment.path).finally(() => {
-      remove(ref(db, `studySessions/${id}`));
-    });
-  } else {
+  Promise.allSettled(deletions).finally(() => {
     remove(ref(db, `studySessions/${id}`));
-  }
+  });
 }
 
 function markRetested(id) {
   const sess = sessions[id];
   if (!sess) return;
+
   const newConf = parseInt(prompt("Rate your recall (1–5):") || "0", 10);
   if (!newConf || newConf < 1 || newConf > 5) return;
 
-  const retestCount = sess.retestCount || 0;
-  const track       = sess.track || (newConf <= 3 ? "A" : "B");
-  const result      = nextRetestDays(newConf, retestCount, track);
-  const nextDays    = result.days;
-  const newTrack    = result.newTrack;
-  const mature      = nextDays === null;
+  const history = sessionList()
+    .filter(s => s.topicId === sess.topicId && s.id !== id)
+    .sort((a, b) => {
+      const dateComp = (b.date || "").localeCompare(a.date || "");
+      if (dateComp !== 0) return dateComp;
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
 
-  if (window._stx_fb) {
-    const { db, ref, update, push } = window._stx_fb;
-    update(ref(db, `studySessions/${id}`), {
-      retestDone:     true,
-      retestedAt:     Date.now(),
-      retestConfidence: newConf,
-      retestCount:    retestCount + 1,
-      track:          newTrack,
-      mastered:       mature,
-    });
-    if (mature) {
-      alert("✓ Card matured — add to Anki for long-term retention.");
-      renderAll();
-      return;
-    }
-    const nd = new Date(); nd.setDate(nd.getDate() + nextDays);
-    const nextDate = nd.toISOString().split("T")[0];
-        update(ref(db, `studySessions/${id}`), {
-      retestDone:   false,
-      retestDate:   nextDate,
-      confidence:   newConf,
-      interval:     nextDays,
-      track:        newTrack,
-      retestCount:  retestCount + 1,
-    });
+  const syntheticCurrent = {
+    ...sess,
+    id,
+    topicId: sess.topicId,
+    track: sess.track,
+    step: sess.step,
+    date: sess.date,
+    createdAt: sess.createdAt
+  };
+
+  const originalSessionList = window._markRetestTempList;
+  window._markRetestTempList = [syntheticCurrent, ...history];
+
+  const srs = calculateSRSUsingList(newConf, sess.topicId, window._markRetestTempList);
+
+  window._markRetestTempList = originalSessionList;
+
+  const days = srs.days;
+  const matured = days === null;
+
+  let nextDate = null;
+  if (!matured) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    nextDate = d.toISOString().split("T")[0];
+  }
+
+  if (!window._stx_fb) return;
+  const { db, ref, update } = window._stx_fb;
+
+  update(ref(db, `studySessions/${id}`), {
+    retestedAt: Date.now(),
+    retestConfidence: newConf,
+    confidence: newConf,
+    interval: days,
+    track: srs.track,
+    step: srs.step,
+    retestDate: nextDate,
+    retestDone: matured,
+    mastered: matured,
+    buried: matured ? true : (sess.buried || false)
+  });
+
+  if (matured) {
+    alert("✓ Topic matured");
   }
 }
 
- function openEditSession(id) {
+function calculateSRSUsingList(currentConf, topicId, customList) {
+  const history = (customList || sessionList())
+    .filter(s => s.topicId === topicId)
+    .sort((a, b) => {
+      const dateComp = (b.date || "").localeCompare(a.date || "");
+      if (dateComp !== 0) return dateComp;
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+
+  const last = history[0] || null;
+
+  if (!last) {
+    if (currentConf <= 3) return { days: 3, track: "LOW", step: 1 };
+    return { days: 5, track: "HIGH", step: 1 };
+  }
+
+  if (currentConf <= 3) {
+    if (last.track === "RECOVERY") {
+      if (last.step === 1) return { days: 30, track: "RECOVERY", step: 2 };
+      if (last.step === 2) return { days: 180, track: "RECOVERY", step: 3 };
+      return { days: null, track: "MATURE", step: 4 };
+    }
+    return { days: 7, track: "RECOVERY", step: 1 };
+  }
+
+  if (last.track === "LOW") {
+    if (last.step === 1) return { days: 14, track: "LOW", step: 2 };
+    if (last.step === 2) return { days: 90, track: "LOW", step: 3 };
+    return { days: null, track: "MATURE", step: 4 };
+  }
+
+  if (last.track === "HIGH") {
+    if (last.step === 1) return { days: 30, track: "HIGH", step: 2 };
+    if (last.step === 2) return { days: 180, track: "HIGH", step: 3 };
+    return { days: null, track: "MATURE", step: 4 };
+  }
+
+  if (last.track === "RECOVERY") {
+    if (last.step === 1) return { days: 30, track: "RECOVERY", step: 2 };
+    if (last.step === 2) return { days: 180, track: "RECOVERY", step: 3 };
+    return { days: null, track: "MATURE", step: 4 };
+  }
+
+  return { days: null, track: "MATURE", step: 4 };
+}
+
+function openEditSession(id) {
   const sess = sessions[id];
   if (!sess) return;
 
   const existing = document.getElementById(`edit-form-${id}`);
-  if (existing) { existing.remove(); return; } // toggle off
+  if (existing) {
+    existing.remove();
+    return;
+  }
 
   const card = document.getElementById(`card-${id}`);
   if (!card) return;
-
-
 
   const form = document.createElement("div");
   form.id = `edit-form-${id}`;
@@ -1507,22 +1752,37 @@ function markRetested(id) {
 function handleEditFileSelect(input, id) {
   const files = Array.from(input.files);
   if (!files.length) return;
+
   window._editPendingFiles = window._editPendingFiles || {};
   window._editPendingFiles[id] = window._editPendingFiles[id] || [];
+
   files.forEach(file => {
-    if (!window._editPendingFiles[id].find(f => f.name === file.name))
+    if (!window._editPendingFiles[id].find(f => f.name === file.name && f.size === file.size)) {
       window._editPendingFiles[id].push({ name: file.name, size: file.size, file });
+    }
   });
-  const preview = document.getElementById(`edit-file-preview-${id}`);
-  if (preview) {
-    preview.innerHTML = window._editPendingFiles[id].map((f, i) => `
-      <div class="attached-file">
-        <span class="attached-file-name">📎 ${f.name}</span>
-        <span class="attached-file-size">${(f.size/1024).toFixed(0)}KB</span>
-        <button class="attached-file-del" onclick="window._editPendingFiles['${id}'].splice(${i},1);handleEditFileSelect({files:[]}, '${id}')">✕</button>
-      </div>`).join("");
-  }
+
+  renderEditPendingFiles(id);
   input.value = "";
+}
+
+function renderEditPendingFiles(id) {
+  const preview = document.getElementById(`edit-file-preview-${id}`);
+  if (!preview) return;
+
+  const files = (window._editPendingFiles || {})[id] || [];
+  preview.innerHTML = files.map((f, i) => `
+    <div class="attached-file">
+      <span class="attached-file-name">📎 ${escapeHtml(f.name)}</span>
+      <span class="attached-file-size">${(f.size/1024).toFixed(0)}KB</span>
+      <button class="attached-file-del" onclick="removeEditPendingFile('${id}', ${i})">✕</button>
+    </div>`).join("");
+}
+
+function removeEditPendingFile(id, idx) {
+  if (!window._editPendingFiles || !window._editPendingFiles[id]) return;
+  window._editPendingFiles[id].splice(idx, 1);
+  renderEditPendingFiles(id);
 }
 
 function saveEditSession(id) {
@@ -1531,22 +1791,22 @@ function saveEditSession(id) {
 
   const notes = document.getElementById(`edit-notes-${id}`)?.value.trim();
   const { db, ref, update } = window._stx_fb;
-
   const updates = { notes };
+  const pendingFilesForEdit = (window._editPendingFiles || {})[id] || [];
 
-  const pendingFiles = (window._editPendingFiles || {})[id] || [];
-
-  if (pendingFiles.length && window.uploadSessionFile) {
+  if (pendingFilesForEdit.length && window.uploadSessionFile) {
     const attachments = [...(sess.attachments || (sess.attachment ? [sess.attachment] : []))];
     let completed = 0;
-    pendingFiles.forEach((pf, i) => {
+
+    pendingFilesForEdit.forEach(pf => {
       window.uploadSessionFile(
-        pf.file, id,
+        pf.file,
+        id,
         () => {},
         fileData => {
           attachments.push(fileData);
           completed++;
-          if (completed === pendingFiles.length) {
+          if (completed === pendingFilesForEdit.length) {
             update(ref(db, `studySessions/${id}`), { ...updates, attachments });
             if (window._editPendingFiles) delete window._editPendingFiles[id];
             document.getElementById(`edit-form-${id}`)?.remove();
@@ -1562,10 +1822,18 @@ function saveEditSession(id) {
 }
 
 function addTopic() {
-  const name   = document.getElementById("new-topic-name")?.value.trim();
+  const name = document.getElementById("new-topic-name")?.value.trim();
   const stream = document.getElementById("new-topic-stream")?.value;
   if (!name) return;
-  if (window._stx_fb) window._stx_fb.push(window._stx_fb.topicRef, { name, stream });
+
+  if (window._stx_fb) {
+    window._stx_fb.push(window._stx_fb.topicRef, {
+      name,
+      stream,
+      createdAt: Date.now()
+    });
+  }
+
   document.getElementById("new-topic-name").value = "";
 }
 
@@ -1584,9 +1852,9 @@ function planList() {
 }
 
 function renderPlan() {
-  const el   = document.getElementById("tab-plan");
+  const el = document.getElementById("tab-plan");
   const list = planList();
-  const MAX  = 5;
+  const MAX = 5;
 
   let html = `
     <div class="sec-head">
@@ -1631,16 +1899,16 @@ function renderPlan() {
       html += `
         <div class="sess-card stream-${topic.stream}" style="border-left-color:var(--cyan);opacity:${p.activated?0.45:1};">
           <div class="sess-head">
-            <div class="sess-topic">${topic.name}</div>
+            <div class="sess-topic">${escapeHtml(topic.name)}</div>
             <span class="sess-stream ${topic.stream}">${STREAM_LABELS[topic.stream]||topic.stream.toUpperCase()}</span>
           </div>
           <div class="sess-meta" style="color:var(--cyan);">▸ PLANNED · ${new Date(p.createdAt).toLocaleDateString("en-GB",{day:"2-digit",month:"short"})}</div>
           ${p.note ? `<div class="sess-notes">${escapeHtml(p.note)}</div>` : ""}
           <div class="sess-footer" style="margin-top:8px;">
             <div style="display:flex;gap:6px;">
-              ${!p.activated ? `
-                <button class="btn-primary" style="font-size:9px;padding:4px 12px;" onclick="activatePlan('${p.id}','${p.topicId}')">▶ ACTIVATE</button>` : `
-                <span style="font-size:9px;color:var(--green);letter-spacing:0.08em;">✓ ACTIVATED</span>`}
+              ${!p.activated
+                ? `<button class="btn-primary" style="font-size:9px;padding:4px 12px;" onclick="activatePlan('${p.id}','${p.topicId}')">▶ ACTIVATE</button>`
+                : `<span style="font-size:9px;color:var(--green);letter-spacing:0.08em;">✓ ACTIVATED</span>`}
             </div>
             <button class="sess-btn danger" onclick="deletePlan('${p.id}')">✕</button>
           </div>
@@ -1664,12 +1932,23 @@ function renderPlan() {
 
 function addPlan() {
   const topicId = document.getElementById("plan-topic")?.value;
-  if (!topicId) { alert("Please select a topic"); return; }
+  if (!topicId) {
+    alert("Please select a topic");
+    return;
+  }
+
   const note = document.getElementById("plan-note")?.value.trim();
-  if (planList().length >= 5) { alert("Max 5 planned sessions"); return; }
+  if (planList().length >= 5) {
+    alert("Max 5 planned sessions");
+    return;
+  }
+
   if (window._stx_fb) {
     window._stx_fb.push(window._stx_fb.planRef, {
-      topicId, note, createdAt: Date.now(), activated: false
+      topicId,
+      note,
+      createdAt: Date.now(),
+      activated: false
     });
   }
 }
@@ -1694,11 +1973,13 @@ function activatePlan(id, topicId) {
   setTimeout(() => {
     const hidden = document.getElementById("f-topic");
     const search = document.getElementById("f-topic-search");
+
     if (hidden) hidden.value = topicId;
     if (search) {
       const topic = topics[topicId];
       if (topic) search.value = `[${STREAM_LABELS[topic.stream]}] ${topic.name}`;
     }
+
     const panel = document.getElementById("timer-panel");
     if (panel && !panel.classList.contains("show")) {
       panel.classList.add("show");
@@ -1706,7 +1987,8 @@ function activatePlan(id, topicId) {
     }
   }, 50);
 }
-  function activateSuggested(topicId, topicName, stream) {
+
+function activateSuggested(topicId, topicName, stream) {
   setTab("log");
   setTimeout(() => {
     const hidden = document.getElementById("f-topic");
@@ -1715,6 +1997,7 @@ function activatePlan(id, topicId) {
     if (search) search.value = `[${STREAM_LABELS[stream]}] ${topicName}`;
     localStorage.setItem("stx_session_topic", topicId);
     localStorage.setItem("stx_session_topic_name", `[${STREAM_LABELS[stream]}] ${topicName}`);
+
     const panel = document.getElementById("timer-panel");
     if (panel && !panel.classList.contains("show")) {
       panel.classList.add("show");
@@ -1728,22 +2011,19 @@ function filterSessions(val) {
   renderSessions();
 }
 
-
 renderAll();
 setTab("today");
+
 if (timerStartTime && localStorage.getItem("stx_timer_running") === "true") {
   const panel = document.getElementById("timer-panel");
   panel.classList.add("show");
   updateTimerDisplay();
   timerStartPause();
 } else if (timerStartTime) {
-  // Was paused — just show the timer panel at correct time
   const panel = document.getElementById("timer-panel");
   panel.classList.add("show");
   updateTimerDisplay();
 }
-
-
 </script>
 </body>
 </html>
