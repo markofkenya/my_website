@@ -2011,6 +2011,141 @@ function filterSessions(val) {
   renderSessions();
 }
 
+<script>
+/* ...your existing code above... */
+
+function addDaysToDate(dateStr, days) {
+  if (!dateStr || days == null) return null;
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split("T")[0];
+}
+
+function buildSRSFromHistory(previousSessions, confidence) {
+  const last = previousSessions.length
+    ? previousSessions[previousSessions.length - 1]
+    : null;
+
+  // First ever session for topic
+  if (!last) {
+    if (confidence <= 3) return { days: 3, track: "LOW", step: 1 };
+    return { days: 5, track: "HIGH", step: 1 };
+  }
+
+  // Drop to low confidence at any later point -> recovery
+  if (confidence <= 3) {
+    if (last.track === "RECOVERY") {
+      if (last.step === 1) return { days: 30, track: "RECOVERY", step: 2 };
+      if (last.step === 2) return { days: 180, track: "RECOVERY", step: 3 };
+      return { days: null, track: "MATURE", step: 4 };
+    }
+    return { days: 7, track: "RECOVERY", step: 1 };
+  }
+
+  // Continue LOW track
+  if (last.track === "LOW") {
+    if (last.step === 1) return { days: 14, track: "LOW", step: 2 };
+    if (last.step === 2) return { days: 90, track: "LOW", step: 3 };
+    return { days: null, track: "MATURE", step: 4 };
+  }
+
+  // Continue HIGH track
+  if (last.track === "HIGH") {
+    if (last.step === 1) return { days: 30, track: "HIGH", step: 2 };
+    if (last.step === 2) return { days: 180, track: "HIGH", step: 3 };
+    return { days: null, track: "MATURE", step: 4 };
+  }
+
+  // Continue RECOVERY track
+  if (last.track === "RECOVERY") {
+    if (last.step === 1) return { days: 30, track: "RECOVERY", step: 2 };
+    if (last.step === 2) return { days: 180, track: "RECOVERY", step: 3 };
+    return { days: null, track: "MATURE", step: 4 };
+  }
+
+  return { days: null, track: "MATURE", step: 4 };
+}
+
+async function migrateOldSessions() {
+  if (!window._stx_fb) {
+    console.error("Firebase not ready");
+    return;
+  }
+
+  const list = sessionList();
+
+  if (!list.length) {
+    console.log("No sessions found to migrate.");
+    return;
+  }
+
+  const byTopic = {};
+  list.forEach(sess => {
+    if (!sess.topicId) return;
+    if (!byTopic[sess.topicId]) byTopic[sess.topicId] = [];
+    byTopic[sess.topicId].push(sess);
+  });
+
+  const updates = {};
+  let migratedCount = 0;
+
+  Object.entries(byTopic).forEach(([topicId, topicSessions]) => {
+    // oldest -> newest so we can reconstruct the pathway
+    topicSessions.sort((a, b) => {
+      const dateComp = (a.date || "").localeCompare(b.date || "");
+      if (dateComp !== 0) return dateComp;
+      return (a.createdAt || 0) - (b.createdAt || 0);
+    });
+
+    const reconstructed = [];
+
+    topicSessions.forEach(sess => {
+      const confidence = Number(sess.retestConfidence || sess.confidence || 3);
+      const srs = buildSRSFromHistory(reconstructed, confidence);
+      const matured = srs.days === null;
+
+      // Preserve buried if already set by user
+      const buried = !!sess.buried || matured;
+      const retestDone = buried || matured ? true : false;
+
+      // For old historical sessions, use session date as anchor
+      const retestDate = matured ? null : addDaysToDate(sess.date, srs.days);
+
+      updates[`studySessions/${sess.id}/track`] = srs.track;
+      updates[`studySessions/${sess.id}/step`] = srs.step;
+      updates[`studySessions/${sess.id}/interval`] = srs.days;
+      updates[`studySessions/${sess.id}/mastered`] = matured;
+      updates[`studySessions/${sess.id}/retestDate`] = retestDate;
+      updates[`studySessions/${sess.id}/retestDone`] = retestDone;
+
+      // optional cleanup / normalization
+      updates[`studySessions/${sess.id}/confidence`] = Number(sess.confidence || confidence);
+
+      reconstructed.push({
+        ...sess,
+        track: srs.track,
+        step: srs.step
+      });
+
+      migratedCount++;
+    });
+  });
+
+  try {
+    const { db, ref, update } = window._stx_fb;
+    await update(ref(db), updates);
+    console.log(`Migration complete. Updated ${migratedCount} session(s).`);
+    alert(`Migration complete. Updated ${migratedCount} session(s).`);
+  } catch (err) {
+    console.error("Migration failed:", err);
+    alert("Migration failed. Check console.");
+  }
+}
+
+window.migrateOldSessions = migrateOldSessions;
+
+/* ...your existing code below... */
+</script>
 renderAll();
 setTab("today");
 
