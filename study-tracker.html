@@ -403,60 +403,43 @@ const DEFAULT_TOPICS = {
 
 const STREAM_LABELS = { renal:"RENAL", gim:"GIM" };
 
-function study2Intervals(confidence, sessionCount) {
-  // Session count: 0 = first study, 1 = first retest/viva, 2 = second viva
-  // After session 3 (count >= 2) with good recall → mastered → no more retests
+function calculateSRS(currentConf, topicId) {
+  // Find the VERY LAST session for this topic to see the track/step
+  const history = sessionList()
+    .filter(s => s.topicId === topicId)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  if (sessionCount === 0) {
-    // After initial study session — retest in 3-5 days regardless of confidence
-    return { interval: confidence >= 4 ? 5 : 3, mastered: false };
+  const last = history[0] || null;
+
+  // 1. RECOVERY TRACK: If confidence drops to <= 3 on a topic you've studied before
+  if (last && currentConf <= 3) {
+    return { days: 7, track: 'RECOVERY', step: 1 };
   }
 
-  if (sessionCount === 1) {
-    // After first viva
-    if (confidence >= 4) return { interval: confidence === 5 ? 14 : 7, mastered: false };
-    return { interval: confidence >= 3 ? 3 : 2, mastered: false };
+  // 2. INITIAL SESSIONS: First time studying this topic
+  if (!last) {
+    if (currentConf <= 3) return { days: 3, track: 'LOW', step: 1 };
+    return { days: 5, track: 'HIGH', step: 1 };
   }
 
-  if (sessionCount >= 2) {
-    // After second viva — cap reached
-    if (confidence >= 4) return { interval: 0, mastered: true }; // mastered → Anki
-    return { interval: 3, mastered: false }; // one more attempt if still shaky
+  // 3. PROGRESSION: Moving forward on a track
+  const nextStep = (last.step || 1) + 1;
+  const currentTrack = last.track || 'LOW';
+
+  if (currentTrack === 'LOW') {
+    if (nextStep === 2) return { days: 14, track: 'LOW', step: 2 };
+    if (nextStep === 3) return { days: 90, track: 'LOW', step: 3 };
+    return { days: null, track: 'MATURE', step: 4 };
   }
 
-  return { interval: 3, mastered: false };
+  if (currentTrack === 'HIGH' || currentTrack === 'RECOVERY') {
+    if (nextStep === 2) return { days: 30, track: 'HIGH', step: 2 };
+    if (nextStep === 3) return { days: 180, track: 'HIGH', step: 3 };
+    return { days: null, track: 'MATURE', step: 4 };
+  }
+
+  return { days: null, track: 'MATURE', step: 99 };
 }
-
-function nextRetestDays(conf, retestCount, track) {
-  if (conf <= 3 && (track === "B" || track === "R")) {
-    if (retestCount === 0) return { days: 7,   newTrack: "R" };
-    if (retestCount === 1) return { days: 30,  newTrack: "R" };
-    if (retestCount === 2) return { days: 180, newTrack: "R" };
-    return { days: null, newTrack: "R" };
-  }
-  if (conf <= 3) {
-    if (retestCount === 0) return { days: 3,  newTrack: "A" };
-    if (retestCount === 1) return { days: 14, newTrack: "A" };
-    if (retestCount === 2) return { days: 90, newTrack: "A" };
-    return { days: null, newTrack: "A" };
-  }
-  if (retestCount === 0) return { days: 5,   newTrack: "B" };
-  if (retestCount === 1) return { days: 30,  newTrack: "B" };
-  if (retestCount === 2) return { days: 180, newTrack: "B" };
-  return { days: null, newTrack: "B" };
-}
-
-
-
-
-
-function retestDaysFromConf(conf) {
-  if (conf <= 2) return 3;
-  if (conf === 3) return 3;
-  if (conf === 4) return 5;
-  return 5;
-}
-
 
 
 function weakestTopics(n = 5) {
@@ -1319,25 +1302,32 @@ function saveSession() {
   const duration = elapsed > 0 ? Math.max(1, Math.round(elapsed / 60)) : 90;
 
 
-  const sessionCount = sessionList().filter(s => s.topicId === topicId).length;
-  const { interval: days, mastered } = study2Intervals(selConfidence, sessionCount);
-  const easiness = 2.5; // kept for data compatibility
+  // NEW SRS LOGIC
+const srs = calculateSRS(selConfidence, topicId);
+const days = srs.days;
+const mastered = (days === null);
 
-  const d = new Date(date); d.setDate(d.getDate() + days);
-  const retestDate = mastered ? null : d.toISOString().split("T")[0];
+let retestDate = null;
+if (!mastered) {
+  const d = new Date(date); 
+  d.setDate(d.getDate() + days);
+  retestDate = d.toISOString().split("T")[0];
+}
 
 
 
   const isRetestSession = sessionTypes.includes("quiz") && !sessionTypes.includes("study");
   const payload = {
-    topicId, date, sessionTypes, notes, duration,
-    confidence: selConfidence,
-    interval: days,
-    easiness,
-    retestDate, retestDone: false,
-    createdAt: Date.now(),
-    isRetest: isRetestSession,
-  };
+  topicId, date, sessionTypes, notes, duration,
+  confidence: selConfidence,
+  interval: days,
+  track: srs.track, // SAVE THE TRACK
+  step: srs.step,   // SAVE THE STEP
+  retestDate, 
+  retestDone: false,
+  createdAt: Date.now(),
+  isRetest: isRetestSession,
+};
 
 
   if (!window._stx_fb) return;
