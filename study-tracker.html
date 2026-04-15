@@ -1327,7 +1327,7 @@ function sessCard(s) {
   const attachments = s.attachments || (s.attachment ? [s.attachment] : []);
 
   return `
-    <div id="card-${s.id}" class="sess-card stream-${topic.stream} track-${track} ${rs==='due'?'retest-due':rs==='soon'?'retest-soon':''}">
+    <div class="sess-card stream-${topic.stream} track-${track} ${rs==='due'?'retest-due':rs==='soon'?'retest-soon':''}">
       <div class="sess-head">
         <div class="sess-topic">
           ${escapeHtml(topic.name)}
@@ -1363,7 +1363,7 @@ function sessCard(s) {
         <div class="sess-actions">
           ${(!s.retestDone && s.retestDate && !s.buried && track !== "MATURE") ? `<button class="sess-btn" onclick="markRetested('${s.id}')">✓ RETESTED</button>` : ""}
           ${!s.buried ? `<button class="sess-btn" onclick="burySession('${s.id}')" title="Mark as finished — removes from retest queue">✓ FINISHED</button>` : `<button class="sess-btn" onclick="unburySession('${s.id}')" title="Reactivate for retesting">↩ REACTIVATE</button>`}
-          <button class="sess-btn" onclick="openEditSession('${s.id}')">✎ EDIT</button>
+          <button class="sess-btn" onclick="openEditSession('${s.id}', this)">✎ EDIT</button>
           <button class="sess-btn danger" onclick="deleteSession('${s.id}')">✕</button>
         </div>
       </div>
@@ -1717,36 +1717,34 @@ function calculateSRSUsingList(currentConf, topicId, customList) {
   return { days: null, track: "MATURE", step: 4 };
 }
 
-function openEditSession(id) {
+function openEditSession(id, btn) {
   const sess = sessions[id];
-  if (!sess) return;
+  if (!sess || !btn) return;
 
-  const existing = document.getElementById(`edit-form-${id}`);
+  const card = btn.closest(".sess-card");
+  if (!card) return;
+
+  const existing = card.querySelector(".edit-session-wrap");
   if (existing) {
     existing.remove();
     return;
   }
 
-  const card = document.getElementById(`card-${id}`);
-  if (!card) return;
-
   const form = document.createElement("div");
-  form.id = `edit-form-${id}`;
+  form.className = "edit-session-wrap";
   form.style.cssText = "border-top:1px solid var(--border2);margin-top:8px;padding-top:8px;";
   form.innerHTML = `
     <div style="font-size:9px;color:var(--grey);letter-spacing:0.1em;margin-bottom:6px;">── EDIT SESSION</div>
-    <textarea id="edit-notes-${id}" class="form-inp" rows="3" placeholder="// notes..."
+    <textarea class="form-inp edit-notes" rows="3" placeholder="// notes..."
       style="width:100%;margin-bottom:6px;color:var(--yellow);">${escapeHtml(sess.notes || "")}</textarea>
-    <div class="upload-area" onclick="document.getElementById('edit-file-${id}').click()"
-      style="margin-bottom:6px;">
+    <div class="upload-area" onclick="this.nextElementSibling.click()" style="margin-bottom:6px;">
       ▸ Add / replace attachments
     </div>
-    <input type="file" id="edit-file-${id}" style="display:none" multiple
-      onchange="handleEditFileSelect(this, '${id}')" />
-    <div id="edit-file-preview-${id}"></div>
+    <input type="file" style="display:none" multiple onchange="handleEditFileSelect(this, '${id}')" />
+    <div class="edit-file-preview" id="edit-file-preview-${id}"></div>
     <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px;">
-      <button class="btn-secondary" onclick="document.getElementById('edit-form-${id}').remove()">CANCEL</button>
-      <button class="btn-primary" onclick="saveEditSession('${id}')">SAVE ▸</button>
+      <button class="btn-secondary" onclick="this.closest('.edit-session-wrap').remove()">CANCEL</button>
+      <button class="btn-primary" onclick="saveEditSession('${id}', this)">SAVE ▸</button>
     </div>`;
 
   card.appendChild(form);
@@ -1788,20 +1786,24 @@ function removeEditPendingFile(id, idx) {
   renderEditPendingFiles(id);
 }
 
-function saveEditSession(id) {
+function saveEditSession(id, btn) {
   const sess = sessions[id];
-  if (!sess || !window._stx_fb) return;
+  if (!sess || !window._stx_fb || !btn) return;
 
-  const notes = document.getElementById(`edit-notes-${id}`)?.value.trim();
+  const formWrap = btn.closest(".edit-session-wrap");
+  if (!formWrap) return;
+
+  const notes = formWrap.querySelector(".edit-notes")?.value.trim() || "";
   const { db, ref, update } = window._stx_fb;
-  const updates = { notes };
-  const pendingFilesForEdit = (window._editPendingFiles || {})[id] || [];
 
-  if (pendingFilesForEdit.length && window.uploadSessionFile) {
+  const updates = { notes };
+  const pendingFiles = (window._editPendingFiles || {})[id] || [];
+
+  if (pendingFiles.length && window.uploadSessionFile) {
     const attachments = [...(sess.attachments || (sess.attachment ? [sess.attachment] : []))];
     let completed = 0;
 
-    pendingFilesForEdit.forEach(pf => {
+    pendingFiles.forEach((pf) => {
       window.uploadSessionFile(
         pf.file,
         id,
@@ -1809,10 +1811,10 @@ function saveEditSession(id) {
         fileData => {
           attachments.push(fileData);
           completed++;
-          if (completed === pendingFilesForEdit.length) {
+          if (completed === pendingFiles.length) {
             update(ref(db, `studySessions/${id}`), { ...updates, attachments });
             if (window._editPendingFiles) delete window._editPendingFiles[id];
-            document.getElementById(`edit-form-${id}`)?.remove();
+            formWrap.remove();
           }
         },
         err => console.error("Edit upload failed:", err)
@@ -1820,7 +1822,7 @@ function saveEditSession(id) {
     });
   } else {
     update(ref(db, `studySessions/${id}`), updates);
-    document.getElementById(`edit-form-${id}`)?.remove();
+    formWrap.remove();
   }
 }
 
