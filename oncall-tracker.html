@@ -1274,28 +1274,30 @@ document.getElementById("status-filters").addEventListener("click", e => {
 document.getElementById("pri-filter").addEventListener("change",  e=>{filterPri=e.target.value; render();});
 document.getElementById("type-filter").addEventListener("change", e=>{filterType=e.target.value; render();});
 
-  window.addEventListener('keydown', (e) => {
-  // Prevent hotkeys if user is typing in an input or textarea
+window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
   switch (e.key.toLowerCase()) {
-    case 'n': // 'N' for New Job
+    case 'n':
       e.preventDefault();
-      openNewJobModal();
+      openDrawer();
       break;
-    case 'h': // 'H' for Handover
+
+    case 'h':
       e.preventDefault();
-      triggerHandover();
+      openHandover();
       break;
-    case 'e': // 'E' for End Shift
-      if (e.ctrlKey || e.metaKey) { // Require Cmd/Ctrl + E for safety
+
+    case 'e':
+      if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
-        confirmEndShift();
+        clearShift();
       }
       break;
-    case '/': // '/' to focus Search
+
+    case '/':
       e.preventDefault();
-      document.querySelector('.search-patient-input').focus();
+      document.getElementById('patient-search').focus(); 
       break;
   }
 });
