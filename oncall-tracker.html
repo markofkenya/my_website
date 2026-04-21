@@ -1274,6 +1274,32 @@ document.getElementById("status-filters").addEventListener("click", e => {
 document.getElementById("pri-filter").addEventListener("change",  e=>{filterPri=e.target.value; render();});
 document.getElementById("type-filter").addEventListener("change", e=>{filterType=e.target.value; render();});
 
+  window.addEventListener('keydown', (e) => {
+  // Prevent hotkeys if user is typing in an input or textarea
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  switch (e.key.toLowerCase()) {
+    case 'n': // 'N' for New Job
+      e.preventDefault();
+      openNewJobModal();
+      break;
+    case 'h': // 'H' for Handover
+      e.preventDefault();
+      triggerHandover();
+      break;
+    case 'e': // 'E' for End Shift
+      if (e.ctrlKey || e.metaKey) { // Require Cmd/Ctrl + E for safety
+        e.preventDefault();
+        confirmEndShift();
+      }
+      break;
+    case '/': // '/' to focus Search
+      e.preventDefault();
+      document.querySelector('.search-patient-input').focus();
+      break;
+  }
+});
+
 // ── PWA ──────────────────────────────────────────────────────
 const mf = {
   name:"OCT On-Call Tracker", short_name:"OCT",
