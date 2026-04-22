@@ -776,16 +776,17 @@ function calcStreak() {
   }
   return streak;
 }
+   
+function weakestTopicsAdvanced(sessions, opts = {}) {
+  const { includeRetests = true } = opts;
 
-  function weakestTopicsAdvanced(sessions) {
   const now = Date.now();
   const topics = {};
 
-  // Group sessions by topic
   sessions.forEach(s => {
     if (!s.topicId || s.confidence == null) return;
-   
 
+    if (!includeRetests && s.isRetest) return;
     if (!topics[s.topicId]) {
       topics[s.topicId] = {
         weightedTotal: 0,
