@@ -776,36 +776,16 @@ function calcStreak() {
   }
   return streak;
 }
-   
-function weakestTopicsAdvanced(sessions, opts = {}) {
-  const { includeRetests = true } = opts;
-
-  const now = Date.now();
+  // 1. The Simple Version (Used when you have few sessions)
+function weakestTopicsSimple(sessions) {
   const topics = {};
 
   sessions.forEach(s => {
     if (!s.topicId || s.confidence == null) return;
-
-    if (!includeRetests && s.isRetest) return;
-    if (!topics[s.topicId]) {
-      topics[s.topicId] = {
-        weightedTotal: 0,
-        totalWeight: 0,
-        lastSeen: 0,
-        confidences: [],
-        recent: []
-      };
-    }
-    function weakestTopicsSimple(sessions) {
-  const topics = {};
-
-  sessions.forEach(s => {
-    if (!s.topicId || s.confidence == null) return;
-
     if (!topics[s.topicId]) {
       topics[s.topicId] = { total: 0, count: 0 };
     }
-
+    // Convert 1-5 confidence to weakness (5 is good, 1 is bad -> 5-1=4 weakness)
     topics[s.topicId].total += (6 - s.confidence);
     topics[s.topicId].count++;
   });
@@ -818,29 +798,42 @@ function weakestTopicsAdvanced(sessions, opts = {}) {
     .sort((a, b) => b.score - a.score);
 }
 
+// 2. The Advanced Version (Used for larger datasets)
+function weakestTopicsAdvanced(sessions, opts = {}) {
+  const { includeRetests = true } = opts;
+  const now = Date.now();
+  const topics = {};
+
+  sessions.forEach(s => {
+    if (!s.topicId || s.confidence == null) return;
+    if (!includeRetests && s.isRetest) return;
+
+    if (!topics[s.topicId]) {
+      topics[s.topicId] = {
+        weightedTotal: 0,
+        totalWeight: 0,
+        lastSeen: 0,
+        confidences: [],
+        recent: []
+      };
+    }
 
     const topic = topics[s.topicId];
-
     const sessionTime = new Date(s.date).getTime();
     const daysAgo = (now - sessionTime) / (1000 * 60 * 60 * 24);
 
-    // Recency weighting
+    // Recency weighting (Older sessions matter less)
     const recencyWeight = Math.exp(-daysAgo / 14);
-
-    // Convert confidence → weakness
     const weakness = 6 - s.confidence;
 
     topic.weightedTotal += weakness * recencyWeight;
     topic.totalWeight += recencyWeight;
-
     topic.confidences.push(s.confidence);
 
-    // Track last seen
     if (sessionTime > topic.lastSeen) {
       topic.lastSeen = sessionTime;
     }
 
-    // Track last 3 sessions (for streak detection)
     topic.recent.push({
       time: sessionTime,
       confidence: s.confidence
@@ -848,59 +841,50 @@ function weakestTopicsAdvanced(sessions, opts = {}) {
   });
 
   return Object.entries(topics).map(([topicId, t]) => {
-    // --- Base score (recency-weighted weakness)
     const baseScore = t.totalWeight ? t.weightedTotal / t.totalWeight : 0;
 
-    // --- Memory decay (forgotten topics resurface)
-    const daysSinceLastSeen =
-      (now - t.lastSeen) / (1000 * 60 * 60 * 24);
-
+    // Memory decay: Topics not seen in a long time get a score boost to resurface
+    const daysSinceLastSeen = (now - t.lastSeen) / (1000 * 60 * 60 * 24);
     const decayWeight = 1 - Math.exp(-daysSinceLastSeen / 10);
+    
+    let finalScore = baseScore + (decayWeight * 3);
 
-    let finalScore = baseScore + decayWeight * 3;
-
-    // --- 🔥 Streak failure boost (last 3 sessions all weak)
+    // Streak failure boost: If last few sessions were all weak (<= 2)
     const recentSorted = t.recent
       .sort((a, b) => b.time - a.time)
       .slice(0, 3);
 
-    if (
-      recentSorted.length >= 2 &&
-      recentSorted.every(s => s.confidence <= 2)
-    ) {
+    if (recentSorted.length >= 2 && recentSorted.every(s => s.confidence <= 2)) {
       finalScore += 2;
     }
 
-    // --- 📉 Inconsistency penalty (variance)
-    const mean =
-      t.confidences.reduce((a, b) => a + b, 0) /
-      t.confidences.length;
-
-    const variance =
-      t.confidences.reduce((sum, c) => sum + Math.pow(c - mean, 2), 0) /
-      t.confidences.length;
-
-    const varianceBoost = Math.min(variance * 0.5, 2);
-    finalScore += varianceBoost;
-
-    // --- 🧱 Cap dominance
-    finalScore = Math.min(finalScore, 10);
+    // Inconsistency penalty: If scores vary wildly, it's a weak area
+    const mean = t.confidences.reduce((a, b) => a + b, 0) / t.confidences.length;
+    const variance = t.confidences.reduce((sum, c) => sum + Math.pow(c - mean, 2), 0) / t.confidences.length;
+    
+    finalScore += Math.min(variance * 0.5, 2);
 
     return {
       topicId,
-      score: finalScore
+      score: Math.min(finalScore, 10) // Cap at 10
     };
   })
   .sort((a, b) => b.score - a.score);
 }
 
-  function weakestTopics(sessions) {
+// 3. The Controller (The one you actually call)
+function weakestTopics(sessions) {
+  if (!sessions || sessions.length === 0) return [];
+  
+  // Use Simple version for new users, Advanced for veterans
   if (sessions.length < 5) {
     return weakestTopicsSimple(sessions);
   }
 
   return weakestTopicsAdvanced(sessions);
 }
+   
+
 
 
 
