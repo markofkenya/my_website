@@ -784,7 +784,7 @@ function calcStreak() {
   // Group sessions by topic
   sessions.forEach(s => {
     if (!s.topicId || s.confidence == null) return;
-    if (s.isRetest) return;
+   
 
     if (!topics[s.topicId]) {
       topics[s.topicId] = {
