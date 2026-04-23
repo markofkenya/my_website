@@ -776,95 +776,27 @@ function calcStreak() {
   }
   return streak;
 }
-  // 1. Updated "Smart" Controller (Handles the limit and fetches sessions automatically)
-function weakestTopics(limitOrSessions = 3) {
-  let sessionsToUse;
-  let limit = 3;
+  function weakestTopics(n = 5) {
+  const map = {};
 
-  // If passed a number (like in renderToday), fetch the sessions automatically
-  if (typeof limitOrSessions === 'number') {
-    sessionsToUse = sessionList(); 
-    limit = limitOrSessions;
-  } else {
-    sessionsToUse = limitOrSessions;
-  }
-
-  if (!sessionsToUse || sessionsToUse.length === 0) return [];
-
-  let results;
-  if (sessionsToUse.length < 5) {
-    results = weakestTopicsSimple(sessionsToUse);
-  } else {
-    results = weakestTopicsAdvanced(sessionsToUse);
-  }
-
-  return results.slice(0, limit);
-}
-
-// 2. The Simple Version
-function weakestTopicsSimple(sessions) {
-  const topics = {};
-  sessions.forEach(s => {
-    if (!s.topicId || s.confidence == null) return;
-    if (!topics[s.topicId]) topics[s.topicId] = { total: 0, count: 0 };
-    topics[s.topicId].total += (6 - s.confidence);
-    topics[s.topicId].count++;
-  });
-  return Object.entries(topics).map(([topicId, t]) => ({
-    topicId,
-    score: t.total / t.count
-  })).sort((a, b) => b.score - a.score);
-}
-
-// 3. The Advanced Version
-function weakestTopicsAdvanced(sessions) {
-  const now = Date.now();
-  const topics = {};
-
-  sessions.forEach(s => {
-    if (!s.topicId || s.confidence == null) return;
-    if (!topics[s.topicId]) {
-      topics[s.topicId] = { weightedTotal: 0, totalWeight: 0, lastSeen: 0, confidences: [], recent: [] };
-    }
-    const topic = topics[s.topicId];
-    const sessionTime = new Date(s.date).getTime();
-    const daysAgo = (now - sessionTime) / (1000 * 60 * 60 * 24);
-    const recencyWeight = Math.exp(-daysAgo / 14);
-    topic.weightedTotal += (6 - s.confidence) * recencyWeight;
-    topic.totalWeight += recencyWeight;
-    topic.confidences.push(s.confidence);
-    if (sessionTime > topic.lastSeen) topic.lastSeen = sessionTime;
-    topic.recent.push({ time: sessionTime, confidence: s.confidence });
+  sessionList().forEach(s => {
+    if (!s.topicId || !s.confidence) return;
+    if (s.buried) return;
+    if (!map[s.topicId]) map[s.topicId] = [];
+    map[s.topicId].push(s.confidence);
   });
 
-  return Object.entries(topics).map(([topicId, t]) => {
-    const baseScore = t.totalWeight ? t.weightedTotal / t.totalWeight : 0;
-    const daysSinceLastSeen = (now - t.lastSeen) / (1000 * 60 * 60 * 24);
-    const decayWeight = 1 - Math.exp(-daysSinceLastSeen / 10);
-    let finalScore = baseScore + (decayWeight * 3);
-    const recentSorted = t.recent.sort((a, b) => b.time - a.time).slice(0, 3);
-    if (recentSorted.length >= 2 && recentSorted.every(s => s.confidence <= 2)) finalScore += 2;
-    const mean = t.confidences.reduce((a, b) => a + b, 0) / t.confidences.length;
-    const variance = t.confidences.reduce((sum, c) => sum + Math.pow(c-mean, 2), 0) / t.confidences.length;
-    finalScore += Math.min(variance * 0.5, 2);
-    return { topicId, score: Math.min(finalScore, 10) };
-  }).sort((a, b) => b.score - a.score);
+  return Object.entries(map)
+    .map(([id, confs]) => ({
+      id,
+      name: (topics[id] || {}).name || "Unknown",
+      stream: (topics[id] || {}).stream || "renal",
+      avg: confs.reduce((a,b) => a+b, 0) / confs.length,
+      count: confs.length,
+    }))
+    .sort((a,b) => a.avg - b.avg)
+    .slice(0, n);
 }
-
-// 4. Missing Helper Functions (Add these to your script)
-function totalStudyHours() {
-  const list = sessionList();
-  // Assuming each session is 90 mins (1.5h)
-  return ((list.length * 90) / 60).toFixed(1);
-}
-
-function escapeHtml(text) {
-  if (!text) return "";
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
 
 
 
