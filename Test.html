@@ -1105,19 +1105,35 @@ function getActiveRoadmapIndex() {
   return currentIdx;
 }
 
+
 function renderRoadmap() {
-  if (!roadmapData) roadmapData = window._sce_roadmap || buildDefaultRoadmap();
-
   const el = document.getElementById("tab-roadmap");
-  el.innerHTML = "";
 
+  if (!el) {
+    console.error("Roadmap panel not found");
+    return;
+  }
+
+  if (!Array.isArray(roadmapData) || roadmapData.length === 0) {
+    roadmapData = buildDefaultRoadmap();
+  }
+
+  el.innerHTML = "";
   const today = new Date();
   today.setHours(0,0,0,0);
 
   const currentIdx = getActiveRoadmapIndex();
   const activeBlock = roadmapData[currentIdx];
 
-  const finalEnd = new Date(roadmapData[roadmapData.length - 1].end);
+  const finalBlock = roadmapData[roadmapData.length - 1];
+
+if (!finalBlock || !finalBlock.end) {
+  el.innerHTML = `<div class="empty-msg">roadmap data could not load — using default roadmap</div>`;
+  roadmapData = buildDefaultRoadmap();
+  return renderRoadmap();
+}
+
+const finalEnd = new Date(finalBlock.end);
   const totalDays = Math.max(1, Math.round((finalEnd - new Date(roadmapData[0].start)) / 86400000));
   const elapsed = Math.max(0, Math.round((today - new Date(roadmapData[0].start)) / 86400000));
   const pct = clampPct(elapsed / totalDays * 100);
