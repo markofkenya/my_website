@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <title>SCE·NEP // Nephrology Tracker</title>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="theme-color" content="#080c14"/>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, update, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
+      authDomain: "task-monitor-bd7ee.firebaseapp.com",
+      databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "task-monitor-bd7ee",
+      storageBucket: "task-monitor-bd7ee.firebasestorage.app",
+      messagingSenderId: "544624731364",
+      appId: "1:544624731364:web:419d52fa061c5c7b4f38f1",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app);
+
+    const sceRef    = ref(db, "sceData");
+    const ksapRef   = ref(db, "sceConfig/ksap");
+    const topicsRef = ref(db, "sceConfig/topics");
+    const rmRef     = ref(db, "sceConfig/roadmap");
+
+    window._sce_fb = { db, ref, update, set, onValue, sceRef, ksapRef, topicsRef, rmRef };
+
+    onValue(sceRef, snap => {
+      window._sce_data = snap.val() || {};
+      window.dispatchEvent(new CustomEvent("sce-sync"));
+    });
+
+    onValue(ksapRef, snap => {
+      const val = snap.val();
+      if (val && Array.isArray(val)) {
+        window._sce_ksap = val;
+        window.dispatchEvent(new CustomEvent("sce-config-sync"));
+      }
+    });
+
+    onValue(topicsRef, snap => {
+      const val = snap.val();
+      if (val && typeof val === "object") {
+        window._sce_topics = val;
+        window.dispatchEvent(new CustomEvent("sce-config-sync"));
+      }
+    });
+
+    onValue(rmRef, snap => {
+      const val = snap.val();
+      window._sce_roadmap = val && Array.isArray(val) ? val : null;
+      window.dispatchEvent(new CustomEvent("sce-roadmap-sync"));
+    });
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    :root {
+      --bg:#080c14; --bg2:#0e1420; --bg3:#141c2c; --bg4:#1a2438;
+      --border:#1e2a3a; --border2:#263445;
+      --white:#dde6f0; --grey:#6a7d92; --grey2:#3d5068;
+      --green:#4ade80; --yellow:#fbbf24; --cyan:#22d3ee;
+      --pink:#f472b6; --red:#f87171; --blue:#60a5fa;
+      --orange:#fb923c; --purple:#a78bfa;
+      --accent:#22d3ee;
+      --font:'Fira Code',monospace;
+    }
+    html,body { background:var(--bg); color:var(--white); font-family:var(--font); font-size:12px; min-height:100vh; line-height:1.5; }
+    ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--bg2);} ::-webkit-scrollbar-thumb{background:var(--border2);}
+
+    #header { background:var(--bg2); border-bottom:1px solid var(--border2); }
+    .hdr-top { display:flex; align-items:stretch; flex-wrap:wrap; }
+    .hdr-logo { padding:12px 20px; border-right:1px solid var(--border); display:flex; flex-direction:column; justify-content:center; }
+    .logo-main { font-size:16px; font-weight:600; color:var(--cyan); letter-spacing:0.04em; }
+    .logo-main span { color:var(--grey); }
+    .logo-sub { font-size:8px; color:var(--grey); letter-spacing:0.18em; margin-top:2px; }
+    .hdr-stat { padding:10px 18px; border-right:1px solid var(--border); display:flex; flex-direction:column; justify-content:center; min-width:100px; }
+    .stat-val { font-size:20px; font-weight:500; line-height:1; }
+    .stat-key { font-size:8px; color:var(--grey); letter-spacing:0.12em; margin-top:3px; }
+    .readiness-wrap { padding:10px 20px; display:flex; flex-direction:column; justify-content:center; flex:1; min-width:200px; }
+    .readiness-label { font-size:8px; color:var(--grey); letter-spacing:0.15em; margin-bottom:6px; }
+    .readiness-bar-bg { height:6px; background:var(--border2); overflow:hidden; }
+    .readiness-bar { height:100%; transition:width 0.6s ease; }
+    .readiness-pct { font-size:18px; font-weight:600; margin-top:4px; }
+    .sync-wrap { padding:10px 16px; border-left:1px solid var(--border); display:flex; align-items:center; }
+    .sync-dot { font-size:8px; color:var(--grey2); letter-spacing:0.08em; }
+
+    #tabbar { background:var(--bg2); border-bottom:1px solid var(--border2); display:flex; overflow-x:auto; }
+    .tab { padding:8px 18px; background:transparent; border:none; border-right:1px solid var(--border); border-bottom:2px solid transparent; color:var(--grey); font-family:var(--font); font-size:10px; cursor:pointer; letter-spacing:0.06em; white-space:nowrap; transition:all 0.1s; }
+    .tab:hover { color:var(--white); background:var(--bg3); }
+    .tab.active { color:var(--cyan); border-bottom-color:var(--cyan); background:var(--bg3); }
+    .tab::before { content:"[ "; color:var(--grey2); }
+    .tab::after { content:" ]"; color:var(--grey2); }
+
+    .subtab-row { display:flex; gap:0; background:var(--bg3); border-bottom:1px solid var(--border); padding:0 18px; overflow-x:auto; }
+    .subtab { padding:6px 14px; background:transparent; border:none; border-bottom:2px solid transparent; color:var(--grey); font-family:var(--font); font-size:9px; cursor:pointer; letter-spacing:0.08em; white-space:nowrap; }
+    .subtab.active { color:var(--yellow); border-bottom-color:var(--yellow); }
+
+    #main { padding:14px 18px 80px; }
+
+    .cat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:8px; margin-bottom:20px; }
+    .cat-card { background:var(--bg2); border:1px solid var(--border2); border-left:3px solid var(--border2); padding:12px 14px; cursor:pointer; transition:all 0.1s; }
+    .cat-card:hover { background:var(--bg3); }
+    .cat-card.expanded { border-left-color:var(--cyan); }
+    .cat-name { font-size:11px; font-weight:500; color:var(--white); margin-bottom:6px; }
+    .cat-stats { display:flex; gap:12px; font-size:9px; color:var(--grey); margin-bottom:6px; flex-wrap:wrap; }
+    .cat-stat strong { color:var(--yellow); }
+    .cat-bar-bg { height:3px; background:var(--border2); overflow:hidden; }
+    .cat-bar { height:100%; background:var(--cyan); transition:width 0.4s; }
+
+    .q-list { background:var(--bg3); border:1px solid var(--border); border-top:none; padding:0; }
+    .q-row { display:flex; align-items:center; gap:10px; padding:7px 12px; border-bottom:1px solid var(--border); font-size:10px; transition:background 0.1s; }
+    .q-row:hover { background:var(--bg4); }
+    .q-row:last-child { border-bottom:none; }
+    .q-code { color:var(--cyan); font-size:9px; min-width:90px; letter-spacing:0.04em; }
+    .q-actions { display:flex; gap:6px; align-items:center; margin-left:auto; flex-wrap:wrap; justify-content:flex-end; }
+    .q-btn { padding:2px 8px; border:1px solid var(--border2); background:transparent; color:var(--grey2); font-family:var(--font); font-size:9px; cursor:pointer; transition:all 0.1s; }
+    .q-btn.correct { border-color:var(--green); color:var(--green); background:rgba(74,222,128,0.08); }
+    .q-btn.incorrect { border-color:var(--red); color:var(--red); background:rgba(248,113,113,0.08); }
+    .q-btn.flagged { border-color:var(--pink); color:var(--pink); background:rgba(244,114,182,0.08); }
+    .q-btn:hover:not(.correct):not(.incorrect) { border-color:var(--cyan); color:var(--cyan); }
+    .conf-dots { display:flex; gap:3px; }
+    .conf-dot { width:8px; height:8px; border-radius:50%; border:1px solid var(--border2); background:transparent; cursor:pointer; transition:all 0.1s; }
+    .conf-dot.lit { background:var(--yellow); border-color:var(--yellow); }
+    .note-inp { background:var(--bg); border:1px solid var(--border2); color:var(--grey); font-family:var(--font); font-size:9px; padding:2px 6px; width:140px; outline:none; }
+    .note-inp:focus { border-color:var(--yellow); color:var(--white); }
+    .pass-badge { font-size:7px; padding:1px 4px; letter-spacing:0.06em; border:1px solid; white-space:nowrap; }
+    .pass-badge.p1 { color:var(--blue); border-color:rgba(96,165,250,0.3); }
+    .pass-badge.p1done { color:var(--green); border-color:rgba(74,222,128,0.3); }
+    .pass-badge.p2 { color:var(--purple); border-color:rgba(167,139,250,0.3); }
+    .pass-badge.p2done { color:var(--orange); border-color:rgba(251,146,60,0.3); }
+    .pass-badge.flagged { color:var(--pink); border-color:rgba(244,114,182,0.4); background:rgba(244,114,182,0.06); }
+
+    .topic-section { margin-bottom:20px; }
+    .topic-hdr { display:flex; align-items:center; gap:10px; padding:8px 12px; background:var(--bg2); border:1px solid var(--border2); cursor:pointer; }
+    .topic-hdr:hover { background:var(--bg3); }
+    .topic-hdr-name { font-size:11px; font-weight:500; color:var(--white); flex:1; }
+    .topic-hdr-stats { font-size:9px; color:var(--grey); }
+    .topic-hdr-pct { font-size:11px; font-weight:500; }
+    .subtopic-list { background:var(--bg3); border:1px solid var(--border2); border-top:none; }
+    .st-row { display:flex; align-items:center; gap:10px; padding:6px 14px; border-bottom:1px solid var(--border); font-size:10px; }
+    .st-row:last-child { border-bottom:none; }
+    .st-name { flex:1; color:var(--grey); }
+    .st-name.read { color:var(--white); }
+    .st-actions { display:flex; gap:6px; align-items:center; }
+    .st-btn { padding:1px 7px; border:1px solid var(--border2); background:transparent; color:var(--grey2); font-family:var(--font); font-size:9px; cursor:pointer; }
+    .st-btn.read { border-color:var(--green); color:var(--green); background:rgba(74,222,128,0.06); }
+    .st-btn.reviewed { border-color:var(--cyan); color:var(--cyan); background:rgba(34,211,238,0.06); }
+
+    .sec-head { display:flex; align-items:baseline; gap:10px; margin-bottom:10px; padding:4px 0; border-bottom:1px solid var(--border); }
+    .sec-title { font-size:10px; font-weight:500; color:var(--cyan); letter-spacing:0.08em; }
+    .sec-rule { flex:1; }
+    .sec-note { font-size:9px; color:var(--grey2); }
+    .empty-msg { padding:30px 0; color:var(--grey2); font-size:10px; letter-spacing:0.08em; }
+    .empty-msg::before { content:"> "; }
+
+    .overview-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:6px; margin-bottom:20px; }
+    .ov-card { background:var(--bg2); border:1px solid var(--border2); border-left:3px solid var(--border2); padding:10px 14px; }
+    .ov-cat { font-size:10px; color:var(--white); font-weight:500; margin-bottom:6px; }
+    .ov-row { display:flex; justify-content:space-between; font-size:9px; color:var(--grey); margin-bottom:3px; gap:12px; }
+    .ov-row strong { color:var(--yellow); text-align:right; }
+    .ov-bar-bg { height:2px; background:var(--border2); margin-top:6px; overflow:hidden; }
+    .ov-bar { height:100%; }
+
+    #statusbar { position:fixed; bottom:0; left:0; right:0; background:var(--bg2); border-top:1px solid var(--border2); padding:5px 18px; display:flex; justify-content:space-between; align-items:center; font-size:9px; color:var(--grey2); z-index:100; gap:10px; }
+    .sb-items { display:flex; gap:18px; flex-wrap:wrap; }
+    .sb-item strong { color:var(--yellow); }
+
+    .filter-row { display:flex; gap:8px; align-items:center; padding:8px 18px; background:var(--bg2); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+    .filter-btn { padding:2px 10px; border:1px solid var(--border2); background:transparent; color:var(--grey); font-family:var(--font); font-size:9px; cursor:pointer; transition:all 0.1s; letter-spacing:0.06em; }
+    .filter-btn.active { border-color:var(--cyan); color:var(--cyan); background:rgba(34,211,238,0.06); }
+    .filter-btn.flag-filter.active { border-color:var(--pink); color:var(--pink); background:rgba(244,114,182,0.06); }
+
+    .admin-inp { background:var(--bg); border:1px solid var(--border2); color:var(--white); font-family:var(--font); font-size:11px; padding:5px 8px; outline:none; caret-color:var(--cyan); transition:border-color 0.1s; }
+    .admin-inp:focus { border-color:var(--yellow); }
+    .admin-inp.wide { width:100%; }
+    .admin-sel { background:var(--bg); border:1px solid var(--border2); color:var(--white); font-family:var(--font); font-size:11px; padding:5px 8px; outline:none; cursor:pointer; }
+    .admin-sel option { background:var(--bg2); }
+    .admin-btn { padding:4px 14px; border:1px solid var(--green); background:transparent; color:var(--green); font-family:var(--font); font-size:10px; cursor:pointer; letter-spacing:0.06em; transition:all 0.1s; }
+    .admin-btn:hover { background:rgba(74,222,128,0.08); }
+    .admin-btn.danger { border-color:var(--red); color:var(--red); }
+    .admin-btn.danger:hover { background:rgba(248,113,113,0.08); }
+    .admin-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+    .admin-tag { font-size:8px; color:var(--grey2); letter-spacing:0.1em; min-width:80px; }
+    .q-admin-row, .st-admin-row { display:flex; align-items:center; gap:8px; padding:5px 10px; border-bottom:1px solid var(--border); font-size:10px; }
+    .q-admin-row:hover, .st-admin-row:hover { background:var(--bg3); }
+
+    .err-row { background:var(--bg2); border:1px solid var(--border2); border-left:3px solid var(--red); margin-bottom:6px; }
+    .err-header { display:flex; align-items:center; gap:10px; padding:8px 12px; flex-wrap:wrap; }
+    .err-code { font-size:9px; color:var(--cyan); min-width:90px; letter-spacing:0.04em; }
+    .err-cat { font-size:9px; color:var(--grey); flex:1; }
+    .err-conf { display:flex; gap:3px; }
+    .err-note-wrap { padding:0 12px 10px; border-top:1px solid var(--border); }
+    .err-note-text { font-size:10px; color:var(--white); padding:6px 0; line-height:1.5; font-style:italic; }
+    .err-resolved { font-size:8px; padding:2px 8px; border:1px solid var(--grey2); background:transparent; color:var(--grey2); font-family:var(--font); cursor:pointer; letter-spacing:0.06em; }
+    .err-resolved.done { border-color:var(--green); color:var(--green); background:rgba(74,222,128,0.06); }
+    .err-filter-bar { display:flex; gap:8px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+
+    .rm-block { background:var(--bg2); border:1px solid var(--border2); border-left:3px solid var(--border2); margin-bottom:10px; transition:opacity .15s, border-color .15s, box-shadow .15s; }
+    .rm-block.active { border-color:var(--cyan); box-shadow:0 0 0 1px var(--cyan); }
+    .rm-block.completed { opacity:0.55; }
+    .rm-header { display:flex; align-items:center; gap:12px; padding:12px 14px; cursor:pointer; }
+    .rm-header:hover { background:var(--bg3); }
+    .rm-cat { font-size:11px; font-weight:500; color:var(--white); flex:1; }
+    .rm-badge { font-size:8px; padding:2px 8px; border:1px solid; letter-spacing:0.06em; white-space:nowrap; }
+    .rm-badge.active { color:var(--cyan); border-color:var(--cyan); background:rgba(34,211,238,0.08); }
+    .rm-badge.upcoming { color:var(--grey); border-color:var(--border2); }
+    .rm-badge.completed { color:var(--green); border-color:var(--green); background:rgba(74,222,128,0.06); }
+    .rm-dates { font-size:9px; color:var(--grey); white-space:nowrap; }
+    .rm-body { padding:0 14px 14px; border-top:1px solid var(--border); }
+    .rm-progress-bg { height:4px; background:var(--border2); margin:10px 0; overflow:hidden; }
+    .rm-progress { height:100%; transition:width 0.4s; }
+    .rm-edit-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+    .rm-inp { background:var(--bg); border:1px solid var(--border2); color:var(--white); font-family:var(--font); font-size:10px; padding:4px 8px; outline:none; }
+    .rm-inp:focus { border-color:var(--yellow); }
+    .rm-save-btn { padding:3px 12px; border:1px solid var(--green); background:transparent; color:var(--green); font-family:var(--font); font-size:9px; cursor:pointer; }
+    .rm-timeline { position:relative; margin:20px 0; height:6px; background:var(--border2); border-radius:3px; overflow:visible; }
+    .rm-timeline-fill { height:100%; background:linear-gradient(90deg,var(--green),var(--cyan)); border-radius:3px; transition:width 0.5s; }
+    .rm-summary { background:var(--bg2); border:1px solid var(--border2); border-left:3px solid var(--cyan); padding:12px 16px; margin-bottom:20px; }
+
+    @media(max-width:640px) {
+      .cat-grid,.overview-grid { grid-template-columns:1fr; }
+      .note-inp { width:90px; }
+      #main { padding:10px 10px 80px; }
+      .hdr-stat { min-width:80px; padding:8px 12px; }
+      .rm-header { flex-wrap:wrap; gap:6px; }
+      .rm-cat { width:calc(100% - 20px); }
+      .rm-dates { width:100%; font-size:8px; }
+      .rm-badge { margin-left:0; }
+      .rm-body [style*="grid-template-columns"], .rm-summary [style*="grid-template-columns"] { grid-template-columns:1fr !important; }
+      #statusbar { align-items:flex-start; flex-direction:column; }
+      .q-row { align-items:flex-start; flex-direction:column; }
+      .q-actions { margin-left:0; justify-content:flex-start; }
+    }
+  </style>
+</head>
+
+<body>
+<div id="header">
+  <div class="hdr-top">
+    <div class="hdr-logo">
+      <div class="logo-main">SCE<span>·</span>NEP</div>
+      <div class="logo-sub">NEPHROLOGY TRACKER</div>
+    </div>
+    <div class="hdr-stat">
+      <div class="stat-val" id="hdr-ksap-pct" style="color:var(--cyan)">0%</div>
+      <div class="stat-key">KSAP CORRECT</div>
+    </div>
+    <div class="hdr-stat">
+      <div class="stat-val" id="hdr-topic-pct" style="color:var(--green)">0%</div>
+      <div class="stat-key">TOPICS COVERED</div>
+    </div>
+    <div class="hdr-stat">
+      <div class="stat-val" id="hdr-attempted" style="color:var(--grey)">0</div>
+      <div class="stat-key">KSAP ATTEMPTED</div>
+    </div>
+    <div class="readiness-wrap">
+      <div class="readiness-label">SCE READINESS</div>
+      <div class="readiness-bar-bg"><div class="readiness-bar" id="readiness-bar" style="width:0%"></div></div>
+      <div class="readiness-pct" id="readiness-pct">0%</div>
+    </div>
+    <div class="sync-wrap"><div class="sync-dot" id="sync-dot">● CONNECTING</div></div>
+  </div>
+</div>
+
+<div id="tabbar">
+  <button class="tab active" onclick="setTab('overview')">OVERVIEW</button>
+  <button class="tab" onclick="setTab('ksap')">KSAP BANK</button>
+  <button class="tab" onclick="setTab('topics')">TOPIC COVERAGE</button>
+  <button class="tab" onclick="setTab('admin')">ADMIN</button>
+  <button class="tab" onclick="setTab('errorlog')">ERROR LOG</button>
+  <button class="tab" onclick="setTab('roadmap')">ROADMAP</button>
+</div>
+
+<div id="main">
+  <div id="tab-overview" style="display:none"></div>
+  <div id="tab-ksap"     style="display:none"></div>
+  <div id="tab-topics"   style="display:none"></div>
+  <div id="tab-admin"    style="display:none"></div>
+  <div id="tab-errorlog" style="display:none"></div>
+  <div id="tab-roadmap"  style="display:none"></div>
+</div>
+
+<div id="statusbar">
+  <div class="sb-items">
+    <span class="sb-item">P1 complete: <strong id="sb-p1">0/0</strong></span>
+    <span class="sb-item">P2 complete: <strong id="sb-p2">0/0</strong></span>
+    <span class="sb-item" id="sb-sync" style="color:var(--grey2)">● CONNECTING</span>
+  </div>
+  <button onclick="clearAllProgress()" style="background:transparent;border:1px solid var(--border2);color:var(--grey2);font-family:var(--font);font-size:9px;padding:3px 10px;cursor:pointer;letter-spacing:0.06em;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--grey2)'">CLEAR PROGRESS</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════
+// DATA FALLBACKS
+// This full file loads your real KSAP/TOPICS from Firebase if present.
+// If Firebase config is empty, it creates a safe 600-question shell so the app still runs.
+// ══════════════════════════════════════════════════════════════════════
+
+const MODULES = ["V7M1","V7M2","V8M1","V8M2","V9M1","V9M2","V10M1","V11M1"];
+
+const CANON_CATS = [
+  "Acid–Base and Potassium Disorders",
+  "Acute Kidney Injury and ICU Nephrology",
+  "Calcium, Phosphorus, and Magnesium Disorders and Stones",
+  "Chronic Kidney Disease",
+  "Glomerular and Vascular Disorders",
+  "Hypertension",
+  "Kidney Transplantation",
+  "Pharmacology",
+  "Sodium and Water Abnormalities",
+  "Tubular, Interstitial, and Cystic Disorders"
+];
+
+function buildFallbackKSAP() {
+  const arr = [];
+  MODULES.forEach((m, mi) => {
+    for (let i = 1; i <= 75; i++) {
+      const cat = CANON_CATS[(i + mi) % CANON_CATS.length];
+      arr.push({ code:`${m}-Q${i}`, category:cat, module:m });
+    }
+  });
+  return arr;
+}
+
+let KSAP = buildFallbackKSAP();
+
+let TOPICS = {
+  "Sodium and Water Abnormalities": {
+    "Hyponatremia": ["SIADH","Hypervolemic hyponatremia","Low solute intake","Thiazide-induced","Adrenal insufficiency","Pseudohyponatremia"],
+    "Hypernatremia": ["Central DI","Nephrogenic DI","Osmotic diuresis","Hypodipsia","Extrarenal water loss"],
+    "Salt Excess and Depletion": ["Heart failure","Cirrhosis","Nephrotic syndrome","Post-AKI diuresis","Diuretics"]
+  },
+  "Acid–Base and Potassium Disorders": {
+    "Metabolic Acidosis": ["Normal anion gap acidosis","Distal RTA","Proximal RTA","Type 4 RTA","High anion gap acidosis"],
+    "Metabolic Alkalosis": ["Volume contraction","Mineralocorticoid excess","Post-hypercapnic alkalosis"],
+    "Potassium Disorders": ["Hyperkalemia","Hypokalemia","Pseudohyperkalemia","Medication-induced potassium disorders"]
+  },
+  "Calcium, Phosphorus, and Magnesium Disorders and Stones": {
+    "Calcium Disorders": ["Hypercalcemia","Hypocalcemia","Primary hyperparathyroidism","Malignancy-related hypercalcemia"],
+    "Phosphate and Magnesium": ["Hyperphosphatemia","Hypophosphatemia","Hypermagnesemia","Hypomagnesemia"],
+    "Nephrolithiasis": ["Calcium stones","Uric acid stones","Struvite stones","Cystine stones","Drug-induced stones"]
+  },
+  "Chronic Kidney Disease": {
+    "CKD Basics": ["GFR","Proteinuria","Kidney biopsy","CKD epidemiology"],
+    "CKD Complications": ["Anemia","Metabolic acidosis","Hyperkalemia","CKD-MBD","Fluid overload"],
+    "Dialysis": ["Hemodialysis adequacy","Peritoneal dialysis","Vascular access","Dialysis complications"]
+  },
+  "Hypertension": {
+    "Essential Hypertension": ["Isolated systolic hypertension","Resistant hypertension","White coat hypertension","Masked hypertension"],
+    "Secondary Hypertension": ["Renovascular disease","Hyperaldosteronism","Sleep apnea","Drug-induced hypertension","CKD-related hypertension"],
+    "Special Situations": ["Pregnancy-associated hypertension","Hypertensive emergency","End-organ damage"]
+  },
+  "Tubular, Interstitial, and Cystic Disorders": {
+    "Tubular Disorders": ["Fanconi syndrome","Drug-induced tubular disorders","Crystal deposition"],
+    "Interstitial Nephritis": ["Acute interstitial nephritis","Chronic interstitial nephritis","Drug-induced AIN"],
+    "Cystic Disease": ["ADPKD","ARPKD","Acquired cystic kidney disease","Renal mass evaluation"]
+  },
+  "Glomerular and Vascular Disorders": {
+    "Nephritic": ["IgA nephropathy","ANCA vasculitis","Anti-GBM disease","Lupus nephritis","Postinfectious GN"],
+    "Nephrotic": ["Minimal change disease","FSGS","Membranous nephropathy","Amyloidosis","Myeloma-related kidney disease"],
+    "Vascular": ["TMA","HUS","aHUS","Scleroderma renal crisis"]
+  },
+  "Kidney Transplantation": {
+    "Pre-Transplant": ["Immunology","Recipient evaluation","Living donor evaluation","Allocation"],
+    "Post-Transplant": ["Induction immunosuppression","Maintenance immunosuppression","Rejection","Long-term graft dysfunction"],
+    "Complications": ["Infection","Malignancy","Pregnancy","Ethics"]
+  },
+  "Pharmacology": {
+    "Drug Handling": ["Pharmacokinetics","Renal dosing","Dialytic drug removal"],
+    "Nephrotoxicity": ["Aminoglycosides","Vancomycin","NSAIDs","RAAS blockade","Contrast","Lithium"],
+    "Toxicology": ["Ethylene glycol","Methanol","Salicylates","Lithium toxicity"]
+  },
+  "Acute Kidney Injury and ICU Nephrology": {
+    "Prerenal AKI": ["True volume depletion","Effective arterial volume depletion","Medication-related"],
+    "Intrinsic AKI": ["ATN","AIN","Glomerular AKI","Vascular AKI"],
+    "Postrenal AKI and KRT": ["Obstruction","Dialysis indications","IHD","CRRT","Complications"]
+  }
+};
+
+const CAT_COLORS = {
+  "Acid–Base and Potassium Disorders": "var(--orange)",
+  "Acute Kidney Injury and ICU Nephrology": "var(--red)",
+  "Ca, Po4, Mg disorders & Stones": "var(--purple)",
+  "Calcium, Phosphorus, and Magnesium Disorders and Stones": "var(--purple)",
+  "Chronic Kidney Disease": "var(--blue)",
+  "Glomerular and Vascular Disorders": "var(--pink)",
+  "Hypertension": "var(--yellow)",
+  "Kidney Transplantation": "var(--green)",
+  "Pharmacology": "var(--cyan)",
+  "Sodium and Water Abnormalities": "var(--orange)",
+  "Tubular, Interstitial and Cystic Disorders": "var(--grey)",
+  "Tubular, Interstitial, and Cystic Disorders": "var(--grey)"
+};
+
+function normCat(cat) {
+  const map = {
+    "Ca, Po4, Mg disorders & Stones": "Calcium, Phosphorus, and Magnesium Disorders and Stones",
+    "Calcium, Phosphorus, and Magnesium Disorders and Stones": "Calcium, Phosphorus, and Magnesium Disorders and Stones",
+    "Tubular, Interstitial and Cystic Disorders": "Tubular, Interstitial, and Cystic Disorders",
+    "Tubular, Interstitial, and Cystic Disorders": "Tubular, Interstitial, and Cystic Disorders"
+  };
+  return map[cat] || cat;
+}
+
+function getAllCats() { return [...new Set(KSAP.map(q => q.category))].sort(); }
+function getAllModules() { return [...new Set(KSAP.map(q => q.module))].sort(); }
+function jsStr(x) { return JSON.stringify(String(x || "")); }
+function pctColor(pct) {
+  if (pct === null || pct === undefined || isNaN(pct)) return "var(--grey2)";
+  if (pct >= 70) return "var(--green)";
+  if (pct >= 40) return "var(--yellow)";
+  return "var(--red)";
+}
+function clampPct(n) {
+  if (n === null || n === undefined || isNaN(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+function escHtml(t) {
+  return String(t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════════
+let sceData = {};
+let currentTab = "overview";
+let ksapMode = "category";
+let expandedCats = new Set();
+let expandedTopics = new Set();
+let ksapFilter = "all";
+let errFilter = "all";
+let errSort = "cat";
+let adminSubTab = "topics";
+
+// ══════════════════════════════════════════════════════════════════════
+// FIREBASE SYNC
+// ══════════════════════════════════════════════════════════════════════
+window.addEventListener("sce-sync", () => {
+  sceData = window._sce_data || {};
+  setLiveStatus(true);
+  renderAll();
+});
+
+window.addEventListener("sce-config-sync", () => {
+  if (window._sce_ksap && window._sce_ksap.length > 0) KSAP = window._sce_ksap;
+  if (window._sce_topics && Object.keys(window._sce_topics).length > 0) TOPICS = window._sce_topics;
+  renderAll();
+  if (currentTab === "admin") renderAdmin();
+});
+
+window.addEventListener("sce-roadmap-sync", () => {
+  roadmapData = window._sce_roadmap || buildDefaultRoadmap();
+  const activeIdx = getActiveRoadmapIndex();
+  if (activeIdx >= 0) rmExpanded.add(activeIdx);
+  if (currentTab === "roadmap") renderRoadmap();
+});
+
+function setLiveStatus(live) {
+  const text = live ? "● LIVE" : "● LOCAL";
+  const color = live ? "var(--green)" : "var(--yellow)";
+  document.getElementById("sync-dot").textContent = text;
+  document.getElementById("sync-dot").style.color = color;
+  document.getElementById("sb-sync").textContent = text;
+  document.getElementById("sb-sync").style.color = color;
+}
+
+function seedConfigToFirebase() {
+  if (!window._sce_fb) return;
+  const { db, ref, set } = window._sce_fb;
+  set(ref(db, "sceConfig/ksap"), KSAP);
+  set(ref(db, "sceConfig/topics"), TOPICS);
+}
+
+function qKey(code) { return code.replace(/[^a-zA-Z0-9]/g, "_"); }
+function stKey(cat, topic, sub) { return `st_${normCat(cat)}_${topic}_${sub}`.replace(/[^a-zA-Z0-9]/g,"_").slice(0,100); }
+function getQ(code) { return sceData.ksap?.[qKey(code)] || {}; }
+function getST(cat, topic, sub) { return sceData.topics?.[stKey(cat,topic,sub)] || {}; }
+
+function saveQ(code, updates) {
+  if (!window._sce_fb) return;
+  const { db, ref, update } = window._sce_fb;
+  update(ref(db, `sceData/ksap/${qKey(code)}`), updates);
+}
+
+function saveST(cat, topic, sub, updates) {
+  if (!window._sce_fb) return;
+  const { db, ref, update } = window._sce_fb;
+  update(ref(db, `sceData/topics/${stKey(cat,topic,sub)}`), updates);
+}
+
+function saveKsapToFirebase() {
+  if (!window._sce_fb) return;
+  const { db, ref, set } = window._sce_fb;
+  set(ref(db, "sceConfig/ksap"), KSAP);
+}
+
+function saveTopicsToFirebase() {
+  if (!window._sce_fb) return;
+  const { db, ref, set } = window._sce_fb;
+  set(ref(db, "sceConfig/topics"), TOPICS);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// COMPUTED STATS
+// ══════════════════════════════════════════════════════════════════════
+function computeStats() {
+  let attempted = 0, correct = 0, p1done = 0, p2done = 0;
+  KSAP.forEach(q => {
+    const d = getQ(q.code);
+    if (d.p1correct || d.p1incorrect) { attempted++; p1done++; }
+    if (d.p2correct || d.p2incorrect) p2done++;
+    if (d.p1correct) correct++;
+  });
+  const ksapPct = attempted > 0 ? Math.round(correct / attempted * 100) : 0;
+
+  let stTotal = 0, stRead = 0;
+  Object.entries(TOPICS).forEach(([cat, topics]) => {
+    Object.entries(topics).forEach(([topic, subs]) => {
+      subs.forEach(sub => {
+        stTotal++;
+        const d = getST(cat, topic, sub);
+        if (d.read || d.reviewed) stRead++;
+      });
+    });
+  });
+  const topicPct = stTotal > 0 ? Math.round(stRead / stTotal * 100) : 0;
+
+  const p1Attempted = p1done;
+  const p1Correct = KSAP.reduce((acc, q) => acc + (getQ(q.code).p1correct ? 1 : 0), 0);
+  const p1Perf = p1Attempted > 0 ? p1Correct / p1Attempted : 0;
+  const p1Coverage = KSAP.length ? p1Attempted / KSAP.length : 0;
+  const p1Score = p1Perf * p1Coverage * 40;
+
+  const p2Attempted = p2done;
+  const p2Correct = KSAP.reduce((acc, q) => acc + (getQ(q.code).p2correct ? 1 : 0), 0);
+  const p2Perf = p2Attempted > 0 ? p2Correct / p2Attempted : 0;
+  const p2Coverage = KSAP.length ? p2Attempted / KSAP.length : 0;
+  const p2Score = p2Perf * p2Coverage * 60;
+
+  const ksapReadiness = Math.min(100, Math.round(p1Score + p2Score));
+  const readiness = Math.round(ksapReadiness * 0.6 + topicPct * 0.4);
+  return { attempted, correct, ksapPct, topicPct, readiness, p1done, p2done, stTotal, stRead };
+}
+
+function computeCatStats(cat) {
+  const qs = KSAP.filter(q => normCat(getQ(q.code).reassignedCategory || q.category) === normCat(cat));
+  let attempted = 0, correct = 0, p1done = 0, p2done = 0;
+  qs.forEach(q => {
+    const d = getQ(q.code);
+    if (d.p1correct || d.p1incorrect) { attempted++; p1done++; }
+    if (d.p2correct || d.p2incorrect) p2done++;
+    if (d.p1correct) correct++;
+  });
+  return { total: qs.length, attempted, correct, p1done, p2done, pct: attempted > 0 ? Math.round(correct/attempted*100) : 0 };
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// RENDER CORE
+// ══════════════════════════════════════════════════════════════════════
+function renderAll() {
+  const s = computeStats();
+  const rPct = s.readiness;
+  const rColor = rPct >= 70 ? "var(--green)" : rPct >= 40 ? "var(--yellow)" : "var(--red)";
+
+  document.getElementById("hdr-ksap-pct").textContent = `${s.ksapPct}%`;
+  document.getElementById("hdr-topic-pct").textContent = `${s.topicPct}%`;
+  document.getElementById("hdr-attempted").textContent = s.attempted;
+  document.getElementById("readiness-bar").style.width = `${rPct}%`;
+  document.getElementById("readiness-bar").style.background = rColor;
+  document.getElementById("readiness-pct").textContent = `${rPct}%`;
+  document.getElementById("readiness-pct").style.color = rColor;
+  document.getElementById("sb-p1").textContent = `${s.p1done}/${KSAP.length}`;
+  document.getElementById("sb-p2").textContent = `${s.p2done}/${KSAP.length}`;
+
+  renderTab(currentTab);
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".tab").forEach(b =>
+    b.classList.toggle("active", b.getAttribute("onclick").includes(`'${tab}'`)));
+  ["overview","ksap","topics","admin","errorlog","roadmap"].forEach(t =>
+    document.getElementById(`tab-${t}`).style.display = t === tab ? "block" : "none");
+  renderTab(tab);
+}
+
+function renderTab(tab) {
+  if (tab === "overview") renderOverview();
+  if (tab === "ksap") renderKSAP();
+  if (tab === "topics") renderTopics();
+  if (tab === "admin") renderAdmin();
+  if (tab === "errorlog") renderErrorLog();
+  if (tab === "roadmap") renderRoadmap();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// OVERVIEW
+// ══════════════════════════════════════════════════════════════════════
+function renderOverview() {
+  const el = document.getElementById("tab-overview");
+  const s = computeStats();
+  const cats = [...new Set(KSAP.map(q => normCat(q.category)))].sort();
+
+  let weakest = null, weakestPct = 101;
+  cats.forEach(cat => {
+    const cs = computeCatStats(cat);
+    if (cs.attempted > 0 && cs.pct < weakestPct) { weakest = cat; weakestPct = cs.pct; }
+  });
+
+  el.innerHTML = `
+    <div class="sec-head">
+      <span class="sec-title">SCE READINESS OVERVIEW</span>
+      <span class="sec-rule"></span>
+      <span class="sec-note">${new Date().toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long"})}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:20px;">
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--cyan);padding:12px 14px;">
+        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">KSAP PROGRESS — PASS 1</div>
+        <div style="font-size:20px;font-weight:500;color:var(--cyan)">${s.p1done} <span style="font-size:11px;color:var(--grey)">/ ${KSAP.length}</span></div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${KSAP.length ? Math.round(s.p1done/KSAP.length*100) : 0}% of questions attempted</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--purple);padding:12px 14px;">
+        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">KSAP PROGRESS — PASS 2</div>
+        <div style="font-size:20px;font-weight:500;color:var(--purple)">${s.p2done} <span style="font-size:11px;color:var(--grey)">/ ${KSAP.length}</span></div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${KSAP.length ? Math.round(s.p2done/KSAP.length*100) : 0}% of module review done</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--green);padding:12px 14px;">
+        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">TOPIC COVERAGE</div>
+        <div style="font-size:20px;font-weight:500;color:var(--green)">${s.stRead} <span style="font-size:11px;color:var(--grey)">/ ${s.stTotal}</span></div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${s.topicPct}% subtopics read or reviewed</div>
+      </div>
+      ${weakest ? `
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--red);padding:12px 14px;">
+        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">WEAKEST CATEGORY</div>
+        <div style="font-size:11px;font-weight:500;color:var(--red);line-height:1.3;">${weakest}</div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${weakestPct}% correct on attempted</div>
+      </div>` : ""}
+    </div>
+
+    <div class="sec-head"><span class="sec-title">BY CATEGORY</span><span class="sec-rule"></span></div>
+    <div class="overview-grid">
+      ${cats.map(cat => {
+        const cs = computeCatStats(cat);
+        const color = CAT_COLORS[cat] || "var(--cyan)";
+        const pct = cs.attempted > 0 ? cs.pct : null;
+        return `
+          <div class="ov-card" style="border-left-color:${color}">
+            <div class="ov-cat">${cat}</div>
+            <div class="ov-row"><span>P1 attempted</span><strong>${cs.p1done} / ${cs.total}</strong></div>
+            <div class="ov-row"><span>P2 attempted</span><strong>${cs.p2done} / ${cs.total}</strong></div>
+            <div class="ov-row"><span>% correct</span><strong style="color:${pctColor(pct)}">${pct !== null ? pct+"%" : "—"}</strong></div>
+            <div class="ov-bar-bg"><div class="ov-bar" style="width:${cs.total ? Math.round(cs.p1done/cs.total*100) : 0}%;background:${color}"></div></div>
+          </div>`;
+      }).join("")}
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// KSAP
+// ══════════════════════════════════════════════════════════════════════
+function renderKSAP() {
+  const el = document.getElementById("tab-ksap");
+  const isModule = ksapMode === "module";
+
+  let html = `
+    <div class="subtab-row">
+      <button class="subtab ${!isModule?'active':''}" onclick="setKsapMode('category')">PASS 1 — BY CATEGORY</button>
+      <button class="subtab ${isModule?'active':''}" onclick="setKsapMode('module')">PASS 2 — BY MODULE</button>
+    </div>
+    <div class="filter-row">
+      <span style="font-size:9px;color:var(--grey);letter-spacing:0.1em;">FILTER:</span>
+      <button class="filter-btn ${ksapFilter==='all'?'active':''}" onclick="setKsapFilter('all')">ALL</button>
+      <button class="filter-btn ${ksapFilter==='unattempted'?'active':''}" onclick="setKsapFilter('unattempted')">UNATTEMPTED</button>
+      <button class="filter-btn ${ksapFilter==='incorrect'?'active':''}" onclick="setKsapFilter('incorrect')">INCORRECT</button>
+      <button class="filter-btn flag-filter ${ksapFilter==='flagged'?'active':''}" onclick="setKsapFilter('flagged')">⚑ FLAGGED</button>
+    </div>`;
+
+  if (!isModule) {
+    const cats = [...new Set(KSAP.map(q => normCat(q.category)))].sort();
+    html += `<div style="padding-top:10px;">`;
+    cats.forEach(cat => {
+      const qsRaw = KSAP.filter(q => normCat(q.category) === normCat(cat));
+      const qs = filterQuestions(qsRaw);
+      const cs = computeCatStats(cat);
+      const color = CAT_COLORS[cat] || "var(--cyan)";
+      const expanded = expandedCats.has(cat);
+      html += `
+        <div style="margin-bottom:6px;">
+          <div class="cat-card ${expanded?'expanded':''}" onclick="toggleCat(${jsStr(cat)})">
+            <div class="cat-name">${cat}</div>
+            <div class="cat-stats">
+              <span>P1: <strong>${cs.p1done}/${cs.total}</strong></span>
+              <span>P2: <strong>${cs.p2done}/${cs.total}</strong></span>
+              <span>Correct: <strong style="color:${pctColor(cs.attempted ? cs.pct : null)}">${cs.attempted>0?cs.pct+'%':'—'}</strong></span>
+              ${ksapFilter !== "all" ? `<span>Showing: <strong>${qs.length}</strong></span>` : ""}
+            </div>
+            <div class="cat-bar-bg"><div class="cat-bar" style="width:${cs.total ? Math.round(cs.p1done/cs.total*100) : 0}%;background:${color}"></div></div>
+          </div>
+          ${expanded ? `<div class="q-list">${qs.length ? qs.map(q => qRow(q, "p1")).join("") : `<div class="empty-msg">no questions match this filter</div>`}</div>` : ""}
+        </div>`;
+    });
+    html += `</div>`;
+  } else {
+    html += `<div style="padding-top:10px;">`;
+    MODULES.forEach(mod => {
+      const qsRaw = KSAP.filter(q => q.module === mod).slice().sort((a,b) => (parseInt(a.code.split('-Q')[1]) || 0) - (parseInt(b.code.split('-Q')[1]) || 0));
+      const qs = filterQuestions(qsRaw);
+      let p2done = 0;
+      qsRaw.forEach(q => { const d = getQ(q.code); if(d.p2correct||d.p2incorrect) p2done++; });
+      const expanded = expandedCats.has(mod);
+      html += `
+        <div style="margin-bottom:6px;">
+          <div class="cat-card ${expanded?'expanded':''}" onclick="toggleCat(${jsStr(mod)})">
+            <div class="cat-name">${mod}</div>
+            <div class="cat-stats">
+              <span>P2 progress: <strong>${p2done}/${qsRaw.length}</strong></span>
+              ${ksapFilter !== "all" ? `<span>Showing: <strong>${qs.length}</strong></span>` : ""}
+            </div>
+            <div class="cat-bar-bg"><div class="cat-bar" style="width:${qsRaw.length ? Math.round(p2done/qsRaw.length*100) : 0}%"></div></div>
+          </div>
+          ${expanded ? `<div class="q-list">${qs.length ? qs.map(q => qRow(q, "p2")).join("") : `<div class="empty-msg">no questions match this filter</div>`}</div>` : ""}
+        </div>`;
+    });
+    html += `</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function filterQuestions(qs) {
+  return qs.filter(q => {
+    const d = getQ(q.code);
+    const attempted = d.p1correct || d.p1incorrect || d.p2correct || d.p2incorrect;
+    if (ksapFilter === 'unattempted') return !attempted;
+    if (ksapFilter === 'flagged') return d.flagged;
+    if (ksapFilter === 'incorrect') return d.p1incorrect || d.p2incorrect;
+    return true;
+  });
+}
+
+function qRow(q, pass) {
+  const d = getQ(q.code);
+  const p1c = d.p1correct, p1i = d.p1incorrect;
+  const p2c = d.p2correct, p2i = d.p2incorrect;
+  const conf = d.confidence || 0;
+  const note = d.note || "";
+  const effectiveCat = d.reassignedCategory || q.category;
+  const color = CAT_COLORS[normCat(effectiveCat)] || "var(--cyan)";
+
+  const p1badge = p1c ? `<span class="pass-badge p1done">P1✓</span>` :
+                  p1i ? `<span class="pass-badge p1">P1✗</span>` :
+                  `<span class="pass-badge" style="color:var(--grey2);border-color:var(--border2)">P1·</span>`;
+  const p2badge = p2c ? `<span class="pass-badge p2done">P2✓</span>` :
+                  p2i ? `<span class="pass-badge p2">P2✗</span>` :
+                  `<span class="pass-badge" style="color:var(--grey2);border-color:var(--border2)">P2·</span>`;
+
+  const isP1 = pass === "p1";
+  const curCorrect = isP1 ? p1c : p2c;
+  const curIncorrect = isP1 ? p1i : p2i;
+  const correctField = isP1 ? "p1correct" : "p2correct";
+  const incorrectField = isP1 ? "p1incorrect" : "p2incorrect";
+  const flagged = d.flagged || false;
+  const rowBg = flagged ? 'background:rgba(244,114,182,0.03);' : curCorrect ? 'background:rgba(74,222,128,0.04);' : curIncorrect ? 'background:rgba(248,113,113,0.04);' : '';
+
+  return `<div class="q-row" style="${rowBg}">
+    <span class="q-code" style="color:${color}">${q.code}</span>
+    <span style="display:flex;gap:3px;">${p1badge}${p2badge}${flagged?'<span class="pass-badge flagged">⚑</span>':''}</span>
+    <div class="q-actions">
+      <button class="q-btn ${curCorrect?'correct':''}" onclick="toggleQ(${jsStr(q.code)},${jsStr(correctField)},${jsStr(incorrectField)},${curCorrect?true:false})">✓</button>
+      <button class="q-btn ${curIncorrect?'incorrect':''}" onclick="toggleQ(${jsStr(q.code)},${jsStr(incorrectField)},${jsStr(correctField)},${curIncorrect?true:false})">✗</button>
+      <button class="q-btn ${flagged?'flagged':''}" onclick="saveQ(${jsStr(q.code)},{flagged:${!flagged}});renderKSAP();" title="Flag for review">⚑</button>
+      <div class="conf-dots">${[1,2,3].map(n => `<div class="conf-dot ${conf>=n?'lit':''}" onclick="setQConf(${jsStr(q.code)},${n})"></div>`).join("")}</div>
+      <input class="note-inp" value="${escHtml(note)}" placeholder="why wrong..." onchange="saveQ(${jsStr(q.code)},{note:this.value})" />
+    </div>
+  </div>`;
+}
+
+function setKsapFilter(f) { ksapFilter = f; renderKSAP(); }
+function toggleQ(code, field, otherField, current) {
+  const updates = { [field]: !current };
+  if (!current) updates[otherField] = false;
+  saveQ(code, updates);
+}
+function setQConf(code, n) {
+  const d = getQ(code);
+  saveQ(code, { confidence: d.confidence === n ? 0 : n });
+}
+function toggleCat(cat) {
+  if (expandedCats.has(cat)) expandedCats.delete(cat);
+  else expandedCats.add(cat);
+  renderKSAP();
+}
+function setKsapMode(mode) {
+  ksapMode = mode;
+  expandedCats.clear();
+  renderKSAP();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// TOPICS
+// ══════════════════════════════════════════════════════════════════════
+function renderTopics() {
+  const el = document.getElementById("tab-topics");
+  let html = "";
+
+  Object.entries(TOPICS).forEach(([cat, topicsObj]) => {
+    const color = CAT_COLORS[normCat(cat)] || "var(--cyan)";
+    let catRead = 0, catTotal = 0;
+    Object.entries(topicsObj).forEach(([topic, subs]) => {
+      subs.forEach(sub => {
+        catTotal++;
+        const d = getST(cat, topic, sub);
+        if (d.read || d.reviewed) catRead++;
+      });
+    });
+
+    html += `
+      <div class="topic-section">
+        <div class="topic-hdr" style="border-left:3px solid ${color}" onclick="toggleTopicCat(${jsStr(cat)})">
+          <div class="topic-hdr-name">${cat}</div>
+          <div class="topic-hdr-stats">${catRead}/${catTotal} subtopics</div>
+          <div class="topic-hdr-pct" style="color:${color};margin-left:12px;">${catTotal ? Math.round(catRead/catTotal*100) : 0}%</div>
+        </div>`;
+
+    if (expandedTopics.has(cat)) {
+      Object.entries(topicsObj).forEach(([topic, subs]) => {
+        let topicRead = 0;
+        subs.forEach(sub => { const d = getST(cat, topic, sub); if (d.read || d.reviewed) topicRead++; });
+        html += `
+          <div style="background:var(--bg2);border:1px solid var(--border2);border-top:none;padding:6px 14px;font-size:9px;color:var(--cyan);letter-spacing:0.1em;">
+            ${topic} · <span style="color:var(--grey2)">${topicRead}/${subs.length}</span>
+          </div>
+          <div class="subtopic-list">
+            ${subs.map(sub => {
+              const d = getST(cat, topic, sub);
+              return `<div class="st-row">
+                <div class="st-name ${d.read||d.reviewed?'read':''}">${sub}</div>
+                <div class="st-actions">
+                  <button class="st-btn ${d.read?'read':''}" onclick="toggleST(${jsStr(cat)},${jsStr(topic)},${jsStr(sub)},'read')">READ</button>
+                  <button class="st-btn ${d.reviewed?'reviewed':''}" onclick="toggleST(${jsStr(cat)},${jsStr(topic)},${jsStr(sub)},'reviewed')">REVIEWED</button>
+                </div>
+              </div>`;
+            }).join("")}
+          </div>`;
+      });
+    }
+
+    html += `</div>`;
+  });
+
+  el.innerHTML = html || `<div class="empty-msg">no topics found</div>`;
+}
+
+function toggleTopicCat(cat) {
+  if (expandedTopics.has(cat)) expandedTopics.delete(cat);
+  else expandedTopics.add(cat);
+  renderTopics();
+}
+
+function toggleST(cat, topic, sub, field) {
+  const d = getST(cat, topic, sub);
+  saveST(cat, topic, sub, { [field]: !d[field] });
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// ERROR LOG
+// ══════════════════════════════════════════════════════════════════════
+function renderErrorLog() {
+  const el = document.getElementById("tab-errorlog");
+  el.innerHTML = "";
+
+  const entries = KSAP.map(q => ({ q, d: getQ(q.code) })).filter(({ d }) => d.note && d.note.trim().length > 0);
+  const filtered = entries.filter(({ d }) => {
+    if (errFilter === "flagged") return d.flagged;
+    if (errFilter === "unresolved") return !d.resolved;
+    return true;
+  });
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (errSort === "conf") return (a.d.confidence || 0) - (b.d.confidence || 0);
+    return normCat(a.q.category).localeCompare(normCat(b.q.category));
+  });
+
+  el.innerHTML = `
+    <div class="sec-head">
+      <span class="sec-title" style="color:var(--red)">ERROR LOG</span>
+      <span class="sec-rule"></span>
+      <span class="sec-note">${filtered.length} entries with notes · ${entries.filter(({d})=>!d.resolved).length} unresolved</span>
+    </div>`;
+
+  if (entries.length === 0) {
+    el.innerHTML += `<div class="empty-msg">no notes logged yet — add 'why wrong' notes in the KSAP bank</div>`;
+    return;
+  }
+
+  el.innerHTML += `
+    <div class="err-filter-bar">
+      <span style="font-size:9px;color:var(--grey);letter-spacing:0.1em;">FILTER:</span>
+      <button class="filter-btn ${errFilter==='all'?'active':''}" onclick="errFilter='all';renderErrorLog()">ALL (${entries.length})</button>
+      <button class="filter-btn ${errFilter==='unresolved'?'active':''}" onclick="errFilter='unresolved';renderErrorLog()">UNRESOLVED (${entries.filter(({d})=>!d.resolved).length})</button>
+      <button class="filter-btn flag-filter ${errFilter==='flagged'?'active':''}" onclick="errFilter='flagged';renderErrorLog()">⚑ FLAGGED (${entries.filter(({d})=>d.flagged).length})</button>
+      <span style="font-size:9px;color:var(--grey);letter-spacing:0.1em;margin-left:8px;">SORT:</span>
+      <button class="filter-btn ${errSort==='cat'?'active':''}" onclick="errSort='cat';renderErrorLog()">BY CATEGORY</button>
+      <button class="filter-btn ${errSort==='conf'?'active':''}" onclick="errSort='conf';renderErrorLog()">BY CONFIDENCE ↑</button>
+    </div>`;
+
+  if (filtered.length === 0) {
+    el.innerHTML += `<div class="empty-msg">no entries match current filter</div>`;
+    return;
+  }
+
+  if (errSort === "cat") {
+    const byCat = {};
+    sorted.forEach(({ q, d }) => {
+      const cat = normCat(q.category);
+      if (!byCat[cat]) byCat[cat] = [];
+      byCat[cat].push({ q, d });
+    });
+    Object.entries(byCat).forEach(([cat, items]) => {
+      const color = CAT_COLORS[cat] || "var(--cyan)";
+      el.innerHTML += `<div style="font-size:9px;color:${color};letter-spacing:0.12em;padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:8px;font-weight:500;">${cat} · ${items.length} error${items.length>1?'s':''}</div>`;
+      items.forEach(({ q, d }) => el.appendChild(makeErrRow(q, d)));
+    });
+  } else {
+    sorted.forEach(({ q, d }) => el.appendChild(makeErrRow(q, d)));
+  }
+}
+
+function makeErrRow(q, d) {
+  const color = CAT_COLORS[normCat(q.category)] || "var(--cyan)";
+  const conf = d.confidence || 0;
+  const resolved = d.resolved || false;
+  const flagged = d.flagged || false;
+  const row = document.createElement("div");
+  row.className = "err-row";
+  row.style.borderLeftColor = resolved ? "var(--green)" : flagged ? "var(--pink)" : "var(--red)";
+  row.style.opacity = resolved ? "0.55" : "1";
+  row.innerHTML = `
+    <div class="err-header">
+      <span class="err-code" style="color:${color}">${q.code}</span>
+      <span class="err-cat">${normCat(q.category)}</span>
+      <span style="font-size:8px;color:var(--grey2);">${q.module}</span>
+      <div class="err-conf">${[1,2,3].map(n => `<div class="conf-dot ${conf>=n?'lit':''}" style="pointer-events:none;"></div>`).join("")}</div>
+      ${flagged ? '<span class="pass-badge flagged">⚑</span>' : ""}
+      <button class="err-resolved ${resolved?'done':''}" onclick="saveQ(${jsStr(q.code)},{resolved:${!resolved}});renderErrorLog();">${resolved ? "✓ RESOLVED" : "MARK RESOLVED"}</button>
+      <button class="filter-btn" style="font-size:8px;padding:1px 8px;" onclick="setTab('ksap');setKsapMode('category');expandedCats.clear();expandedCats.add(${jsStr(normCat(q.category))});renderKSAP();">→ KSAP</button>
+    </div>
+    <div class="err-note-wrap">
+      <div class="err-note-text">"${escHtml(d.note)}"</div>
+      <input class="note-inp" style="width:100%;margin-top:4px;" value="${escHtml(d.note)}" placeholder="edit note..." onchange="saveQ(${jsStr(q.code)},{note:this.value});renderErrorLog();" />
+    </div>`;
+  return row;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// ROADMAP — EXPECTED VS ACTUAL OPTIMISED
+// ══════════════════════════════════════════════════════════════════════
+const ROADMAP_DEFAULTS = [
+  { cat: "Acute Kidney Injury and ICU Nephrology", months: 2 },
+  { cat: "Chronic Kidney Disease", months: 3 },
+  { cat: "Glomerular and Vascular Disorders", months: 2 },
+  { cat: "Acid–Base and Potassium Disorders", months: 2 },
+  { cat: "Sodium and Water Abnormalities", months: 2 },
+  { cat: "Kidney Transplantation", months: 2 },
+  { cat: "Hypertension", months: 2 },
+  { cat: "Calcium, Phosphorus, and Magnesium Disorders and Stones", months: 1 },
+  { cat: "Tubular, Interstitial, and Cystic Disorders", months: 1 },
+  { cat: "Pharmacology", months: 1 },
+];
+
+let roadmapData = null;
+let rmExpanded = new Set();
+
+function buildDefaultRoadmap() {
+  const start = new Date("2026-04-01");
+  return ROADMAP_DEFAULTS.map(d => {
+    const end = new Date(start);
+    end.setMonth(end.getMonth() + d.months);
+    const block = {
+      cat: d.cat,
+      months: d.months,
+      start: start.toISOString().split("T")[0],
+      end: new Date(end.getTime() - 86400000).toISOString().split("T")[0],
+    };
+    start.setMonth(start.getMonth() + d.months);
+    return block;
+  });
+}
+
+function cascadeRoadmap(blocks, fromIndex) {
+  for (let i = fromIndex + 1; i < blocks.length; i++) {
+    const prev = new Date(blocks[i - 1].end);
+    const next = new Date(prev.getTime() + 86400000);
+    blocks[i].start = next.toISOString().split("T")[0];
+    const end = new Date(next);
+    end.setMonth(end.getMonth() + blocks[i].months);
+    blocks[i].end = new Date(end.getTime() - 86400000).toISOString().split("T")[0];
+  }
+  return blocks;
+}
+
+function saveRoadmap() {
+  if (!window._sce_fb || !roadmapData) return;
+  const { db, ref, set } = window._sce_fb;
+  set(ref(db, "sceConfig/roadmap"), roadmapData);
+}
+
+function catTopicPct(cat) {
+  const canonicalCat = normCat(cat);
+  const topicsObj = TOPICS[canonicalCat];
+  if (!topicsObj) return null;
+  let total = 0, read = 0;
+  Object.entries(topicsObj).forEach(([topic, subs]) => {
+    subs.forEach(sub => {
+      total++;
+      const d = getST(canonicalCat, topic, sub);
+      if (d.read || d.reviewed) read++;
+    });
+  });
+  return total > 0 ? Math.round(read / total * 100) : 0;
+}
+
+function catKsapPct(cat) {
+  const canonicalCat = normCat(cat);
+  const qs = KSAP.filter(q => normCat(q.category) === canonicalCat);
+  if (!qs.length) return null;
+  const attempted = qs.filter(q => {
+    const d = getQ(q.code);
+    return d.p1correct || d.p1incorrect;
+  }).length;
+  return Math.round(attempted / qs.length * 100);
+}
+
+function catKsapAccuracyPct(cat) {
+  const canonicalCat = normCat(cat);
+  const qs = KSAP.filter(q => normCat(q.category) === canonicalCat);
+  let attempted = 0, correct = 0;
+  qs.forEach(q => {
+    const d = getQ(q.code);
+    if (d.p1correct || d.p1incorrect) attempted++;
+    if (d.p1correct) correct++;
+  });
+  return attempted > 0 ? Math.round(correct / attempted * 100) : null;
+}
+
+function actualBlockProgress(cat) {
+  const topic = catTopicPct(cat);
+  const ksap = catKsapPct(cat);
+  if (topic === null && ksap === null) return 0;
+  if (topic === null) return ksap;
+  if (ksap === null) return topic;
+  return Math.round((topic + ksap) / 2);
+}
+
+function expectedBlockProgress(block, today = new Date()) {
+  const start = new Date(block.start);
+  const end = new Date(block.end);
+  start.setHours(0,0,0,0);
+  end.setHours(0,0,0,0);
+  today.setHours(0,0,0,0);
+  if (today < start) return 0;
+  if (today > end) return 100;
+  const totalDays = Math.max(1, Math.round((end - start) / 86400000) + 1);
+  const elapsedDays = Math.max(0, Math.round((today - start) / 86400000) + 1);
+  return clampPct((elapsedDays / totalDays) * 100);
+}
+
+function progressStatus(actual, expected) {
+  const delta = actual - expected;
+  if (delta >= 10) return { label:"AHEAD", color:"var(--green)", bg:"rgba(74,222,128,0.08)", delta };
+  if (delta >= -10) return { label:"ON TRACK", color:"var(--cyan)", bg:"rgba(34,211,238,0.08)", delta };
+  if (delta >= -25) return { label:"DRIFTING", color:"var(--yellow)", bg:"rgba(251,191,36,0.08)", delta };
+  return { label:"BEHIND", color:"var(--red)", bg:"rgba(248,113,113,0.08)", delta };
+}
+
+function getActiveRoadmapIndex() {
+  if (!roadmapData || !roadmapData.length) return -1;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  let currentIdx = -1;
+  roadmapData.forEach((b, i) => {
+    const s = new Date(b.start), e = new Date(b.end);
+    s.setHours(0,0,0,0); e.setHours(0,0,0,0);
+    if (today >= s && today <= e) currentIdx = i;
+  });
+  if (currentIdx === -1 && today < new Date(roadmapData[0].start)) currentIdx = 0;
+  return currentIdx;
+}
+
+function renderRoadmap() {
+  if (!roadmapData) roadmapData = window._sce_roadmap || buildDefaultRoadmap();
+
+  const el = document.getElementById("tab-roadmap");
+  el.innerHTML = "";
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const currentIdx = getActiveRoadmapIndex();
+  const activeBlock = roadmapData[currentIdx];
+
+  const finalEnd = new Date(roadmapData[roadmapData.length - 1].end);
+  const totalDays = Math.max(1, Math.round((finalEnd - new Date(roadmapData[0].start)) / 86400000));
+  const elapsed = Math.max(0, Math.round((today - new Date(roadmapData[0].start)) / 86400000));
+  const pct = clampPct(elapsed / totalDays * 100);
+  const daysLeft = Math.max(0, Math.round((finalEnd - today) / 86400000));
+
+  if (activeBlock) {
+    const activeActual = actualBlockProgress(activeBlock.cat);
+    const activeExpected = expectedBlockProgress(activeBlock, new Date());
+    const activeStatus = progressStatus(activeActual, activeExpected);
+    const activeEnd = new Date(activeBlock.end);
+    const activeDaysLeft = Math.max(0, Math.round((activeEnd - today) / 86400000));
+
+    const hero = document.createElement("div");
+    hero.className = "rm-summary";
+    hero.style.borderLeftColor = activeStatus.color;
+    hero.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:8px;color:var(--grey);letter-spacing:0.14em;margin-bottom:4px;">ACTIVE NOW</div>
+          <div style="font-size:16px;color:var(--white);font-weight:600;line-height:1.3;">${activeBlock.cat}</div>
+          <div style="font-size:9px;color:var(--grey);margin-top:4px;">
+            ${activeDaysLeft}d left · ${new Date(activeBlock.start).toLocaleDateString("en-GB",{day:"2-digit",month:"short"})}
+            → ${activeEnd.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="display:inline-block;font-size:9px;padding:3px 9px;border:1px solid ${activeStatus.color};color:${activeStatus.color};background:${activeStatus.bg};letter-spacing:0.08em;">${activeStatus.label}</div>
+          <div style="font-size:9px;color:var(--grey2);margin-top:5px;">${activeStatus.delta >= 0 ? "+" : ""}${activeStatus.delta}% vs expected</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;">
+        <div>
+          <div style="font-size:8px;color:var(--grey);letter-spacing:0.1em;margin-bottom:4px;">EXPECTED BY TODAY</div>
+          <div class="rm-progress-bg"><div class="rm-progress" style="width:${activeExpected}%;background:var(--grey);"></div></div>
+          <div style="font-size:11px;color:var(--grey);margin-top:3px;">${activeExpected}%</div>
+        </div>
+        <div>
+          <div style="font-size:8px;color:var(--grey);letter-spacing:0.1em;margin-bottom:4px;">ACTUAL COMPLETION</div>
+          <div class="rm-progress-bg"><div class="rm-progress" style="width:${activeActual}%;background:${activeStatus.color};"></div></div>
+          <div style="font-size:11px;color:${activeStatus.color};margin-top:3px;">${activeActual}%</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">
+        <button class="filter-btn active" onclick="document.querySelector('.rm-block.active')?.scrollIntoView({behavior:'smooth',block:'center'})">JUMP TO ACTIVE</button>
+        <button class="filter-btn" onclick="setTab('ksap')">OPEN KSAP</button>
+        <button class="filter-btn" onclick="setTab('topics')">OPEN TOPICS</button>
+      </div>`;
+    el.appendChild(hero);
+  }
+
+  const sumDiv = document.createElement("div");
+  sumDiv.className = "rm-summary";
+  sumDiv.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+      <span style="font-size:10px;color:var(--grey);letter-spacing:0.1em;">STUDY ROADMAP · Apr 2026 → ${finalEnd.toLocaleDateString("en-GB",{month:"short",year:"numeric"})}</span>
+      <span style="font-size:11px;color:var(--cyan);font-weight:500;">${daysLeft}d remaining</span>
+    </div>
+    <div class="rm-timeline"><div class="rm-timeline-fill" style="width:${pct}%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--grey2);">
+      <span>Apr 2026</span><span style="color:var(--cyan)">${pct}% through</span><span>${finalEnd.toLocaleDateString("en-GB",{month:"short",year:"numeric"})}</span>
+    </div>`;
+  el.appendChild(sumDiv);
+
+  roadmapData.forEach((block, idx) => {
+    const blockStart = new Date(block.start);
+    const blockEnd = new Date(block.end);
+    const isActive = idx === currentIdx;
+    const isDone = blockEnd < today;
+    const color = CAT_COLORS[normCat(block.cat)] || "var(--cyan)";
+    const topicPct = catTopicPct(block.cat);
+    const ksapPct = catKsapPct(block.cat);
+    const accuracyPct = catKsapAccuracyPct(block.cat);
+    const actual = actualBlockProgress(block.cat);
+    const expected = expectedBlockProgress(block, new Date());
+    const status = progressStatus(actual, expected);
+    const expanded = rmExpanded.has(idx);
+
+    const blockDaysLeft = Math.max(0, Math.round((blockEnd - today) / 86400000));
+    const blockTotalDays = Math.max(1, Math.round((blockEnd - blockStart) / 86400000) + 1);
+    const blockElapsedDays = Math.max(0, Math.min(blockTotalDays, blockTotalDays - blockDaysLeft));
+    const loadLabel = block.months <= 1 ? "INTENSE" : block.months === 2 ? "STANDARD" : "DEEP DIVE";
+
+    const div = document.createElement("div");
+    div.className = "rm-block" + (isActive ? " active" : "") + (isDone ? " completed" : "");
+    div.style.borderLeftColor = isActive ? status.color : color;
+
+    const statusLabel = isDone ? "COMPLETED" : isActive ? status.label : "UPCOMING";
+    const statusClass = isDone ? "completed" : isActive ? "active" : "upcoming";
+
+    div.innerHTML = `
+      <div class="rm-header" onclick="rmExpanded.has(${idx})?rmExpanded.delete(${idx}):rmExpanded.add(${idx});renderRoadmap();">
+        <div style="width:8px;height:8px;border-radius:50%;background:${isActive?status.color:isDone?'var(--green)':'var(--border2)'};flex-shrink:0;"></div>
+        <div class="rm-cat" style="color:${isActive?'var(--white)':isDone?'var(--grey)':'var(--grey)'}">
+          ${block.cat}
+          <div style="font-size:8px;color:var(--grey2);font-weight:400;margin-top:2px;">Expected ${expected}% · Actual ${actual}% · ${status.delta >= 0 ? "+" : ""}${status.delta}%</div>
+        </div>
+        <span style="font-size:9px;color:var(--grey);white-space:nowrap;">${block.months}mo · ${loadLabel}</span>
+        <div class="rm-dates">${blockStart.toLocaleDateString("en-GB",{month:"short",year:"numeric"})} → ${blockEnd.toLocaleDateString("en-GB",{month:"short",year:"numeric"})}</div>
+        <span class="rm-badge ${statusClass}" style="${isActive ? `color:${status.color};border-color:${status.color};background:${status.bg};` : ""}">${statusLabel}</span>
+        <div style="font-size:10px;color:var(--grey2);">${expanded ? "▾" : "▸"}</div>
+      </div>`;
+
+    if (expanded) {
+      const body = document.createElement("div");
+      body.className = "rm-body";
+      body.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;margin-bottom:12px;">
+          <div>
+            <div style="font-size:8px;color:var(--grey);letter-spacing:0.1em;margin-bottom:4px;">EXPECTED PROGRESS</div>
+            <div class="rm-progress-bg"><div class="rm-progress" style="width:${expected}%;background:var(--grey);"></div></div>
+            <div style="font-size:9px;color:var(--grey);margin-top:2px;">${expected}% expected by today</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:var(--grey);letter-spacing:0.1em;margin-bottom:4px;">ACTUAL PROGRESS</div>
+            <div class="rm-progress-bg"><div class="rm-progress" style="width:${actual}%;background:${status.color};"></div></div>
+            <div style="font-size:9px;color:${status.color};margin-top:2px;">${actual}% actual · ${status.label}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
+          <div style="background:var(--bg);border:1px solid var(--border);padding:8px;"><div style="font-size:8px;color:var(--grey);letter-spacing:0.1em;">TOPICS</div><div style="font-size:16px;color:${pctColor(topicPct)};font-weight:600;">${topicPct !== null ? topicPct + "%" : "—"}</div></div>
+          <div style="background:var(--bg);border:1px solid var(--border);padding:8px;"><div style="font-size:8px;color:var(--grey);letter-spacing:0.1em;">KSAP ATTEMPTED</div><div style="font-size:16px;color:${pctColor(ksapPct)};font-weight:600;">${ksapPct !== null ? ksapPct + "%" : "—"}</div></div>
+          <div style="background:var(--bg);border:1px solid var(--border);padding:8px;"><div style="font-size:8px;color:var(--grey);letter-spacing:0.1em;">P1 ACCURACY</div><div style="font-size:16px;color:${pctColor(accuracyPct)};font-weight:600;">${accuracyPct !== null ? accuracyPct + "%" : "—"}</div></div>
+        </div>
+        <div style="font-size:9px;color:var(--grey2);margin-bottom:10px;">Block day ${blockElapsedDays}/${blockTotalDays}${isActive ? ` · ${blockDaysLeft}d left` : ""}</div>
+        ${isActive ? `
+          <div style="background:var(--bg);border:1px solid var(--border);border-left:3px solid ${status.color};padding:9px 10px;margin-bottom:12px;">
+            <div style="font-size:8px;color:var(--grey);letter-spacing:0.1em;margin-bottom:5px;">THIS BLOCK TARGETS</div>
+            <div style="font-size:9px;color:var(--white);line-height:1.7;">
+              → Read/review the core ${block.cat} subtopics<br>
+              → Attempt all ${block.cat} KSAP Pass 1 questions<br>
+              → Add notes to incorrect questions and clear them in Error Log
+            </div>
+          </div>` : ""}
+        <div style="font-size:8px;color:var(--grey);letter-spacing:0.1em;margin-bottom:6px;border-top:1px solid var(--border);padding-top:10px;">EDIT BLOCK</div>
+        <div class="rm-edit-row">
+          <span style="font-size:9px;color:var(--grey2);">Start date:</span>
+          <input class="rm-inp" type="date" id="rm-start-${idx}" value="${block.start}" />
+          <span style="font-size:9px;color:var(--grey2);">Duration:</span>
+          <input class="rm-inp" type="number" id="rm-months-${idx}" value="${block.months}" min="1" max="12" style="width:60px;" />
+          <button class="rm-save-btn" onclick="saveRmBlock(${idx})">SAVE & CASCADE ▸</button>
+        </div>`;
+      div.appendChild(body);
+    }
+    el.appendChild(div);
+  });
+}
+
+function saveRmBlock(idx) {
+  if (!roadmapData) return;
+  const startVal = document.getElementById(`rm-start-${idx}`)?.value;
+  const monthsVal = parseInt(document.getElementById(`rm-months-${idx}`)?.value || "1");
+  if (!startVal || !monthsVal) return;
+  roadmapData[idx].start = startVal;
+  roadmapData[idx].months = monthsVal;
+  const end = new Date(startVal);
+  end.setMonth(end.getMonth() + monthsVal);
+  roadmapData[idx].end = new Date(end.getTime() - 86400000).toISOString().split("T")[0];
+  cascadeRoadmap(roadmapData, idx);
+  saveRoadmap();
+  renderRoadmap();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════════════════════════════════
+function renderAdmin() {
+  const el = document.getElementById("tab-admin");
+  el.innerHTML = "";
+
+  const subBar = document.createElement("div");
+  subBar.style.cssText = "display:flex;border-bottom:1px solid var(--border2);margin-bottom:20px;gap:6px;align-items:center;flex-wrap:wrap;";
+
+  [
+    { id:"topics", label:"TOPIC EDITOR" },
+    { id:"questions", label:"QUESTION EDITOR" },
+  ].forEach(st => {
+    const btn = document.createElement("button");
+    btn.style.cssText = `padding:8px 18px;background:transparent;border:none;border-bottom:2px solid ${adminSubTab===st.id?"var(--cyan)":"transparent"};color:${adminSubTab===st.id?"var(--cyan)":"var(--grey)"};font-family:var(--font);font-size:10px;letter-spacing:0.1em;cursor:pointer;`;
+    btn.textContent = st.label;
+    btn.onclick = () => { adminSubTab = st.id; renderAdmin(); };
+    subBar.appendChild(btn);
+  });
+
+  const seedBtn = document.createElement("button");
+  seedBtn.className = "filter-btn";
+  seedBtn.style.marginLeft = "auto";
+  seedBtn.textContent = "⬆ SEED CURRENT CONFIG TO FIREBASE";
+  seedBtn.onclick = () => {
+    if (confirm("Push current KSAP and TOPICS to Firebase?")) {
+      seedConfigToFirebase();
+      alert("✓ Seeded to Firebase.");
+    }
+  };
+  subBar.appendChild(seedBtn);
+  el.appendChild(subBar);
+
+  if (adminSubTab === "topics") renderAdminTopics(el);
+  if (adminSubTab === "questions") renderAdminQuestions(el);
+}
+
+function renderAdminTopics(el) {
+  el.innerHTML += `<div class="sec-head"><span class="sec-title">ADD SUBTOPIC</span><span class="sec-rule"></span></div>
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-top:2px solid var(--cyan);padding:14px;margin-bottom:24px;display:flex;flex-direction:column;gap:10px;">
+      <div class="admin-row"><span class="admin-tag">CATEGORY</span><select class="admin-sel" id="admin-topic-cat" style="flex:1;max-width:420px;">${Object.keys(TOPICS).map(c => `<option value="${escHtml(c)}">${c}</option>`).join("")}</select></div>
+      <div class="admin-row"><span class="admin-tag">TOPIC</span><select class="admin-sel" id="admin-topic-topic" style="flex:1;max-width:360px;"></select><input class="admin-inp" id="admin-topic-newtopic" placeholder="or new topic name..." style="flex:1;max-width:240px;" /></div>
+      <div class="admin-row"><span class="admin-tag">SUBTOPIC</span><input class="admin-inp" id="admin-topic-sub" placeholder="Subtopic name..." style="flex:1;max-width:400px;" /></div>
+      <div class="admin-row"><button class="admin-btn" onclick="adminAddSubtopic()">ADD SUBTOPIC ▸</button></div>
+    </div>
+    <div class="sec-head"><span class="sec-title">BROWSE & DELETE SUBTOPICS</span><span class="sec-rule"></span></div>`;
+
+  setTimeout(() => {
+    const catSel = document.getElementById("admin-topic-cat");
+    if (catSel) { catSel.onchange = populateTopicDropdown; populateTopicDropdown(); }
+  }, 0);
+
+  Object.entries(TOPICS).forEach(([cat, topicsObj]) => {
+    const color = CAT_COLORS[normCat(cat)] || "var(--cyan)";
+    const catDiv = document.createElement("div");
+    catDiv.style.cssText = "margin-bottom:14px;";
+    catDiv.innerHTML = `<div style="font-size:10px;font-weight:500;color:${color};letter-spacing:0.1em;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:6px;">${cat}</div>`;
+    Object.entries(topicsObj).forEach(([topic, subs]) => {
+      const topicDiv = document.createElement("div");
+      topicDiv.style.cssText = `margin-bottom:8px;background:var(--bg2);border:1px solid var(--border2);border-left:3px solid ${color};`;
+      topicDiv.innerHTML = `<div style="font-size:9px;color:var(--grey);letter-spacing:0.1em;padding:5px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;"><span>${topic}</span><span style="color:var(--grey2)">${subs.length} subtopics</span></div>`;
+      subs.forEach((sub, idx) => {
+        topicDiv.innerHTML += `<div class="st-admin-row"><span style="flex:1;color:var(--grey);">${sub}</span><button class="admin-btn danger" style="font-size:8px;padding:1px 8px;" onclick="adminDeleteSubtopic(${jsStr(cat)},${jsStr(topic)},${idx})">✕</button></div>`;
+      });
+      catDiv.appendChild(topicDiv);
+    });
+    el.appendChild(catDiv);
+  });
+}
+
+function populateTopicDropdown() {
+  const catSel = document.getElementById("admin-topic-cat");
+  const topicSel = document.getElementById("admin-topic-topic");
+  if (!catSel || !topicSel) return;
+  const cat = catSel.value;
+  const topics_in_cat = TOPICS[cat] ? Object.keys(TOPICS[cat]) : [];
+  topicSel.innerHTML = topics_in_cat.map(t => `<option value="${escHtml(t)}">${t}</option>`).join("");
+}
+
+function adminAddSubtopic() {
+  const cat = document.getElementById("admin-topic-cat")?.value;
+  const topicSel = document.getElementById("admin-topic-topic")?.value;
+  const newTopic = document.getElementById("admin-topic-newtopic")?.value.trim();
+  const sub = document.getElementById("admin-topic-sub")?.value.trim();
+  const topic = newTopic || topicSel;
+  if (!cat || !topic || !sub) { alert("Please fill in category, topic and subtopic."); return; }
+  if (!TOPICS[cat]) TOPICS[cat] = {};
+  if (!TOPICS[cat][topic]) TOPICS[cat][topic] = [];
+  if (TOPICS[cat][topic].includes(sub)) { alert("Subtopic already exists."); return; }
+  TOPICS[cat][topic].push(sub);
+  saveTopicsToFirebase();
+  renderAdmin();
+  renderTopics();
+}
+
+function adminDeleteSubtopic(cat, topic, idx) {
+  const sub = TOPICS[cat]?.[topic]?.[idx];
+  if (!sub) return;
+  if (!confirm(`Delete subtopic: "${sub}"?`)) return;
+  TOPICS[cat][topic].splice(idx, 1);
+  if (TOPICS[cat][topic].length === 0) delete TOPICS[cat][topic];
+  saveTopicsToFirebase();
+  renderAdmin();
+  renderTopics();
+}
+
+function renderAdminQuestions(el) {
+  el.innerHTML += `<div class="sec-head"><span class="sec-title">ADD QUESTION</span><span class="sec-rule"></span></div>
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-top:2px solid var(--cyan);padding:14px;margin-bottom:24px;display:flex;flex-direction:column;gap:10px;">
+      <div class="admin-row"><span class="admin-tag">CODE</span><input class="admin-inp" id="admin-q-code" placeholder="e.g. V12M1-Q1" style="max-width:180px;" /></div>
+      <div class="admin-row"><span class="admin-tag">CATEGORY</span><select class="admin-sel" id="admin-q-cat" style="flex:1;max-width:420px;">${getAllCats().map(c => `<option value="${escHtml(c)}">${c}</option>`).join("")}</select></div>
+      <div class="admin-row"><span class="admin-tag">MODULE</span><select class="admin-sel" id="admin-q-mod" style="max-width:160px;">${getAllModules().map(m => `<option value="${escHtml(m)}">${m}</option>`).join("")}<option value="custom">custom</option></select><input class="admin-inp" id="admin-q-custmod" placeholder="custom module name" style="max-width:180px;" /></div>
+      <div class="admin-row"><button class="admin-btn" onclick="adminAddQuestion()">ADD QUESTION ▸</button></div>
+    </div>
+    <div class="sec-head"><span class="sec-title">BROWSE & EDIT QUESTIONS</span><span class="sec-rule"></span><span class="sec-note">${KSAP.length} total</span></div>
+    <div style="margin-bottom:12px;"><input class="admin-inp wide" id="admin-q-search" placeholder="// search by code or category..." oninput="renderAdminQList()" /></div>
+    <div id="admin-q-list" style="background:var(--bg2);border:1px solid var(--border2);max-height:500px;overflow-y:auto;"></div>`;
+  renderAdminQList();
+}
+
+function renderAdminQList() {
+  const el = document.getElementById("admin-q-list");
+  if (!el) return;
+  const search = (document.getElementById("admin-q-search")?.value || "").toLowerCase();
+  const filtered = KSAP.filter(q => q.code.toLowerCase().includes(search) || q.category.toLowerCase().includes(search) || q.module.toLowerCase().includes(search));
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:8px;color:var(--grey);letter-spacing:0.1em;"><span style="min-width:90px;">CODE</span><span style="flex:1;">CATEGORY</span><span style="min-width:60px;">MODULE</span><span style="min-width:80px;text-align:right;">ACTIONS</span></div>` +
+    filtered.slice(0, 200).map(q => {
+      const color = CAT_COLORS[normCat(q.category)] || "var(--cyan)";
+      const idx = KSAP.indexOf(q);
+      return `<div class="q-admin-row"><span style="min-width:90px;color:${color};font-size:9px;">${q.code}</span><span style="flex:1;font-size:10px;color:var(--grey);">${q.category}</span><span style="min-width:60px;font-size:9px;color:var(--grey2);">${q.module}</span><div style="display:flex;gap:4px;min-width:80px;justify-content:flex-end;"><button class="admin-btn" style="font-size:8px;padding:1px 6px;" onclick="adminEditQuestion(${idx})">✎</button><button class="admin-btn danger" style="font-size:8px;padding:1px 6px;" onclick="adminDeleteQuestion(${idx})">✕</button></div></div>`;
+    }).join("") +
+    (filtered.length > 200 ? `<div style="padding:8px 10px;font-size:9px;color:var(--grey2);">// showing first 200 of ${filtered.length} — refine search to see more</div>` : "");
+}
+
+function adminAddQuestion() {
+  const code = document.getElementById("admin-q-code")?.value.trim().toUpperCase();
+  const cat = document.getElementById("admin-q-cat")?.value;
+  const modSel = document.getElementById("admin-q-mod")?.value;
+  const custMod = document.getElementById("admin-q-custmod")?.value.trim();
+  const module = modSel === "custom" ? custMod : modSel;
+  if (!code || !cat || !module) { alert("Please fill in code, category and module."); return; }
+  if (KSAP.find(q => q.code === code)) { alert(`Question ${code} already exists.`); return; }
+  KSAP.push({ code, category: cat, module });
+  saveKsapToFirebase();
+  document.getElementById("admin-q-code").value = "";
+  renderAdminQList();
+  renderKSAP();
+}
+
+function adminEditQuestion(idx) {
+  const q = KSAP[idx];
+  if (!q) return;
+  const newCat = prompt(`Edit category for ${q.code}:`, q.category);
+  if (!newCat || newCat === q.category) return;
+  KSAP[idx].category = newCat;
+  saveQ(q.code, { reassignedCategory: newCat });
+  saveKsapToFirebase();
+  renderAdminQList();
+  renderKSAP();
+}
+
+function adminDeleteQuestion(idx) {
+  const q = KSAP[idx];
+  if (!q) return;
+  if (!confirm(`Delete question ${q.code}?\n\nThis also removes any saved answers for this question.`)) return;
+  KSAP.splice(idx, 1);
+  if (window._sce_fb) {
+    const { db, ref, set } = window._sce_fb;
+    set(ref(db, "sceData/ksap/" + qKey(q.code)), null);
+  }
+  saveKsapToFirebase();
+  renderAdminQList();
+  renderKSAP();
+  renderAll();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// DANGER ZONE
+// ══════════════════════════════════════════════════════════════════════
+function clearAllProgress() {
+  if (!confirm("⚠️ WARNING: This will delete ALL your KSAP and topic progress.\n\nAre you absolutely sure?")) return;
+  if (!confirm("⚠️ SECOND WARNING: This cannot be undone. All answers, flags, notes and topic coverage will be permanently deleted.\n\nConfirm to proceed.")) return;
+  if (!window._sce_fb) return;
+  const { db, ref, set } = window._sce_fb;
+  set(ref(db, "sceData"), null).then(() => {
+    sceData = {};
+    renderAll();
+    alert("✓ Progress cleared.");
+  }).catch(e => alert("Error: " + e.message));
+}
+
+// INIT
+roadmapData = buildDefaultRoadmap();
+setTab("overview");
+setTimeout(() => {
+  if (!window._sce_data) {
+    sceData = {};
+    setLiveStatus(false);
+    renderAll();
+  }
+}, 2000);
+</script>
+</body>
+</html>
