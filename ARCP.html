@@ -2217,14 +2217,15 @@ function printLogbookReport() {
 
 
   </div>
+    ${subHead(badge("GIM","badge-gim"), `${gimCpd.length} total entries · all years · cumulative target 100h`)}
+  ${tbl(["Date","Type","Title / Event","Hours","Year","Notes"],
+    gimCpd.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.title,e.hours?e.hours+"h":"—",e.year||"—",e.notes]),
+    "#003087")}
   ${subHead(badge("Renal","badge-renal"), `${renalCpd.length} entries · ${yr}`)}
   ${tbl(["Date","Type","Title / Event","Hours","Notes"],
     renalCpd.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.title,e.hours?e.hours+"h":"—",e.notes]),
     "#5b21b6")}
-  ${subHead(badge("GIM","badge-gim"), `${gimCpd.length} total entries · all years · cumulative target 100h`)}
-  ${tbl(["Date","Type","Title / Event","Hours","Year","Notes"],
-    gimCpd.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.title,e.hours?e.hours+"h":"—",e.year||"—",e.notes]),
-    "#003087")}
+
 
   ${secHead("Simulation")}
   <div class="cpd-summary">
