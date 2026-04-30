@@ -96,105 +96,7 @@
       console.error("Firebase error:", err);
       window.dispatchEvent(new CustomEvent("arcp-sync", { detail: { ok: false } }));
     });
-  
-function renderLogbook() {
-  const el = document.getElementById("tab-logbook");
-  el.innerHTML = "";
-
-  function getEntries(type) {
-    return JSON.parse(localStorage.getItem(`pft_lb_${type}_entries`) || "[]");
-  }
-
-  function saveEntries(type, entries) {
-    localStorage.setItem(`pft_lb_${type}_entries`, JSON.stringify(entries));
-  }
-
-  function calcMonths(start, end) {
-    if (!start || !end) return "";
-    const s = new Date(start);
-    const e = new Date(end);
-    return ((e - s) / (1000 * 60 * 60 * 24 * 30.44)).toFixed(1);
-  }
-
-  function calculateFirth(e) {
-    return Math.round((e.Months||0)*(e.Takes||0)*(e.Patients||0));
-  }
-
-  function makeTable(title, type, fields, isFirth=false) {
-    const section = document.createElement("div");
-    section.style.marginBottom = "30px";
-
-    const head = document.createElement("div");
-    head.className = "sec-head";
-    head.innerHTML = `<span class="sec-title">${title}</span><span class="sec-rule"></span>`;
-    section.appendChild(head);
-
-    const entries = getEntries(type);
-
-    const table = document.createElement("table");
-    table.style.width = "100%";
-
-    const header = document.createElement("tr");
-    fields.forEach(f=>{
-      const th=document.createElement("th");
-      th.textContent=f;
-      th.style.padding="6px";
-      header.appendChild(th);
-    });
-    table.appendChild(header);
-
-    entries.forEach((e,i)=>{
-      const tr=document.createElement("tr");
-      fields.forEach(f=>{
-        const td=document.createElement("td");
-        const input=document.createElement("input");
-        input.value=e[f]||"";
-        input.style.width="100%";
-        input.onchange=()=>{
-          e[f]=input.value;
-          e["Months"]=calcMonths(e["Start Date"],e["End Date"]);
-          if(isFirth){
-            e["Estimated"]=calculateFirth(e);
-          }
-          saveEntries(type,entries);
-          renderLogbook();
-        };
-        td.appendChild(input);
-        tr.appendChild(td);
-      });
-      table.appendChild(tr);
-    });
-
-    section.appendChild(table);
-
-    const btn=document.createElement("button");
-    btn.textContent="+ ADD";
-    btn.onclick=()=>{
-      entries.push({});
-      saveEntries(type,entries);
-      renderLogbook();
-    };
-    section.appendChild(btn);
-
-    if(isFirth){
-      const total=entries.reduce((s,e)=>s+(parseFloat(e.Estimated)||0),0);
-      const div=document.createElement("div");
-      div.style.color="#39ff14";
-      div.textContent=`TOTAL: ${total} / 750`;
-      section.appendChild(div);
-    }
-
-    el.appendChild(section);
-  }
-
-  makeTable("TEACHING LOG","teaching",["Topic","Date","Audience","Notes"]);
-  makeTable("FIRTH CALCULATOR","firth_calculator",
-    ["Hospital","Start Date","End Date","Months","Takes","Patients","Estimated","Supervisor"],true);
-  makeTable("WARD COVER","ward_cover",
-    ["Hospital","Start Date","End Date","Months","Supervisor"]);
-}
-
-</script>
+  </script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -460,6 +362,7 @@ const REQS = {
   gim_cpd_hours:     { label:"IM Study Leave / CPD Hours", stream:"gim", type:"number", target:75,  unit:"hours",   deadline:"ST7", cumulative:true, note:"75hrs total, 20 in final year" },
   gim_sim_hours:     { label:"Simulation Hours",     stream:"gim", type:"number", target:12,  unit:"hours",   deadline:"ST7", cumulative:true, note:"12hrs total (GIMME/NOTES), 4 in final year" },
   gim_acute_patients:{ label:"Acute GIM Patients",   stream:"gim", type:"number", target:750, unit:"patients",deadline:"ST7", cumulative:true, note:"750 total, 100 in final year" },
+  gim_ward_cover: { label:"IM Ward Cover", stream:"gim", type:"number", target:12, unit:"months", deadline:"ST7", cumulative:true, note:"12 months total IM ward cover" },
   gim_teaching_obs:  { label:"Teaching Observation", stream:"gim", type:"checkbox", deadline:"ST7", sharedWith:"renal_teaching_obs",   note:"Can be done in Renal — applies to GIM" },
   gim_patient_survey:{ label:"Patient Survey",       stream:"gim", type:"checkbox", deadline:"ST7", sharedWith:"renal_patient_survey_st7", note:"Shared with Renal — only needed once" },
   gim_qip:           { label:"GIM QIP + QIPAT",      stream:"gim", type:"checkbox", deadline:"ST7", note:"By end of ST7" },
@@ -1031,14 +934,7 @@ document.getElementById("sb-year").textContent = currentYear;
 
 // Seed logbook timestamps on first load if missing
 (function seedLbTimestamps() {
-  const types = [
-  "clinics_gim","clinics_renal",
-  "procedures_gim","procedures_renal",
-  "cpd_gim","cpd_renal",
-  "simulation","teaching",
-  "firth_calculator",
-  "ward_cover"
-];
+  const types = ["clinics_gim","clinics_renal","procedures_gim","procedures_renal","cpd_gim","cpd_renal","simulation","teaching","acute_take","ward_cover"];
   types.forEach(type => {
     const tsKey = `pft_lb_${type}_ts`;
     if (!localStorage.getItem(tsKey)) {
@@ -1609,6 +1505,63 @@ function cpdSummary() {
 let lbSubTab = "clinics";
 
 // ── Main render ──────────────────────────────────────
+function renderLogbook() {
+  const el = document.getElementById("tab-logbook");
+  el.innerHTML = "";
+
+  // Sub-tab bar
+  const subBar = document.createElement("div");
+  subBar.style.cssText = "display:flex;border-bottom:1px solid var(--blue4);margin-bottom:20px;flex-wrap:wrap;";
+  [
+    { id:"clinics",    label:"CLINICS" },
+    { id:"procedures", label:"PROCEDURES" },
+    { id:"cpd",        label:"CPD / STUDY LEAVE" },
+    { id:"simulation", label:"SIMULATION" },
+    { id:"teaching",   label:"TEACHING" },
+    { id:"acute_take", label:"ACUTE TAKE" },
+    { id:"ward_cover", label:"WARD COVER" },
+  ].forEach(st => {
+    const btn = document.createElement("button");
+    btn.style.cssText = `padding:8px 16px;background:transparent;border:none;
+      border-bottom:2px solid ${lbSubTab===st.id?"var(--blue)":"transparent"};
+      color:${lbSubTab===st.id?"var(--blue)":"var(--dim)"};
+      font-family:var(--font);font-size:10px;letter-spacing:0.1em;cursor:pointer;white-space:nowrap;`;
+    btn.textContent = st.label;
+    btn.onclick = () => { lbSubTab = st.id; renderLogbook(); };
+    subBar.appendChild(btn);
+  });
+  el.appendChild(subBar);
+
+  // Send report button
+  const sendWrap = document.createElement("div");
+  sendWrap.style.cssText = "display:flex;justify-content:flex-end;margin-bottom:16px;gap:8px;align-items:center;";
+  const lastSent = localStorage.getItem("pft_lb_last_sent");
+  const lastSentLabel = lastSent
+    ? `<span style="font-size:9px;color:var(--dim);letter-spacing:0.08em;">last sent ${new Date(parseInt(lastSent)).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})}</span>`
+    : `<span style="font-size:9px;color:var(--dim);letter-spacing:0.08em;">not yet sent</span>`;
+  sendWrap.innerHTML = lastSentLabel;
+  const printBtn = document.createElement("button");
+  printBtn.className = "btn-reset";
+  printBtn.style.cssText = "border-color:var(--blue);color:var(--blue);font-size:9px;padding:4px 12px;";
+  printBtn.textContent = "⎙ PRINT REPORT";
+  printBtn.onclick = () => printLogbookReport();
+  sendWrap.appendChild(printBtn);
+  const sendBtn = document.createElement("button");
+  sendBtn.className = "btn-reset";
+  sendBtn.style.cssText = "border-color:var(--green);color:var(--green);font-size:9px;padding:4px 12px;";
+  sendBtn.textContent = "✉ SEND REPORT";
+  sendBtn.onclick = () => sendLogbookReport(false);
+  sendWrap.appendChild(sendBtn);
+  el.appendChild(sendWrap);
+
+  if (lbSubTab === "clinics")    renderLbClinics(el);
+  if (lbSubTab === "procedures") renderLbProcedures(el);
+  if (lbSubTab === "cpd")        renderLbCPD(el);
+  if (lbSubTab === "simulation") renderLbSimulation(el);
+  if (lbSubTab === "teaching")   renderLbTeaching(el);
+  if (lbSubTab === "acute_take") renderLbAcuteTake(el);
+  if (lbSubTab === "ward_cover") renderLbWardCover(el);
+}
 
 // ════════════════════════════════════════════════════
 //  CLINICS
@@ -1853,7 +1806,347 @@ function renderLbTeaching(el) {
   el.appendChild(makeLbSection("TEACHING LOG", "both", entries, "teaching",
     e => `${e.type || "Teaching"} · ${e.topic || "—"} · ${e.audience || ""}`, false));
 }
+// ════════════════════════════════════════════════════
+//  ACUTE TAKE
+// ════════════════════════════════════════════════════
+function renderLbAcuteTake(el) {
+  const entries = getLbEntries("acute_take");
+  const totalEstimated = entries.reduce((acc,e) => acc + (parseFloat(e.estimated)||0), 0);
+  const TARGET = 750;
+  const pct = Math.min(100, Math.round((totalEstimated / TARGET) * 100));
 
+  const sumDiv = document.createElement("div");
+  sumDiv.style.cssText = "display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;";
+  sumDiv.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${totalEstimated>=TARGET?'var(--green)':'var(--gim)'};padding:12px 16px;flex:1;min-width:140px;">
+      <div style="font-size:20px;font-weight:700;color:${totalEstimated>=TARGET?'var(--green)':'var(--gim)'};">${Math.round(totalEstimated)}<span style="font-size:11px;color:var(--dim);"> / ${TARGET}</span></div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">ESTIMATED ACUTE PATIENTS · CUMULATIVE</div>
+      <div style="height:3px;background:var(--blue5);margin-top:6px;border-radius:2px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${totalEstimated>=TARGET?'var(--green)':'var(--gim)'};"></div>
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--dim);padding:12px 16px;flex:1;min-width:140px;">
+      <div style="font-size:20px;font-weight:700;color:var(--blue);">${entries.length}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">PLACEMENTS LOGGED</div>
+    </div>`;
+  el.appendChild(sumDiv);
+
+  // Add form
+  const formWrap = document.createElement("div");
+  formWrap.style.cssText = "margin-bottom:20px;";
+  const head = document.createElement("div");
+  head.className = "sec-head";
+  head.innerHTML = `<span class="sec-title" style="color:var(--gim)">ADD ACUTE TAKE PLACEMENT</span><span class="sec-rule"></span>`;
+  formWrap.appendChild(head);
+
+  const form = document.createElement("div");
+  form.style.cssText = "background:var(--bg2);border:1px solid var(--blue5);border-top:2px solid var(--gim);padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:8px;";
+  form.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Hospital</label>
+      <input class="req-input" id="at-hospital" type="text" placeholder="e.g. Rotherham DGH" style="width:100%;" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Start Date</label>
+      <input class="req-input date-inp" id="at-start" type="date" style="width:100%;" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── End Date</label>
+      <input class="req-input date-inp" id="at-end" type="date" style="width:100%;" oninput="calcAcuteTakeEstimate()" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Months in Post</label>
+      <input class="req-input" id="at-months" type="number" min="0" step="0.5" placeholder="auto" style="width:100%;" readonly />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Avg Takes / Month</label>
+      <input class="req-input" id="at-takes" type="number" min="0" step="1" placeholder="e.g. 8" style="width:100%;" oninput="calcAcuteTakeEstimate()" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Avg Patients / Take</label>
+      <input class="req-input" id="at-patients" type="number" min="0" step="1" placeholder="e.g. 8" style="width:100%;" oninput="calcAcuteTakeEstimate()" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Estimated Patients</label>
+      <input class="req-input" id="at-estimated" type="number" style="width:100%;color:var(--green);" readonly />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Training Year</label>
+      <select class="req-input" id="at-year" style="width:100%;padding:4px 8px;">
+        <option>ST4</option><option>ST5</option><option>ST6</option><option>ST7</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Educational Supervisor</label>
+      <input class="req-input" id="at-supervisor" type="text" placeholder="Name" style="width:100%;" />
+    </div>
+    <div style="grid-column:1/-1;display:flex;justify-content:flex-end;margin-top:4px;">
+      <button class="btn-reset" style="border-color:var(--gim);color:var(--gim);" onclick="saveAcuteTake()">ADD ENTRY ▸</button>
+    </div>`;
+  formWrap.appendChild(form);
+  el.appendChild(formWrap);
+
+  // Entries table
+  const secHead = document.createElement("div");
+  secHead.className = "sec-head";
+  secHead.style.marginTop = "16px";
+  secHead.innerHTML = `<span class="sec-title" style="color:var(--gim)">ACUTE TAKE LOG</span><span class="sec-rule"></span><span class="sec-note">${entries.length} placements · ${Math.round(totalEstimated)} estimated patients total</span>`;
+  el.appendChild(secHead);
+
+  if (!entries.length) {
+    const empty = document.createElement("div");
+    empty.style.cssText = "font-size:9px;color:var(--dim);padding:10px 0;";
+    empty.textContent = "// no entries logged yet";
+    el.appendChild(empty);
+    return;
+  }
+
+  const table = document.createElement("div");
+  table.style.cssText = "border:1px solid var(--blue5);overflow:hidden;";
+  const hdr = document.createElement("div");
+  hdr.style.cssText = "display:flex;background:var(--bg3);border-bottom:1px solid var(--blue5);padding:5px 10px;gap:8px;";
+  hdr.innerHTML = `
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:120px;">HOSPITAL</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:80px;">START</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:80px;">END</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:50px;">MONTHS</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;flex:1;">ESTIMATED PTS</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:30px;text-align:right;">DEL</span>`;
+  table.appendChild(hdr);
+
+  entries.forEach((e, i) => {
+    const row = document.createElement("div");
+    row.style.cssText = `display:flex;align-items:center;padding:6px 10px;gap:8px;border-bottom:1px solid var(--blue5);border-left:3px solid var(--gim);background:${i%2===0?'var(--bg2)':'var(--bg3)'};`;
+    const fmtD = d => d ? new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+    row.innerHTML = `
+      <span style="font-size:10px;color:#c8d8ff;min-width:120px;">${e.hospital||"—"}</span>
+      <span style="font-size:9px;color:var(--dim);min-width:80px;">${fmtD(e.start)}</span>
+      <span style="font-size:9px;color:var(--dim);min-width:80px;">${fmtD(e.end)}</span>
+      <span style="font-size:9px;color:var(--dim);min-width:50px;">${e.months||"—"}mo</span>
+      <span style="font-size:11px;color:var(--green);flex:1;font-weight:700;">${Math.round(e.estimated||0)} pts</span>`;
+    const delBtn = document.createElement("button");
+    delBtn.style.cssText = "background:none;border:none;color:var(--dim);font-family:var(--font);font-size:10px;padding:0 4px;cursor:pointer;min-width:30px;text-align:right;";
+    delBtn.textContent = "✕";
+    delBtn.onmouseover = () => delBtn.style.color = "var(--red)";
+    delBtn.onmouseout  = () => delBtn.style.color = "var(--dim)";
+    delBtn.onclick = () => {
+      if (confirm("Delete this entry?")) {
+        deleteLbEntry("acute_take", e.id);
+        syncAcutePatients();
+        renderLogbook();
+        updateReadiness();
+      }
+    };
+    row.appendChild(delBtn);
+    table.appendChild(row);
+  });
+  el.appendChild(table);
+}
+
+function calcAcuteTakeEstimate() {
+  const start    = document.getElementById("at-start")?.value;
+  const end      = document.getElementById("at-end")?.value;
+  const takes    = parseFloat(document.getElementById("at-takes")?.value || 0);
+  const patients = parseFloat(document.getElementById("at-patients")?.value || 0);
+
+  let months = 0;
+  if (start && end) {
+    const s = new Date(start); const e = new Date(end);
+    months = Math.round(((e - s) / (1000 * 60 * 60 * 24 * 30.44)) * 10) / 10;
+    if (months < 0) months = 0;
+    const mEl = document.getElementById("at-months");
+    if (mEl) mEl.value = months;
+  }
+
+  const estimated = months * takes * patients;
+  const estEl = document.getElementById("at-estimated");
+  if (estEl) estEl.value = Math.round(estimated);
+}
+
+function saveAcuteTake() {
+  const hospital   = document.getElementById("at-hospital")?.value.trim();
+  const start      = document.getElementById("at-start")?.value;
+  const end        = document.getElementById("at-end")?.value;
+  const months     = parseFloat(document.getElementById("at-months")?.value || 0);
+  const takes      = parseFloat(document.getElementById("at-takes")?.value || 0);
+  const patients   = parseFloat(document.getElementById("at-patients")?.value || 0);
+  const estimated  = Math.round(months * takes * patients);
+  const year       = document.getElementById("at-year")?.value;
+  const supervisor = document.getElementById("at-supervisor")?.value.trim();
+
+  if (!hospital || !start || !end) { alert("Please fill in hospital, start and end date."); return; }
+
+  addLbEntry("acute_take", { hospital, start, end, months, takes, patients, estimated, year, supervisor, date: start });
+  syncAcutePatients();
+  renderLogbook();
+  updateReadiness();
+}
+
+function syncAcutePatients() {
+  const entries = getLbEntries("acute_take");
+  const total   = Math.round(entries.reduce((acc,e) => acc + (parseFloat(e.estimated)||0), 0));
+  const cumK    = sKey("gim_acute_patients");
+  localStorage.setItem(cumK, String(total));
+  fbPush(cumK, total);
+}
+  // ════════════════════════════════════════════════════
+//  WARD COVER
+// ════════════════════════════════════════════════════
+function renderLbWardCover(el) {
+  const entries = getLbEntries("ward_cover");
+  const totalMonths = entries.reduce((acc,e) => acc + (parseFloat(e.months)||0), 0);
+  const TARGET = 12;
+  const pct = Math.min(100, Math.round((totalMonths / TARGET) * 100));
+
+  const sumDiv = document.createElement("div");
+  sumDiv.style.cssText = "display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;";
+  sumDiv.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${totalMonths>=TARGET?'var(--green)':'var(--gim)'};padding:12px 16px;flex:1;min-width:140px;">
+      <div style="font-size:20px;font-weight:700;color:${totalMonths>=TARGET?'var(--green)':'var(--gim)'};">${Math.round(totalMonths*10)/10}<span style="font-size:11px;color:var(--dim);"> / ${TARGET} months</span></div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">IM WARD COVER · CUMULATIVE</div>
+      <div style="height:3px;background:var(--blue5);margin-top:6px;border-radius:2px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${totalMonths>=TARGET?'var(--green)':'var(--gim)'};"></div>
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--dim);padding:12px 16px;flex:1;min-width:140px;">
+      <div style="font-size:20px;font-weight:700;color:var(--blue);">${entries.length}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">PLACEMENTS LOGGED</div>
+    </div>`;
+  el.appendChild(sumDiv);
+
+  // Add form
+  const formWrap = document.createElement("div");
+  formWrap.style.cssText = "margin-bottom:20px;";
+  const head = document.createElement("div");
+  head.className = "sec-head";
+  head.innerHTML = `<span class="sec-title" style="color:var(--gim)">ADD WARD COVER PLACEMENT</span><span class="sec-rule"></span>`;
+  formWrap.appendChild(head);
+
+  const form = document.createElement("div");
+  form.style.cssText = "background:var(--bg2);border:1px solid var(--blue5);border-top:2px solid var(--gim);padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:8px;";
+  form.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Hospital</label>
+      <input class="req-input" id="wc-hospital" type="text" placeholder="e.g. Rotherham DGH" style="width:100%;" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Start Date</label>
+      <input class="req-input date-inp" id="wc-start" type="date" style="width:100%;" oninput="calcWardCoverMonths()" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── End Date</label>
+      <input class="req-input date-inp" id="wc-end" type="date" style="width:100%;" oninput="calcWardCoverMonths()" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Months in Post</label>
+      <input class="req-input" id="wc-months" type="number" style="width:100%;color:var(--green);" readonly />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Training Year</label>
+      <select class="req-input" id="wc-year" style="width:100%;padding:4px 8px;">
+        <option>ST4</option><option>ST5</option><option>ST6</option><option>ST7</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Educational Supervisor</label>
+      <input class="req-input" id="wc-supervisor" type="text" placeholder="Name" style="width:100%;" />
+    </div>
+    <div style="grid-column:1/-1;display:flex;justify-content:flex-end;margin-top:4px;">
+      <button class="btn-reset" style="border-color:var(--gim);color:var(--gim);" onclick="saveWardCover()">ADD ENTRY ▸</button>
+    </div>`;
+  formWrap.appendChild(form);
+  el.appendChild(formWrap);
+
+  // Entries table
+  const secHead = document.createElement("div");
+  secHead.className = "sec-head";
+  secHead.style.marginTop = "16px";
+  secHead.innerHTML = `<span class="sec-title" style="color:var(--gim)">WARD COVER LOG</span><span class="sec-rule"></span><span class="sec-note">${entries.length} placements · ${Math.round(totalMonths*10)/10} months total</span>`;
+  el.appendChild(secHead);
+
+  if (!entries.length) {
+    const empty = document.createElement("div");
+    empty.style.cssText = "font-size:9px;color:var(--dim);padding:10px 0;";
+    empty.textContent = "// no entries logged yet";
+    el.appendChild(empty);
+    return;
+  }
+
+  const table = document.createElement("div");
+  table.style.cssText = "border:1px solid var(--blue5);overflow:hidden;";
+  const hdr = document.createElement("div");
+  hdr.style.cssText = "display:flex;background:var(--bg3);border-bottom:1px solid var(--blue5);padding:5px 10px;gap:8px;";
+  hdr.innerHTML = `
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;flex:1;">HOSPITAL</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:90px;">START</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:90px;">END</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:60px;">MONTHS</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:120px;">SUPERVISOR</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:30px;text-align:right;">DEL</span>`;
+  table.appendChild(hdr);
+
+  entries.forEach((e, i) => {
+    const row = document.createElement("div");
+    row.style.cssText = `display:flex;align-items:center;padding:6px 10px;gap:8px;border-bottom:1px solid var(--blue5);border-left:3px solid var(--gim);background:${i%2===0?'var(--bg2)':'var(--bg3)'};`;
+    const fmtD = d => d ? new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+    row.innerHTML = `
+      <span style="font-size:10px;color:#c8d8ff;flex:1;">${e.hospital||"—"}</span>
+      <span style="font-size:9px;color:var(--dim);min-width:90px;">${fmtD(e.start)}</span>
+      <span style="font-size:9px;color:var(--dim);min-width:90px;">${fmtD(e.end)}</span>
+      <span style="font-size:11px;color:var(--green);min-width:60px;font-weight:700;">${Math.round((e.months||0)*10)/10}mo</span>
+      <span style="font-size:9px;color:var(--dim);min-width:120px;">${e.supervisor||"—"}</span>`;
+    const delBtn = document.createElement("button");
+    delBtn.style.cssText = "background:none;border:none;color:var(--dim);font-family:var(--font);font-size:10px;padding:0 4px;cursor:pointer;min-width:30px;text-align:right;";
+    delBtn.textContent = "✕";
+    delBtn.onmouseover = () => delBtn.style.color = "var(--red)";
+    delBtn.onmouseout  = () => delBtn.style.color = "var(--dim)";
+    delBtn.onclick = () => {
+      if (confirm("Delete this entry?")) {
+        deleteLbEntry("ward_cover", e.id);
+        syncWardCover();
+        renderLogbook();
+        updateReadiness();
+      }
+    };
+    row.appendChild(delBtn);
+    table.appendChild(row);
+  });
+  el.appendChild(table);
+}
+
+function calcWardCoverMonths() {
+  const start = document.getElementById("wc-start")?.value;
+  const end   = document.getElementById("wc-end")?.value;
+  if (!start || !end) return;
+  const s = new Date(start); const e = new Date(end);
+  const months = Math.round(((e - s) / (1000 * 60 * 60 * 24 * 30.44)) * 10) / 10;
+  const mEl = document.getElementById("wc-months");
+  if (mEl) mEl.value = Math.max(0, months);
+}
+
+function saveWardCover() {
+  const hospital   = document.getElementById("wc-hospital")?.value.trim();
+  const start      = document.getElementById("wc-start")?.value;
+  const end        = document.getElementById("wc-end")?.value;
+  const months     = parseFloat(document.getElementById("wc-months")?.value || 0);
+  const year       = document.getElementById("wc-year")?.value;
+  const supervisor = document.getElementById("wc-supervisor")?.value.trim();
+
+  if (!hospital || !start || !end) { alert("Please fill in hospital, start and end date."); return; }
+
+  addLbEntry("ward_cover", { hospital, start, end, months, year, supervisor, date: start });
+  syncWardCover();
+  renderLogbook();
+  updateReadiness();
+}
+
+function syncWardCover() {
+  const entries = getLbEntries("ward_cover");
+  const total   = Math.round(entries.reduce((acc,e) => acc + (parseFloat(e.months)||0), 0) * 10) / 10;
+  const cumK    = sKey("gim_ward_cover");
+  localStorage.setItem(cumK, String(total));
+  fbPush(cumK, total);
+}
 // ════════════════════════════════════════════════════
 //  SHARED HELPERS
 // ════════════════════════════════════════════════════
@@ -2296,6 +2589,35 @@ function printLogbookReport() {
     teaching.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.topic,e.audience,e.supervisor||"—",e.signoff,e.notes]),
     "#92400e")}
 
+  ${secHead("Acute Take (Firth Calculator)")}
+  <div class="cpd-summary">
+    <strong>Acute Take Summary:</strong> &nbsp;
+    Estimated total: <strong style="color:#003087">${Math.round(getLbEntries("acute_take").reduce((a,e)=>a+(parseFloat(e.estimated)||0),0))}</strong> / 750 patients
+  </div>
+  ${subHead(badge("GIM","badge-gim"), `${getLbEntries("acute_take").length} placements · all years`)}
+  ${tbl(["Hospital","Start","End","Months","Takes/mo","Pts/Take","Est. Patients","Year","Supervisor"],
+    getLbEntries("acute_take").sort((a,b)=>(b.start||"").localeCompare(a.start||"")).map(e=>[
+      e.hospital,fmt(e.start),fmt(e.end),e.months?e.months+"mo":"—",
+      e.takes||"—",e.patients||"—",
+      `<strong>${Math.round(e.estimated||0)}</strong>`,
+      e.year||"—",e.supervisor||"—"
+    ]),
+    "#003087")}
+
+  ${secHead("Ward Cover")}
+  <div class="cpd-summary">
+    <strong>Ward Cover Summary:</strong> &nbsp;
+    Total: <strong style="color:#003087">${Math.round(getLbEntries("ward_cover").reduce((a,e)=>a+(parseFloat(e.months)||0),0)*10)/10}</strong> / 12 months
+  </div>
+  ${subHead(badge("GIM","badge-gim"), `${getLbEntries("ward_cover").length} placements · all years`)}
+  ${tbl(["Hospital","Start","End","Months","Year","Supervisor"],
+    getLbEntries("ward_cover").sort((a,b)=>(b.start||"").localeCompare(a.start||"")).map(e=>[
+      e.hospital,fmt(e.start),fmt(e.end),
+      e.months?e.months+"mo":"—",
+      e.year||"—",e.supervisor||"—"
+    ]),
+    "#003087")}
+
   <div class="doc-footer">
     <span>ARCP Portfolio Tracker · Auto-generated document</span>
     <span>Generated ${fullDate} · Confidential</span>
@@ -2326,104 +2648,6 @@ if ("serviceWorker" in navigator) {
   let refreshing = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => { if (!refreshing) { refreshing = true; window.location.reload(); } });
 }
-
-function renderLogbook() {
-  const el = document.getElementById("tab-logbook");
-  el.innerHTML = "";
-
-  function getEntries(type) {
-    return JSON.parse(localStorage.getItem(`pft_lb_${type}_entries`) || "[]");
-  }
-
-  function saveEntries(type, entries) {
-    localStorage.setItem(`pft_lb_${type}_entries`, JSON.stringify(entries));
-  }
-
-  function calcMonths(start, end) {
-    if (!start || !end) return "";
-    const s = new Date(start);
-    const e = new Date(end);
-    return ((e - s) / (1000 * 60 * 60 * 24 * 30.44)).toFixed(1);
-  }
-
-  function calculateFirth(e) {
-    return Math.round((e.Months||0)*(e.Takes||0)*(e.Patients||0));
-  }
-
-  function makeTable(title, type, fields, isFirth=false) {
-    const section = document.createElement("div");
-    section.style.marginBottom = "30px";
-
-    const head = document.createElement("div");
-    head.className = "sec-head";
-    head.innerHTML = `<span class="sec-title">${title}</span><span class="sec-rule"></span>`;
-    section.appendChild(head);
-
-    const entries = getEntries(type);
-
-    const table = document.createElement("table");
-    table.style.width = "100%";
-
-    const header = document.createElement("tr");
-    fields.forEach(f=>{
-      const th=document.createElement("th");
-      th.textContent=f;
-      th.style.padding="6px";
-      header.appendChild(th);
-    });
-    table.appendChild(header);
-
-    entries.forEach((e,i)=>{
-      const tr=document.createElement("tr");
-      fields.forEach(f=>{
-        const td=document.createElement("td");
-        const input=document.createElement("input");
-        input.value=e[f]||"";
-        input.style.width="100%";
-        input.onchange=()=>{
-          e[f]=input.value;
-          e["Months"]=calcMonths(e["Start Date"],e["End Date"]);
-          if(isFirth){
-            e["Estimated"]=calculateFirth(e);
-          }
-          saveEntries(type,entries);
-          renderLogbook();
-        };
-        td.appendChild(input);
-        tr.appendChild(td);
-      });
-      table.appendChild(tr);
-    });
-
-    section.appendChild(table);
-
-    const btn=document.createElement("button");
-    btn.textContent="+ ADD";
-    btn.onclick=()=>{
-      entries.push({});
-      saveEntries(type,entries);
-      renderLogbook();
-    };
-    section.appendChild(btn);
-
-    if(isFirth){
-      const total=entries.reduce((s,e)=>s+(parseFloat(e.Estimated)||0),0);
-      const div=document.createElement("div");
-      div.style.color="#39ff14";
-      div.textContent=`TOTAL: ${total} / 750`;
-      section.appendChild(div);
-    }
-
-    el.appendChild(section);
-  }
-
-  makeTable("TEACHING LOG","teaching",["Topic","Date","Audience","Notes"]);
-  makeTable("FIRTH CALCULATOR","firth_calculator",
-    ["Hospital","Start Date","End Date","Months","Takes","Patients","Estimated","Supervisor"],true);
-  makeTable("WARD COVER","ward_cover",
-    ["Hospital","Start Date","End Date","Months","Supervisor"]);
-}
-
 </script>
 </body>
 </html>
