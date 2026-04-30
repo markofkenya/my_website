@@ -363,7 +363,6 @@
       #main { padding:14px 16px 80px; }
     }
   </style>
-
 </head>
 <body>
 
@@ -2576,7 +2575,6 @@ function printLogbookReport() {
       .no-print{display:none;}
     }
   </style>
-
 </head>
 <body>
 <div class="page">
@@ -2612,25 +2610,25 @@ function printLogbookReport() {
 
   </div>
 
-${secHead(“Clinics”)}
-${subHead(badge(“GIM”,“badge-gim”), `${gimClinics.length} total entries · all years · cumulative target 20`)}
-${tbl([“Date”,“Type”,“Hospital”,“Supervisor”,“Patients”,“Year”,“Notes”],
-gimClinics.sort((a,b)=>(b.date||””).localeCompare(a.date||””)).map(e=>[fmt(e.date),e.type,e.hospital,e.supervisor,e.patients?e.patients+” pts”:”—”,e.year||”—”,e.notes]),
-“#003087”)}
+  ${secHead("Clinics")}
+  ${subHead(badge("GIM","badge-gim"), `${gimClinics.length} total entries · all years · cumulative target 20`)}
+  ${tbl(["Date","Type","Hospital","Supervisor","Patients","Year","Notes"],
+    gimClinics.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.hospital,e.supervisor,e.patients?e.patients+" pts":"—",e.year||"—",e.notes]),
+    "#003087")}
 
-${secHead(“Procedures”)}
-${subHead(badge(“GIM”,“badge-gim”), `${gimProcs.length} entries · ${yr}`)}
-${tbl([“Date”,“Procedure”,“Supervisor”,“DOPS”,“Notes”],
-gimProcs.sort((a,b)=>(b.date||””).localeCompare(a.date||””)).map(e=>[fmt(e.date),e.type,e.supervisor,e.dops===“Yes”?’<span class="dops-yes">✓ Yes</span>’:“No”,e.notes]),
-“#003087”)}
+  ${secHead("Procedures")}
+  ${subHead(badge("GIM","badge-gim"), `${gimProcs.length} entries · ${yr}`)}
+  ${tbl(["Date","Procedure","Supervisor","DOPS","Notes"],
+    gimProcs.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.supervisor,e.dops==="Yes"?'<span class="dops-yes">✓ Yes</span>':"No",e.notes]),
+    "#003087")}
 
-${secHead(“CPD / Study Leave”)}
-
+  ${secHead("CPD / Study Leave")}
   <div class="cpd-summary">
     <strong>GIM CPD Summary:</strong> &nbsp;
     Counted total: <strong style="color:#003087">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
     Online: <strong>${onlineCapped.toFixed(1)}h</strong> / 15h max &nbsp;·&nbsp;
     External: <strong>${externalHrs.toFixed(1)}h</strong>
+
 
   </div>
     ${subHead(badge("GIM","badge-gim"), `${gimCpd.length} total entries · all years · cumulative target 100h`)}
@@ -2638,8 +2636,8 @@ ${secHead(“CPD / Study Leave”)}
     gimCpd.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.title,e.hours?e.hours+"h":"—",e.year||"—",e.notes]),
     "#003087")}
 
-${secHead(“Simulation”)}
 
+  ${secHead("Simulation")}
   <div class="cpd-summary">
     <strong>Simulation Summary:</strong> &nbsp;
     Total: <strong style="color:#003087">${totalSimHrs.toFixed(1)}h</strong> / 12h &nbsp;·&nbsp;
@@ -2650,14 +2648,13 @@ ${secHead(“Simulation”)}
     simulation.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.course,e.title,e.hours?e.hours+"h":"—",e.hospital,e.year||"—",e.notes]),
     "#0e7490")}
 
-${secHead(“Teaching”)}
-${subHead(””, `${teaching.length} sessions · ${yr}`)}
-${tbl([“Date”,“Type”,“Topic”,“Audience”,“Observed by”,“Sign-off”,“Notes”],
-teaching.sort((a,b)=>(b.date||””).localeCompare(a.date||””)).map(e=>[fmt(e.date),e.type,e.topic,e.audience,e.supervisor||”—”,e.signoff,e.notes]),
-“#92400e”)}
+  ${secHead("Teaching")}
+  ${subHead("", `${teaching.length} sessions · ${yr}`)}
+  ${tbl(["Date","Type","Topic","Audience","Observed by","Sign-off","Notes"],
+    teaching.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.topic,e.audience,e.supervisor||"—",e.signoff,e.notes]),
+    "#92400e")}
 
-${secHead(“Acute Take (Firth Calculator)”)}
-
+  ${secHead("Acute Take (Firth Calculator)")}
   <div class="cpd-summary">
     <strong>Acute Take Summary:</strong> &nbsp;
     Estimated total: <strong style="color:#003087">${Math.round(getLbEntries("acute_take").reduce((a,e)=>a+(parseFloat(e.estimated)||0),0))}</strong> / 750 patients
@@ -2672,8 +2669,7 @@ ${secHead(“Acute Take (Firth Calculator)”)}
     ]),
     "#003087")}
 
-${secHead(“Ward Cover”)}
-
+  ${secHead("Ward Cover")}
   <div class="cpd-summary">
     <strong>Ward Cover Summary:</strong> &nbsp;
     Total: <strong style="color:#003087">${Math.round(getLbEntries("ward_cover").reduce((a,e)=>a+(parseFloat(e.months)||0),0)*10)/10}</strong> / 12 months
@@ -2696,28 +2692,27 @@ ${secHead(“Ward Cover”)}
 </body>
 </html>`;
 
-const w = window.open(””, “_blank”);
-if (!w) { alert(“Please allow popups for this site to use the print view.”); return; }
-w.document.write(html);
-w.document.close();
+  const w = window.open("", "_blank");
+  if (!w) { alert("Please allow popups for this site to use the print view."); return; }
+  w.document.write(html);
+  w.document.close();
 }
 
 setInterval(updateCountdown, 60000);
 
-if (“serviceWorker” in navigator) {
-navigator.serviceWorker.register(”./arcp-sw.js”).then(reg => {
-reg.update();
-reg.addEventListener(“updatefound”, () => {
-const nw = reg.installing;
-nw.addEventListener(“statechange”, () => {
-if (nw.state === “installed” && navigator.serviceWorker.controller) nw.postMessage(“skipWaiting”);
-});
-});
-}).catch(err => console.warn(“SW registration failed:”, err));
-let refreshing = false;
-navigator.serviceWorker.addEventListener(“controllerchange”, () => { if (!refreshing) { refreshing = true; window.location.reload(); } });
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./arcp-sw.js").then(reg => {
+    reg.update();
+    reg.addEventListener("updatefound", () => {
+      const nw = reg.installing;
+      nw.addEventListener("statechange", () => {
+        if (nw.state === "installed" && navigator.serviceWorker.controller) nw.postMessage("skipWaiting");
+      });
+    });
+  }).catch(err => console.warn("SW registration failed:", err));
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (!refreshing) { refreshing = true; window.location.reload(); } });
 }
 </script>
-
 </body>
 </html>
