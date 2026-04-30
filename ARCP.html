@@ -371,9 +371,15 @@
     body.focus-mode [style*="color:var(--dim)"] { color: #9a9089 !important; }
     body.focus-mode [style*="color:var(--blue3)"] { color: #6b6560 !important; }
     body.focus-mode [style*="color:#c8d8ff"] { color: #2d2926 !important; }
-    body.focus-mode [style*="color:var(--blue2)"] { color: #003087 !important; }
+        body.focus-mode [style*="color:var(--blue2)"] { color: #003087 !important; }
     body.focus-mode select.req-input,
     body.focus-mode input.req-input { background: #faf9f6 !important; border-color: #c8c0b4 !important; color: #1a1714 !important; }
+
+    /* Logbook entry rows */
+    body.focus-mode #tab-logbook div[style] { background: #faf9f6 !important; color: #1a1714 !important; border-color: #ddd8d0 !important; }
+    body.focus-mode #tab-logbook span[style] { color: #3d3933 !important; }
+    body.focus-mode #tab-logbook strong { color: #003087 !important; }
+
 
     @media (max-width:640px) {
       .req-grid, .dops-grid { grid-template-columns:1fr; }
