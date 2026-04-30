@@ -248,34 +248,23 @@
 
 
     /* Logbook sections in focus mode */
-    [style*="background:var(--bg2)"] { background: #faf9f6 !important; }
-    [style*="background:var(--bg3)"] { background: #ede9e3 !important; }
-    [style*="border:1px solid var(--blue5)"] { border-color: #ddd8d0 !important; }
-    [style*="border-bottom:1px solid var(--blue5)"] { border-color: #ddd8d0 !important; }
-    [style*="background:var(--blue5)"] { background: #ddd8d0 !important; }
-    [style*="color:var(--blue)"] { color: #003087 !important; }
-    [style*="color:var(--gim)"] { color: #2563eb !important; }
+    body.focus-mode [style*="background:var(--bg2)"] { background: #faf9f6 !important; }
+    body.focus-mode [style*="background:var(--bg3)"] { background: #ede9e3 !important; }
+    body.focus-mode [style*="border:1px solid var(--blue5)"] { border-color: #ddd8d0 !important; }
+    body.focus-mode [style*="border-bottom:1px solid var(--blue5)"] { border-color: #ddd8d0 !important; }
+    body.focus-mode [style*="background:var(--blue5)"] { background: #ddd8d0 !important; }
+    body.focus-mode [style*="color:var(--blue)"] { color: #003087 !important; }
+    body.focus-mode [style*="color:var(--gim)"] { color: #2563eb !important; }
     body.focus-mode [style*="color:var(--renal)"] { color: #7c3aed !important; }
-    [style*="color:var(--green)"] { color: #059669 !important; }
-    [style*="color:var(--amber)"] { color: #d97706 !important; }
-    [style*="color:var(--red)"] { color: #dc2626 !important; }
-    [style*="color:var(--dim)"] { color: #9a9089 !important; }
-    [style*="color:var(--blue3)"] { color: #6b6560 !important; }
-    [style*="color:#c8d8ff"] { color: #2d2926 !important; }
+    body.focus-mode [style*="color:var(--green)"] { color: #059669 !important; }
+    body.focus-mode [style*="color:var(--amber)"] { color: #d97706 !important; }
+    body.focus-mode [style*="color:var(--red)"] { color: #dc2626 !important; }
+    body.focus-mode [style*="color:var(--dim)"] { color: #9a9089 !important; }
+    body.focus-mode [style*="color:var(--blue3)"] { color: #6b6560 !important; }
+    body.focus-mode [style*="color:#c8d8ff"] { color: #2d2926 !important; }
     body.focus-mode [style*="color:var(--blue2)"] { color: #003087 !important; }
     body.focus-mode select.req-input,
     body.focus-mode input.req-input { background: #faf9f6 !important; border-color: #c8c0b4 !important; color: #1a1714 !important; }
-        body.focus-mode #tab-logbook div[style] { background: #faf9f6 !important; color: #1a1714 !important; border-color: #ddd8d0 !important; }
-        body.focus-mode #tab-logbook span[style*="color:var(--gim)"] { color: #2563eb !important; }
-    body.focus-mode #tab-logbook span[style*="color:var(--renal)"] { color: #7c3aed !important; }
-    body.focus-mode #tab-logbook span[style*="color:var(--green)"] { color: #059669 !important; }
-    body.focus-mode #tab-logbook span[style*="color:var(--dim)"] { color: #9a9089 !important; }
-    body.focus-mode #tab-logbook span[style*="color:var(--blue3)"] { color: #6b6560 !important; }
-    body.focus-mode #tab-logbook span[style*="color:#c8d8ff"] { color: #2d2926 !important; }
-    body.focus-mode #tab-logbook span[style*="color:var(--blue)"] { color: #003087 !important; }
-
-    body.focus-mode #tab-logbook strong { color: #003087 !important; }
-
 
     /* ── FOCUS MODE — warm Claude palette (matches GIMTrack) ─────── */
     html:has(body.focus-mode) { background: #f0ede8 !important; }
@@ -400,6 +389,22 @@
     body.focus-mode [style*="color:var(--blue2)"] { color:#003087 !important; }
     body.focus-mode select.req-input,
     body.focus-mode input.req-input { background:#faf9f6 !important; border-color:#c8c0b4 !important; color:#1a1714 !important; }
+
+    /* Logbook and CiP row overrides in focus mode */
+    body.focus-mode #tab-logbook div[style],
+    body.focus-mode #tab-cips div[style] { background: #faf9f6 !important; color: #1a1714 !important; border-color: #ddd8d0 !important; }
+    body.focus-mode #tab-logbook span[style*="color:var(--gim)"],
+    body.focus-mode #tab-cips span[style*="color:var(--gim)"] { color: #2563eb !important; }
+    body.focus-mode #tab-logbook span[style*="color:var(--renal)"],
+    body.focus-mode #tab-cips span[style*="color:var(--renal)"] { color: #7c3aed !important; }
+    body.focus-mode #tab-logbook span[style*="color:var(--green)"],
+    body.focus-mode #tab-cips span[style*="color:var(--green)"] { color: #059669 !important; }
+    body.focus-mode #tab-logbook span[style*="color:var(--dim)"],
+    body.focus-mode #tab-cips span[style*="color:var(--dim)"] { color: #9a9089 !important; }
+    body.focus-mode #tab-logbook span[style*="color:#c8d8ff"],
+    body.focus-mode #tab-cips span[style*="color:#c8d8ff"] { color: #2d2926 !important; }
+    body.focus-mode #tab-logbook strong,
+    body.focus-mode #tab-cips strong { color: #003087 !important; }
 
     @media (max-width:640px) {
       .req-grid, .dops-grid { grid-template-columns:1fr; }
@@ -915,9 +920,8 @@ function renderOverview() {
   const renalIds  = allIds.filter(id => REQS[id].stream === "renal");
   const gimMet    = gimIds.filter(id => getStatus(id) === "met").length;
   const renalMet  = renalIds.filter(id => getStatus(id) === "met").length;
-  const gimUnmet  = gimIds.filter(id => getStatus(id) === "unmet" || getStatus(id) === "partial").length;
-  const renalUnmet= renalIds.filter(id => getStatus(id) === "unmet" || getStatus(id) === "partial").length;
-
+  const gimUnmet  = gimIds.filter(id => getStatus(id) === "unmet").length;
+  const renalUnmet= renalIds.filter(id => getStatus(id) === "unmet").length;
   const dopsDone  = DOPS_PROCEDURES.filter(p => getDops(p)).length;
   el.innerHTML = `
     <div class="sec-head"><span class="sec-title">OVERVIEW — ${currentYear}</span><span class="sec-rule"></span></div>
