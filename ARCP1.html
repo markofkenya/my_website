@@ -391,8 +391,10 @@
     body.focus-mode input.req-input { background:#faf9f6 !important; border-color:#c8c0b4 !important; color:#1a1714 !important; }
 
     /* Logbook and CiP row overrides in focus mode */
-    body.focus-mode #tab-logbook div[style],
-    body.focus-mode #tab-cips div[style] { background: #faf9f6 !important; color: #1a1714 !important; border-color: #ddd8d0 !important; }
+        body.focus-mode #tab-logbook div[style],
+    body.focus-mode #tab-cips div[style],
+    body.focus-mode #tab-cips input[type="number"] { background: #faf9f6 !important; color: #1a1714 !important; border-color: #ddd8d0 !important; }
+
     body.focus-mode #tab-logbook span[style*="color:var(--gim)"],
     body.focus-mode #tab-cips span[style*="color:var(--gim)"] { color: #2563eb !important; }
     body.focus-mode #tab-logbook span[style*="color:var(--renal)"],
@@ -920,8 +922,21 @@ function renderOverview() {
   const renalIds  = allIds.filter(id => REQS[id].stream === "renal");
   const gimMet    = gimIds.filter(id => getStatus(id) === "met").length;
   const renalMet  = renalIds.filter(id => getStatus(id) === "met").length;
-  const gimUnmet  = gimIds.filter(id => getStatus(id) === "unmet").length;
-  const renalUnmet= renalIds.filter(id => getStatus(id) === "unmet").length;
+    const gimUnmet  = gimIds.filter(id => {
+    const req = REQS[id];
+    const s = getStatus(id);
+    if (s !== "unmet" && s !== "partial") return false;
+    if (req.cumulative && YEARS.indexOf(req.deadline) > YEARS.indexOf(currentYear)) return false;
+    return true;
+  }).length;
+  const renalUnmet= renalIds.filter(id => {
+    const req = REQS[id];
+    const s = getStatus(id);
+    if (s !== "unmet" && s !== "partial") return false;
+    if (req.cumulative && YEARS.indexOf(req.deadline) > YEARS.indexOf(currentYear)) return false;
+    return true;
+  }).length;
+
   const dopsDone  = DOPS_PROCEDURES.filter(p => getDops(p)).length;
   el.innerHTML = `
     <div class="sec-head"><span class="sec-title">OVERVIEW — ${currentYear}</span><span class="sec-rule"></span></div>
@@ -1101,13 +1116,20 @@ function toggleFocusMode() {
 }
 
 // Restore focus mode preference on load
-if (localStorage.getItem("pft_focus_mode") === "1") {
+const _savedMode = localStorage.getItem("pft_focus_mode");
+if (_savedMode === "1") {
   document.body.classList.add("focus-mode");
   setTimeout(() => {
     const btn = document.getElementById("focus-toggle-btn");
     if (btn) btn.textContent = "◑ TERMINAL";
   }, 100);
+} else {
+  setTimeout(() => {
+    const btn = document.getElementById("focus-toggle-btn");
+    if (btn) btn.textContent = "☀ FOCUS MODE";
+  }, 100);
 }
+
 
 renderAll();
 setTab("renal");
