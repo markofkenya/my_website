@@ -483,7 +483,84 @@
       }
     }
 
-  </style>
+  
+/* ── FOCUS MODE V2: CLEAN DASHBOARD AESTHETIC ── */
+body.focus-mode {
+  background:#101827 !important;
+  color:#f3f6ff !important;
+  text-shadow:none !important;
+}
+
+/* remove cyber overlays */
+body.focus-mode::before,
+body.focus-mode::after {
+  opacity:0 !important;
+}
+
+/* cards become solid panels */
+body.focus-mode .req-card,
+body.focus-mode .dops-card,
+body.focus-mode .sum-cell,
+body.focus-mode .outcome-selector {
+  background:#182235 !important;
+  border:1px solid #31415f !important;
+  box-shadow:none !important;
+}
+
+/* strong primary text */
+body.focus-mode .req-label,
+body.focus-mode .dops-label,
+body.focus-mode .sec-title,
+body.focus-mode .outcome-title {
+  color:#ffffff !important;
+  font-weight:600;
+}
+
+/* secondary text */
+body.focus-mode .req-unit,
+body.focus-mode .req-target,
+body.focus-mode .req-deadline,
+body.focus-mode .chk-label,
+body.focus-mode .status-item {
+  color:#c7d4f5 !important;
+}
+
+/* tertiary text */
+body.focus-mode .sec-note,
+body.focus-mode .sum-key,
+body.focus-mode .countdown-key,
+body.focus-mode .als-key,
+body.focus-mode .year-label {
+  color:#8fa3da !important;
+}
+
+/* tabs = clean nav */
+body.focus-mode .tab {
+  color:#9fb2e8;
+}
+
+body.focus-mode .tab.active {
+  color:#fbbf24 !important;
+  border-bottom:2px solid #fbbf24 !important;
+}
+
+/* inputs cleaner */
+body.focus-mode input,
+body.focus-mode select,
+body.focus-mode textarea {
+  background:#0f172a !important;
+  border:1px solid #334155 !important;
+  color:#ffffff !important;
+}
+
+/* progress bars lose glow */
+body.focus-mode .bar-fill,
+body.focus-mode .req-fill {
+  filter:none !important;
+  box-shadow:none !important;
+}
+
+</style>
 </head>
 <body>
 
@@ -2736,7 +2813,84 @@ function printLogbookReport() {
       tr{page-break-inside:avoid;}
       .no-print{display:none;}
     }
-  </style>
+  
+/* ── FOCUS MODE V2: CLEAN DASHBOARD AESTHETIC ── */
+body.focus-mode {
+  background:#101827 !important;
+  color:#f3f6ff !important;
+  text-shadow:none !important;
+}
+
+/* remove cyber overlays */
+body.focus-mode::before,
+body.focus-mode::after {
+  opacity:0 !important;
+}
+
+/* cards become solid panels */
+body.focus-mode .req-card,
+body.focus-mode .dops-card,
+body.focus-mode .sum-cell,
+body.focus-mode .outcome-selector {
+  background:#182235 !important;
+  border:1px solid #31415f !important;
+  box-shadow:none !important;
+}
+
+/* strong primary text */
+body.focus-mode .req-label,
+body.focus-mode .dops-label,
+body.focus-mode .sec-title,
+body.focus-mode .outcome-title {
+  color:#ffffff !important;
+  font-weight:600;
+}
+
+/* secondary text */
+body.focus-mode .req-unit,
+body.focus-mode .req-target,
+body.focus-mode .req-deadline,
+body.focus-mode .chk-label,
+body.focus-mode .status-item {
+  color:#c7d4f5 !important;
+}
+
+/* tertiary text */
+body.focus-mode .sec-note,
+body.focus-mode .sum-key,
+body.focus-mode .countdown-key,
+body.focus-mode .als-key,
+body.focus-mode .year-label {
+  color:#8fa3da !important;
+}
+
+/* tabs = clean nav */
+body.focus-mode .tab {
+  color:#9fb2e8;
+}
+
+body.focus-mode .tab.active {
+  color:#fbbf24 !important;
+  border-bottom:2px solid #fbbf24 !important;
+}
+
+/* inputs cleaner */
+body.focus-mode input,
+body.focus-mode select,
+body.focus-mode textarea {
+  background:#0f172a !important;
+  border:1px solid #334155 !important;
+  color:#ffffff !important;
+}
+
+/* progress bars lose glow */
+body.focus-mode .bar-fill,
+body.focus-mode .req-fill {
+  filter:none !important;
+  box-shadow:none !important;
+}
+
+</style>
 </head>
 <body>
 <div class="page">
