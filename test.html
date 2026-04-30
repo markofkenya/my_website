@@ -249,6 +249,114 @@
       .year-sel-wrap { display:none; }
       #main { padding:14px 16px 80px; }
     }
+
+    /* ── LEGIBILITY BOOST: keeps the cyber-terminal aesthetic, improves readability ── */
+    :root {
+      --text-main:  #d7e4ff;
+      --text-soft:  #aebfff;
+      --text-muted: #7f91c8;
+      --scanline: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,0,0,0.04) 3px,
+        rgba(0,0,0,0.04) 6px
+      );
+    }
+
+    html, body {
+      font-size:14px;
+      line-height:1.55;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      text-shadow:0 0 3px rgba(79,158,255,0.10);
+    }
+
+    .logo-line1,
+    .countdown-val,
+    .sum-val,
+    .readiness-pct {
+      text-shadow:0 0 6px rgba(79,158,255,0.18);
+    }
+
+    .req-label,
+    .dops-label,
+    .als-val,
+    .locked-outcome {
+      color:var(--text-main) !important;
+    }
+
+    .req-deadline,
+    .req-unit,
+    .req-target,
+    .sec-note,
+    .status-item,
+    .chk-label,
+    .locked-note,
+    .locked-toggle,
+    .sum-key,
+    .countdown-key,
+    .als-key,
+    .year-label {
+      color:var(--text-muted) !important;
+    }
+
+    .req-card,
+    .dops-card,
+    .sum-cell {
+      padding:14px 16px;
+    }
+
+    .tab {
+      font-size:11px;
+      padding:12px 18px;
+    }
+
+    .req-input,
+    .outcome-select,
+    .year-btn,
+    .btn-reset {
+      font-size:11px;
+    }
+
+    .req-input {
+      color:var(--text-main);
+      border-color:var(--blue3);
+    }
+
+    .req-input:focus {
+      border-color:var(--blue);
+      box-shadow:0 0 0 1px rgba(79,158,255,0.25);
+    }
+
+    .sec-title {
+      color:var(--text-soft);
+    }
+
+    .bar-track,
+    .req-track {
+      background:#111a33;
+    }
+
+    .req-card,
+    .dops-card,
+    .sum-cell,
+    .outcome-selector {
+      box-shadow:0 0 0 1px rgba(79,158,255,0.03);
+    }
+
+    @media (max-width:640px) {
+      html, body { font-size:14px; }
+      .header-logo { padding:12px 16px; }
+      .logo-line1 { font-size:18px; }
+      .countdown-val { font-size:24px; }
+      .tab { font-size:10px; padding:11px 14px; }
+      .req-card, .dops-card, .sum-cell { padding:13px 14px; }
+    }
+
   </style>
 </head>
 <body>
@@ -1873,7 +1981,7 @@ function renderLbAcuteTake(el) {
     <div style="display:flex;flex-direction:column;gap:4px;">
       <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Training Year</label>
       <select class="req-input" id="at-year" style="width:100%;padding:4px 8px;">
-        <option>ST4</option><option>ST5</option><option>ST6</option><option>ST7</option>
+        ${["ST4","ST5","ST6","ST7"].map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join("")}
       </select>
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;">
@@ -2044,7 +2152,7 @@ function renderLbWardCover(el) {
     <div style="display:flex;flex-direction:column;gap:4px;">
       <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Training Year</label>
       <select class="req-input" id="wc-year" style="width:100%;padding:4px 8px;">
-        <option>ST4</option><option>ST5</option><option>ST6</option><option>ST7</option>
+        ${["ST4","ST5","ST6","ST7"].map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join("")}
       </select>
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;">
