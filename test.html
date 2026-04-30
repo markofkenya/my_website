@@ -637,7 +637,7 @@ function renderGIM() {
   renderOutcomeSelector(el);
   if (isYearLocked(currentYear)) { const show = renderLockedBanner(el, "gim"); if (!show) return; }
   el.appendChild(makeSection("ANNUAL REQUIREMENTS","gim",`For ${currentYear} — resets each year`,["gim_mcrs","gim_acats","gim_sles","gim_msf_raters","gim_es_report"]));
-  el.appendChild(makeSection("CUMULATIVE TARGETS","gim","Tracks toward end-of-training total",["gim_clinics","gim_cpd_hours","gim_sim_hours","gim_acute_patients"]));
+  el.appendChild(makeSection("CUMULATIVE TARGETS","gim","Tracks toward end-of-training total",["gim_clinics","gim_cpd_hours","gim_sim_hours","gim_acute_patients","gim_ward_cover"]));
   el.appendChild(makeSection("MILESTONES","gim","One-off requirements — carry forward once achieved",["gim_teaching_obs","gim_patient_survey","gim_qip"]));
   const dopsDone = DOPS_PROCEDURES.filter(p => getDops(p)).length;
   const dopsTotal = DOPS_PROCEDURES.length;
