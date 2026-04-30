@@ -915,8 +915,9 @@ function renderOverview() {
   const renalIds  = allIds.filter(id => REQS[id].stream === "renal");
   const gimMet    = gimIds.filter(id => getStatus(id) === "met").length;
   const renalMet  = renalIds.filter(id => getStatus(id) === "met").length;
-  const gimUnmet  = gimIds.filter(id => getStatus(id) === "unmet").length;
-  const renalUnmet= renalIds.filter(id => getStatus(id) === "unmet").length;
+  const gimUnmet  = gimIds.filter(id => getStatus(id) === "unmet" || getStatus(id) === "partial").length;
+  const renalUnmet= renalIds.filter(id => getStatus(id) === "unmet" || getStatus(id) === "partial").length;
+
   const dopsDone  = DOPS_PROCEDURES.filter(p => getDops(p)).length;
   el.innerHTML = `
     <div class="sec-head"><span class="sec-title">OVERVIEW — ${currentYear}</span><span class="sec-rule"></span></div>
