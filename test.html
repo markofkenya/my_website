@@ -1891,8 +1891,7 @@ function renderLbClinics(el) {
   const sumDiv = document.createElement("div");
   sumDiv.style.cssText = "display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;";
   const gimTarget = REQS["gim_clinics"].target;
-  const gimPct    = Math.min(100, Math.round((gimEntries.length / gimTarget) * 100));
-  sumDiv.innerHTML = `
+  const gimPct    = Math.min(100, Math.round((gimEntries.length / gimTarget) * 100)
     sumDiv.innerHTML = `
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--renal);padding:12px 16px;flex:1;min-width:140px;">
       <div style="font-size:20px;font-weight:700;color:var(--renal);">${renalEntries.length}</div>
