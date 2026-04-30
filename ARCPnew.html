@@ -354,7 +354,32 @@
     body.focus-mode .locked-note { color: #a0aec0; }
     body.focus-mode ::-webkit-scrollbar-track { background: #f4f5f7; }
     body.focus-mode ::-webkit-scrollbar-thumb { background: #cbd5e0; }
-    body.focus-mode #sync-indicator { color: #a0aec0 !important; }
+    body.focus-mode #sync-indicator { color: #9a9089 !important; }
+
+    /* Logbook sections in focus mode */
+    body.focus-mode [style*="background:var(--bg2)"] { background: #faf9f6 !important; }
+    body.focus-mode [style*="background:var(--bg3)"] { background: #ede9e3 !important; }
+    body.focus-mode [style*="border:1px solid var(--blue5)"] { border-color: #ddd8d0 !important; }
+    body.focus-mode [style*="border-bottom:1px solid var(--blue5)"] { border-color: #ddd8d0 !important; }
+    body.focus-mode [style*="background:var(--blue5)"] { background: #ddd8d0 !important; }
+    body.focus-mode [style*="color:var(--blue)"] { color: #003087 !important; }
+    body.focus-mode [style*="color:var(--gim)"] { color: #2563eb !important; }
+    body.focus-mode [style*="color:var(--renal)"] { color: #7c3aed !important; }
+    body.focus-mode [style*="color:var(--green)"] { color: #059669 !important; }
+    body.focus-mode [style*="color:var(--amber)"] { color: #d97706 !important; }
+    body.focus-mode [style*="color:var(--red)"] { color: #dc2626 !important; }
+    body.focus-mode [style*="color:var(--dim)"] { color: #9a9089 !important; }
+    body.focus-mode [style*="color:var(--blue3)"] { color: #6b6560 !important; }
+    body.focus-mode [style*="color:#c8d8ff"] { color: #2d2926 !important; }
+        body.focus-mode [style*="color:var(--blue2)"] { color: #003087 !important; }
+    body.focus-mode select.req-input,
+    body.focus-mode input.req-input { background: #faf9f6 !important; border-color: #c8c0b4 !important; color: #1a1714 !important; }
+
+    /* Logbook entry rows */
+    body.focus-mode #tab-logbook div[style] { background: #faf9f6 !important; color: #1a1714 !important; border-color: #ddd8d0 !important; }
+    body.focus-mode #tab-logbook span[style] { color: #3d3933 !important; }
+    body.focus-mode #tab-logbook strong { color: #003087 !important; }
+
 
     @media (max-width:640px) {
       .req-grid, .dops-grid { grid-template-columns:1fr; }
@@ -1709,15 +1734,16 @@ function renderLbClinics(el) {
   const gimPct    = Math.min(100, Math.round((gimEntries.length / gimTarget) * 100));
   sumDiv.innerHTML = `
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--gim);padding:12px 16px;flex:1;min-width:140px;">
+    <div style="font-size:20px;font-weight:700;color:var(--renal);">${renalEntries.length}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">RENAL CLINICS · LOG ONLY</div>
+      
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--renal);padding:12px 16px;flex:1;min-width:140px;">
       <div style="font-size:20px;font-weight:700;color:var(--gim);">${gimEntries.length}<span style="font-size:11px;color:var(--dim);"> / ${gimTarget}</span></div>
       <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">GIM CLINICS · CUMULATIVE</div>
       <div style="height:3px;background:var(--blue5);margin-top:6px;border-radius:2px;overflow:hidden;">
         <div style="height:100%;width:${gimPct}%;background:var(--gim);"></div>
-      </div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--renal);padding:12px 16px;flex:1;min-width:140px;">
-      <div style="font-size:20px;font-weight:700;color:var(--renal);">${renalEntries.length}</div>
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">RENAL CLINICS · LOG ONLY</div>
     </div>`;
   el.appendChild(sumDiv);
 
