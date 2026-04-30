@@ -357,6 +357,132 @@
       .req-card, .dops-card, .sum-cell { padding:13px 14px; }
     }
 
+
+    /* ── FOCUS MODE TOGGLE ── */
+    .focus-toggle {
+      position:fixed;
+      right:14px;
+      bottom:46px;
+      z-index:9999;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 10px;
+      background:rgba(8,12,24,0.92);
+      border:1px solid rgba(79,158,255,0.28);
+      color:#7f91c8;
+      font-family:var(--font);
+      font-size:9px;
+      letter-spacing:0.08em;
+      cursor:pointer;
+      box-shadow:0 0 18px rgba(79,158,255,0.08);
+      backdrop-filter:blur(8px);
+      -webkit-backdrop-filter:blur(8px);
+    }
+
+    .focus-toggle:hover {
+      border-color:#4f9eff;
+      color:#d7e4ff;
+    }
+
+    .focus-toggle-dot {
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      border:1px solid currentColor;
+      background:transparent;
+      box-shadow:0 0 8px rgba(79,158,255,0.2);
+    }
+
+    body.focus-mode .focus-toggle {
+      color:#ffffff;
+      border-color:#fbbf24;
+      background:rgba(10,14,24,0.96);
+    }
+
+    body.focus-mode .focus-toggle-dot {
+      background:#fbbf24;
+      border-color:#fbbf24;
+      box-shadow:0 0 10px rgba(251,191,36,0.55);
+    }
+
+    /* ── HIGH-CLARITY FOCUS MODE ── */
+    body.focus-mode {
+      text-shadow:none !important;
+      letter-spacing:0.005em;
+    }
+
+    body.focus-mode::before,
+    body.focus-mode::after {
+      opacity:0.22 !important;
+    }
+
+    body.focus-mode .logo-line1,
+    body.focus-mode .countdown-val,
+    body.focus-mode .sum-val,
+    body.focus-mode .readiness-pct {
+      text-shadow:0 0 5px rgba(79,158,255,0.18) !important;
+    }
+
+    body.focus-mode .req-label,
+    body.focus-mode .dops-label,
+    body.focus-mode .als-val,
+    body.focus-mode .locked-outcome,
+    body.focus-mode .cip-label,
+    body.focus-mode .outcome-title,
+    body.focus-mode .sec-title {
+      color:#ffffff !important;
+      font-weight:600;
+    }
+
+    body.focus-mode .req-unit,
+    body.focus-mode .req-target,
+    body.focus-mode .req-deadline,
+    body.focus-mode .locked-note,
+    body.focus-mode .chk-label,
+    body.focus-mode .status-item {
+      color:#a8bbff !important;
+    }
+
+    body.focus-mode .sec-note,
+    body.focus-mode .sum-key,
+    body.focus-mode .countdown-key,
+    body.focus-mode .als-key,
+    body.focus-mode .year-label {
+      color:#8fa3da !important;
+    }
+
+    body.focus-mode .req-card,
+    body.focus-mode .dops-card,
+    body.focus-mode .sum-cell,
+    body.focus-mode .outcome-selector {
+      background:rgba(10,18,40,0.92) !important;
+      border-color:rgba(79,158,255,0.22) !important;
+    }
+
+    body.focus-mode .tab {
+      color:#a8bbff;
+    }
+
+    body.focus-mode .tab.active {
+      color:#ffffff;
+    }
+
+    body.focus-mode input,
+    body.focus-mode select,
+    body.focus-mode textarea {
+      color:#ffffff !important;
+    }
+
+    @media(max-width:640px) {
+      .focus-toggle {
+        right:10px;
+        bottom:58px;
+        font-size:8px;
+        padding:7px 9px;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -422,6 +548,12 @@
   <div id="tab-cips"     style="display:none"></div>
   <div id="tab-logbook"  style="display:none"></div>
 </div>
+
+
+<button class="focus-toggle" id="focus-toggle" type="button" onclick="toggleFocusMode()" aria-label="Toggle focus mode">
+  <span class="focus-toggle-dot"></span>
+  <span id="focus-toggle-label">FOCUS MODE</span>
+</button>
 
 <div id="statusbar">
   <div class="status-left">
@@ -2756,6 +2888,24 @@ if ("serviceWorker" in navigator) {
   let refreshing = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => { if (!refreshing) { refreshing = true; window.location.reload(); } });
 }
+
+// ── Focus Mode: persistent readability toggle ──
+function applyFocusModeState() {
+  const enabled = localStorage.getItem("arcpFocusMode") === "1";
+  document.body.classList.toggle("focus-mode", enabled);
+  const label = document.getElementById("focus-toggle-label");
+  if (label) label.textContent = enabled ? "FOCUS ON" : "FOCUS MODE";
+}
+
+function toggleFocusMode() {
+  const enabled = !document.body.classList.contains("focus-mode");
+  localStorage.setItem("arcpFocusMode", enabled ? "1" : "0");
+  applyFocusModeState();
+}
+
+document.addEventListener("DOMContentLoaded", applyFocusModeState);
+setTimeout(applyFocusModeState, 0);
+
 </script>
 </body>
 </html>
