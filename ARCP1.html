@@ -1079,17 +1079,17 @@ function resetYearData() {
 function toggleFocusMode() {
   const body = document.body;
   const btn  = document.getElementById("focus-toggle-btn");
-  const terminal = body.classList.toggle("terminal-mode");
-  localStorage.setItem("pft_focus_mode", terminal ? "terminal" : "warm");
-  if (btn) btn.textContent = terminal ? "☀ WARM" : "◑ TERMINAL";
+  const on   = body.classList.toggle("focus-mode");
+  localStorage.setItem("pft_focus_mode", on ? "1" : "0");
+  if (btn) btn.textContent = on ? "◑ TERMINAL" : "☀ FOCUS MODE";
 }
 
-// Restore preference
-if (localStorage.getItem("pft_focus_mode") === "terminal") {
-  document.body.classList.add("terminal-mode");
+// Restore focus mode preference on load
+if (localStorage.getItem("pft_focus_mode") === "1") {
+  document.body.classList.add("focus-mode");
   setTimeout(() => {
     const btn = document.getElementById("focus-toggle-btn");
-    if (btn) btn.textContent = "☀ WARM";
+    if (btn) btn.textContent = "◑ TERMINAL";
   }, 100);
 }
 
