@@ -4,11 +4,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>ARCP // Portfolio Tracker</title>
+  <title>ARCP Portfolio Dossier</title>
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="ARCP" />
   <meta name="theme-color" content="#060810" />
+  <link rel="apple-touch-icon" href="RCP-icon.png"/>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
 
@@ -27,12 +28,39 @@
       appId:             "1:544624731364:web:419d52fa061c5c7b4f38f1",
     };
 
-    const app     = initializeApp(firebaseConfig);
+    const app          = initializeApp(firebaseConfig);
     signInAnonymously(getAuth(app)).then(c => console.log("UID:", c.user.uid));
-    const db      = getDatabase(app);
-    const dataRef = ref(db, "arcpData");
+    const db           = getDatabase(app);
+    const dataRef      = ref(db, "arcpData");
+    const logbookRef   = ref(db, "logbookData");
 
-    window._arcp_fb = { update, dataRef };
+    window._arcp_fb = { update, dataRef, logbookRef, db, ref };
+
+    // ── Logbook sync — separate path, raw JSON per type ──────────────────────
+        onValue(logbookRef, snap => {
+      const data = snap.val();
+      if (!data) return;
+      let changed = false;
+      Object.entries(data).forEach(([k, val]) => {
+        if (typeof val === "string" && !k.endsWith("_ts")) {
+          const localKey = "pft_lb_" + k + "_entries";
+          const localTs  = parseInt(localStorage.getItem(`pft_lb_${k}_ts`) || "0");
+          const remoteTs = parseInt(data[`${k}_ts`] || "0");
+          if (remoteTs >= localTs) {
+            const current = localStorage.getItem(localKey);
+            if (current !== val) {
+              localStorage.setItem(localKey, val);
+              localStorage.setItem(`pft_lb_${k}_ts`, String(remoteTs));
+              changed = true;
+            }
+          }
+        }
+      });
+      if (changed) {
+        window.dispatchEvent(new CustomEvent("arcp-sync", { detail: { ok: true, changed: true } }));
+      }
+    });
+
 
     onValue(dataRef, snap => {
       const data = snap.val();
@@ -221,7 +249,586 @@
       .year-sel-wrap { display:none; }
       #main { padding:14px 16px 80px; }
     }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       REIMAGINED AESTHETIC — CLINICAL DOSSIER DASHBOARD
+       Keeps original functionality. Replaces cyber-terminal skin.
+       ══════════════════════════════════════════════════════════════════════ */
+
+    :root {
+      --bg:#eef3f8;
+      --bg2:#ffffff;
+      --bg3:#f7f9fc;
+      --bg4:#edf2f7;
+
+      --blue:#2457a6;
+      --blue2:#3f6fb4;
+      --blue3:#6d82a3;
+      --blue4:#d7e0ec;
+      --blue5:#e7edf5;
+
+      --gim:#2563eb;
+      --renal:#7c3aed;
+
+      --green:#16a34a;
+      --amber:#d97706;
+      --red:#dc2626;
+      --dim:#718096;
+      --dimmest:#dce5f0;
+
+      --ink:#142033;
+      --ink2:#30415f;
+      --muted:#66758f;
+      --paper:#ffffff;
+      --paper2:#f8fafc;
+      --line:#d8e2ee;
+
+      --font:'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --display:'Space Grotesk', 'Inter', system-ui, sans-serif;
+      --scanline:none;
+    }
+
+    html, body {
+      background:
+        radial-gradient(circle at top left, rgba(36,87,166,0.10), transparent 34rem),
+        linear-gradient(180deg,#f8fbff 0%, #eef3f8 40%, #e8eff7 100%) !important;
+      color:var(--ink) !important;
+      font-family:var(--font) !important;
+      font-size:14px !important;
+      line-height:1.55 !important;
+      text-shadow:none !important;
+      background-image:none !important;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+
+    body {
+      text-shadow:none !important;
+    }
+
+    ::-webkit-scrollbar { width:8px; }
+    ::-webkit-scrollbar-track { background:#edf2f7; }
+    ::-webkit-scrollbar-thumb { background:#bcc9da; border-radius:999px; }
+
+    #header {
+      background:rgba(255,255,255,0.92) !important;
+      border-bottom:1px solid var(--line) !important;
+      box-shadow:0 10px 30px rgba(20,32,51,0.06);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+      position:sticky;
+      top:0;
+      z-index:50;
+    }
+
+    .header-top {
+      border-bottom:1px solid var(--blue5) !important;
+    }
+
+    .header-logo,
+    .arcp-countdown,
+    .als-status,
+    .year-sel-wrap {
+      border-color:var(--blue5) !important;
+    }
+
+    .logo-line1 {
+      font-family:var(--display) !important;
+      color:var(--ink) !important;
+      font-size:22px !important;
+      letter-spacing:-0.02em !important;
+      text-shadow:none !important;
+    }
+
+    .logo-line1 span {
+      color:var(--green) !important;
+    }
+
+    .logo-line2,
+    .logo-sub,
+    .countdown-key,
+    .als-key,
+    .year-label {
+      color:var(--muted) !important;
+      letter-spacing:0.11em !important;
+      text-shadow:none !important;
+    }
+
+    .countdown-val,
+    .als-val,
+    .readiness-pct {
+      color:var(--ink) !important;
+      font-family:var(--display) !important;
+      text-shadow:none !important;
+    }
+
+    .countdown-val.warn,
+    .als-val.warn {
+      color:var(--amber) !important;
+      text-shadow:none !important;
+    }
+
+    .countdown-val.alert,
+    .als-val.alert {
+      color:var(--red) !important;
+      text-shadow:none !important;
+    }
+
+    .readiness-label {
+      color:var(--muted) !important;
+      letter-spacing:0.08em !important;
+    }
+
+    .bar-track,
+    .req-track {
+      background:#e1e9f2 !important;
+      border-radius:999px !important;
+    }
+
+    .bar-fill,
+    .req-fill {
+      border-radius:999px !important;
+      box-shadow:none !important;
+      filter:none !important;
+    }
+
+    .bar-fill {
+      background:linear-gradient(90deg,#93c5fd,var(--blue)) !important;
+    }
+
+    .bar-fill.good {
+      background:linear-gradient(90deg,#86efac,var(--green)) !important;
+    }
+
+    .bar-fill.warn {
+      background:linear-gradient(90deg,#fcd34d,var(--amber)) !important;
+    }
+
+    #tabbar {
+      background:rgba(255,255,255,0.84) !important;
+      border-bottom:1px solid var(--line) !important;
+      padding:0 24px !important;
+      gap:6px;
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+    }
+
+    .tab {
+      color:var(--muted) !important;
+      border-bottom:3px solid transparent !important;
+      font-size:11px !important;
+      font-weight:700 !important;
+      letter-spacing:0.04em !important;
+      padding:13px 16px !important;
+      border-radius:12px 12px 0 0;
+      font-family:var(--font) !important;
+    }
+
+    .tab:hover {
+      color:var(--ink) !important;
+      background:#f1f5fa !important;
+    }
+
+    .tab.active {
+      color:var(--blue) !important;
+      border-bottom-color:var(--blue) !important;
+      background:#f8fbff !important;
+    }
+
+    .tab.gim-tab.active {
+      color:var(--gim) !important;
+      border-bottom-color:var(--gim) !important;
+    }
+
+    .tab.renal-tab.active {
+      color:var(--renal) !important;
+      border-bottom-color:var(--renal) !important;
+    }
+
+    #main {
+      padding:24px 28px 92px !important;
+      max-width:1440px;
+      margin:0 auto;
+    }
+
+    .locked-banner,
+    .outcome-selector,
+    .req-card,
+    .dops-card,
+    .sum-cell {
+      background:rgba(255,255,255,0.92) !important;
+      border:1px solid var(--line) !important;
+      box-shadow:0 10px 24px rgba(20,32,51,0.055);
+      border-radius:18px !important;
+      text-shadow:none !important;
+    }
+
+    .locked-banner {
+      border-left:5px solid var(--green) !important;
+      background:linear-gradient(135deg,#ffffff,#f0fdf4) !important;
+    }
+
+    .locked-banner:hover,
+    .req-card:hover,
+    .dops-card:hover {
+      background:#ffffff !important;
+      box-shadow:0 14px 32px rgba(20,32,51,0.08);
+      transform:translateY(-1px);
+    }
+
+    .locked-outcome {
+      color:var(--green) !important;
+      font-family:var(--display) !important;
+      font-size:12px !important;
+      letter-spacing:0.05em !important;
+    }
+
+    .locked-note,
+    .locked-toggle {
+      color:var(--muted) !important;
+    }
+
+    .outcome-label,
+    .sec-note,
+    .req-deadline,
+    .req-unit,
+    .req-target,
+    .chk-label,
+    .status-item,
+    .sum-key {
+      color:var(--muted) !important;
+      text-shadow:none !important;
+    }
+
+    .outcome-select,
+    .req-input {
+      background:#f8fafc !important;
+      border:1px solid #cbd7e6 !important;
+      color:var(--ink) !important;
+      border-radius:10px !important;
+      font-family:var(--font) !important;
+      font-weight:600;
+      text-shadow:none !important;
+    }
+
+    .outcome-select:focus,
+    .req-input:focus {
+      border-color:var(--blue) !important;
+      box-shadow:0 0 0 3px rgba(36,87,166,0.12);
+      outline:none !important;
+    }
+
+    .outcome-clear,
+    .btn-reset,
+    .year-btn {
+      border-radius:999px !important;
+      border:1px solid var(--line) !important;
+      background:#ffffff !important;
+      color:var(--muted) !important;
+      font-family:var(--font) !important;
+      font-weight:700;
+      letter-spacing:0.04em !important;
+      text-shadow:none !important;
+    }
+
+    .outcome-clear:hover,
+    .btn-reset:hover {
+      color:var(--red) !important;
+      border-color:rgba(220,38,38,0.32) !important;
+      background:#fff5f5 !important;
+    }
+
+    .year-btn:hover {
+      color:var(--blue) !important;
+      border-color:#a7bce0 !important;
+      background:#f8fbff !important;
+    }
+
+    .year-btn.active {
+      background:var(--ink) !important;
+      border-color:var(--ink) !important;
+      color:#ffffff !important;
+    }
+
+    .year-btn.locked,
+    .year-btn.locked.active {
+      border-color:rgba(22,163,74,0.35) !important;
+      color:var(--green) !important;
+      background:#f0fdf4 !important;
+    }
+
+    .sec-head {
+      border-bottom:0 !important;
+      margin:24px 0 14px !important;
+      padding-bottom:0 !important;
+    }
+
+    .sec-title {
+      color:var(--ink) !important;
+      font-family:var(--display) !important;
+      font-size:14px !important;
+      font-weight:700 !important;
+      letter-spacing:-0.01em !important;
+      text-transform:none !important;
+    }
+
+    .sec-title.gim {
+      color:var(--gim) !important;
+    }
+
+    .sec-title.renal {
+      color:var(--renal) !important;
+    }
+
+    .sec-title.both {
+      color:var(--ink2) !important;
+    }
+
+    .sec-rule {
+      background:linear-gradient(90deg,var(--line),transparent) !important;
+    }
+
+    .req-grid {
+      grid-template-columns:repeat(auto-fill,minmax(300px,1fr)) !important;
+      gap:14px !important;
+    }
+
+    .req-card {
+      border-left:0 !important;
+      padding:16px 18px !important;
+      position:relative;
+      overflow:hidden;
+      transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+    }
+
+    .req-card::before {
+      content:"";
+      position:absolute;
+      left:0;
+      top:0;
+      bottom:0;
+      width:5px;
+      background:var(--line);
+    }
+
+    .req-card.met::before { background:var(--green); }
+    .req-card.partial::before,
+    .req-card.warn::before { background:var(--amber); }
+    .req-card.unmet::before { background:var(--red); }
+    .req-card.na::before { background:#aeb9c9; }
+
+    .req-card.na {
+      opacity:0.58 !important;
+      background:#f3f6fa !important;
+    }
+
+    .req-label,
+    .dops-label {
+      color:var(--ink) !important;
+      font-size:13px !important;
+      font-weight:700 !important;
+      line-height:1.35 !important;
+      text-shadow:none !important;
+    }
+
+    .badge {
+      border-radius:999px !important;
+      padding:2px 7px !important;
+      font-size:8px !important;
+      font-weight:800 !important;
+    }
+
+    .badge-gim {
+      background:#eff6ff !important;
+      color:var(--gim) !important;
+      border-color:#bfdbfe !important;
+    }
+
+    .badge-renal {
+      background:#f5f3ff !important;
+      color:var(--renal) !important;
+      border-color:#ddd6fe !important;
+    }
+
+    .badge-both {
+      background:#f1f5f9 !important;
+      color:var(--ink2) !important;
+      border-color:#d8e2ee !important;
+    }
+
+    .req-fill.met {
+      background:linear-gradient(90deg,#86efac,var(--green)) !important;
+    }
+
+    .req-fill.partial {
+      background:linear-gradient(90deg,#fcd34d,var(--amber)) !important;
+    }
+
+    .req-fill.unmet {
+      background:linear-gradient(90deg,#fca5a5,var(--red)) !important;
+    }
+
+    .req-count {
+      font-family:var(--display) !important;
+      font-size:13px !important;
+      text-shadow:none !important;
+    }
+
+    .req-count.met { color:var(--green) !important; }
+    .req-count.partial { color:var(--amber) !important; }
+    .req-count.unmet { color:var(--red) !important; }
+
+    .chk,
+    .dops-chk {
+      border-radius:7px !important;
+      border:1.5px solid #b8c7da !important;
+      background:#ffffff !important;
+      color:#ffffff !important;
+      box-shadow:none !important;
+    }
+
+    .chk.checked,
+    .dops-chk.checked {
+      background:var(--green) !important;
+      border-color:var(--green) !important;
+      color:#ffffff !important;
+      box-shadow:0 0 0 3px rgba(22,163,74,0.13) !important;
+    }
+
+    .req-deadline.soon {
+      color:var(--amber) !important;
+    }
+
+    .req-deadline.past {
+      color:var(--red) !important;
+    }
+
+    .dops-grid {
+      grid-template-columns:repeat(auto-fill,minmax(270px,1fr)) !important;
+      gap:12px !important;
+    }
+
+    .dops-card {
+      border-left:0 !important;
+      padding:13px 14px !important;
+      transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .dops-card::before {
+      content:"";
+      position:absolute;
+      left:0;
+      top:0;
+      bottom:0;
+      width:5px;
+      background:#cbd7e6;
+    }
+
+    .dops-card.done::before {
+      background:var(--green);
+    }
+
+    .summary-grid {
+      grid-template-columns:repeat(auto-fill,minmax(150px,1fr)) !important;
+      gap:12px !important;
+    }
+
+    .sum-cell {
+      padding:16px 18px !important;
+      text-align:left !important;
+    }
+
+    .sum-val {
+      font-family:var(--display) !important;
+      font-size:30px !important;
+      color:var(--ink) !important;
+      text-shadow:none !important;
+    }
+
+    .sum-val.green { color:var(--green) !important; text-shadow:none !important; }
+    .sum-val.amber { color:var(--amber) !important; }
+    .sum-val.red { color:var(--red) !important; }
+    .sum-val.blue { color:var(--blue) !important; }
+
+    #statusbar {
+      background:rgba(255,255,255,0.94) !important;
+      border-top:1px solid var(--line) !important;
+      box-shadow:0 -10px 30px rgba(20,32,51,0.06);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+    }
+
+    .status-item {
+      color:var(--muted) !important;
+      letter-spacing:0.05em !important;
+      font-weight:600;
+    }
+
+    .status-item strong {
+      color:var(--ink) !important;
+      font-weight:800;
+    }
+
+    #sync-indicator {
+      color:var(--green) !important;
+      font-weight:900 !important;
+    }
+
+    .cip-card,
+    .logbook-card,
+    .admin-card,
+    .panel,
+    .card {
+      background:#ffffff !important;
+      border-color:var(--line) !important;
+      box-shadow:0 10px 24px rgba(20,32,51,0.055) !important;
+      border-radius:18px !important;
+      text-shadow:none !important;
+    }
+
+    /* broad text clean-up for dynamically rendered sections */
+    #main * {
+      text-shadow:none !important;
+    }
+
+    #main input,
+    #main select,
+    #main textarea,
+    #main button {
+      font-family:var(--font) !important;
+    }
+
+    @media (max-width:640px) {
+      #header { position:relative; }
+      #main { padding:16px 14px 92px !important; }
+      .header-logo,
+      .arcp-countdown,
+      .als-status,
+      .readiness-bar-wrap,
+      .year-sel-wrap {
+        padding:12px 14px !important;
+      }
+      .logo-line1 { font-size:20px !important; }
+      #tabbar { padding:0 12px !important; }
+      .tab { padding:12px 13px !important; font-size:10px !important; }
+      .req-grid,
+      .dops-grid,
+      .summary-grid {
+        grid-template-columns:1fr !important;
+      }
+      .req-card,
+      .dops-card,
+      .sum-cell {
+        border-radius:16px !important;
+      }
+    }
+
   </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
 </head>
 <body>
 
@@ -334,6 +941,7 @@ const REQS = {
   gim_cpd_hours:     { label:"IM Study Leave / CPD Hours", stream:"gim", type:"number", target:75,  unit:"hours",   deadline:"ST7", cumulative:true, note:"75hrs total, 20 in final year" },
   gim_sim_hours:     { label:"Simulation Hours",     stream:"gim", type:"number", target:12,  unit:"hours",   deadline:"ST7", cumulative:true, note:"12hrs total (GIMME/NOTES), 4 in final year" },
   gim_acute_patients:{ label:"Acute GIM Patients",   stream:"gim", type:"number", target:750, unit:"patients",deadline:"ST7", cumulative:true, note:"750 total, 100 in final year" },
+  gim_ward_cover: { label:"IM Ward Cover", stream:"gim", type:"number", target:12, unit:"months", deadline:"ST7", cumulative:true, note:"12 months total IM ward cover" },
   gim_teaching_obs:  { label:"Teaching Observation", stream:"gim", type:"checkbox", deadline:"ST7", sharedWith:"renal_teaching_obs",   note:"Can be done in Renal — applies to GIM" },
   gim_patient_survey:{ label:"Patient Survey",       stream:"gim", type:"checkbox", deadline:"ST7", sharedWith:"renal_patient_survey_st7", note:"Shared with Renal — only needed once" },
   gim_qip:           { label:"GIM QIP + QIPAT",      stream:"gim", type:"checkbox", deadline:"ST7", note:"By end of ST7" },
@@ -608,7 +1216,7 @@ function renderGIM() {
   renderOutcomeSelector(el);
   if (isYearLocked(currentYear)) { const show = renderLockedBanner(el, "gim"); if (!show) return; }
   el.appendChild(makeSection("ANNUAL REQUIREMENTS","gim",`For ${currentYear} — resets each year`,["gim_mcrs","gim_acats","gim_sles","gim_msf_raters","gim_es_report"]));
-  el.appendChild(makeSection("CUMULATIVE TARGETS","gim","Tracks toward end-of-training total",["gim_clinics","gim_cpd_hours","gim_sim_hours","gim_acute_patients"]));
+  el.appendChild(makeSection("CUMULATIVE TARGETS","gim","Tracks toward end-of-training total",["gim_clinics","gim_cpd_hours","gim_sim_hours","gim_acute_patients","gim_ward_cover"]));
   el.appendChild(makeSection("MILESTONES","gim","One-off requirements — carry forward once achieved",["gim_teaching_obs","gim_patient_survey","gim_qip"]));
   const dopsDone = DOPS_PROCEDURES.filter(p => getDops(p)).length;
   const dopsTotal = DOPS_PROCEDURES.length;
@@ -902,6 +1510,27 @@ renderAll();
 setTab("renal");
 document.getElementById("sb-year").textContent = currentYear;
 
+
+// Seed logbook timestamps on first load if missing
+(function seedLbTimestamps() {
+  const types = ["clinics_gim","clinics_renal","procedures_gim","procedures_renal","cpd_gim","cpd_renal","simulation","teaching","acute_take","ward_cover"];
+  types.forEach(type => {
+    const tsKey = `pft_lb_${type}_ts`;
+    if (!localStorage.getItem(tsKey)) {
+      const entries = localStorage.getItem(`pft_lb_${type}_entries`);
+      if (entries) {
+        const ts = Date.now();
+        localStorage.setItem(tsKey, String(ts));
+        if (window._arcp_fb) {
+          const { update, db, ref } = window._arcp_fb;
+          update(ref(db, "logbookData"), { [`${type}_ts`]: ts })
+            .catch(e => console.error("Logbook ts seed error:", e));
+        }
+      }
+    }
+  });
+})();
+  
 window.addEventListener("arcp-sync", e => {
   const { ok, changed } = e.detail;
   const indicator = document.getElementById("sync-indicator");
@@ -1354,12 +1983,12 @@ const LOGBOOK_PROCEDURES_GIM = [
   "Lumbar puncture",
 ];
 
-const CPD_TYPES_GIM = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD (approved)","Other external CPD"];
-const CPD_TYPES_RENAL = ["Renal study day","Renal conference","Northern Postgraduate Nephrology Course","Other CPD"];
+const CPD_TYPES_GIM = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Grand round(attended)", "Departmental teaching", "Journal club", "Other GIM CPD", "Other external CPD"];
+const CPD_TYPES_RENAL = ["Renal study day","Renal conference","Northern Postgraduate Nephrology Course","Grand round (attended)","M&M / mortality meeting","Departmental teaching / journal club","Other renal CPD"];
 const SIM_COURSE_TYPES = ["GIMME","NOTES","Other simulation course"];
 const TEACHING_TYPES = ["Bedside teaching","Tutorial / seminar","Grand round presentation","Journal club","Simulation facilitation","Medical student supervision","Foundation doctor supervision","Audit / QIP presentation","Other"];
 const CLINIC_TYPES_GIM   = ["GIM outpatient clinic","Medical SDEC","Community clinic","Other GIM clinic"];
-const CLINIC_TYPES_RENAL = ["Renal outpatient clinic","HD unit clinic","Transplant clinic","CKD clinic","Pre-dialysis clinic","Other renal clinic"];
+const CLINIC_TYPES_RENAL = ["General Nephrology clinic","HD clinic","Transplant clinic","HTN clinic","AKCC","Other renal clinic"];
 
 // ── Storage helpers ──────────────────────────────────
 function lbKey(type, id) { return `pft_lb_${type}_${id}`; }
@@ -1372,8 +2001,15 @@ function saveLbEntries(type, entries) {
   const k = lbKey(type, "entries");
   const val = JSON.stringify(entries);
   localStorage.setItem(k, val);
-  // Note: logbook entries stored in localStorage only (Firebase sync of raw JSON
-  // would overwrite with string on next load, breaking delete)
+  // Sync to Firebase logbookData path (separate from arcpData to avoid corruption)
+    if (window._arcp_fb && window._arcp_fb.logbookRef) {
+    const { update, db, ref } = window._arcp_fb;
+    const ts = Date.now();
+    localStorage.setItem(`pft_lb_${type}_ts`, String(ts));
+    update(ref(db, "logbookData"), { [type]: val, [`${type}_ts`]: ts })
+      .catch(e => console.error("Logbook FB sync error:", e));
+  }
+
   // If GIM clinics — sync cumulative target
   if (type === "clinics_gim") {
     const gimCount = entries.length;
@@ -1389,15 +2025,17 @@ function saveLbEntries(type, entries) {
     fbPush(cumK, Math.round(totalSim*10)/10);
   }
   // If GIM CPD — sync cumulative target (online capped at 15h)
-  if (type === "cpd_gim") {
+    if (type === "cpd_gim") {
+    const GIM_COUNTED_TYPES = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
     const ONLINE_LIMIT = 15;
-    const onlineHrs   = entries.filter(e => e.type === "Online CPD (approved)").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
-    const externalHrs = entries.filter(e => e.type !== "Online CPD (approved)").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+    const onlineHrs    = entries.filter(e => e.type === "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+    const externalHrs  = entries.filter(e => GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
     const countedTotal = externalHrs + Math.min(onlineHrs, ONLINE_LIMIT);
     const cumK = sKey("gim_cpd_hours");
     localStorage.setItem(cumK, String(Math.round(countedTotal)));
     fbPush(cumK, Math.round(countedTotal));
   }
+
 }
 function addLbEntry(type, entry) {
   const entries = getLbEntries(type);
@@ -1413,20 +2051,24 @@ function deleteLbEntry(type, id) {
 function cpdSummary() {
   const gimEntries   = getLbEntries("cpd_gim");
   const ONLINE_LIMIT = 15;
-  const onlineHrs    = gimEntries.filter(e => e.type === "Online CPD (approved)").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
-  const onlineCapped = Math.min(onlineHrs, ONLINE_LIMIT); // excess online hrs don't count toward total
-  const externalHrs  = gimEntries.filter(e => e.type !== "Online CPD (approved)").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+  const GIM_COUNTED_TYPES = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
+  const onlineHrs    = gimEntries.filter(e => e.type === "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+  const onlineCapped = Math.min(onlineHrs, ONLINE_LIMIT);
+  const externalHrs  = gimEntries.filter(e => GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
   const total        = externalHrs + onlineCapped;
-  const currentYrHrs = gimEntries.filter(e => e.year === currentYear).reduce((acc,e) => {
+    const currentYrHrs = gimEntries.filter(e => e.year === currentYear && GIM_COUNTED_TYPES.includes(e.type)).reduce((acc,e) => {
     const h = parseFloat(e.hours) || 0;
-    // For online in current year, pro-rate the cap
-    if (e.type === "Online CPD (approved)") {
-      const allOnlineYr = gimEntries.filter(x => x.type === "Online CPD (approved)" && x.year === currentYear).reduce((a,x) => a+(parseFloat(x.hours)||0),0);
+    if (e.type === "Online CPD") {
+      const allOnlineYr = gimEntries.filter(x => x.type === "Online CPD" && x.year === currentYear).reduce((a,x) => a+(parseFloat(x.hours)||0),0);
       return acc + (allOnlineYr > ONLINE_LIMIT ? h * (ONLINE_LIMIT / allOnlineYr) : h);
     }
     return acc + h;
   }, 0);
-  const st7Hrs = gimEntries.filter(e => e.year === "ST7").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+
+  const st7OnlineHrs = gimEntries.filter(e => e.year === "ST7" && e.type === "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+  const st7ExternalHrs = gimEntries.filter(e => e.year === "ST7" && GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+  const st7Hrs = st7ExternalHrs + Math.min(st7OnlineHrs, ONLINE_LIMIT);
+
   return {
     total:       Math.round(total*10)/10,
     onlineHrs:   Math.round(onlineHrs*10)/10,
@@ -1455,6 +2097,8 @@ function renderLogbook() {
     { id:"cpd",        label:"CPD / STUDY LEAVE" },
     { id:"simulation", label:"SIMULATION" },
     { id:"teaching",   label:"TEACHING" },
+    { id:"acute_take", label:"ACUTE TAKE" },
+    { id:"ward_cover", label:"WARD COVER" },
   ].forEach(st => {
     const btn = document.createElement("button");
     btn.style.cssText = `padding:8px 16px;background:transparent;border:none;
@@ -1494,6 +2138,8 @@ function renderLogbook() {
   if (lbSubTab === "cpd")        renderLbCPD(el);
   if (lbSubTab === "simulation") renderLbSimulation(el);
   if (lbSubTab === "teaching")   renderLbTeaching(el);
+  if (lbSubTab === "acute_take") renderLbAcuteTake(el);
+  if (lbSubTab === "ward_cover") renderLbWardCover(el);
 }
 
 // ════════════════════════════════════════════════════
@@ -1618,7 +2264,7 @@ function renderLbCPD(el) {
   sumDiv.innerHTML = `
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${cpd.total>=totalTarget?'var(--green)':'var(--gim)'};padding:12px 16px;flex:1;min-width:130px;">
       <div style="font-size:20px;font-weight:700;color:${cpd.total>=totalTarget?'var(--green)':'var(--gim)'};">${cpd.total}<span style="font-size:10px;color:var(--dim);"> / ${totalTarget}h</span></div>
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">TOTAL GIM CPD HRS</div>
+        <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">TOTAL EXTERNAL GIM CPD HRS</div>
       <div style="height:3px;background:var(--blue5);margin-top:6px;border-radius:2px;overflow:hidden;">
         <div style="height:100%;width:${totalPct}%;background:${cpd.total>=totalTarget?'var(--green)':'var(--gim)'};"></div>
       </div>
@@ -1739,7 +2385,347 @@ function renderLbTeaching(el) {
   el.appendChild(makeLbSection("TEACHING LOG", "both", entries, "teaching",
     e => `${e.type || "Teaching"} · ${e.topic || "—"} · ${e.audience || ""}`, false));
 }
+// ════════════════════════════════════════════════════
+//  ACUTE TAKE
+// ════════════════════════════════════════════════════
+function renderLbAcuteTake(el) {
+  const entries = getLbEntries("acute_take");
+  const totalEstimated = entries.reduce((acc,e) => acc + (parseFloat(e.estimated)||0), 0);
+  const TARGET = 750;
+  const pct = Math.min(100, Math.round((totalEstimated / TARGET) * 100));
 
+  const sumDiv = document.createElement("div");
+  sumDiv.style.cssText = "display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;";
+  sumDiv.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${totalEstimated>=TARGET?'var(--green)':'var(--gim)'};padding:12px 16px;flex:1;min-width:140px;">
+      <div style="font-size:20px;font-weight:700;color:${totalEstimated>=TARGET?'var(--green)':'var(--gim)'};">${Math.round(totalEstimated)}<span style="font-size:11px;color:var(--dim);"> / ${TARGET}</span></div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">ESTIMATED ACUTE PATIENTS · CUMULATIVE</div>
+      <div style="height:3px;background:var(--blue5);margin-top:6px;border-radius:2px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${totalEstimated>=TARGET?'var(--green)':'var(--gim)'};"></div>
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--dim);padding:12px 16px;flex:1;min-width:140px;">
+      <div style="font-size:20px;font-weight:700;color:var(--blue);">${entries.length}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">PLACEMENTS LOGGED</div>
+    </div>`;
+  el.appendChild(sumDiv);
+
+  // Add form
+  const formWrap = document.createElement("div");
+  formWrap.style.cssText = "margin-bottom:20px;";
+  const head = document.createElement("div");
+  head.className = "sec-head";
+  head.innerHTML = `<span class="sec-title" style="color:var(--gim)">ADD ACUTE TAKE PLACEMENT</span><span class="sec-rule"></span>`;
+  formWrap.appendChild(head);
+
+  const form = document.createElement("div");
+  form.style.cssText = "background:var(--bg2);border:1px solid var(--blue5);border-top:2px solid var(--gim);padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:8px;";
+  form.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Hospital</label>
+      <input class="req-input" id="at-hospital" type="text" placeholder="e.g. Rotherham DGH" style="width:100%;" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Start Date</label>
+      <input class="req-input date-inp" id="at-start" type="date" style="width:100%;" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── End Date</label>
+      <input class="req-input date-inp" id="at-end" type="date" style="width:100%;" oninput="calcAcuteTakeEstimate()" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Months in Post</label>
+      <input class="req-input" id="at-months" type="number" min="0" step="0.5" placeholder="auto" style="width:100%;" readonly />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Avg Takes / Month</label>
+      <input class="req-input" id="at-takes" type="number" min="0" step="1" placeholder="e.g. 8" style="width:100%;" oninput="calcAcuteTakeEstimate()" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Avg Patients / Take</label>
+      <input class="req-input" id="at-patients" type="number" min="0" step="1" placeholder="e.g. 8" style="width:100%;" oninput="calcAcuteTakeEstimate()" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Estimated Patients</label>
+      <input class="req-input" id="at-estimated" type="number" style="width:100%;color:var(--green);" readonly />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Training Year</label>
+      <select class="req-input" id="at-year" style="width:100%;padding:4px 8px;">
+        ${["ST4","ST5","ST6","ST7"].map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join("")}
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Educational Supervisor</label>
+      <input class="req-input" id="at-supervisor" type="text" placeholder="Name" style="width:100%;" />
+    </div>
+    <div style="grid-column:1/-1;display:flex;justify-content:flex-end;margin-top:4px;">
+      <button class="btn-reset" style="border-color:var(--gim);color:var(--gim);" onclick="saveAcuteTake()">ADD ENTRY ▸</button>
+    </div>`;
+  formWrap.appendChild(form);
+  el.appendChild(formWrap);
+
+  // Entries table
+  const secHead = document.createElement("div");
+  secHead.className = "sec-head";
+  secHead.style.marginTop = "16px";
+  secHead.innerHTML = `<span class="sec-title" style="color:var(--gim)">ACUTE TAKE LOG</span><span class="sec-rule"></span><span class="sec-note">${entries.length} placements · ${Math.round(totalEstimated)} estimated patients total</span>`;
+  el.appendChild(secHead);
+
+  if (!entries.length) {
+    const empty = document.createElement("div");
+    empty.style.cssText = "font-size:9px;color:var(--dim);padding:10px 0;";
+    empty.textContent = "// no entries logged yet";
+    el.appendChild(empty);
+    return;
+  }
+
+  const table = document.createElement("div");
+  table.style.cssText = "border:1px solid var(--blue5);overflow:hidden;";
+  const hdr = document.createElement("div");
+  hdr.style.cssText = "display:flex;background:var(--bg3);border-bottom:1px solid var(--blue5);padding:5px 10px;gap:8px;";
+  hdr.innerHTML = `
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:120px;">HOSPITAL</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:80px;">START</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:80px;">END</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:50px;">MONTHS</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;flex:1;">ESTIMATED PTS</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:30px;text-align:right;">DEL</span>`;
+  table.appendChild(hdr);
+
+  entries.forEach((e, i) => {
+    const row = document.createElement("div");
+    row.style.cssText = `display:flex;align-items:center;padding:6px 10px;gap:8px;border-bottom:1px solid var(--blue5);border-left:3px solid var(--gim);background:${i%2===0?'var(--bg2)':'var(--bg3)'};`;
+    const fmtD = d => d ? new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+    row.innerHTML = `
+      <span style="font-size:10px;color:#c8d8ff;min-width:120px;">${e.hospital||"—"}</span>
+      <span style="font-size:9px;color:var(--dim);min-width:80px;">${fmtD(e.start)}</span>
+      <span style="font-size:9px;color:var(--dim);min-width:80px;">${fmtD(e.end)}</span>
+      <span style="font-size:9px;color:var(--dim);min-width:50px;">${e.months||"—"}mo</span>
+      <span style="font-size:11px;color:var(--green);flex:1;font-weight:700;">${Math.round(e.estimated||0)} pts</span>`;
+    const delBtn = document.createElement("button");
+    delBtn.style.cssText = "background:none;border:none;color:var(--dim);font-family:var(--font);font-size:10px;padding:0 4px;cursor:pointer;min-width:30px;text-align:right;";
+    delBtn.textContent = "✕";
+    delBtn.onmouseover = () => delBtn.style.color = "var(--red)";
+    delBtn.onmouseout  = () => delBtn.style.color = "var(--dim)";
+    delBtn.onclick = () => {
+      if (confirm("Delete this entry?")) {
+        deleteLbEntry("acute_take", e.id);
+        syncAcutePatients();
+        renderLogbook();
+        updateReadiness();
+      }
+    };
+    row.appendChild(delBtn);
+    table.appendChild(row);
+  });
+  el.appendChild(table);
+}
+
+function calcAcuteTakeEstimate() {
+  const start    = document.getElementById("at-start")?.value;
+  const end      = document.getElementById("at-end")?.value;
+  const takes    = parseFloat(document.getElementById("at-takes")?.value || 0);
+  const patients = parseFloat(document.getElementById("at-patients")?.value || 0);
+
+  let months = 0;
+  if (start && end) {
+    const s = new Date(start); const e = new Date(end);
+    months = Math.round(((e - s) / (1000 * 60 * 60 * 24 * 30.44)) * 10) / 10;
+    if (months < 0) months = 0;
+    const mEl = document.getElementById("at-months");
+    if (mEl) mEl.value = months;
+  }
+
+  const estimated = months * takes * patients;
+  const estEl = document.getElementById("at-estimated");
+  if (estEl) estEl.value = Math.round(estimated);
+}
+
+function saveAcuteTake() {
+  const hospital   = document.getElementById("at-hospital")?.value.trim();
+  const start      = document.getElementById("at-start")?.value;
+  const end        = document.getElementById("at-end")?.value;
+  const months     = parseFloat(document.getElementById("at-months")?.value || 0);
+  const takes      = parseFloat(document.getElementById("at-takes")?.value || 0);
+  const patients   = parseFloat(document.getElementById("at-patients")?.value || 0);
+  const estimated  = Math.round(months * takes * patients);
+  const year       = document.getElementById("at-year")?.value;
+  const supervisor = document.getElementById("at-supervisor")?.value.trim();
+
+  if (!hospital || !start || !end) { alert("Please fill in hospital, start and end date."); return; }
+
+  addLbEntry("acute_take", { hospital, start, end, months, takes, patients, estimated, year, supervisor, date: start });
+  syncAcutePatients();
+  renderLogbook();
+  updateReadiness();
+}
+
+function syncAcutePatients() {
+  const entries = getLbEntries("acute_take");
+  const total   = Math.round(entries.reduce((acc,e) => acc + (parseFloat(e.estimated)||0), 0));
+  const cumK    = sKey("gim_acute_patients");
+  localStorage.setItem(cumK, String(total));
+  fbPush(cumK, total);
+}
+  // ════════════════════════════════════════════════════
+//  WARD COVER
+// ════════════════════════════════════════════════════
+function renderLbWardCover(el) {
+  const entries = getLbEntries("ward_cover");
+  const totalMonths = entries.reduce((acc,e) => acc + (parseFloat(e.months)||0), 0);
+  const TARGET = 12;
+  const pct = Math.min(100, Math.round((totalMonths / TARGET) * 100));
+
+  const sumDiv = document.createElement("div");
+  sumDiv.style.cssText = "display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;";
+  sumDiv.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${totalMonths>=TARGET?'var(--green)':'var(--gim)'};padding:12px 16px;flex:1;min-width:140px;">
+      <div style="font-size:20px;font-weight:700;color:${totalMonths>=TARGET?'var(--green)':'var(--gim)'};">${Math.round(totalMonths*10)/10}<span style="font-size:11px;color:var(--dim);"> / ${TARGET} months</span></div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">IM WARD COVER · CUMULATIVE</div>
+      <div style="height:3px;background:var(--blue5);margin-top:6px;border-radius:2px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${totalMonths>=TARGET?'var(--green)':'var(--gim)'};"></div>
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--dim);padding:12px 16px;flex:1;min-width:140px;">
+      <div style="font-size:20px;font-weight:700;color:var(--blue);">${entries.length}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">PLACEMENTS LOGGED</div>
+    </div>`;
+  el.appendChild(sumDiv);
+
+  // Add form
+  const formWrap = document.createElement("div");
+  formWrap.style.cssText = "margin-bottom:20px;";
+  const head = document.createElement("div");
+  head.className = "sec-head";
+  head.innerHTML = `<span class="sec-title" style="color:var(--gim)">ADD WARD COVER PLACEMENT</span><span class="sec-rule"></span>`;
+  formWrap.appendChild(head);
+
+  const form = document.createElement("div");
+  form.style.cssText = "background:var(--bg2);border:1px solid var(--blue5);border-top:2px solid var(--gim);padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:8px;";
+  form.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Hospital</label>
+      <input class="req-input" id="wc-hospital" type="text" placeholder="e.g. Rotherham DGH" style="width:100%;" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Start Date</label>
+      <input class="req-input date-inp" id="wc-start" type="date" style="width:100%;" oninput="calcWardCoverMonths()" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── End Date</label>
+      <input class="req-input date-inp" id="wc-end" type="date" style="width:100%;" oninput="calcWardCoverMonths()" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Months in Post</label>
+      <input class="req-input" id="wc-months" type="number" style="width:100%;color:var(--green);" readonly />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Training Year</label>
+      <select class="req-input" id="wc-year" style="width:100%;padding:4px 8px;">
+        ${["ST4","ST5","ST6","ST7"].map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join("")}
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Educational Supervisor</label>
+      <input class="req-input" id="wc-supervisor" type="text" placeholder="Name" style="width:100%;" />
+    </div>
+    <div style="grid-column:1/-1;display:flex;justify-content:flex-end;margin-top:4px;">
+      <button class="btn-reset" style="border-color:var(--gim);color:var(--gim);" onclick="saveWardCover()">ADD ENTRY ▸</button>
+    </div>`;
+  formWrap.appendChild(form);
+  el.appendChild(formWrap);
+
+  // Entries table
+  const secHead = document.createElement("div");
+  secHead.className = "sec-head";
+  secHead.style.marginTop = "16px";
+  secHead.innerHTML = `<span class="sec-title" style="color:var(--gim)">WARD COVER LOG</span><span class="sec-rule"></span><span class="sec-note">${entries.length} placements · ${Math.round(totalMonths*10)/10} months total</span>`;
+  el.appendChild(secHead);
+
+  if (!entries.length) {
+    const empty = document.createElement("div");
+    empty.style.cssText = "font-size:9px;color:var(--dim);padding:10px 0;";
+    empty.textContent = "// no entries logged yet";
+    el.appendChild(empty);
+    return;
+  }
+
+  const table = document.createElement("div");
+  table.style.cssText = "border:1px solid var(--blue5);overflow:hidden;";
+  const hdr = document.createElement("div");
+  hdr.style.cssText = "display:flex;background:var(--bg3);border-bottom:1px solid var(--blue5);padding:5px 10px;gap:8px;";
+  hdr.innerHTML = `
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;flex:1;">HOSPITAL</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:90px;">START</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:90px;">END</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:60px;">MONTHS</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:120px;">SUPERVISOR</span>
+    <span style="font-size:8px;color:var(--blue3);letter-spacing:0.1em;min-width:30px;text-align:right;">DEL</span>`;
+  table.appendChild(hdr);
+
+  entries.forEach((e, i) => {
+    const row = document.createElement("div");
+    row.style.cssText = `display:flex;align-items:center;padding:6px 10px;gap:8px;border-bottom:1px solid var(--blue5);border-left:3px solid var(--gim);background:${i%2===0?'var(--bg2)':'var(--bg3)'};`;
+    const fmtD = d => d ? new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+    row.innerHTML = `
+      <span style="font-size:10px;color:#c8d8ff;flex:1;">${e.hospital||"—"}</span>
+      <span style="font-size:9px;color:var(--dim);min-width:90px;">${fmtD(e.start)}</span>
+      <span style="font-size:9px;color:var(--dim);min-width:90px;">${fmtD(e.end)}</span>
+      <span style="font-size:11px;color:var(--green);min-width:60px;font-weight:700;">${Math.round((e.months||0)*10)/10}mo</span>
+      <span style="font-size:9px;color:var(--dim);min-width:120px;">${e.supervisor||"—"}</span>`;
+    const delBtn = document.createElement("button");
+    delBtn.style.cssText = "background:none;border:none;color:var(--dim);font-family:var(--font);font-size:10px;padding:0 4px;cursor:pointer;min-width:30px;text-align:right;";
+    delBtn.textContent = "✕";
+    delBtn.onmouseover = () => delBtn.style.color = "var(--red)";
+    delBtn.onmouseout  = () => delBtn.style.color = "var(--dim)";
+    delBtn.onclick = () => {
+      if (confirm("Delete this entry?")) {
+        deleteLbEntry("ward_cover", e.id);
+        syncWardCover();
+        renderLogbook();
+        updateReadiness();
+      }
+    };
+    row.appendChild(delBtn);
+    table.appendChild(row);
+  });
+  el.appendChild(table);
+}
+
+function calcWardCoverMonths() {
+  const start = document.getElementById("wc-start")?.value;
+  const end   = document.getElementById("wc-end")?.value;
+  if (!start || !end) return;
+  const s = new Date(start); const e = new Date(end);
+  const months = Math.round(((e - s) / (1000 * 60 * 60 * 24 * 30.44)) * 10) / 10;
+  const mEl = document.getElementById("wc-months");
+  if (mEl) mEl.value = Math.max(0, months);
+}
+
+function saveWardCover() {
+  const hospital   = document.getElementById("wc-hospital")?.value.trim();
+  const start      = document.getElementById("wc-start")?.value;
+  const end        = document.getElementById("wc-end")?.value;
+  const months     = parseFloat(document.getElementById("wc-months")?.value || 0);
+  const year       = document.getElementById("wc-year")?.value;
+  const supervisor = document.getElementById("wc-supervisor")?.value.trim();
+
+  if (!hospital || !start || !end) { alert("Please fill in hospital, start and end date."); return; }
+
+  addLbEntry("ward_cover", { hospital, start, end, months, year, supervisor, date: start });
+  syncWardCover();
+  renderLogbook();
+  updateReadiness();
+}
+
+function syncWardCover() {
+  const entries = getLbEntries("ward_cover");
+  const total   = Math.round(entries.reduce((acc,e) => acc + (parseFloat(e.months)||0), 0) * 10) / 10;
+  const cumK    = sKey("gim_ward_cover");
+  localStorage.setItem(cumK, String(total));
+  fbPush(cumK, total);
+}
 // ════════════════════════════════════════════════════
 //  SHARED HELPERS
 // ════════════════════════════════════════════════════
@@ -1967,7 +2953,9 @@ async function sendLogbookReport(auto) {
       body: JSON.stringify(payload),
     });
     // no-cors means we can't read response — assume success
-    localStorage.setItem("pft_lb_last_sent", String(Date.now()));
+    const sentTs = Date.now();
+    localStorage.setItem("pft_lb_last_sent", String(sentTs));
+    fbPush("pft_lb_last_sent", sentTs);
     if (!auto) {
       alert("✓ Report sent for " + currentYear + "! Check your Gmail in a few seconds.");
       if (currentTab === "logbook") renderLogbook();
@@ -1993,11 +2981,13 @@ function printLogbookReport() {
     const p = d.split("-");
     return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : d;
   };
-  const filterByYear = entries => entries.filter(e => {
+    const filterByYear = entries => entries.filter(e => {
     if (e.year) return e.year === yr;
     if (!e.date) return true;
     return new Date(e.date).getFullYear() === yearMap[yr];
   });
+
+
 
   const gimClinics   = getLbEntries("clinics_gim");
   const renalClinics = filterByYear(getLbEntries("clinics_renal"));
@@ -2010,10 +3000,17 @@ function printLogbookReport() {
   const totalSimHrs  = simulation.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
   const st7SimHrs    = simulation.filter(e => e.year==="ST7").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
 
-  const totalCpdHrs  = gimCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
-  const onlineHrs    = gimCpd.filter(e => e.type==="Online CPD (approved)").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const GIM_COUNTED_TYPES = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
+  const onlineHrs    = gimCpd.filter(e => e.type==="Online CPD").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
   const onlineCapped = Math.min(onlineHrs, 15);
-  const countedTotal = (totalCpdHrs - onlineHrs) + onlineCapped;
+  const externalHrs  = gimCpd.filter(e => GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const countedTotal = externalHrs + onlineCapped;
+  const renalCpdHrs    = renalCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const gimAllHrs      = gimCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const combinedCpdHrs = gimAllHrs + renalCpdHrs;
+
+
+
 
   const tbl = (headers, rows, accentColor) => {
     if (!rows.length) return `<p class="empty-note">No entries logged</p>`;
@@ -2110,7 +3107,9 @@ function printLogbookReport() {
     <div class="sum-box" style="--c:#5b21b6"><div class="num">${renalClinics.length}</div><div class="key">Renal Clinics (${yr})</div></div>
     <div class="sum-box" style="--c:#166534"><div class="num">${renalProcs.length + gimProcs.length}</div><div class="key">Procedures (${yr})</div></div>
     <div class="sum-box" style="--c:#92400e"><div class="num">${teaching.length}</div><div class="key">Teaching (${yr})</div></div>
-    <div class="sum-box" style="--c:#0e7490"><div class="num">${totalSimHrs.toFixed(1)}h</div><div class="key">Simulation (total)</div></div>
+    <div class="sum-box" style="--c:#166534"><div class="num">${Math.round(combinedCpdHrs)}h</div><div class="key">CPD — GIM + Renal (${yr})</div></div>
+    <div class="sum-box" style="--c:#0e7490"><div class="num">${Math.round(totalSimHrs)}h</div><div class="key">Simulation (total)</div></div>
+
   </div>
 
   ${secHead("Clinics")}
@@ -2138,16 +3137,19 @@ function printLogbookReport() {
     <strong>GIM CPD Summary:</strong> &nbsp;
     Counted total: <strong style="color:#003087">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
     Online: <strong>${onlineCapped.toFixed(1)}h</strong> / 15h max &nbsp;·&nbsp;
-    External: <strong>${(totalCpdHrs-onlineHrs).toFixed(1)}h</strong>
+    External: <strong>${externalHrs.toFixed(1)}h</strong>
+
+
   </div>
+    ${subHead(badge("GIM","badge-gim"), `${gimCpd.length} total entries · all years · cumulative target 100h`)}
+  ${tbl(["Date","Type","Title / Event","Hours","Year","Notes"],
+    gimCpd.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.title,e.hours?e.hours+"h":"—",e.year||"—",e.notes]),
+    "#003087")}
   ${subHead(badge("Renal","badge-renal"), `${renalCpd.length} entries · ${yr}`)}
   ${tbl(["Date","Type","Title / Event","Hours","Notes"],
     renalCpd.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.title,e.hours?e.hours+"h":"—",e.notes]),
     "#5b21b6")}
-  ${subHead(badge("GIM","badge-gim"), `${gimCpd.length} total entries · all years · cumulative target 100h`)}
-  ${tbl(["Date","Type","Title / Event","Hours","Year","Notes"],
-    gimCpd.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.title,e.hours?e.hours+"h":"—",e.year||"—",e.notes]),
-    "#003087")}
+
 
   ${secHead("Simulation")}
   <div class="cpd-summary">
@@ -2165,6 +3167,35 @@ function printLogbookReport() {
   ${tbl(["Date","Type","Topic","Audience","Observed by","Sign-off","Notes"],
     teaching.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.topic,e.audience,e.supervisor||"—",e.signoff,e.notes]),
     "#92400e")}
+
+  ${secHead("Acute Take (Firth Calculator)")}
+  <div class="cpd-summary">
+    <strong>Acute Take Summary:</strong> &nbsp;
+    Estimated total: <strong style="color:#003087">${Math.round(getLbEntries("acute_take").reduce((a,e)=>a+(parseFloat(e.estimated)||0),0))}</strong> / 750 patients
+  </div>
+  ${subHead(badge("GIM","badge-gim"), `${getLbEntries("acute_take").length} placements · all years`)}
+  ${tbl(["Hospital","Start","End","Months","Takes/mo","Pts/Take","Est. Patients","Year","Supervisor"],
+    getLbEntries("acute_take").sort((a,b)=>(b.start||"").localeCompare(a.start||"")).map(e=>[
+      e.hospital,fmt(e.start),fmt(e.end),e.months?e.months+"mo":"—",
+      e.takes||"—",e.patients||"—",
+      `<strong>${Math.round(e.estimated||0)}</strong>`,
+      e.year||"—",e.supervisor||"—"
+    ]),
+    "#003087")}
+
+  ${secHead("Ward Cover")}
+  <div class="cpd-summary">
+    <strong>Ward Cover Summary:</strong> &nbsp;
+    Total: <strong style="color:#003087">${Math.round(getLbEntries("ward_cover").reduce((a,e)=>a+(parseFloat(e.months)||0),0)*10)/10}</strong> / 12 months
+  </div>
+  ${subHead(badge("GIM","badge-gim"), `${getLbEntries("ward_cover").length} placements · all years`)}
+  ${tbl(["Hospital","Start","End","Months","Year","Supervisor"],
+    getLbEntries("ward_cover").sort((a,b)=>(b.start||"").localeCompare(a.start||"")).map(e=>[
+      e.hospital,fmt(e.start),fmt(e.end),
+      e.months?e.months+"mo":"—",
+      e.year||"—",e.supervisor||"—"
+    ]),
+    "#003087")}
 
   <div class="doc-footer">
     <span>ARCP Portfolio Tracker · Auto-generated document</span>
