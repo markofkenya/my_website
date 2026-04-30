@@ -1893,16 +1893,16 @@ function renderLbClinics(el) {
   const gimTarget = REQS["gim_clinics"].target;
   const gimPct    = Math.min(100, Math.round((gimEntries.length / gimTarget) * 100));
   sumDiv.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--renal);padding:12px 16px;flex:1;min-width:140px;">
+      <div style="font-size:20px;font-weight:700;color:var(--renal);">${renalEntries.length}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">RENAL CLINICS · LOG ONLY</div>
+    </div>
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--gim);padding:12px 16px;flex:1;min-width:140px;">
       <div style="font-size:20px;font-weight:700;color:var(--gim);">${gimEntries.length}<span style="font-size:11px;color:var(--dim);"> / ${gimTarget}</span></div>
       <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">GIM CLINICS · CUMULATIVE</div>
       <div style="height:3px;background:var(--blue5);margin-top:6px;border-radius:2px;overflow:hidden;">
         <div style="height:100%;width:${gimPct}%;background:var(--gim);"></div>
       </div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--renal);padding:12px 16px;flex:1;min-width:140px;">
-      <div style="font-size:20px;font-weight:700;color:var(--renal);">${renalEntries.length}</div>
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">RENAL CLINICS · LOG ONLY</div>
     </div>`;
   el.appendChild(sumDiv);
 
