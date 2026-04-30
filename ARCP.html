@@ -1873,7 +1873,7 @@ function renderLbAcuteTake(el) {
     <div style="display:flex;flex-direction:column;gap:4px;">
       <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Training Year</label>
       <select class="req-input" id="at-year" style="width:100%;padding:4px 8px;">
-        <option>ST4</option><option>ST5</option><option>ST6</option><option>ST7</option>
+        ${["ST4","ST5","ST6","ST7"].map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join("")}
       </select>
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;">
@@ -2044,7 +2044,7 @@ function renderLbWardCover(el) {
     <div style="display:flex;flex-direction:column;gap:4px;">
       <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Training Year</label>
       <select class="req-input" id="wc-year" style="width:100%;padding:4px 8px;">
-        <option>ST4</option><option>ST5</option><option>ST6</option><option>ST7</option>
+        ${["ST4","ST5","ST6","ST7"].map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join("")}
       </select>
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;">
