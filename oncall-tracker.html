@@ -1028,10 +1028,12 @@ function openHandover() {
     pending.forEach((t, i) => {
       const icon    = PRI_ICON[t.priority] || "── ";
       const pri     = (t.priority||"routine").toUpperCase();
-      const patient = `${t.patient||"?"}${t.dobYear?" (age "+(new Date().getFullYear()-parseInt(t.dobYear))+")":""}${t.remindAt?" [due:"+String(new Date(t.remindAt).getHours()).padStart(2,"0")+":"+String(new Date(t.remindAt).getMinutes()).padStart(2,"0")+"]":""}`;
+      const patient = `${t.patient||"?"}${t.dobYear?" (age "+(new Date().getFullYear()-parseInt(t.dobYear))+")":""}`;
       const type    = (t.type||"other").toUpperCase();
       const time    = t.timeIn || "??:??";
-      out += `\n  ${icon} [${pri}] ${patient} :: ${type} :: @${time}\n`;
+      const dueStr = t.remindAt ? String(new Date(t.remindAt).getHours()).padStart(2,"0")+":"+String(new Date(t.remindAt).getMinutes()).padStart(2,"0") : time;
+      out += `\n  ${icon} [${pri}] ${patient} :: ${type} :: @${dueStr}\n`;
+
       out += `     TASK   : ${t.task}\n`;
       if (t.location) out += `     WARD   : ${t.location}\n`;
       if (t.notes)    out += `     NOTES  : ${t.notes}\n`;
@@ -1044,11 +1046,12 @@ function openHandover() {
     out += `  COMPLETED JOBS (${completed.length})\n`;
     out += `${d}\n`;
     completed.forEach(t => {
-      const patient = `${t.patient||"?"}${t.dobYear?" (age "+(new Date().getFullYear()-parseInt(t.dobYear))+")":""}${t.remindAt?" [due:"+String(new Date(t.remindAt).getHours()).padStart(2,"0")+":"+String(new Date(t.remindAt).getMinutes()).padStart(2,"0")+"]":""}`;
+      const patient = `${t.patient||"?"}${t.dobYear?" (age "+(new Date().getFullYear()-parseInt(t.dobYear))+")":""}`;
 
       const type    = (t.type||"other").toUpperCase();
       const time    = t.timeIn || "??:??";
-      out += `\n  ✓  [DONE] ${patient} :: ${type} :: @${time}\n`;
+      const dueStr = t.remindAt ? String(new Date(t.remindAt).getHours()).padStart(2,"0")+":"+String(new Date(t.remindAt).getMinutes()).padStart(2,"0") : time;
+      out += `\n  ${icon} [${pri}] ${patient} :: ${type} :: @${dueStr}\n`;
       out += `     TASK   : ${t.task}\n`;
       if (t.notes) out += `     NOTES  : ${t.notes}\n`;
     });
@@ -1256,7 +1259,7 @@ function buildRow(task) {
         const mm = String(due.getMinutes()).padStart(2,"0");
         return `<div class="time-str" style="color:${overdue?'#ff4444':'var(--amber4)'}">DUE ${hh}:${mm}${overdue?'!!':''}</div>`;
       })():`<div class="time-str">${fmtTime(task.timeIn)}</div>`}
-      <div class="time-age" id="age-${task.id}">${timeAgo(task.timeIn)}</div>
+      
     </td>
 
     <td class="td-actions">
