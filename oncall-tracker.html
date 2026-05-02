@@ -628,10 +628,15 @@
       <label class="lbl">patient_id *</label>
       <input class="inp" id="f-patient" placeholder="JD" maxlength="8" />
     </div>
-    <div class="field">
+        <div class="field">
       <label class="lbl">dob_year</label>
       <input class="inp" id="f-dobyear" placeholder="1958" type="number" maxlength="4" />
     </div>
+    <div class="field">
+      <label class="lbl">due_by</label>
+      <input class="inp" id="f-dueby" type="time" />
+    </div>
+
     <div class="field">
       <label class="lbl">location</label>
       <input class="inp no-caps" id="f-location" placeholder="Ward 5B" maxlength="20" />
@@ -874,7 +879,8 @@ function openDrawer(taskId) {
     selType = typeObj(task.type);
     setPriority(selPriority);
   } else {
-    ["f-patient","f-dobyear","f-location","f-task","f-notes"].forEach(id=>document.getElementById(id).value="");
+        ["f-patient","f-dobyear","f-location","f-task","f-notes","f-dueby"].forEach(id=>document.getElementById(id).value="");
+
     document.getElementById("f-time").value   = nowTimeStr();
     selPriority = "routine";
     selType = JOB_TYPES[0];
@@ -924,6 +930,7 @@ function saveJob() {
   const payload = {
     patient,
     dobYear:  document.getElementById("f-dobyear").value || "",
+    dueBy:    document.getElementById("f-dueby").value || "",
     location: document.getElementById("f-location").value.trim(),
     timeIn:   document.getElementById("f-time").value,
     priority: selPriority,
@@ -974,7 +981,9 @@ function toggleExpand(id) {
   document.getElementById("drawer-exec-btn").textContent   = "EXECUTE ▸";
 
   document.getElementById("f-patient").value  = task.patient  || "";
-  document.getElementById("f-dobyear").value  = task.dobYear  || "";
+    document.getElementById("f-dobyear").value  = task.dobYear  || "";
+  document.getElementById("f-dueby").value    = task.dueBy    || "";
+
   document.getElementById("f-location").value = task.location || "";
   document.getElementById("f-time").value     = nowTimeStr();
   document.getElementById("f-task").value     = "";
@@ -1025,7 +1034,8 @@ function openHandover() {
     pending.forEach((t, i) => {
       const icon    = PRI_ICON[t.priority] || "── ";
       const pri     = (t.priority||"routine").toUpperCase();
-      const patient = `${t.patient}${t.dobYear?" ("+t.dobYear+", age "+(new Date().getFullYear()-parseInt(t.dobYear))+")":""}`;
+      const patient = `${t.patient||"?"}${t.dobYear?" (age "+(new Date().getFullYear()-parseInt(t.dobYear))+")":""}${t.dueBy?" [due:"+t.dueBy+"]":""}`;
+
       const type    = (t.type||"other").toUpperCase();
       const time    = t.timeIn || "??:??";
       out += `\n  ${icon} [${pri}] ${patient} :: ${type} :: @${time}\n`;
@@ -1041,7 +1051,8 @@ function openHandover() {
     out += `  COMPLETED JOBS (${completed.length})\n`;
     out += `${d}\n`;
     completed.forEach(t => {
-      const patient = `${t.patient}${t.dobYear?" ("+t.dobYear+", age "+(new Date().getFullYear()-parseInt(t.dobYear))+")":""}`;
+      const patient = `${t.patient||"?"}${t.dobYear?" (age "+(new Date().getFullYear()-parseInt(t.dobYear))+")":""}${t.dueBy?" [due:"+t.dueBy+"]":""}`;
+
       const type    = (t.type||"other").toUpperCase();
       const time    = t.timeIn || "??:??";
       out += `\n  ✓  [DONE] ${patient} :: ${type} :: @${time}\n`;
@@ -1231,7 +1242,15 @@ function buildRow(task) {
     </td>
     <td class="td-patient">
       <div class="patient-str">${esc(task.patient||"?")}</div>
-      ${task.dobYear?`<div style="font-size:9px;color:var(--amber4)">${esc(task.dobYear)} · age ${new Date().getFullYear() - parseInt(task.dobYear)}</div>`:""}
+      ${task.dobYear?`<div style="font-size:9px;color:var(--amber4)">DOB: ${esc(task.dobYear)} · age ${new Date().getFullYear() - parseInt(task.dobYear)}</div>`:""}
+${task.dueBy?(()=>{
+  const [h,m] = task.dueBy.split(":").map(Number);
+  const now = new Date();
+  const due = new Date(); due.setHours(h,m,0,0);
+  const overdue = now > due;
+  return `<div style="font-size:9px;font-weight:700;color:${overdue?'#ff4444':'var(--amber4)'}">DUE: ${task.dueBy}${overdue?' !! OVERDUE':''}</div>`;
+})():""}
+
       ${task.location?`<div style="font-size:9px;color:var(--amber4)">${esc(task.location)}</div>`:""}
       ${task.oncall?`<div style="font-size:9px;color:var(--amber4)">${esc(task.oncall)}</div>`:""}
     </td>
