@@ -1102,7 +1102,7 @@ function copyHandover() {
 
 function emailHandover() {
   const btn  = document.getElementById("email-btn");
-  const text = generateHandover();
+  const text = document.getElementById("ho-text").textContent;
   btn.textContent = "SENDING...";
   btn.style.opacity = "0.6";
 
