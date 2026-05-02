@@ -1236,20 +1236,10 @@ function buildRow(task) {
     <td class="td-patient">
       <div class="patient-str">${esc(task.patient||"?")}</div>
       ${task.dobYear?`<div style="font-size:9px;color:var(--amber4)">DOB: ${esc(task.dobYear)} · age ${new Date().getFullYear() - parseInt(task.dobYear)}</div>`:""}
-
-${task.remindAt?(()=>{
-  const due = new Date(task.remindAt);
-  const now = new Date();
-  const overdue = !task.reminded && now > due;
-  const hh = String(due.getHours()).padStart(2,"0");
-  const mm = String(due.getMinutes()).padStart(2,"0");
-  return `<div style="font-size:9px;font-weight:700;color:${overdue?'#ff4444':'var(--amber4)'}">DUE: ${hh}:${mm}${overdue?' !! OVERDUE':''}</div>`;
-})():""}
-
-
       ${task.location?`<div style="font-size:9px;color:var(--amber4)">${esc(task.location)}</div>`:""}
       ${task.oncall?`<div style="font-size:9px;color:var(--amber4)">${esc(task.oncall)}</div>`:""}
     </td>
+
     <td class="td-type">
       <span class="type-pill" style="border-color:${t.color};color:${t.color}">${t.label}</span>
     </td>
@@ -1258,9 +1248,17 @@ ${task.remindAt?(()=>{
       ${task.notes?`<div class="task-notes">// ${esc(task.notes)}</div>`:""}
     </td>
     <td class="td-time">
-      <div class="time-str">${fmtTime(task.timeIn)}</div>
+      ${task.remindAt?(()=>{
+        const due = new Date(task.remindAt);
+        const now = new Date();
+        const overdue = !task.reminded && now > due;
+        const hh = String(due.getHours()).padStart(2,"0");
+        const mm = String(due.getMinutes()).padStart(2,"0");
+        return `<div class="time-str" style="color:${overdue?'#ff4444':'var(--amber4)'}">DUE ${hh}:${mm}${overdue?'!!':''}</div>`;
+      })():`<div class="time-str">${fmtTime(task.timeIn)}</div>`}
       <div class="time-age" id="age-${task.id}">${timeAgo(task.timeIn)}</div>
     </td>
+
     <td class="td-actions">
       ${!task.completed?`
         <button class="edt" onclick="openDrawer('${task.id}')">EDIT</button>
