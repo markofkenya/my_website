@@ -633,11 +633,6 @@
       <input class="inp" id="f-dobyear" placeholder="1958" type="number" maxlength="4" />
     </div>
     <div class="field">
-      <label class="lbl">due_by</label>
-      <input class="inp" id="f-dueby" type="time" />
-    </div>
-
-    <div class="field">
       <label class="lbl">location</label>
       <input class="inp no-caps" id="f-location" placeholder="Ward 5B" maxlength="20" />
     </div>
@@ -879,7 +874,7 @@ function openDrawer(taskId) {
     selType = typeObj(task.type);
     setPriority(selPriority);
   } else {
-        ["f-patient","f-dobyear","f-location","f-task","f-notes","f-dueby"].forEach(id=>document.getElementById(id).value="");
+        ["f-patient","f-dobyear","f-location","f-task","f-notes"].forEach(id=>document.getElementById(id).value="");
 
     document.getElementById("f-time").value   = nowTimeStr();
     selPriority = "routine";
@@ -930,7 +925,6 @@ function saveJob() {
   const payload = {
     patient,
     dobYear:  document.getElementById("f-dobyear").value || "",
-    dueBy:    document.getElementById("f-dueby").value || "",
     location: document.getElementById("f-location").value.trim(),
     timeIn:   document.getElementById("f-time").value,
     priority: selPriority,
@@ -982,7 +976,7 @@ function toggleExpand(id) {
 
   document.getElementById("f-patient").value  = task.patient  || "";
     document.getElementById("f-dobyear").value  = task.dobYear  || "";
-  document.getElementById("f-dueby").value    = task.dueBy    || "";
+  
 
   document.getElementById("f-location").value = task.location || "";
   document.getElementById("f-time").value     = nowTimeStr();
@@ -1034,8 +1028,7 @@ function openHandover() {
     pending.forEach((t, i) => {
       const icon    = PRI_ICON[t.priority] || "── ";
       const pri     = (t.priority||"routine").toUpperCase();
-      const patient = `${t.patient||"?"}${t.dobYear?" (age "+(new Date().getFullYear()-parseInt(t.dobYear))+")":""}${t.dueBy?" [due:"+t.dueBy+"]":""}`;
-
+      const patient = `${t.patient||"?"}${t.dobYear?" (age "+(new Date().getFullYear()-parseInt(t.dobYear))+")":""}${t.remindAt?" [due:"+String(new Date(t.remindAt).getHours()).padStart(2,"0")+":"+String(new Date(t.remindAt).getMinutes()).padStart(2,"0")+"]":""}`;
       const type    = (t.type||"other").toUpperCase();
       const time    = t.timeIn || "??:??";
       out += `\n  ${icon} [${pri}] ${patient} :: ${type} :: @${time}\n`;
@@ -1051,7 +1044,7 @@ function openHandover() {
     out += `  COMPLETED JOBS (${completed.length})\n`;
     out += `${d}\n`;
     completed.forEach(t => {
-      const patient = `${t.patient||"?"}${t.dobYear?" (age "+(new Date().getFullYear()-parseInt(t.dobYear))+")":""}${t.dueBy?" [due:"+t.dueBy+"]":""}`;
+      const patient = `${t.patient||"?"}${t.dobYear?" (age "+(new Date().getFullYear()-parseInt(t.dobYear))+")":""}${t.remindAt?" [due:"+String(new Date(t.remindAt).getHours()).padStart(2,"0")+":"+String(new Date(t.remindAt).getMinutes()).padStart(2,"0")+"]":""}`;
 
       const type    = (t.type||"other").toUpperCase();
       const time    = t.timeIn || "??:??";
@@ -1243,13 +1236,16 @@ function buildRow(task) {
     <td class="td-patient">
       <div class="patient-str">${esc(task.patient||"?")}</div>
       ${task.dobYear?`<div style="font-size:9px;color:var(--amber4)">DOB: ${esc(task.dobYear)} · age ${new Date().getFullYear() - parseInt(task.dobYear)}</div>`:""}
-${task.dueBy?(()=>{
-  const [h,m] = task.dueBy.split(":").map(Number);
+
+${task.remindAt?(()=>{
+  const due = new Date(task.remindAt);
   const now = new Date();
-  const due = new Date(); due.setHours(h,m,0,0);
-  const overdue = now > due;
-  return `<div style="font-size:9px;font-weight:700;color:${overdue?'#ff4444':'var(--amber4)'}">DUE: ${task.dueBy}${overdue?' !! OVERDUE':''}</div>`;
+  const overdue = !task.reminded && now > due;
+  const hh = String(due.getHours()).padStart(2,"0");
+  const mm = String(due.getMinutes()).padStart(2,"0");
+  return `<div style="font-size:9px;font-weight:700;color:${overdue?'#ff4444':'var(--amber4)'}">DUE: ${hh}:${mm}${overdue?' !! OVERDUE':''}</div>`;
 })():""}
+
 
       ${task.location?`<div style="font-size:9px;color:var(--amber4)">${esc(task.location)}</div>`:""}
       ${task.oncall?`<div style="font-size:9px;color:var(--amber4)">${esc(task.oncall)}</div>`:""}
