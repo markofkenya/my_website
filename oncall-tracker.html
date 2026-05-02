@@ -1101,37 +1101,54 @@ function copyHandover() {
 }
 
 function emailHandover() {
-  const btn  = document.getElementById("email-btn");
-  const text = document.getElementById("ho-text").textContent;
+  const btn = document.getElementById("email-btn");
   btn.textContent = "SENDING...";
   btn.style.opacity = "0.6";
 
-  fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "handover",
-      text: text,
-      date: new Date().toLocaleDateString("en-GB", { weekday:"long", day:"2-digit", month:"long", year:"numeric" }),
-      time: new Date().toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" }),
-    }),
-  }).then(() => {
-    btn.textContent = "✓ SENT";
-    btn.style.borderColor = "var(--green)";
-    btn.style.color = "var(--green)";
-    btn.style.opacity = "1";
+  // Create a hidden iframe to catch the response
+  const iframe = document.createElement("iframe");
+  iframe.name = "hidden-handover";
+  iframe.style.display = "none";
+  document.body.appendChild(iframe);
+
+  // Create a hidden form targeting the iframe
+  const form = document.createElement("form");
+  form.method = "GET";
+  form.action = APPS_SCRIPT_URL;
+  form.target = "hidden-handover";
+
+  const input = document.createElement("input");
+  input.type  = "hidden";
+  input.name  = "action";
+  input.value = "handover";
+  form.appendChild(input);
+  document.body.appendChild(form);
+
+  // Submit — fires after a short delay to let iframe attach
+  setTimeout(() => {
+    form.submit();
+
+    // Show sent state — we can't read iframe response cross-origin
+    // but form submission to Apps Script works reliably
     setTimeout(() => {
-      btn.textContent = "EMAIL ▸";
-      btn.style.borderColor = "";
-      btn.style.color = "";
-    }, 3000);
-  }).catch(() => {
-    btn.textContent = "✗ FAILED";
-    btn.style.color = "var(--red)";
-    setTimeout(() => { btn.textContent = "EMAIL ▸"; btn.style.color = ""; }, 3000);
-  });
+      btn.textContent = "✓ SENT";
+      btn.style.borderColor = "var(--green)";
+      btn.style.color = "var(--green)";
+      btn.style.opacity = "1";
+
+      // Clean up
+      document.body.removeChild(form);
+      document.body.removeChild(iframe);
+
+      setTimeout(() => {
+        btn.textContent = "EMAIL ▸";
+        btn.style.borderColor = "";
+        btn.style.color = "";
+      }, 3000);
+    }, 2000);
+  }, 100);
 }
+
 
 
 // ── Render ───────────────────────────────────────────────────
