@@ -1051,9 +1051,12 @@ function openHandover() {
       const type    = (t.type||"other").toUpperCase();
       const time    = t.timeIn || "??:??";
       const dueStr = t.remindAt ? String(new Date(t.remindAt).getHours()).padStart(2,"0")+":"+String(new Date(t.remindAt).getMinutes()).padStart(2,"0") : time;
-      out += `\n  ${icon} [${pri}] ${patient} :: ${type} :: @${dueStr}\n`;
+      const cIcon = "✓ ";
+      const cPri  = (t.priority||"routine").toUpperCase();
+      out += `\n  ${cIcon} [${cPri}] ${patient} :: ${type} :: @${dueStr}\n`;
       out += `     TASK   : ${t.task}\n`;
       if (t.notes) out += `     NOTES  : ${t.notes}\n`;
+  
     });
     out += `\n${d}\n\n`;
   }
@@ -1102,7 +1105,7 @@ function copyHandover() {
 
 function emailHandover() {
   const btn  = document.getElementById("email-btn");
-  const text = generateHandover();
+  const text = document.getElementById("ho-text").textContent;
   btn.textContent = "SENDING...";
   btn.style.opacity = "0.6";
 
