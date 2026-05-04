@@ -2598,59 +2598,61 @@ setTimeout(() => sendLogbookReport(true), 5000);
 // ══════════════════════════════════════════════════════
 //  PRINT REPORT
 // ══════════════════════════════════════════════════════
+ort · TXT
+Copy
+
 function printLogbookReport() {
-const yr = currentYear;
-const yearMap = { ST4:2026, ST5:2027, ST6:2028, ST7:2029 };
-const fmt = d => {
-if (!d) return “—”;
-const p = d.split(”-”);
-return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : d;
-};
-const filterByYear = entries => entries.filter(e => {
-if (e.year) return e.year === yr;
-if (!e.date) return true;
-return new Date(e.date).getFullYear() === yearMap[yr];
-});
-
-const gimClinics   = getLbEntries(“clinics_gim”);
-const renalClinics = filterByYear(getLbEntries(“clinics_renal”));
-const renalProcs   = filterByYear(getLbEntries(“procedures_renal”));
-const gimProcs     = filterByYear(getLbEntries(“procedures_gim”));
-const renalCpd     = filterByYear(getLbEntries(“cpd_renal”));
-const gimCpd       = getLbEntries(“cpd_gim”);
-const teaching     = filterByYear(getLbEntries(“teaching”));
-const simulation   = getLbEntries(“simulation”);
-const totalSimHrs  = simulation.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
-const st7SimHrs    = simulation.filter(e => e.year===“ST7”).reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
-
-const GIM_COUNTED_TYPES = [“Regional GIM training day”,“RCP / RSM / BMA approved course”,“Online CPD”,“Other external CPD”];
-const onlineHrs    = gimCpd.filter(e => e.type===“Online CPD”).reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
-const onlineCapped = Math.min(onlineHrs, 15);
-const externalHrs  = gimCpd.filter(e => GIM_COUNTED_TYPES.includes(e.type) && e.type !== “Online CPD”).reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
-const countedTotal = externalHrs + onlineCapped;
-const renalCpdHrs  = renalCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
-const gimAllHrs    = gimCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
-
-const tbl = (headers, rows, accentColor) => {
-if (!rows.length) return `<p class="empty-note">No entries logged</p>`;
-const ths = headers.map(h => `<th>${h}</th>`).join(””);
-const trs = rows.map((r,i) => `<tr class="${i%2===0?'even':'odd'}">${r.map(c=>`<td>${c||”—”}</td>`).join("")}</tr>`).join(””);
-return `<table><thead style="--ac:${accentColor}"><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
-};
-
-const secHead = (title, stream=“both”) => {
-const cls = stream === “gim” ? “gim” : stream === “renal” ? “renal” : “”;
-return `<div class="section-head"><h2 class="${cls}">${title}</h2><div class="rule"></div></div>`;
-};
-const badge = (t, cls) => `<span class="stream-badge ${cls}">${t}</span>`;
-const note  = (t) => `<span class="badge-note">${t}</span>`;
-const subHead = (badges, noteText) => `<div class="sub-head">${badges} ${note(noteText)}</div>`;
-
-const today = new Date().toLocaleDateString(“en-GB”,{day:“2-digit”,month:“2-digit”,year:“numeric”}).replace(///g,”-”);
-const fullDate = new Date().toLocaleDateString(“en-GB”,{weekday:“long”,day:“2-digit”,month:“long”,year:“numeric”});
-
-const html = `<!DOCTYPE html>
-
+  const yr = currentYear;
+  const yearMap = { ST4:2026, ST5:2027, ST6:2028, ST7:2029 };
+  const fmt = d => {
+    if (!d) return "—";
+    const p = d.split("-");
+    return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : d;
+  };
+  const filterByYear = entries => entries.filter(e => {
+    if (e.year) return e.year === yr;
+    if (!e.date) return true;
+    return new Date(e.date).getFullYear() === yearMap[yr];
+  });
+ 
+  const gimClinics   = getLbEntries("clinics_gim");
+  const renalClinics = filterByYear(getLbEntries("clinics_renal"));
+  const renalProcs   = filterByYear(getLbEntries("procedures_renal"));
+  const gimProcs     = filterByYear(getLbEntries("procedures_gim"));
+  const renalCpd     = filterByYear(getLbEntries("cpd_renal"));
+  const gimCpd       = getLbEntries("cpd_gim");
+  const teaching     = filterByYear(getLbEntries("teaching"));
+  const simulation   = getLbEntries("simulation");
+  const totalSimHrs  = simulation.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const st7SimHrs    = simulation.filter(e => e.year==="ST7").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+ 
+  const GIM_COUNTED_TYPES = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
+  const onlineHrs    = gimCpd.filter(e => e.type==="Online CPD").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const onlineCapped = Math.min(onlineHrs, 15);
+  const externalHrs  = gimCpd.filter(e => GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const countedTotal = externalHrs + onlineCapped;
+  const renalCpdHrs  = renalCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const gimAllHrs    = gimCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+ 
+  const tbl = (headers, rows, accentColor) => {
+    if (!rows.length) return `<p class="empty-note">No entries logged</p>`;
+    const ths = headers.map(h => `<th>${h}</th>`).join("");
+    const trs = rows.map((r,i) => `<tr class="${i%2===0?'even':'odd'}">${r.map(c=>`<td>${c||"—"}</td>`).join("")}</tr>`).join("");
+    return `<table><thead style="--ac:${accentColor}"><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
+  };
+ 
+  const secHead = (title, stream="both") => {
+    const cls = stream === "gim" ? "gim" : stream === "renal" ? "renal" : "";
+    return `<div class="section-head"><h2 class="${cls}">${title}</h2><div class="rule"></div></div>`;
+  };
+  const badge = (t, cls) => `<span class="stream-badge ${cls}">${t}</span>`;
+  const note  = (t) => `<span class="badge-note">${t}</span>`;
+  const subHead = (badges, noteText) => `<div class="sub-head">${badges} ${note(noteText)}</div>`;
+ 
+  const today = new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"2-digit",year:"numeric"}).replace(/\//g,"-");
+  const fullDate = new Date().toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+ 
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -2706,11 +2708,11 @@ const html = `<!DOCTYPE html>
 </head>
 <body>
 <div class="page">
-
+ 
   <div class="no-print" style="text-align:right;padding:10px 16px;background:#f0f4ff;border-bottom:1px solid #ccd6e8;">
     <button onclick="window.print()" style="background:#003087;color:#fff;border:none;padding:8px 20px;font-size:10pt;cursor:pointer;border-radius:3px;">⎙ Print / Save as PDF</button>
   </div>
-
+ 
   <div class="doc-header">
     <div>
       <h1>ARCP Logbook Report</h1>
@@ -2722,15 +2724,15 @@ const html = `<!DOCTYPE html>
       <div><strong>Programme:</strong> Renal + GIM ST4–ST7</div>
     </div>
   </div>
-
+ 
   <div class="page-inner">
-
+ 
   <div class="info-box">
     <div class="info-cell"><div class="lbl">Programme</div><div class="val">Renal Medicine + GIM</div></div>
     <div class="info-cell"><div class="lbl">Current Year</div><div class="val">${yr}</div></div>
     <div class="info-cell"><div class="lbl">CCT Date</div><div class="val">Dec 2030</div></div>
   </div>
-
+ 
   <div class="summary-strip">
     <div class="sum-box" style="--c:#005EB8"><div class="num">${gimClinics.length}</div><div class="key">GIM Clinics (total)</div></div>
     <div class="sum-box" style="--c:#7c3aed"><div class="num">${renalClinics.length}</div><div class="key">Renal Clinics (${yr})</div></div>
@@ -2739,29 +2741,28 @@ const html = `<!DOCTYPE html>
     <div class="sum-box" style="--c:#005EB8"><div class="num">${Math.round(gimAllHrs + renalCpdHrs)}h</div><div class="key">CPD — GIM + Renal</div></div>
     <div class="sum-box" style="--c:#0e7490"><div class="num">${Math.round(totalSimHrs)}h</div><div class="key">Simulation (total)</div></div>
   </div>
-
-${secHead(“Clinics”,“both”)}
-${subHead(badge(“Renal”,“badge-renal”), `${renalClinics.length} entries · ${yr}`)}
-${tbl([“Date”,“Type”,“Hospital”,“Supervisor”,“Patients”,“Notes”],
-renalClinics.sort((a,b)=>(b.date||””).localeCompare(a.date||””)).map(e=>[fmt(e.date),e.type,e.hospital,e.supervisor,e.patients?e.patients+” pts”:”—”,e.notes]),
-“#7c3aed”)}
-${subHead(badge(“GIM”,“badge-gim”), `${gimClinics.length} total entries · all years · cumulative target 20`)}
-${tbl([“Date”,“Type”,“Hospital”,“Supervisor”,“Patients”,“Year”,“Notes”],
-gimClinics.sort((a,b)=>(b.date||””).localeCompare(a.date||””)).map(e=>[fmt(e.date),e.type,e.hospital,e.supervisor,e.patients?e.patients+” pts”:”—”,e.year||”—”,e.notes]),
-“#005EB8”)}
-
-${secHead(“Procedures”,“both”)}
-${subHead(badge(“Renal”,“badge-renal”), `${renalProcs.length} entries · ${yr}`)}
-${tbl([“Date”,“Procedure”,“Supervisor”,“DOPS”,“Notes”],
-renalProcs.sort((a,b)=>(b.date||””).localeCompare(a.date||””)).map(e=>[fmt(e.date),e.type,e.supervisor,e.dops===“Yes”?’<span class="dops-yes">✓ Yes</span>’:“No”,e.notes]),
-“#7c3aed”)}
-${subHead(badge(“GIM”,“badge-gim”), `${gimProcs.length} entries · ${yr}`)}
-${tbl([“Date”,“Procedure”,“Supervisor”,“DOPS”,“Notes”],
-gimProcs.sort((a,b)=>(b.date||””).localeCompare(a.date||””)).map(e=>[fmt(e.date),e.type,e.supervisor,e.dops===“Yes”?’<span class="dops-yes">✓ Yes</span>’:“No”,e.notes]),
-“#005EB8”)}
-
-${secHead(“CPD / Study Leave”,“both”)}
-
+ 
+  ${secHead("Clinics","both")}
+  ${subHead(badge("Renal","badge-renal"), `${renalClinics.length} entries · ${yr}`)}
+  ${tbl(["Date","Type","Hospital","Supervisor","Patients","Notes"],
+    renalClinics.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.hospital,e.supervisor,e.patients?e.patients+" pts":"—",e.notes]),
+    "#7c3aed")}
+  ${subHead(badge("GIM","badge-gim"), `${gimClinics.length} total entries · all years · cumulative target 20`)}
+  ${tbl(["Date","Type","Hospital","Supervisor","Patients","Year","Notes"],
+    gimClinics.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.hospital,e.supervisor,e.patients?e.patients+" pts":"—",e.year||"—",e.notes]),
+    "#005EB8")}
+ 
+  ${secHead("Procedures","both")}
+  ${subHead(badge("Renal","badge-renal"), `${renalProcs.length} entries · ${yr}`)}
+  ${tbl(["Date","Procedure","Supervisor","DOPS","Notes"],
+    renalProcs.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.supervisor,e.dops==="Yes"?'<span class="dops-yes">✓ Yes</span>':"No",e.notes]),
+    "#7c3aed")}
+  ${subHead(badge("GIM","badge-gim"), `${gimProcs.length} entries · ${yr}`)}
+  ${tbl(["Date","Procedure","Supervisor","DOPS","Notes"],
+    gimProcs.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.supervisor,e.dops==="Yes"?'<span class="dops-yes">✓ Yes</span>':"No",e.notes]),
+    "#005EB8")}
+ 
+  ${secHead("CPD / Study Leave","both")}
   <div class="cpd-summary">
     <strong>GIM CPD Summary:</strong> &nbsp;
     Counted total: <strong style="color:#005EB8">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
@@ -2780,9 +2781,8 @@ ${secHead(“CPD / Study Leave”,“both”)}
   ${tbl(["Date","Type","Title / Event","Hours","Notes"],
     renalCpd.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.title,e.hours?e.hours+"h":"—",e.notes]),
     "#7c3aed")}
-
-${secHead(“Simulation”,“gim”)}
-
+ 
+  ${secHead("Simulation","gim")}
   <div class="cpd-summary">
     <strong>Simulation Summary:</strong> &nbsp;
     Total: <strong style="color:#0e7490">${totalSimHrs.toFixed(1)}h</strong> / 12h &nbsp;·&nbsp;
@@ -2792,15 +2792,14 @@ ${secHead(“Simulation”,“gim”)}
   ${tbl(["Date","Course","Title / Session","Hours","Hospital / Venue","Year","Notes"],
     simulation.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.course,e.title,e.hours?e.hours+"h":"—",e.hospital,e.year||"—",e.notes]),
     "#0e7490")}
-
-${secHead(“Teaching”,“both”)}
-${subHead(””, `${teaching.length} sessions · ${yr}`)}
-${tbl([“Date”,“Type”,“Topic”,“Audience”,“Observed by”,“Sign-off”,“Notes”],
-teaching.sort((a,b)=>(b.date||””).localeCompare(a.date||””)).map(e=>[fmt(e.date),e.type,e.topic,e.audience,e.supervisor||”—”,e.signoff,e.notes]),
-“#92400e”)}
-
-${secHead(“Acute Take (Firth Calculator)”,“gim”)}
-
+ 
+  ${secHead("Teaching","both")}
+  ${subHead("", `${teaching.length} sessions · ${yr}`)}
+  ${tbl(["Date","Type","Topic","Audience","Observed by","Sign-off","Notes"],
+    teaching.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.topic,e.audience,e.supervisor||"—",e.signoff,e.notes]),
+    "#92400e")}
+ 
+  ${secHead("Acute Take (Firth Calculator)","gim")}
   <div class="cpd-summary">
     <strong>Acute Take Summary:</strong> &nbsp;
     Estimated total: <strong style="color:#005EB8">${Math.round(getLbEntries("acute_take").reduce((a,e)=>a+(parseFloat(e.estimated)||0),0))}</strong> / 750 patients
@@ -2814,9 +2813,8 @@ ${secHead(“Acute Take (Firth Calculator)”,“gim”)}
       e.year||"—",e.supervisor||"—"
     ]),
     "#005EB8")}
-
-${secHead(“Ward Cover”,“gim”)}
-
+ 
+  ${secHead("Ward Cover","gim")}
   <div class="cpd-summary">
     <strong>Ward Cover Summary:</strong> &nbsp;
     Total: <strong style="color:#005EB8">${Math.round(getLbEntries("ward_cover").reduce((a,e)=>a+(parseFloat(e.months)||0),0)*10)/10}</strong> / 12 months
@@ -2829,21 +2827,21 @@ ${secHead(“Ward Cover”,“gim”)}
       e.year||"—",e.supervisor||"—"
     ]),
     "#005EB8")}
-
+ 
   <div class="doc-footer">
     <span>ARCP Portfolio Tracker · Auto-generated document</span>
     <span>Generated ${fullDate} · Confidential</span>
   </div>
-
+ 
   </div>
 </div>
 </body>
 </html>`;
-
-const w = window.open(””, “_blank”);
-if (!w) { alert(“Please allow popups for this site to use the print view.”); return; }
-w.document.write(html);
-w.document.close();
+ 
+  const w = window.open("", "_blank");
+  if (!w) { alert("Please allow popups for this site to use the print view."); return; }
+  w.document.write(html);
+  w.document.close();
 }
 </script>
 </body>
