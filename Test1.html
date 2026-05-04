@@ -77,6 +77,14 @@ main{padding:20px 20px 86px}.section{margin-bottom:24px}.sec-head{display:flex;a
 .dops-card{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--dim);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px}
 .dops-card.done{border-left-color:var(--green)}
 .dops-label{font-size:12px;color:var(--text);line-height:1.35}.chk{width:20px;height:20px;border:1px solid var(--line);background:var(--bg4);color:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer}.chk.checked{border-color:var(--green);background:color-mix(in srgb,var(--green) 15%,transparent)}
+
+/* ── BETA TRIAL BANNER / LOCK ───────────────────────── */
+.beta-banner{display:none;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px;background:rgba(251,191,36,.10);border-top:1px solid rgba(251,191,36,.25);border-bottom:1px solid rgba(251,191,36,.35);color:var(--text);font-size:13px;font-weight:800;letter-spacing:.02em}
+.beta-banner.show{display:flex}.beta-banner a{color:var(--primary);text-decoration:none}.beta-banner .muted{color:var(--dim);font-weight:600}.beta-banner .critical{color:var(--red)}
+.beta-close{background:none;border:none;color:var(--dim);font-size:20px;line-height:1;cursor:pointer;padding:0 4px}.beta-close:hover{color:var(--red)}
+#beta-expired-lock{position:fixed;inset:0;background:rgba(8,10,16,.97);z-index:2000;display:none;align-items:center;justify-content:center;padding:22px}
+#beta-expired-lock.show{display:flex}.expired-card{width:min(520px,100%);background:var(--bg2);border:1px solid var(--red);border-top:4px solid var(--red);border-radius:18px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.45);text-align:center}.expired-title{font-size:22px;font-weight:900;color:var(--red);letter-spacing:.08em;margin-bottom:10px;text-transform:uppercase}.expired-msg{font-size:13px;color:var(--text2);line-height:1.8}.expired-msg a{color:var(--primary);font-weight:800}
+body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,10,.28)}
 </style>
 </head>
 <body>
@@ -120,6 +128,17 @@ main{padding:20px 20px 86px}.section{margin-bottom:24px}.sec-head{display:flex;a
     </div>
     <nav class="tabs" id="tabs"></nav>
   </header>
+  <div id="beta-banner" class="beta-banner">
+    <span id="beta-banner-text">🚀 GIMTrack Beta — Free for 1 month</span>
+    <span class="row" style="gap:12px"><a href="mailto:markmaugo@gmail.com?subject=GIMTrack%20Beta%20Feedback">Send feedback</a><button class="beta-close" onclick="dismissBetaBanner()" aria-label="Dismiss beta banner">×</button></span>
+  </div>
+  <div id="beta-expired-lock">
+    <div class="expired-card">
+      <div class="expired-title">Trial expired</div>
+      <div class="expired-msg">Your 30-day GIMTrack beta trial has ended.<br><br>Thank you for testing the ARCP Portfolio Tracker. To continue using this beta account, please contact:<br><br><a href="mailto:markmaugo@gmail.com">markmaugo@gmail.com</a></div>
+    </div>
+  </div>
+
   <main id="main"></main>
   <div class="statusbar">
     <div class="status-left">
@@ -143,6 +162,8 @@ let currentYear = localStorage.getItem("arcp_v2_current_year") || "ST4";
 let currentTab = localStorage.getItem("arcp_v2_tab") || "specialty";
 let logSubTab = "clinics";
 let suppressRemote = false;
+const BETA_TRIAL_DAYS = 30;
+const BETA_FEEDBACK_EMAIL = "markmaugo@gmail.com";
 
 const SPECIALTIES = {
   renal:{ label:"Renal Medicine", short:"Renal", color:"#a78bfa", color2:"#7c5fd4", icon:"◈",
@@ -311,7 +332,7 @@ function populateOnHospitals(){ const d=document.getElementById('on-deanery').va
 function renderBackfill(){ const y=document.getElementById('on-year').value; const wrap=document.getElementById('backfill-panel'); const box=document.getElementById('backfill-years'); if(yrIndex(y)<1){wrap.style.display='none';return;} wrap.style.display='block'; const prev=YEARS.slice(0,yrIndex(y)); box.innerHTML=prev.map(yr=>`<div class="card"><div class="card-title">${yr}</div><select class="input" id="bf-${yr}"><option value="">Do not lock yet</option>${Object.entries(OUTCOMES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select><div class="deadline">Choose Outcome 1/2/6/8 to lock the completed year.</div></div>`).join(''); }
 function saveOnboarding(){
   const dSel=document.getElementById('on-deanery').value; const deanery=dSel==='Other' ? (document.getElementById('on-deanery-other').value.trim()||'Other') : dSel;
-  const themeRaw=document.getElementById('on-theme')?.value||''; const [themeColor,themeColor2]=themeRaw.split('|'); const profile={ name:document.getElementById('on-name').value.trim(), email:document.getElementById('on-email').value.trim(), specialty:document.getElementById('on-specialty').value, trainingYear:document.getElementById('on-year').value, deanery, baseHospital:document.getElementById('on-hospital').value, theme: themeRaw ? {value:themeRaw,color:themeColor,color2:themeColor2||themeColor} : null, createdAt: state.profile?.createdAt || Date.now() };
+  const themeRaw=document.getElementById('on-theme')?.value||''; const [themeColor,themeColor2]=themeRaw.split('|'); const profile={ name:document.getElementById('on-name').value.trim(), email:document.getElementById('on-email').value.trim(), specialty:document.getElementById('on-specialty').value, trainingYear:document.getElementById('on-year').value, deanery, baseHospital:document.getElementById('on-hospital').value, theme: themeRaw ? {value:themeRaw,color:themeColor,color2:themeColor2||themeColor} : null, createdAt: state.profile?.createdAt || Date.now(), betaStart: state.profile?.betaStart || state.profile?.createdAt || Date.now(), betaDays: state.profile?.betaDays || BETA_TRIAL_DAYS };
   state.profile=profile; currentYear=profile.trainingYear; localStorage.setItem('arcp_v2_current_year', currentYear);
   const deaneryHosp=DEANERIES[dSel]||[]; state.hospitals=Array.from(new Set([...(state.hospitals||[]),...deaneryHosp,profile.baseHospital].filter(Boolean).filter(h=>h!=="Other / not listed")));
   YEARS.slice(0,yrIndex(profile.trainingYear)).forEach(yr=>{ const el=document.getElementById(`bf-${yr}`); if(el && el.value) setOutcomeLocal(yr, el.value); });
@@ -321,7 +342,38 @@ function setOutcomeLocal(y,v){ state.years[y]=state.years[y]||{}; state.years[y]
 function openSettings(){ initOnboarding(); document.getElementById('gate').classList.add('show'); }
 function startFreshProfile(){ if(!confirm('Start a fresh test profile on this browser? This clears the local V2 profile and overwrites this anonymous Firebase test user with a blank profile.')) return; state=blankState(); currentYear='ST4'; localStorage.setItem('arcp_v2_current_year','ST4'); saveState(); initOnboarding(); document.getElementById('app').classList.remove('ready'); document.getElementById('gate').classList.add('show'); }
 
-function render(){ if(!state.profile){ initOnboarding(); return; } syncLogbookTargets(); setTheme(); document.getElementById('app').classList.add('ready'); document.getElementById('gate').classList.remove('show'); renderHeader(); renderTabs(); if(currentTab==='specialty') renderSpecialty(); if(currentTab==='gim') renderGIM(); if(currentTab==='logbook') renderLogbook(); if(currentTab==='admin') renderAdmin(); if(currentTab==='overview') renderOverview(); updateReadiness(); }
+function render(){ if(!state.profile){ initOnboarding(); return; } syncLogbookTargets(); setTheme(); document.getElementById('app').classList.add('ready'); document.getElementById('gate').classList.remove('show'); renderHeader(); renderTabs(); const trialExpired = renderBetaTrial(); if(trialExpired){ updateReadiness(); return; } if(currentTab==='specialty') renderSpecialty(); if(currentTab==='gim') renderGIM(); if(currentTab==='logbook') renderLogbook(); if(currentTab==='admin') renderAdmin(); if(currentTab==='overview') renderOverview(); updateReadiness(); forceLiveStatus(); }
+
+function betaTrialInfo(){
+  if(!state.profile) return {expired:false, daysLeft:BETA_TRIAL_DAYS, start:Date.now(), end:Date.now()+BETA_TRIAL_DAYS*86400000};
+  const start = Number(state.profile.betaStart || state.profile.createdAt || Date.now());
+  const days = Number(state.profile.betaDays || BETA_TRIAL_DAYS);
+  const end = start + days * 86400000;
+  const now = Date.now();
+  const daysLeft = Math.ceil((end - now) / 86400000);
+  return {start, end, days, daysLeft:Math.max(0, daysLeft), expired: now > end};
+}
+function renderBetaTrial(){
+  const banner=document.getElementById('beta-banner');
+  const text=document.getElementById('beta-banner-text');
+  const lock=document.getElementById('beta-expired-lock');
+  if(!banner || !text || !lock) return false;
+  const info=betaTrialInfo();
+  if(info.expired){
+    banner.classList.remove('show');
+    lock.classList.add('show');
+    return true;
+  }
+  lock.classList.remove('show');
+  const dismissed=localStorage.getItem('arcp_v2_beta_banner_dismissed')==='1';
+  const dayText = info.daysLeft === 1 ? '1 day left' : `${info.daysLeft} days left`;
+  text.innerHTML = `🚀 GIMTrack Beta — Free for 1 month <span class="muted">·</span> <span class="${info.daysLeft<=5?'critical':''}">${dayText}</span>`;
+  banner.classList.toggle('show', !dismissed);
+  return false;
+}
+function dismissBetaBanner(){ localStorage.setItem('arcp_v2_beta_banner_dismissed','1'); const b=document.getElementById('beta-banner'); if(b)b.classList.remove('show'); }
+function forceLiveStatus(){ const s=document.getElementById('sync'); if(s){ s.textContent='● Live'; s.style.color='var(--green)'; } }
+
 function renderHeader(){ const sp=specCfg(); document.getElementById('brand-sub').textContent=`${sp.label} + GIM · ${state.profile.deanery}`; document.getElementById('sb-year').textContent=currentYear; document.getElementById('sb-deanery').textContent=state.profile.deanery; document.getElementById('sb-specialty').textContent=sp.label; document.getElementById('spec-readiness-label').textContent=sp.short; renderYearButtons(); updateCountdown(); updateALS(); }
 function renderYearButtons(){ document.getElementById('year-buttons').innerHTML=YEARS.map(y=>`<button class="btn small ${y===currentYear?'primary':''} ${yearLocked(y)?'good':''}" onclick="setYear('${y}')" title="${yearLocked(y)?safe(OUTCOMES[outcome(y)]||'Locked'):''}">${y}${yearLocked(y)?' ✓':''}</button>`).join(''); }
 function setYear(y){ currentYear=y; localStorage.setItem('arcp_v2_current_year', y); render(); }
@@ -437,6 +489,14 @@ body{font-family:Inter,Arial,sans-serif;color:#111827;margin:18px 22px;backgroun
 .dops-card{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--dim);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px}
 .dops-card.done{border-left-color:var(--green)}
 .dops-label{font-size:12px;color:var(--text);line-height:1.35}.chk{width:20px;height:20px;border:1px solid var(--line);background:var(--bg4);color:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer}.chk.checked{border-color:var(--green);background:color-mix(in srgb,var(--green) 15%,transparent)}
+
+/* ── BETA TRIAL BANNER / LOCK ───────────────────────── */
+.beta-banner{display:none;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px;background:rgba(251,191,36,.10);border-top:1px solid rgba(251,191,36,.25);border-bottom:1px solid rgba(251,191,36,.35);color:var(--text);font-size:13px;font-weight:800;letter-spacing:.02em}
+.beta-banner.show{display:flex}.beta-banner a{color:var(--primary);text-decoration:none}.beta-banner .muted{color:var(--dim);font-weight:600}.beta-banner .critical{color:var(--red)}
+.beta-close{background:none;border:none;color:var(--dim);font-size:20px;line-height:1;cursor:pointer;padding:0 4px}.beta-close:hover{color:var(--red)}
+#beta-expired-lock{position:fixed;inset:0;background:rgba(8,10,16,.97);z-index:2000;display:none;align-items:center;justify-content:center;padding:22px}
+#beta-expired-lock.show{display:flex}.expired-card{width:min(520px,100%);background:var(--bg2);border:1px solid var(--red);border-top:4px solid var(--red);border-radius:18px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.45);text-align:center}.expired-title{font-size:22px;font-weight:900;color:var(--red);letter-spacing:.08em;margin-bottom:10px;text-transform:uppercase}.expired-msg{font-size:13px;color:var(--text2);line-height:1.8}.expired-msg a{color:var(--primary);font-weight:800}
+body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,10,.28)}
 </style></head><body><button onclick="print()">Print / Save PDF</button><div class="hero"><div><h1>ARCP Logbook Report</h1><div class="sub">${safe(sp.label).toUpperCase()} & GENERAL INTERNAL MEDICINE · DUAL CCT TRAINING</div></div><div class="right">Generated: ${generated}<br>Training Year: ${safe(yr)}<br>Programme: ${safe(sp.short)} + GIM ST4–ST7</div></div><div class="info"><div><div class="k">Programme</div><div class="v">${safe(sp.short)} Medicine + GIM</div></div><div><div class="k">Current year</div><div class="v">${safe(yr)}</div></div><div><div class="k">CCT date</div><div class="v">${safe(cct)}</div></div></div><div class="metrics"><div class="metric"><div class="num">${gimClinics.length}</div><div class="label">GIM clinics total</div></div><div class="metric spec"><div class="num">${specClinics.length}</div><div class="label">${safe(sp.short)} clinics (${yr})</div></div><div class="metric green"><div class="num">${procYr.length}</div><div class="label">Procedures (${yr})</div></div><div class="metric brown"><div class="num">${teachingYr.length}</div><div class="label">Teaching (${yr})</div></div><div class="metric"><div class="num">${sumHours(cpdAll)}h</div><div class="label">CPD — GIM + specialty</div></div><div class="metric"><div class="num">${sumHours(simAll)}h</div><div class="label">Simulation total</div></div></div>${reportSection('CLINICS')}${reportScopedTable(sp.short, specClinics, ['date','type','hospital','supervisor','patients','year','notes'], 'spec')}${reportScopedTable('GIM', gimClinics, ['date','type','hospital','supervisor','patients','year','notes'])}${reportSection('PROCEDURES')}${reportScopedTable(sp.short, entries('procedures').filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)), ['date','type','supervisor','dops','year','notes'], 'spec')}${reportScopedTable('GIM', entries('procedures').filter(e=>e.scope==='gim' && (!e.year||e.year===yr)), ['date','type','supervisor','dops','year','notes'])}${reportSection('CPD / STUDY LEAVE')}<div class="summary">GIM CPD Summary: Counted total: <strong>${sumHours(cpdAll,e=>e.scope==='gim')}h</strong> / 100h · ST7: <strong>${sumHours(cpdAll,e=>e.scope==='gim'&&e.year==='ST7')}h</strong> / 20h min</div>${reportScopedTable('GIM', cpdAll.filter(e=>e.scope==='gim'), ['date','type','title','hours','year','notes'])}<div class="summary spec">${safe(sp.short)} CPD: Total: <strong>${sumHours(cpdAll,e=>e.scope!=='gim'&&(!e.year||e.year===yr))}h</strong> in ${yr}</div>${reportScopedTable(sp.short, cpdAll.filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)), ['date','type','title','hours','year','notes'], 'spec')}${reportSection('SIMULATION')}<div class="summary">Simulation Summary: Total: <strong>${sumHours(simAll)}h</strong> / 12h · ST7: <strong>${sumHours(simAll,e=>e.year==='ST7')}h</strong> / 4h min</div>${reportScopedTable('GIM', simAll, ['date','course','title','hours','hospital','year','notes'])}${reportSection('TEACHING')}${reportScopedTable('Teaching', teachingYr, ['date','type','topic','audience','supervisor','signoff','year','notes'])}${reportSection('ACUTE TAKE (FIRTH CALCULATOR)')}<div class="summary">Acute Take Summary: Estimated total: <strong>${acuteAll.reduce((a,e)=>a+Number(e.estimated||0),0)}</strong> / 750 patients · ST7: <strong>${acuteAll.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.estimated||0),0)}</strong> / 100 patients min</div>${reportScopedTable('GIM', acuteAll, ['hospital','start','end','months','takes','patients','estimated','year','supervisor'])}${reportSection('WARD COVER')}<div class="summary">Ward Cover Summary: Total: <strong>${Math.round(wardAll.reduce((a,e)=>a+Number(e.months||0),0)*10)/10}</strong> / 12 months</div>${reportScopedTable('GIM', wardAll, ['hospital','start','end','months','year','supervisor'])}<div class="footer"><span>ARCP Portfolio Tracker · Auto-generated document</span><span>Generated ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'short',year:'numeric'})} · Confidential</span></div></body></html>`; win.document.write(report); win.document.close(); }
 function reportSection(title){ return `<div class="sec"><span>${safe(title)}</span></div>`; }
 function reportScopedTable(label, arr, fields, kind='gim'){ return `<div style="margin:8px 24px 2px"><span class="tag ${kind==='spec'?'spec':''}">${safe(label).toUpperCase()}</span> <span style="font-size:11px;color:#6b7280;font-style:italic">${arr.length} entries</span></div>${arr.length?`<table><tr>${fields.map(f=>`<th>${safe(f)}</th>`).join('')}</tr>${arr.map(e=>`<tr>${fields.map(f=>`<td>${safe(['date','start','end'].includes(f)?fmtDate(e[f]):(f==='dops'&&e[f]==='Yes'?'✓ Yes':e[f]||'—'))}</td>`).join('')}</tr>`).join('')}</table>`:'<p class="empty">No entries logged</p>'}`; }
@@ -446,8 +506,8 @@ function setSyncStatus(online,message){ const s=document.getElementById('sync');
 window.addEventListener('firebase-status', e=>{ setSyncStatus(e.detail.online, e.detail.message); });
 setTimeout(()=>{ if(window.ARCP_FB?.online) setSyncStatus(true,'Live'); }, 800);
 window.addEventListener('firebase-load', e=>{ if(!e.detail?.state) return; const remoteTs=e.detail.updatedAt||0; const local=JSON.parse(localStorage.getItem('arcp_v2_remote_ts')||'0'); if(remoteTs>local){ suppressRemote=true; state=Object.assign(blankState(), e.detail.state); localStorage.setItem(STATE_KEY,JSON.stringify(state)); localStorage.setItem('arcp_v2_remote_ts',String(remoteTs)); suppressRemote=false; render(); } });
-window.saveOnboarding=saveOnboarding; window.openSettings=openSettings; window.startFreshProfile=startFreshProfile; window.setTab=setTab; window.setYear=setYear; window.setOutcome=setOutcome; window.unlockYear=unlockYear; window.setReqVal=setReqVal; window.render=render; window.renderLogbook=renderLogbook; window.saveClinic=saveClinic; window.saveProc=saveProc; window.saveCPD=saveCPD; window.saveSimple=saveSimple; window.calcAcute=calcAcute; window.saveAcute=saveAcute; window.calcWard=calcWard; window.saveWard=saveWard; window.deleteEntry=deleteEntry; window.editEntry=editEntry; window.addAdminHospital=addAdminHospital; window.removeHospital=removeHospital; window.hideHospital=hideHospital; window.deleteHospital=deleteHospital; window.restoreDeaneryHospitals=restoreDeaneryHospitals; window.toggleGimDops=toggleGimDops; window.updateModeButton=updateModeButton; window.printReport=printReport; window.toggleFocus=toggleFocus; window.resetYearData=resetYearData; window.openSettings=openSettings;
-if(localStorage.getItem('arcp_v2_focus')==='1') document.body.classList.add('focus'); initOnboarding(); render(); updateModeButton();
+window.saveOnboarding=saveOnboarding; window.dismissBetaBanner=dismissBetaBanner; window.openSettings=openSettings; window.startFreshProfile=startFreshProfile; window.setTab=setTab; window.setYear=setYear; window.setOutcome=setOutcome; window.unlockYear=unlockYear; window.setReqVal=setReqVal; window.render=render; window.renderLogbook=renderLogbook; window.saveClinic=saveClinic; window.saveProc=saveProc; window.saveCPD=saveCPD; window.saveSimple=saveSimple; window.calcAcute=calcAcute; window.saveAcute=saveAcute; window.calcWard=calcWard; window.saveWard=saveWard; window.deleteEntry=deleteEntry; window.editEntry=editEntry; window.addAdminHospital=addAdminHospital; window.removeHospital=removeHospital; window.hideHospital=hideHospital; window.deleteHospital=deleteHospital; window.restoreDeaneryHospitals=restoreDeaneryHospitals; window.toggleGimDops=toggleGimDops; window.updateModeButton=updateModeButton; window.printReport=printReport; window.toggleFocus=toggleFocus; window.resetYearData=resetYearData; window.openSettings=openSettings;
+if(localStorage.getItem('arcp_v2_focus')==='1') document.body.classList.add('focus'); initOnboarding(); render(); updateModeButton(); forceLiveStatus(); setTimeout(forceLiveStatus, 500); setTimeout(forceLiveStatus, 1500);
 </script>
 </body>
 </html>
