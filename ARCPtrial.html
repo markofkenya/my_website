@@ -604,15 +604,21 @@
     <input class="beta-input" id="beta-email" type="email" placeholder="j.smith@nhs.net" />
     <label class="beta-label">SPECIALTY</label>
     <select class="beta-input" id="beta-specialty">
-      <option value="">-- select --</option>
-      <option>Renal Medicine + GIM</option>
-      <option>Cardiology + GIM</option>
-      <option>Respiratory + GIM</option>
-      <option>Gastroenterology + GIM</option>
-      <option>Endocrinology + GIM</option>
-      <option>Neurology + GIM</option>
-      <option>Rheumatology + GIM</option>
-      <option>Other + GIM</option>
+      <option value="">-- select specialty --</option>
+      <option value="renal">Renal Medicine</option>
+      <option value="respiratory">Respiratory Medicine</option>
+      <option value="cardiology">Cardiology</option>
+      <option value="endocrinology">Endocrinology &amp; Diabetes Mellitus</option>
+      <option value="gastroenterology">Gastroenterology</option>
+      <option value="geriatric">Geriatric Medicine</option>
+      <option value="neurology">Neurology</option>
+      <option value="rheumatology">Rheumatology</option>
+      <option value="acute_im">Acute Internal Medicine</option>
+      <option value="palliative">Palliative Medicine</option>
+      <option value="infectious">Infectious Diseases</option>
+      <option value="genitourinary">Genitourinary Medicine</option>
+      <option value="pharmacology">Clinical Pharmacology &amp; Therapeutics</option>
+      <option value="tropical">Tropical Medicine</option>
     </select>
     <button class="beta-btn" onclick="startBetaTrial()">START 30-DAY FREE TRIAL ▸</button>
     <div class="beta-note">// By starting the trial you agree to provide feedback at the end of 30 days.<br/>// Your data is stored locally on your device · Contact: markmaugo@gmail.com</div>
@@ -676,12 +682,11 @@
 </div>
 
 <div id="tabbar">
-  <button class="tab renal-tab active" onclick="setTab('renal')">Renal</button>
+  <button class="tab renal-tab active" id="specialty-tab-btn" onclick="setTab('renal')">Specialty</button>
   <button class="tab gim-tab"          onclick="setTab('gim')">GIM</button>
   <button class="tab"                  onclick="setTab('logbook')">Logbook</button>
   <button class="tab"                  onclick="setTab('overview')">Overview</button>
   <button class="tab"                  onclick="setTab('admin')">Admin / Docs</button>
-  <button class="tab"                  onclick="setTab('cips')">CiPs</button>
 </div>
 
 <div id="main">
@@ -689,7 +694,6 @@
   <div id="tab-renal"    style="display:none"></div>
   <div id="tab-admin"    style="display:none"></div>
   <div id="tab-overview" style="display:none"></div>
-  <div id="tab-cips"     style="display:none"></div>
   <div id="tab-logbook"  style="display:none"></div>
 </div>
 
@@ -732,6 +736,150 @@ const DOPS_PROCEDURES = [
   "Abdominal paracentesis",
   "Lumbar puncture",
 ];
+
+
+// ══════════════════════════════════════════════════════
+//  SPECIALTY CONFIGURATION
+// ══════════════════════════════════════════════════════
+
+const SPECIALTY_LABELS = {
+  renal:          "Renal Medicine",
+  respiratory:    "Respiratory Medicine",
+  cardiology:     "Cardiology",
+  endocrinology:  "Endocrinology & Diabetes",
+  gastroenterology:"Gastroenterology",
+  geriatric:      "Geriatric Medicine",
+  neurology:      "Neurology",
+  rheumatology:   "Rheumatology",
+  acute_im:       "Acute Internal Medicine",
+  palliative:     "Palliative Medicine",
+  infectious:     "Infectious Diseases",
+  genitourinary:  "Genitourinary Medicine",
+  pharmacology:   "Clinical Pharmacology",
+  tropical:       "Tropical Medicine",
+};
+
+const SPECIALTY_SCE = {
+  renal:       "ESENeph (Nephrology SCE)",
+  respiratory: "SCE Respiratory Medicine",
+  cardiology:  "SCE Cardiology",
+  endocrinology:"SCE Endocrinology & Diabetes",
+  gastroenterology:"SCE Gastroenterology",
+  geriatric:   "SCE Geriatric Medicine",
+  neurology:   "SCE Neurology",
+  rheumatology:"SCE Rheumatology",
+};
+
+// target: minimum level required per ST year to be "on track"
+// S=Supervised, I=Independent, M=Maintain
+const RESP_PROC_TARGETS = {
+  "Pleural aspiration (diagnostic)":   { ST4:"I", ST5:"M", ST6:"M", ST7:"M" },
+  "Pleural aspiration (therapeutic)":  { ST4:"I", ST5:"M", ST6:"M", ST7:"M" },
+  "Chest drain insertion":             { ST4:"S", ST5:"I", ST6:"M", ST7:"M" },
+  "Chest drain + pleurodesis":         { ST4:"S", ST5:"I", ST6:"M", ST7:"M" },
+  "Pleural ultrasound":                { ST4:"S", ST5:"I", ST6:"M", ST7:"M" },
+  "Flexible bronchoscopy":             { ST4:"S", ST5:"S", ST6:"S", ST7:"I" },
+  "Non-invasive ventilation (NIV)":    { ST4:"S", ST5:"I", ST6:"M", ST7:"M" },
+  "CPAP initiation":                   { ST4:"S", ST5:"S", ST6:"I", ST7:"M" },
+  "Lung function testing":             { ST4:"S", ST5:"I", ST6:"M", ST7:"M" },
+  "Sleep study interpretation":        { ST4:"S", ST5:"S", ST6:"I", ST7:"M" },
+};
+
+const PROC_LEVEL_ORDER = { "": 0, "S": 1, "I": 2, "M": 3 };
+
+const SPECIALTY_PROCEDURES = {
+  renal: [
+    "Temp HD catheter — femoral",
+    "Temp HD catheter — jugular",
+    "Tunnelled dialysis catheter",
+    "Tunnelled line removal",
+    "Native kidney biopsy",
+    "Transplant kidney biopsy",
+  ],
+  respiratory: [
+    "Pleural aspiration (diagnostic)",
+    "Pleural aspiration (therapeutic)",
+    "Chest drain insertion",
+    "Chest drain + pleurodesis",
+    "Pleural ultrasound",
+    "Flexible bronchoscopy",
+    "Non-invasive ventilation (NIV)",
+    "CPAP initiation",
+    "Lung function testing",
+    "Sleep study interpretation",
+  ],
+  cardiology: [],
+  endocrinology: [],
+  gastroenterology: [],
+  geriatric: [],
+  neurology: [],
+  rheumatology: [],
+  acute_im: [],
+  palliative: [],
+  infectious: [],
+  genitourinary: [],
+  pharmacology: [],
+  tropical: [],
+};
+
+const SPECIALTY_REQS = {
+  renal: {
+    spec_mcrs:         { label:"Specialty MCRs", stream:"specialty", type:"number", target:4,  unit:"MCRs",   deadline:"annual", note:"Renal consultants, labelled renal" },
+    spec_msf_raters:   { label:"Specialty MSF Raters", stream:"specialty", type:"number", target:8, unit:"raters", deadline:"annual", note:"8 specialty + 4 GIM = 12 total (3 must be consultants)" },
+    spec_sles:         { label:"Specialty SLEs (ACATs / CBD / miniCEX)", stream:"specialty", type:"number", target:15, unit:"SLEs", deadline:"annual", note:"Minimum 15 per year across all SLE types" },
+    spec_teaching_log: { label:"Teaching Hours Log", stream:"specialty", type:"checkbox", deadline:"annual", note:"Log teaching hours each year" },
+    spec_teaching_inv: { label:"Evidence of Teaching Involvement", stream:"specialty", type:"checkbox", deadline:"annual", note:"Required every year" },
+    spec_es_report:    { label:"Educational Supervisor Report", stream:"specialty", type:"checkbox", deadline:"annual", note:"1 per year" },
+    spec_temp_lines:   { label:"Temporary Line Competency", stream:"specialty", type:"checkbox", deadline:"ST4", note:"Competent by end of ST4" },
+    spec_sce:          { label:"ESENeph Exam", stream:"specialty", type:"checkbox", deadline:"ST6", note:"Held once a year — book early" },
+    spec_survey_st5:   { label:"Patient Survey (ST5)", stream:"specialty", type:"checkbox", deadline:"ST5", note:"With patient survey summary tool by ES" },
+    spec_qip:          { label:"Specialty QIP + QIPAT", stream:"specialty", type:"checkbox", deadline:"ST6", note:"By end of ST6" },
+    spec_teaching_obs: { label:"Teaching Observation", stream:"specialty", type:"checkbox", deadline:"ST6", note:"Required before end of ST6" },
+    spec_survey_st7:   { label:"Patient Survey (ST7)", stream:"specialty", type:"checkbox", deadline:"ST7", note:"Required in final year" },
+    spec_mgmt_course:  { label:"Management & Leadership Course", stream:"specialty", type:"checkbox", deadline:"ST7", note:"By end of ST7" },
+    spec_teaching_course: { label:"Teaching Course", stream:"specialty", type:"checkbox", deadline:"ST7", note:"By end of ST7" },
+  },
+  respiratory: {
+    spec_mcrs:         { label:"Specialty MCRs", stream:"specialty", type:"number", target:5,  unit:"MCRs",   deadline:"annual", note:"Respiratory consultants, 4–6 per year" },
+    spec_msf_raters:   { label:"MSF Raters", stream:"specialty", type:"number", target:12, unit:"raters", deadline:"annual", note:"≥12 raters total (specialty + GIM combined)" },
+    spec_acats:        { label:"ACATs", stream:"specialty", type:"number", target:6,  unit:"ACATs",  deadline:"annual", note:"Minimum 6 ACATs per year" },
+    spec_sles:         { label:"CbD / mini-CEX", stream:"specialty", type:"number", target:6,  unit:"SLEs",   deadline:"annual", note:"Minimum 6 per year" },
+    spec_es_report:    { label:"Educational Supervisor Report", stream:"specialty", type:"checkbox", deadline:"annual", note:"1 per year" },
+    spec_sce:          { label:"SCE Respiratory Medicine", stream:"specialty", type:"checkbox", deadline:"ST6", note:"Must pass before CCT — book early" },
+    spec_qip:          { label:"QIP + QIPAT", stream:"specialty", type:"checkbox", deadline:"ST6", note:"By end of ST6" },
+    spec_teaching_obs: { label:"Teaching Observation", stream:"specialty", type:"checkbox", deadline:"ST6", note:"Required before end of ST6" },
+    spec_survey_early: { label:"Patient Survey (Early training)", stream:"specialty", type:"checkbox", deadline:"ST5", note:"Early in training" },
+    spec_survey_late:  { label:"Patient Survey (Late training)", stream:"specialty", type:"checkbox", deadline:"ST7", note:"Late in training" },
+    spec_mgmt:         { label:"Management & Leadership Evidence", stream:"specialty", type:"checkbox", deadline:"ST7", note:"By end of ST7" },
+  },
+};
+
+// Default placeholder for unbuilt specialties
+const SPECIALTY_REQS_PLACEHOLDER = {
+  spec_mcrs:       { label:"Specialty MCRs", stream:"specialty", type:"number", target:4, unit:"MCRs", deadline:"annual", note:"Requirements for this specialty coming soon" },
+  spec_es_report:  { label:"Educational Supervisor Report", stream:"specialty", type:"checkbox", deadline:"annual", note:"1 per year" },
+  spec_sce:        { label:"Specialty Certificate Exam (SCE)", stream:"specialty", type:"checkbox", deadline:"ST6", note:"Must pass before CCT" },
+  spec_qip:        { label:"QIP + QIPAT", stream:"specialty", type:"checkbox", deadline:"ST6", note:"By end of ST6" },
+};
+
+function getSpecialty() {
+  return localStorage.getItem("arcp_trial_specialty") || "renal";
+}
+
+function getSpecialtyReqs() {
+  const sp = getSpecialty();
+  return SPECIALTY_REQS[sp] || SPECIALTY_REQS_PLACEHOLDER;
+}
+
+function getSpecialtyLabel() {
+  const sp = getSpecialty();
+  return SPECIALTY_LABELS[sp] || "Specialty";
+}
+
+function getSpecialtyProcedures() {
+  const sp = getSpecialty();
+  return SPECIALTY_PROCEDURES[sp] || [];
+}
 
 const REQS = {
   gim_acats: { label:"GIM ACATs", stream:"gim", type:"number", target:4, unit:"ACATs", deadline:"annual", note:"GIM consultants, labelled GIM" },
@@ -951,7 +1099,7 @@ function setYear(yr) {
 function setTab(tab) {
   currentTab = tab;
   document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.getAttribute("onclick").includes(`'${tab}'`)));
-  ["gim","renal","admin","overview","cips","logbook"].forEach(t => {
+  ["gim","renal","admin","overview","logbook"].forEach(t => {
     document.getElementById(`tab-${t}`).style.display = t === tab ? "block" : "none";
   });
   if (tab === "cips") renderCIPs();
@@ -968,7 +1116,6 @@ function renderAll() {
   renderOverview();
   updateReadiness();
   updateDopsCount();
-  if (currentTab === "cips") renderCIPs();
   if (currentTab === "logbook") renderLogbook();
 }
 
@@ -1046,17 +1193,233 @@ function renderGIM() {
 function renderRenal() {
   const el = document.getElementById("tab-renal");
   el.innerHTML = "";
+  const sp    = getSpecialty();
+  const label = getSpecialtyLabel();
+  const spReqs = getSpecialtyReqs();
+  const procs  = getSpecialtyProcedures();
+
+  // Update tab button label
+  const tabBtn = document.getElementById("specialty-tab-btn");
+  if (tabBtn) tabBtn.textContent = label;
+
+  // Update header subtitle
+  const logoSub = document.querySelector(".logo-sub");
+  if (logoSub) logoSub.textContent = `ST4–ST7 · ${label} + GIM`;
+
   renderOutcomeSelector(el);
   if (isYearLocked(currentYear)) { const show = renderLockedBanner(el, "renal"); if (!show) return; }
-  const sHead = document.createElement("div");
-  sHead.className = "sec-head";
-  sHead.innerHTML = `<span class="sec-title renal">ANNUAL REQUIREMENTS</span><span class="sec-rule"></span><span class="sec-note">For ${currentYear} — resets each year</span>`;
-  el.appendChild(sHead);
-  const annualGrid = document.createElement("div");
-  annualGrid.className = "req-grid";
-  ["renal_mcrs","renal_sles","renal_msf_raters","renal_teaching_log","renal_teaching_involvement","renal_es_report"].forEach(id => annualGrid.appendChild(makeCard(id, REQS[id])));
-  el.appendChild(annualGrid);
-  el.appendChild(makeSection("MILESTONES","renal","One-off requirements — deadlines shown",["renal_temp_lines","renal_eseneph","renal_patient_survey_st5","renal_qip","renal_teaching_obs","renal_patient_survey_st7","renal_mgmt_course","renal_teaching_course"]));
+
+  // Check if this is a built specialty
+  const isBuilt = SPECIALTY_REQS[sp] !== undefined;
+
+  if (!isBuilt) {
+    const placeholder = document.createElement("div");
+    placeholder.style.cssText = "background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--amber);padding:20px 24px;margin-bottom:20px;";
+    placeholder.innerHTML = `
+      <div style="font-size:11px;color:var(--amber);font-weight:700;letter-spacing:0.1em;margin-bottom:8px;">// ${label} — COMING SOON</div>
+      <div style="font-size:10px;color:var(--dim);line-height:1.8;">Specialty-specific requirements for ${label} are being added.<br/>
+      GIM requirements are fully functional in the GIM tab.<br/>
+      Contact <a href="mailto:markmaugo@gmail.com" style="color:var(--blue);">markmaugo@gmail.com</a> to request early access.</div>`;
+    el.appendChild(placeholder);
+  }
+
+  // Annual requirements
+  const annualIds = Object.keys(spReqs).filter(id => spReqs[id].deadline === "annual");
+  if (annualIds.length) {
+    const sHead = document.createElement("div");
+    sHead.className = "sec-head";
+    sHead.innerHTML = `<span class="sec-title renal">ANNUAL REQUIREMENTS</span><span class="sec-rule"></span><span class="sec-note">For ${currentYear} — resets each year</span>`;
+    el.appendChild(sHead);
+    const annualGrid = document.createElement("div");
+    annualGrid.className = "req-grid";
+    annualIds.forEach(id => annualGrid.appendChild(makeSpecCard(id, spReqs[id])));
+    el.appendChild(annualGrid);
+  }
+
+  // Milestones
+  const milestoneIds = Object.keys(spReqs).filter(id => spReqs[id].deadline !== "annual");
+  if (milestoneIds.length) {
+    const mWrap = document.createElement("div");
+    mWrap.style.marginBottom = "24px";
+    const mHead = document.createElement("div");
+    mHead.className = "sec-head";
+    mHead.innerHTML = `<span class="sec-title renal">MILESTONES</span><span class="sec-rule"></span><span class="sec-note">One-off requirements — deadlines shown</span>`;
+    mWrap.appendChild(mHead);
+    const mGrid = document.createElement("div");
+    mGrid.className = "req-grid";
+    milestoneIds.forEach(id => mGrid.appendChild(makeSpecCard(id, spReqs[id])));
+    mWrap.appendChild(mGrid);
+    el.appendChild(mWrap);
+  }
+
+  // Procedures
+  if (procs.length) {
+    const useProgression = sp === "respiratory";
+    const pDone = procs.filter(p => {
+      if (useProgression) {
+        const lvl = localStorage.getItem("pft_spec_proc_" + p.replace(/\s+/g,"_").toLowerCase()) || "";
+        const target = (RESP_PROC_TARGETS[p] || {})[currentYear] || "";
+        return target && PROC_LEVEL_ORDER[lvl] >= PROC_LEVEL_ORDER[target];
+      }
+      return getDops("sp_" + p.replace(/\s+/g,"_").toLowerCase());
+    }).length;
+
+    const pHead = document.createElement("div");
+    pHead.className = "sec-head";
+    pHead.innerHTML = `<span class="sec-title renal">SPECIALTY PROCEDURES</span><span class="sec-rule"></span><span class="sec-note">${pDone} / ${procs.length} on track for ${currentYear}</span>`;
+    el.appendChild(pHead);
+
+    if (useProgression) {
+      // Respiratory — progression matrix per year
+      const pStack = document.createElement("div");
+      pStack.style.cssText = "display:flex;flex-direction:column;gap:8px;margin-bottom:24px;";
+      procs.forEach(proc => {
+        const key     = "pft_spec_proc_" + proc.replace(/\s+/g,"_").toLowerCase();
+        const current = localStorage.getItem(key) || "";
+        const target  = (RESP_PROC_TARGETS[proc] || {})[currentYear] || "";
+        const onTrack = target && PROC_LEVEL_ORDER[current] >= PROC_LEVEL_ORDER[target];
+        const LEVEL_LABELS = { "":"— not assessed", "S":"Supervised", "I":"Independent", "M":"Maintain" };
+        const targetLabel  = { S:"Supervised", I:"Independent", M:"Maintain" };
+
+        const card = document.createElement("div");
+        card.style.cssText = `background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${onTrack?"var(--green)":"var(--renal)"};padding:10px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;`;
+        card.innerHTML = `
+          <div style="flex:1;font-size:11px;color:#c8d8ff;font-weight:500;">${proc}</div>
+          ${target ? `<div style="font-size:8px;color:var(--dim);white-space:nowrap;">${currentYear} target: <strong style="color:${onTrack?"var(--green)":"var(--amber)"};">${targetLabel[target]||target}</strong></div>` : ""}
+          <select style="background:var(--bg);border:1px solid var(--blue4);color:var(--blue);font-family:var(--font);font-size:10px;padding:4px 8px;outline:none;cursor:pointer;"
+            onchange="setSpecProc('${proc.replace(/'/g,"\'")}',this.value)">
+            <option value=""  ${!current?"selected":""}>— not assessed</option>
+            <option value="S" ${current==="S"?"selected":""}>Supervised</option>
+            <option value="I" ${current==="I"?"selected":""}>Independent</option>
+            <option value="M" ${current==="M"?"selected":""}>Maintain</option>
+          </select>
+          <div style="font-size:9px;color:${onTrack?"var(--green)":"var(--dim)"};">${onTrack?"✓ ON TRACK":"—"}</div>`;
+        pStack.appendChild(card);
+      });
+      el.appendChild(pStack);
+
+      // ST progression summary
+      const matrixHead = document.createElement("div");
+      matrixHead.className = "sec-head";
+      matrixHead.innerHTML = `<span class="sec-title renal">PROGRESSION TARGETS</span><span class="sec-rule"></span><span class="sec-note">curriculum targets per year</span>`;
+      el.appendChild(matrixHead);
+      const matrixDiv = document.createElement("div");
+      matrixDiv.style.cssText = "overflow-x:auto;margin-bottom:24px;";
+      const YEARS_LIST = ["ST4","ST5","ST6","ST7"];
+      let tbl = `<table style="width:100%;border-collapse:collapse;font-size:10px;">
+        <thead><tr style="background:var(--bg3);">
+          <th style="padding:6px 10px;text-align:left;color:var(--blue3);font-size:9px;letter-spacing:0.1em;border-bottom:1px solid var(--blue5);">PROCEDURE</th>
+          ${YEARS_LIST.map(y=>`<th style="padding:6px 10px;text-align:center;color:${y===currentYear?"var(--blue)":"var(--blue3)"};font-size:9px;letter-spacing:0.1em;border-bottom:1px solid var(--blue5);${y===currentYear?"border-bottom:2px solid var(--blue);":""}">${y}</th>`).join("")}
+        </tr></thead><tbody>`;
+      procs.forEach((proc, i) => {
+        const lvl = localStorage.getItem("pft_spec_proc_" + proc.replace(/\s+/g,"_").toLowerCase()) || "";
+        tbl += `<tr style="background:${i%2===0?"var(--bg2)":"var(--bg3)"};">
+          <td style="padding:5px 10px;color:#c8d8ff;border-bottom:1px solid var(--blue5);">${proc}</td>
+          ${YEARS_LIST.map(yr => {
+            const t = (RESP_PROC_TARGETS[proc]||{})[yr]||"";
+            const isCurrentYr = yr === currentYear;
+            const achieved = lvl && PROC_LEVEL_ORDER[lvl] >= PROC_LEVEL_ORDER[t];
+            const bg = isCurrentYr && achieved ? "color:var(--green)" : isCurrentYr ? "color:var(--amber)" : "color:var(--dim)";
+            return `<td style="padding:5px 10px;text-align:center;border-bottom:1px solid var(--blue5);${bg}">${t||"—"}</td>`;
+          }).join("")}
+        </tr>`;
+      });
+      tbl += "</tbody></table>";
+      matrixDiv.innerHTML = tbl;
+      el.appendChild(matrixDiv);
+
+    } else {
+      // Other specialties — simple checkbox
+      const pGrid = document.createElement("div");
+      pGrid.className = "dops-grid";
+      procs.forEach(proc => {
+        const done = getDops("sp_" + proc.replace(/\s+/g,"_").toLowerCase());
+        const card = document.createElement("div");
+        card.className = `dops-card ${done?"done":""}`;
+        card.innerHTML = `<button class="dops-chk ${done?"checked":""}" onclick="toggleSpecProc('${proc.replace(/'/g,"\'")}')"> ${done?"✓":""}</button><span class="dops-label">${proc}</span>`;
+        pGrid.appendChild(card);
+      });
+      el.appendChild(pGrid);
+    }
+  }
+}
+
+function setSpecProc(proc, level) {
+  const key = "pft_spec_proc_" + proc.replace(/\s+/g,"_").toLowerCase();
+  localStorage.setItem(key, level);
+  fbPush(key, level);
+  renderRenal();
+}
+
+function toggleSpecProc(proc) {
+  const k = dopsKey("sp_" + proc.replace(/\s+/g,'_').toLowerCase());
+  const current = localStorage.getItem(k) === "true";
+  localStorage.setItem(k, String(!current));
+  fbPush(k, !current);
+  renderRenal();
+}
+
+// ── Spec card maker ─────────────────────────────────────────────────
+function specKey(reqId) {
+  const req = getSpecialtyReqs()[reqId];
+  if (!req) return `pft_${currentYear}_${reqId}`;
+  if (req.type === "checkbox" && req.deadline !== "annual") return `pft_spec_milestone_${reqId}`;
+  return `pft_${currentYear}_spec_${reqId}`;
+}
+
+function getSpecVal(reqId) {
+  const req = getSpecialtyReqs()[reqId];
+  if (!req) return false;
+  const raw = localStorage.getItem(specKey(reqId));
+  if (req.type === "checkbox") return raw === "true";
+  return raw ? parseInt(raw) : 0;
+}
+
+function setSpecVal(reqId, val) {
+  const k = specKey(reqId);
+  localStorage.setItem(k, String(val));
+  fbPush(k, val);
+  updateReadiness();
+}
+
+function getSpecStatus(reqId) {
+  const req = getSpecialtyReqs()[reqId];
+  if (!req) return "unmet";
+  const val = getSpecVal(reqId);
+  if (req.type === "checkbox") {
+    if (isDeadlineFuture(req.deadline) && !val) return "na";
+    return val ? "met" : (isDeadlinePast(req.deadline) ? "unmet" : "partial");
+  }
+  if (val >= req.target) return "met";
+  if (val > 0)           return "partial";
+  return "unmet";
+}
+
+function makeSpecCard(reqId, req) {
+  const val    = getSpecVal(reqId);
+  const status = getSpecStatus(reqId);
+  const card   = document.createElement("div");
+  card.className = `req-card ${status}`;
+  card.id = `spec-card-${reqId}`;
+  const deadlineHtml = `<div class="req-deadline ${deadlineClass(req.deadline)}">${deadlineLabel(req.deadline)}${req.note ? ` · ${req.note}` : ""}</div>`;
+  if (req.type === "checkbox") {
+    card.innerHTML = `<div class="req-label">${req.label} <span class="badge badge-renal">SPECIALTY</span></div>
+      <div class="req-check">
+        <button class="chk ${val?"checked":""}" onclick="setSpecVal('${reqId}',${!val});renderRenal();">${val?"✓":""}</button>
+        <span class="chk-label" onclick="setSpecVal('${reqId}',${!val});renderRenal();">${val?"COMPLETE":"NOT YET DONE"}</span>
+      </div>${deadlineHtml}`;
+  } else {
+    const pct = Math.min(100, Math.round((val / req.target) * 100));
+    card.innerHTML = `<div class="req-label">${req.label} <span class="badge badge-renal">SPECIALTY</span></div>
+      <div class="req-progress"><div class="req-track"><div class="req-fill ${status}" style="width:${pct}%"></div></div>
+      <span class="req-count ${status}">${val} / ${req.target}</span></div>
+      <div class="req-controls">
+        <input class="req-input" type="number" min="0" value="${val}"
+          onchange="setSpecVal('${reqId}',Math.max(0,parseInt(this.value)||0));renderRenal();" />
+        <span class="req-unit">${req.unit}</span><span class="req-target">· target ${req.target}</span>
+      </div>${deadlineHtml}`;
+  }
+  return card;
 }
 
 function renderAdmin() {
@@ -1083,6 +1446,48 @@ function renderAdmin() {
       ${!alsVal ? "// not set — enter expiry date above" : daysTo < 0 ? `// !! EXPIRED ${Math.abs(daysTo)} days ago — renew immediately` : daysTo < 183 ? `// ⚠ expires in ${daysTo} days — renew within 6 months` : `// valid — expires in ${daysTo} days`}
     </div>`;
   el.appendChild(alsCard);
+  // ── Hospitals ──────────────────────────────────────────────────────
+  const hospHead = document.createElement("div");
+  hospHead.className = "sec-head";
+  hospHead.style.marginTop = "24px";
+  hospHead.innerHTML = `<span class="sec-title both">MY HOSPITALS</span><span class="sec-rule"></span><span class="sec-note">Used in logbook dropdowns</span>`;
+  el.appendChild(hospHead);
+
+  const hospNote = document.createElement("div");
+  hospNote.style.cssText = "font-size:9px;color:var(--dim);letter-spacing:0.08em;margin-bottom:12px;";
+  hospNote.textContent = "// Add the hospitals you rotate through — these populate the hospital field in your logbook";
+  el.appendChild(hospNote);
+
+  const hospList = getHospitals();
+  const hospWrap = document.createElement("div");
+  hospWrap.style.cssText = "display:flex;flex-direction:column;gap:6px;margin-bottom:12px;";
+  if (!hospList.length) {
+    hospWrap.innerHTML = `<div style="font-size:9px;color:var(--dim);">// no hospitals added yet</div>`;
+  } else {
+    hospList.forEach((h, i) => {
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--blue5);padding:6px 10px;border-left:3px solid var(--blue3);";
+      row.innerHTML = `<span style="flex:1;font-size:11px;color:#c8d8ff;">${h}</span>`;
+      const del = document.createElement("button");
+      del.className = "btn-reset";
+      del.style.cssText = "font-size:9px;padding:2px 8px;";
+      del.textContent = "✕";
+      del.onmouseover = () => del.style.color = "var(--red)";
+      del.onmouseout  = () => del.style.color = "";
+      del.onclick = () => { removeHospital(i); renderAdmin(); };
+      row.appendChild(del);
+      hospWrap.appendChild(row);
+    });
+  }
+  el.appendChild(hospWrap);
+
+  const hospAddRow = document.createElement("div");
+  hospAddRow.style.cssText = "display:flex;gap:8px;margin-bottom:24px;";
+  hospAddRow.innerHTML = `
+    <input class="req-input" id="new-hospital" type="text" placeholder="e.g. Sheffield Teaching Hospital" style="flex:1;" />
+    <button class="btn-reset" style="border-color:var(--blue);color:var(--blue);" onclick="addHospital()">ADD ▸</button>`;
+  el.appendChild(hospAddRow);
+
   const docHead = document.createElement("div");
   docHead.className = "sec-head";
   docHead.style.marginTop = "24px";
@@ -1828,6 +2233,35 @@ const CLINIC_TYPES_GIM   = ["GIM outpatient clinic","Medical SDEC","Community cl
 const CLINIC_TYPES_RENAL = ["General Nephrology clinic","HD clinic","Transplant clinic","HTN clinic","AKCC","Other renal clinic"];
 
 // ── Storage helpers ──────────────────────────────────
+function getHospitals() {
+  const raw = localStorage.getItem("pft_hospitals");
+  return raw ? JSON.parse(raw) : [];
+}
+function addHospital() {
+  const inp = document.getElementById("new-hospital");
+  const name = inp?.value.trim();
+  if (!name) return;
+  const list = getHospitals();
+  if (!list.includes(name)) {
+    list.push(name);
+    localStorage.setItem("pft_hospitals", JSON.stringify(list));
+    fbPush("pft_hospitals", JSON.stringify(list));
+  }
+  if (inp) inp.value = "";
+  renderAdmin();
+}
+function removeHospital(idx) {
+  const list = getHospitals();
+  list.splice(idx, 1);
+  localStorage.setItem("pft_hospitals", JSON.stringify(list));
+  fbPush("pft_hospitals", JSON.stringify(list));
+}
+function hospitalDatalist(id) {
+  const hospitals = getHospitals();
+  if (!hospitals.length) return "";
+  return `<datalist id="${id}">${hospitals.map(h=>`<option value="${h}">`).join("")}</datalist>`;
+}
+
 function lbKey(type, id) { return `pft_lb_${type}_${id}`; }
 
 function getLbEntries(type) {
@@ -2009,7 +2443,7 @@ function renderLbClinics(el) {
   el.appendChild(makeLbForm("clinics_renal", "ADD RENAL CLINIC", "renal", [
     { id:"date",        label:"Date",                    type:"date" },
     { id:"type",        label:"Clinic type",             type:"select_other", options: CLINIC_TYPES_RENAL, otherId:"type_other", otherLabel:"Specify clinic type" },
-    { id:"hospital",    label:"Hospital",                type:"text",   placeholder:"Sheffield Teaching Hospital", default:"Sheffield Teaching Hospital" },
+    { id:"hospital",    label:"Hospital",                type:"text",   placeholder:"Sheffield Teaching Hospital" },
     { id:"supervisor",  label:"Supervisor",              type:"text",   placeholder:"Consultant name" },
     { id:"patients",    label:"Patients seen / observed",type:"number", placeholder:"e.g. 8" },
     { id:"year",        label:"Training year",           type:"select", options:["ST4","ST5","ST6","ST7"] },
@@ -2024,7 +2458,7 @@ function renderLbClinics(el) {
   el.appendChild(makeLbForm("clinics_gim", "ADD GIM CLINIC", "gim", [
     { id:"date",        label:"Date",                    type:"date" },
     { id:"type",        label:"Clinic type",             type:"select_other", options: CLINIC_TYPES_GIM, otherId:"type_other", otherLabel:"Specify clinic type" },
-    { id:"hospital",    label:"Hospital",                type:"text",   placeholder:"Rotherham DGH", default:"Rotherham DGH" },
+    { id:"hospital",    label:"Hospital",                type:"text",   placeholder:"Rotherham DGH" },
     { id:"supervisor",  label:"Supervisor",              type:"text",   placeholder:"Consultant name" },
     { id:"patients",    label:"Patients seen / observed",type:"number", placeholder:"e.g. 8" },
     { id:"year",        label:"Training year",           type:"select", options:["ST4","ST5","ST6","ST7"] },
@@ -2599,7 +3033,11 @@ function makeLbForm(type, title, stream, fields, defaultYear) {
     } else if (f.type === "number") {
       input = `<input id="${formId}-${f.id}" class="req-input" type="number" min="0" step="0.5" placeholder="${f.placeholder||''}" style="width:100%;" />`;
     } else {
-      input = `<input id="${formId}-${f.id}" class="req-input" type="text" value="${f.default||''}" placeholder="${f.placeholder||''}" style="width:100%;" />`;
+      const isHospField = f.id === "hospital";
+      const dlId = isHospField ? `dl-${formId}-${f.id}` : "";
+      const dlAttr = isHospField ? `list="${dlId}"` : "";
+      const dlTag  = isHospField ? hospitalDatalist(dlId) : "";
+      input = `${dlTag}<input id="${formId}-${f.id}" class="req-input" type="text" value="${f.default||''}" placeholder="${f.placeholder||''}" style="width:100%;" ${dlAttr}/>`;
     }
     field.innerHTML = `<label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── ${f.label}</label>${input}`;
     form.appendChild(field);
@@ -3081,6 +3519,15 @@ function initBeta() {
   banner.classList.add("show");
   daysEl.textContent = remaining + " day" + (remaining !== 1 ? "s" : "") + " remaining";
   if (remaining <= 5) daysEl.classList.add("critical");
+
+  // Restore specialty labels
+  const sp = localStorage.getItem("arcp_trial_specialty") || "renal";
+  setTimeout(() => {
+    const tabBtn = document.getElementById("specialty-tab-btn");
+    if (tabBtn) tabBtn.textContent = SPECIALTY_LABELS[sp] || "Specialty";
+    const logoSub = document.querySelector(".logo-sub");
+    if (logoSub) logoSub.textContent = `ST4–ST7 · ${SPECIALTY_LABELS[sp] || "Specialty"} + GIM`;
+  }, 100);
   return true;
 }
 
@@ -3098,6 +3545,12 @@ function startBetaTrial() {
   localStorage.setItem("arcp_trial_specialty", specialty);
 
   document.getElementById("beta-gate").classList.remove("show");
+
+  // Update specialty tab label
+  const tabBtn = document.getElementById("specialty-tab-btn");
+  if (tabBtn) tabBtn.textContent = SPECIALTY_LABELS[specialty] || "Specialty";
+  const logoSub = document.querySelector(".logo-sub");
+  if (logoSub) logoSub.textContent = `ST4–ST7 · ${SPECIALTY_LABELS[specialty] || "Specialty"} + GIM`;
   const banner = document.getElementById("beta-banner");
   const daysEl = document.getElementById("beta-days-left");
   banner.classList.add("show");
