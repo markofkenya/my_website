@@ -118,6 +118,34 @@ body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,
 .gate-title small{font-size:13px;color:var(--text2);font-weight:700;margin-left:8px;}
 #gate{overflow:auto;padding:18px;}
 .gate-card{max-height:calc(100vh - 36px);overflow:auto;}
+
+
+/* V13 PATCH — mobile friendliness and non-sticky header/tabs */
+.topbar{position:static!important;top:auto!important;z-index:auto!important;}
+.tabs{position:static!important;top:auto!important;}
+@media (max-width: 760px){
+  body{font-size:14px;}
+  .top-row{display:block;}
+  .brand,.metric,.grow{border-right:0!important;border-bottom:1px solid var(--line);width:100%;min-width:0;padding:12px 14px;}
+  .brand-main{font-size:20px;}
+  .brand-sub{font-size:9px;line-height:1.5;}
+  .metric-val{font-size:22px;}
+  .tabs{padding:7px 8px;gap:3px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tab{font-size:11px;padding:7px 10px;}
+  main,#main{padding:12px 10px 98px!important;}
+  .grid,.req-grid,.summary-grid,.form-grid,.dops-grid{grid-template-columns:1fr!important;}
+  .card,.panel,.section{max-width:100%;}
+  .statusbar{position:static!important;display:block;padding:10px 12px;margin-top:18px;}
+  .status-left{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .statusbar .btn{margin-top:6px;}
+  .row{flex-wrap:wrap;}
+  .row .input{min-width:0;width:100%;}
+  table{font-size:11px;}
+}
+@media (min-width: 761px) and (max-width: 1050px){
+  .brand{min-width:190px}.metric{min-width:115px}.grow{min-width:280px}.tab{padding:7px 11px;}
+}
+
 </style>
 </head>
 <body>
@@ -1114,6 +1142,59 @@ function renderOverview(){
 }
 window.renderHeader=renderHeader; window.updateReadiness=updateReadiness; window.renderGIM=renderGIM; window.renderAdmin=renderAdmin; window.renderOverview=renderOverview;
 try{ render(); forceLiveStatus(); }catch(e){ console.warn('V12 refresh skipped',e); }
+
+
+
+/* ─────────────────────────────────────────────────────────────
+   V13 PATCH — remove incl DOPS wording, mobile/non-sticky handled in CSS,
+   and hide final-year cards outside ST7 while still keeping DOPS in readiness.
+───────────────────────────────────────────────────────────── */
+function isFinalYearOnlyReq(id){ return ['gim_cpd_st7','gim_sim_st7','gim_acute_st7'].includes(id); }
+function visibleGimReqs(){
+  const out={};
+  Object.entries(GIM_REQS).forEach(([id,req])=>{
+    if(isFinalYearOnlyReq(id) && currentYear!=='ST7') return;
+    out[id]=req;
+  });
+  return out;
+}
+function updateReadiness(){
+  if(!state.profile)return;
+  const spec=calcReqsWithExtra(specReqs(), specDopsStats());
+  const gim=calcReqsWithExtra(visibleGimReqs(), gimDopsStats());
+  document.getElementById('spec-pct').textContent=spec.pct+'%';
+  document.getElementById('spec-fill').style.width=spec.pct+'%';
+  document.getElementById('gim-pct').textContent=gim.pct+'%';
+  document.getElementById('gim-fill').style.width=gim.pct+'%';
+  document.getElementById('readiness-detail').textContent=`${specCfg().short} ${spec.met}/${spec.total} · GIM ${gim.met}/${gim.total}`;
+}
+function renderGIM(){
+  if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
+  const annual=[], cumulative=[], milestones=[];
+  Object.entries(visibleGimReqs()).forEach(([id,req])=>{
+    const c=makeReqCard(id,req,'gim');
+    if(req.deadline==='annual') annual.push(c); else if(req.cumulative) cumulative.push(c); else milestones.push(c);
+  });
+  const stats=gimDopsStats();
+  const cumulativeNote = currentYear==='ST7' ? 'End-of-training totals including final-year minimums' : 'End-of-training cumulative targets';
+  document.getElementById('main').innerHTML =
+    renderOutcomeSelector()+
+    section('GIM annual requirements',`For ${currentYear}`,annual)+
+    section('GIM cumulative targets',cumulativeNote,cumulative)+
+    section('GIM milestones','One-off items',milestones)+
+    section('GIM DOPS procedures',`${stats.met} / ${stats.total} completed`,[dopsCardGrid()]);
+}
+function renderOverview(){
+  if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
+  const spec=calcReqsWithExtra(specReqs(), specDopsStats()), gim=calcReqsWithExtra(visibleGimReqs(), gimDopsStats());
+  const outstanding=[
+    ...Object.entries(specReqs()).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'spec')),
+    ...Object.entries(visibleGimReqs()).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'gim'))
+  ];
+  document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Overview — ${currentYear}</span><span class="sec-rule"></span></div><div class="summary-grid"><div class="summary"><div class="big green">${spec.met}</div><div class="hint">${specCfg().short} complete</div></div><div class="summary"><div class="big red">${spec.open}</div><div class="hint">${specCfg().short} outstanding</div></div><div class="summary"><div class="big green">${gim.met}</div><div class="hint">GIM complete</div></div><div class="summary"><div class="big red">${gim.open}</div><div class="hint">GIM outstanding</div></div><div class="summary"><div class="big primary">${entries('clinics').length+entries('procedures').length+entries('cpd').length+entries('simulation').length+entries('teaching').length}</div><div class="hint">logbook entries</div></div></div></section>${outstanding.length?section('Outstanding / in progress','Editable unless year locked',outstanding):'<div class="panel green">✓ All visible requirements met for this year.</div>'}`;
+}
+window.updateReadiness=updateReadiness; window.renderGIM=renderGIM; window.renderOverview=renderOverview;
+try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',e); }
 
 </script>
 </body>
