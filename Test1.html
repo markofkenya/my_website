@@ -506,7 +506,133 @@ function setSyncStatus(online,message){ const s=document.getElementById('sync');
 window.addEventListener('firebase-status', e=>{ setSyncStatus(e.detail.online, e.detail.message); });
 setTimeout(()=>{ if(window.ARCP_FB?.online) setSyncStatus(true,'Live'); }, 800);
 window.addEventListener('firebase-load', e=>{ if(!e.detail?.state) return; const remoteTs=e.detail.updatedAt||0; const local=JSON.parse(localStorage.getItem('arcp_v2_remote_ts')||'0'); if(remoteTs>local){ suppressRemote=true; state=Object.assign(blankState(), e.detail.state); localStorage.setItem(STATE_KEY,JSON.stringify(state)); localStorage.setItem('arcp_v2_remote_ts',String(remoteTs)); suppressRemote=false; render(); } });
-window.saveOnboarding=saveOnboarding; window.dismissBetaBanner=dismissBetaBanner; window.openSettings=openSettings; window.startFreshProfile=startFreshProfile; window.setTab=setTab; window.setYear=setYear; window.setOutcome=setOutcome; window.unlockYear=unlockYear; window.setReqVal=setReqVal; window.render=render; window.renderLogbook=renderLogbook; window.saveClinic=saveClinic; window.saveProc=saveProc; window.saveCPD=saveCPD; window.saveSimple=saveSimple; window.calcAcute=calcAcute; window.saveAcute=saveAcute; window.calcWard=calcWard; window.saveWard=saveWard; window.deleteEntry=deleteEntry; window.editEntry=editEntry; window.addAdminHospital=addAdminHospital; window.removeHospital=removeHospital; window.hideHospital=hideHospital; window.deleteHospital=deleteHospital; window.restoreDeaneryHospitals=restoreDeaneryHospitals; window.toggleGimDops=toggleGimDops; window.updateModeButton=updateModeButton; window.printReport=printReport; window.toggleFocus=toggleFocus; window.resetYearData=resetYearData; window.openSettings=openSettings;
+
+
+// ══════════════════════════════════════════════════════
+//  BULK IMPORT V1 — paste CSV → preview → import into logbook
+//  Imported entries use the same state.logbook arrays, so printed reports
+//  automatically include imported rows.
+// ══════════════════════════════════════════════════════
+const BULK_IMPORT_TYPES = {
+  clinics_gim:      { label:'GIM clinics', key:'clinics', scope:'gim', fields:['date','type','hospital','supervisor','patients','year','notes'] },
+  clinics_spec:     { label:'Specialty clinics', key:'clinics', scope:'spec', fields:['date','type','hospital','supervisor','patients','year','notes'] },
+  procedures_gim:   { label:'GIM procedures', key:'procedures', scope:'gim', fields:['date','type','supervisor','dops','year','notes'] },
+  procedures_spec:  { label:'Specialty procedures', key:'procedures', scope:'spec', fields:['date','type','supervisor','dops','year','notes'] },
+  cpd_gim:          { label:'GIM CPD / study leave', key:'cpd', scope:'gim', fields:['date','type','title','hours','year','notes'] },
+  cpd_spec:         { label:'Specialty CPD / study leave', key:'cpd', scope:'spec', fields:['date','type','title','hours','year','notes'] },
+  simulation:       { label:'Simulation', key:'simulation', fields:['date','course','title','hours','hospital','year','notes'] },
+  teaching:         { label:'Teaching', key:'teaching', fields:['date','type','topic','audience','supervisor','signoff','year','notes'] },
+  acute:            { label:'Acute take', key:'acute', fields:['hospital','start','end','months','takes','patients','estimated','year','supervisor'] },
+  ward:             { label:'Ward cover', key:'ward', fields:['hospital','start','end','months','year','supervisor'] },
+};
+
+function bulkImportPanel(){
+  const opts = Object.entries(BULK_IMPORT_TYPES).map(([k,v])=>`<option value="${k}">${safe(v.label)}</option>`).join('');
+  const sample = 'date,type,hospital,supervisor,patients,year,notes\n2026-04-02,Medical SDEC,Rotherham DGH,Dr Khazraj,6,ST4,';
+  return `<section class="section"><div class="sec-head"><span class="sec-title">Bulk import</span><span class="sec-rule"></span><span class="sec-note">Paste CSV · preview before importing · appears in printed report</span></div>
+    <div class="panel">
+      <div class="form-grid">
+        <div class="field"><label>Import destination</label><select class="input" id="bulk-type" onchange="bulkImportTemplate()">${opts}</select></div>
+        <div class="field"><label>CSV helper</label><button class="btn" onclick="bulkImportTemplate()">Show template</button></div>
+        <div class="field full"><label>Paste CSV</label><textarea class="input" id="bulk-csv" rows="8" style="min-height:150px;resize:vertical;" placeholder="${safe(sample)}"></textarea></div>
+        <div class="field full"><div class="row"><button class="btn primary" onclick="previewBulkImport()">Preview rows</button><button class="btn good" onclick="runBulkImport()">Import into logbook</button><button class="btn" onclick="printReport()">Print report</button></div><div class="hint" style="margin-top:8px">Tip: keep the header row. Imported rows are appended, not overwritten. Each row gets a createdAt timestamp, so your 24-hour edit rule still works.</div></div>
+      </div>
+      <div id="bulk-preview" style="margin-top:14px"></div>
+    </div></section>`;
+}
+
+function parseCSVLine(line){
+  const out=[]; let cur=''; let quote=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){
+      if(quote && line[i+1]==='"'){ cur+='"'; i++; }
+      else quote=!quote;
+    } else if(ch===',' && !quote){ out.push(cur); cur=''; }
+    else cur+=ch;
+  }
+  out.push(cur);
+  return out.map(v=>v.trim());
+}
+function parseCSV(text){
+  const lines=String(text||'').replace(/\r/g,'').split('\n').filter(l=>l.trim().length);
+  if(lines.length<2) return [];
+  const headers=parseCSVLine(lines[0]).map(h=>h.trim().toLowerCase());
+  return lines.slice(1).map(line=>{
+    const vals=parseCSVLine(line); const obj={};
+    headers.forEach((h,i)=> obj[h]=vals[i]??'');
+    return obj;
+  });
+}
+function bulkImportTemplate(){
+  const type=document.getElementById('bulk-type')?.value || 'clinics_gim';
+  const cfg=BULK_IMPORT_TYPES[type];
+  if(!cfg) return;
+  const examples={
+    clinics_gim:'2026-04-02,Medical SDEC,Rotherham DGH,Dr Khazraj,6,ST4,',
+    clinics_spec:'2026-04-02,General specialty clinic,Rotherham DGH,Dr Smith,6,ST4,',
+    procedures_gim:'2026-04-10,Ascitic tap,Dr Deena,Yes,ST4,Uncomplicated',
+    procedures_spec:'2026-04-10,Specialty procedure,Dr Smith,Yes,ST4,',
+    cpd_gim:'2026-03-19,Regional GIM training day,Yorkshire GIM Training Day — Haematology,6,ST4,',
+    cpd_spec:'2026-03-18,Specialty study day,Specialty teaching day,6,ST4,',
+    simulation:'2026-03-20,GIMME,Human factors simulation,4,Rotherham DGH,ST4,',
+    teaching:'2026-03-20,Tutorial / seminar,AKI management,FY1s,Dr Smith,Informal — not observed,ST4,',
+    acute:'Rotherham DGH,2026-02-04,2026-05-05,3,5,10,150,ST4,Dr Solomon Muzulu',
+    ward:'Rotherham DGH,2026-02-04,2026-05-05,3,ST4,Dr Solomon Muzulu'
+  };
+  const box=document.getElementById('bulk-csv');
+  if(box) box.value = cfg.fields.join(',') + '\n' + (examples[type] || cfg.fields.map(()=> '').join(','));
+  const prev=document.getElementById('bulk-preview');
+  if(prev) prev.innerHTML = `<div class="hint">Template inserted for <strong>${safe(cfg.label)}</strong>. Replace the example row with your own rows, then preview.</div>`;
+}
+function normaliseImportRow(row,cfg){
+  const now=Date.now()+Math.floor(Math.random()*100000);
+  const item={ id:now, createdAt:Date.now(), updatedAt:Date.now() };
+  cfg.fields.forEach(f=>{ item[f]=row[f] ?? row[f.toLowerCase()] ?? ''; });
+  if(cfg.scope) item.scope=cfg.scope;
+  if(!item.year) item.year=currentYear;
+  if(cfg.key==='acute'){
+    if(!item.months) item.months=monthsBetween(item.start,item.end);
+    if(!item.estimated) item.estimated=Math.round(Number(item.months||0)*Number(item.takes||0)*Number(item.patients||0));
+  }
+  if(cfg.key==='ward' && !item.months) item.months=monthsBetween(item.start,item.end);
+  return item;
+}
+function previewBulkImport(){
+  const type=document.getElementById('bulk-type')?.value;
+  const cfg=BULK_IMPORT_TYPES[type];
+  const rows=parseCSV(document.getElementById('bulk-csv')?.value || '');
+  const prev=document.getElementById('bulk-preview');
+  if(!cfg || !prev) return;
+  if(!rows.length){ prev.innerHTML='<div class="deadline past">No valid rows found. Make sure your CSV has a header row and at least one data row.</div>'; return; }
+  const formatted=rows.map(r=>normaliseImportRow(r,cfg));
+  const fields=['scope',...cfg.fields].filter((v,i,a)=>a.indexOf(v)===i);
+  prev.innerHTML=`<div class="hint" style="margin-bottom:8px"><strong>${formatted.length}</strong> rows ready for <strong>${safe(cfg.label)}</strong>. Previewing first 8 rows:</div>
+    <div style="overflow:auto;border:1px solid var(--line);border-radius:10px"><table class="table"><thead><tr>${fields.map(f=>`<th>${safe(f)}</th>`).join('')}</tr></thead><tbody>${formatted.slice(0,8).map(r=>`<tr>${fields.map(f=>`<td>${safe(r[f]||'—')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+function runBulkImport(){
+  if(yearLocked()) return alert('This year is locked. Unlock it before importing.');
+  const type=document.getElementById('bulk-type')?.value;
+  const cfg=BULK_IMPORT_TYPES[type];
+  const rows=parseCSV(document.getElementById('bulk-csv')?.value || '');
+  if(!cfg) return alert('Please choose an import destination.');
+  if(!rows.length) return alert('No valid CSV rows found.');
+  const formatted=rows.map(r=>normaliseImportRow(r,cfg));
+  saveEntries(cfg.key, [...entries(cfg.key), ...formatted]);
+  formatted.forEach(r=>{ if(r.hospital) addHospitalIfNew(r.hospital); });
+  const prev=document.getElementById('bulk-preview');
+  if(prev) prev.innerHTML=`<div class="deadline" style="color:var(--green)">✓ Imported ${formatted.length} row(s) into ${safe(cfg.label)}. They will now appear in the logbook and the printed ARCP report.</div>`;
+  saveState();
+}
+
+// Override Admin renderer to include Bulk Import panel without changing the rest of the app.
+function renderAdmin(){
+  if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
+  const hosp=hospitalOptions();
+  document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Profile & deanery</span><span class="sec-rule"></span><span class="sec-note">Used in reports and hospital dropdowns</span></div><div class="panel"><div class="form-grid"><div class="field"><label>ALS expiry</label><input class="input" type="date" value="${state.als||''}" onchange="state.als=this.value;saveState();render()"></div><div class="field"><label>${currentYear} ARCP date</label><input class="input" type="date" value="${state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]}" onchange="state.arcpDates['${currentYear}']=this.value;saveState();render()"></div><div class="field full"><label>Add hospital</label><div class="row"><input class="input" id="new-hospital" placeholder="Add hospital"><button class="btn primary" onclick="addAdminHospital()">ADD</button></div></div></div></div></section><section class="section"><div class="sec-head"><span class="sec-title">Hospitals</span><span class="sec-rule"></span><span class="sec-note">${hosp.length} available · delete hospitals you are not rotating in</span></div><div class="grid">${hosp.map(h=>`<div class="card"><div class="card-title">${safe(h)}</div><button class="btn small danger" onclick="deleteHospital('${safe(h)}')">Delete from list</button></div>`).join('')}</div></section>${bulkImportPanel()}`;
+}
+
+window.saveOnboarding=saveOnboarding; window.dismissBetaBanner=dismissBetaBanner; window.openSettings=openSettings; window.startFreshProfile=startFreshProfile; window.setTab=setTab; window.setYear=setYear; window.setOutcome=setOutcome; window.unlockYear=unlockYear; window.setReqVal=setReqVal; window.render=render; window.renderLogbook=renderLogbook; window.saveClinic=saveClinic; window.saveProc=saveProc; window.saveCPD=saveCPD; window.saveSimple=saveSimple; window.calcAcute=calcAcute; window.saveAcute=saveAcute; window.calcWard=calcWard; window.saveWard=saveWard; window.deleteEntry=deleteEntry; window.editEntry=editEntry; window.addAdminHospital=addAdminHospital; window.removeHospital=removeHospital; window.hideHospital=hideHospital; window.deleteHospital=deleteHospital; window.restoreDeaneryHospitals=restoreDeaneryHospitals; window.toggleGimDops=toggleGimDops; window.updateModeButton=updateModeButton; window.printReport=printReport; window.previewBulkImport=previewBulkImport; window.runBulkImport=runBulkImport; window.bulkImportTemplate=bulkImportTemplate; window.toggleFocus=toggleFocus; window.resetYearData=resetYearData; window.openSettings=openSettings;
 if(localStorage.getItem('arcp_v2_focus')==='1') document.body.classList.add('focus'); initOnboarding(); render(); updateModeButton(); forceLiveStatus(); setTimeout(forceLiveStatus, 500); setTimeout(forceLiveStatus, 1500);
 </script>
 </body>
