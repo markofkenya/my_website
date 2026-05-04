@@ -1003,6 +1003,118 @@ window.renderRespProcedureProgression=renderRespProcedureProgression;
 window.renderSpecialty=renderSpecialty;
 try { render(); forceLiveStatus(); } catch(e) { console.warn('V11 refresh skipped', e); }
 
+
+
+/* ─────────────────────────────────────────────────────────────
+   V12 FINAL EVENING PATCH — bulk removed, specialty labels, readiness incl DOPS
+───────────────────────────────────────────────────────────── */
+function specialtyDisplayName(){
+  const key=getSpecKey();
+  const cfg=specCfg();
+  if(key==='respiratory') return 'Respiratory';
+  if(key==='renal') return 'Renal';
+  return (cfg.short || cfg.label || 'Specialty').replace(/ Medicine$/,'');
+}
+function personalisedReq(req){
+  const out=Object.assign({}, req);
+  const name=specialtyDisplayName();
+  out.label=(out.label||'')
+    .replace(/Specialty MCRs/gi, name+' MCRs')
+    .replace(/Specialty MSF raters/gi, name+' MSF raters')
+    .replace(/Specialty SLEs/gi, name+' SLEs')
+    .replace(/Specialty Certificate Exam/gi, name+' SCE')
+    .replace(/Specialty consultants/gi, name+' consultants')
+    .replace(/Specialty/g, name)
+    .replace(/specialty/g, name.toLowerCase());
+  out.note=(out.note||'')
+    .replace(/Specialty consultants/gi, name+' consultants')
+    .replace(/specialty/g, name.toLowerCase())
+    .replace(/Specialty/g, name);
+  return out;
+}
+const _v12_baseSpecReqs = specReqs;
+specReqs=function(){
+  const raw=_v12_baseSpecReqs();
+  const next={};
+  Object.entries(raw).forEach(([id,req])=> next[id]=personalisedReq(req));
+  return next;
+};
+function specDopsStats(){
+  if(getSpecKey()==='respiratory'){
+    const procs=Object.keys(RESP_PROCEDURE_TARGETS||{});
+    return {met:procs.filter(p=>respProcMet(p,currentYear)).length,total:procs.length,label:'Resp DOPS'};
+  }
+  const procs=(specCfg().logbook?.procedures||[]).filter(p=>p && p!=='Other');
+  const logged=entries('procedures').filter(e=>e.scope!=='gim' && e.dops==='Yes').map(e=>e.type);
+  return {met:procs.filter(p=>logged.includes(p)).length,total:procs.length,label:specialtyDisplayName()+' DOPS'};
+}
+function gimDopsStats(){
+  return {met:GIM_DOPS_PROCEDURES.filter(p=>!!state.req['dops.'+p]).length,total:GIM_DOPS_PROCEDURES.length,label:'GIM DOPS'};
+}
+function calcReqsWithExtra(reqs, extra){
+  const base=calcReqs(reqs);
+  const met=base.met+(extra?.met||0), total=base.total+(extra?.total||0);
+  return {met,total,open:Math.max(0,total-met),pct:total?Math.round(met/total*100):0,base,extra};
+}
+function renderHeader(){
+  const sp=specCfg();
+  document.getElementById('brand-sub').textContent=`${sp.label} + GIM · ${state.profile.deanery}`;
+  document.getElementById('sb-year').textContent=currentYear;
+  document.getElementById('sb-deanery').textContent=state.profile.deanery;
+  document.getElementById('sb-specialty').textContent=sp.label;
+  document.getElementById('spec-readiness-label').textContent=sp.short;
+  const grow=document.querySelector('.grow');
+  if(grow && !document.getElementById('arcp-readiness-title')){
+    grow.insertAdjacentHTML('afterbegin','<div id="arcp-readiness-title" class="hint" style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:7px;color:var(--dim);font-weight:800">ARCP READINESS</div>');
+  }
+  renderYearButtons(); updateCountdown(); updateALS();
+}
+function updateReadiness(){
+  if(!state.profile)return;
+  const spec=calcReqsWithExtra(specReqs(), specDopsStats());
+  const gim=calcReqsWithExtra(GIM_REQS, gimDopsStats());
+  document.getElementById('spec-pct').textContent=spec.pct+'%';
+  document.getElementById('spec-fill').style.width=spec.pct+'%';
+  document.getElementById('gim-pct').textContent=gim.pct+'%';
+  document.getElementById('gim-fill').style.width=gim.pct+'%';
+  document.getElementById('readiness-detail').textContent=`${specCfg().short} ${spec.met}/${spec.total} incl DOPS · GIM ${gim.met}/${gim.total} incl DOPS`;
+}
+function dopsCardGrid(){
+  const rows=GIM_DOPS_PROCEDURES.map(p=>{
+    const done=!!state.req['dops.'+p];
+    return `<div class="dops-card ${done?'done':''}"><button class="chk ${done?'checked':''}" onclick="toggleGimDops('${safe(p)}')">${done?'✓':''}</button><span class="dops-label">${safe(p)}</span></div>`;
+  }).join('');
+  return `<div class="dops-grid">${rows}</div>`;
+}
+function renderGIM(){
+  if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
+  const annual=[], cumulative=[], milestones=[];
+  Object.entries(GIM_REQS).forEach(([id,req])=>{
+    const c=makeReqCard(id,req,'gim');
+    if(req.deadline==='annual') annual.push(c); else if(req.cumulative) cumulative.push(c); else milestones.push(c);
+  });
+  const stats=gimDopsStats();
+  document.getElementById('main').innerHTML =
+    renderOutcomeSelector()+
+    section('GIM annual requirements',`For ${currentYear}`,annual)+
+    section('GIM cumulative targets','End-of-training totals; ST7 minimums grey out until final year',cumulative)+
+    section('GIM milestones','One-off items',milestones)+
+    section('GIM DOPS procedures',`${stats.met} / ${stats.total} completed`,[dopsCardGrid()]);
+}
+function renderAdmin(){
+  if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
+  const hosp=hospitalOptions();
+  document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Profile & deanery</span><span class="sec-rule"></span><span class="sec-note">Used in reports and hospital dropdowns</span></div><div class="panel"><div class="form-grid"><div class="field"><label>ALS expiry</label><input class="input" type="date" value="${state.als||''}" onchange="state.als=this.value;saveState();render()"></div><div class="field"><label>${currentYear} ARCP date</label><input class="input" type="date" value="${state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]}" onchange="state.arcpDates['${currentYear}']=this.value;saveState();render()"></div><div class="field full"><label>Add hospital</label><div class="row"><input class="input" id="new-hospital" placeholder="Add hospital not in deanery list"><button class="btn primary" onclick="addAdminHospital()">ADD</button></div></div></div></div></section><section class="section"><div class="sec-head"><span class="sec-title">Hospitals</span><span class="sec-rule"></span><span class="sec-note">${hosp.length} available · delete hospitals you are not rotating in</span></div><div class="grid">${hosp.map(h=>`<div class="card"><div class="card-title">${safe(h)}</div><button class="btn small danger" onclick="deleteHospital('${safe(h)}')">Delete from list</button></div>`).join('')}</div></section>`;
+}
+function renderOverview(){
+  if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
+  const spec=calcReqsWithExtra(specReqs(), specDopsStats()), gim=calcReqsWithExtra(GIM_REQS, gimDopsStats());
+  const outstanding=[...Object.entries(specReqs()).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'spec')),...Object.entries(GIM_REQS).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'gim'))];
+  document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Overview — ${currentYear}</span><span class="sec-rule"></span></div><div class="summary-grid"><div class="summary"><div class="big green">${spec.met}</div><div class="hint">${specCfg().short} complete incl DOPS</div></div><div class="summary"><div class="big red">${spec.open}</div><div class="hint">${specCfg().short} outstanding incl DOPS</div></div><div class="summary"><div class="big green">${gim.met}</div><div class="hint">GIM complete incl DOPS</div></div><div class="summary"><div class="big red">${gim.open}</div><div class="hint">GIM outstanding incl DOPS</div></div><div class="summary"><div class="big primary">${entries('clinics').length+entries('procedures').length+entries('cpd').length+entries('simulation').length+entries('teaching').length}</div><div class="hint">logbook entries</div></div></div></section>${outstanding.length?section('Outstanding / in progress','Editable unless year locked',outstanding):'<div class="panel green">✓ All visible requirements met for this year.</div>'}`;
+}
+window.renderHeader=renderHeader; window.updateReadiness=updateReadiness; window.renderGIM=renderGIM; window.renderAdmin=renderAdmin; window.renderOverview=renderOverview;
+try{ render(); forceLiveStatus(); }catch(e){ console.warn('V12 refresh skipped',e); }
+
 </script>
 </body>
 </html>
