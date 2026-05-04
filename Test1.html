@@ -895,6 +895,114 @@ window.renderRespProcedureProgression=renderRespProcedureProgression;
 window.printReport=printReport;
 // Refresh onboarding dropdowns and current screen after overrides load.
 try { initOnboarding(); render(); forceLiveStatus(); } catch(e) { console.warn('V8 override refresh skipped', e); }
+
+
+
+/* ─────────────────────────────────────────────────────────────
+   V11 PATCH — restore GIM DOPS, make RESP procedures list-style, deanery wording
+───────────────────────────────────────────────────────────── */
+// Correct Yorkshire & Humber hospital wording requested by user.
+if (DEANERIES["Yorkshire & Humber"]) {
+  DEANERIES["Yorkshire & Humber"] = DEANERIES["Yorkshire & Humber"]
+    .map(h => h === "Sheffield Royal Hallamshire Hospital" ? "Sheffield Teaching Hospitals" : h)
+    .filter((h, i, arr) => arr.indexOf(h) === i);
+}
+
+// Keep GIM DOPS as the original checkbox list only.
+function toggleGimDops(proc){
+  state.req['dops.'+proc]=!state.req['dops.'+proc];
+  saveState();
+  renderGIM();
+}
+function renderGIM(){
+  if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
+  const annual=[], cumulative=[], milestones=[];
+  Object.entries(GIM_REQS).forEach(([id,req])=>{
+    const c=makeReqCard(id,req,'gim');
+    if(req.deadline==='annual') annual.push(c); else if(req.cumulative) cumulative.push(c); else milestones.push(c);
+  });
+  const doneCount=GIM_DOPS_PROCEDURES.filter(p=>!!state.req['dops.'+p]).length;
+  const dopsRows=GIM_DOPS_PROCEDURES.map(p=>{
+    const done=!!state.req['dops.'+p];
+    return `<div class="dops-row ${done?'done':''}">
+      <button class="check ${done?'checked':''}" onclick="toggleGimDops('${safe(p)}')">${done?'✓':''}</button>
+      <span class="dops-label">${safe(p)}</span>
+      <span class="dops-note">${done?'signed off':'not yet'}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('main').innerHTML =
+    renderOutcomeSelector()+
+    section('GIM annual requirements',`For ${currentYear}`,annual)+
+    section('GIM cumulative targets','End-of-training totals; ST7 minimums grey out until final year',cumulative)+
+    section('GIM DOPS procedures',`${doneCount} / ${GIM_DOPS_PROCEDURES.length} completed`,[`<div class="dops-list">${dopsRows}</div>`])+
+    section('GIM milestones','One-off items',milestones);
+}
+
+// Respiratory DOPS/procedures: list-style rows like the screenshot, NOT the GIM checkbox list and NOT a matrix.
+function renderRespProcedureProgression(){
+  const procs=Object.keys(RESP_PROCEDURE_TARGETS);
+  const done=procs.filter(p=>respProcMet(p,currentYear)).length;
+  const rows=procs.map(proc=>{
+    const target=RESP_PROCEDURE_TARGETS[proc][currentYear];
+    const val=respProcValue(proc,currentYear);
+    const ok=respProcMet(proc,currentYear);
+    return `<div class="resp-dops-row ${ok?'done':''}">
+      <div class="resp-dops-name">${safe(proc)}</div>
+      <div class="resp-dops-target">${currentYear} target: <strong>${safe(target)}</strong></div>
+      <select class="input resp-dops-select" onchange="setRespProc('${safe(proc)}','${currentYear}',this.value)">
+        ${RESP_LEVELS.map(l=>`<option value="${l}" ${val===l?'selected':''}>${l||'— not assessed —'}</option>`).join('')}
+      </select>
+      <div class="resp-dops-status ${ok?'good':'warn'}">${ok?'✓ on track':'not yet'}</div>
+    </div>`;
+  }).join('');
+  return `<section class="section"><div class="sec-head"><span class="sec-title">Respiratory DOPS / procedures</span><span class="sec-rule"></span><span class="sec-note">${done} / ${procs.length} on track for ${currentYear}</span></div><div class="resp-dops-list">${rows}</div></section>`;
+}
+
+// Safety: force respiratory procedures to remain at the bottom and remove any old roadmap/progression matrix output.
+function renderSpecialty(){
+  if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
+  const sp=specCfg();
+  if(!['renal','respiratory'].includes(getSpecKey())){
+    document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">${safe(sp.label)}</span><span class="sec-rule"></span></div><div class="panel"><div class="card-title" style="color:var(--primary)">Coming soon</div><div class="hint">This beta currently has full specialty requirement logic for Renal Medicine and Respiratory Medicine. Your GIM portfolio, logbook, hospitals, reports and profile still work while this specialty module is being built.</div></div></section>`;
+    return;
+  }
+  const reqs=specReqs(); const annual=[], milestones=[];
+  Object.entries(reqs).forEach(([id,req])=> (req.deadline==='annual'?annual:milestones).push(makeReqCard(id,req,'spec')));
+  let htmlOut = renderOutcomeSelector();
+  htmlOut += section(`${sp.label} annual requirements`,`For ${currentYear}`,annual);
+  htmlOut += section('Specialty milestones','One-off items carry forward',milestones);
+  if(getSpecKey()==='respiratory') htmlOut += renderRespProcedureProgression();
+  document.getElementById('main').innerHTML=htmlOut;
+}
+
+// Styling for the respiratory list to match the long-row layout in the screenshot.
+(function addV11Styles(){
+  if(document.getElementById('v11-resp-dops-style')) return;
+  const st=document.createElement('style');
+  st.id='v11-resp-dops-style';
+  st.textContent=`
+    .resp-dops-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+    .resp-dops-row{display:grid;grid-template-columns:minmax(260px,1fr) 170px 180px 90px;gap:14px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);border-left:4px solid var(--primary)}
+    .resp-dops-row:last-child{border-bottom:none}
+    .resp-dops-row.done{border-left-color:var(--green);background:rgba(52,211,153,.04)}
+    .resp-dops-name{font-size:13px;font-weight:700;color:var(--text)}
+    .resp-dops-target{font-size:10px;color:var(--muted);text-align:right}
+    .resp-dops-target strong{color:var(--primary)}
+    .resp-dops-select{width:100%;min-width:150px}
+    .resp-dops-status{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;text-align:right;color:var(--amber)}
+    .resp-dops-status.good{color:var(--green)}
+    .resp-dops-status.warn{color:var(--amber)}
+    @media(max-width:800px){.resp-dops-row{grid-template-columns:1fr;gap:8px}.resp-dops-target,.resp-dops-status{text-align:left}.resp-dops-select{min-width:0}}
+  `;
+  document.head.appendChild(st);
+})();
+
+window.toggleGimDops=toggleGimDops;
+window.renderGIM=renderGIM;
+window.renderRespProcedureProgression=renderRespProcedureProgression;
+window.renderSpecialty=renderSpecialty;
+try { render(); forceLiveStatus(); } catch(e) { console.warn('V11 refresh skipped', e); }
+
 </script>
 </body>
 </html>
