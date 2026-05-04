@@ -976,7 +976,6 @@ const REQS = {
   renal_teaching_obs: { label:"Teaching Observation", stream:"renal", type:"checkbox", deadline:"ST6", sharesTo:"gim_teaching_obs", note:"Applies to GIM — ticking this ticks GIM too" },
   renal_patient_survey_st7: { label:"Patient Survey (ST7)", stream:"renal", type:"checkbox", deadline:"ST7", sharesTo:"gim_patient_survey", note:"Applies to GIM — ticking this ticks GIM too" },
   renal_mgmt_course:  { label:"Management & Leadership Course", stream:"renal", type:"checkbox", deadline:"ST7", note:"By end of ST7" },
-  renal_teaching_course: { label:"Teaching Course", stream:"renal", type:"checkbox", deadline:"ST7", note:"By end of ST7" },
 };
 
 const ADMIN_DOCS = [
@@ -1272,7 +1271,7 @@ function renderRenal() {
   annualGrid.className = "req-grid";
   ["renal_mcrs","renal_sles","renal_msf_raters","renal_teaching_log","renal_teaching_involvement","renal_es_report"].forEach(id => annualGrid.appendChild(makeCard(id, REQS[id])));
   el.appendChild(annualGrid);
-  el.appendChild(makeSection("MILESTONES","renal","One-off requirements — deadlines shown",["renal_temp_lines","renal_eseneph","renal_patient_survey_st5","renal_qip","renal_teaching_obs","renal_patient_survey_st7","renal_mgmt_course","renal_teaching_course"]));
+  el.appendChild(makeSection("MILESTONES","renal","One-off requirements — deadlines shown",["renal_temp_lines","renal_eseneph","renal_patient_survey_st5","renal_qip","renal_teaching_obs","renal_patient_survey_st7","renal_mgmt_course"]));
 }
 
 function renderAdmin() {
