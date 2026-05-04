@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -8,10 +7,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="ARCP" />
-  <meta name="theme-color" content="#060810" />
+  <meta name="theme-color" content="#04060f" />
   <link rel="apple-touch-icon" href="RCP-icon.png"/>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
   <script type="module">
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -100,329 +99,924 @@
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ═══════════════════════════════════════════════
+       TERMINAL MODE — Design Tokens
+    ═══════════════════════════════════════════════ */
     :root {
-      --bg:    #060810; --bg2: #0a0d18; --bg3: #0f1220; --bg4: #141828;
-      --blue:  #4f9eff; --blue2: #3a7acc; --blue3: #264d8a; --blue4: #162d57; --blue5: #0a1a36;
-      --gim:   #4f9eff; --renal: #a78bfa;
-      --green: #39ff14; --amber: #ffb000; --red: #ff4444; --dim: #2a3560; --dimmest: #0d1020;
+      /* Backgrounds — deeper, richer navy */
+      --bg:   #04060f;
+      --bg2:  #080c1a;
+      --bg3:  #0c1122;
+      --bg4:  #111828;
+      --bg5:  #161e30;
+
+      /* Accents — more saturated */
+      --blue:   #58b3ff;
+      --blue2:  #3d8fd4;
+      --blue3:  #1f5499;
+      --blue4:  #122e5c;
+      --blue5:  #091a38;
+      --blue6:  #050f22;
+
+      --gim:    #58b3ff;
+      --renal:  #b78fff;
+      --renal2: #8b5fd4;
+
+      --green:  #22ff7a;
+      --green2: #0dbf5a;
+      --amber:  #ffb830;
+      --amber2: #cc8800;
+      --red:    #ff3b3b;
+      --red2:   #cc1f1f;
+
+      --dim:    #2c3f6e;
+      --dim2:   #1a2545;
+      --text:   #d0e4ff;
+      --text2:  #8aabdb;
+
       --font: 'JetBrains Mono', 'Courier New', monospace;
-      --scanline: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);
+
+      /* Scanlines — subtler */
+      --scanline: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,0,0,0.06) 3px,
+        rgba(0,0,0,0.06) 4px
+      );
+
+      /* Glow effects */
+      --glow-blue:  0 0 12px rgba(88,179,255,0.25);
+      --glow-green: 0 0 12px rgba(34,255,122,0.3);
+      --glow-amber: 0 0 10px rgba(255,184,48,0.3);
+      --glow-red:   0 0 10px rgba(255,59,59,0.3);
+      --glow-renal: 0 0 12px rgba(183,143,255,0.25);
     }
-    html, body { background:var(--bg); color:var(--blue); font-family:var(--font); font-size:13px; min-height:100vh; background-image:var(--scanline); }
-    body { text-shadow: 0 0 6px rgba(79,158,255,0.2); }
-    ::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-track { background:var(--bg); } ::-webkit-scrollbar-thumb { background:var(--blue4); }
 
-    #header { background:var(--bg2); border-bottom:2px solid var(--blue3); }
-    .header-top { display:flex; align-items:stretch; border-bottom:1px solid var(--blue5); flex-wrap:wrap; }
-    .header-logo { padding:14px 24px; border-right:1px solid var(--blue5); display:flex; flex-direction:column; justify-content:center; }
-    .logo-line1 { font-size:20px; font-weight:700; color:var(--blue); letter-spacing:0.08em; line-height:1; }
-    .logo-line1 span { color:var(--blue3); }
-    .logo-line2 { font-size:8px; color:var(--blue3); letter-spacing:0.3em; margin-top:4px; }
-    .logo-sub   { font-size:9px; color:var(--blue2); letter-spacing:0.12em; margin-top:3px; }
-    .arcp-countdown { padding:14px 20px; border-right:1px solid var(--blue5); display:flex; flex-direction:column; justify-content:center; }
-    .countdown-val { font-size:26px; font-weight:700; color:var(--blue); line-height:1; }
-    .countdown-val.warn  { color:var(--amber); text-shadow:0 0 8px rgba(255,176,0,0.4); }
-    .countdown-val.alert { color:var(--red);   text-shadow:0 0 8px rgba(255,68,68,0.4); }
-    .countdown-key { font-size:8px; color:var(--blue3); letter-spacing:0.18em; margin-top:3px; }
-    .als-status { padding:14px 20px; border-right:1px solid var(--blue5); display:flex; flex-direction:column; justify-content:center; }
-    .als-val { font-size:12px; font-weight:700; color:var(--blue); line-height:1.3; }
-    .als-val.warn  { color:var(--amber); }
-    .als-val.alert { color:var(--red); animation:pulse 2s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
-    .als-key { font-size:8px; color:var(--blue3); letter-spacing:0.15em; margin-top:3px; }
-    .readiness-bar-wrap { flex:1; padding:14px 20px; display:flex; flex-direction:column; justify-content:center; }
-    .readiness-label { display:flex; justify-content:space-between; font-size:9px; color:var(--blue3); letter-spacing:0.15em; margin-bottom:6px; }
-    .readiness-pct { color:var(--blue); font-weight:700; font-size:11px; }
-    .bar-track { height:6px; background:var(--blue5); border-radius:3px; overflow:hidden; }
-    .bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--blue3),var(--blue)); transition:width 0.5s ease; }
-    .bar-fill.warn { background:linear-gradient(90deg,#8a5500,var(--amber)); }
-    .bar-fill.good { background:linear-gradient(90deg,#0a4a1a,var(--green)); }
-    .year-sel-wrap { padding:14px 20px; border-left:1px solid var(--blue5); display:flex; flex-direction:column; justify-content:center; gap:6px; }
-    .year-label { font-size:8px; color:var(--blue3); letter-spacing:0.18em; }
-    .year-btns  { display:flex; gap:4px; }
-    .year-btn { padding:4px 10px; background:transparent; border:1px solid var(--blue5); color:var(--dim); font-family:var(--font); font-size:10px; cursor:pointer; transition:all 0.12s; }
-    .year-btn:hover { border-color:var(--blue3); color:var(--blue2); }
-    .year-btn.active { background:var(--blue4); border-color:var(--blue); color:var(--blue); font-weight:700; }
-    .year-btn.locked { border-color:var(--green); color:var(--green); opacity:0.7; }
-    .year-btn.locked.active { background:rgba(57,255,20,0.08); border-color:var(--green); color:var(--green); font-weight:700; opacity:1; }
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      min-height: 100vh;
+      background-image: var(--scanline);
+      -webkit-font-smoothing: antialiased;
+    }
 
-    .locked-banner { background:rgba(57,255,20,0.05); border:1px solid rgba(57,255,20,0.2); border-left:3px solid var(--green); padding:12px 18px; display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; cursor:pointer; }
-    .locked-banner:hover { background:rgba(57,255,20,0.08); }
-    .locked-banner-left { display:flex; flex-direction:column; gap:4px; }
-    .locked-outcome { font-size:11px; font-weight:700; color:var(--green); letter-spacing:0.1em; }
-    .locked-note    { font-size:9px; color:var(--dim); letter-spacing:0.08em; }
-    .locked-toggle  { font-size:10px; color:var(--dim); letter-spacing:0.1em; }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--blue4); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--blue3); }
 
-    .outcome-selector { display:flex; align-items:center; gap:8px; margin-bottom:20px; padding:10px 14px; background:var(--bg2); border:1px solid var(--blue5); flex-wrap:wrap; }
-    .outcome-label { font-size:9px; color:var(--blue3); letter-spacing:0.15em; }
-    .outcome-select { background:var(--bg); border:1px solid var(--blue4); color:var(--blue); font-family:var(--font); font-size:11px; padding:5px 10px; outline:none; cursor:pointer; }
-    .outcome-select option { background:var(--bg2); }
-    .outcome-clear { background:none; border:1px solid var(--blue5); color:var(--dim); font-family:var(--font); font-size:9px; padding:4px 10px; cursor:pointer; letter-spacing:0.08em; transition:all 0.1s; }
-    .outcome-clear:hover { border-color:var(--red); color:var(--red); }
+    /* ═══════════════════════════════════════════════
+       HEADER — Two-row layout
+    ═══════════════════════════════════════════════ */
+    #header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--blue4);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
 
-    #tabbar { background:var(--bg3); border-bottom:1px solid var(--blue4); padding:0 24px; display:flex; align-items:stretch; overflow-x:auto; }
-    .tab { padding:10px 16px; background:transparent; border:none; border-bottom:2px solid transparent; color:var(--dim); font-family:var(--font); font-size:10px; letter-spacing:0.1em; cursor:pointer; transition:all 0.12s; white-space:nowrap; }
-    .tab:hover { color:var(--blue2); }
-    .tab.active { color:var(--blue); border-bottom-color:var(--blue); }
-    .tab.gim-tab.active   { color:var(--gim);   border-bottom-color:var(--gim); }
-    .tab.renal-tab.active { color:var(--renal); border-bottom-color:var(--renal); }
+    /* Row 1: Logo + Year selector */
+    .header-row1 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--blue6);
+      gap: 12px;
+    }
 
-    #main { padding:20px 24px 80px; }
+    .header-logo {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .logo-mark {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--blue);
+      letter-spacing: 0.06em;
+      line-height: 1;
+      text-shadow: var(--glow-blue);
+    }
+    .logo-mark span { color: var(--blue4); }
+    .logo-sub {
+      font-size: 9px;
+      color: var(--dim);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
 
-    .sec-head { display:flex; align-items:baseline; gap:12px; margin-bottom:12px; padding-bottom:6px; border-bottom:1px solid var(--blue5); }
-    .sec-title { font-size:10px; font-weight:700; letter-spacing:0.2em; color:var(--blue2); }
-    .sec-title.gim   { color:var(--gim); }
-    .sec-title.renal { color:var(--renal); }
-    .sec-title.both  { color:#aabbff; }
-    .sec-rule { flex:1; height:1px; background:var(--blue5); }
-    .sec-note { font-size:9px; color:var(--dim); letter-spacing:0.08em; }
+    /* Year buttons — pill style */
+    .year-sel-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .year-label {
+      font-size: 9px;
+      color: var(--dim);
+      letter-spacing: 0.18em;
+    }
+    .year-btns { display: flex; gap: 3px; }
+    .year-btn {
+      padding: 5px 11px;
+      background: transparent;
+      border: 1px solid var(--dim2);
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.12s;
+    }
+    .year-btn:hover {
+      border-color: var(--blue3);
+      color: var(--blue2);
+      background: var(--blue6);
+    }
+    .year-btn.active {
+      background: var(--blue4);
+      border-color: var(--blue);
+      color: var(--blue);
+      font-weight: 700;
+      box-shadow: var(--glow-blue);
+    }
+    .year-btn.locked {
+      border-color: var(--green2);
+      color: var(--green);
+      opacity: 0.75;
+    }
+    .year-btn.locked.active {
+      background: rgba(34,255,122,0.1);
+      border-color: var(--green);
+      color: var(--green);
+      font-weight: 700;
+      opacity: 1;
+      box-shadow: var(--glow-green);
+    }
 
-    .req-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:10px; margin-bottom:24px; }
-    .req-card { background:var(--bg2); border:1px solid var(--blue5); border-left:3px solid; padding:12px 14px; transition:background 0.1s; }
-    .req-card:hover { background:var(--bg3); }
-    .req-card.met     { border-left-color:var(--green); }
-    .req-card.partial { border-left-color:var(--amber); }
-    .req-card.unmet   { border-left-color:var(--red); }
-    .req-card.na      { border-left-color:var(--dim); opacity:0.45; }
-    .req-card.warn    { border-left-color:var(--amber); }
+    /* Row 2: Status metrics */
+    .header-row2 {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .header-row2::-webkit-scrollbar { display: none; }
 
-    .req-label { font-size:11px; color:#c8d8ff; font-weight:500; margin-bottom:8px; line-height:1.3; }
-    .badge { font-size:8px; font-weight:700; letter-spacing:0.1em; padding:1px 5px; border-radius:2px; margin-left:5px; vertical-align:middle; }
-    .badge-gim   { background:rgba(79,158,255,0.15);  color:var(--gim);   border:1px solid rgba(79,158,255,0.3); }
-    .badge-renal { background:rgba(167,139,250,0.15); color:var(--renal); border:1px solid rgba(167,139,250,0.3); }
-    .badge-both  { background:rgba(170,187,255,0.1);  color:#aabbff;      border:1px solid rgba(170,187,255,0.25); }
+    .stat-block {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 10px 18px;
+      border-right: 1px solid var(--blue6);
+      flex-shrink: 0;
+      min-width: 0;
+    }
+    .stat-block:last-child { border-right: none; }
+    .stat-label {
+      font-size: 8px;
+      color: var(--dim);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+    .stat-val {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--blue);
+    }
+    .stat-val.warn  { color: var(--amber); text-shadow: var(--glow-amber); }
+    .stat-val.alert { color: var(--red);   text-shadow: var(--glow-red); animation: pulse 2s ease-in-out infinite; }
+    .stat-val.ok    { color: var(--green); text-shadow: var(--glow-green); }
+    .stat-sub {
+      font-size: 9px;
+      color: var(--text2);
+      margin-top: 2px;
+      letter-spacing: 0.04em;
+    }
+    .stat-sub.warn  { color: var(--amber); }
+    .stat-sub.alert { color: var(--red); }
 
-    .req-progress { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
-    .req-track { flex:1; height:4px; background:var(--blue5); border-radius:2px; overflow:hidden; }
-    .req-fill { height:100%; border-radius:2px; transition:width 0.4s ease; }
-    .req-fill.met     { background:var(--green); }
-    .req-fill.partial { background:var(--amber); }
-    .req-fill.unmet   { background:var(--red); }
+    /* Readiness block — flex:1 */
+    .readiness-block {
+      flex: 1;
+      padding: 10px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+      min-width: 200px;
+    }
+    .readiness-header {
+      font-size: 8px;
+      color: var(--dim);
+      letter-spacing: 0.2em;
+      margin-bottom: 2px;
+    }
+    .readiness-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .readiness-stream {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      width: 38px;
+      flex-shrink: 0;
+    }
+    .readiness-track {
+      flex: 1;
+      height: 5px;
+      background: var(--blue6);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .readiness-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+    .readiness-pct {
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 34px;
+      text-align: right;
+    }
+    .readiness-detail {
+      font-size: 8px;
+      color: var(--dim);
+      letter-spacing: 0.06em;
+      margin-top: 1px;
+    }
 
-    .req-count { font-size:11px; font-weight:700; white-space:nowrap; min-width:60px; text-align:right; }
-    .req-count.met     { color:var(--green); }
-    .req-count.partial { color:var(--amber); }
-    .req-count.unmet   { color:var(--red); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
 
-    .req-controls { display:flex; align-items:center; gap:6px; margin-top:8px; flex-wrap:wrap; }
-    .req-input { background:var(--bg); border:1px solid var(--blue4); color:var(--blue); font-family:var(--font); font-size:12px; padding:4px 8px; width:65px; outline:none; transition:border-color 0.12s; caret-color:var(--blue); }
-    .req-input:focus { border-color:var(--blue); }
-    .req-input.date-inp { width:130px; }
-    .req-unit   { font-size:9px; color:var(--dim); letter-spacing:0.08em; }
-    .req-target { font-size:9px; color:var(--blue3); letter-spacing:0.06em; }
+    /* ═══════════════════════════════════════════════
+       TAB BAR — Pill style
+    ═══════════════════════════════════════════════ */
+    #tabbar {
+      background: var(--bg3);
+      border-bottom: 1px solid var(--blue5);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    #tabbar::-webkit-scrollbar { display: none; }
 
-    .req-check { display:flex; align-items:center; gap:8px; margin-top:8px; }
-    .chk { width:16px; height:16px; border:1px solid var(--blue4); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--green); transition:all 0.15s; flex-shrink:0; }
-    .chk.checked { background:var(--blue4); border-color:var(--blue); box-shadow:0 0 6px rgba(79,158,255,0.3); }
-    .chk-label { font-size:10px; color:var(--dim); letter-spacing:0.06em; cursor:pointer; }
+    .tab {
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.12s;
+    }
+    .tab:hover {
+      color: var(--text2);
+      background: var(--bg4);
+      border-color: var(--blue5);
+    }
+    .tab.active {
+      color: var(--blue);
+      background: var(--blue6);
+      border-color: var(--blue4);
+      box-shadow: inset 0 0 0 1px var(--blue5), var(--glow-blue);
+    }
+    .tab.gim-tab.active {
+      color: var(--gim);
+      background: rgba(88,179,255,0.07);
+      border-color: var(--blue4);
+    }
+    .tab.renal-tab.active {
+      color: var(--renal);
+      background: rgba(183,143,255,0.07);
+      border-color: var(--renal2);
+      box-shadow: inset 0 0 0 1px rgba(183,143,255,0.15), var(--glow-renal);
+    }
 
-    .req-deadline { font-size:8px; color:var(--dim); margin-top:5px; letter-spacing:0.08em; }
-    .req-deadline.soon { color:var(--amber); }
-    .req-deadline.past { color:var(--red); }
+    /* ═══════════════════════════════════════════════
+       MAIN CONTENT
+    ═══════════════════════════════════════════════ */
+    #main { padding: 20px 20px 80px; }
 
-    .dops-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:8px; margin-bottom:24px; }
-    .dops-card { background:var(--bg2); border:1px solid var(--blue5); border-left:3px solid var(--dim); padding:10px 12px; display:flex; align-items:center; gap:10px; transition:background 0.1s; }
-    .dops-card:hover { background:var(--bg3); }
-    .dops-card.done { border-left-color:var(--green); }
-    .dops-label { flex:1; font-size:11px; color:#c8d8ff; line-height:1.3; }
-    .dops-chk { width:16px; height:16px; border:1px solid var(--blue4); background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:9px; color:var(--green); transition:all 0.15s; flex-shrink:0; }
-    .dops-chk.checked { background:var(--blue4); border-color:var(--blue); box-shadow:0 0 6px rgba(79,158,255,0.3); }
+    /* Section header */
+    .sec-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--blue6);
+    }
+    .sec-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      color: var(--blue2);
+      white-space: nowrap;
+    }
+    .sec-title.gim   { color: var(--gim); }
+    .sec-title.renal { color: var(--renal); }
+    .sec-title.both  { color: var(--text2); }
+    .sec-rule { flex: 1; height: 1px; background: var(--blue6); }
+    .sec-note { font-size: 9px; color: var(--dim); letter-spacing: 0.06em; white-space: nowrap; }
 
-    .summary-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:8px; margin-bottom:24px; }
-    .sum-cell { background:var(--bg2); border:1px solid var(--blue5); padding:12px 14px; text-align:center; }
-    .sum-val { font-size:26px; font-weight:700; line-height:1; }
-    .sum-val.green { color:var(--green); text-shadow:0 0 8px rgba(57,255,20,0.25); }
-    .sum-val.amber { color:var(--amber); }
-    .sum-val.red   { color:var(--red); }
-    .sum-val.blue  { color:var(--blue); }
-    .sum-key { font-size:8px; color:var(--blue3); letter-spacing:0.15em; margin-top:4px; }
+    /* ═══════════════════════════════════════════════
+       REQUIREMENT CARDS
+    ═══════════════════════════════════════════════ */
+    .req-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
 
-    #statusbar { position:fixed; bottom:0; left:0; right:0; background:var(--bg3); border-top:1px solid var(--blue4); padding:6px 24px; display:flex; justify-content:space-between; align-items:center; z-index:100; }
-    .status-left { display:flex; gap:16px; flex-wrap:wrap; }
-    .status-item { font-size:9px; color:var(--blue3); letter-spacing:0.1em; }
-    .status-item strong { color:var(--blue); }
-    .btn-reset { background:transparent; border:1px solid var(--blue5); color:var(--dim); font-family:var(--font); font-size:9px; letter-spacing:0.1em; padding:3px 10px; cursor:pointer; }
-    .btn-reset:hover { border-color:var(--red); color:var(--red); }
+    .req-card {
+      background: var(--bg2);
+      border: 1px solid var(--blue5);
+      border-top: 2px solid var(--dim2);
+      border-left: 3px solid var(--dim2);
+      padding: 13px 14px 12px;
+      transition: background 0.12s, border-color 0.12s;
+      position: relative;
+    }
+    .req-card:hover { background: var(--bg3); }
 
-    /* ── FOCUS MODE ─────────────────────────────────────────────────── */
+    .req-card.met {
+      border-top-color: var(--green);
+      border-left-color: var(--green);
+    }
+    .req-card.partial {
+      border-top-color: var(--amber);
+      border-left-color: var(--amber);
+    }
+    .req-card.unmet {
+      border-top-color: var(--red);
+      border-left-color: var(--red);
+    }
+    .req-card.na {
+      border-top-color: var(--dim2);
+      border-left-color: var(--dim2);
+      opacity: 0.45;
+    }
+    .req-card.warn {
+      border-top-color: var(--amber);
+      border-left-color: var(--amber);
+    }
+
+    .req-label {
+      font-size: 12px;
+      color: var(--text);
+      font-weight: 500;
+      margin-bottom: 9px;
+      line-height: 1.35;
+    }
+
+    /* Badges */
+    .badge {
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 2px 5px;
+      border-radius: 2px;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+    .badge-gim {
+      background: rgba(88,179,255,0.12);
+      color: var(--gim);
+      border: 1px solid rgba(88,179,255,0.3);
+    }
+    .badge-renal {
+      background: rgba(183,143,255,0.12);
+      color: var(--renal);
+      border: 1px solid rgba(183,143,255,0.3);
+    }
+    .badge-both {
+      background: rgba(208,228,255,0.08);
+      color: var(--text2);
+      border: 1px solid rgba(208,228,255,0.2);
+    }
+
+    /* Progress bar */
+    .req-progress {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .req-track {
+      flex: 1;
+      height: 5px;
+      background: var(--blue6);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .req-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+    .req-fill.met     { background: var(--green); box-shadow: 0 0 6px rgba(34,255,122,0.4); }
+    .req-fill.partial { background: var(--amber); }
+    .req-fill.unmet   { background: var(--red); }
+
+    .req-count {
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      min-width: 56px;
+      text-align: right;
+    }
+    .req-count.met     { color: var(--green); }
+    .req-count.partial { color: var(--amber); }
+    .req-count.unmet   { color: var(--red); }
+
+    /* Controls */
+    .req-controls {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .req-input {
+      background: var(--bg4);
+      border: 1px solid var(--blue4);
+      color: var(--blue);
+      font-family: var(--font);
+      font-size: 13px;
+      padding: 5px 9px;
+      width: 68px;
+      outline: none;
+      border-radius: 3px;
+      transition: border-color 0.12s, box-shadow 0.12s;
+      caret-color: var(--blue);
+    }
+    .req-input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2px rgba(88,179,255,0.12);
+    }
+    .req-input.date-inp { width: 138px; }
+    select.req-input    { width: auto; padding: 5px 8px; }
+    .req-unit   { font-size: 9px; color: var(--dim); letter-spacing: 0.08em; }
+    .req-target { font-size: 9px; color: var(--blue3); letter-spacing: 0.06em; }
+
+    /* Checkbox */
+    .req-check {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 9px;
+    }
+    .chk {
+      width: 18px;
+      height: 18px;
+      border: 1px solid var(--blue4);
+      background: var(--bg4);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--green);
+      transition: all 0.15s;
+      flex-shrink: 0;
+      border-radius: 2px;
+    }
+    .chk.checked {
+      background: var(--blue4);
+      border-color: var(--blue);
+      box-shadow: 0 0 8px rgba(88,179,255,0.3);
+    }
+    .chk-label {
+      font-size: 11px;
+      color: var(--dim);
+      letter-spacing: 0.05em;
+      cursor: pointer;
+    }
+
+    /* Deadline note */
+    .req-deadline {
+      font-size: 9px;
+      color: var(--dim);
+      margin-top: 6px;
+      letter-spacing: 0.07em;
+    }
+    .req-deadline.soon { color: var(--amber); }
+    .req-deadline.past { color: var(--red); }
+
+    /* ═══════════════════════════════════════════════
+       DOPS CARDS
+    ═══════════════════════════════════════════════ */
+    .dops-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 7px;
+      margin-bottom: 24px;
+    }
+    .dops-card {
+      background: var(--bg2);
+      border: 1px solid var(--blue5);
+      border-left: 3px solid var(--dim2);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.1s;
+    }
+    .dops-card:hover { background: var(--bg3); }
+    .dops-card.done { border-left-color: var(--green); }
+    .dops-label {
+      flex: 1;
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .dops-chk {
+      width: 18px;
+      height: 18px;
+      border: 1px solid var(--blue4);
+      background: var(--bg4);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--green);
+      transition: all 0.15s;
+      flex-shrink: 0;
+      border-radius: 2px;
+    }
+    .dops-chk.checked {
+      background: var(--blue4);
+      border-color: var(--blue);
+      box-shadow: 0 0 8px rgba(88,179,255,0.3);
+    }
+
+    /* ═══════════════════════════════════════════════
+       SUMMARY GRID (OVERVIEW)
+    ═══════════════════════════════════════════════ */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .sum-cell {
+      background: var(--bg2);
+      border: 1px solid var(--blue5);
+      border-top: 2px solid var(--blue4);
+      padding: 14px 14px 12px;
+      text-align: center;
+    }
+    .sum-val { font-size: 30px; font-weight: 700; line-height: 1; }
+    .sum-val.green { color: var(--green); text-shadow: var(--glow-green); }
+    .sum-val.amber { color: var(--amber); }
+    .sum-val.red   { color: var(--red); }
+    .sum-val.blue  { color: var(--blue); }
+    .sum-key {
+      font-size: 8px;
+      color: var(--dim);
+      letter-spacing: 0.15em;
+      margin-top: 5px;
+    }
+
+    /* ═══════════════════════════════════════════════
+       OUTCOME SELECTOR
+    ═══════════════════════════════════════════════ */
+    .outcome-selector {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      padding: 10px 14px;
+      background: var(--bg2);
+      border: 1px solid var(--blue5);
+      border-left: 3px solid var(--blue3);
+      border-radius: 0 3px 3px 0;
+      flex-wrap: wrap;
+    }
+    .outcome-label {
+      font-size: 9px;
+      color: var(--dim);
+      letter-spacing: 0.16em;
+    }
+    .outcome-select {
+      background: var(--bg4);
+      border: 1px solid var(--blue4);
+      color: var(--blue);
+      font-family: var(--font);
+      font-size: 12px;
+      padding: 5px 10px;
+      outline: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .outcome-select option { background: var(--bg2); }
+    .outcome-clear {
+      background: none;
+      border: 1px solid var(--blue5);
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 9px;
+      padding: 4px 10px;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      border-radius: 3px;
+      transition: all 0.1s;
+    }
+    .outcome-clear:hover { border-color: var(--red); color: var(--red); }
+
+    /* ═══════════════════════════════════════════════
+       LOCKED BANNER
+    ═══════════════════════════════════════════════ */
+    .locked-banner {
+      background: rgba(34,255,122,0.04);
+      border: 1px solid rgba(34,255,122,0.18);
+      border-left: 3px solid var(--green);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      cursor: pointer;
+      border-radius: 0 3px 3px 0;
+      transition: background 0.1s;
+    }
+    .locked-banner:hover { background: rgba(34,255,122,0.07); }
+    .locked-banner-left { display: flex; flex-direction: column; gap: 3px; }
+    .locked-outcome {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: 0.08em;
+    }
+    .locked-note    { font-size: 9px; color: var(--dim); letter-spacing: 0.07em; }
+    .locked-toggle  { font-size: 10px; color: var(--dim); letter-spacing: 0.08em; }
+
+    /* ═══════════════════════════════════════════════
+       STATUS BAR
+    ═══════════════════════════════════════════════ */
+    #statusbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg2);
+      border-top: 1px solid var(--blue5);
+      padding: 7px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+    }
+    .status-left {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .status-item {
+      font-size: 10px;
+      color: var(--dim);
+      letter-spacing: 0.08em;
+    }
+    .status-item strong { color: var(--text2); font-weight: 600; }
+
+    .btn-reset {
+      background: transparent;
+      border: 1px solid var(--dim2);
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      padding: 4px 11px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.1s;
+    }
+    .btn-reset:hover { border-color: var(--red); color: var(--red); }
+
+    /* ═══════════════════════════════════════════════
+       FOCUS MODE — Warm paper
+    ═══════════════════════════════════════════════ */
+    html:has(body.focus-mode) { background: #edeae4 !important; }
     body.focus-mode {
-      background-image: none;
-      background: #f4f5f7;
-      color: #1a1a2e;
-      text-shadow: none;
-      font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+      background: #edeae4 !important;
+      background-image: none !important;
+      color: #1a1814 !important;
+      text-shadow: none !important;
     }
+
+    /* Focus mode tokens (applied via CSS variable override) */
+    body.focus-mode {
+      --bg:    #edeae4;
+      --bg2:   #f5f3ef;
+      --bg3:   #ede9e3;
+      --bg4:   #e4dfd7;
+      --bg5:   #dbd5cc;
+      --bg6:   #d2cbc0;
+      --blue:  #0c3d87;
+      --blue2: #1556b0;
+      --blue3: #1b6fdd;
+      --blue4: #3381d4;
+      --blue5: #c2cfe0;
+      --blue6: #dde5f0;
+      --gim:   #1556b0;
+      --renal: #5a1ea0;
+      --renal2: #7c3aed;
+      --green:  #0a7c3e;
+      --green2: #059652;
+      --amber:  #b45309;
+      --amber2: #92400e;
+      --red:    #c0190f;
+      --red2:   #991309;
+      --dim:    #7a7268;
+      --dim2:   #a09890;
+      --text:   #1a1814;
+      --text2:  #3d3830;
+      --scanline: none;
+      --glow-blue:  none;
+      --glow-green: none;
+      --glow-amber: none;
+      --glow-red:   none;
+      --glow-renal: none;
+    }
+
     body.focus-mode #header {
-      background: #ffffff;
-      border-bottom: 2px solid #003087;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      background: var(--bg2);
+      border-bottom-color: var(--blue5);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
     }
-    body.focus-mode .header-top { border-bottom: 1px solid #e0e5f0; }
-    body.focus-mode .header-logo { border-right: 1px solid #e0e5f0; }
-    body.focus-mode .logo-line1 { color: #003087; font-size: 18px; }
-    body.focus-mode .logo-line1 span { color: #a0aec0; }
-    body.focus-mode .logo-line2 { color: #a0aec0; }
-    body.focus-mode .logo-sub { color: #718096; }
-    body.focus-mode .arcp-countdown { border-right: 1px solid #e0e5f0; }
-    body.focus-mode .countdown-val { color: #003087; text-shadow: none; }
-    body.focus-mode .countdown-val.warn { color: #d97706; text-shadow: none; }
-    body.focus-mode .countdown-val.alert { color: #dc2626; text-shadow: none; }
-    body.focus-mode .countdown-key { color: #718096; }
-    body.focus-mode .als-status { border-right: 1px solid #e0e5f0; }
-    body.focus-mode .als-val { color: #003087; }
-    body.focus-mode .als-val.warn { color: #d97706; }
-    body.focus-mode .als-val.alert { color: #dc2626; }
-    body.focus-mode .als-key { color: #718096; }
-    body.focus-mode .readiness-label { color: #718096; }
-    body.focus-mode .readiness-pct { color: #003087; }
-    body.focus-mode .bar-track { background: #e2e8f0; }
-    body.focus-mode .bar-fill { background: linear-gradient(90deg,#3b82f6,#003087); }
-    body.focus-mode .bar-fill.warn { background: linear-gradient(90deg,#f59e0b,#d97706); }
-    body.focus-mode .bar-fill.good { background: linear-gradient(90deg,#10b981,#059669); }
-    body.focus-mode .year-sel-wrap { border-left: 1px solid #e0e5f0; }
-    body.focus-mode .year-label { color: #718096; }
-    body.focus-mode .year-btn { border-color: #cbd5e0; color: #718096; background: #fff; }
-    body.focus-mode .year-btn:hover { border-color: #003087; color: #003087; }
-    body.focus-mode .year-btn.active { background: #003087; border-color: #003087; color: #fff; }
-    body.focus-mode .year-btn.locked { border-color: #059669; color: #059669; }
-    body.focus-mode .year-btn.locked.active { background: #059669; color: #fff; }
-    body.focus-mode #tabbar { background: #ffffff; border-bottom: 1px solid #e0e5f0; }
-    body.focus-mode .tab { color: #718096; font-family: -apple-system,'Segoe UI',Arial,sans-serif; font-size:11px; letter-spacing:0; }
-    body.focus-mode .tab:hover { color: #003087; background: #f7fafc; }
-    body.focus-mode .tab.active { color: #003087; border-bottom-color: #003087; background: #f7fafc; }
-    body.focus-mode .tab.gim-tab.active { color: #2563eb; border-bottom-color: #2563eb; }
-    body.focus-mode .tab.renal-tab.active { color: #7c3aed; border-bottom-color: #7c3aed; }
-    body.focus-mode #main { background: #f4f5f7; }
-    body.focus-mode .sec-head { border-bottom: 1px solid #e2e8f0; }
-    body.focus-mode .sec-title { color: #003087; font-family: -apple-system,'Segoe UI',Arial,sans-serif; font-size: 11px; letter-spacing: 0.05em; }
-    body.focus-mode .sec-title.gim { color: #2563eb; }
-    body.focus-mode .sec-title.renal { color: #7c3aed; }
-    body.focus-mode .sec-title.both { color: #003087; }
-    body.focus-mode .sec-rule { background: #e2e8f0; }
-    body.focus-mode .sec-note { color: #a0aec0; }
-    body.focus-mode .req-card { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-    body.focus-mode .req-card:hover { background: #f7fafc; }
-    body.focus-mode .req-card.met { border-left-color: #059669; }
-    body.focus-mode .req-card.partial { border-left-color: #d97706; }
-    body.focus-mode .req-card.unmet { border-left-color: #dc2626; }
-    body.focus-mode .req-card.na { border-left-color: #cbd5e0; }
-    body.focus-mode .req-label { color: #1a202c; font-size: 12px; }
-    body.focus-mode .badge-gim { background: rgba(37,99,235,0.08); color: #2563eb; border-color: rgba(37,99,235,0.2); }
-    body.focus-mode .badge-renal { background: rgba(124,58,237,0.08); color: #7c3aed; border-color: rgba(124,58,237,0.2); }
-    body.focus-mode .badge-both { background: rgba(0,48,135,0.06); color: #003087; border-color: rgba(0,48,135,0.15); }
-    body.focus-mode .req-track { background: #e2e8f0; }
-    body.focus-mode .req-fill.met { background: #059669; }
-    body.focus-mode .req-fill.partial { background: #d97706; }
-    body.focus-mode .req-fill.unmet { background: #dc2626; }
-    body.focus-mode .req-count.met { color: #059669; }
-    body.focus-mode .req-count.partial { color: #d97706; }
-    body.focus-mode .req-count.unmet { color: #dc2626; }
-    body.focus-mode .req-input { background: #ffffff; border: 1px solid #cbd5e0; color: #1a202c; font-family: -apple-system,'Segoe UI',Arial,sans-serif; }
-    body.focus-mode .req-input:focus { border-color: #003087; }
-    body.focus-mode .req-unit { color: #718096; }
-    body.focus-mode .req-target { color: #a0aec0; }
-    body.focus-mode .chk { border-color: #cbd5e0; color: #059669; }
-    body.focus-mode .chk.checked { background: #003087; border-color: #003087; box-shadow: none; }
-    body.focus-mode .chk-label { color: #4a5568; }
-    body.focus-mode .req-deadline { color: #a0aec0; }
-    body.focus-mode .req-deadline.soon { color: #d97706; }
-    body.focus-mode .req-deadline.past { color: #dc2626; }
-    body.focus-mode .dops-card { background: #ffffff; border: 1px solid #e2e8f0; border-left: 3px solid #cbd5e0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-    body.focus-mode .dops-card:hover { background: #f7fafc; }
-    body.focus-mode .dops-card.done { border-left-color: #059669; }
-    body.focus-mode .dops-label { color: #2d3748; font-size: 12px; }
-    body.focus-mode .dops-chk { border-color: #cbd5e0; }
-    body.focus-mode .dops-chk.checked { background: #003087; border-color: #003087; box-shadow: none; }
-    body.focus-mode .sum-cell { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-    body.focus-mode .sum-val.green { color: #059669; text-shadow: none; }
-    body.focus-mode .sum-val.amber { color: #d97706; }
-    body.focus-mode .sum-val.red { color: #dc2626; }
-    body.focus-mode .sum-val.blue { color: #003087; }
-    body.focus-mode .sum-key { color: #718096; }
-    body.focus-mode #statusbar { background: #ffffff; border-top: 1px solid #e2e8f0; }
-    body.focus-mode .status-item { color: #718096; }
-    body.focus-mode .status-item strong { color: #003087; }
-    body.focus-mode .btn-reset { border-color: #e2e8f0; color: #718096; }
-    body.focus-mode .btn-reset:hover { border-color: #dc2626; color: #dc2626; }
-    body.focus-mode .outcome-selector { background: #ffffff; border: 1px solid #e2e8f0; }
-    body.focus-mode .outcome-label { color: #718096; }
-    body.focus-mode .outcome-select { background: #ffffff; border: 1px solid #cbd5e0; color: #1a202c; font-family: -apple-system,'Segoe UI',Arial,sans-serif; }
-    body.focus-mode .outcome-select option { background: #ffffff; color: #1a202c; }
-    body.focus-mode .outcome-clear { color: #718096; border-color: #e2e8f0; }
-    body.focus-mode .locked-banner { background: rgba(5,150,105,0.04); border-color: rgba(5,150,105,0.2); border-left-color: #059669; }
-    body.focus-mode .locked-outcome { color: #059669; }
-    body.focus-mode .locked-note { color: #a0aec0; }
-    body.focus-mode ::-webkit-scrollbar-track { background: #f4f5f7; }
-    body.focus-mode ::-webkit-scrollbar-thumb { background: #cbd5e0; }
-    body.focus-mode #sync-indicator { color: #9a9089 !important; }
+    body.focus-mode .header-row1 { border-bottom-color: var(--blue6); }
+    body.focus-mode .logo-mark { color: var(--blue); text-shadow: none; }
+    body.focus-mode .logo-mark span { color: var(--blue5); }
+    body.focus-mode .logo-sub { color: var(--dim); }
+    body.focus-mode .year-btn { background: var(--bg2); color: var(--dim2); border-color: var(--blue5); }
+    body.focus-mode .year-btn:hover { background: var(--bg3); border-color: var(--blue4); color: var(--blue2); }
+    body.focus-mode .year-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: none; }
+    body.focus-mode .year-btn.locked { border-color: var(--green2); color: var(--green); }
+    body.focus-mode .year-btn.locked.active { background: var(--green); color: #fff; box-shadow: none; }
+    body.focus-mode .stat-val { color: var(--blue); }
+    body.focus-mode .stat-label { color: var(--dim); }
+    body.focus-mode .stat-sub { color: var(--text2); }
+    body.focus-mode .readiness-track { background: var(--blue6); }
+    body.focus-mode .readiness-detail { color: var(--dim); }
+    body.focus-mode #tabbar { background: var(--bg2); border-bottom-color: var(--blue5); }
+    body.focus-mode .tab { color: var(--dim); }
+    body.focus-mode .tab:hover { background: var(--bg3); color: var(--text2); border-color: var(--blue5); }
+    body.focus-mode .tab.active { color: var(--blue); background: rgba(21,86,176,0.08); border-color: var(--blue4); box-shadow: none; }
+    body.focus-mode .tab.gim-tab.active { color: var(--gim); background: rgba(21,86,176,0.07); }
+    body.focus-mode .tab.renal-tab.active { color: var(--renal); background: rgba(90,30,160,0.07); border-color: var(--renal2); box-shadow: none; }
+    body.focus-mode #main { background: var(--bg); }
+    body.focus-mode .sec-head { border-bottom-color: var(--blue5); }
+    body.focus-mode .sec-rule { background: var(--blue5); }
+    body.focus-mode .req-card { background: var(--bg2); border-color: var(--blue5); border-top-color: var(--dim2); border-left-color: var(--dim2); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    body.focus-mode .req-card:hover { background: var(--bg3); }
+    body.focus-mode .req-card.met { border-top-color: var(--green); border-left-color: var(--green); }
+    body.focus-mode .req-card.partial { border-top-color: var(--amber); border-left-color: var(--amber); }
+    body.focus-mode .req-card.unmet { border-top-color: var(--red); border-left-color: var(--red); }
+    body.focus-mode .req-card.na { border-top-color: var(--dim2); border-left-color: var(--dim2); }
+    body.focus-mode .req-label { color: var(--text); }
+    body.focus-mode .req-track { background: var(--blue6); }
+    body.focus-mode .req-fill.met { background: var(--green); box-shadow: none; }
+    body.focus-mode .req-fill.partial { background: var(--amber); }
+    body.focus-mode .req-fill.unmet { background: var(--red); }
+    body.focus-mode .req-input { background: var(--bg2); border-color: var(--blue5); color: var(--text); }
+    body.focus-mode .req-input:focus { border-color: var(--blue3); box-shadow: 0 0 0 2px rgba(27,111,221,0.1); }
+    body.focus-mode .chk { background: var(--bg2); border-color: var(--blue5); color: var(--green); }
+    body.focus-mode .chk.checked { background: var(--blue); border-color: var(--blue); box-shadow: none; color: #fff; }
+    body.focus-mode .chk-label { color: var(--dim); }
+    body.focus-mode .dops-card { background: var(--bg2); border-color: var(--blue5); border-left-color: var(--dim2); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    body.focus-mode .dops-card:hover { background: var(--bg3); }
+    body.focus-mode .dops-card.done { border-left-color: var(--green); }
+    body.focus-mode .dops-label { color: var(--text); }
+    body.focus-mode .dops-chk { background: var(--bg2); border-color: var(--blue5); color: var(--green); }
+    body.focus-mode .dops-chk.checked { background: var(--blue); border-color: var(--blue); box-shadow: none; color: #fff; }
+    body.focus-mode .sum-cell { background: var(--bg2); border-color: var(--blue5); border-top-color: var(--blue4); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    body.focus-mode .sum-val.green { color: var(--green); text-shadow: none; }
+    body.focus-mode .sum-val.amber { color: var(--amber); }
+    body.focus-mode .sum-val.red { color: var(--red); }
+    body.focus-mode .sum-val.blue { color: var(--blue); }
+    body.focus-mode .sum-key { color: var(--dim); }
+    body.focus-mode #statusbar { background: var(--bg2); border-top-color: var(--blue5); }
+    body.focus-mode .status-item { color: var(--dim); }
+    body.focus-mode .status-item strong { color: var(--text2); }
+    body.focus-mode .btn-reset { border-color: var(--blue5); color: var(--dim); background: var(--bg2); }
+    body.focus-mode .btn-reset:hover { border-color: var(--red); color: var(--red); }
+    body.focus-mode .outcome-selector { background: var(--bg2); border-color: var(--blue5); border-left-color: var(--blue3); }
+    body.focus-mode .outcome-select { background: var(--bg2); border-color: var(--blue5); color: var(--text); }
+    body.focus-mode .outcome-select option { background: var(--bg2); color: var(--text); }
+    body.focus-mode .locked-banner { background: rgba(10,124,62,0.04); border-color: rgba(10,124,62,0.2); border-left-color: var(--green); }
+    body.focus-mode .locked-banner:hover { background: rgba(10,124,62,0.07); }
+    body.focus-mode .locked-outcome { color: var(--green); }
+    body.focus-mode ::-webkit-scrollbar-track { background: var(--bg); }
+    body.focus-mode ::-webkit-scrollbar-thumb { background: var(--blue5); }
 
-    /* Logbook sections in focus mode */
-    body.focus-mode [style*="background:var(--bg2)"] { background: #faf9f6 !important; }
-    body.focus-mode [style*="background:var(--bg3)"] { background: #ede9e3 !important; }
-    body.focus-mode [style*="border:1px solid var(--blue5)"] { border-color: #ddd8d0 !important; }
-    body.focus-mode [style*="border-bottom:1px solid var(--blue5)"] { border-color: #ddd8d0 !important; }
-    body.focus-mode [style*="background:var(--blue5)"] { background: #ddd8d0 !important; }
-    body.focus-mode [style*="color:var(--blue)"] { color: #003087 !important; }
-    body.focus-mode [style*="color:var(--gim)"] { color: #2563eb !important; }
-    body.focus-mode [style*="color:var(--renal)"] { color: #7c3aed !important; }
-    body.focus-mode [style*="color:var(--green)"] { color: #059669 !important; }
-    body.focus-mode [style*="color:var(--amber)"] { color: #d97706 !important; }
-    body.focus-mode [style*="color:var(--red)"] { color: #dc2626 !important; }
-    body.focus-mode [style*="color:var(--dim)"] { color: #9a9089 !important; }
-    body.focus-mode [style*="color:var(--blue3)"] { color: #6b6560 !important; }
-    body.focus-mode [style*="color:#c8d8ff"] { color: #2d2926 !important; }
-        body.focus-mode [style*="color:var(--blue2)"] { color: #003087 !important; }
+    /* Focus mode inline style overrides */
+    body.focus-mode [style*="background:var(--bg2)"] { background: var(--bg2) !important; }
+    body.focus-mode [style*="background:var(--bg3)"] { background: var(--bg3) !important; }
+    body.focus-mode [style*="background:var(--bg4)"] { background: var(--bg4) !important; }
+    body.focus-mode [style*="background:var(--blue5)"] { background: var(--blue6) !important; }
+    body.focus-mode [style*="background:var(--blue6)"] { background: var(--blue6) !important; }
+    body.focus-mode [style*="border:1px solid var(--blue5)"] { border-color: var(--blue5) !important; }
+    body.focus-mode [style*="border-bottom:1px solid var(--blue5)"] { border-color: var(--blue5) !important; }
+    body.focus-mode [style*="border-left:3px solid var(--dim)"] { border-left-color: var(--dim2) !important; }
+    body.focus-mode [style*="color:var(--blue)"] { color: var(--blue) !important; }
+    body.focus-mode [style*="color:var(--gim)"]   { color: var(--gim)   !important; }
+    body.focus-mode [style*="color:var(--renal)"] { color: var(--renal) !important; }
+    body.focus-mode [style*="color:var(--green)"] { color: var(--green) !important; }
+    body.focus-mode [style*="color:var(--amber)"] { color: var(--amber) !important; }
+    body.focus-mode [style*="color:var(--red)"]   { color: var(--red)   !important; }
+    body.focus-mode [style*="color:var(--dim)"]   { color: var(--dim)   !important; }
+    body.focus-mode [style*="color:var(--blue3)"] { color: var(--blue3) !important; }
+    body.focus-mode [style*="color:var(--blue2)"] { color: var(--blue2) !important; }
+    body.focus-mode [style*="color:#c8d8ff"]      { color: var(--text)  !important; }
+    body.focus-mode [style*="color:var(--text2)"] { color: var(--text2) !important; }
     body.focus-mode select.req-input,
-    body.focus-mode input.req-input { background: #faf9f6 !important; border-color: #c8c0b4 !important; color: #1a1714 !important; }
+    body.focus-mode input.req-input { background: var(--bg2) !important; border-color: var(--blue5) !important; color: var(--text) !important; }
 
-    /* Logbook entry rows */
-    body.focus-mode #tab-logbook div[style] { background: #faf9f6 !important; color: #1a1714 !important; border-color: #ddd8d0 !important; }
-    body.focus-mode #tab-logbook span[style] { color: #3d3933 !important; }
-    body.focus-mode #tab-logbook strong { color: #003087 !important; }
+    /* Focus mode logbook/cips */
+    body.focus-mode #tab-logbook div[style],
+    body.focus-mode #tab-cips div[style],
+    body.focus-mode #tab-cips input[type="number"],
+    body.focus-mode #tab-cips select { background: var(--bg2) !important; color: var(--text) !important; border-color: var(--blue5) !important; }
+    body.focus-mode #tab-logbook strong,
+    body.focus-mode #tab-cips strong { color: var(--blue) !important; }
+    body.focus-mode #tab-logbook span[style*="color:var(--gim)"],
+    body.focus-mode #tab-cips span[style*="color:var(--gim)"]   { color: var(--gim)   !important; }
+    body.focus-mode #tab-logbook span[style*="color:var(--renal)"],
+    body.focus-mode #tab-cips span[style*="color:var(--renal)"] { color: var(--renal) !important; }
+    body.focus-mode #tab-logbook span[style*="color:var(--green)"],
+    body.focus-mode #tab-cips span[style*="color:var(--green)"] { color: var(--green) !important; }
+    body.focus-mode #tab-logbook span[style*="color:var(--dim)"],
+    body.focus-mode #tab-cips span[style*="color:var(--dim)"]   { color: var(--dim)   !important; }
+    body.focus-mode #tab-logbook span[style*="color:#c8d8ff"],
+    body.focus-mode #tab-cips span[style*="color:#c8d8ff"]      { color: var(--text)  !important; }
 
-
-    @media (max-width:640px) {
-      .req-grid, .dops-grid { grid-template-columns:1fr; }
-      .year-sel-wrap { display:none; }
-      #main { padding:14px 16px 80px; }
+    /* ═══════════════════════════════════════════════
+       MOBILE
+    ═══════════════════════════════════════════════ */
+    @media (max-width: 600px) {
+      html, body { font-size: 13px; }
+      .header-row1 { padding: 8px 14px; flex-wrap: wrap; gap: 8px; }
+      .logo-mark { font-size: 18px; }
+      .logo-sub  { display: none; }
+      .year-label { display: none; }
+      .year-btns { gap: 2px; }
+      .year-btn  { padding: 4px 9px; font-size: 10px; }
+      .header-row2 { gap: 0; }
+      .stat-block { padding: 8px 12px; }
+      .stat-val   { font-size: 22px; }
+      .readiness-block { min-width: 160px; padding: 8px 12px; }
+      #tabbar     { padding: 6px 10px; gap: 3px; }
+      .tab        { padding: 5px 10px; font-size: 10px; }
+      #main       { padding: 14px 14px 76px; }
+      .req-grid, .dops-grid { grid-template-columns: 1fr; }
+      #statusbar  { padding: 6px 14px; }
+      .status-item { font-size: 9px; }
+      .btn-reset  { font-size: 9px; padding: 3px 8px; }
+    }
+    @media (max-width: 380px) {
+      .stat-block { padding: 7px 10px; }
+      .stat-val   { font-size: 20px; }
+      .year-btn   { padding: 3px 7px; font-size: 10px; }
     }
   </style>
 </head>
 <body>
 
+<!-- ═══════════════════════════════════════════ HEADER -->
 <div id="header">
-  <div class="header-top">
+  <div class="header-row1">
     <div class="header-logo">
-      <div class="logo-line1">ARCP<span>//</span>01</div>
-      <div class="logo-line2">PORTFOLIO TRACKER</div>
-      <div class="logo-sub">ST4–ST7 · GIM + RENAL</div>
+      <div class="logo-mark">ARCP<span>//</span>01</div>
+      <div class="logo-sub">PORTFOLIO TRACKER &middot; ST4&ndash;ST7 &middot; GIM + RENAL</div>
     </div>
-    <div class="arcp-countdown">
-      <div class="countdown-val" id="arcp-days">--</div>
-      <div class="countdown-key">DAYS TO ARCP</div>
-    </div>
-    <div class="als-status">
-      <div class="als-val" id="als-display">NOT SET</div>
-      <div class="als-key">ALS EXPIRY</div>
-    </div>
-    <div class="readiness-bar-wrap">
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.2em;margin-bottom:8px;">ARCP READINESS</div>
-      <div class="readiness-label">
-        <span style="color:var(--renal)">RENAL</span>
-        <span class="readiness-pct" id="readiness-pct-renal" style="color:var(--renal)">0%</span>
-      </div>
-      <div class="bar-track"><div class="bar-fill" id="readiness-bar-renal" style="width:0%;background:linear-gradient(90deg,#5b21b6,var(--renal))"></div></div>
-      <div class="readiness-label" style="margin-top:8px;">
-        <span style="color:var(--gim)">GIM</span>
-        <span class="readiness-pct" id="readiness-pct-gim">0%</span>
-      </div>
-      <div class="bar-track"><div class="bar-fill" id="readiness-bar-gim" style="width:0%"></div></div>
-      <div style="font-size:8px;color:var(--dim);margin-top:5px;letter-spacing:0.08em;">
-        <span id="readiness-detail">-- of -- requirements met</span>
-      </div>
-    </div>
-    <div class="year-sel-wrap" style="border-left:1px solid var(--blue5);padding:14px 20px;display:flex;flex-direction:column;justify-content:center;gap:8px;">
-      <div class="year-label">TRAINING YEAR</div>
+    <div class="year-sel-wrap">
+      <span class="year-label">YEAR</span>
       <div class="year-btns" id="year-btns">
         <button class="year-btn active" data-year="ST4" onclick="setYear('ST4')">ST4</button>
         <button class="year-btn" data-year="ST5" onclick="setYear('ST5')">ST5</button>
@@ -431,8 +1025,42 @@
       </div>
     </div>
   </div>
+
+  <div class="header-row2">
+    <div class="stat-block">
+      <div class="stat-label">DAYS TO ARCP</div>
+      <div class="stat-val" id="arcp-days">--</div>
+      <div class="stat-sub" id="arcp-date-sub">Dec 2026</div>
+    </div>
+
+    <div class="stat-block">
+      <div class="stat-label">ALS EXPIRY</div>
+      <div class="als-val stat-val" id="als-display" style="font-size:16px;margin-top:4px;">NOT SET</div>
+      <div class="als-key stat-sub" style="display:none;"></div>
+    </div>
+
+    <div class="readiness-block">
+      <div class="readiness-header">ARCP READINESS</div>
+      <div class="readiness-row">
+        <span class="readiness-stream" style="color:var(--renal)">RENAL</span>
+        <div class="readiness-track">
+          <div class="readiness-fill" id="readiness-bar-renal" style="width:0%;background:linear-gradient(90deg,var(--renal2),var(--renal));"></div>
+        </div>
+        <span class="readiness-pct" id="readiness-pct-renal" style="color:var(--renal)">0%</span>
+      </div>
+      <div class="readiness-row">
+        <span class="readiness-stream" style="color:var(--gim)">GIM</span>
+        <div class="readiness-track">
+          <div class="readiness-fill" id="readiness-bar-gim" style="width:0%;background:linear-gradient(90deg,var(--blue3),var(--gim));"></div>
+        </div>
+        <span class="readiness-pct" id="readiness-pct-gim" style="color:var(--gim)">0%</span>
+      </div>
+      <div class="readiness-detail" id="readiness-detail">-- of -- requirements met</div>
+    </div>
+  </div>
 </div>
 
+<!-- ═══════════════════════════════════════════ TABS -->
 <div id="tabbar">
   <button class="tab renal-tab active" onclick="setTab('renal')">RENAL</button>
   <button class="tab gim-tab"          onclick="setTab('gim')">GIM</button>
@@ -440,9 +1068,9 @@
   <button class="tab"                  onclick="setTab('admin')">ADMIN / DOCS</button>
   <button class="tab"                  onclick="setTab('overview')">OVERVIEW</button>
   <button class="tab"                  onclick="setTab('cips')">CiPs</button>
-  
 </div>
 
+<!-- ═══════════════════════════════════════════ MAIN -->
 <div id="main">
   <div id="tab-gim"      style="display:none"></div>
   <div id="tab-renal"    style="display:none"></div>
@@ -452,14 +1080,15 @@
   <div id="tab-logbook"  style="display:none"></div>
 </div>
 
+<!-- ═══════════════════════════════════════════ STATUS BAR -->
 <div id="statusbar">
   <div class="status-left">
     <span class="status-item">Year: <strong id="sb-year">ST4</strong></span>
     <span class="status-item">ARCP: <strong id="sb-arcp">Dec 2026</strong></span>
-    <span class="status-item" id="sync-indicator" style="color:var(--amber)">● CONNECTING</span>
+    <span class="status-item" id="sync-indicator" style="color:var(--amber)">&#9679; CONNECTING</span>
   </div>
-  <div style="display:flex;gap:8px;">
-    <button class="btn-reset" id="focus-toggle-btn" onclick="toggleFocusMode()" style="border-color:var(--blue3);color:var(--blue2);">☀ FOCUS MODE</button>
+  <div style="display:flex;gap:6px;align-items:center;">
+    <button class="btn-reset" id="focus-toggle-btn" onclick="toggleFocusMode()" style="border-color:var(--blue4);color:var(--dim);">&#9680; TERMINAL</button>
     <button class="btn-reset" onclick="resetYearData()">RESET YEAR DATA</button>
   </div>
 </div>
@@ -895,8 +1524,21 @@ function renderOverview() {
   const renalIds  = allIds.filter(id => REQS[id].stream === "renal");
   const gimMet    = gimIds.filter(id => getStatus(id) === "met").length;
   const renalMet  = renalIds.filter(id => getStatus(id) === "met").length;
-  const gimUnmet  = gimIds.filter(id => getStatus(id) === "unmet").length;
-  const renalUnmet= renalIds.filter(id => getStatus(id) === "unmet").length;
+    const gimUnmet  = gimIds.filter(id => {
+    const req = REQS[id];
+    const s = getStatus(id);
+    if (s !== "unmet" && s !== "partial") return false;
+    if (req.cumulative && YEARS.indexOf(req.deadline) > YEARS.indexOf(currentYear)) return false;
+    return true;
+  }).length;
+  const renalUnmet= renalIds.filter(id => {
+    const req = REQS[id];
+    const s = getStatus(id);
+    if (s !== "unmet" && s !== "partial") return false;
+    if (req.cumulative && YEARS.indexOf(req.deadline) > YEARS.indexOf(currentYear)) return false;
+    return true;
+  }).length;
+
   const dopsDone  = DOPS_PROCEDURES.filter(p => getDops(p)).length;
   el.innerHTML = `
     <div class="sec-head"><span class="sec-title">OVERVIEW — ${currentYear}</span><span class="sec-rule"></span></div>
@@ -1075,14 +1717,21 @@ function toggleFocusMode() {
   if (btn) btn.textContent = on ? "◑ TERMINAL" : "☀ FOCUS MODE";
 }
 
-// Restore focus mode on load
-if (localStorage.getItem("pft_focus_mode") === "1") {
+// Restore focus mode preference on load
+const _savedMode = localStorage.getItem("pft_focus_mode");
+if (_savedMode === "1") {
   document.body.classList.add("focus-mode");
   setTimeout(() => {
     const btn = document.getElementById("focus-toggle-btn");
     if (btn) btn.textContent = "◑ TERMINAL";
   }, 100);
+} else {
+  setTimeout(() => {
+    const btn = document.getElementById("focus-toggle-btn");
+    if (btn) btn.textContent = "☀ FOCUS MODE";
+  }, 100);
 }
+
 
 renderAll();
 setTab("renal");
@@ -1734,16 +2383,15 @@ function renderLbClinics(el) {
   const gimPct    = Math.min(100, Math.round((gimEntries.length / gimTarget) * 100));
   sumDiv.innerHTML = `
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--gim);padding:12px 16px;flex:1;min-width:140px;">
-    <div style="font-size:20px;font-weight:700;color:var(--renal);">${renalEntries.length}</div>
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">RENAL CLINICS · LOG ONLY</div>
-      
-      </div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--renal);padding:12px 16px;flex:1;min-width:140px;">
       <div style="font-size:20px;font-weight:700;color:var(--gim);">${gimEntries.length}<span style="font-size:11px;color:var(--dim);"> / ${gimTarget}</span></div>
       <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">GIM CLINICS · CUMULATIVE</div>
       <div style="height:3px;background:var(--blue5);margin-top:6px;border-radius:2px;overflow:hidden;">
         <div style="height:100%;width:${gimPct}%;background:var(--gim);"></div>
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--renal);padding:12px 16px;flex:1;min-width:140px;">
+      <div style="font-size:20px;font-weight:700;color:var(--renal);">${renalEntries.length}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">RENAL CLINICS · LOG ONLY</div>
     </div>`;
   el.appendChild(sumDiv);
 
@@ -2560,14 +3208,12 @@ function printLogbookReport() {
     const p = d.split("-");
     return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : d;
   };
-    const filterByYear = entries => entries.filter(e => {
+  const filterByYear = entries => entries.filter(e => {
     if (e.year) return e.year === yr;
     if (!e.date) return true;
     return new Date(e.date).getFullYear() === yearMap[yr];
   });
-
-
-
+ 
   const gimClinics   = getLbEntries("clinics_gim");
   const renalClinics = filterByYear(getLbEntries("clinics_renal"));
   const renalProcs   = filterByYear(getLbEntries("procedures_renal"));
@@ -2578,34 +3224,33 @@ function printLogbookReport() {
   const simulation   = getLbEntries("simulation");
   const totalSimHrs  = simulation.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
   const st7SimHrs    = simulation.filter(e => e.year==="ST7").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
-
+ 
   const GIM_COUNTED_TYPES = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
   const onlineHrs    = gimCpd.filter(e => e.type==="Online CPD").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
   const onlineCapped = Math.min(onlineHrs, 15);
   const externalHrs  = gimCpd.filter(e => GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
   const countedTotal = externalHrs + onlineCapped;
-  const renalCpdHrs    = renalCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
-  const gimAllHrs      = gimCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
-  const combinedCpdHrs = gimAllHrs + renalCpdHrs;
-
-
-
-
+  const renalCpdHrs  = renalCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const gimAllHrs    = gimCpd.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+ 
   const tbl = (headers, rows, accentColor) => {
     if (!rows.length) return `<p class="empty-note">No entries logged</p>`;
     const ths = headers.map(h => `<th>${h}</th>`).join("");
     const trs = rows.map((r,i) => `<tr class="${i%2===0?'even':'odd'}">${r.map(c=>`<td>${c||"—"}</td>`).join("")}</tr>`).join("");
     return `<table><thead style="--ac:${accentColor}"><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
   };
-
-  const secHead = (title) => `<div class="section-head"><h2>${title}</h2><div class="rule"></div></div>`;
+ 
+  const secHead = (title, stream="both") => {
+    const cls = stream === "gim" ? "gim" : stream === "renal" ? "renal" : "";
+    return `<div class="section-head"><h2 class="${cls}">${title}</h2><div class="rule"></div></div>`;
+  };
   const badge = (t, cls) => `<span class="stream-badge ${cls}">${t}</span>`;
   const note  = (t) => `<span class="badge-note">${t}</span>`;
   const subHead = (badges, noteText) => `<div class="sub-head">${badges} ${note(noteText)}</div>`;
-
+ 
   const today = new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"2-digit",year:"numeric"}).replace(/\//g,"-");
   const fullDate = new Date().toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
-
+ 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2613,14 +3258,15 @@ function printLogbookReport() {
   <title>ARCP Logbook Report — ${yr}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111;background:#e8e8e8;padding:20px;}
-    .page{background:#fff;max-width:210mm;margin:0 auto;padding:18mm 16mm;box-shadow:0 2px 12px rgba(0,0,0,0.15);}
-    .doc-header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:10px;border-bottom:3px solid #003087;margin-bottom:14px;}
-    .doc-header h1{font-size:15pt;font-weight:700;color:#003087;letter-spacing:0.02em;}
-    .doc-header .subtitle{font-size:8.5pt;color:#555;margin-top:3px;text-transform:uppercase;letter-spacing:0.05em;}
-    .doc-meta{text-align:right;font-size:8.5pt;color:#555;line-height:1.7;}
-    .doc-meta strong{color:#003087;}
-    .info-box{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #003087;margin-bottom:16px;}
+    body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111;background:#e0e4ee;padding:20px;}
+    .page{background:#fff;max-width:210mm;margin:0 auto;padding:0;box-shadow:0 2px 12px rgba(0,0,0,0.18);overflow:hidden;}
+    .doc-header{background:linear-gradient(135deg,#003087,#005EB8);color:#fff;padding:20px 24px;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0;}
+    .doc-header h1{font-size:15pt;font-weight:700;color:#fff;letter-spacing:0.02em;}
+    .doc-header .subtitle{font-size:8.5pt;color:rgba(255,255,255,0.75);margin-top:3px;text-transform:uppercase;letter-spacing:0.05em;}
+    .doc-meta{text-align:right;font-size:8.5pt;color:rgba(255,255,255,0.8);line-height:1.7;}
+    .doc-meta strong{color:#fff;}
+    .page-inner{padding:16px 20px;}
+    .info-box{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #ccd6e8;margin-bottom:16px;}
     .info-cell{padding:7px 11px;border-right:1px solid #ccd6e8;}
     .info-cell:last-child{border-right:none;}
     .info-cell .lbl{font-size:7pt;text-transform:uppercase;letter-spacing:0.1em;color:#666;margin-bottom:2px;}
@@ -2630,12 +3276,14 @@ function printLogbookReport() {
     .sum-box .num{font-size:18pt;font-weight:700;color:var(--c);line-height:1;}
     .sum-box .key{font-size:7pt;text-transform:uppercase;letter-spacing:0.1em;color:#666;margin-top:3px;}
     .section-head{display:flex;align-items:center;gap:10px;margin:16px 0 7px;page-break-after:avoid;}
-    .section-head h2{font-size:9.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#003087;white-space:nowrap;}
-    .section-head .rule{flex:1;height:1px;background:#003087;}
+    .section-head h2{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#fff;background:#003087;padding:4px 12px;white-space:nowrap;}
+    .section-head h2.gim{background:#005EB8;}
+    .section-head h2.renal{background:#7c3aed;}
+    .section-head .rule{flex:1;height:2px;background:#e8eef8;}
     .sub-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
     .stream-badge{font-size:7pt;font-weight:700;padding:2px 6px;border-radius:2px;letter-spacing:0.08em;text-transform:uppercase;}
-    .badge-gim{background:#e8f0ff;color:#003087;border:1px solid #b3c6f0;}
-    .badge-renal{background:#f3eeff;color:#5b21b6;border:1px solid #c4b0e8;}
+    .badge-gim{background:#005EB8;color:#fff;}
+    .badge-renal{background:#7c3aed;color:#fff;}
     .badge-note{font-size:7.5pt;color:#666;font-style:italic;}
     .empty-note{font-style:italic;color:#999;font-size:8.5pt;padding:6px 0;margin-bottom:12px;}
     table{width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:12px;page-break-inside:auto;}
@@ -2645,24 +3293,26 @@ function printLogbookReport() {
     tr.odd{background:#fff;}
     td{padding:4px 7px;border-bottom:1px solid #e8eef8;vertical-align:top;}
     .dops-yes{color:#166534;font-weight:700;}
-    .cpd-summary{background:#f8f9ff;border:1px solid #ccd6e8;padding:7px 11px;margin-bottom:9px;font-size:8.5pt;color:#333;}
+    .cpd-summary{background:#f0f4ff;border:1px solid #ccd6e8;border-left:3px solid #003087;padding:7px 11px;margin-bottom:9px;font-size:8.5pt;color:#333;}
+    .cpd-summary.renal{border-left-color:#7c3aed;background:#f8f5ff;}
     .doc-footer{margin-top:20px;padding-top:8px;border-top:1px solid #ccd6e8;display:flex;justify-content:space-between;font-size:7pt;color:#888;}
     @media print{
       body{background:#fff;padding:0;}
-      .page{box-shadow:none;padding:12mm 14mm;max-width:100%;}
+      .page{box-shadow:none;max-width:100%;}
       .section-head{page-break-after:avoid;}
       tr{page-break-inside:avoid;}
       .no-print{display:none;}
+      *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
     }
   </style>
 </head>
 <body>
 <div class="page">
-
-  <div class="no-print" style="text-align:right;margin-bottom:12px;">
+ 
+  <div class="no-print" style="text-align:right;padding:10px 16px;background:#f0f4ff;border-bottom:1px solid #ccd6e8;">
     <button onclick="window.print()" style="background:#003087;color:#fff;border:none;padding:8px 20px;font-size:10pt;cursor:pointer;border-radius:3px;">⎙ Print / Save as PDF</button>
   </div>
-
+ 
   <div class="doc-header">
     <div>
       <h1>ARCP Logbook Report</h1>
@@ -2674,83 +3324,85 @@ function printLogbookReport() {
       <div><strong>Programme:</strong> Renal + GIM ST4–ST7</div>
     </div>
   </div>
-
+ 
+  <div class="page-inner">
+ 
   <div class="info-box">
     <div class="info-cell"><div class="lbl">Programme</div><div class="val">Renal Medicine + GIM</div></div>
     <div class="info-cell"><div class="lbl">Current Year</div><div class="val">${yr}</div></div>
     <div class="info-cell"><div class="lbl">CCT Date</div><div class="val">Dec 2030</div></div>
   </div>
-
+ 
   <div class="summary-strip">
-    <div class="sum-box" style="--c:#003087"><div class="num">${gimClinics.length}</div><div class="key">GIM Clinics (total)</div></div>
-    <div class="sum-box" style="--c:#5b21b6"><div class="num">${renalClinics.length}</div><div class="key">Renal Clinics (${yr})</div></div>
+    <div class="sum-box" style="--c:#005EB8"><div class="num">${gimClinics.length}</div><div class="key">GIM Clinics (total)</div></div>
+    <div class="sum-box" style="--c:#7c3aed"><div class="num">${renalClinics.length}</div><div class="key">Renal Clinics (${yr})</div></div>
     <div class="sum-box" style="--c:#166534"><div class="num">${renalProcs.length + gimProcs.length}</div><div class="key">Procedures (${yr})</div></div>
     <div class="sum-box" style="--c:#92400e"><div class="num">${teaching.length}</div><div class="key">Teaching (${yr})</div></div>
-    <div class="sum-box" style="--c:#166534"><div class="num">${Math.round(combinedCpdHrs)}h</div><div class="key">CPD — GIM + Renal (${yr})</div></div>
+    <div class="sum-box" style="--c:#005EB8"><div class="num">${Math.round(gimAllHrs + renalCpdHrs)}h</div><div class="key">CPD — GIM + Renal</div></div>
     <div class="sum-box" style="--c:#0e7490"><div class="num">${Math.round(totalSimHrs)}h</div><div class="key">Simulation (total)</div></div>
-
   </div>
-
-  ${secHead("Clinics")}
+ 
+  ${secHead("Clinics","both")}
   ${subHead(badge("Renal","badge-renal"), `${renalClinics.length} entries · ${yr}`)}
   ${tbl(["Date","Type","Hospital","Supervisor","Patients","Notes"],
     renalClinics.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.hospital,e.supervisor,e.patients?e.patients+" pts":"—",e.notes]),
-    "#5b21b6")}
+    "#7c3aed")}
   ${subHead(badge("GIM","badge-gim"), `${gimClinics.length} total entries · all years · cumulative target 20`)}
   ${tbl(["Date","Type","Hospital","Supervisor","Patients","Year","Notes"],
     gimClinics.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.hospital,e.supervisor,e.patients?e.patients+" pts":"—",e.year||"—",e.notes]),
-    "#003087")}
-
-  ${secHead("Procedures")}
+    "#005EB8")}
+ 
+  ${secHead("Procedures","both")}
   ${subHead(badge("Renal","badge-renal"), `${renalProcs.length} entries · ${yr}`)}
   ${tbl(["Date","Procedure","Supervisor","DOPS","Notes"],
     renalProcs.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.supervisor,e.dops==="Yes"?'<span class="dops-yes">✓ Yes</span>':"No",e.notes]),
-    "#5b21b6")}
+    "#7c3aed")}
   ${subHead(badge("GIM","badge-gim"), `${gimProcs.length} entries · ${yr}`)}
   ${tbl(["Date","Procedure","Supervisor","DOPS","Notes"],
     gimProcs.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.supervisor,e.dops==="Yes"?'<span class="dops-yes">✓ Yes</span>':"No",e.notes]),
-    "#003087")}
-
-  ${secHead("CPD / Study Leave")}
+    "#005EB8")}
+ 
+  ${secHead("CPD / Study Leave","both")}
   <div class="cpd-summary">
     <strong>GIM CPD Summary:</strong> &nbsp;
-    Counted total: <strong style="color:#003087">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
+    Counted total: <strong style="color:#005EB8">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
     Online: <strong>${onlineCapped.toFixed(1)}h</strong> / 15h max &nbsp;·&nbsp;
     External: <strong>${externalHrs.toFixed(1)}h</strong>
-
-
   </div>
-    ${subHead(badge("GIM","badge-gim"), `${gimCpd.length} total entries · all years · cumulative target 100h`)}
+  ${subHead(badge("GIM","badge-gim"), `${gimCpd.length} total entries · all years · cumulative target 100h`)}
   ${tbl(["Date","Type","Title / Event","Hours","Year","Notes"],
     gimCpd.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.title,e.hours?e.hours+"h":"—",e.year||"—",e.notes]),
-    "#003087")}
+    "#005EB8")}
+  <div class="cpd-summary renal">
+    <strong>Renal CPD:</strong> &nbsp;
+    Total: <strong style="color:#7c3aed">${renalCpdHrs.toFixed(1)}h</strong> in ${yr}
+  </div>
   ${subHead(badge("Renal","badge-renal"), `${renalCpd.length} entries · ${yr}`)}
   ${tbl(["Date","Type","Title / Event","Hours","Notes"],
     renalCpd.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.title,e.hours?e.hours+"h":"—",e.notes]),
-    "#5b21b6")}
-
-
-  ${secHead("Simulation")}
+    "#7c3aed")}
+ 
+  ${secHead("Simulation","gim")}
   <div class="cpd-summary">
     <strong>Simulation Summary:</strong> &nbsp;
-    Total: <strong style="color:#003087">${totalSimHrs.toFixed(1)}h</strong> / 12h &nbsp;·&nbsp;
+    Total: <strong style="color:#0e7490">${totalSimHrs.toFixed(1)}h</strong> / 12h &nbsp;·&nbsp;
     ST7: <strong>${st7SimHrs.toFixed(1)}h</strong> / 4h min
   </div>
   ${subHead(badge("GIM","badge-gim"), simulation.length + " total entries · all years · cumulative target 12h")}
   ${tbl(["Date","Course","Title / Session","Hours","Hospital / Venue","Year","Notes"],
     simulation.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.course,e.title,e.hours?e.hours+"h":"—",e.hospital,e.year||"—",e.notes]),
     "#0e7490")}
-
-  ${secHead("Teaching")}
+ 
+  ${secHead("Teaching","both")}
   ${subHead("", `${teaching.length} sessions · ${yr}`)}
   ${tbl(["Date","Type","Topic","Audience","Observed by","Sign-off","Notes"],
     teaching.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.topic,e.audience,e.supervisor||"—",e.signoff,e.notes]),
     "#92400e")}
-
-  ${secHead("Acute Take (Firth Calculator)")}
+ 
+  ${secHead("Acute Take (Firth Calculator)","gim")}
   <div class="cpd-summary">
     <strong>Acute Take Summary:</strong> &nbsp;
-    Estimated total: <strong style="color:#003087">${Math.round(getLbEntries("acute_take").reduce((a,e)=>a+(parseFloat(e.estimated)||0),0))}</strong> / 750 patients
+    Estimated total: <strong style="color:#005EB8">${Math.round(getLbEntries("acute_take").reduce((a,e)=>a+(parseFloat(e.estimated)||0),0))}</strong> / 750 patients
   </div>
   ${subHead(badge("GIM","badge-gim"), `${getLbEntries("acute_take").length} placements · all years`)}
   ${tbl(["Hospital","Start","End","Months","Takes/mo","Pts/Take","Est. Patients","Year","Supervisor"],
@@ -2760,12 +3412,12 @@ function printLogbookReport() {
       `<strong>${Math.round(e.estimated||0)}</strong>`,
       e.year||"—",e.supervisor||"—"
     ]),
-    "#003087")}
-
-  ${secHead("Ward Cover")}
+    "#005EB8")}
+ 
+  ${secHead("Ward Cover","gim")}
   <div class="cpd-summary">
     <strong>Ward Cover Summary:</strong> &nbsp;
-    Total: <strong style="color:#003087">${Math.round(getLbEntries("ward_cover").reduce((a,e)=>a+(parseFloat(e.months)||0),0)*10)/10}</strong> / 12 months
+    Total: <strong style="color:#005EB8">${Math.round(getLbEntries("ward_cover").reduce((a,e)=>a+(parseFloat(e.months)||0),0)*10)/10}</strong> / 12 months
   </div>
   ${subHead(badge("GIM","badge-gim"), `${getLbEntries("ward_cover").length} placements · all years`)}
   ${tbl(["Hospital","Start","End","Months","Year","Supervisor"],
@@ -2774,38 +3426,48 @@ function printLogbookReport() {
       e.months?e.months+"mo":"—",
       e.year||"—",e.supervisor||"—"
     ]),
-    "#003087")}
-
+    "#005EB8")}
+ 
   <div class="doc-footer">
     <span>ARCP Portfolio Tracker · Auto-generated document</span>
     <span>Generated ${fullDate} · Confidential</span>
   </div>
-
+ 
+  </div>
 </div>
 </body>
 </html>`;
-
+ 
   const w = window.open("", "_blank");
   if (!w) { alert("Please allow popups for this site to use the print view."); return; }
   w.document.write(html);
   w.document.close();
 }
-
-setInterval(updateCountdown, 60000);
-
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./arcp-sw.js").then(reg => {
-    reg.update();
-    reg.addEventListener("updatefound", () => {
-      const nw = reg.installing;
-      nw.addEventListener("statechange", () => {
-        if (nw.state === "installed" && navigator.serviceWorker.controller) nw.postMessage("skipWaiting");
-      });
-    });
-  }).catch(err => console.warn("SW registration failed:", err));
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => { if (!refreshing) { refreshing = true; window.location.reload(); } });
-}
 </script>
+
+<script>
+// ── Patch updateCountdown to also update the sub-label ──
+const _origUpdateCountdown = updateCountdown;
+updateCountdown = function() {
+  _origUpdateCountdown();
+  const sub = document.getElementById('arcp-date-sub');
+  if (sub) sub.textContent = document.getElementById('sb-arcp').textContent;
+};
+// ── Patch updateALSDisplay to fix font size in new header ──
+const _origUpdateALS = updateALSDisplay;
+updateALSDisplay = function() {
+  _origUpdateALS();
+  const el = document.getElementById('als-display');
+  if (el) {
+    // Scale font size based on text length
+    const txt = el.textContent;
+    el.style.fontSize = txt.length > 14 ? '12px' : txt.length > 8 ? '14px' : '20px';
+  }
+};
+// ── Re-run to apply patches ──
+updateCountdown();
+updateALSDisplay();
+</script>
+
 </body>
 </html>
