@@ -1103,7 +1103,56 @@ body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,
 /* V18 PATCH — hero percent now uses same simple ARCP readiness logic as header bars; duplicate roadmap nav removed */
 body.visual-v16 .roadmap-top{padding-top:18px!important;}
 body.visual-v16 .roadmap-nav{display:none!important;}
-</style></head><body><button onclick="print()">Print / Save PDF</button><div class="hero"><div><h1>ARCP Logbook Report</h1><div class="sub">${safe(sp.label).toUpperCase()} & GENERAL INTERNAL MEDICINE · DUAL CCT TRAINING</div></div><div class="right">Generated: ${generated}<br>Training Year: ${safe(yr)}<br>Programme: ${safe(sp.short)} + GIM ST4–ST7</div></div><div class="info"><div><div class="k">Programme</div><div class="v">${safe(sp.short)} Medicine + GIM</div></div><div><div class="k">Current year</div><div class="v">${safe(yr)}</div></div><div><div class="k">CCT date</div><div class="v">${safe(cct)}</div></div></div><div class="metrics"><div class="metric"><div class="num">${gimClinics.length}</div><div class="label">GIM clinics total</div></div><div class="metric spec"><div class="num">${specClinics.length}</div><div class="label">${safe(sp.short)} clinics (${yr})</div></div><div class="metric green"><div class="num">${procYr.length}</div><div class="label">Procedures (${yr})</div></div><div class="metric brown"><div class="num">${teachingYr.length}</div><div class="label">Teaching (${yr})</div></div><div class="metric"><div class="num">${sumHours(cpdAll)}h</div><div class="label">CPD — GIM + specialty</div></div><div class="metric"><div class="num">${sumHours(simAll)}h</div><div class="label">Simulation total</div></div></div>${reportSection('CLINICS')}${reportScopedTable(sp.short, specClinics, ['date','type','hospital','supervisor','patients','year','notes'], 'spec')}${reportScopedTable('GIM', gimClinics, ['date','type','hospital','supervisor','patients','year','notes'])}${reportSection('PROCEDURES')}${reportScopedTable(sp.short, entries('procedures').filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)), ['date','type','supervisor','dops','year','notes'], 'spec')}${reportScopedTable('GIM', entries('procedures').filter(e=>e.scope==='gim' && (!e.year||e.year===yr)), ['date','type','supervisor','dops','year','notes'])}${reportSection('CPD / STUDY LEAVE')}<div class="summary">GIM CPD Summary: Counted total: <strong>${sumHours(cpdAll,e=>e.scope==='gim')}h</strong> / 100h · ST7: <strong>${sumHours(cpdAll,e=>e.scope==='gim'&&e.year==='ST7')}h</strong> / 20h min</div>${reportScopedTable('GIM', cpdAll.filter(e=>e.scope==='gim'), ['date','type','title','hours','year','notes'])}<div class="summary spec">${safe(sp.short)} CPD: Total: <strong>${sumHours(cpdAll,e=>e.scope!=='gim'&&(!e.year||e.year===yr))}h</strong> in ${yr}</div>${reportScopedTable(sp.short, cpdAll.filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)), ['date','type','title','hours','year','notes'], 'spec')}${reportSection('SIMULATION')}<div class="summary">Simulation Summary: Total: <strong>${sumHours(simAll)}h</strong> / 12h · ST7: <strong>${sumHours(simAll,e=>e.year==='ST7')}h</strong> / 4h min</div>${reportScopedTable('GIM', simAll, ['date','course','title','hours','hospital','year','notes'])}${reportSection('TEACHING')}${reportScopedTable('Teaching', teachingYr, ['date','type','topic','audience','supervisor','signoff','year','notes'])}${reportSection('ACUTE TAKE (FIRTH CALCULATOR)')}<div class="summary">Acute Take Summary: Estimated total: <strong>${acuteAll.reduce((a,e)=>a+Number(e.estimated||0),0)}</strong> / 750 patients · ST7: <strong>${acuteAll.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.estimated||0),0)}</strong> / 100 patients min</div>${reportScopedTable('GIM', acuteAll, ['hospital','start','end','months','takes','patients','estimated','year','supervisor'])}${reportSection('WARD COVER')}<div class="summary">Ward Cover Summary: Total: <strong>${Math.round(wardAll.reduce((a,e)=>a+Number(e.months||0),0)*10)/10}</strong> / 12 months</div>${reportScopedTable('GIM', wardAll, ['hospital','start','end','months','year','supervisor'])}<div class="footer"><span>ARCP//01 · Auto-generated ARCP document</span><span>Generated ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'short',year:'numeric'})} · Confidential</span></div></body></html>`; win.document.write(report); win.document.close(); }
+</style></head><body><button onclick="print()">Print / Save PDF</button><div class="hero"><div><h1>ARCP Logbook Report</h1><div class="sub">${safe(sp.label).toUpperCase()} & GENERAL INTERNAL MEDICINE · DUAL CCT TRAINING</div></div><div class="right">Generated: ${generated}<br>Training Year: ${safe(yr)}<br>Programme: ${safe(sp.short)} + GIM ST4–ST7</div></div><div class="info"><div><div class="k">Programme</div><div class="v">${safe(sp.short)} Medicine + GIM</div></div><div><div class="k">Current year</div><div class="v">${safe(yr)}</div></div><div><div class="k">CCT date</div><div class="v">${safe(cct)}</div></div></div><div class="metrics"><div class="metric"><div class="num">${gimClinics.length}</div><div class="label">GIM clinics total</div></div><div class="metric spec"><div class="num">${specClinics.length}</div><div class="label">${safe(sp.short)} clinics (${yr})</div></div><div class="metric green"><div class="num">${procYr.length}</div><div class="label">Procedures (${yr})</div></div><div class="metric brown"><div class="num">${teachingYr.length}</div><div class="label">Teaching (${yr})</div></div><div class="metric"><div class="num">${sumHours(cpdAll)}h</div><div class="label">CPD — GIM + specialty</div></div><div class="metric"><div class="num">${sumHours(simAll)}h</div><div class="label">Simulation total</div></div></div>${reportSection('CLINICS')}${reportScopedTable(sp.short, specClinics, ['date','type','hospital','supervisor','patients','year','notes'], 'spec')}${reportScopedTable('GIM', gimClinics, ['date','type','hospital','supervisor','patients','year','notes'])}${reportSection('PROCEDURES')}${reportScopedTable(sp.short, entries('procedures').filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)), ['date','type','supervisor','dops','year','notes'], 'spec')}${reportScopedTable('GIM', entries('procedures').filter(e=>e.scope==='gim' && (!e.year||e.year===yr)), ['date','type','supervisor','dops','year','notes'])}${reportSection('CPD / STUDY LEAVE')}<div class="summary">GIM CPD Summary: Counted total: <strong>${sumHours(cpdAll,e=>e.scope==='gim')}h</strong> / 100h · ST7: <strong>${sumHours(cpdAll,e=>e.scope==='gim'&&e.year==='ST7')}h</strong> / 20h min</div>${reportScopedTable('GIM', cpdAll.filter(e=>e.scope==='gim'), ['date','type','title','hours','year','notes'])}<div class="summary spec">${safe(sp.short)} CPD: Total: <strong>${sumHours(cpdAll,e=>e.scope!=='gim'&&(!e.year||e.year===yr))}h</strong> in ${yr}</div>${reportScopedTable(sp.short, cpdAll.filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)), ['date','type','title','hours','year','notes'], 'spec')}${reportSection('SIMULATION')}<div class="summary">Simulation Summary: Total: <strong>${sumHours(simAll)}h</strong> / 12h · ST7: <strong>${sumHours(simAll,e=>e.year==='ST7')}h</strong> / 4h min</div>${reportScopedTable('GIM', simAll, ['date','course','title','hours','hospital','year','notes'])}${reportSection('TEACHING')}${reportScopedTable('Teaching', teachingYr, ['date','type','topic','audience','supervisor','signoff','year','notes'])}${reportSection('ACUTE TAKE (FIRTH CALCULATOR)')}<div class="summary">Acute Take Summary: Estimated total: <strong>${acuteAll.reduce((a,e)=>a+Number(e.estimated||0),0)}</strong> / 750 patients · ST7: <strong>${acuteAll.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.estimated||0),0)}</strong> / 100 patients min</div>${reportScopedTable('GIM', acuteAll, ['hospital','start','end','months','takes','patients','estimated','year','supervisor'])}${reportSection('WARD COVER')}<div class="summary">Ward Cover Summary: Total: <strong>${Math.round(wardAll.reduce((a,e)=>a+Number(e.months||0),0)*10)/10}</strong> / 12 months</div>${reportScopedTable('GIM', wardAll, ['hospital','start','end','months','year','supervisor'])}<div class="footer"><span>ARCP//01 · Auto-generated ARCP document</span><span>Generated ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'short',year:'numeric'})} · Confidential</span></div>
+<!-- V19.10.8 PATCH — GIM target label/value neon split only -->
+<style id="v19108-gim-target-neon-split">
+  .gim-proc-target{
+    color:rgba(247,244,232,.92) !important;
+    font-size:10px !important;
+    letter-spacing:.02em !important;
+    font-weight:800 !important;
+  }
+  .gim-proc-target .target-label{
+    color:#f7f4e8 !important;
+    opacity:.96 !important;
+    font-weight:850 !important;
+  }
+  .gim-proc-target .target-value,
+  .gim-proc-target strong{
+    color:var(--primary,#d7ff28) !important;
+    font-weight:900 !important;
+    text-shadow:
+      0 0 4px rgba(215,255,40,.62),
+      0 0 10px rgba(215,255,40,.38),
+      0 0 18px rgba(215,255,40,.18) !important;
+  }
+</style>
+<script>
+/* V19.10.8 — render GIM procedure target as white label + neon value.
+   No layout/logic changes. Keeps the V19.10.6 skills-lab/supervised logic. */
+(function installV19108GimTargetNeonSplit(){
+  if(typeof GIM_PROCEDURE_TARGETS_V106 === 'undefined' || typeof dopsCardGrid !== 'function') return;
+  window.dopsCardGrid = function(){
+    const rows = GIM_PROCEDURE_TARGETS_V106.map(item=>{
+      const val = gimProcValueV106(item.name);
+      const status = gimProcStatusV106(item);
+      const ok = status === 'done';
+      return `<div class="gim-proc-row ${status}">
+        <div class="gim-proc-name">${safe(item.name)}</div>
+        <div class="gim-proc-target"><span class="target-label">Target:</span> <span class="target-value">${safe(item.targetText)}</span></div>
+        <select class="input gim-proc-select" onchange="setGimProcedureLevel('${safe(item.name)}', this.value)">
+          ${GIM_LEVELS_V106.map(l=>`<option value="${l}" ${val===l?'selected':''}>${l}</option>`).join('')}
+        </select>
+        <div class="gim-proc-status ${ok?'good':status==='partial'?'warn':''}">${ok?'✓ on track':status==='partial'?'in progress':'not yet'}</div>
+      </div>`;
+    }).join('');
+    return `<div class="gim-proc-list">${rows}</div>`;
+  };
+  try{ if(currentTab==='gim') renderGIM(); updateReadiness(); forceLiveStatus(); }catch(e){ console.warn('V19.10.8 GIM target neon split skipped', e); }
+})();
+</script>
+
+</body></html>`; win.document.write(report); win.document.close(); }
 function reportSection(title){ return `<div class="sec"><span>${safe(title)}</span></div>`; }
 function reportScopedTable(label, arr, fields, kind='gim'){ return `<div style="margin:8px 24px 2px"><span class="tag ${kind==='spec'?'spec':''}">${safe(label).toUpperCase()}</span> <span style="font-size:11px;color:#6b7280;font-style:italic">${arr.length} entries</span></div>${arr.length?`<table><tr>${fields.map(f=>`<th>${safe(f)}</th>`).join('')}</tr>${arr.map(e=>`<tr>${fields.map(f=>`<td>${safe(['date','start','end'].includes(f)?fmtDate(e[f]):(f==='dops'&&e[f]==='Yes'?'✓ Yes':e[f]||'—'))}</td>`).join('')}</tr>`).join('')}</table>`:'<p class="empty">No entries logged</p>'}`; }
 function reportReqTable(scope, reqs, title){ return `<h2>${title} <span class="badge">${safe(scope)}</span></h2><table><tr><th>Requirement</th><th>Status</th><th>Value</th><th>Target</th><th>Deadline</th></tr>${Object.entries(reqs).map(([id,r])=>`<tr><td>${safe(r.label)}</td><td>${reqStatus(id,r)}</td><td>${r.type==='checkbox'?(getReqVal(id,r)?'Yes':'No'):getReqVal(id,r)}</td><td>${r.target||'—'} ${r.unit||''}</td><td>${r.deadline}</td></tr>`).join('')}</table>`; }
@@ -2758,5 +2807,54 @@ try {
   try{ if(currentTab==='gim') renderGIM(); updateReadiness(); forceLiveStatus(); }catch(e){ console.warn('V19.10.6 GIM skills-lab logic patch skipped', e); }
 })();
 </script>
+
+<!-- V19.10.8 PATCH — GIM target label/value neon split only -->
+<style id="v19108-gim-target-neon-split">
+  .gim-proc-target{
+    color:rgba(247,244,232,.92) !important;
+    font-size:10px !important;
+    letter-spacing:.02em !important;
+    font-weight:800 !important;
+  }
+  .gim-proc-target .target-label{
+    color:#f7f4e8 !important;
+    opacity:.96 !important;
+    font-weight:850 !important;
+  }
+  .gim-proc-target .target-value,
+  .gim-proc-target strong{
+    color:var(--primary,#d7ff28) !important;
+    font-weight:900 !important;
+    text-shadow:
+      0 0 4px rgba(215,255,40,.62),
+      0 0 10px rgba(215,255,40,.38),
+      0 0 18px rgba(215,255,40,.18) !important;
+  }
+</style>
+<script>
+/* V19.10.8 — render GIM procedure target as white label + neon value.
+   No layout/logic changes. Keeps the V19.10.6 skills-lab/supervised logic. */
+(function installV19108GimTargetNeonSplit(){
+  if(typeof GIM_PROCEDURE_TARGETS_V106 === 'undefined' || typeof dopsCardGrid !== 'function') return;
+  window.dopsCardGrid = function(){
+    const rows = GIM_PROCEDURE_TARGETS_V106.map(item=>{
+      const val = gimProcValueV106(item.name);
+      const status = gimProcStatusV106(item);
+      const ok = status === 'done';
+      return `<div class="gim-proc-row ${status}">
+        <div class="gim-proc-name">${safe(item.name)}</div>
+        <div class="gim-proc-target"><span class="target-label">Target:</span> <span class="target-value">${safe(item.targetText)}</span></div>
+        <select class="input gim-proc-select" onchange="setGimProcedureLevel('${safe(item.name)}', this.value)">
+          ${GIM_LEVELS_V106.map(l=>`<option value="${l}" ${val===l?'selected':''}>${l}</option>`).join('')}
+        </select>
+        <div class="gim-proc-status ${ok?'good':status==='partial'?'warn':''}">${ok?'✓ on track':status==='partial'?'in progress':'not yet'}</div>
+      </div>`;
+    }).join('');
+    return `<div class="gim-proc-list">${rows}</div>`;
+  };
+  try{ if(currentTab==='gim') renderGIM(); updateReadiness(); forceLiveStatus(); }catch(e){ console.warn('V19.10.8 GIM target neon split skipped', e); }
+})();
+</script>
+
 </body>
 </html>
