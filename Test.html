@@ -181,34 +181,139 @@ body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,
 .milestone-chip.done .milestone-check{background:var(--rm-lime)!important;color:#10130d!important;}
 .rm-actions .btn.primary{border-color:var(--rm-lime)!important;background:rgba(215,255,40,.10)!important;}
 
+
+
+/* ─────────────────────────────────────────────────────────────
+   V16 VISUAL OVERHAUL — Premium dark system inspired by mockup
+   Keeps app logic intact; shifts % display back to simple completion.
+───────────────────────────────────────────────────────────── */
+body.visual-v16{
+  --bg:#070908; --bg2:#0d1110; --bg3:#141918; --bg4:#1c2321; --line:rgba(255,255,255,.11);
+  --text:#f7f4e8; --text2:#c4c0ae; --dim:#8f8a78;
+  --primary:#d7ff28; --primary2:#aeea00; --green:#9cff2e; --amber:#ffd43b; --red:#ff6b6b;
+  background:
+    radial-gradient(circle at 78% 9%, rgba(215,255,40,.13), transparent 24%),
+    radial-gradient(circle at 6% 10%, rgba(69,99,255,.10), transparent 30%),
+    linear-gradient(180deg,#080b0a 0%,#0d1110 48%,#090b0a 100%) !important;
+  color:var(--text)!important;
+}
+body.visual-v16::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:linear-gradient(115deg,transparent 0 58%,rgba(255,255,255,.07) 58.2%,transparent 58.5%);opacity:.5}
+body.visual-v16 #app, body.visual-v16 #gate, body.visual-v16 #beta-expired-lock{position:relative;z-index:1}
+body.visual-v16 .topbar{position:relative!important;background:rgba(9,12,11,.78)!important;backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.10)!important;box-shadow:0 18px 60px rgba(0,0,0,.35)}
+body.visual-v16 .top-row{padding:8px 16px 2px;gap:10px;align-items:center}
+body.visual-v16 .brand{border-right:0!important;min-width:220px;padding:12px 12px 14px}
+body.visual-v16 .brand-main{font-size:23px;color:var(--text)!important;letter-spacing:-.04em}.brand-main span{color:var(--primary)!important}
+body.visual-v16 .brand-sub{color:var(--text2)!important;letter-spacing:.16em;font-size:10px;margin-top:8px}
+body.visual-v16 .metric{border:1px solid rgba(255,255,255,.10)!important;border-radius:18px;background:rgba(255,255,255,.045);padding:12px 17px;min-width:132px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+body.visual-v16 .metric-val{font-size:28px;color:var(--text)!important}.metric-val.warn{color:var(--amber)!important}.metric-val.alert{color:var(--red)!important}
+body.visual-v16 .metric-key{color:var(--dim)!important;letter-spacing:.19em}
+body.visual-v16 .grow{border:1px solid rgba(255,255,255,.10);border-radius:20px;background:rgba(255,255,255,.045);margin:8px 0;padding:14px 18px!important;min-width:min(420px,100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+body.visual-v16 #arcp-readiness-title{color:var(--text)!important;letter-spacing:.22em!important;margin-bottom:12px!important}
+body.visual-v16 .bar-label{font-size:11px;color:var(--text2)!important;letter-spacing:.08em;text-transform:uppercase;margin:7px 0 5px}.bar-label strong{color:var(--primary)!important}
+body.visual-v16 .track{height:8px;background:rgba(255,255,255,.12)!important;border-radius:99px;box-shadow:inset 0 1px 5px rgba(0,0,0,.45)}
+body.visual-v16 .fill{background:linear-gradient(90deg,#d7ff28,#fff06a)!important;box-shadow:0 0 16px rgba(215,255,40,.38)}
+body.visual-v16 #gim-fill{background:linear-gradient(90deg,#18a0ff,#6b8cff)!important;box-shadow:0 0 16px rgba(24,160,255,.28)}
+body.visual-v16 .tabs{border-top:1px solid rgba(255,255,255,.08)!important;padding:10px 20px 12px!important;gap:8px;background:transparent!important}
+body.visual-v16 .tab{border:1px solid transparent!important;border-radius:999px!important;color:var(--text2)!important;background:transparent!important;padding:9px 15px!important;letter-spacing:.02em;transition:.15s ease}
+body.visual-v16 .tab:hover{color:var(--text)!important;background:rgba(255,255,255,.06)!important;border-color:rgba(255,255,255,.08)!important}
+body.visual-v16 .tab.active{color:#0a0d0c!important;background:var(--primary)!important;border-color:var(--primary)!important;box-shadow:0 0 22px rgba(215,255,40,.22)}
+body.visual-v16 .tab.gim-tab.active{background:#6b8cff!important;border-color:#6b8cff!important;color:white!important;box-shadow:0 0 22px rgba(107,140,255,.22)}
+body.visual-v16 main{padding:28px 28px 96px!important;max-width:1440px;margin:0 auto}
+body.visual-v16 .beta-banner{background:rgba(215,255,40,.10)!important;border-color:rgba(215,255,40,.28)!important;border-left:0!important;color:var(--text)!important;padding:12px 28px!important}
+body.visual-v16 .panel,body.visual-v16 .card,body.visual-v16 .summary{background:rgba(255,255,255,.045)!important;border:1px solid rgba(255,255,255,.10)!important;border-radius:20px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 18px 50px rgba(0,0,0,.18)}
+body.visual-v16 .card{padding:18px!important;border-left:3px solid rgba(255,255,255,.18)!important}.card.met{border-left-color:var(--green)!important}.card.partial{border-left-color:var(--amber)!important}.card.unmet{border-left-color:var(--red)!important}
+body.visual-v16 .card-title{font-size:15px!important;color:var(--text)!important;letter-spacing:-.01em}.deadline,.hint{color:var(--dim)!important}
+body.visual-v16 .sec-head{margin:24px 0 14px!important}.sec-title{color:var(--primary)!important;font-size:12px!important;letter-spacing:.18em!important}.sec-rule{background:rgba(255,255,255,.11)!important}.sec-note{color:var(--dim)!important;letter-spacing:.05em}
+body.visual-v16 .grid{gap:15px!important;grid-template-columns:repeat(auto-fill,minmax(305px,1fr))!important}
+body.visual-v16 .input{background:rgba(0,0,0,.18)!important;border:1px solid rgba(255,255,255,.12)!important;color:var(--text)!important;border-radius:14px!important;padding:11px 13px!important}.input:focus{border-color:var(--primary)!important;box-shadow:0 0 0 3px rgba(215,255,40,.13)!important}
+body.visual-v16 .btn{background:rgba(255,255,255,.055)!important;border-color:rgba(255,255,255,.14)!important;color:var(--text)!important;border-radius:999px!important}.btn.primary{color:#0a0d0c!important;background:var(--primary)!important;border-color:var(--primary)!important}.btn.good{color:#0a0d0c!important;background:var(--green)!important;border-color:var(--green)!important}.btn.danger{color:var(--red)!important;background:rgba(255,107,107,.07)!important;border-color:rgba(255,107,107,.45)!important}
+body.visual-v16 .badge{border-radius:999px!important;background:rgba(255,255,255,.06)!important}.badge.spec{color:var(--primary)!important;border-color:rgba(215,255,40,.4)!important}.badge.gim{color:#8fb3ff!important;border-color:rgba(107,140,255,.45)!important}
+body.visual-v16 .check,body.visual-v16 .chk{border-radius:8px!important;background:rgba(255,255,255,.06)!important;border-color:rgba(255,255,255,.16)!important}.check.checked,.chk.checked{background:var(--primary)!important;color:#0a0d0c!important;border-color:var(--primary)!important}
+body.visual-v16 .dops-card,body.visual-v16 .dops-row{background:rgba(255,255,255,.04)!important;border-color:rgba(255,255,255,.10)!important;border-radius:16px!important}.dops-card.done,.dops-row.done{border-left-color:var(--green)!important;background:rgba(156,255,46,.075)!important}
+body.visual-v16 .statusbar{background:rgba(9,12,11,.88)!important;backdrop-filter:blur(14px);border-top:1px solid rgba(255,255,255,.10)!important}
+body.visual-v16 .roadmap-wrap{margin:-28px -28px -96px;min-height:calc(100vh - 0px);padding:32px 58px 96px;background:radial-gradient(circle at 80% 12%,rgba(215,255,40,.12),transparent 25%),radial-gradient(circle at 10% 0%,rgba(255,255,255,.08),transparent 28%),linear-gradient(180deg,#090d0c,#0c1110 46%,#080a09)}
+body.visual-v16 .roadmap-nav{display:flex;align-items:center;gap:28px;color:rgba(247,244,232,.75);font-size:13px;font-weight:700;margin-bottom:72px}.roadmap-logo{font-size:24px!important;color:white!important}.roadmap-logo span{color:var(--primary)!important}.roadmap-pill{background:rgba(215,255,40,.14)!important;color:var(--primary)!important;border:1px solid rgba(215,255,40,.18);padding:7px 11px;border-radius:999px}.roadmap-status{margin-left:auto!important;color:rgba(247,244,232,.72)!important}.roadmap-dot{background:var(--primary)!important;box-shadow:0 0 12px rgba(215,255,40,.8)}
+body.visual-v16 .hero-kicker{letter-spacing:.28em!important;color:rgba(247,244,232,.6)!important;font-size:12px!important;margin-bottom:20px!important}.hero-title{font-size:clamp(42px,6vw,86px)!important;line-height:.98!important;letter-spacing:-.065em!important;color:#fff!important;max-width:980px}.lime{color:var(--primary)!important;text-shadow:0 0 28px rgba(215,255,40,.35)}
+body.visual-v16 .roadmap-bars{margin:54px 0 38px!important}.rm-bar-row{margin:18px 0!important}.rm-bar-label{font-size:12px!important;letter-spacing:.18em!important;color:rgba(247,244,232,.62)!important;text-transform:uppercase}.rm-track{height:12px!important;background:rgba(255,255,255,.12)!important;border-radius:999px!important}.rm-fill{box-shadow:0 0 16px rgba(215,255,40,.40)!important}.rm-fill.gim{background:linear-gradient(90deg,#ffdf3a,#d7ff28)!important}.rm-target{font-size:11px!important;color:rgba(247,244,232,.55)!important;letter-spacing:.16em!important;text-transform:uppercase}.rm-target.pace-behind{color:#ffd43b!important}.rm-target.pace-good{color:var(--primary)!important}
+body.visual-v16 .roadmap-kpis{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:18px!important;margin:34px 0!important}.rm-kpi{background:rgba(255,255,255,.055)!important;border:1px solid rgba(255,255,255,.11)!important;border-radius:20px!important;padding:22px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}.rm-kpi-label{font-size:11px!important;letter-spacing:.17em!important;color:rgba(247,244,232,.55)!important;text-transform:uppercase}.rm-kpi-val{font-size:42px!important;color:white!important;margin:12px 0 4px!important;line-height:1}.rm-kpi-note{color:rgba(247,244,232,.68)!important;font-weight:700}
+body.visual-v16 .roadmap-journey{margin-top:52px}.journey-title{font-size:27px!important;color:white!important;margin-bottom:28px!important}.timeline{border-left:2px solid rgba(215,255,40,.25)!important;padding-left:34px!important}.year-block{background:rgba(255,255,255,.045)!important;border:1px solid rgba(255,255,255,.10)!important;border-radius:22px!important;margin-bottom:22px!important;padding:22px!important;position:relative}.year-block:before{content:"";position:absolute;left:-45px;top:28px;width:20px;height:20px;background:var(--primary);border-radius:50%;box-shadow:0 0 22px rgba(215,255,40,.55)}.year-block.locked:before{background:var(--green)}.year-name{font-size:38px!important;color:#fff!important}.year-meta{color:rgba(247,244,232,.7)!important}.year-badge{background:rgba(215,255,40,.15)!important;color:var(--primary)!important;border-color:rgba(215,255,40,.25)!important;border-radius:999px!important}.milestone-chip{background:rgba(255,255,255,.055)!important;border-color:rgba(255,255,255,.10)!important;border-radius:14px!important}.milestone-chip.done{background:rgba(215,255,40,.12)!important;border-color:rgba(215,255,40,.28)!important}.milestone-check{background:rgba(255,255,255,.08)!important;color:var(--primary)!important;border-radius:7px!important}.milestone-chip.done .milestone-check{background:var(--primary)!important;color:#080a09!important}
+body.visual-v16 .rm-actions{margin-top:26px!important}.rm-actions .btn{border-radius:999px!important;padding:11px 15px!important}.rm-actions .btn.primary{background:var(--primary)!important;color:#080a09!important}
+@media (max-width:760px){body.visual-v16 .top-row{display:block;padding:10px 12px}body.visual-v16 .brand,body.visual-v16 .metric,body.visual-v16 .grow{width:100%;min-width:0;margin:8px 0}.tabs{padding:8px 12px!important}.tab{font-size:11px!important;padding:8px 11px!important}main{padding:16px 14px 92px!important}.grid{grid-template-columns:1fr!important}.form-grid{grid-template-columns:1fr!important}.roadmap-wrap{margin:-16px -14px -92px!important;padding:24px 18px 92px!important}.roadmap-nav{gap:12px!important;overflow-x:auto;margin-bottom:42px!important}.hero-title{font-size:44px!important}.roadmap-kpis{grid-template-columns:1fr!important}.timeline{padding-left:24px!important}.year-block:before{left:-35px!important}.year-name{font-size:30px!important}}
+
+
+
+/* V17 — Premium onboarding visual overhaul */
+body.visual-v16 #gate.premium-onboarding{
+  position:fixed!important; inset:0!important; display:none; align-items:center; justify-content:center;
+  padding:28px; overflow:auto; background:
+    radial-gradient(circle at 86% 10%, rgba(215,255,40,.18), transparent 28%),
+    radial-gradient(circle at 8% 0%, rgba(255,255,255,.08), transparent 30%),
+    linear-gradient(180deg,#070a09 0%,#0b100f 48%,#070908 100%)!important;
+  z-index:1000;
+}
+body.visual-v16 #gate.premium-onboarding.show{display:flex!important}
+body.visual-v16 #gate.premium-onboarding:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:54px 54px;mask-image:linear-gradient(180deg,rgba(0,0,0,.75),transparent 85%);pointer-events:none}
+body.visual-v16 .gate-shell{position:relative;z-index:1;width:min(1180px,100%);display:grid;grid-template-columns:minmax(0,1.05fr) minmax(380px,.95fr);gap:24px;align-items:stretch}
+body.visual-v16 .gate-hero{min-height:640px;border:1px solid rgba(255,255,255,.10);border-radius:30px;padding:34px;background:linear-gradient(135deg,rgba(255,255,255,.075),rgba(255,255,255,.025));box-shadow:0 34px 120px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08);display:flex;flex-direction:column;overflow:hidden;position:relative}
+body.visual-v16 .gate-hero:after{content:"";position:absolute;right:-120px;bottom:-130px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(215,255,40,.18),transparent 65%);filter:blur(2px)}
+body.visual-v16 .gate-nav{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:86px;position:relative;z-index:1}.gate-brandmark{display:flex;align-items:center;gap:10px}.gate-brand-main{font-size:24px;font-weight:900;letter-spacing:-.05em;color:#fff}.gate-brand-main span{color:var(--primary)}.gate-beta-chip{font-size:10px;font-weight:900;letter-spacing:.18em;color:#0a0d0c;background:var(--primary);padding:5px 8px;border-radius:999px}.gate-trial{font-size:12px;font-weight:800;color:rgba(247,244,232,.82);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);padding:8px 10px;border-radius:999px;white-space:nowrap}
+body.visual-v16 .gate-kicker{font-size:12px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;color:rgba(247,244,232,.55);margin-bottom:18px;position:relative;z-index:1}
+body.visual-v16 .gate-headline{font-size:clamp(48px,6vw,86px);line-height:.96;letter-spacing:-.07em;color:#fff;margin:0;max-width:820px;position:relative;z-index:1}.gate-headline span{color:var(--primary);text-shadow:0 0 32px rgba(215,255,40,.34)}
+body.visual-v16 .gate-lede{font-size:22px;color:rgba(247,244,232,.78);font-weight:700;margin:24px 0 0;position:relative;z-index:1}.gate-progress-preview{margin-top:auto;position:relative;z-index:1;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.09);border-radius:22px;padding:18px;max-width:560px}.preview-row{display:flex;justify-content:space-between;gap:12px;color:rgba(247,244,232,.62);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin:8px 0}.preview-row strong{color:rgba(247,244,232,.86);letter-spacing:0;text-transform:none}.preview-track{height:10px;background:rgba(255,255,255,.12);border-radius:999px;overflow:hidden;margin-bottom:15px}.preview-track div{height:100%;background:linear-gradient(90deg,#ffdf3a,#d7ff28);border-radius:999px;box-shadow:0 0 18px rgba(215,255,40,.36)}.preview-track.blue div{background:linear-gradient(90deg,#4a6adf,#8fb3ff);box-shadow:0 0 18px rgba(107,140,255,.25)}.gate-thanks{margin-top:16px;color:rgba(247,244,232,.54);font-size:12px;line-height:1.55;max-width:520px;position:relative;z-index:1}
+body.visual-v16 #gate.premium-onboarding .gate-card{width:auto;max-height:none;overflow:visible;background:rgba(14,17,16,.82)!important;backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.12)!important;border-top:1px solid rgba(255,255,255,.18)!important;border-radius:30px!important;padding:26px!important;box-shadow:0 34px 120px rgba(0,0,0,.46),inset 0 1px 0 rgba(255,255,255,.06)!important}
+body.visual-v16 .gate-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:20px}.gate-form-title{font-size:26px;font-weight:900;color:#fff;letter-spacing:-.04em}.gate-form-sub{font-size:13px;color:rgba(247,244,232,.62);line-height:1.55;margin-top:6px}.gate-step{font-family:var(--mono);font-size:13px;color:#0a0d0c;background:var(--primary);border-radius:999px;padding:8px 10px;font-weight:900}
+body.visual-v16 #gate.premium-onboarding .form-grid{gap:13px}.premium-onboarding .field label{color:rgba(247,244,232,.52)!important;font-size:10px!important;font-weight:900!important;letter-spacing:.18em!important}.premium-onboarding .input{background:rgba(255,255,255,.055)!important;border:1px solid rgba(255,255,255,.12)!important;color:#fff!important;border-radius:16px!important;padding:13px 14px!important;font-weight:700!important;min-height:46px}.premium-onboarding .input:focus{border-color:rgba(215,255,40,.72)!important;box-shadow:0 0 0 4px rgba(215,255,40,.13)!important}.premium-onboarding select.input option{background:#111614;color:#f7f4e8}.premium-onboarding .panel{background:rgba(255,255,255,.045)!important;border:1px solid rgba(255,255,255,.10)!important;border-radius:18px!important}.gate-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:20px}.gate-safe-note{font-size:11px;color:rgba(247,244,232,.48);line-height:1.45}.gate-start{border-radius:999px!important;background:var(--primary)!important;color:#080a09!important;border-color:var(--primary)!important;padding:12px 18px!important;font-weight:900!important;box-shadow:0 12px 30px rgba(215,255,40,.18)}
+@media (max-width:860px){body.visual-v16 #gate.premium-onboarding{padding:14px;align-items:flex-start}.gate-shell{grid-template-columns:1fr!important;gap:14px}.gate-hero{min-height:auto!important;padding:24px!important;border-radius:24px!important}.gate-nav{margin-bottom:38px!important}.gate-headline{font-size:46px!important}.gate-lede{font-size:18px!important}.gate-progress-preview{margin-top:32px}.premium-onboarding .gate-card{border-radius:24px!important}.premium-onboarding .form-grid{grid-template-columns:1fr!important}.gate-actions{display:block}.gate-start{width:100%;margin-top:14px}.gate-trial{display:none}.gate-brand-main{font-size:20px}}
 </style>
 </head>
 <body>
-<div id="gate" class="show">
-  <div class="gate-card">
+<div id="gate" class="show premium-onboarding">
+  <div class="gate-shell">
+    <section class="gate-hero">
+      <div class="gate-nav">
+        <div class="gate-brandmark"><span class="gate-brand-main">ARCP<span>//</span>01</span><span class="gate-beta-chip">BETA</span></div>
+        <div class="gate-trial">🚀 Beta Trial: 30 days</div>
+      </div>
+      <div class="gate-kicker">PORTFOLIO TRACKER FOR PHYSICIANS</div>
+      <h1 class="gate-headline">Know your <span>roadmap</span>.<br>Own your ARCP.</h1>
+      <p class="gate-lede">Bye-bye spreadsheets. Hello, Outcome1.</p>
+      <div class="gate-progress-preview" aria-hidden="true">
+        <div class="preview-row"><span>Specialty evidence</span><strong>Roadmap-ready</strong></div>
+        <div class="preview-track"><div style="width:72%"></div></div>
+        <div class="preview-row"><span>GIM portfolio</span><strong>Same across specialties</strong></div>
+        <div class="preview-track blue"><div style="width:58%"></div></div>
+      </div>
+      <div class="gate-thanks">Thank you for testing ARCP//01 beta. Your feedback will help shape the final product.</div>
+    </section>
 
-    <div class="gate-title">ARCP<span style="color:var(--dim);font-weight:600">//</span>01 <small>Beta Portfolio Tracker</small></div>
-    <div class="gate-sub">Set up your ARCP portfolio once, track your training year, and generate ARCP-ready reports.</div>
-    <div class="gate-slogan"><strong>Bye-bye spreadsheets. Hello, Outcome1.</strong><span>Know your roadmap. Own your ARCP.</span></div>
-    <div class="form-grid">
-      <div class="field"><label>Name</label><input id="on-name" class="input" placeholder="Dr John Smith"></div>
-      <div class="field"><label>Email</label><input id="on-email" class="input" type="email" placeholder="j.smith@nhs.net"></div>
-      <div class="field"><label>Specialty</label><select id="on-specialty" class="input"></select></div>
-      <div class="field"><label>Theme colour</label><select id="on-theme" class="input"><option value="">Use specialty default</option><option value="#a78bfa|#7c5fd4">Purple</option><option value="#34d399|#059669">Green</option><option value="#6b8cff|#2f4aaa">Blue</option><option value="#f87171|#dc2626">Red / Cardiology</option><option value="#f59e0b|#d97706">Amber</option><option value="#14b8a6|#0f766e">Teal</option><option value="#ec4899|#be185d">Pink</option><option value="#84cc16|#4d7c0f">Lime</option></select></div>
-      <div class="field"><label>Training year</label><select id="on-year" class="input"><option>ST4</option><option>ST5</option><option>ST6</option><option>ST7</option></select></div>
-      <div class="field"><label>Deanery / region</label><select id="on-deanery" class="input"></select></div>
-      <div class="field" id="on-deanery-other-wrap" style="display:none"><label>Other deanery</label><input id="on-deanery-other" class="input" placeholder="Type deanery"></div>
-      <div class="field full"><label>Base hospital</label><select id="on-hospital" class="input"></select></div>
-      <div class="field full" id="on-hospital-other-wrap" style="display:none"><label>Hospital not listed</label><input id="on-hospital-other" class="input" placeholder="Type hospital name"></div>
-    </div>
-    <div id="backfill-panel" class="panel" style="display:none;margin-top:16px">
-      <div class="sec-head"><span class="sec-title">Previous completed years</span><span class="sec-rule"></span><span class="sec-note">Optional: lock prior years now</span></div>
-      <div id="backfill-years" class="grid"></div>
-    </div>
-    <div class="row" style="justify-content:space-between;margin-top:18px">
-      <div class="hint">Thank you for testing ARCP//01 beta. Your feedback will help shape the final product.</div>
-      <button class="btn primary" onclick="saveOnboarding()">START ARCP//01 ▸</button>
-    </div>
+    <section class="gate-card">
+      <div class="gate-card-top">
+        <div>
+          <div class="gate-form-title">Set up your portfolio</div>
+          <div class="gate-form-sub">Choose your specialty, deanery and base hospital. You can change these later from Profile.</div>
+        </div>
+        <div class="gate-step">01</div>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label>Name</label><input id="on-name" class="input" placeholder="Dr John Smith"></div>
+        <div class="field"><label>Email</label><input id="on-email" class="input" type="email" placeholder="j.smith@nhs.net"></div>
+        <div class="field"><label>Specialty</label><select id="on-specialty" class="input"></select></div>
+        <div class="field"><label>Theme colour</label><select id="on-theme" class="input"><option value="">Use specialty default</option><option value="#a78bfa|#7c5fd4">Purple</option><option value="#34d399|#059669">Green</option><option value="#6b8cff|#2f4aaa">Blue</option><option value="#f87171|#dc2626">Red / Cardiology</option><option value="#f59e0b|#d97706">Amber</option><option value="#14b8a6|#0f766e">Teal</option><option value="#ec4899|#be185d">Pink</option><option value="#84cc16|#4d7c0f">Lime</option></select></div>
+        <div class="field"><label>Training year</label><select id="on-year" class="input"><option>ST4</option><option>ST5</option><option>ST6</option><option>ST7</option></select></div>
+        <div class="field"><label>Deanery / region</label><select id="on-deanery" class="input"></select></div>
+        <div class="field" id="on-deanery-other-wrap" style="display:none"><label>Other deanery</label><input id="on-deanery-other" class="input" placeholder="Type deanery"></div>
+        <div class="field full"><label>Base hospital</label><select id="on-hospital" class="input"></select></div>
+        <div class="field full" id="on-hospital-other-wrap" style="display:none"><label>Hospital not listed</label><input id="on-hospital-other" class="input" placeholder="Type hospital name"></div>
+      </div>
+      <div id="backfill-panel" class="panel" style="display:none;margin-top:16px">
+        <div class="sec-head"><span class="sec-title">Previous completed years</span><span class="sec-rule"></span><span class="sec-note">Optional: lock prior years now</span></div>
+        <div id="backfill-years" class="grid"></div>
+      </div>
+      <div class="gate-actions">
+        <div class="gate-safe-note">Your beta data is stored in this browser until full login is added.</div>
+        <button class="btn primary gate-start" onclick="saveOnboarding()">START ARCP//01 ▸</button>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -1316,6 +1421,38 @@ const _v14Render = render;
 render=function(){ if(!state.profile){ initOnboarding(); return; } syncLogbookTargets(); setTheme(); document.getElementById('app').classList.add('ready'); document.getElementById('gate').classList.remove('show'); renderHeader(); renderTabs(); const trialExpired = renderBetaTrial(); if(trialExpired){ updateReadiness(); return; } if(currentTab==='roadmap') renderRoadmap(); if(currentTab==='specialty') renderSpecialty(); if(currentTab==='gim') renderGIM(); if(currentTab==='logbook') renderLogbook(); if(currentTab==='admin') renderAdmin(); if(currentTab==='overview') renderOverview(); updateReadiness(); forceLiveStatus(); };
 window.renderRoadmap=renderRoadmap; window.renderTabs=renderTabs; window.render=render;
 try{ if(!localStorage.getItem('arcp_v2_tab')) currentTab='roadmap'; render(); forceLiveStatus(); }catch(e){ console.warn('V14 roadmap patch skipped',e); }
+
+
+
+/* ─────────────────────────────────────────────────────────────
+   V16 LOGIC — Option A simple completion % + activate visual layer
+───────────────────────────────────────────────────────────── */
+function simpleRoadmapReqs(reqs, extra){
+  return calcReqsWithExtra(reqs||{}, extra||{met:0,total:0});
+}
+function renderRoadmap(){
+  if(!state.profile){ initOnboarding(); return; }
+  const sp=simpleRoadmapReqs(specReqs(), specDopsStats());
+  const gim=simpleRoadmapReqs(visibleGimReqs(), gimDopsStats());
+  const days=daysToArcp();
+  const progress=yearProgressPct();
+  const open=sp.open+gim.open;
+  const als=alsDays();
+  const paceClass=(sp.pct>=progress&&gim.pct>=progress)?'pace-good':'pace-behind';
+  document.getElementById('main').innerHTML=`
+    <div class="roadmap-wrap">
+      <div class="roadmap-nav"><div class="roadmap-logo">ARCP<span>//01</span></div><span class="roadmap-pill">Roadmap</span><span>Logbook</span><span>${safe(specCfg().short)}</span><span>GIM</span><span>Reports</span><span class="roadmap-status"><span class="roadmap-dot"></span>Live · synced</span></div>
+      <div class="roadmap-top"><div class="hero-kicker">Roadmap · ${safe(specCfg().label)} · ${safe(currentYear)}</div><div class="hero-title">You're <span class="lime">${progress}%</span> through ${safe(currentYear)}.<br>${Math.max(0,days)} days to your ARCP.</div></div>
+      <div class="roadmap-bars"><div class="rm-bar-row"><div class="rm-bar-label">${safe(specCfg().short)} evidence · ${sp.pct}%</div><div class="rm-track"><div class="rm-fill spec" style="width:${sp.pct}%"></div></div><div class="rm-target">simple completion</div></div><div class="rm-bar-row"><div class="rm-bar-label">GIM evidence · ${gim.pct}%</div><div class="rm-track"><div class="rm-fill gim" style="width:${gim.pct}%"></div></div><div class="rm-target ${paceClass}">${sp.pct>=progress&&gim.pct>=progress?'on pace':'behind pace'}</div></div></div>
+      <div class="roadmap-kpis"><div class="rm-kpi"><div class="rm-kpi-label">Days to ARCP</div><div class="rm-kpi-val">${Math.max(0,days)}</div><div class="rm-kpi-note">${safe(arcpDateLabel())}</div></div><div class="rm-kpi"><div class="rm-kpi-label">Open items</div><div class="rm-kpi-val">${open}</div><div class="rm-kpi-note">simple completion gaps</div></div><div class="rm-kpi"><div class="rm-kpi-label">Logged this month</div><div class="rm-kpi-val">${loggedThisMonth()}</div><div class="rm-kpi-note">procedures + clinics + CPD</div></div><div class="rm-kpi"><div class="rm-kpi-label">ALS expiry</div><div class="rm-kpi-val">${als===null?'—':Math.max(0,als)+'d'}</div><div class="rm-kpi-note">${als===null?'not set':als<183?'renew soon':'valid'}</div></div></div>
+      <div class="roadmap-journey"><div class="journey-title">Your training journey</div><div class="timeline">${YEARS.map(roadmapYearBlock).join('')}</div><div class="rm-actions"><button class="btn primary" onclick="setTab('specialty')">Open ${safe(specCfg().short)} requirements</button><button class="btn" onclick="setTab('gim')">Open GIM</button><button class="btn" onclick="setTab('logbook')">Add evidence</button></div></div>
+    </div>`;
+}
+function activateVisualV16(){ document.body.classList.add('visual-v16'); }
+const _v16_render = render;
+render=function(){ activateVisualV16(); return _v16_render(); };
+window.renderRoadmap=renderRoadmap; window.render=render;
+try{ activateVisualV16(); render(); forceLiveStatus(); }catch(e){ console.warn('V16 visual refresh skipped',e); }
 
 </script>
 </body>
