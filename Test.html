@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <meta name="apple-mobile-web-app-title" content="ARCP//01" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -56,7 +56,7 @@
   --bg:#0e0f11;--bg2:#16181c;--bg3:#1c1f24;--bg4:#242831;--line:#343a46;
   --text:#edf0f6;--text2:#9ca6b8;--dim:#687083;
   --primary:#a78bfa;--primary2:#7c5fd4;--gim:#6b8cff;--green:#34d399;--amber:#fbbf24;--red:#f87171;
-  --font:'Geist','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0} html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;-webkit-font-smoothing:antialiased} button,input,select,textarea{font-family:var(--font)} button{cursor:pointer} a{color:var(--primary)}
 body.focus{--bg:#f7f5f0;--bg2:#fdfcfa;--bg3:#f0ede6;--bg4:#e8e4dc;--line:#ddd8ce;--text:#1e1b16;--text2:#4a4540;--dim:#8a8278;background:var(--bg);font-family:'DM Sans',sans-serif}
@@ -286,96 +286,6 @@ body.visual-v16 .roadmap-logo .o1-mark{width:28px;height:28px;border-width:4px;}
 body.visual-v16 .roadmap-logo .o1-mark:after{width:10px;height:10px;right:-6px;top:9px;}
 body.visual-v16 .roadmap-logo .o1-text{font-size:24px;}
 @media(max-width:760px){.gate-brand-main .o1-text{font-size:24px}.brand-main .o1-text{font-size:22px}.o1-mark{width:34px;height:34px;border-width:5px}.o1-mark:after{top:12px}}
-
-
-
-/* ─────────────────────────────────────────────────────────────
-   V20 POLISH — logo direction, typography, moving training marker
-───────────────────────────────────────────────────────────── */
-:root{--o1-yellow:#d7ff28;--o1-paper:#f7f4e8;--o1-ink:#080a09;}
-body.visual-v16{font-family:var(--font)!important;letter-spacing:-.01em;}
-body.visual-v16 .topbar{background:rgba(8,12,11,.82)!important;backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.10)!important;}
-body.visual-v16 .tabs{border-top:1px solid rgba(255,255,255,.08)!important;padding:12px 26px!important;gap:10px!important;}
-body.visual-v16 .tab{font-size:13px!important;font-weight:850!important;letter-spacing:-.015em!important;border-radius:999px!important;padding:10px 18px!important;color:rgba(247,244,232,.78)!important;}
-body.visual-v16 .tab.active{background:var(--o1-yellow)!important;color:#090c0b!important;border-color:var(--o1-yellow)!important;box-shadow:0 14px 35px rgba(215,255,40,.16)!important;}
-body.visual-v16 .tab.gim-tab.active{background:#6b8cff!important;color:white!important;border-color:#6b8cff!important;}
-
-/* Outcome1 logo: clockwise-feeling arc, white wordmark, yellow 1 */
-.o1-brand{gap:14px!important;align-items:center!important;}
-.o1-text{font-weight:900!important;color:#fff!important;letter-spacing:-.07em!important;line-height:.92!important;}
-.o1-text span{color:var(--o1-yellow)!important;}
-.o1-mark{
-  width:44px;height:44px;border:none!important;border-radius:50%;position:relative;display:inline-block;flex:0 0 auto;
-  background:conic-gradient(from 218deg, transparent 0 78deg, rgba(247,244,232,.98) 78deg 360deg)!important;
-  transform:none!important;filter:drop-shadow(0 0 10px rgba(215,255,40,.08));
-}
-.o1-mark:before{content:"";position:absolute;inset:7px;border-radius:50%;background:#0a0d0c;z-index:1;}
-.o1-mark:after{content:"";position:absolute;width:15px;height:15px;border-radius:50%;background:var(--o1-yellow)!important;right:2px;top:50%;transform:translateY(-50%);box-shadow:0 0 24px rgba(215,255,40,.72);z-index:2;}
-.brand-main .o1-mark{width:32px!important;height:32px!important;}
-.brand-main .o1-mark:before{inset:5px!important;}
-.brand-main .o1-mark:after{width:11px!important;height:11px!important;right:1px!important;top:50%!important;}
-.brand-main .o1-text{font-size:27px!important;}
-.gate-brand-main .o1-mark{width:46px!important;height:46px!important;}
-.gate-brand-main .o1-mark:before{inset:7px!important;}
-.gate-brand-main .o1-text{font-size:36px!important;}
-
-/* Roadmap typography tightening */
-body.visual-v16 .roadmap-wrap{padding:46px clamp(22px,5.2vw,86px) 110px!important;border-radius:0!important;background:radial-gradient(circle at 78% 8%,rgba(215,255,40,.14),transparent 28%),radial-gradient(circle at 8% -8%,rgba(255,255,255,.09),transparent 34%),linear-gradient(180deg,#090d0c 0%,#0c1110 48%,#070908 100%)!important;}
-body.visual-v16 .roadmap-wrap:after{opacity:.38!important;}
-body.visual-v16 .roadmap-top{padding-top:8px!important;max-width:1180px!important;}
-body.visual-v16 .hero-kicker{font-family:var(--mono)!important;font-size:12px!important;line-height:1!important;letter-spacing:.28em!important;font-weight:800!important;color:rgba(247,244,232,.58)!important;margin-bottom:22px!important;}
-body.visual-v16 .hero-title{font-size:clamp(54px,6.3vw,104px)!important;line-height:.92!important;letter-spacing:-.085em!important;font-weight:900!important;max-width:1120px!important;text-wrap:balance;color:rgba(247,244,232,.96)!important;}
-body.visual-v16 .hero-title .lime{color:var(--o1-yellow)!important;text-shadow:0 0 32px rgba(215,255,40,.28)!important;}
-body.visual-v16 .roadmap-bars{margin-top:56px!important;gap:22px!important;max-width:1240px!important;}
-body.visual-v16 .rm-bar-row{grid-template-columns:210px 1fr 130px!important;gap:20px!important;margin:0!important;}
-body.visual-v16 .rm-bar-label{font-family:var(--mono)!important;font-size:11px!important;font-weight:800!important;letter-spacing:.18em!important;color:rgba(247,244,232,.62)!important;}
-body.visual-v16 .rm-track{height:10px!important;background:rgba(247,244,232,.13)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important;}
-body.visual-v16 .rm-fill.spec{background:linear-gradient(90deg,#e6ff37,#bfff00)!important;}
-body.visual-v16 .rm-fill.gim{background:linear-gradient(90deg,#6b8cff,#93b0ff)!important;box-shadow:0 0 18px rgba(107,140,255,.34)!important;}
-body.visual-v16 .rm-target{font-family:var(--mono)!important;font-size:11px!important;font-weight:800!important;letter-spacing:.12em!important;}
-body.visual-v16 .roadmap-kpis{gap:18px!important;margin-top:42px!important;}
-body.visual-v16 .rm-kpi{border-radius:24px!important;background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.04))!important;border:1px solid rgba(255,255,255,.12)!important;padding:24px!important;min-height:124px!important;}
-body.visual-v16 .rm-kpi-label{font-family:var(--mono)!important;font-size:10px!important;font-weight:800!important;letter-spacing:.2em!important;color:rgba(247,244,232,.52)!important;}
-body.visual-v16 .rm-kpi-val{font-size:46px!important;font-weight:900!important;letter-spacing:-.065em!important;margin-top:14px!important;}
-body.visual-v16 .rm-kpi-note{font-size:12px!important;color:rgba(247,244,232,.62)!important;font-weight:650!important;}
-body.visual-v16 .journey-title{font-size:30px!important;letter-spacing:-.055em!important;margin-top:62px!important;margin-bottom:30px!important;color:#fff!important;}
-body.visual-v16 .timeline{position:relative!important;border-left:2px solid rgba(215,255,40,.22)!important;padding-left:42px!important;}
-body.visual-v16 .timeline:before{display:none!important;}
-body.visual-v16 .timeline-progress-dot{position:absolute;left:-10px;width:20px;height:20px;border-radius:50%;background:var(--o1-yellow);box-shadow:0 0 0 8px rgba(215,255,40,.10),0 0 28px rgba(215,255,40,.75);z-index:4;transition:top .55s cubic-bezier(.2,.8,.2,1);}
-body.visual-v16 .timeline-progress-dot:after{content:"";position:absolute;inset:6px;border-radius:50%;background:#0a0d0c;opacity:.18;}
-body.visual-v16 .year-block{border-radius:24px!important;padding:24px!important;margin-bottom:24px!important;background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.035))!important;}
-body.visual-v16 .year-block:before{left:-53px!important;width:14px!important;height:14px!important;top:32px!important;background:rgba(247,244,232,.28)!important;box-shadow:0 0 0 7px rgba(255,255,255,.035)!important;}
-body.visual-v16 .year-block.current:before{background:rgba(215,255,40,.65)!important;}
-body.visual-v16 .year-block.locked:before{background:#34d399!important;}
-body.visual-v16 .year-name{font-size:40px!important;font-weight:900!important;letter-spacing:-.065em!important;}
-body.visual-v16 .year-meta{font-size:12px!important;color:rgba(247,244,232,.62)!important;font-weight:750!important;}
-body.visual-v16 .year-badge{font-family:var(--mono)!important;font-size:10px!important;font-weight:800!important;letter-spacing:.12em!important;}
-body.visual-v16 .milestone-chip{border-radius:16px!important;padding:13px 14px!important;}
-body.visual-v16 .milestone-text{font-size:13px!important;font-weight:800!important;letter-spacing:-.015em!important;}
-
-/* Onboarding premium typography */
-body.visual-v16 #gate.premium-onboarding{background:radial-gradient(circle at 80% 8%,rgba(215,255,40,.13),transparent 30%),linear-gradient(180deg,#070a09,#0c1110)!important;}
-body.visual-v16 .gate-headline{font-size:clamp(48px,6.8vw,98px)!important;line-height:.93!important;letter-spacing:-.085em!important;font-weight:900!important;}
-body.visual-v16 .gate-lede{font-size:clamp(20px,2.2vw,30px)!important;letter-spacing:-.045em!important;color:rgba(247,244,232,.86)!important;}
-body.visual-v16 .gate-kicker{font-family:var(--mono)!important;font-weight:800!important;letter-spacing:.22em!important;}
-body.visual-v16 .gate-form-title{font-size:30px!important;letter-spacing:-.055em!important;}
-body.visual-v16 .gate-form-sub{font-size:14px!important;}
-body.visual-v16 .gate-start{transition:transform .16s ease, box-shadow .16s ease;}
-body.visual-v16 .gate-start:hover{transform:translateY(-1px);box-shadow:0 18px 45px rgba(215,255,40,.24)!important;}
-
-@media (max-width:860px){
-  body.visual-v16 .roadmap-wrap{padding:24px 16px 96px!important;}
-  body.visual-v16 .hero-title{font-size:clamp(42px,13vw,58px)!important;letter-spacing:-.075em!important;line-height:.96!important;}
-  body.visual-v16 .rm-bar-row{grid-template-columns:1fr!important;gap:9px!important;}
-  body.visual-v16 .rm-target{text-align:left!important;}
-  body.visual-v16 .roadmap-kpis{grid-template-columns:1fr 1fr!important;gap:12px!important;}
-  body.visual-v16 .timeline{padding-left:30px!important;}
-  body.visual-v16 .timeline-progress-dot{left:-10px!important;}
-  body.visual-v16 .year-block:before{left:-41px!important;}
-  body.visual-v16 .tabs{padding:10px 12px!important;gap:7px!important;}
-  body.visual-v16 .tab{padding:9px 13px!important;font-size:12px!important;}
-}
-@media (max-width:520px){body.visual-v16 .roadmap-kpis{grid-template-columns:1fr!important}.gate-brand-main .o1-text{font-size:28px!important}.gate-brand-main .o1-mark{width:38px!important;height:38px!important}.gate-brand-main .o1-mark:before{inset:6px!important}}
 
 </style>
 </head>
@@ -1634,61 +1544,6 @@ function renderHeader(){
 window.renderRoadmap=renderRoadmap; window.renderHeader=renderHeader; window.yearProgressPct=yearProgressPct;
 try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19 brand/year-start patch skipped',e); }
 
-
-
-/* ─────────────────────────────────────────────────────────────
-   V20 JS — polished roadmap with moving year-progress dot
-───────────────────────────────────────────────────────────── */
-function trainingTimelineDotPct(){
-  const idx = Math.max(0, yrIndex(currentYear));
-  const p = Math.max(0, Math.min(100, yearProgressPct())) / 100;
-  // distribute dot across ST4→ST7 blocks, then clamp away from hard edges
-  const raw = ((idx + p) / YEARS.length) * 100;
-  return Math.max(3, Math.min(97, raw));
-}
-function renderRoadmap(){
-  if(!state.profile){ initOnboarding(); return; }
-  const sp=simpleRoadmapReqs(specReqs(), specDopsStats());
-  const gim=simpleRoadmapReqs(visibleGimReqs(), gimDopsStats());
-  const days=daysToArcp();
-  const progress=yearProgressPct();
-  const startDate=trainingYearStartDateFor(currentYear);
-  const open=sp.open+gim.open;
-  const als=alsDays();
-  const paceClass=(sp.pct>=progress&&gim.pct>=progress)?'pace-good':'pace-behind';
-  const dotTop=trainingTimelineDotPct();
-  document.getElementById('main').innerHTML=`
-    <div class="roadmap-wrap">
-      <div class="roadmap-top">
-        <div class="hero-kicker">Roadmap · ${safe(specCfg().label)} · ${safe(currentYear)} · started ${safe(startDate.toLocaleDateString('en-GB',{month:'short',year:'numeric'}))}</div>
-        <div class="hero-title">You're <span class="lime">${progress}%</span> through ${safe(currentYear)}.<br>${Math.max(0,days)} days to your ARCP.</div>
-      </div>
-      <div class="roadmap-bars">
-        <div class="rm-bar-row"><div class="rm-bar-label">${safe(specCfg().short)} evidence · ${sp.pct}%</div><div class="rm-track"><div class="rm-fill spec" style="width:${sp.pct}%"></div></div><div class="rm-target">${sp.met}/${sp.total}</div></div>
-        <div class="rm-bar-row"><div class="rm-bar-label">GIM evidence · ${gim.pct}%</div><div class="rm-track"><div class="rm-fill gim" style="width:${gim.pct}%"></div></div><div class="rm-target ${paceClass}">${sp.pct>=progress&&gim.pct>=progress?'on pace':'behind pace'}</div></div>
-      </div>
-      <div class="roadmap-kpis">
-        <div class="rm-kpi"><div class="rm-kpi-label">Days to ARCP</div><div class="rm-kpi-val">${Math.max(0,days)}</div><div class="rm-kpi-note">${safe(arcpDateLabel())}</div></div>
-        <div class="rm-kpi"><div class="rm-kpi-label">Open items</div><div class="rm-kpi-val">${open}</div><div class="rm-kpi-note">same logic as readiness bars</div></div>
-        <div class="rm-kpi"><div class="rm-kpi-label">Logged this month</div><div class="rm-kpi-val">${loggedThisMonth()}</div><div class="rm-kpi-note">procedures + clinics + CPD</div></div>
-        <div class="rm-kpi"><div class="rm-kpi-label">ALS expiry</div><div class="rm-kpi-val">${als===null?'—':Math.max(0,als)+'d'}</div><div class="rm-kpi-note">${als===null?'not set':als<183?'renew soon':'valid'}</div></div>
-      </div>
-      <div class="roadmap-journey"><div class="journey-title">Your training journey</div><div class="timeline"><span class="timeline-progress-dot" style="top:${dotTop}%"></span>${YEARS.map(roadmapYearBlock).join('')}</div><div class="rm-actions"><button class="btn primary" onclick="setTab('specialty')">Open ${safe(specCfg().short)} requirements</button><button class="btn" onclick="setTab('gim')">Open GIM</button><button class="btn" onclick="setTab('logbook')">Add evidence</button></div></div>
-    </div>`;
-}
-function renderHeader(){
-  const sp=specCfg();
-  const brand=document.querySelector('.brand-main');
-  if(brand) brand.innerHTML='<span class="o1-mark" aria-hidden="true"></span><span class="o1-text">Outcome<span>1</span></span>';
-  document.getElementById('brand-sub').textContent=`${sp.label} + GIM · ${state.profile.deanery}`;
-  document.getElementById('sb-year').textContent=currentYear;
-  document.getElementById('sb-deanery').textContent=state.profile.deanery;
-  document.getElementById('sb-specialty').textContent=sp.label;
-  document.getElementById('spec-readiness-label').textContent=sp.short;
-  renderYearButtons(); updateCountdown(); updateALS();
-}
-window.renderRoadmap=renderRoadmap; window.renderHeader=renderHeader; window.trainingTimelineDotPct=trainingTimelineDotPct;
-try{ render(); forceLiveStatus(); }catch(e){ console.warn('V20 polish patch skipped',e); }
 </script>
 </body>
 </html>
