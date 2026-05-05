@@ -493,6 +493,17 @@ body.visual-v16 .journey-title{font-size:28px!important;letter-spacing:-.055em!i
 }
 
 </style>
+
+
+<!-- V19.10.1 PATCH — remove faint diagonal decorative overlay on mobile/roadmap -->
+<style>
+body.visual-v16::before,
+.roadmap-wrap::after{
+  display:none !important;
+  content:none !important;
+}
+</style>
+
 </head>
 <body>
 <div id="gate" class="show premium-onboarding">
