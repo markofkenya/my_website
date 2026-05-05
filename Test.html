@@ -68,7 +68,7 @@
     document.getElementById('main').innerHTML=`
       <div class="roadmap-wrap">
         <div class="roadmap-top"><div class="hero-kicker">Roadmap · ${safe(specCfg().label)} · ${safe(currentYear)} · started ${safe(startDate.toLocaleDateString('en-GB',{month:'short',year:'numeric'}))}</div><div class="hero-title">You're <span class="lime">${progress}%</span> through ${safe(currentYear)}.<br><span class="hero-subline">${Math.max(0,days)} days to your ARCP.</span></div></div>
-        <div class="roadmap-bars"><div class="rm-bar-row"><div class="rm-bar-label">${safe(specCfg().short)} evidence · ${sp.pct}%</div><div class="rm-track"><div class="rm-fill spec" style="width:${sp.pct}%"></div></div><div class="rm-target">${sp.met}/${sp.total}</div></div><div class="rm-bar-row"><div class="rm-bar-label">GIM evidence · ${gim.pct}%</div><div class="rm-track"><div class="rm-fill gim" style="width:${gim.pct}%"></div></div><div class="rm-target ${paceClass}">${sp.pct>=progress&&gim.pct>=progress?'on pace':'behind pace'}</div></div></div>
+        <div class="roadmap-bars"><div class="rm-bar-row"><div class="rm-bar-label">${safe(specCfg().short)} evidence · ${sp.pct}%</div><div class="rm-track"><div class="rm-fill spec" style="width:${sp.pct}%"></div></div><div class="rm-target">${sp.met}/${sp.total}</div></div><div class="rm-bar-row"><div class="rm-bar-label">GIM evidence · ${gim.pct}%</div><div class="rm-track"><div class="rm-fill gim" style="width:${gim.pct}%"></div></div><div class="rm-target ${paceClass}">${gim.met}/${gim.total}</div></div></div>
         <div class="roadmap-kpis"><div class="rm-kpi"><div class="rm-kpi-label">Days to ARCP</div><div class="rm-kpi-val">${Math.max(0,days)}</div><div class="rm-kpi-note">${safe(arcpDateLabel())}</div></div><div class="rm-kpi"><div class="rm-kpi-label">Open milestones</div><div class="rm-kpi-val">${open}</div><div class="rm-kpi-note">this year</div></div><div class="rm-kpi"><div class="rm-kpi-label">Logged this month</div><div class="rm-kpi-val">${loggedThisMonth()}</div><div class="rm-kpi-note">procedures + clinics</div></div><div class="rm-kpi"><div class="rm-kpi-label">ALS expiry</div><div class="rm-kpi-val">${als===null?'—':Math.max(0,als)+'d'}</div><div class="rm-kpi-note">${als===null?'not set':als<183?'renew soon':'valid'}</div></div></div>
         <div class="roadmap-journey"><div class="journey-title">Your training journey</div><div class="timeline">${YEARS.map(roadmapYearBlock).join('')}</div><div class="rm-actions"><button class="btn primary" onclick="setTab('specialty')">Open ${safe(specCfg().short)} requirements</button><button class="btn" onclick="setTab('gim')">Open GIM</button><button class="btn" onclick="setTab('logbook')">Add evidence</button></div></div>
       </div>`;
@@ -651,7 +651,7 @@ const SPECIALTY_OPTIONS = { renal:"Renal Medicine", respiratory:"Respiratory Med
 const GIM_REQS = {
   gim_mcrs:{label:"GIM MCRs",type:"number",target:2,unit:"MCRs",deadline:"annual",note:"GIM consultants"},
   gim_acats:{label:"GIM ACATs",type:"number",target:4,unit:"ACATs",deadline:"annual",note:"Labelled GIM"},
-  gim_sles:{label:"GIM SLEs",type:"number",target:3,unit:"SLEs",deadline:"annual",note:"mini-CEX / CbD"},
+  gim_sles:{label:"GIM CbD / mini-CEX",type:"number",target:3,unit:"SLEs",deadline:"annual",note:"GIM CbD / mini-CEX"},
   gim_msf:{label:"GIM MSF raters",type:"number",target:4,unit:"raters",deadline:"annual",note:"Part of overall MSF"},
   gim_es:{label:"GIM Educational Supervisor Report",type:"checkbox",deadline:"annual",note:"One per year"},
   gim_clinics:{label:"GIM Clinics",type:"number",target:20,unit:"clinics",deadline:"ST7",cumulative:true,note:"Cumulative"},
@@ -1648,7 +1648,7 @@ function renderRoadmap(){
     <div class="roadmap-wrap">
       <div class="roadmap-nav"><div class="roadmap-logo">ARCP<span>//01</span></div><span class="roadmap-pill">Roadmap</span><span>Logbook</span><span>${safe(specCfg().short)}</span><span>GIM</span><span>Reports</span><span class="roadmap-status"><span class="roadmap-dot"></span>Live · synced</span></div>
       <div class="roadmap-top"><div class="hero-kicker">Roadmap · ${safe(specCfg().label)} · ${safe(currentYear)}</div><div class="hero-title">You're <span class="lime">${progress}%</span> through ${safe(currentYear)}.<br>${Math.max(0,days)} days to your ARCP.</div></div>
-      <div class="roadmap-bars"><div class="rm-bar-row"><div class="rm-bar-label">${safe(specCfg().short)} evidence · ${sp.pct}%</div><div class="rm-track"><div class="rm-fill spec" style="width:${sp.pct}%"></div></div><div class="rm-target">annual target</div></div><div class="rm-bar-row"><div class="rm-bar-label">GIM evidence · ${gim.pct}%</div><div class="rm-track"><div class="rm-fill gim" style="width:${gim.pct}%"></div></div><div class="rm-target ${paceClass}">${sp.pct>=progress&&gim.pct>=progress?'on pace':'behind pace'}</div></div></div>
+      <div class="roadmap-bars"><div class="rm-bar-row"><div class="rm-bar-label">${safe(specCfg().short)} evidence · ${sp.pct}%</div><div class="rm-track"><div class="rm-fill spec" style="width:${sp.pct}%"></div></div><div class="rm-target">${sp.met}/${sp.total}</div></div><div class="rm-bar-row"><div class="rm-bar-label">GIM evidence · ${gim.pct}%</div><div class="rm-track"><div class="rm-fill gim" style="width:${gim.pct}%"></div></div><div class="rm-target ${paceClass}">${gim.met}/${gim.total}</div></div></div>
       <div class="roadmap-kpis"><div class="rm-kpi"><div class="rm-kpi-label">Days to ARCP</div><div class="rm-kpi-val">${Math.max(0,days)}</div><div class="rm-kpi-note">${safe(arcpDateLabel())}</div></div><div class="rm-kpi"><div class="rm-kpi-label">Open milestones</div><div class="rm-kpi-val">${open}</div><div class="rm-kpi-note">weighted evidence gaps</div></div><div class="rm-kpi"><div class="rm-kpi-label">Logged this month</div><div class="rm-kpi-val">${loggedThisMonth()}</div><div class="rm-kpi-note">procedures + clinics + CPD</div></div><div class="rm-kpi"><div class="rm-kpi-label">ALS expiry</div><div class="rm-kpi-val">${als===null?'—':Math.max(0,als)+'d'}</div><div class="rm-kpi-note">${als===null?'not set':als<183?'renew soon':'valid'}</div></div></div>
       <div class="roadmap-journey"><div class="journey-title">Your training journey</div><div class="timeline">${YEARS.map(roadmapYearBlock).join('')}</div><div class="rm-actions"><button class="btn primary" onclick="setTab('specialty')">Open ${safe(specCfg().short)} requirements</button><button class="btn" onclick="setTab('gim')">Open GIM</button><button class="btn" onclick="setTab('logbook')">Add evidence</button></div></div>
     </div>`;
@@ -1735,7 +1735,7 @@ function renderRoadmap(){
   document.getElementById('main').innerHTML=`
     <div class="roadmap-wrap">
       <div class="roadmap-top"><div class="hero-kicker">Roadmap · ${safe(specCfg().label)} · ${safe(currentYear)} · started ${safe(startDate.toLocaleDateString('en-GB',{month:'short',year:'numeric'}))}</div><div class="hero-title">You're <span class="lime">${progress}%</span> through ${safe(currentYear)}.<br>${Math.max(0,days)} days to your ARCP.</div></div>
-      <div class="roadmap-bars"><div class="rm-bar-row"><div class="rm-bar-label">${safe(specCfg().short)} evidence · ${sp.pct}%</div><div class="rm-track"><div class="rm-fill spec" style="width:${sp.pct}%"></div></div><div class="rm-target">${sp.met}/${sp.total}</div></div><div class="rm-bar-row"><div class="rm-bar-label">GIM evidence · ${gim.pct}%</div><div class="rm-track"><div class="rm-fill gim" style="width:${gim.pct}%"></div></div><div class="rm-target ${paceClass}">${sp.pct>=progress&&gim.pct>=progress?'on pace':'behind pace'}</div></div></div>
+      <div class="roadmap-bars"><div class="rm-bar-row"><div class="rm-bar-label">${safe(specCfg().short)} evidence · ${sp.pct}%</div><div class="rm-track"><div class="rm-fill spec" style="width:${sp.pct}%"></div></div><div class="rm-target">${sp.met}/${sp.total}</div></div><div class="rm-bar-row"><div class="rm-bar-label">GIM evidence · ${gim.pct}%</div><div class="rm-track"><div class="rm-fill gim" style="width:${gim.pct}%"></div></div><div class="rm-target ${paceClass}">${gim.met}/${gim.total}</div></div></div>
       <div class="roadmap-kpis"><div class="rm-kpi"><div class="rm-kpi-label">Days to ARCP</div><div class="rm-kpi-val">${Math.max(0,days)}</div><div class="rm-kpi-note">${safe(arcpDateLabel())}</div></div><div class="rm-kpi"><div class="rm-kpi-label">Open items</div><div class="rm-kpi-val">${open}</div><div class="rm-kpi-note">same logic as readiness bars</div></div><div class="rm-kpi"><div class="rm-kpi-label">Logged this month</div><div class="rm-kpi-val">${loggedThisMonth()}</div><div class="rm-kpi-note">procedures + clinics + CPD</div></div><div class="rm-kpi"><div class="rm-kpi-label">ALS expiry</div><div class="rm-kpi-val">${als===null?'—':Math.max(0,als)+'d'}</div><div class="rm-kpi-note">${als===null?'not set':als<183?'renew soon':'valid'}</div></div></div>
       <div class="roadmap-journey"><div class="journey-title">Your training journey</div><div class="timeline">${YEARS.map(roadmapYearBlock).join('')}</div><div class="rm-actions"><button class="btn primary" onclick="setTab('specialty')">Open ${safe(specCfg().short)} requirements</button><button class="btn" onclick="setTab('gim')">Open GIM</button><button class="btn" onclick="setTab('logbook')">Add evidence</button></div></div>
     </div>`;
@@ -2439,7 +2439,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19 brand/year-start 
     document.getElementById('main').innerHTML=`
       <div class="roadmap-wrap">
         <div class="roadmap-top"><div class="hero-kicker">Roadmap · ${safe(specCfg().label)} · ${safe(currentYear)} · started ${safe(startDate.toLocaleDateString('en-GB',{month:'short',year:'numeric'}))}</div><div class="hero-title">You're <span class="lime">${progress}%</span> through ${safe(currentYear)}.<br><span class="hero-subline">${Math.max(0,days)} days to your ARCP.</span></div></div>
-        <div class="roadmap-bars"><div class="rm-bar-row"><div class="rm-bar-label">${safe(specCfg().short)} evidence · ${sp.pct}%</div><div class="rm-track"><div class="rm-fill spec" style="width:${sp.pct}%"></div></div><div class="rm-target">${sp.met}/${sp.total}</div></div><div class="rm-bar-row"><div class="rm-bar-label">GIM evidence · ${gim.pct}%</div><div class="rm-track"><div class="rm-fill gim" style="width:${gim.pct}%"></div></div><div class="rm-target ${paceClass}">${sp.pct>=progress&&gim.pct>=progress?'on pace':'behind pace'}</div></div></div>
+        <div class="roadmap-bars"><div class="rm-bar-row"><div class="rm-bar-label">${safe(specCfg().short)} evidence · ${sp.pct}%</div><div class="rm-track"><div class="rm-fill spec" style="width:${sp.pct}%"></div></div><div class="rm-target">${sp.met}/${sp.total}</div></div><div class="rm-bar-row"><div class="rm-bar-label">GIM evidence · ${gim.pct}%</div><div class="rm-track"><div class="rm-fill gim" style="width:${gim.pct}%"></div></div><div class="rm-target ${paceClass}">${gim.met}/${gim.total}</div></div></div>
         <div class="roadmap-kpis"><div class="rm-kpi"><div class="rm-kpi-label">Days to ARCP</div><div class="rm-kpi-val">${Math.max(0,days)}</div><div class="rm-kpi-note">${safe(arcpDateLabel())}</div></div><div class="rm-kpi"><div class="rm-kpi-label">Open milestones</div><div class="rm-kpi-val">${open}</div><div class="rm-kpi-note">this year</div></div><div class="rm-kpi"><div class="rm-kpi-label">Logged this month</div><div class="rm-kpi-val">${loggedThisMonth()}</div><div class="rm-kpi-note">procedures + clinics</div></div><div class="rm-kpi"><div class="rm-kpi-label">ALS expiry</div><div class="rm-kpi-val">${als===null?'—':Math.max(0,als)+'d'}</div><div class="rm-kpi-note">${als===null?'not set':als<183?'renew soon':'valid'}</div></div></div>
         <div class="roadmap-journey"><div class="journey-title">Your training journey</div><div class="timeline">${YEARS.map(roadmapYearBlock).join('')}</div><div class="rm-actions"><button class="btn primary" onclick="setTab('specialty')">Open ${safe(specCfg().short)} requirements</button><button class="btn" onclick="setTab('gim')">Open GIM</button><button class="btn" onclick="setTab('logbook')">Add evidence</button></div></div>
       </div>`;
@@ -2447,6 +2447,107 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19 brand/year-start 
   window.renderRoadmap=renderRoadmap;
   try{ if(currentTab==='roadmap') renderRoadmap(); forceLiveStatus(); }catch(e){ console.warn('V19.10 roadmap typography-only patch skipped', e); }
 })();
+
+
+
+/* V19.10.2 — Per-year specialty logbook counts
+   Renal/Resp specialty CPD, specialty clinics and teaching display per selected training year.
+   GIM clinics remain cumulative. No readiness/navigation changes. */
+(function installV19102PerYearSpecialtyLogs(){
+  function yearFilter(e){ return (e.year || currentYear) === currentYear; }
+  function specScope(e){ return e.scope !== 'gim'; }
+  function gimScope(e){ return e.scope === 'gim'; }
+  function specYearEntries(key){ return entries(key).filter(e => specScope(e) && yearFilter(e)); }
+  function gimEntriesAll(key){ return entries(key).filter(gimScope); }
+  function hoursFor(arr){ return Math.round(arr.reduce((a,e)=>a+Number(e.hours||0),0)*10)/10; }
+
+  renderLogClinics = function(){
+    const sp=specCfg();
+    const specEntries=specYearEntries('clinics');
+    const gimEntries=gimEntriesAll('clinics');
+    const specForm=`<input type="hidden" id="clinic-spec-scope" value="spec"><div class="field"><label>Clinic type</label>${otherClinicControl('clinic-spec-type', sp.logbook.clinics)}</div>${hospitalField('clinic-spec-hospital')}<div class="field"><label>Date</label><input class="input" id="clinic-spec-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Supervisor</label><input class="input" id="clinic-spec-supervisor" placeholder="Consultant name"></div><div class="field"><label>Patients seen / observed</label><input class="input" id="clinic-spec-patients" type="number" min="0"></div><div class="field"><label>Training year</label><select class="input" id="clinic-spec-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="clinic-spec-notes" placeholder="Optional"></div>`;
+    const gimForm=`<input type="hidden" id="clinic-gim-scope" value="gim"><div class="field"><label>Clinic type</label>${otherClinicControl('clinic-gim-type', GIM_LOGBOOK.clinics)}</div>${hospitalField('clinic-gim-hospital')}<div class="field"><label>Date</label><input class="input" id="clinic-gim-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Supervisor</label><input class="input" id="clinic-gim-supervisor" placeholder="Consultant name"></div><div class="field"><label>Patients seen / observed</label><input class="input" id="clinic-gim-patients" type="number" min="0"></div><div class="field"><label>Training year</label><select class="input" id="clinic-gim-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="clinic-gim-notes" placeholder="Optional"></div>`;
+    document.getElementById('log-content').innerHTML=
+      logSummaryCards([{value:specEntries.length,label:`${sp.short} clinics · ${currentYear}`,cls:'primary'},{value:gimEntries.length,label:`GIM clinics · cumulative`,cls:'blue'}])+
+      formPanel(`Add ${sp.short} clinic`,specForm,"saveClinic('spec')")+
+      section(`${sp.short} clinics`,`${specEntries.length} entries in ${currentYear}`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('clinics',e=>specScope(e)&&yearFilter(e),['Date','Clinic type','Hospital','Supervisor','Patients','Year','Notes'], e=>[fmtDate(e.date),e.type,e.hospital,e.supervisor,e.patients,e.year,e.notes])}</div>`])+
+      formPanel('Add GIM clinic',gimForm,"saveClinic('gim')")+
+      section('GIM clinics',`${gimEntries.length} entries · cumulative target`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('clinics',e=>gimScope(e),['Date','Clinic type','Hospital','Supervisor','Patients','Year','Notes'], e=>[fmtDate(e.date),e.type,e.hospital,e.supervisor,e.patients,e.year,e.notes])}</div>`]);
+  };
+
+  renderLogCPD = function(){
+    const sp=specCfg();
+    const specEntries=specYearEntries('cpd');
+    const gimEntries=gimEntriesAll('cpd');
+    const specHours=hoursFor(specEntries);
+    const gimHours=hoursFor(gimEntries);
+    const specForm=`<input type="hidden" id="cpd-spec-scope" value="spec"><div class="field"><label>CPD type</label><select class="input" id="cpd-spec-type">${optionsHtml(sp.logbook.cpd)}</select></div><div class="field"><label>Date</label><input class="input" id="cpd-spec-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Title / event</label><input class="input" id="cpd-spec-title"></div><div class="field"><label>Hours</label><input class="input" id="cpd-spec-hours" type="number" min="0" step="0.5"></div><div class="field"><label>Training year</label><select class="input" id="cpd-spec-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="cpd-spec-notes" placeholder="Optional"></div>`;
+    const gimForm=`<input type="hidden" id="cpd-gim-scope" value="gim"><div class="field"><label>CPD type</label><select class="input" id="cpd-gim-type">${optionsHtml(GIM_LOGBOOK.cpd)}</select></div><div class="field"><label>Date</label><input class="input" id="cpd-gim-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Title / event</label><input class="input" id="cpd-gim-title"></div><div class="field"><label>Hours</label><input class="input" id="cpd-gim-hours" type="number" min="0" step="0.5"></div><div class="field"><label>Training year</label><select class="input" id="cpd-gim-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="cpd-gim-notes" placeholder="Optional"></div>`;
+    document.getElementById('log-content').innerHTML=
+      logSummaryCards([{value:specHours,label:`${sp.short} CPD hours · ${currentYear}`,cls:'primary'},{value:gimHours,label:`GIM CPD hours · cumulative`,cls:'blue'}])+
+      formPanel(`Add ${sp.short} CPD / study leave`,specForm,"saveCPD('spec')")+
+      section(`${sp.short} CPD entries`,`${specEntries.length} entries in ${currentYear}`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('cpd',e=>specScope(e)&&yearFilter(e),['Date','Type','Title','Hours','Year','Notes'], e=>[fmtDate(e.date),e.type,e.title,e.hours,e.year,e.notes])}</div>`])+
+      formPanel('Add GIM CPD / study leave',gimForm,"saveCPD('gim')")+
+      section('GIM CPD entries',`${gimEntries.length} entries · cumulative target`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('cpd',e=>gimScope(e),['Date','Type','Title','Hours','Year','Notes'], e=>[fmtDate(e.date),e.type,e.title,e.hours,e.year,e.notes])}</div>`]);
+  };
+
+  const _v19102_renderSimpleLog = renderSimpleLog;
+  renderSimpleLog = function(k,title,fields,cols,types){
+    if(k !== 'teaching') return _v19102_renderSimpleLog(k,title,fields,cols,types);
+    const html=fields.map(f=>{
+      if(f==='date')return `<div class="field"><label>Date</label><input class="input" id="sl-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>`;
+      if(f==='hospital')return hospitalField('sl-hospital');
+      if(f==='year')return `<div class="field"><label>Year</label><select class="input" id="sl-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div>`;
+      if((f==='type'||f==='course') && Array.isArray(types))return `<div class="field"><label>${f}</label><select class="input" id="sl-${f}">${optionsHtml(types)}</select></div>`;
+      return `<div class="field"><label>${f}</label><input class="input" id="sl-${f}" ${f==='hours'?'type="number" step="0.5" min="0"':''}></div>`;
+    }).join('');
+    const arr=entries(k).filter(yearFilter);
+    document.getElementById('log-content').innerHTML=
+      section(`Add ${title}`,'Manual entry',[`<div class="form-grid">${html}<div class="field full"><button class="btn primary" onclick="saveSimple('${k}','${fields.join('|')}')">ADD ENTRY ▸</button></div></div>`])+
+      section(`${title} log`,`${arr.length} entries in ${currentYear}`,[`<div class="card" style="grid-column:1/-1">${tableFiltered(k,e=>yearFilter(e), cols, e=>fields.slice(1).map(f=>f==='date'?fmtDate(e[f]):e[f]))}</div>`]);
+  };
+
+  window.renderLogClinics=renderLogClinics;
+  window.renderLogCPD=renderLogCPD;
+  window.renderSimpleLog=renderSimpleLog;
+  try{ if(currentTab==='logbook') renderLogbook(); forceLiveStatus(); }catch(e){ console.warn('V19.10.2 per-year specialty log patch skipped', e); }
+})();
+
+
+/* V19.10.3 — Global specialty clinics per selected year
+   Explicit global rule: every non-GIM clinic entry is treated as a specialty clinic
+   and displayed/counted only for the selected training year. GIM clinics remain cumulative. */
+(function installV19103GlobalSpecialtyClinics(){
+  function yearFilter(e){ return (e.year || currentYear) === currentYear; }
+  function isGimClinic(e){ return e.scope === 'gim'; }
+  function isSpecialtyClinic(e){ return e.scope !== 'gim'; }
+
+  renderLogClinics = function(){
+    const sp=specCfg();
+    const specEntries=entries('clinics').filter(e=>isSpecialtyClinic(e) && yearFilter(e));
+    const gimEntries=entries('clinics').filter(isGimClinic);
+    const specForm=`<input type="hidden" id="clinic-spec-scope" value="spec"><div class="field"><label>Clinic type</label>${otherClinicControl('clinic-spec-type', sp.logbook.clinics)}</div>${hospitalField('clinic-spec-hospital')}<div class="field"><label>Date</label><input class="input" id="clinic-spec-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Supervisor</label><input class="input" id="clinic-spec-supervisor" placeholder="Consultant name"></div><div class="field"><label>Patients seen / observed</label><input class="input" id="clinic-spec-patients" type="number" min="0"></div><div class="field"><label>Training year</label><select class="input" id="clinic-spec-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="clinic-spec-notes" placeholder="Optional"></div>`;
+    const gimForm=`<input type="hidden" id="clinic-gim-scope" value="gim"><div class="field"><label>Clinic type</label>${otherClinicControl('clinic-gim-type', GIM_LOGBOOK.clinics)}</div>${hospitalField('clinic-gim-hospital')}<div class="field"><label>Date</label><input class="input" id="clinic-gim-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Supervisor</label><input class="input" id="clinic-gim-supervisor" placeholder="Consultant name"></div><div class="field"><label>Patients seen / observed</label><input class="input" id="clinic-gim-patients" type="number" min="0"></div><div class="field"><label>Training year</label><select class="input" id="clinic-gim-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="clinic-gim-notes" placeholder="Optional"></div>`;
+    document.getElementById('log-content').innerHTML=
+      logSummaryCards([{value:specEntries.length,label:`${sp.short} clinics · ${currentYear} only`,cls:'primary'},{value:gimEntries.length,label:`GIM clinics · cumulative`,cls:'blue'}])+
+      formPanel(`Add ${sp.short} clinic`,specForm,"saveClinic('spec')")+
+      section(`${sp.short} clinics`,`${specEntries.length} entries in ${currentYear} · resets by selected year`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('clinics',e=>isSpecialtyClinic(e)&&yearFilter(e),['Date','Clinic type','Hospital','Supervisor','Patients','Year','Notes'], e=>[fmtDate(e.date),e.type,e.hospital,e.supervisor,e.patients,e.year,e.notes])}</div>`])+
+      formPanel('Add GIM clinic',gimForm,"saveClinic('gim')")+
+      section('GIM clinics',`${gimEntries.length} entries · cumulative target`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('clinics',e=>isGimClinic(e),['Date','Clinic type','Hospital','Supervisor','Patients','Year','Notes'], e=>[fmtDate(e.date),e.type,e.hospital,e.supervisor,e.patients,e.year,e.notes])}</div>`]);
+  };
+  window.renderLogClinics=renderLogClinics;
+  try{ if(currentTab==='logbook' && logSubTab==='clinics') renderLogbook(); forceLiveStatus(); }catch(e){ console.warn('V19.10.3 global specialty clinics patch skipped', e); }
+})();
+
+
+
+/* V19.10.4 PATCH — GIM roadmap evidence shows x/total; GIM SLEs renamed */
+try {
+  if (typeof GIM_REQS !== 'undefined' && GIM_REQS.gim_sles) {
+    GIM_REQS.gim_sles.label = 'GIM CbD / mini-CEX';
+    GIM_REQS.gim_sles.note = 'GIM CbD / mini-CEX';
+  }
+} catch(e) { console.warn('V19.10.4 label patch skipped', e); }
 
 </script>
 </body>
