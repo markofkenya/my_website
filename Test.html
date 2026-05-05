@@ -2124,6 +2124,109 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19 brand/year-start 
   }catch(e){ console.warn('V19.8 endocrinology procedure cleanup skipped', e); }
 })();
 
+
+
+/* ─────────────────────────────────────────────────────────────
+   V19.9 PATCH — Header simplification, ENDO labels, risk-in-card only
+   - Header no longer shows Days to ARCP, ALS or readiness bars.
+   - Endocrinology module section titles shortened.
+   - Endocrinology badges/tabs use ENDO while requirement labels stay full.
+   - Removes standalone ARCP risk banner; highlights tiny deadline text in cards.
+───────────────────────────────────────────────────────────── */
+(function installV199HeaderEndoRiskCleanup(){
+  // 1) Header cleanup: roadmap owns the dashboard metrics now.
+  function simplifyHeaderMetrics(){
+    ['days-val','als-val'].forEach(id=>{
+      const el=document.getElementById(id);
+      const metric=el && el.closest('.metric');
+      if(metric) metric.classList.add('header-hidden');
+    });
+    const readiness=document.querySelector('.top-row .grow');
+    if(readiness) readiness.classList.add('header-hidden');
+    const yearMetric=document.getElementById('year-buttons')?.closest('.metric');
+    if(yearMetric) yearMetric.classList.add('year-metric-compact');
+  }
+  window.simplifyHeaderMetrics=simplifyHeaderMetrics;
+
+  const _v199_renderHeader = renderHeader;
+  renderHeader = function(){
+    _v199_renderHeader();
+    simplifyHeaderMetrics();
+  };
+  window.renderHeader=renderHeader;
+
+  // 2) ENDO short label in bubbles/tabs, while full labels remain Endocrinology.
+  if(SPECIALTIES.endocrinology){ SPECIALTIES.endocrinology.short='ENDO'; SPECIALTIES.endocrinology.label='Endocrinology & Diabetes'; }
+  if(SPECIALTY_THEMES.endocrinology){ SPECIALTY_THEMES.endocrinology.short='ENDO'; SPECIALTY_THEMES.endocrinology.label='Endocrinology & Diabetes'; }
+  SPECIALTY_OPTIONS.endocrinology='Endocrinology & Diabetes';
+  window.specialtyDisplayName=function(){
+    const key=getSpecKey();
+    if(key==='respiratory') return 'Respiratory';
+    if(key==='renal') return 'Renal';
+    if(key==='endocrinology') return 'Endocrinology';
+    const cfg=specCfg();
+    return (cfg.short || cfg.label || 'Specialty').replace(/ Medicine$/,'');
+  };
+
+  // 3) Remove standalone ARCP risk banner everywhere.
+  window.riskBannerHTML=function(){ return ''; };
+  riskBannerHTML=function(){ return ''; };
+
+  // 4) Endocrinology renderer: no "Endo" section prefixes.
+  const _v199_previousRenderSpecialty = renderSpecialty;
+  renderSpecialty = function(){
+    if(getSpecKey() !== 'endocrinology') return _v199_previousRenderSpecialty();
+    if(yearLocked()){ document.getElementById('main').innerHTML = renderLockedBlock(); return; }
+    syncLogbookTargets();
+    const reqs = specReqs();
+    const annual=[], early=[], end=[];
+    Object.entries(reqs).forEach(([id, req])=>{
+      const card = makeReqCard(id, req, 'spec');
+      if(req.deadline === 'annual') annual.push(card);
+      else if(['ST4','ST5'].includes(req.deadline)) early.push(card);
+      else end.push(card);
+    });
+    document.getElementById('main').innerHTML =
+      renderOutcomeSelector() +
+      section('Annual requirements', `For ${currentYear}`, annual) +
+      section('ST4–ST5 window', 'SCE attempt, QIP 1, CPD 60h, DAFNE, patient survey 1', early) +
+      section('CCT completion milestones', 'ST6–ST7 and end-of-training totals', end);
+  };
+  window.renderSpecialty=renderSpecialty;
+
+  // 5) Style: compact header and risk moved into deadline/tiny text only.
+  if(!document.getElementById('v19-9-header-risk-style')){
+    const st=document.createElement('style');
+    st.id='v19-9-header-risk-style';
+    st.textContent=`
+      .header-hidden{display:none!important}
+      .top-row{align-items:center!important}
+      .year-metric-compact{margin-left:auto!important;border-left:1px solid var(--line)}
+      @media(max-width:680px){.year-metric-compact{margin-left:0!important;width:100%!important;border-left:0!important}}
+      .risk-banner{display:none!important}
+      .card.at-risk{box-shadow:none!important}
+      .card.at-risk.medium{border-left-color:var(--amber)!important}
+      .card.at-risk.high{border-left-color:var(--red)!important}
+      .card.at-risk.medium .deadline{color:var(--amber)!important;font-weight:850!important}
+      .card.at-risk.high .deadline{color:var(--red)!important;font-weight:850!important}
+      .card.at-risk .deadline::before{font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-right:4px}
+      .card.at-risk.medium .deadline::before{content:'WATCH · '}
+      .card.at-risk.high .deadline::before{content:'AT RISK · '}
+      .risk-tag{display:none!important}
+    `;
+    document.head.appendChild(st);
+  }
+
+  const _v199_render = render;
+  render=function(){
+    _v199_render();
+    simplifyHeaderMetrics();
+    document.querySelectorAll('.risk-banner').forEach(el=>el.remove());
+  };
+  window.render=render;
+
+  try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19.9 header/endo/risk cleanup skipped', e); }
+})();
 </script>
 </body>
 </html>
