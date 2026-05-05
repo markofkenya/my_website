@@ -2643,6 +2643,94 @@ try {
   try{ if(currentTab==='gim') renderGIM(); updateReadiness(); forceLiveStatus(); }catch(e){ console.warn('V19.10.5 GIM procedures competency patch skipped', e); }
 })();
 
+
+
+/* V19.10.6 PATCH — GIM skills-lab/supervised equivalence
+   Applies to uploaded V19.10.5 file only. Keeps UI/structure unchanged. */
+(function installV19106GimSkillsLabLogic(){
+  const GIM_PROCEDURE_TARGETS_V106 = [
+    { name:'Advanced cardiopulmonary resuscitation (CPR)', targetText:'Leadership of CPR team', targetLevel:'Unsupervised' },
+    { name:'Direct current (DC) cardioversion', targetText:'Unsupervised', targetLevel:'Unsupervised' },
+    { name:'Temporary cardiac pacing using an external device', targetText:'Skills lab / supervised', targetLevel:'Skills lab' },
+    { name:'Central venous cannulation (internal jugular or subclavian)', targetText:'Skills lab / supervised', targetLevel:'Skills lab' },
+    { name:'Access to circulation for resuscitation (femoral vein or intraosseous)', targetText:'Skills lab / supervised', targetLevel:'Skills lab' },
+    { name:'Pleural aspiration for fluid (diagnostic)', targetText:'Unsupervised', targetLevel:'Unsupervised' },
+    { name:'Pleural aspiration (pneumothorax)', targetText:'Unsupervised', targetLevel:'Unsupervised' },
+    { name:'Intercostal drain for pneumothorax', targetText:'Skills lab / supervised', targetLevel:'Skills lab' },
+    { name:'Intercostal drain for effusion', targetText:'Skills lab / supervised', targetLevel:'Skills lab' },
+    { name:'Nasogastric (NG) tube', targetText:'Unsupervised', targetLevel:'Unsupervised' },
+    { name:'Ascitic tap', targetText:'Unsupervised', targetLevel:'Unsupervised' },
+    { name:'Abdominal paracentesis', targetText:'Skills lab / supervised', targetLevel:'Skills lab' },
+    { name:'Lumbar puncture', targetText:'Unsupervised', targetLevel:'Unsupervised' }
+  ];
+  const GIM_LEVELS_V106 = ['Not assessed','Skills lab','Supervised','Unsupervised'];
+  const LEVEL_RANK_V106 = {'Not assessed':0,'Skills lab':1,'Supervised':2,'Unsupervised':3};
+  function gimProcKeyV106(name){ return 'gim_proc.' + name; }
+  function normaliseGimProcValV106(v){ return GIM_LEVELS_V106.includes(v) ? v : 'Not assessed'; }
+  function gimProcValueV106(name){ return normaliseGimProcValV106(state.req[gimProcKeyV106(name)]); }
+  function gimProcMetItemV106(item){
+    const current = gimProcValueV106(item.name);
+    // Clinical equivalence rule: if the curriculum target is Skills lab / supervised,
+    // then Skills lab, Supervised and Unsupervised all count as on track.
+    if(item.targetLevel === 'Skills lab'){
+      return ['Skills lab','Supervised','Unsupervised'].includes(current);
+    }
+    return (LEVEL_RANK_V106[current]||0) >= (LEVEL_RANK_V106[item.targetLevel]||0);
+  }
+  function gimProcStatusV106(item){
+    const v = gimProcValueV106(item.name);
+    if(gimProcMetItemV106(item)) return 'done';
+    if(v !== 'Not assessed') return 'partial';
+    return '';
+  }
+  window.setGimProcedureLevel = function(name, value){
+    if(yearLocked()) return alert('This year is locked. Unlock it before editing.');
+    const item = GIM_PROCEDURE_TARGETS_V106.find(p=>p.name===name) || {name, targetLevel:'Unsupervised'};
+    state.req[gimProcKeyV106(name)] = normaliseGimProcValV106(value);
+    // Keep old checkbox keys in sync for backward compatibility.
+    state.req['dops.' + name] = gimProcMetItemV106(item);
+    saveState();
+    renderGIM();
+    updateReadiness();
+  };
+  window.gimDopsStats = function(){
+    const met = GIM_PROCEDURE_TARGETS_V106.filter(gimProcMetItemV106).length;
+    return {met,total:GIM_PROCEDURE_TARGETS_V106.length,label:'GIM DOPS'};
+  };
+  window.dopsCardGrid = function(){
+    const rows = GIM_PROCEDURE_TARGETS_V106.map(item=>{
+      const val = gimProcValueV106(item.name);
+      const status = gimProcStatusV106(item);
+      const ok = status === 'done';
+      return `<div class="gim-proc-row ${status}">
+        <div class="gim-proc-name">${safe(item.name)}</div>
+        <div class="gim-proc-target">Target: <strong>${safe(item.targetText)}</strong></div>
+        <select class="input gim-proc-select" onchange="setGimProcedureLevel('${safe(item.name)}', this.value)">
+          ${GIM_LEVELS_V106.map(l=>`<option value="${l}" ${val===l?'selected':''}>${l}</option>`).join('')}
+        </select>
+        <div class="gim-proc-status ${ok?'good':status==='partial'?'warn':''}">${ok?'✓ on track':status==='partial'?'in progress':'not yet'}</div>
+      </div>`;
+    }).join('');
+    return `<div class="gim-proc-list">${rows}</div>`;
+  };
+  window.renderGIM = function(){
+    if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
+    const annual=[], cumulative=[], milestones=[];
+    Object.entries(visibleGimReqs()).forEach(([id,req])=>{
+      const c=makeReqCard(id,req,'gim');
+      if(req.deadline==='annual') annual.push(c); else if(req.cumulative) cumulative.push(c); else milestones.push(c);
+    });
+    const stats=gimDopsStats();
+    const cumulativeNote = currentYear==='ST7' ? 'End-of-training totals including final-year minimums' : 'End-of-training cumulative targets';
+    document.getElementById('main').innerHTML =
+      renderOutcomeSelector()+
+      section('GIM annual requirements',`For ${currentYear}`,annual)+
+      section('GIM cumulative targets',cumulativeNote,cumulative)+
+      section('GIM milestones','One-off items',milestones)+
+      section('GIM DOPS procedures',`${stats.met} / ${stats.total} at target`,[dopsCardGrid()]);
+  };
+  try{ if(currentTab==='gim') renderGIM(); updateReadiness(); forceLiveStatus(); }catch(e){ console.warn('V19.10.6 GIM skills-lab logic patch skipped', e); }
+})();
 </script>
 </body>
 </html>
