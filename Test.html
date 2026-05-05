@@ -62,7 +62,7 @@
 body.focus{--bg:#f7f5f0;--bg2:#fdfcfa;--bg3:#f0ede6;--bg4:#e8e4dc;--line:#ddd8ce;--text:#1e1b16;--text2:#4a4540;--dim:#8a8278;background:var(--bg);font-family:'DM Sans',sans-serif}
 #gate{position:fixed;inset:0;background:rgba(8,10,16,.97);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px} #gate.show{display:flex}
 .gate-card{width:min(760px,100%);background:var(--bg2);border:1px solid var(--line);border-top:3px solid var(--primary);border-radius:18px;padding:26px;box-shadow:0 25px 80px rgba(0,0,0,.35)}
-.gate-title{font-size:26px;font-weight:800;color:var(--primary);letter-spacing:-.03em}.gate-sub{font-size:12px;color:var(--text2);margin:5px 0 22px;line-height:1.6}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:10px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase}.input{width:100%;border:1px solid var(--line);background:var(--bg3);color:var(--text);border-radius:10px;padding:10px 12px;outline:none;font-size:13px}.input:focus{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 18%,transparent)}
+.gate-title{font-size:26px;font-weight:800;color:var(--primary);letter-spacing:-.03em}.gate-sub{font-size:12px;color:var(--text2);margin:5px 0 22px;line-height:1.6}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:10px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase}.input{width:100%;border:1px solid var(--line);background:var(--bg3);color:var(--text);border-radius:10px;padding:10px 12px;outline:none;font-size:13px}.input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(215,255,40,.16)}
 .btn{border:1px solid var(--line);background:var(--bg3);color:var(--text);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;letter-spacing:.05em}.btn.tiny{padding:2px 6px;font-size:9px;border-radius:6px;letter-spacing:.03em}.btn.primary{background:color-mix(in srgb,var(--primary) 18%,var(--bg3));border-color:var(--primary);color:var(--primary)}.btn.danger{border-color:var(--red);color:var(--red)}.btn.good{border-color:var(--green);color:var(--green)}.btn.small{padding:5px 9px;font-size:10px;border-radius:7px}.hint{font-size:10px;color:var(--dim);line-height:1.6}
 
 .gate-slogan{margin:10px 0 16px;padding:12px 14px;border:1px solid var(--line);border-left:3px solid var(--primary);border-radius:12px;background:var(--bg3)}
@@ -145,6 +145,41 @@ body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,
 @media (min-width: 761px) and (max-width: 1050px){
   .brand{min-width:190px}.metric{min-width:115px}.grow{min-width:280px}.tab{padding:7px 11px;}
 }
+
+
+
+/* ─────────────────────────────────────────────────────────────
+   V14 ROADMAP VISUAL LAYER — premium dark dashboard inspired by mockup
+───────────────────────────────────────────────────────────── */
+.roadmap-wrap{min-height:calc(100vh - 120px);padding:34px clamp(18px,5vw,72px) 90px;background:radial-gradient(circle at 88% 10%, rgba(215,255,40,.16), transparent 34%),linear-gradient(135deg,#101411 0%,#171b18 42%,#0c0f0e 100%);border-radius:22px;color:#fff;overflow:hidden;position:relative}.roadmap-wrap:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(180deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:90px 90px;opacity:.35;pointer-events:none}.roadmap-top,.roadmap-bars,.roadmap-kpis,.roadmap-journey{position:relative;z-index:1}.roadmap-nav{display:flex;align-items:center;gap:12px;margin-bottom:62px;color:rgba(255,255,255,.72);font-weight:800;font-size:12px;letter-spacing:.04em}.roadmap-logo{font-size:20px;color:#fff;margin-right:24px}.roadmap-logo span{color:#d7ff28}.roadmap-pill{padding:8px 12px;border-radius:999px;background:rgba(215,255,40,.12);color:#d7ff28}.roadmap-status{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:11px}.roadmap-dot{width:8px;height:8px;border-radius:50%;background:#d7ff28;box-shadow:0 0 18px #d7ff28}.hero-kicker{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:.28em;text-transform:uppercase;font-weight:900;margin-bottom:18px}.hero-title{font-size:clamp(42px,6vw,86px);line-height:.98;font-weight:900;letter-spacing:-.07em;max-width:940px}.hero-title .lime{color:#d7ff28;text-shadow:0 0 28px rgba(215,255,40,.22)}.roadmap-bars{margin-top:46px;display:flex;flex-direction:column;gap:22px}.rm-bar-row{display:grid;grid-template-columns:170px 1fr 110px;align-items:center;gap:16px}.rm-bar-label{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.62);font-weight:900}.rm-track{height:12px;border-radius:999px;background:rgba(255,255,255,.13);overflow:hidden;position:relative}.rm-fill{height:100%;border-radius:999px;box-shadow:0 0 22px rgba(215,255,40,.3)}.rm-fill.spec{background:linear-gradient(90deg,#d7ff28,#b7ff00)}.rm-fill.gim{background:linear-gradient(90deg,#ffe600,#ffb000)}.rm-target{font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:rgba(255,255,255,.65);font-weight:900;text-align:right}.roadmap-kpis{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:14px;margin-top:42px}.rm-kpi{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);backdrop-filter:blur(10px);border-radius:18px;padding:18px 20px;min-height:118px}.rm-kpi-label{font-size:10px;color:rgba(255,255,255,.58);letter-spacing:.22em;text-transform:uppercase;font-weight:900}.rm-kpi-val{font-size:34px;font-weight:900;margin-top:12px;letter-spacing:-.04em}.rm-kpi-note{font-size:11px;color:rgba(255,255,255,.58);margin-top:6px}.journey-title{font-size:24px;font-weight:900;letter-spacing:-.04em;margin-top:52px;margin-bottom:26px}.timeline{position:relative;padding-left:44px}.timeline:before{content:"";position:absolute;left:14px;top:18px;bottom:20px;width:1px;background:rgba(255,255,255,.15)}.year-block{position:relative;margin-bottom:24px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.045);border-radius:20px;padding:22px}.year-block:before{content:"";position:absolute;left:-39px;top:28px;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.2);box-shadow:0 0 0 7px rgba(255,255,255,.04)}.year-block.current:before,.year-block.locked:before{background:#d7ff28;box-shadow:0 0 22px #d7ff28}.year-head{display:flex;align-items:flex-end;gap:12px;margin-bottom:14px}.year-name{font-size:34px;font-weight:900;letter-spacing:-.05em}.year-meta{font-size:12px;color:rgba(255,255,255,.65);font-weight:800;margin-bottom:6px}.year-badge{margin-left:auto;padding:6px 10px;border-radius:999px;background:rgba(215,255,40,.12);color:#d7ff28;font-size:10px;text-transform:uppercase;letter-spacing:.14em;font-weight:900}.milestone-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.milestone-chip{display:flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.055);border-radius:12px;padding:12px}.milestone-chip.done{border-color:rgba(215,255,40,.45);background:rgba(215,255,40,.08)}.milestone-check{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.18);font-size:12px;color:#d7ff28;flex:0 0 auto}.milestone-chip.done .milestone-check{background:#d7ff28;color:#111}.milestone-text{font-size:12px;font-weight:800;line-height:1.25}.milestone-count{margin-left:auto;color:#d7ff28;font-size:12px;font-weight:900}.pace-behind{color:#ffc400}.pace-good{color:#d7ff28}.rm-actions{display:flex;gap:8px;margin-top:20px}.rm-actions .btn{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:white}.rm-actions .btn.primary{color:#d7ff28;border-color:#d7ff28;background:rgba(215,255,40,.10)}
+@media(max-width:780px){.roadmap-wrap{padding:22px 16px 80px;border-radius:0}.roadmap-nav{margin-bottom:34px;overflow:auto}.hero-title{font-size:42px}.rm-bar-row{grid-template-columns:1fr;gap:8px}.rm-target{text-align:left}.roadmap-kpis{grid-template-columns:1fr 1fr}.milestone-grid{grid-template-columns:1fr}.timeline{padding-left:30px}.year-block:before{left:-31px}}@media(max-width:480px){.roadmap-kpis{grid-template-columns:1fr}.roadmap-logo{margin-right:4px}.rm-kpi{min-height:auto}.year-head{align-items:flex-start;flex-direction:column}.year-badge{margin-left:0}}
+
+
+/* V15 PATCH — Roadmap visual polish, fixed neon yellow accent */
+.roadmap-wrap{
+  --rm-lime:#d7ff28;
+  --rm-lime2:#b7ff00;
+  --rm-amber:#ffd400;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(215,255,40,.14), transparent 28%),
+    radial-gradient(circle at 18% 4%, rgba(255,255,255,.07), transparent 24%),
+    linear-gradient(135deg,#111512 0%,#1a1f1b 38%,#090c0b 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+.roadmap-wrap:after{
+  content:"";position:absolute;right:-160px;top:160px;width:520px;height:520px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.10);transform:rotate(-18deg);pointer-events:none;opacity:.55;
+}
+.roadmap-pill,.roadmap-logo span,.roadmap-dot,.hero-title .lime,.year-badge,.milestone-count,.rm-actions .btn.primary{color:var(--rm-lime)!important;}
+.roadmap-pill,.year-badge{background:rgba(215,255,40,.12)!important;border:1px solid rgba(215,255,40,.18)}
+.roadmap-dot{background:var(--rm-lime)!important;box-shadow:0 0 18px rgba(215,255,40,.75)!important;}
+.hero-title .lime{text-shadow:0 0 30px rgba(215,255,40,.28)!important;}
+.rm-fill.spec{background:linear-gradient(90deg,var(--rm-lime),var(--rm-lime2))!important;box-shadow:0 0 22px rgba(215,255,40,.34)!important;}
+.rm-fill.gim{background:linear-gradient(90deg,var(--rm-amber),#ffb000)!important;box-shadow:0 0 20px rgba(255,212,0,.22)!important;}
+.year-block.current:before,.year-block.locked:before{background:var(--rm-lime)!important;box-shadow:0 0 22px rgba(215,255,40,.8)!important;}
+.milestone-chip.done{border-color:rgba(215,255,40,.45)!important;background:rgba(215,255,40,.08)!important;}
+.milestone-chip.done .milestone-check{background:var(--rm-lime)!important;color:#10130d!important;}
+.rm-actions .btn.primary{border-color:var(--rm-lime)!important;background:rgba(215,255,40,.10)!important;}
 
 </style>
 </head>
@@ -1195,6 +1230,92 @@ function renderOverview(){
 }
 window.updateReadiness=updateReadiness; window.renderGIM=renderGIM; window.renderOverview=renderOverview;
 try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',e); }
+
+
+
+/* ─────────────────────────────────────────────────────────────
+   V14 PATCH — Weighted Roadmap dashboard from mockup
+───────────────────────────────────────────────────────────── */
+function roadmapReqWeight(id, req, stream){
+  const label=(req.label||'').toLowerCase();
+  if(label.includes('sce') || label.includes('esen')) return 2.2;
+  if(label.includes('educational supervisor')) return 1.6;
+  if(label.includes('mcr') || label.includes('sle') || label.includes('acat')) return 1.5;
+  if(label.includes('msf')) return 1.35;
+  if(label.includes('qip') || label.includes('patient survey') || label.includes('teaching observation')) return 1.45;
+  if(req.cumulative) return 1.25;
+  if(req.type==='checkbox' && req.deadline!=='annual') return 1.35;
+  return 1;
+}
+function roadmapReqScore(id, req){
+  const val=getReqVal(id, req);
+  if(req.type==='checkbox') return val ? 1 : 0;
+  return Math.max(0, Math.min(1, Number(val||0)/(Number(req.target)||1)));
+}
+function weightedReqs(reqs, extra){
+  const arr=Object.entries(reqs||{}).filter(([id,r])=>r.deadline==='annual'||yrIndex(r.deadline)<=yrIndex());
+  let earned=0,total=0,open=0;
+  arr.forEach(([id,req])=>{ const w=roadmapReqWeight(id,req); total+=w; const s=roadmapReqScore(id,req); earned+=w*s; if(s<1) open++; });
+  if(extra && extra.total){ const w=Math.max(1, Math.min(10, extra.total))*0.25; total+=w; earned+=w*((extra.met||0)/Math.max(1,extra.total)); if((extra.met||0)<extra.total) open++; }
+  return {earned,total,open,pct:total?Math.round((earned/total)*100):0};
+}
+function daysToArcp(){ const d=new Date(state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]); const today=new Date(); today.setHours(0,0,0,0); return Math.round((d-today)/86400000); }
+function arcpDateLabel(){ const d=new Date(state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]); return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+function yearProgressPct(){
+  const end=new Date(state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]);
+  const idx=yrIndex(currentYear);
+  let start;
+  if(idx>0){ start=new Date(state.arcpDates[YEARS[idx-1]]||ARCP_DEFAULTS[YEARS[idx-1]]); start.setDate(start.getDate()+1); }
+  else { start=new Date(end); start.setFullYear(end.getFullYear()-1); start.setDate(start.getDate()+1); }
+  const now=new Date();
+  const pct=Math.round(((now-start)/(end-start))*100);
+  return Math.max(0,Math.min(100,pct));
+}
+function allLogEntries(){ return Object.values(state.logbook||{}).flat().filter(Boolean); }
+function loggedThisMonth(){ const now=new Date(); return allLogEntries().filter(e=>{ const d=new Date(e.date||e.start||e.createdAt||0); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear(); }).length; }
+function alsDays(){ if(!state.als) return null; return Math.round((new Date(state.als)-new Date())/86400000); }
+function roadmapMilestonesForYear(y){
+  const old=currentYear; currentYear=y;
+  const reqs={...specReqs(),...visibleGimReqs()};
+  const items=[];
+  Object.entries(reqs).forEach(([id,req])=>{
+    if(req.deadline==='annual' || req.deadline===y || req.cumulative){
+      const score=roadmapReqScore(id,req);
+      if(items.length<8) items.push({id, label:req.label.replace(/^Specialty/i,specCfg().short).replace(/^GIM /,'GIM '), done:score>=1, val:getReqVal(id,req), target:req.target});
+    }
+  });
+  currentYear=old;
+  return items;
+}
+function roadmapYearBlock(y){
+  const locked=yearLocked(y); const isCurrent=y===currentYear; const out=outcome(y); const items=roadmapMilestonesForYear(y).slice(0,6);
+  const meta=locked ? `${OUTCOMES[out]||'Locked'} · locked` : isCurrent ? `In progress · ${Math.max(0,daysToArcp())} days to ARCP` : 'Upcoming training year';
+  return `<div class="year-block ${locked?'locked':''} ${isCurrent?'current':''}"><div class="year-head"><div class="year-name">${y}</div><div class="year-meta">${safe(meta)}</div><div class="year-badge">${locked?'Outcome '+safe(out):isCurrent?'Current':'Upcoming'}</div></div><div class="milestone-grid">${items.map(it=>`<div class="milestone-chip ${it.done?'done':''}"><span class="milestone-check">${it.done?'✓':''}</span><span class="milestone-text">${safe(it.label)}</span>${it.target?`<span class="milestone-count">${safe(String(it.val))}/${safe(String(it.target))}</span>`:''}</div>`).join('')||'<div class="hint">No mapped roadmap items yet.</div>'}</div></div>`;
+}
+function renderRoadmap(){
+  if(!state.profile){ initOnboarding(); return; }
+  const sp=weightedReqs(specReqs(), specDopsStats());
+  const gim=weightedReqs(visibleGimReqs(), gimDopsStats());
+  const days=daysToArcp();
+  const progress=yearProgressPct();
+  const open=sp.open+gim.open;
+  const als=alsDays();
+  const paceClass=(sp.pct>=progress||gim.pct>=progress)?'pace-good':'pace-behind';
+  document.getElementById('main').innerHTML=`
+    <div class="roadmap-wrap">
+      <div class="roadmap-nav"><div class="roadmap-logo">ARCP<span>//01</span></div><span class="roadmap-pill">Roadmap</span><span>Logbook</span><span>${safe(specCfg().short)}</span><span>GIM</span><span>Reports</span><span class="roadmap-status"><span class="roadmap-dot"></span>Live · synced</span></div>
+      <div class="roadmap-top"><div class="hero-kicker">Roadmap · ${safe(specCfg().label)} · ${safe(currentYear)}</div><div class="hero-title">You're <span class="lime">${progress}%</span> through ${safe(currentYear)}.<br>${Math.max(0,days)} days to your ARCP.</div></div>
+      <div class="roadmap-bars"><div class="rm-bar-row"><div class="rm-bar-label">${safe(specCfg().short)} evidence · ${sp.pct}%</div><div class="rm-track"><div class="rm-fill spec" style="width:${sp.pct}%"></div></div><div class="rm-target">annual target</div></div><div class="rm-bar-row"><div class="rm-bar-label">GIM evidence · ${gim.pct}%</div><div class="rm-track"><div class="rm-fill gim" style="width:${gim.pct}%"></div></div><div class="rm-target ${paceClass}">${sp.pct>=progress&&gim.pct>=progress?'on pace':'behind pace'}</div></div></div>
+      <div class="roadmap-kpis"><div class="rm-kpi"><div class="rm-kpi-label">Days to ARCP</div><div class="rm-kpi-val">${Math.max(0,days)}</div><div class="rm-kpi-note">${safe(arcpDateLabel())}</div></div><div class="rm-kpi"><div class="rm-kpi-label">Open milestones</div><div class="rm-kpi-val">${open}</div><div class="rm-kpi-note">weighted evidence gaps</div></div><div class="rm-kpi"><div class="rm-kpi-label">Logged this month</div><div class="rm-kpi-val">${loggedThisMonth()}</div><div class="rm-kpi-note">procedures + clinics + CPD</div></div><div class="rm-kpi"><div class="rm-kpi-label">ALS expiry</div><div class="rm-kpi-val">${als===null?'—':Math.max(0,als)+'d'}</div><div class="rm-kpi-note">${als===null?'not set':als<183?'renew soon':'valid'}</div></div></div>
+      <div class="roadmap-journey"><div class="journey-title">Your training journey</div><div class="timeline">${YEARS.map(roadmapYearBlock).join('')}</div><div class="rm-actions"><button class="btn primary" onclick="setTab('specialty')">Open ${safe(specCfg().short)} requirements</button><button class="btn" onclick="setTab('gim')">Open GIM</button><button class="btn" onclick="setTab('logbook')">Add evidence</button></div></div>
+    </div>`;
+}
+const _v14RenderTabs = renderTabs;
+renderTabs=function(){ const tabs=[['roadmap','Roadmap'],['logbook','Logbook'],['specialty',specCfg().short],['gim','GIM'],['overview','Overview'],['admin','Admin / Docs']]; document.getElementById('tabs').innerHTML=tabs.map(([id,label])=>`<button class="tab ${id==='gim'?'gim-tab':''} ${currentTab===id?'active':''}" onclick="setTab('${id}')">${label}</button>`).join(''); };
+const _v14Render = render;
+render=function(){ if(!state.profile){ initOnboarding(); return; } syncLogbookTargets(); setTheme(); document.getElementById('app').classList.add('ready'); document.getElementById('gate').classList.remove('show'); renderHeader(); renderTabs(); const trialExpired = renderBetaTrial(); if(trialExpired){ updateReadiness(); return; } if(currentTab==='roadmap') renderRoadmap(); if(currentTab==='specialty') renderSpecialty(); if(currentTab==='gim') renderGIM(); if(currentTab==='logbook') renderLogbook(); if(currentTab==='admin') renderAdmin(); if(currentTab==='overview') renderOverview(); updateReadiness(); forceLiveStatus(); };
+window.renderRoadmap=renderRoadmap; window.renderTabs=renderTabs; window.render=render;
+try{ if(!localStorage.getItem('arcp_v2_tab')) currentTab='roadmap'; render(); forceLiveStatus(); }catch(e){ console.warn('V14 roadmap patch skipped',e); }
 
 </script>
 </body>
