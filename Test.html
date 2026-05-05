@@ -50,6 +50,33 @@
       window.dispatchEvent(new CustomEvent("firebase-status", { detail:{ online:true, message:"Live" }}));
     });
   });
+
+
+/* V19.10 ROADMAP TYPOGRAPHY-ONLY PATCH — render same roadmap, wrap ARCP-days line for grey typography. */
+(function installV1910RoadmapTypographyOnly(){
+  if(typeof renderRoadmap !== 'function') return;
+  renderRoadmap = function(){
+    if(!state.profile){ initOnboarding(); return; }
+    const sp=simpleRoadmapReqs(specReqs(), specDopsStats());
+    const gim=simpleRoadmapReqs(visibleGimReqs(), gimDopsStats());
+    const days=daysToArcp();
+    const progress=yearProgressPct();
+    const startDate=trainingYearStartDateFor(currentYear);
+    const open=sp.open+gim.open;
+    const als=alsDays();
+    const paceClass=(sp.pct>=progress&&gim.pct>=progress)?'pace-good':'pace-behind';
+    document.getElementById('main').innerHTML=`
+      <div class="roadmap-wrap">
+        <div class="roadmap-top"><div class="hero-kicker">Roadmap · ${safe(specCfg().label)} · ${safe(currentYear)} · started ${safe(startDate.toLocaleDateString('en-GB',{month:'short',year:'numeric'}))}</div><div class="hero-title">You're <span class="lime">${progress}%</span> through ${safe(currentYear)}.<br><span class="hero-subline">${Math.max(0,days)} days to your ARCP.</span></div></div>
+        <div class="roadmap-bars"><div class="rm-bar-row"><div class="rm-bar-label">${safe(specCfg().short)} evidence · ${sp.pct}%</div><div class="rm-track"><div class="rm-fill spec" style="width:${sp.pct}%"></div></div><div class="rm-target">${sp.met}/${sp.total}</div></div><div class="rm-bar-row"><div class="rm-bar-label">GIM evidence · ${gim.pct}%</div><div class="rm-track"><div class="rm-fill gim" style="width:${gim.pct}%"></div></div><div class="rm-target ${paceClass}">${sp.pct>=progress&&gim.pct>=progress?'on pace':'behind pace'}</div></div></div>
+        <div class="roadmap-kpis"><div class="rm-kpi"><div class="rm-kpi-label">Days to ARCP</div><div class="rm-kpi-val">${Math.max(0,days)}</div><div class="rm-kpi-note">${safe(arcpDateLabel())}</div></div><div class="rm-kpi"><div class="rm-kpi-label">Open milestones</div><div class="rm-kpi-val">${open}</div><div class="rm-kpi-note">this year</div></div><div class="rm-kpi"><div class="rm-kpi-label">Logged this month</div><div class="rm-kpi-val">${loggedThisMonth()}</div><div class="rm-kpi-note">procedures + clinics</div></div><div class="rm-kpi"><div class="rm-kpi-label">ALS expiry</div><div class="rm-kpi-val">${als===null?'—':Math.max(0,als)+'d'}</div><div class="rm-kpi-note">${als===null?'not set':als<183?'renew soon':'valid'}</div></div></div>
+        <div class="roadmap-journey"><div class="journey-title">Your training journey</div><div class="timeline">${YEARS.map(roadmapYearBlock).join('')}</div><div class="rm-actions"><button class="btn primary" onclick="setTab('specialty')">Open ${safe(specCfg().short)} requirements</button><button class="btn" onclick="setTab('gim')">Open GIM</button><button class="btn" onclick="setTab('logbook')">Add evidence</button></div></div>
+      </div>`;
+  };
+  window.renderRoadmap=renderRoadmap;
+  try{ if(currentTab==='roadmap') renderRoadmap(); forceLiveStatus(); }catch(e){ console.warn('V19.10 roadmap typography-only patch skipped', e); }
+})();
+
 </script>
 <style>
 :root{
@@ -309,6 +336,162 @@ body{font-kerning:normal;text-rendering:optimizeLegibility;}
 .year-name{letter-spacing:-.06em!important;font-weight:900!important;}
 .year-meta,.milestone-text{letter-spacing:-.01em!important;}
 @media(max-width:680px){.hero-title{letter-spacing:-.06em!important;line-height:1!important}.brand-main{letter-spacing:-.035em!important}}
+
+
+/* V19.10 ROADMAP TYPOGRAPHY-ONLY PATCH — safe CSS overrides from V19.9
+   Scope: roadmap only. No tab/nav/header logic touched. */
+body.visual-v16 .roadmap-wrap{
+  --rm-soft:#a8a79f;
+  --rm-cream:#f4f1e7;
+  --rm-muted:#8f8f87;
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif!important;
+}
+body.visual-v16 .roadmap-top{padding-top:10px!important;}
+body.visual-v16 .hero-kicker{
+  font-size:12px!important;
+  line-height:1.2!important;
+  color:rgba(244,241,231,.58)!important;
+  letter-spacing:.30em!important;
+  font-weight:850!important;
+  margin-bottom:22px!important;
+}
+body.visual-v16 .hero-title{
+  color:var(--rm-cream)!important;
+  font-size:clamp(54px,5.7vw,88px)!important;
+  line-height:1.02!important;
+  letter-spacing:-.078em!important;
+  font-weight:900!important;
+  max-width:1050px!important;
+  text-wrap:balance;
+}
+body.visual-v16 .hero-title .lime{
+  color:var(--primary)!important;
+  text-shadow:0 0 26px rgba(215,255,40,.30)!important;
+}
+body.visual-v16 .hero-title .hero-subline{
+  color:var(--rm-soft)!important;
+  font-weight:850!important;
+  letter-spacing:-.072em!important;
+}
+body.visual-v16 .roadmap-bars{margin-top:48px!important;gap:24px!important;}
+body.visual-v16 .rm-bar-row{grid-template-columns:190px 1fr 150px!important;gap:16px!important;}
+body.visual-v16 .rm-bar-label,
+body.visual-v16 .rm-target,
+body.visual-v16 .rm-kpi-label{
+  font-size:12px!important;
+  letter-spacing:.22em!important;
+  font-weight:850!important;
+  color:rgba(244,241,231,.58)!important;
+}
+body.visual-v16 .rm-target{color:rgba(244,241,231,.70)!important;}
+body.visual-v16 .rm-target.pace-behind{color:#ffd43b!important;}
+body.visual-v16 .rm-target.pace-good{color:var(--primary)!important;}
+body.visual-v16 .rm-track{height:11px!important;background:rgba(255,255,255,.105)!important;}
+body.visual-v16 .roadmap-kpis{margin-top:38px!important;gap:18px!important;}
+body.visual-v16 .rm-kpi{border-radius:20px!important;padding:22px 24px!important;min-height:124px!important;}
+body.visual-v16 .rm-kpi-val{font-size:42px!important;letter-spacing:-.055em!important;line-height:1!important;color:var(--rm-cream)!important;}
+body.visual-v16 .rm-kpi-note{font-size:12px!important;color:rgba(244,241,231,.62)!important;font-weight:650!important;}
+body.visual-v16 .journey-title{font-size:28px!important;letter-spacing:-.055em!important;color:var(--rm-cream)!important;}
+
+@media (max-width:760px){
+  body.visual-v16 main{padding:0!important;}
+  body.visual-v16 .roadmap-wrap{
+    margin:0!important;
+    min-height:100vh!important;
+    width:100%!important;
+    max-width:100vw!important;
+    border-radius:0!important;
+    padding:22px 18px 84px!important;
+    overflow-x:hidden!important;
+  }
+  body.visual-v16 .roadmap-top{padding-top:18px!important;}
+  body.visual-v16 .hero-kicker{
+    font-size:11px!important;
+    letter-spacing:.28em!important;
+    line-height:1.55!important;
+    margin-bottom:18px!important;
+    white-space:normal!important;
+  }
+  body.visual-v16 .hero-title{
+    font-size:clamp(36px,10.8vw,48px)!important;
+    line-height:1.05!important;
+    letter-spacing:-.068em!important;
+    max-width:100%!important;
+  }
+  body.visual-v16 .hero-title .hero-subline{
+    color:#a5a49c!important;
+    letter-spacing:-.064em!important;
+  }
+  body.visual-v16 .roadmap-bars{
+    margin-top:34px!important;
+    gap:20px!important;
+  }
+  body.visual-v16 .rm-bar-row{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    grid-template-rows:auto auto!important;
+    gap:8px 10px!important;
+    align-items:end!important;
+  }
+  body.visual-v16 .rm-bar-label{
+    grid-column:1/2!important;
+    font-size:10px!important;
+    letter-spacing:.20em!important;
+    min-width:0!important;
+  }
+  body.visual-v16 .rm-target{
+    grid-column:2/3!important;
+    text-align:right!important;
+    font-size:10px!important;
+    letter-spacing:.16em!important;
+    white-space:nowrap!important;
+  }
+  body.visual-v16 .rm-track{
+    grid-column:1/-1!important;
+    grid-row:2!important;
+    height:10px!important;
+    width:100%!important;
+  }
+  body.visual-v16 .roadmap-kpis{
+    grid-template-columns:1fr 1fr!important;
+    gap:12px!important;
+    margin-top:28px!important;
+  }
+  body.visual-v16 .rm-kpi{
+    min-height:116px!important;
+    padding:18px 16px!important;
+    border-radius:18px!important;
+  }
+  body.visual-v16 .rm-kpi-label{
+    font-size:10px!important;
+    letter-spacing:.20em!important;
+    line-height:1.25!important;
+  }
+  body.visual-v16 .rm-kpi-val{
+    font-size:34px!important;
+    margin-top:12px!important;
+  }
+  body.visual-v16 .rm-kpi-note{font-size:11px!important;}
+  body.visual-v16 .journey-title{
+    margin-top:34px!important;
+    font-size:22px!important;
+  }
+  body.visual-v16 .timeline{padding-left:30px!important;}
+  body.visual-v16 .year-block{
+    padding:18px!important;
+    border-radius:18px!important;
+  }
+  body.visual-v16 .year-block:before{left:-40px!important;top:24px!important;}
+  body.visual-v16 .year-name{font-size:32px!important;}
+}
+@media (max-width:390px){
+  body.visual-v16 .roadmap-wrap{padding-left:14px!important;padding-right:14px!important;}
+  body.visual-v16 .hero-title{font-size:34px!important;}
+  body.visual-v16 .roadmap-kpis{gap:10px!important;}
+  body.visual-v16 .rm-kpi{padding:15px 13px!important;}
+  body.visual-v16 .rm-kpi-val{font-size:30px!important;}
+}
+
 </style>
 </head>
 <body>
@@ -2227,6 +2410,33 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19 brand/year-start 
 
   try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19.9 header/endo/risk cleanup skipped', e); }
 })();
+
+
+/* V19.10 ROADMAP TYPOGRAPHY-ONLY PATCH — render same roadmap, wrap ARCP-days line for grey typography. */
+(function installV1910RoadmapTypographyOnly(){
+  if(typeof renderRoadmap !== 'function') return;
+  renderRoadmap = function(){
+    if(!state.profile){ initOnboarding(); return; }
+    const sp=simpleRoadmapReqs(specReqs(), specDopsStats());
+    const gim=simpleRoadmapReqs(visibleGimReqs(), gimDopsStats());
+    const days=daysToArcp();
+    const progress=yearProgressPct();
+    const startDate=trainingYearStartDateFor(currentYear);
+    const open=sp.open+gim.open;
+    const als=alsDays();
+    const paceClass=(sp.pct>=progress&&gim.pct>=progress)?'pace-good':'pace-behind';
+    document.getElementById('main').innerHTML=`
+      <div class="roadmap-wrap">
+        <div class="roadmap-top"><div class="hero-kicker">Roadmap · ${safe(specCfg().label)} · ${safe(currentYear)} · started ${safe(startDate.toLocaleDateString('en-GB',{month:'short',year:'numeric'}))}</div><div class="hero-title">You're <span class="lime">${progress}%</span> through ${safe(currentYear)}.<br><span class="hero-subline">${Math.max(0,days)} days to your ARCP.</span></div></div>
+        <div class="roadmap-bars"><div class="rm-bar-row"><div class="rm-bar-label">${safe(specCfg().short)} evidence · ${sp.pct}%</div><div class="rm-track"><div class="rm-fill spec" style="width:${sp.pct}%"></div></div><div class="rm-target">${sp.met}/${sp.total}</div></div><div class="rm-bar-row"><div class="rm-bar-label">GIM evidence · ${gim.pct}%</div><div class="rm-track"><div class="rm-fill gim" style="width:${gim.pct}%"></div></div><div class="rm-target ${paceClass}">${sp.pct>=progress&&gim.pct>=progress?'on pace':'behind pace'}</div></div></div>
+        <div class="roadmap-kpis"><div class="rm-kpi"><div class="rm-kpi-label">Days to ARCP</div><div class="rm-kpi-val">${Math.max(0,days)}</div><div class="rm-kpi-note">${safe(arcpDateLabel())}</div></div><div class="rm-kpi"><div class="rm-kpi-label">Open milestones</div><div class="rm-kpi-val">${open}</div><div class="rm-kpi-note">this year</div></div><div class="rm-kpi"><div class="rm-kpi-label">Logged this month</div><div class="rm-kpi-val">${loggedThisMonth()}</div><div class="rm-kpi-note">procedures + clinics</div></div><div class="rm-kpi"><div class="rm-kpi-label">ALS expiry</div><div class="rm-kpi-val">${als===null?'—':Math.max(0,als)+'d'}</div><div class="rm-kpi-note">${als===null?'not set':als<183?'renew soon':'valid'}</div></div></div>
+        <div class="roadmap-journey"><div class="journey-title">Your training journey</div><div class="timeline">${YEARS.map(roadmapYearBlock).join('')}</div><div class="rm-actions"><button class="btn primary" onclick="setTab('specialty')">Open ${safe(specCfg().short)} requirements</button><button class="btn" onclick="setTab('gim')">Open GIM</button><button class="btn" onclick="setTab('logbook')">Add evidence</button></div></div>
+      </div>`;
+  };
+  window.renderRoadmap=renderRoadmap;
+  try{ if(currentTab==='roadmap') renderRoadmap(); forceLiveStatus(); }catch(e){ console.warn('V19.10 roadmap typography-only patch skipped', e); }
+})();
+
 </script>
 </body>
 </html>
