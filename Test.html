@@ -651,7 +651,7 @@ const SPECIALTIES = {
     reqs:{
       spec_mcrs:{label:"Specialty MCRs",type:"number",target:4,unit:"MCRs",deadline:"annual",note:"Specialty consultants"},
       spec_msf:{label:"Specialty MSF raters",type:"number",target:8,unit:"raters",deadline:"annual",note:"Contributes to total MSF"},
-      spec_sles:{label:"Specialty SLEs",type:"number",target:15,unit:"SLEs",deadline:"annual",note:"ACAT / CbD / mini-CEX"},
+      spec_sles:{label:"Specialty SLEs",type:"number",target:15,unit:"SLEs",deadline:"annual",note:"ACAT / CBD / miniCEX"},
       spec_teaching:{label:"Evidence of teaching involvement",type:"checkbox",deadline:"annual",note:"Annual evidence"},
       spec_es:{label:"Educational Supervisor Report",type:"checkbox",deadline:"annual",note:"One per year"},
       spec_lines:{label:"Temporary line competency",type:"checkbox",deadline:"ST4",note:"Competent by end of ST4"},
@@ -667,7 +667,7 @@ const SPECIALTIES = {
       spec_mcrs:{label:"Specialty MCRs",type:"number",target:5,unit:"MCRs",deadline:"annual",note:"Respiratory consultants"},
       spec_msf:{label:"MSF raters",type:"number",target:12,unit:"raters",deadline:"annual",note:"Combined specialty + GIM"},
       spec_acats:{label:"ACATs",type:"number",target:6,unit:"ACATs",deadline:"annual",note:"Annual target"},
-      spec_sles:{label:"CbD / mini-CEX",type:"number",target:6,unit:"SLEs",deadline:"annual",note:"Annual target"},
+      spec_sles:{label:"CBD / miniCEX",type:"number",target:6,unit:"SLEs",deadline:"annual",note:"Annual target"},
       spec_es:{label:"Educational Supervisor Report",type:"checkbox",deadline:"annual",note:"One per year"},
       spec_teaching:{label:"Teaching experience",type:"checkbox",deadline:"annual",note:"Teaching evidence / feedback"},
       spec_sce:{label:"SCE Respiratory Medicine",type:"checkbox",deadline:"ST6",note:"Pass before CCT"},
@@ -685,7 +685,7 @@ const SPECIALTIES = {
 };
 const DEFAULT_SPEC_REQS = {
   spec_mcrs:{label:"Specialty MCRs",type:"number",target:4,unit:"MCRs",deadline:"annual",note:"Specialty-specific targets can be refined later"},
-  spec_sles:{label:"Specialty SLEs",type:"number",target:6,unit:"SLEs",deadline:"annual",note:"ACAT / CbD / mini-CEX"},
+  spec_sles:{label:"Specialty SLEs",type:"number",target:6,unit:"SLEs",deadline:"annual",note:"ACAT / CBD / miniCEX"},
   spec_es:{label:"Educational Supervisor Report",type:"checkbox",deadline:"annual",note:"One per year"},
   spec_sce:{label:"Specialty Certificate Exam",type:"checkbox",deadline:"ST6",note:"Pass before CCT"},
   spec_qip:{label:"QIP + QIPAT",type:"checkbox",deadline:"ST6",note:"One-off milestone"},
@@ -695,7 +695,7 @@ const SPECIALTY_OPTIONS = { renal:"Renal Medicine", respiratory:"Respiratory Med
 const GIM_REQS = {
   gim_mcrs:{label:"GIM MCRs",type:"number",target:2,unit:"MCRs",deadline:"annual",note:"GIM consultants"},
   gim_acats:{label:"GIM ACATs",type:"number",target:4,unit:"ACATs",deadline:"annual",note:"Labelled GIM"},
-  gim_sles:{label:"GIM CbD / mini-CEX",type:"number",target:3,unit:"SLEs",deadline:"annual",note:"GIM CbD / mini-CEX"},
+  gim_sles:{label:"GIM CBD / miniCEX",type:"number",target:3,unit:"SLEs",deadline:"annual",note:"GIM CBD / miniCEX"},
   gim_msf:{label:"GIM MSF raters",type:"number",target:4,unit:"raters",deadline:"annual",note:"Part of overall MSF"},
   gim_es:{label:"GIM Educational Supervisor Report",type:"checkbox",deadline:"annual",note:"One per year"},
   gim_clinics:{label:"GIM Clinics",type:"number",target:20,unit:"clinics",deadline:"ST7",cumulative:true,note:"Cumulative"},
@@ -951,7 +951,7 @@ function renderRespSummary(){
       <ul class="resp-summary-list">
         <li>ST4–ST7 training with Generic, Internal Medicine and Respiratory specialty CiPs.</li>
         <li>All CiPs should progress to Level 4 independent practice by ST7.</li>
-        <li>Annual evidence: ESR, 4–6 MCRs, MSF with ≥12 raters, 6 ACATs and 6 CbD/mini-CEX.</li>
+        <li>Annual evidence: ESR, 4–6 MCRs, MSF with ≥12 raters, 6 ACATs and 6 CBD/miniCEX.</li>
         <li>Must pass Respiratory SCE before CCT and keep ALS valid.</li>
         <li>Requires QIP/QIPAT, teaching experience, Teaching Observation, patient survey, management/leadership evidence, reflections and PDP.</li>
       </ul>
@@ -1082,7 +1082,7 @@ function updateModeButton(){ const b=document.getElementById('mode-toggle'); if(
 function countByYear(arr){ return arr.filter(e=>!e.year || e.year===currentYear).length; }
 function sumHours(arr, filter=()=>true){ return Math.round(arr.filter(filter).reduce((a,e)=>a+Number(e.hours||0),0)*10)/10; }
 function printReport(){ const sp=specCfg(); const yr=currentYear; const generated=new Date().toLocaleDateString('en-GB').replace(/\//g,'-'); const cct=state.profile?.cctDate ? new Date(state.profile.cctDate).toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : 'Dec 2030'; const specName=sp.short; const gimClinics=entries('clinics').filter(e=>e.scope==='gim'); const specClinics=entries('clinics').filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)); const procYr=entries('procedures').filter(e=>!e.year||e.year===yr); const teachingYr=entries('teaching').filter(e=>!e.year||e.year===yr); const cpdAll=entries('cpd'); const simAll=entries('simulation'); const acuteAll=entries('acute'); const wardAll=entries('ward'); const win=window.open('','_blank'); const report=`<!doctype html><html><head><title>ARCP Logbook Report — ${yr}</title><style>
-body{font-family:Inter,Arial,sans-serif;color:#111827;margin:18px 22px;background:#fff}button{margin-bottom:14px;padding:8px 12px;border:1px solid #0b5cad;background:white;color:#0b5cad;font-weight:700}.hero{background:#064f9e;color:white;padding:24px 28px;display:flex;justify-content:space-between;align-items:flex-start}.hero h1{font-size:24px;margin:0 0 6px}.hero .sub{font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.86}.hero .right{text-align:right;font-size:12px;line-height:1.6;font-weight:700}.info{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #cbd5e1;margin:16px 24px 14px}.info div{padding:10px 14px;border-right:1px solid #cbd5e1}.info div:last-child{border-right:none}.k{font-size:10px;color:#6b7280;letter-spacing:.14em;text-transform:uppercase;font-weight:800}.v{font-size:16px;color:#064f9e;font-weight:900;margin-top:2px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 24px 18px}.metric{border:1px solid #d1d5db;border-top:4px solid #064f9e;text-align:center;padding:10px}.metric.spec{border-top-color:${sp.color}}.metric.green{border-top-color:#0f766e}.metric.brown{border-top-color:#92400e}.metric .num{font-size:26px;color:#064f9e;font-weight:900}.metric .label{font-size:10px;color:#6b7280;letter-spacing:.14em;text-transform:uppercase}.sec{margin:22px 24px 8px;display:flex;align-items:center;gap:12px}.sec span{background:#064f9e;color:white;padding:7px 12px;font-size:12px;font-weight:900;letter-spacing:.18em}.sec:after{content:"";height:2px;background:#e5e7eb;flex:1}.tag{display:inline-block;color:white;background:#064f9e;font-size:10px;font-weight:900;padding:3px 8px;border-radius:2px;letter-spacing:.08em}.tag.spec{background:${sp.color}}.summary{margin:8px 24px;border-left:4px solid #064f9e;background:#f8fafc;border:1px solid #cbd5e1;padding:8px 10px;font-size:12px}.summary.spec{border-left-color:${sp.color}}table{width:calc(100% - 48px);margin:8px 24px 16px;border-collapse:collapse;font-size:12px}th{background:#075da8;color:#fff;text-align:left;padding:7px 8px;font-size:10px;letter-spacing:.08em;text-transform:uppercase}td{padding:7px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top}tr:nth-child(even) td{background:#f1f5f9}.empty{margin:8px 24px 16px;color:#6b7280;font-style:italic;font-size:12px}.footer{display:flex;justify-content:space-between;margin:28px 24px 0;color:#6b7280;font-size:11px;border-top:1px solid #e5e7eb;padding-top:10px}@media print{button{display:none}body{margin:0}.hero{break-inside:avoid}.sec{break-after:avoid}table{break-inside:auto}tr{break-inside:avoid}}
+body{font-family:Inter,Arial,sans-serif;color:#111827;margin:18px 22px;background:#fff}button{margin-bottom:14px;padding:8px 12px;border:1px solid #0b5cad;background:white;color:#0b5cad;font-weight:700}.hero{background:#064f9e;color:white;padding:24px 28px;display:flex;justify-content:space-between;align-items:flex-start}.hero h1{font-size:24px;margin:0 0 6px}.hero .sub{font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.86}.hero .right{text-align:right;font-size:12px;line-height:1.6;font-weight:700}.info{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #CBD5e1;margin:16px 24px 14px}.info div{padding:10px 14px;border-right:1px solid #CBD5e1}.info div:last-child{border-right:none}.k{font-size:10px;color:#6b7280;letter-spacing:.14em;text-transform:uppercase;font-weight:800}.v{font-size:16px;color:#064f9e;font-weight:900;margin-top:2px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 24px 18px}.metric{border:1px solid #d1d5db;border-top:4px solid #064f9e;text-align:center;padding:10px}.metric.spec{border-top-color:${sp.color}}.metric.green{border-top-color:#0f766e}.metric.brown{border-top-color:#92400e}.metric .num{font-size:26px;color:#064f9e;font-weight:900}.metric .label{font-size:10px;color:#6b7280;letter-spacing:.14em;text-transform:uppercase}.sec{margin:22px 24px 8px;display:flex;align-items:center;gap:12px}.sec span{background:#064f9e;color:white;padding:7px 12px;font-size:12px;font-weight:900;letter-spacing:.18em}.sec:after{content:"";height:2px;background:#e5e7eb;flex:1}.tag{display:inline-block;color:white;background:#064f9e;font-size:10px;font-weight:900;padding:3px 8px;border-radius:2px;letter-spacing:.08em}.tag.spec{background:${sp.color}}.summary{margin:8px 24px;border-left:4px solid #064f9e;background:#f8fafc;border:1px solid #CBD5e1;padding:8px 10px;font-size:12px}.summary.spec{border-left-color:${sp.color}}table{width:calc(100% - 48px);margin:8px 24px 16px;border-collapse:collapse;font-size:12px}th{background:#075da8;color:#fff;text-align:left;padding:7px 8px;font-size:10px;letter-spacing:.08em;text-transform:uppercase}td{padding:7px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top}tr:nth-child(even) td{background:#f1f5f9}.empty{margin:8px 24px 16px;color:#6b7280;font-style:italic;font-size:12px}.footer{display:flex;justify-content:space-between;margin:28px 24px 0;color:#6b7280;font-size:11px;border-top:1px solid #e5e7eb;padding-top:10px}@media print{button{display:none}body{margin:0}.hero{break-inside:avoid}.sec{break-after:avoid}table{break-inside:auto}tr{break-inside:avoid}}
 
 .dops-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;width:100%}
 .dops-card{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--dim);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px}
@@ -1837,7 +1837,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19 brand/year-start 
     endo_mcrs: {label:'Endo MCRs', type:'number', target:4, unit:'MCRs', deadline:'annual', note:'4–6 Multiple Consultant Reports each year'},
     endo_msf: {label:'Endo MSF', type:'number', target:1, unit:'MSF', deadline:'annual', note:'One MSF per year'},
     endo_sles: {label:'Endo SLEs', type:'number', target:6, unit:'SLEs', deadline:'annual', note:'At least 6 SLEs per year'},
-    endo_cbds: {label:'Endo CBDs', type:'number', target:4, unit:'CBDs', deadline:'annual', note:'At least 4 of the annual SLEs should be CBDs'},
+    endo_CBDs: {label:'Endo CBDs', type:'number', target:4, unit:'CBDs', deadline:'annual', note:'At least 4 of the annual SLEs should be CBDs'},
     endo_esr: {label:'Educational Supervisor Report', type:'checkbox', deadline:'annual', note:'One ESR per year'},
     endo_teaching_annual: {label:'Teaching evidence', type:'checkbox', deadline:'annual', note:'Evidence of teaching contribution / feedback'},
     endo_mdt_annual: {label:'MDT / leadership exposure', type:'checkbox', deadline:'annual', note:'MDT exposure in early years; leadership evidence later'},
@@ -2082,7 +2082,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19 brand/year-start 
       .replace(/^Specialty\s+/i, spec+' ')
       .replace(/^MSF\b/i, spec+' MSF')
       .replace(/^ACATs?\b/i, spec+' ACATs')
-      .replace(/^CbD\s*\/\s*mini-CEX\b/i, spec+' CbD / mini-CEX')
+      .replace(/^CBD\s*\/\s*miniCEX\b/i, spec+' CBD / miniCEX')
       .replace(/^CBDs?\b/i, spec+' CBDs')
       .replace(/^SLEs?\b/i, spec+' SLEs')
       .replace(/^MCRs?\b/i, spec+' MCRs')
@@ -2091,7 +2091,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19 brand/year-start 
       .replace(/^Teaching Observations/i, spec+' Teaching Observations');
     out.note=(out.note||'').replace(/\bEndo\b/g,'Endocrinology');
     if(getSpecKey()==='endocrinology' && (out.label||'').includes('SLEs')){
-      out.note='At least 6 SLEs per year (minimum 4 CBDs, minimum 2 mini-CEX).';
+      out.note='At least 6 SLEs per year (minimum 4 CBDs, minimum 2 miniCEX).';
     }
     return out;
   }
@@ -2588,8 +2588,8 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19 brand/year-start 
 /* V19.10.4 PATCH — GIM roadmap evidence shows x/total; GIM SLEs renamed */
 try {
   if (typeof GIM_REQS !== 'undefined' && GIM_REQS.gim_sles) {
-    GIM_REQS.gim_sles.label = 'GIM CbD / mini-CEX';
-    GIM_REQS.gim_sles.note = 'GIM CbD / mini-CEX';
+    GIM_REQS.gim_sles.label = 'GIM CBD / miniCEX';
+    GIM_REQS.gim_sles.note = 'GIM CBD / miniCEX';
   }
 } catch(e) { console.warn('V19.10.4 label patch skipped', e); }
 
