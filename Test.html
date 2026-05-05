@@ -2549,6 +2549,100 @@ try {
   }
 } catch(e) { console.warn('V19.10.4 label patch skipped', e); }
 
+
+/* V19.10.5 — GIM procedures competency patch
+   Converts GIM DOPS from checkbox cards to Respiratory-style competency rows.
+   No layout/nav/readiness changes outside GIM procedure competency tracking. */
+(function installV19105GimProcedureCompetency(){
+  const GIM_PROCEDURE_TARGETS = [
+    { name:'Advanced cardiopulmonary resuscitation (CPR)', targetText:'Leadership of CPR team', targetLevel:'Unsupervised' },
+    { name:'Direct current (DC) cardioversion', targetText:'Unsupervised', targetLevel:'Unsupervised' },
+    { name:'Temporary cardiac pacing using an external device', targetText:'Skills lab or satisfactory supervised', targetLevel:'Supervised' },
+    { name:'Central venous cannulation (internal jugular or subclavian)', targetText:'Skills lab or satisfactory supervised', targetLevel:'Supervised' },
+    { name:'Access to circulation for resuscitation (femoral vein or intraosseous)', targetText:'Skills lab or satisfactory supervised', targetLevel:'Supervised' },
+    { name:'Pleural aspiration for fluid (diagnostic)', targetText:'Unsupervised', targetLevel:'Unsupervised' },
+    { name:'Pleural aspiration (pneumothorax)', targetText:'Unsupervised', targetLevel:'Unsupervised' },
+    { name:'Intercostal drain for pneumothorax', targetText:'Skills lab or satisfactory supervised', targetLevel:'Supervised' },
+    { name:'Intercostal drain for effusion', targetText:'Skills lab or satisfactory supervised', targetLevel:'Supervised' },
+    { name:'Nasogastric (NG) tube', targetText:'Unsupervised', targetLevel:'Unsupervised' },
+    { name:'Ascitic tap', targetText:'Unsupervised', targetLevel:'Unsupervised' },
+    { name:'Abdominal paracentesis', targetText:'Skills lab or satisfactory supervised practice', targetLevel:'Supervised' },
+    { name:'Lumbar puncture', targetText:'Unsupervised', targetLevel:'Unsupervised' }
+  ];
+  const GIM_LEVELS = ['Not assessed','Skills lab','Supervised','Unsupervised'];
+  const LEVEL_RANK = {'Not assessed':0,'Skills lab':1,'Supervised':2,'Unsupervised':3};
+  function gimProcKey(name){ return 'gim_proc.' + name; }
+  function normaliseGimProcVal(v){ return GIM_LEVELS.includes(v) ? v : 'Not assessed'; }
+  function gimProcValue(name){ return normaliseGimProcVal(state.req[gimProcKey(name)]); }
+  function gimProcMetItem(item){ return (LEVEL_RANK[gimProcValue(item.name)]||0) >= (LEVEL_RANK[item.targetLevel]||0); }
+  function gimProcStatus(item){
+    const v = gimProcValue(item.name);
+    if(gimProcMetItem(item)) return 'done';
+    if(v !== 'Not assessed') return 'partial';
+    return '';
+  }
+  window.setGimProcedureLevel = function(name, value){
+    if(yearLocked()) return alert('This year is locked. Unlock it before editing.');
+    state.req[gimProcKey(name)] = normaliseGimProcVal(value);
+    // Preserve backward compatibility for old checkbox-based reports/readiness if present.
+    state.req['dops.' + name] = gimProcMetItem({name, targetLevel: (GIM_PROCEDURE_TARGETS.find(p=>p.name===name)||{}).targetLevel || 'Unsupervised'});
+    saveState();
+    renderGIM();
+    updateReadiness();
+  };
+  window.gimDopsStats = function(){
+    const met = GIM_PROCEDURE_TARGETS.filter(gimProcMetItem).length;
+    return {met,total:GIM_PROCEDURE_TARGETS.length,label:'GIM DOPS'};
+  };
+  window.dopsCardGrid = function(){
+    const rows = GIM_PROCEDURE_TARGETS.map(item=>{
+      const val = gimProcValue(item.name);
+      const status = gimProcStatus(item);
+      const ok = status === 'done';
+      return `<div class="gim-proc-row ${status}">
+        <div class="gim-proc-name">${safe(item.name)}</div>
+        <div class="gim-proc-target">ST4 target: <strong>${safe(item.targetText)}</strong></div>
+        <select class="input gim-proc-select" onchange="setGimProcedureLevel('${safe(item.name)}', this.value)">
+          ${GIM_LEVELS.map(l=>`<option value="${l}" ${val===l?'selected':''}>${l}</option>`).join('')}
+        </select>
+        <div class="gim-proc-status ${ok?'good':status==='partial'?'warn':''}">${ok?'✓ on track':status==='partial'?'in progress':'not yet'}</div>
+      </div>`;
+    }).join('');
+    return `<div class="gim-proc-list">${rows}</div>`;
+  };
+  window.renderGIM = function(){
+    if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
+    const annual=[], cumulative=[], milestones=[];
+    Object.entries(visibleGimReqs()).forEach(([id,req])=>{
+      const c=makeReqCard(id,req,'gim');
+      if(req.deadline==='annual') annual.push(c); else if(req.cumulative) cumulative.push(c); else milestones.push(c);
+    });
+    const stats=gimDopsStats();
+    const cumulativeNote = currentYear==='ST7' ? 'End-of-training totals including final-year minimums' : 'End-of-training cumulative targets';
+    document.getElementById('main').innerHTML =
+      renderOutcomeSelector()+
+      section('GIM annual requirements',`For ${currentYear}`,annual)+
+      section('GIM cumulative targets',cumulativeNote,cumulative)+
+      section('GIM milestones','One-off items',milestones)+
+      section('GIM DOPS procedures',`${stats.met} / ${stats.total} at target`,[dopsCardGrid()]);
+  };
+  if(!document.getElementById('v19105-gim-procedure-style')){
+    const st=document.createElement('style');
+    st.id='v19105-gim-procedure-style';
+    st.textContent=`
+      .gim-proc-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg2);width:100%}
+      .gim-proc-row{display:grid;grid-template-columns:minmax(280px,1fr) 230px 180px 96px;gap:14px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);border-left:4px solid var(--dim);background:var(--bg2)}
+      .gim-proc-row:last-child{border-bottom:none}.gim-proc-row.done{border-left-color:var(--green);background:color-mix(in srgb,var(--green) 6%,var(--bg2))}.gim-proc-row.partial{border-left-color:var(--amber);background:color-mix(in srgb,var(--amber) 5%,var(--bg2))}
+      .gim-proc-name{font-size:13px;font-weight:750;color:var(--text);line-height:1.35}.gim-proc-target{font-size:10px;color:var(--dim);letter-spacing:.02em}.gim-proc-target strong{color:var(--text2);font-weight:800}.gim-proc-select{width:100%;min-width:150px}.gim-proc-status{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;text-align:right;color:var(--dim)}.gim-proc-status.good{color:var(--green)}.gim-proc-status.warn{color:var(--amber)}
+      body.visual-v16 .gim-proc-list{background:rgba(255,255,255,.035)!important;border-color:rgba(255,255,255,.10)!important;border-radius:18px!important;overflow:hidden}
+      body.visual-v16 .gim-proc-row{background:rgba(255,255,255,.035)!important;border-bottom-color:rgba(255,255,255,.08)!important;border-left-color:rgba(255,255,255,.18)!important}.visual-v16 .gim-proc-row.done{border-left-color:var(--primary)!important;background:rgba(215,255,40,.075)!important}.visual-v16 .gim-proc-row.partial{border-left-color:var(--amber)!important;background:rgba(255,212,59,.055)!important}
+      @media(max-width:860px){.gim-proc-row{grid-template-columns:1fr;gap:8px}.gim-proc-target,.gim-proc-status{text-align:left}.gim-proc-select{min-width:0}}
+    `;
+    document.head.appendChild(st);
+  }
+  try{ if(currentTab==='gim') renderGIM(); updateReadiness(); forceLiveStatus(); }catch(e){ console.warn('V19.10.5 GIM procedures competency patch skipped', e); }
+})();
+
 </script>
 </body>
 </html>
