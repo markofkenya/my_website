@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>ARCP//Outcome1</title>
+<title>ARCP//01 Portfolio Tracker</title>
 <meta name="theme-color" content="#0e0f11" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
@@ -322,13 +322,7 @@ body{font-kerning:normal;text-rendering:optimizeLegibility;}
       <div class="gate-kicker">PORTFOLIO TRACKER FOR PHYSICIANS</div>
       <h1 class="gate-headline">Know your <span>roadmap</span>.<br>Own your ARCP.</h1>
       <p class="gate-lede">Bye-bye spreadsheets. Hello, Outcome1.</p>
-      <div class="gate-progress-preview" aria-hidden="true">
-        <div class="preview-row"><span>Specialty evidence</span><strong>Roadmap-ready</strong></div>
-        <div class="preview-track"><div style="width:72%"></div></div>
-        <div class="preview-row"><span>GIM portfolio</span><strong>Same across specialties</strong></div>
-        <div class="preview-track blue"><div style="width:58%"></div></div>
-      </div>
-      <div class="gate-thanks">Thank you for testing ARCP//01 beta. Your feedback will help shape the final product.</div>
+      <div class="gate-thanks">Thank you for testing Outcome1 beta. Your feedback will help shape the final product.</div>
     </section>
 
     <section class="gate-card">
@@ -343,7 +337,6 @@ body{font-kerning:normal;text-rendering:optimizeLegibility;}
         <div class="field"><label>Name</label><input id="on-name" class="input" placeholder="Dr John Smith"></div>
         <div class="field"><label>Email</label><input id="on-email" class="input" type="email" placeholder="j.smith@nhs.net"></div>
         <div class="field"><label>Specialty</label><select id="on-specialty" class="input"></select></div>
-        <div class="field"><label>Theme colour</label><select id="on-theme" class="input"><option value="">Use specialty default</option><option value="#a78bfa|#7c5fd4">Purple</option><option value="#34d399|#059669">Green</option><option value="#6b8cff|#2f4aaa">Blue</option><option value="#f87171|#dc2626">Red / Cardiology</option><option value="#f59e0b|#d97706">Amber</option><option value="#14b8a6|#0f766e">Teal</option><option value="#ec4899|#be185d">Pink</option><option value="#84cc16|#4d7c0f">Lime</option></select></div>
         <div class="field"><label>Training year</label><select id="on-year" class="input"><option>ST4</option><option>ST5</option><option>ST6</option><option>ST7</option></select></div>
         <div class="field"><label>Training year started</label><select id="on-start-month" class="input"><option value="0">January</option><option value="1">February</option><option value="2">March</option><option value="3">April</option><option value="4">May</option><option value="5">June</option><option value="6">July</option><option value="7" selected>August</option><option value="8">September</option><option value="9">October</option><option value="10">November</option><option value="11">December</option></select></div>
         <div class="field"><label>Deanery / region</label><select id="on-deanery" class="input"></select></div>
@@ -385,7 +378,7 @@ body{font-kerning:normal;text-rendering:optimizeLegibility;}
   <div id="beta-expired-lock">
     <div class="expired-card">
       <div class="expired-title">Trial expired</div>
-      <div class="expired-msg">Your 30-day GIMTrack beta trial has ended.<br><br>Thank you for testing the ARCP//01 beta. To continue using this beta account, please contact:<br><br><a href="mailto:markmaugo@gmail.com">markmaugo@gmail.com</a></div>
+      <div class="expired-msg">Your 30-day Outcome1 beta trial has ended.<br><br>Thank you for testing Outcome1 beta. To continue using this beta account, please contact:<br><br><a href="mailto:markmaugo@gmail.com">markmaugo@gmail.com</a></div>
     </div>
   </div>
 
@@ -397,7 +390,7 @@ body{font-kerning:normal;text-rendering:optimizeLegibility;}
       <span class="status-item">Specialty: <strong id="sb-specialty">--</strong></span>
       <span class="status-item" id="sync" style="color:var(--green)">● Live</span>
     </div>
-    <div class="row"><button class="btn small" id="mode-toggle" onclick="toggleFocus()">LIGHT</button><button class="btn small" onclick="openSettings()">Profile / Specialty</button><button class="btn small" onclick="startFreshProfile()">New test profile</button><button class="btn small danger" onclick="resetYearData()">Reset year</button></div>
+    <div class="row"><button class="btn small" onclick="openSettings()">Profile / Specialty</button><button class="btn small" onclick="startFreshProfile()">New test profile</button><button class="btn small danger" onclick="resetYearData()">Reset year</button></div>
   </div>
 </div>
 
@@ -1697,7 +1690,6 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19 brand/year-start 
     const groups = splitEndoReqCards(reqs);
     document.getElementById('main').innerHTML =
       renderOutcomeSelector() +
-      endoYearSummaryCard() +
       section('Endo annual requirements', `For ${currentYear}`, groups.annual) +
       section('Endo ST4–ST5 window', 'SCE attempt, QIP 1, CPD 60h, DAFNE, patient survey 1', groups.early) +
       section('Endo CCT completion milestones', 'ST6–ST7 and end-of-training totals', groups.end);
@@ -1749,6 +1741,389 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19 brand/year-start 
   window.printReport = printReport;
   try { syncLogbookTargets(); initOnboarding(); render(); forceLiveStatus(); } catch(e){ console.warn('V19.2 ENDO module refresh skipped', e); }
 })();
+
+
+/* ─────────────────────────────────────────────────────────────
+   V19.3 CLEANUP PATCH — no light mode, no onboarding theme picker,
+   Outcome1 beta copy, selected-year neon, no Endo summary card.
+───────────────────────────────────────────────────────────── */
+(function installV193Cleanup(){
+  // Force dark-only experience now that light mode has been removed.
+  document.body.classList.remove('focus');
+  try { localStorage.removeItem('arcp_v2_focus'); } catch(e) {}
+
+  // Keep selected training year visibly neon in the header.
+  if(!document.getElementById('v19-3-cleanup-style')){
+    const st=document.createElement('style');
+    st.id='v19-3-cleanup-style';
+    st.textContent=`
+      #year-buttons .btn.primary,
+      body.visual-v16 #year-buttons .btn.primary{
+        background:#d7ff28!important;
+        border-color:#d7ff28!important;
+        color:#080a09!important;
+        box-shadow:0 0 22px rgba(215,255,40,.28)!important;
+      }
+      #year-buttons .btn.good:not(.primary){
+        border-color:rgba(156,255,46,.55)!important;
+        color:#9cff2e!important;
+      }
+      .gate-thanks{color:rgba(247,244,232,.62)!important;}
+    `;
+    document.head.appendChild(st);
+  }
+
+  // Defensive removal in case cached DOM still contains old controls.
+  const modeBtn=document.getElementById('mode-toggle');
+  if(modeBtn) modeBtn.remove();
+  const theme=document.getElementById('on-theme');
+  if(theme && theme.closest('.field')) theme.closest('.field').remove();
+
+  // Ensure the final copied wording is Outcome1 everywhere visible.
+  const thanks=document.querySelector('.gate-thanks');
+  if(thanks) thanks.textContent='Thank you for testing Outcome1 beta. Your feedback will help shape the final product.';
+  const expired=document.querySelector('.expired-msg');
+  if(expired){
+    expired.innerHTML='Your 30-day Outcome1 beta trial has ended.<br><br>Thank you for testing Outcome1 beta. To continue using this beta account, please contact:<br><br><a href="mailto:markmaugo@gmail.com">markmaugo@gmail.com</a>';
+  }
+
+  // Override ENDO renderer one final time to remove the small ARCP summary / roadmap block.
+  const previousRenderSpecialty = renderSpecialty;
+  renderSpecialty = function(){
+    if(getSpecKey() !== 'endocrinology') return previousRenderSpecialty();
+    if(yearLocked()){ document.getElementById('main').innerHTML = renderLockedBlock(); return; }
+    syncLogbookTargets();
+    const reqs = specReqs();
+    const annual=[], early=[], end=[];
+    Object.entries(reqs).forEach(([id, req])=>{
+      const card = makeReqCard(id, req, 'spec');
+      if(req.deadline === 'annual') annual.push(card);
+      else if(['ST4','ST5'].includes(req.deadline)) early.push(card);
+      else end.push(card);
+    });
+    document.getElementById('main').innerHTML =
+      renderOutcomeSelector() +
+      section('Endo annual requirements', `For ${currentYear}`, annual) +
+      section('Endo ST4–ST5 window', 'SCE attempt, QIP 1, CPD 60h, DAFNE, patient survey 1', early) +
+      section('Endo CCT completion milestones', 'ST6–ST7 and end-of-training totals', end);
+  };
+  window.renderSpecialty=renderSpecialty;
+  try { render(); forceLiveStatus(); } catch(e){ console.warn('V19.3 cleanup refresh skipped', e); }
+})();
+
+
+/* ─────────────────────────────────────────────────────────────
+   V19.6 PATCH — Standardised specialty labels + ARCP at-risk highlighting
+   Adds visual risk flags only; no data structure change.
+───────────────────────────────────────────────────────────── */
+(function installV196AtRisk(){
+  // 1) Standardise visible specialty names.
+  if(SPECIALTIES.endocrinology){ SPECIALTIES.endocrinology.short = 'Endocrinology'; SPECIALTIES.endocrinology.label = 'Endocrinology & Diabetes'; }
+  if(SPECIALTY_THEMES.endocrinology){ SPECIALTY_THEMES.endocrinology.short = 'Endocrinology'; SPECIALTY_THEMES.endocrinology.label = 'Endocrinology & Diabetes'; }
+  SPECIALTY_OPTIONS.endocrinology = 'Endocrinology & Diabetes';
+
+  function canonicalSpecName(){
+    const key=getSpecKey();
+    if(key==='respiratory') return 'Respiratory';
+    if(key==='renal') return 'Renal';
+    if(key==='endocrinology') return 'Endocrinology';
+    const cfg=specCfg();
+    return (cfg.short || cfg.label || 'Specialty').replace(/ Medicine$/,'');
+  }
+  window.specialtyDisplayName = canonicalSpecName;
+
+  function standardiseReq(req, stream){
+    const out=Object.assign({}, req);
+    const spec=canonicalSpecName();
+    if(stream==='gim'){
+      out.label=(out.label||'').replace(/^GIM\s*/,'GIM ');
+      return out;
+    }
+    out.label=(out.label||'')
+      .replace(/\bEndo\b/g,'Endocrinology')
+      .replace(/^Specialty\s+/i, spec+' ')
+      .replace(/^MSF\b/i, spec+' MSF')
+      .replace(/^ACATs?\b/i, spec+' ACATs')
+      .replace(/^CbD\s*\/\s*mini-CEX\b/i, spec+' CbD / mini-CEX')
+      .replace(/^CBDs?\b/i, spec+' CBDs')
+      .replace(/^SLEs?\b/i, spec+' SLEs')
+      .replace(/^MCRs?\b/i, spec+' MCRs')
+      .replace(/^Patient survey/i, spec+' patient survey')
+      .replace(/^Teaching Observation/i, spec+' Teaching Observation')
+      .replace(/^Teaching Observations/i, spec+' Teaching Observations');
+    out.note=(out.note||'').replace(/\bEndo\b/g,'Endocrinology');
+    if(getSpecKey()==='endocrinology' && (out.label||'').includes('SLEs')){
+      out.note='At least 6 SLEs per year (minimum 4 CBDs, minimum 2 mini-CEX).';
+    }
+    return out;
+  }
+
+  const _v196_specReqs = specReqs;
+  specReqs=function(){
+    const raw=_v196_specReqs();
+    const out={};
+    Object.entries(raw||{}).forEach(([id,req])=> out[id]=standardiseReq(req,'spec'));
+    return out;
+  };
+  window.specReqs=specReqs;
+
+  // 2) At-risk logic.
+  function isReqAtRisk(id, req){
+    const status=reqStatus(id, req);
+    if(status==='met' || status==='na') return false;
+    const d=daysToArcp ? daysToArcp() : 999;
+    if(req.deadline==='annual') return d <= 120;
+    if(deadlinePast(req.deadline)) return true;
+    if(req.deadline===currentYear) return true;
+    return d <= 90 && yrIndex(req.deadline) <= yrIndex(currentYear)+1;
+  }
+  function riskSeverity(id, req){
+    const d=daysToArcp ? daysToArcp() : 999;
+    if(deadlinePast(req.deadline)) return 'high';
+    if(req.deadline===currentYear && d<=90) return 'high';
+    if(req.deadline==='annual' && d<=60) return 'high';
+    return 'medium';
+  }
+  function riskLabel(id, req, stream){
+    const streamName=stream==='gim'?'GIM':canonicalSpecName();
+    const status=reqStatus(id, req);
+    const val=req.type==='checkbox' ? (getReqVal(id,req)?'complete':'not done') : `${getReqVal(id,req)} / ${req.target}`;
+    const due=req.deadline==='annual' ? `${currentYear} annual` : `due ${req.deadline}`;
+    return {label:`${streamName}: ${req.label}`, detail:`${val} · ${due}`, severity:riskSeverity(id,req), status};
+  }
+  function currentRiskItems(){
+    if(!state.profile || yearLocked()) return [];
+    const items=[];
+    Object.entries(specReqs()||{}).forEach(([id,req])=>{ if(isReqAtRisk(id,req)) items.push(riskLabel(id,req,'spec')); });
+    Object.entries(visibleGimReqs()||{}).forEach(([id,req])=>{ if(isReqAtRisk(id,req)) items.push(riskLabel(id,req,'gim')); });
+    const specD=specDopsStats ? specDopsStats() : {met:0,total:0};
+    if(specD.total && specD.met < specD.total && (daysToArcp ? daysToArcp()<=120 : true)) items.push({label:`${canonicalSpecName()}: DOPS / procedure sign-off`, detail:`${specD.met} / ${specD.total} complete`, severity:(daysToArcp&&daysToArcp()<=60)?'high':'medium'});
+    const gimD=gimDopsStats ? gimDopsStats() : {met:0,total:0};
+    if(gimD.total && gimD.met < gimD.total && (daysToArcp ? daysToArcp()<=120 : true)) items.push({label:'GIM: DOPS sign-off', detail:`${gimD.met} / ${gimD.total} complete`, severity:(daysToArcp&&daysToArcp()<=60)?'high':'medium'});
+    return items.slice(0,8);
+  }
+  window.currentRiskItems=currentRiskItems;
+
+  function riskBannerHTML(){
+    const risks=currentRiskItems();
+    if(!risks.length) return `<div class="risk-banner risk-clear"><div><strong>✓ ARCP risk check clear</strong><span>No current high-risk evidence gaps for ${safe(currentYear)}.</span></div></div>`;
+    const high=risks.filter(r=>r.severity==='high').length;
+    return `<div class="risk-banner ${high?'risk-high':'risk-medium'}"><div class="risk-banner-head"><strong>${high?'⚠ ARCP at-risk items':'⚑ ARCP watch list'}</strong><span>${risks.length} item${risks.length===1?'':'s'} need attention for ${safe(currentYear)}${high?` · ${high} high priority`:''}</span></div><div class="risk-list">${risks.map(r=>`<div class="risk-pill ${r.severity==='high'?'high':'medium'}"><b>${safe(r.label)}</b><small>${safe(r.detail)}</small></div>`).join('')}</div></div>`;
+  }
+  window.riskBannerHTML=riskBannerHTML;
+
+  function prependRiskBanner(){
+    const main=document.getElementById('main');
+    if(!main || yearLocked() || currentTab==='admin') return;
+    if(main.querySelector('.risk-banner')) return;
+    main.insertAdjacentHTML('afterbegin', riskBannerHTML());
+  }
+
+  // 3) Highlight individual cards that are currently risky.
+  const _v196_makeReqCard = makeReqCard;
+  makeReqCard=function(id, req, stream){
+    const cleanReq = standardiseReq(req, stream);
+    let html=_v196_makeReqCard(id, cleanReq, stream);
+    if(isReqAtRisk(id, cleanReq)){
+      html=html.replace('class="card ', `class="card at-risk ${riskSeverity(id, cleanReq)} `);
+      html=html.replace('</div>', `<span class="risk-tag ${riskSeverity(id, cleanReq)}">${riskSeverity(id, cleanReq)==='high'?'AT RISK':'WATCH'}</span></div>`);
+    }
+    return html;
+  };
+  window.makeReqCard=makeReqCard;
+
+  // 4) Add risk information to roadmap KPI area while preserving layout.
+  const _v196_renderRoadmap = renderRoadmap;
+  renderRoadmap=function(){
+    _v196_renderRoadmap();
+    const wrap=document.querySelector('.roadmap-wrap');
+    if(wrap && !wrap.querySelector('.risk-banner')){
+      const kpis=wrap.querySelector('.roadmap-kpis');
+      if(kpis) kpis.insertAdjacentHTML('beforebegin', riskBannerHTML());
+    }
+  };
+  window.renderRoadmap=renderRoadmap;
+
+  // 5) Ensure all screens get the banner after rendering.
+  const _v196_render = render;
+  render=function(){
+    _v196_render();
+    if(['specialty','gim','overview','logbook'].includes(currentTab)) prependRiskBanner();
+  };
+  window.render=render;
+
+  // 6) Styling.
+  if(!document.getElementById('v19-6-risk-style')){
+    const st=document.createElement('style');
+    st.id='v19-6-risk-style';
+    st.textContent=`
+      .risk-banner{border:1px solid var(--line);border-left:4px solid var(--amber);background:color-mix(in srgb,var(--amber) 8%,var(--bg2));border-radius:16px;padding:14px 16px;margin:0 0 18px;box-shadow:0 12px 36px rgba(0,0,0,.16)}
+      .risk-banner.risk-high{border-left-color:var(--red);background:color-mix(in srgb,var(--red) 8%,var(--bg2))}.risk-banner.risk-clear{border-left-color:var(--green);background:color-mix(in srgb,var(--green) 7%,var(--bg2))}
+      .risk-banner-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}.risk-banner strong{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--text)}.risk-banner span{font-size:11px;color:var(--text2)}
+      .risk-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}.risk-pill{border:1px solid color-mix(in srgb,var(--amber) 35%,transparent);background:color-mix(in srgb,var(--amber) 8%,transparent);border-radius:999px;padding:7px 10px;display:flex;flex-direction:column;gap:2px;max-width:310px}.risk-pill.high{border-color:color-mix(in srgb,var(--red) 45%,transparent);background:color-mix(in srgb,var(--red) 9%,transparent)}.risk-pill b{font-size:11px;color:var(--text);line-height:1.25}.risk-pill small{font-size:10px;color:var(--dim)}
+      .card.at-risk{position:relative;box-shadow:0 0 0 1px color-mix(in srgb,var(--amber) 35%,transparent),0 12px 32px rgba(0,0,0,.18)!important}.card.at-risk.high{box-shadow:0 0 0 1px color-mix(in srgb,var(--red) 45%,transparent),0 12px 32px rgba(0,0,0,.18)!important}.card.at-risk.high{border-left-color:var(--red)!important}.card.at-risk.medium{border-left-color:var(--amber)!important}.risk-tag{float:right;font-size:8px;font-weight:900;letter-spacing:.12em;border:1px solid currentColor;border-radius:999px;padding:2px 6px;margin-left:6px}.risk-tag.high{color:var(--red)}.risk-tag.medium{color:var(--amber)}
+      body.visual-v16 .risk-banner{background:rgba(255,212,59,.07)!important;border-color:rgba(255,212,59,.28)!important;border-left-color:#ffd43b!important}.visual-v16 .risk-banner.risk-high{background:rgba(255,107,107,.075)!important;border-left-color:#ff6b6b!important}.visual-v16 .risk-banner.risk-clear{background:rgba(156,255,46,.06)!important;border-left-color:#9cff2e!important}.visual-v16 .risk-pill{background:rgba(255,212,59,.08)!important}.visual-v16 .risk-pill.high{background:rgba(255,107,107,.09)!important}
+      @media(max-width:680px){.risk-banner{padding:12px;margin-bottom:14px}.risk-list{display:block}.risk-pill{max-width:none;margin-top:8px;border-radius:13px}.risk-banner-head{display:block}.risk-banner span{display:block;margin-top:4px}}
+    `;
+    document.head.appendChild(st);
+  }
+  try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19.6 at-risk refresh skipped', e); }
+})();
+
+
+
+/* ─────────────────────────────────────────────────────────────
+   V19.7 PATCH — Readiness completion fix + onboarding preview removal
+   - Readiness only counts active/current requirements.
+   - Cumulative manual values are preserved when higher than logbook-derived totals.
+   - DOPS remains included, but only when a mandatory specialty DOPS set exists.
+───────────────────────────────────────────────────────────── */
+(function installV197ReadinessFix(){
+  // Ensure preview bars are removed even if cached markup survives.
+  document.querySelectorAll('.gate-progress-preview').forEach(el => el.remove());
+
+  // Preserve manual cumulative entries if they are higher than auto-derived logbook values.
+  const _v197_sync = syncLogbookTargets;
+  syncLogbookTargets = function(){
+    const before = Object.assign({}, state.req || {});
+    _v197_sync();
+    const cumulativeKeys = [
+      'cum.gim_clinics','cum.gim_cpd','cum.gim_cpd_st7','cum.gim_sim','cum.gim_sim_st7','cum.gim_acute','cum.gim_acute_st7','cum.gim_ward',
+      'cum.endo_cpd_early','cum.endo_cpd_late','cum.endo_cpd_total'
+    ];
+    cumulativeKeys.forEach(k => {
+      const manual = Number(before[k] || 0);
+      const derived = Number(state.req[k] || 0);
+      if(manual > derived) state.req[k] = manual;
+    });
+  };
+  window.syncLogbookTargets = syncLogbookTargets;
+
+  function activeReqEntries(reqs){
+    return Object.entries(reqs || {}).filter(([id, r]) => {
+      if(typeof isFinalYearOnlyReq === 'function' && isFinalYearOnlyReq(id) && currentYear !== 'ST7') return false;
+      if(r.deadline === 'annual') return true;
+      return yrIndex(r.deadline) <= yrIndex(currentYear);
+    });
+  }
+  window.activeReqEntries = activeReqEntries;
+
+  function calcActiveReqs(reqs){
+    const arr = activeReqEntries(reqs);
+    const met = arr.filter(([id, r]) => reqStatus(id, r) === 'met').length;
+    return { met, total: arr.length, open: Math.max(0, arr.length - met), pct: arr.length ? Math.round((met / arr.length) * 100) : 0 };
+  }
+  window.calcActiveReqs = calcActiveReqs;
+
+  function calcReqsWithExtraActive(reqs, extra){
+    const base = calcActiveReqs(reqs);
+    const extraTotal = Math.max(0, Number(extra?.total || 0));
+    const extraMet = Math.min(extraTotal, Math.max(0, Number(extra?.met || 0)));
+    const met = base.met + extraMet;
+    const total = base.total + extraTotal;
+    return { met, total, open: Math.max(0, total - met), pct: total ? Math.round((met / total) * 100) : 0, base, extra };
+  }
+  window.calcReqsWithExtra = calcReqsWithExtraActive;
+
+  // Keep Endocrinology clean: no mandatory DOPS/procedure sign-off in readiness.
+  const _v197_specDopsStats = specDopsStats;
+  specDopsStats = function(){
+    if(getSpecKey() === 'endocrinology') return {met:0,total:0,label:'Endocrinology DOPS'};
+    return _v197_specDopsStats();
+  };
+  window.specDopsStats = specDopsStats;
+
+  // Make the top readiness bars use the corrected active logic.
+  updateReadiness = function(){
+    if(!state.profile) return;
+    syncLogbookTargets();
+    const spec = calcReqsWithExtraActive(specReqs(), specDopsStats());
+    const gimReqs = (typeof visibleGimReqs === 'function') ? visibleGimReqs() : GIM_REQS;
+    const gim = calcReqsWithExtraActive(gimReqs, gimDopsStats());
+    const specPct=document.getElementById('spec-pct'), specFill=document.getElementById('spec-fill'), gimPct=document.getElementById('gim-pct'), gimFill=document.getElementById('gim-fill'), detail=document.getElementById('readiness-detail');
+    if(specPct) specPct.textContent=spec.pct+'%';
+    if(specFill) specFill.style.width=spec.pct+'%';
+    if(gimPct) gimPct.textContent=gim.pct+'%';
+    if(gimFill) gimFill.style.width=gim.pct+'%';
+    if(detail) detail.textContent=`${specCfg().short} ${spec.met}/${spec.total} · GIM ${gim.met}/${gim.total}`;
+  };
+  window.updateReadiness = updateReadiness;
+
+  // Overview should use the same corrected active totals.
+  renderOverview = function(){
+    if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
+    const spec = calcReqsWithExtraActive(specReqs(), specDopsStats());
+    const gimReqs = (typeof visibleGimReqs === 'function') ? visibleGimReqs() : GIM_REQS;
+    const gim = calcReqsWithExtraActive(gimReqs, gimDopsStats());
+    const outstanding = [
+      ...activeReqEntries(specReqs()).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'spec')),
+      ...activeReqEntries(gimReqs).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'gim'))
+    ];
+    document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Overview — ${currentYear}</span><span class="sec-rule"></span></div><div class="summary-grid"><div class="summary"><div class="big green">${spec.met}</div><div class="hint">${specCfg().short} complete</div></div><div class="summary"><div class="big red">${spec.open}</div><div class="hint">${specCfg().short} outstanding</div></div><div class="summary"><div class="big green">${gim.met}</div><div class="hint">GIM complete</div></div><div class="summary"><div class="big red">${gim.open}</div><div class="hint">GIM outstanding</div></div><div class="summary"><div class="big primary">${entries('clinics').length+entries('procedures').length+entries('cpd').length+entries('simulation').length+entries('teaching').length}</div><div class="hint">logbook entries</div></div></div></section>${outstanding.length?section('Outstanding / in progress','Editable unless year locked',outstanding):'<div class="panel green">✓ All active requirements are complete for this year.</div>'}`;
+  };
+  window.renderOverview = renderOverview;
+
+  // At-risk list should also ignore inactive/future items, so it does not report phantom blockers.
+  if(typeof currentRiskItems === 'function'){
+    currentRiskItems = function(){
+      if(!state.profile || yearLocked()) return [];
+      const items=[];
+      activeReqEntries(specReqs()).forEach(([id,req])=>{ if(isReqAtRisk(id,req)) items.push(riskLabel(id,req,'spec')); });
+      const gimReqs=(typeof visibleGimReqs === 'function') ? visibleGimReqs() : GIM_REQS;
+      activeReqEntries(gimReqs).forEach(([id,req])=>{ if(isReqAtRisk(id,req)) items.push(riskLabel(id,req,'gim')); });
+      const specD=specDopsStats ? specDopsStats() : {met:0,total:0};
+      if(specD.total && specD.met < specD.total && (daysToArcp ? daysToArcp()<=120 : true)) items.push({label:`${specialtyDisplayName ? specialtyDisplayName() : specCfg().short}: DOPS / procedure sign-off`, detail:`${specD.met} / ${specD.total} complete`, severity:(daysToArcp&&daysToArcp()<=60)?'high':'medium'});
+      const gimD=gimDopsStats ? gimDopsStats() : {met:0,total:0};
+      if(gimD.total && gimD.met < gimD.total && (daysToArcp ? daysToArcp()<=120 : true)) items.push({label:'GIM: DOPS sign-off', detail:`${gimD.met} / ${gimD.total} complete`, severity:(daysToArcp&&daysToArcp()<=60)?'high':'medium'});
+      return items.slice(0,8);
+    };
+    window.currentRiskItems=currentRiskItems;
+  }
+
+  try { render(); forceLiveStatus(); } catch(e){ console.warn('V19.7 readiness fix refresh skipped', e); }
+})();
+
+
+/* ─────────────────────────────────────────────────────────────
+   V19.8 PATCH — Endocrinology has no specialty procedures
+   Removes the specialty procedure form/table ONLY for Endocrinology.
+   Keeps GIM procedures/DOPS intact.
+───────────────────────────────────────────────────────────── */
+(function installV198EndocrinologyProcedureCleanup(){
+  const _v198_renderLogProcedures = renderLogProcedures;
+
+  function isEndocrinologySpecialty(){
+    return getSpecKey && getSpecKey() === 'endocrinology';
+  }
+
+  renderLogProcedures = function(){
+    if(!isEndocrinologySpecialty()) return _v198_renderLogProcedures();
+
+    const gimEntries = entries('procedures').filter(e=>e.scope==='gim');
+    const gimForm = `<input type="hidden" id="proc-gim-scope" value="gim"><div class="field"><label>Procedure</label><select class="input" id="proc-gim-type">${optionsHtml(GIM_LOGBOOK.procedures)}</select></div><div class="field"><label>Date</label><input class="input" id="proc-gim-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Supervisor</label><input class="input" id="proc-gim-supervisor" placeholder="Supervising consultant"></div><div class="field"><label>DOPS signed?</label><select class="input" id="proc-gim-dops"><option>No</option><option>Yes</option></select></div><div class="field"><label>Training year</label><select class="input" id="proc-gim-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="proc-gim-notes" placeholder="Optional"></div>`;
+
+    document.getElementById('log-content').innerHTML =
+      logSummaryCards([{value:gimEntries.length,label:`GIM procedures logged`,cls:'blue'}])+
+      formPanel('Add GIM procedure',gimForm,"saveProc('gim')")+
+      section('GIM procedures',`${gimEntries.length} entries`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('procedures',e=>e.scope==='gim',['Date','Procedure','Supervisor','DOPS','Year','Notes'], e=>[fmtDate(e.date),e.type,e.supervisor,e.dops,e.year,e.notes])}</div>`]);
+  };
+  window.renderLogProcedures = renderLogProcedures;
+
+  // Extra guard: Endocrinology should never be blocked by procedure/DOPS readiness.
+  const _v198_specDopsStats = specDopsStats;
+  specDopsStats = function(){
+    if(isEndocrinologySpecialty()) return {met:0,total:0,label:'Endocrinology procedures not required'};
+    return _v198_specDopsStats();
+  };
+  window.specDopsStats = specDopsStats;
+
+  try{
+    if(currentTab==='logbook' && logSubTab==='procedures') renderLogbook();
+    updateReadiness();
+    forceLiveStatus();
+  }catch(e){ console.warn('V19.8 endocrinology procedure cleanup skipped', e); }
+})();
+
 </script>
 </body>
 </html>
