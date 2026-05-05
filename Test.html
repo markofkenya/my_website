@@ -287,6 +287,28 @@ body.visual-v16 .roadmap-logo .o1-mark:after{width:10px;height:10px;right:-6px;t
 body.visual-v16 .roadmap-logo .o1-text{font-size:24px;}
 @media(max-width:760px){.gate-brand-main .o1-text{font-size:24px}.brand-main .o1-text{font-size:22px}.o1-mark{width:34px;height:34px;border-width:5px}.o1-mark:after{top:12px}}
 
+
+
+/* V19.1 MICRO-POLISH — typography only, no layout/logic changes */
+:root{--type-tight:-0.035em;--type-kicker:.22em;}
+body{font-kerning:normal;text-rendering:optimizeLegibility;}
+.brand-main{letter-spacing:-.045em!important;font-weight:850!important;}
+.brand-sub{letter-spacing:.14em!important;line-height:1.45!important;}
+.metric-val{letter-spacing:-.045em!important;font-weight:850!important;}
+.metric-key,.bar-label,.sec-note{letter-spacing:.12em!important;}
+.tab{font-weight:750!important;letter-spacing:-.01em!important;}
+.title,.card-title,.sec-title{letter-spacing:.065em!important;font-weight:850!important;}
+.card,.req-card{line-height:1.38!important;}
+.req-label,.card-title{letter-spacing:-.015em!important;}
+.roadmap-wrap{font-feature-settings:'kern' 1,'liga' 1;}
+.hero-kicker{letter-spacing:.24em!important;font-weight:850!important;}
+.hero-title{letter-spacing:-.075em!important;font-weight:900!important;line-height:.96!important;}
+.rm-bar-label,.rm-target,.rm-kpi-label{letter-spacing:.19em!important;font-weight:850!important;}
+.rm-kpi-val{letter-spacing:-.06em!important;font-weight:900!important;}
+.journey-title{letter-spacing:-.055em!important;font-weight:900!important;}
+.year-name{letter-spacing:-.06em!important;font-weight:900!important;}
+.year-meta,.milestone-text{letter-spacing:-.01em!important;}
+@media(max-width:680px){.hero-title{letter-spacing:-.06em!important;line-height:1!important}.brand-main{letter-spacing:-.035em!important}}
 </style>
 </head>
 <body>
@@ -1544,6 +1566,189 @@ function renderHeader(){
 window.renderRoadmap=renderRoadmap; window.renderHeader=renderHeader; window.yearProgressPct=yearProgressPct;
 try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19 brand/year-start patch skipped',e); }
 
+
+
+/* ─────────────────────────────────────────────────────────────
+   V19.2 PATCH — FULL ENDOCRINOLOGY & DIABETES MODULE
+   Source: Endo_ARCP_App_Summary.docx
+   Preserves V19.1 UI, roadmap and typography.
+───────────────────────────────────────────────────────────── */
+(function installEndoModule(){
+  const ENDO_KEY = 'endocrinology';
+
+  // 1) Register ENDO as a first-class specialty, not a placeholder.
+  SPECIALTIES[ENDO_KEY] = {
+    label: 'Endocrinology & Diabetes',
+    short: 'Endo',
+    color: '#d7ff28',
+    color2: '#b7d900',
+    icon: '◇',
+    logbook: {
+      clinics: [
+        'General endocrinology clinic','Diabetes clinic','Antenatal diabetes clinic','Pump / technology clinic',
+        'Pituitary clinic','Thyroid clinic','Adrenal clinic','Metabolic bone clinic','Lipid clinic','Transition clinic','Other'
+      ],
+      procedures: [
+        'Dynamic endocrine test observed','Pituitary MDT exposure','Thyroid FNA exposure','Diabetes technology review','Other'
+      ],
+      cpd: [
+        'Regional endocrinology training day','Diabetes UK meeting','BES meeting','Society for Endocrinology event',
+        'DAFNE course','Pump / diabetes technology course','Grand round','Journal club','Other'
+      ]
+    }
+  };
+  SPECIALTY_OPTIONS[ENDO_KEY] = 'Endocrinology & Diabetes';
+  SPECIALTY_THEMES[ENDO_KEY] = {label:'Endocrinology & Diabetes', short:'Endo', color:'#d7ff28', color2:'#b7d900', icon:'◇'};
+
+  // 2) ENDO requirements: annual, windowed and end-of-training milestones.
+  // Numeric targets use the same simple readiness logic as the rest of the app.
+  const ENDO_REQS = {
+    endo_mcrs: {label:'Endo MCRs', type:'number', target:4, unit:'MCRs', deadline:'annual', note:'4–6 Multiple Consultant Reports each year'},
+    endo_msf: {label:'Endo MSF', type:'number', target:1, unit:'MSF', deadline:'annual', note:'One MSF per year'},
+    endo_sles: {label:'Endo SLEs', type:'number', target:6, unit:'SLEs', deadline:'annual', note:'At least 6 SLEs per year'},
+    endo_cbds: {label:'Endo CBDs', type:'number', target:4, unit:'CBDs', deadline:'annual', note:'At least 4 of the annual SLEs should be CBDs'},
+    endo_esr: {label:'Educational Supervisor Report', type:'checkbox', deadline:'annual', note:'One ESR per year'},
+    endo_teaching_annual: {label:'Teaching evidence', type:'checkbox', deadline:'annual', note:'Evidence of teaching contribution / feedback'},
+    endo_mdt_annual: {label:'MDT / leadership exposure', type:'checkbox', deadline:'annual', note:'MDT exposure in early years; leadership evidence later'},
+    endo_journal: {label:'Journal club / academic evidence', type:'checkbox', deadline:'annual', note:'Journal club, reflection, poster or presentation evidence'},
+
+    endo_sce_attempt: {label:'SCE attempted', type:'checkbox', deadline:'ST5', note:'Opportunity in ST4; should be attempted by ST5'},
+    endo_sce_pass: {label:'SCE passed', type:'checkbox', deadline:'ST7', note:'Must be passed before CCT'},
+    endo_dafne: {label:'DAFNE started / completed', type:'checkbox', deadline:'ST5', note:'Start in ST4; completed by ST5 where available'},
+    endo_qip_early: {label:'QIP completed — ST4–ST5 window', type:'number', target:1, unit:'QIP', deadline:'ST5', note:'One QIP required by ST5'},
+    endo_qip_total: {label:'QIP total by CCT', type:'number', target:2, unit:'QIPs', deadline:'ST7', note:'Two total, including ST6–ST7 QIP'},
+    endo_to_early: {label:'Teaching Observation — early', type:'number', target:1, unit:'TO', deadline:'ST5', note:'At least one Teaching Observation by ST5'},
+    endo_to_total: {label:'Teaching Observations total', type:'number', target:2, unit:'TOs', deadline:'ST7', note:'Two total by ST7'},
+    endo_teaching_course: {label:'Formal teaching course', type:'checkbox', deadline:'ST7', note:'Required by ST7'},
+    endo_cpd_early: {label:'Endo CPD hours — ST4–ST5', type:'number', target:60, unit:'hours', deadline:'ST5', cumulative:true, note:'60 hours across ST4–ST5'},
+    endo_cpd_late: {label:'Endo CPD hours — ST6–ST7', type:'number', target:60, unit:'hours', deadline:'ST7', cumulative:true, note:'60 hours across ST6–ST7'},
+    endo_cpd_total: {label:'Endo CPD hours total', type:'number', target:120, unit:'hours', deadline:'ST7', cumulative:true, note:'120 hours total across ST4–ST7'},
+    endo_duk_bes: {label:'DUK / BES or accredited CPD event', type:'checkbox', deadline:'ST5', note:'Attend DUK, BES or other accredited CPD by ST5'},
+    endo_leadership: {label:'Leadership role / course', type:'checkbox', deadline:'ST7', note:'Leadership evidence or course by ST7'},
+    endo_research: {label:'Poster / presentation completed', type:'checkbox', deadline:'ST7', note:'Research, poster or presentation completed'},
+    endo_survey_early: {label:'Patient survey — early', type:'checkbox', deadline:'ST5', note:'One patient survey required by ST5'},
+    endo_survey_late: {label:'Patient survey — late / total 2', type:'checkbox', deadline:'ST7', note:'Two total by ST7'}
+  };
+
+  const ENDO_YEAR_NOTES = {
+    ST4: ['Start 60h CPD window for ST4–ST5','Start QIP for completion by ST5','Begin teaching evidence and DAFNE where available','Journal club / academic evidence'],
+    ST5: ['MCR 4–6, MSF 1, SLEs 6 with ≥4 CBD','SCE should have been attempted','QIP 1 completed','CPD 60h ST4–ST5 complete; DUK/BES or equivalent CPD','Patient survey 1 required'],
+    ST6: ['Start second QIP window for ST6–ST7','Start second 60h CPD window','SCE ideally passed','Develop leadership and research / poster evidence'],
+    ST7: ['SCE must be passed','QIP total 2','Teaching Observations total 2 + formal teaching course','CPD total 120h','Leadership + research evidence completed','Patient surveys total 2']
+  };
+
+  // 3) Make ENDO CPD counters automatically derive from specialty CPD logbook entries.
+  const _endo_baseSyncLogbookTargets = syncLogbookTargets;
+  syncLogbookTargets = function(){
+    _endo_baseSyncLogbookTargets();
+    const specCpd = entries('cpd').filter(e => e.scope !== 'gim');
+    const h = (years) => Math.round(specCpd.filter(e => years.includes(e.year || currentYear)).reduce((a,e)=>a+Number(e.hours||0),0)*10)/10;
+    state.req['cum.endo_cpd_early'] = h(['ST4','ST5']);
+    state.req['cum.endo_cpd_late'] = h(['ST6','ST7']);
+    state.req['cum.endo_cpd_total'] = h(['ST4','ST5','ST6','ST7']);
+  };
+
+  // 4) Requirement resolver now includes ENDO.
+  const _endo_previousSpecReqs = specReqs;
+  specReqs = function(){
+    if(getSpecKey() === ENDO_KEY){
+      const out = {};
+      Object.entries(ENDO_REQS).forEach(([id, req]) => out[id] = Object.assign({}, req));
+      return out;
+    }
+    return _endo_previousSpecReqs();
+  };
+
+  // ENDO has no mandatory DOPS list. Keep readiness clean and non-misleading.
+  const _endo_previousSpecDopsStats = specDopsStats;
+  specDopsStats = function(){
+    if(getSpecKey() === ENDO_KEY) return {met:0,total:0,label:'Endo DOPS'};
+    return _endo_previousSpecDopsStats();
+  };
+
+  function endoYearSummaryCard(){
+    const notes = ENDO_YEAR_NOTES[currentYear] || [];
+    return `<section class="section"><div class="sec-head"><span class="sec-title">Endo roadmap — ${safe(currentYear)}</span><span class="sec-rule"></span><span class="sec-note">Endocrinology & Diabetes ARCP summary</span></div>
+      <div class="panel">
+        <div class="card-title" style="color:var(--primary)">Endocrinology & Diabetes + GIM dual CCT</div>
+        <div class="hint" style="margin-bottom:10px">Annual evidence is repeated each year; QIP, CPD, teaching observations, SCE and patient surveys are tracked across ST4–ST7 windows.</div>
+        <ul class="endo-summary-list">${notes.map(n=>`<li>${safe(n)}</li>`).join('')}</ul>
+      </div></section>`;
+  }
+
+  function splitEndoReqCards(reqs){
+    const annual=[], early=[], end=[];
+    Object.entries(reqs).forEach(([id, req])=>{
+      const card = makeReqCard(id, req, 'spec');
+      if(req.deadline === 'annual') annual.push(card);
+      else if(['ST4','ST5'].includes(req.deadline)) early.push(card);
+      else end.push(card);
+    });
+    return {annual, early, end};
+  }
+
+  // 5) Specialty renderer now treats ENDO as a complete module, while preserving Renal/Resp behavior.
+  const _endo_previousRenderSpecialty = renderSpecialty;
+  renderSpecialty = function(){
+    if(getSpecKey() !== ENDO_KEY) return _endo_previousRenderSpecialty();
+    if(yearLocked()){ document.getElementById('main').innerHTML = renderLockedBlock(); return; }
+    syncLogbookTargets();
+    const reqs = specReqs();
+    const groups = splitEndoReqCards(reqs);
+    document.getElementById('main').innerHTML =
+      renderOutcomeSelector() +
+      endoYearSummaryCard() +
+      section('Endo annual requirements', `For ${currentYear}`, groups.annual) +
+      section('Endo ST4–ST5 window', 'SCE attempt, QIP 1, CPD 60h, DAFNE, patient survey 1', groups.early) +
+      section('Endo CCT completion milestones', 'ST6–ST7 and end-of-training totals', groups.end);
+  };
+
+  // 6) Roadmap chips: ensure ENDO appears meaningfully in the year journey.
+  const _endo_previousRoadmapMilestonesForYear = (typeof roadmapMilestonesForYear === 'function') ? roadmapMilestonesForYear : null;
+  if(_endo_previousRoadmapMilestonesForYear){
+    roadmapMilestonesForYear = function(y){
+      if(getSpecKey() !== ENDO_KEY) return _endo_previousRoadmapMilestonesForYear(y);
+      const savedYear = currentYear;
+      currentYear = y;
+      const reqs = specReqs();
+      const pairs = Object.entries(reqs).filter(([id, req]) => req.deadline === 'annual' || yrIndex(req.deadline) <= yrIndex(y));
+      const chips = pairs.map(([id, req]) => {
+        const val = getReqVal(id, req);
+        const done = reqStatus(id, req) === 'met';
+        return { label:req.label, done, val:req.type==='checkbox' ? (done?'Yes':'No') : val, target:req.target||'' };
+      });
+      currentYear = savedYear;
+      return chips;
+    };
+  }
+
+  // 7) Print report label polish for ENDO, without changing the existing report template structure.
+  const _endo_previousPrintReport = printReport;
+  printReport = function(){
+    syncLogbookTargets();
+    return _endo_previousPrintReport();
+  };
+
+  // 8) Small module-specific styling only.
+  (function addEndoStyles(){
+    if(document.getElementById('v19-2-endo-style')) return;
+    const st=document.createElement('style');
+    st.id='v19-2-endo-style';
+    st.textContent=`
+      .endo-summary-list{margin:10px 0 0 18px;color:var(--text2);font-size:12px;line-height:1.75}
+      body.visual-v16 .endo-summary-list{color:rgba(247,244,232,.72)}
+    `;
+    document.head.appendChild(st);
+  })();
+
+  // 9) Expose and refresh safely.
+  window.renderSpecialty = renderSpecialty;
+  window.specReqs = specReqs;
+  window.specDopsStats = specDopsStats;
+  window.syncLogbookTargets = syncLogbookTargets;
+  window.printReport = printReport;
+  try { syncLogbookTargets(); initOnboarding(); render(); forceLiveStatus(); } catch(e){ console.warn('V19.2 ENDO module refresh skipped', e); }
+})();
 </script>
 </body>
 </html>
