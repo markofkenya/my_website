@@ -2227,6 +2227,179 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19 brand/year-start 
 
   try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19.9 header/endo/risk cleanup skipped', e); }
 })();
+
+
+/* ─────────────────────────────────────────────────────────────
+   V19.10 PATCH — Outcome1 icon + roadmap typography/mobile scale
+   - Match supplied Outcome1 mark more closely: white arc, neon dot, white Outcome, neon 1.
+   - Roadmap hero typography tightened to mockup.
+   - "days to your ARCP" line uses muted grey.
+   - Mobile roadmap scale adjusted to the supplied narrow mock.
+───────────────────────────────────────────────────────────── */
+(function installV1910IconTypographyMobile(){
+  if(!document.getElementById('v19-10-icon-typography-style')){
+    const st=document.createElement('style');
+    st.id='v19-10-icon-typography-style';
+    st.textContent=`
+      /* Outcome1 logo — mockup match */
+      .o1-brand{gap:13px!important;align-items:center!important;}
+      .o1-mark{
+        width:38px!important;height:38px!important;border-radius:50%!important;
+        border:0!important;background:conic-gradient(from 212deg, #f7f4e8 0deg 245deg, transparent 245deg 360deg)!important;
+        -webkit-mask:radial-gradient(circle, transparent 50%, #000 52%);
+        mask:radial-gradient(circle, transparent 50%, #000 52%);
+        transform:rotate(-8deg)!important;position:relative!important;flex:0 0 auto!important;
+        filter:drop-shadow(0 0 7px rgba(247,244,232,.12));
+      }
+      .o1-mark:after{
+        content:''!important;position:absolute!important;width:8px!important;height:8px!important;border-radius:50%!important;
+        right:1px!important;top:12px!important;background:#d7ff28!important;box-shadow:0 0 13px rgba(215,255,40,.85)!important;
+        transform:none!important;
+      }
+      .o1-text{color:#f7f4e8!important;font-weight:850!important;letter-spacing:-.055em!important;text-shadow:none!important;}
+      .o1-text > span{color:#d7ff28!important;text-shadow:0 0 16px rgba(215,255,40,.28)!important;}
+      body.visual-v16 .brand-main.o1-brand .o1-text,
+      body.visual-v16 .gate-brand-main.o1-brand .o1-text,
+      body.visual-v16 .roadmap-logo .o1-text{color:#f7f4e8!important;}
+      body.visual-v16 .brand-main.o1-brand .o1-text > span,
+      body.visual-v16 .gate-brand-main.o1-brand .o1-text > span,
+      body.visual-v16 .roadmap-logo .o1-text > span{color:#d7ff28!important;}
+      .brand-main .o1-mark{width:34px!important;height:34px!important;}
+      .brand-main .o1-mark:after{width:7px!important;height:7px!important;right:1px!important;top:11px!important;}
+      .brand-main .o1-text{font-size:27px!important;}
+      .gate-brand-main .o1-text{font-size:30px!important;}
+
+      /* Roadmap typography — closer to mockup */
+      body.visual-v16 .roadmap-wrap{
+        padding-top:28px!important;
+        background:
+          radial-gradient(circle at 86% 13%,rgba(215,255,40,.09),transparent 26%),
+          radial-gradient(circle at 8% 4%,rgba(255,255,255,.08),transparent 30%),
+          linear-gradient(180deg,#080b0a 0%,#0b0f0e 48%,#070908 100%)!important;
+      }
+      body.visual-v16 .roadmap-top{padding-top:20px!important;}
+      body.visual-v16 .hero-kicker{
+        color:rgba(247,244,232,.60)!important;
+        font-size:12px!important;
+        letter-spacing:.32em!important;
+        font-weight:900!important;
+        margin-bottom:22px!important;
+      }
+      body.visual-v16 .hero-title{
+        color:#f7f4e8!important;
+        font-size:clamp(56px,6.8vw,92px)!important;
+        line-height:.99!important;
+        letter-spacing:-.075em!important;
+        font-weight:850!important;
+        max-width:1080px!important;
+      }
+      body.visual-v16 .hero-title .lime{
+        color:#d7ff28!important;
+        font-weight:900!important;
+        text-shadow:0 0 22px rgba(215,255,40,.35)!important;
+      }
+      body.visual-v16 .hero-days{
+        color:rgba(247,244,232,.66)!important;
+        font-weight:760!important;
+        letter-spacing:-.065em!important;
+        text-shadow:none!important;
+      }
+      body.visual-v16 .rm-bar-label,
+      body.visual-v16 .rm-target,
+      body.visual-v16 .rm-kpi-label{
+        font-family:'DM Sans', var(--font)!important;
+        letter-spacing:.24em!important;
+        font-weight:900!important;
+      }
+      body.visual-v16 .rm-track{height:11px!important;}
+      body.visual-v16 .rm-kpi{border-radius:20px!important;background:rgba(255,255,255,.042)!important;}
+      body.visual-v16 .rm-kpi-val{font-weight:850!important;letter-spacing:-.055em!important;}
+      body.visual-v16 .rm-kpi-note{color:rgba(247,244,232,.64)!important;}
+
+      /* Mobile scale like the supplied right-hand mock */
+      @media(max-width:760px){
+        body.visual-v16 .roadmap-wrap{
+          margin:-16px -14px -92px!important;
+          padding:24px 20px 92px!important;
+          border-radius:0!important;
+          min-height:100vh!important;
+        }
+        body.visual-v16 .roadmap-top{padding-top:10px!important;}
+        body.visual-v16 .hero-kicker{
+          font-size:11px!important;
+          letter-spacing:.28em!important;
+          line-height:1.55!important;
+          margin-bottom:18px!important;
+          white-space:normal!important;
+        }
+        body.visual-v16 .hero-title{
+          font-size:clamp(44px,13vw,58px)!important;
+          line-height:.97!important;
+          letter-spacing:-.07em!important;
+          max-width:100%!important;
+        }
+        body.visual-v16 .hero-days{color:rgba(247,244,232,.68)!important;}
+        body.visual-v16 .roadmap-bars{margin:34px 0 28px!important;gap:20px!important;}
+        body.visual-v16 .rm-bar-row{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;margin:0!important;}
+        body.visual-v16 .rm-target{text-align:left!important;font-size:10px!important;}
+        body.visual-v16 .roadmap-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;margin:26px 0 36px!important;}
+        body.visual-v16 .rm-kpi{padding:18px 16px!important;min-height:130px!important;border-radius:18px!important;}
+        body.visual-v16 .rm-kpi-label{font-size:10px!important;line-height:1.35!important;letter-spacing:.20em!important;}
+        body.visual-v16 .rm-kpi-val{font-size:38px!important;}
+        body.visual-v16 .journey-title{font-size:23px!important;margin-top:30px!important;}
+        .brand-main .o1-mark{width:30px!important;height:30px!important;}
+        .brand-main .o1-text{font-size:25px!important;}
+      }
+      @media(max-width:430px){
+        body.visual-v16 .hero-title{font-size:43px!important;}
+        body.visual-v16 .roadmap-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+        body.visual-v16 .rm-kpi{min-height:122px!important;padding:16px 14px!important;}
+        body.visual-v16 .rm-kpi-val{font-size:34px!important;}
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  function renderRoadmapV1910(){
+    if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
+    syncLogbookTargets();
+    const startInfo = trainingYearWindow ? trainingYearWindow(currentYear) : null;
+    const startDate = startInfo?.start || new Date(new Date().getFullYear(), Number(state.profile?.trainingStartMonth ?? 7), 1);
+    const progress = yearProgressPct ? yearProgressPct() : 0;
+    const days = daysToArcp ? daysToArcp() : 0;
+    const sp = calcReqsWithExtra(specReqs(), specDopsStats());
+    const gimReqs = (typeof visibleGimReqs==='function') ? visibleGimReqs() : GIM_REQS;
+    const gim = calcReqsWithExtra(gimReqs, gimDopsStats());
+    const open = Math.max(0, sp.open + gim.open);
+    const als = alsDays ? alsDays() : null;
+    const paceOk = sp.pct>=progress && gim.pct>=progress;
+    const paceClass = paceOk ? 'pace-good' : 'pace-behind';
+    const month = startDate.toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+    document.getElementById('main').innerHTML=`
+      <div class="roadmap-wrap">
+        <div class="roadmap-top">
+          <div class="hero-kicker">ROADMAP · ${safe(specCfg().label).toUpperCase()} · ${safe(currentYear)} · STARTED ${safe(month).toUpperCase()}</div>
+          <div class="hero-title">You're <span class="lime">${progress}%</span> through ${safe(currentYear)}.<br><span class="hero-days">${Math.max(0,days)} days to your ARCP.</span></div>
+        </div>
+        <div class="roadmap-bars">
+          <div class="rm-bar-row"><div class="rm-bar-label">${safe(specCfg().short).toUpperCase()} EVIDENCE · ${sp.pct}%</div><div class="rm-track"><div class="rm-fill spec" style="width:${sp.pct}%"></div></div><div class="rm-target">${sp.met}/${sp.total}</div></div>
+          <div class="rm-bar-row"><div class="rm-bar-label">GIM EVIDENCE · ${gim.pct}%</div><div class="rm-track"><div class="rm-fill gim" style="width:${gim.pct}%"></div></div><div class="rm-target ${paceClass}">${paceOk?'ON PACE':'BEHIND PACE'}</div></div>
+        </div>
+        <div class="roadmap-kpis">
+          <div class="rm-kpi"><div class="rm-kpi-label">Days to ARCP</div><div class="rm-kpi-val">${Math.max(0,days)}</div><div class="rm-kpi-note">${safe(arcpDateLabel())}</div></div>
+          <div class="rm-kpi"><div class="rm-kpi-label">Open milestones</div><div class="rm-kpi-val">${open}</div><div class="rm-kpi-note">this year</div></div>
+          <div class="rm-kpi"><div class="rm-kpi-label">Logged this month</div><div class="rm-kpi-val">${loggedThisMonth()}</div><div class="rm-kpi-note">procedures + clinics</div></div>
+          <div class="rm-kpi"><div class="rm-kpi-label">ALS expiry</div><div class="rm-kpi-val">${als===null?'—':Math.max(0,als)+'d'}</div><div class="rm-kpi-note">${als===null?'not set':als<183?'renew soon':'valid'}</div></div>
+        </div>
+        <div class="roadmap-journey"><div class="journey-title">Your training journey</div><div class="timeline">${YEARS.map(roadmapYearBlock).join('')}</div><div class="rm-actions"><button class="btn primary" onclick="setTab('specialty')">Open ${safe(specCfg().short)} requirements</button><button class="btn" onclick="setTab('gim')">Open GIM</button><button class="btn" onclick="setTab('logbook')">Add evidence</button></div></div>
+      </div>`;
+  }
+
+  renderRoadmap = renderRoadmapV1910;
+  window.renderRoadmap = renderRoadmap;
+
+  try{ render(); forceLiveStatus(); }catch(e){ console.warn('V19.10 icon/typography/mobile patch skipped', e); }
+})();
 </script>
 </body>
 </html>
