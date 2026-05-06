@@ -479,10 +479,12 @@ function fbSave(){ if(!window.ARCP_FB?.online || !window.ARCP_FB.userRoot || sup
 function getSpecKey(){ return state.profile?.specialty || "renal"; }
 function specCfg(){ const key=getSpecKey(); const t=SPECIALTY_THEMES[key] || {}; return SPECIALTIES[key] || { label:t.label || SPECIALTY_OPTIONS[key] || "Specialty", short:t.short || SPECIALTY_OPTIONS[key] || "Specialty", color:t.color || "#a78bfa", color2:t.color2 || "#7c5fd4", icon:t.icon || "◈", reqs:null, logbook:{clinics:["Specialty clinic","Other"], procedures:["Specialty procedure","Other"], cpd:["Specialty study day","Other"]} }; }
 function specReqs(){
-  const key=getSpecKey();
-  if(key!=="renal" && key!=="respiratory") return {};
   const reqs = Object.assign({}, specCfg().reqs || DEFAULT_SPEC_REQS);
-  reqs.spec_teaching_obs = {label:"Teaching observation",type:"checkbox",deadline:"ST7",note:"Shared with GIM — ticking either one ticks both"};
+  // Auto-merge the GIM-shared Teaching Observation only if the specialty hasn't already defined one
+  const hasTeachingObs = Object.entries(reqs).some(([k,r])=>/teaching[_-]?obs/i.test(k) || /teaching observation/i.test(r.label||''));
+  if(!hasTeachingObs){
+    reqs.spec_teaching_obs = {label:"Teaching observation",type:"checkbox",deadline:"ST7",note:"Shared with GIM — ticking either one ticks both"};
+  }
   return reqs;
 }
 function yrIndex(y=currentYear){ return YEARS.indexOf(y); }
@@ -1140,10 +1142,31 @@ function renderSpecialty(){
   htmlOut += section(`${sp.label} annual requirements`,`For ${currentYear}`,annual);
   htmlOut += section('Specialty milestones','One-off items carry forward',milestones);
   if(getSpecKey()==='respiratory') htmlOut += renderRespProcedureProgression();
+  else htmlOut += renderSpecProcedureChecklist();
   document.getElementById('main').innerHTML=htmlOut;
 }
 
-// Styling for the respiratory list to match the long-row layout in the screenshot.
+function renderSpecProcedureChecklist(){
+  const procs=(specCfg().logbook?.procedures||[]).filter(p=>p && p!=='Other');
+  if(!procs.length) return '';
+  const allEntries=entries('procedures').filter(e=>e.scope!=='gim');
+  const rows=procs.map(proc=>{
+    const matching=allEntries.filter(e=>e.type===proc);
+    const dopsCount=matching.filter(e=>e.dops==='Yes').length;
+    const totalCount=matching.length;
+    const signed=dopsCount>0;
+    const summary=totalCount===0 ? 'No entries yet' : `${totalCount} logged · ${dopsCount} DOPS signed`;
+    return `<div class="resp-dops-row ${signed?'done':''}">
+      <div class="resp-dops-name">${safe(proc)}</div>
+      <div class="resp-dops-target">${summary}</div>
+      <button class="btn small" onclick="openLogbookForm('procedures')">+ log entry</button>
+      <div class="resp-dops-status ${signed?'good':'warn'}">${signed?'✓ DOPS signed':'not yet'}</div>
+    </div>`;
+  }).join('');
+  const done=procs.filter(p=>allEntries.some(e=>e.type===p && e.dops==='Yes')).length;
+  return `<section class="section"><div class="sec-head"><span class="sec-title">${specCfg().short} procedures (DOPS)</span><span class="sec-rule"></span><span class="sec-note">${done} / ${procs.length} have at least one signed DOPS · entries from Logbook</span></div><div class="resp-dops-list">${rows}</div></section>`;
+}
+window.renderSpecProcedureChecklist=renderSpecProcedureChecklist;
 (function addV11Styles(){
   if(document.getElementById('v11-resp-dops-style')) return;
   const st=document.createElement('style');
