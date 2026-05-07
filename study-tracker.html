@@ -1515,13 +1515,14 @@ function regenerateDoc(sessionId) {
 </body>
 </html>`;
 
-  const blob = new Blob([html], { type: "text/html" });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href     = url;
-  a.download = `STX_Debrief_${topic.name.replace(/[^a-z0-9]/gi,"_")}_${s.date || "unknown"}.html`;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+    const w = window.open("", "_blank");
+  if (!w) {
+    alert("Please allow popups to view the document.");
+    return;
+  }
+  w.document.write(html);
+  w.document.close();
+
 }
 
 function saveSession() {
