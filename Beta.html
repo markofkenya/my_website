@@ -172,7 +172,7 @@ main{padding:28px 32px 100px;max-width:1440px;margin:0 auto}
 .table th,.table td{border-bottom:1px solid var(--line);padding:11px 14px;text-align:left;vertical-align:top}
 .table th{font-size:10px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;background:var(--bg3);font-family:var(--font-mono);font-weight:600}
 .table tr:last-child td{border-bottom:none}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg2)}
+.table-wrap{overflow-x:auto;overflow-y:visible;max-width:100%;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg2);-webkit-overflow-scrolling:touch}
 .statusbar{position:fixed;left:0;right:0;bottom:0;background:var(--bg2);border-top:1px solid var(--line);padding:10px 24px;display:flex;justify-content:space-between;gap:10px;align-items:center;z-index:70}
 .status-left{display:flex;gap:18px;flex-wrap:wrap}
 .status-item{font-size:11px;color:var(--dim);font-family:var(--font-mono);letter-spacing:.04em}
