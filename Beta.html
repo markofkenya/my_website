@@ -73,8 +73,31 @@ body.focus .check{color:#fff}body.focus .btn.primary{color:#fff}body.focus .chec
 #gate{position:fixed;inset:0;background:rgba(10,13,12,.94);backdrop-filter:blur(10px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px} #gate.show{display:flex}
 .gate-card{width:min(720px,100%);background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius-lg);padding:32px 30px;box-shadow:0 30px 80px -20px rgba(0,0,0,.7)}
 .gate-title{font-size:30px;font-weight:500;color:var(--text);letter-spacing:-.03em;display:flex;align-items:center;gap:14px;font-family:var(--font)}.gate-title small{font-size:11px;color:var(--dim);font-weight:500;letter-spacing:.16em;text-transform:uppercase;font-family:var(--font-mono)}.gate-sub{font-size:14px;color:var(--text2);margin:8px 0 22px;line-height:1.6}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:8px}.field.full{grid-column:1/-1}.field label{font-size:10px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;font-family:var(--font-mono)}
-.input{width:100%;border:1px solid var(--line);background:var(--bg3);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;outline:none;font-size:14px;transition:border-color .15s,box-shadow .15s}.input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:8px;min-width:0}.field.full{grid-column:1/-1}.field label{font-size:10px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;font-family:var(--font-mono)}
+.input{width:100%;border:1px solid var(--line);background:var(--bg3);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;outline:none;font-size:14px;box-sizing:border-box;transition:border-color .15s,box-shadow .15s}.input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.input[type="date"],.input[type="time"],.input[type="datetime-local"],.input[type="month"]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%}
+.input[type="date"]::-webkit-date-and-time-value{text-align:left}
+@media (max-width: 640px){
+  /* iOS Safari auto-zooms into any input with font-size < 16px on focus, then often stays zoomed.
+     Bumping to 16px on mobile only stops the auto-zoom while keeping desktop typography intact. */
+  .input, select.input, textarea.input{ font-size:16px; }
+
+  /* Logbook V2 list: stack each row vertically on phones — desktop table layout (5 fixed columns ~700px)
+     doesn't fit a ~390px viewport. Each entry becomes a 3-line card: meta row (date + pills), item, details. */
+  .lb-row.lb-row-head{ display:none !important; }
+  .lb-row.lb-row-data{
+    grid-template-columns: auto 1fr !important;
+    grid-template-areas: "date type" "item item" "hosp sup" !important;
+    row-gap:6px; column-gap:10px;
+    padding:14px 16px !important;
+    align-items:start !important;
+  }
+  .lb-row-data .lb-cell-date{ grid-area: date; font-size:11px !important; align-self:center; }
+  .lb-row-data .lb-cell-type{ grid-area: type; justify-self:end; align-self:center; }
+  .lb-row-data .lb-cell-item{ grid-area: item; font-size:14px !important; line-height:1.35; }
+  .lb-row-data .lb-cell-hospital{ grid-area: hosp; font-size:11px !important; color:var(--dim); }
+  .lb-row-data .lb-cell-supervisor{ grid-area: sup; font-size:11px !important; color:var(--dim); justify-self:end; text-align:right; }
+}
 .btn{border:1px solid var(--line);background:transparent;color:var(--text2);border-radius:var(--radius-sm);padding:9px 13px;font-size:12px;font-weight:500;letter-spacing:.01em;transition:all .15s;font-family:var(--font)}.btn:hover{border-color:var(--line-strong);color:var(--text)}.btn.tiny{padding:3px 8px;font-size:10px;border-radius:6px}.btn.primary{background:var(--primary);border-color:var(--primary);color:#0e1110;font-weight:600}.btn.primary:hover{background:var(--primary2);border-color:var(--primary2);color:#0e1110}.btn.danger{border-color:rgba(248,113,113,.4);color:var(--red)}.btn.danger:hover{background:var(--red-soft);border-color:var(--red)}.btn.good{border-color:rgba(163,230,53,.4);color:var(--green)}.btn.good:hover{background:var(--green-soft);border-color:var(--green)}.btn.small{padding:6px 10px;font-size:11px;border-radius:7px}.hint{font-size:11px;color:var(--dim);line-height:1.6;font-family:var(--font-mono);letter-spacing:.02em}
 
 .gate-slogan{margin:14px 0 18px;padding:16px 18px;border:1px solid var(--line);background:var(--bg3);border-radius:var(--radius)}
@@ -727,7 +750,7 @@ function hideHospital(h){ deleteHospital(h); }
 function restoreDeaneryHospitals(){ state.deletedHospitals=[]; state.hiddenHospitals=[]; saveState(); renderAdmin(); }
 
 function optionsHtml(list, selected=''){ return list.map(x=>`<option value="${safe(x)}" ${selected===x?'selected':''}>${safe(x)}</option>`).join(''); }
-function renderLogbook(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','CPD'],['simulation','Simulation'],['teaching','Teaching']]; document.getElementById('main').innerHTML=`<div class="subtabs">${subs.map(([id,l])=>`<button class="subtab ${logSubTab===id?'active':''}" onclick="logSubTab='${id}';renderLogbook()">${l}</button>`).join('')}</div><div class="row" style="justify-content:flex-end;margin-bottom:12px"><button class="btn small primary" onclick="printReport()">⎙ Print ARCP Report</button></div><div id="log-content"></div>`; if(logSubTab==='clinics') renderLogClinics(); if(logSubTab==='procedures') renderLogProcedures(); if(logSubTab==='cpd') renderLogCPD(); if(logSubTab==='simulation') renderSimpleLog('simulation','Simulation session', ['date','course','title','hours','hospital','year','notes'], ['Course','Title','Hours','Hospital','Year','Notes'], null); if(logSubTab==='teaching') renderSimpleLog('teaching','Teaching session', ['date','type','topic','audience','supervisor','signoff','year','notes'], ['Type','Topic','Audience','Observed by','Sign-off','Year','Notes'], ['Bedside teaching','Tutorial / seminar','Grand round presentation','Journal club','Simulation facilitation','Medical student supervision','Other']); }
+function renderLogbook(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','CPD'],['simulation','Simulation'],['teaching','Teaching']]; document.getElementById('main').innerHTML=`<div class="subtabs">${subs.map(([id,l])=>`<button class="subtab ${logSubTab===id?'active':''}" onclick="logSubTab='${id}';renderLogbook()">${l}</button>`).join('')}</div><div class="row" style="justify-content:flex-end;margin-bottom:12px"><button class="btn small primary" onclick="printReport()">⎙ Print Logbook Report</button></div><div id="log-content"></div>`; if(logSubTab==='clinics') renderLogClinics(); if(logSubTab==='procedures') renderLogProcedures(); if(logSubTab==='cpd') renderLogCPD(); if(logSubTab==='simulation') renderSimpleLog('simulation','Simulation session', ['date','course','title','hours','hospital','year','notes'], ['Course','Title','Hours','Hospital','Year','Notes'], null); if(logSubTab==='teaching') renderSimpleLog('teaching','Teaching session', ['date','type','topic','audience','supervisor','signoff','year','notes'], ['Type','Topic','Audience','Observed by','Sign-off','Year','Notes'], ['Bedside teaching','Tutorial / seminar','Grand round presentation','Journal club','Simulation facilitation','Medical student supervision','Other']); }
 function formPanel(title, html, onsubmit){ return `<div class="panel"><div class="sec-head"><span class="sec-title">${title}</span><span class="sec-rule"></span></div><div class="form-grid">${html}<div class="field full"><button class="btn primary" onclick="${onsubmit}">ADD ENTRY ▸</button></div></div></div>`; }
 function hospitalField(id='hospital'){ const list=hospitalOptions(); return `<div class="field"><label>Hospital</label><input class="input" id="${id}" list="${id}-list" placeholder="Start typing or add manually"><datalist id="${id}-list">${list.map(h=>`<option value="${safe(h)}">`).join('')}</datalist></div>`; }
 function table(k, cols, mapper){ const arr=entries(k).slice().sort((a,b)=>(b.date||b.start||'').localeCompare(a.date||a.start||'')); return tableFromArray(k, arr, cols, mapper); }
@@ -807,11 +830,11 @@ function toggleFocus(){ document.body.classList.toggle('focus'); localStorage.se
 function updateModeButton(){ const b=document.getElementById('mode-toggle'); if(b) b.textContent=document.body.classList.contains('focus')?'DARK':'LIGHT'; }
 function countByYear(arr){ return arr.filter(e=>!e.year || e.year===currentYear).length; }
 function sumHours(arr, filter=()=>true){ return Math.round(arr.filter(filter).reduce((a,e)=>a+Number(e.hours||0),0)*10)/10; }
-function printReport(){ const sp=specCfg(); const yr=currentYear; const generated=new Date().toLocaleDateString('en-GB').replace(/\//g,'-'); const cct=state.profile?.cctDate ? new Date(state.profile.cctDate).toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : 'Dec 2030'; const traineeName=state.profile?.name||'—'; const trainingNumber=state.profile?.trainingNumber||'—'; const specName=sp.short; const gimClinics=entries('clinics').filter(e=>e.scope==='gim'); const specClinics=entries('clinics').filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)); const procYr=entries('procedures').filter(e=>!e.year||e.year===yr); const teachingYr=entries('teaching').filter(e=>!e.year||e.year===yr); const cpdAll=entries('cpd'); const simAll=entries('simulation'); const acuteAll=entries('acute'); const wardAll=entries('ward'); const win=window.open('','_blank'); const report=`<!doctype html><html><head><title>ARCP Logbook Report — ${yr}</title><style>
+function printReport(){ const sp=specCfg(); const yr=currentYear; const generated=new Date().toLocaleDateString('en-GB').replace(/\//g,'-'); const cct=state.profile?.cctDate ? new Date(state.profile.cctDate).toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : 'Dec 2030'; const traineeName=state.profile?.name||'—'; const trainingNumber=state.profile?.trainingNumber||'—'; const specName=sp.short; const gimClinics=entries('clinics').filter(e=>e.scope==='gim'); const specClinics=entries('clinics').filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)); const procYr=entries('procedures').filter(e=>!e.year||e.year===yr); const teachingYr=entries('teaching').filter(e=>!e.year||e.year===yr); const cpdAll=entries('cpd'); const simAll=entries('simulation'); const acuteAll=entries('acute'); const wardAll=entries('ward'); const win=window.open('','_blank'); const report=`<!doctype html><html><head><title>Logbook Report — ${yr}</title><style>
 body{font-family:Inter,Arial,sans-serif;color:#111827;margin:18px 22px;background:#fff}button{margin-bottom:14px;padding:8px 12px;border:1px solid #0b5cad;background:white;color:#0b5cad;font-weight:700}.hero{background:#064f9e;color:white;padding:24px 28px;display:flex;justify-content:space-between;align-items:flex-start}.hero h1{font-size:24px;margin:0 0 6px}.hero .sub{font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.86}.hero .right{text-align:right;font-size:12px;line-height:1.6;font-weight:700}.info{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid #cbd5e1;margin:16px 24px 14px}.info div{padding:10px 14px;border-right:1px solid #cbd5e1}.info div:last-child{border-right:none}.k{font-size:10px;color:#6b7280;letter-spacing:.14em;text-transform:uppercase;font-weight:800}.v{font-size:14px;color:#064f9e;font-weight:900;margin-top:2px;line-height:1.25;word-break:break-word}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 24px 18px}.metric{border:1px solid #d1d5db;border-top:4px solid #064f9e;text-align:center;padding:10px}.metric.spec{border-top-color:${sp.color}}.metric.green{border-top-color:#0f766e}.metric.brown{border-top-color:#92400e}.metric .num{font-size:26px;color:#064f9e;font-weight:900}.metric .label{font-size:10px;color:#6b7280;letter-spacing:.14em;text-transform:uppercase}.sec{margin:22px 24px 8px;display:flex;align-items:center;gap:12px}.sec span{background:#064f9e;color:white;padding:7px 12px;font-size:12px;font-weight:900;letter-spacing:.18em}.sec:after{content:"";height:2px;background:#e5e7eb;flex:1}.tag{display:inline-block;color:white;background:#064f9e;font-size:10px;font-weight:900;padding:3px 8px;border-radius:2px;letter-spacing:.08em}.tag.spec{background:${sp.color}}.summary{margin:8px 24px;border-left:4px solid #064f9e;background:#f8fafc;border:1px solid #cbd5e1;padding:8px 10px;font-size:12px}.summary.spec{border-left-color:${sp.color}}table{width:calc(100% - 48px);margin:8px 24px 16px;border-collapse:collapse;font-size:12px;table-layout:fixed}th{background:#075da8;color:#fff;text-align:left;padding:7px 8px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis}td{padding:7px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top;overflow:hidden;text-overflow:ellipsis;word-wrap:break-word}tr:nth-child(even) td{background:#f1f5f9}.empty-row td{color:#6b7280;font-style:italic;padding:10px 8px;text-align:center}.footer{display:flex;justify-content:space-between;margin:28px 24px 0;color:#6b7280;font-size:11px;border-top:1px solid #e5e7eb;padding-top:10px}@media print{button{display:none}body{margin:0}.hero{break-inside:avoid}.sec{break-after:avoid}table{break-inside:auto}tr{break-inside:avoid}}
-</style></head><body><button onclick="print()">Print / Save PDF</button><div class="hero"><div><h1>ARCP Logbook Report</h1><div class="sub">${safe(sp.label).toUpperCase()} & GENERAL INTERNAL MEDICINE · DUAL CCT TRAINING</div></div><div class="right">Generated: ${generated}<br>Training Year: ${safe(yr)}<br>Programme: ${safe(sp.short)} + GIM ST4–ST7</div></div><div class="info"><div><div class="k">Trainee</div><div class="v">${safe(traineeName)}</div></div><div><div class="k">Training number</div><div class="v">${safe(trainingNumber)}</div></div><div><div class="k">Programme</div><div class="v">${safe(sp.short)} + GIM</div></div><div><div class="k">Current year</div><div class="v">${safe(yr)}</div></div><div><div class="k">CCT date</div><div class="v">${safe(cct)}</div></div></div><div class="metrics"><div class="metric"><div class="num">${gimClinics.length}</div><div class="label">GIM clinics total</div></div><div class="metric spec"><div class="num">${specClinics.length}</div><div class="label">${safe(sp.short)} clinics (${yr})</div></div><div class="metric green"><div class="num">${procYr.length}</div><div class="label">Procedures (${yr})</div></div><div class="metric brown"><div class="num">${teachingYr.length}</div><div class="label">Teaching (${yr})</div></div><div class="metric"><div class="num">${sumHours(cpdAll)}h</div><div class="label">CPD — GIM + specialty</div></div><div class="metric"><div class="num">${sumHours(simAll)}h</div><div class="label">Simulation total</div></div></div>${reportSection('CLINICS')}${reportScopedTable(sp.short, specClinics, ['date','type','hospital','supervisor','patients','year','notes'], 'spec')}${reportScopedTable('GIM', gimClinics, ['date','type','hospital','supervisor','patients','year','notes'])}${reportSection('PROCEDURES')}${reportScopedTable(sp.short, entries('procedures').filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)), ['date','type','hospital','supervisor','dops','year','notes'], 'spec')}${reportScopedTable('GIM', entries('procedures').filter(e=>e.scope==='gim' && (!e.year||e.year===yr)), ['date','type','hospital','supervisor','dops','year','notes'])}${reportSection('CPD / STUDY LEAVE')}<div class="summary">GIM CPD Summary: Counted total: <strong>${sumHours(cpdAll,e=>e.scope==='gim')}h</strong> / 100h · ST7: <strong>${sumHours(cpdAll,e=>e.scope==='gim'&&e.year==='ST7')}h</strong> / 20h min</div>${reportScopedTable('GIM', cpdAll.filter(e=>e.scope==='gim'), ['date','type','title','hours','year','notes'])}<div class="summary spec">${safe(sp.short)} CPD: Total: <strong>${sumHours(cpdAll,e=>e.scope!=='gim'&&(!e.year||e.year===yr))}h</strong> in ${yr}</div>${reportScopedTable(sp.short, cpdAll.filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)), ['date','type','title','hours','year','notes'], 'spec')}${reportSection('SIMULATION')}<div class="summary">Simulation Summary: Total: <strong>${sumHours(simAll)}h</strong> / 12h · ST7: <strong>${sumHours(simAll,e=>e.year==='ST7')}h</strong> / 4h min</div>${reportScopedTable('GIM', simAll, ['date','course','title','hours','hospital','year','notes'])}${reportSection('TEACHING')}${reportScopedTable('Teaching', teachingYr, ['date','type','topic','audience','supervisor','signoff','year','notes'])}${reportSection('ACUTE TAKE (FIRTH CALCULATOR)')}<div class="summary">Acute Take Summary: Estimated total: <strong>${acuteAll.reduce((a,e)=>a+Number(e.estimated||0),0)}</strong> / 750 patients · ST7: <strong>${acuteAll.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.estimated||0),0)}</strong> / 100 patients min</div>${reportScopedTable('GIM', acuteAll, ['hospital','start','end','months','takes','patients','estimated','year','supervisor'])}${reportSection('WARD COVER')}<div class="summary">Ward Cover Summary: Total: <strong>${Math.round(wardAll.reduce((a,e)=>a+Number(e.months||0),0)*10)/10}</strong> / 12 months</div>${reportScopedTable('GIM', wardAll, ['hospital','start','end','months','year','supervisor'])}<div class="footer"><span>ARCP//01 · Auto-generated ARCP document · ${safe(traineeName)} · ${safe(trainingNumber)}</span><span>Generated ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'short',year:'numeric'})} · Confidential</span></div></body></html>`; win.document.write(report); win.document.close(); }
+</style></head><body><button onclick="print()">Print / Save PDF</button><div class="hero"><div><h1>Logbook Report</h1><div class="sub">${safe(sp.label).toUpperCase()} & GENERAL INTERNAL MEDICINE · DUAL CCT TRAINING</div></div><div class="right">Generated: ${generated}<br>Training Year: ${safe(yr)}<br>Programme: ${safe(sp.short)} + GIM ST4–ST7</div></div><div class="info"><div><div class="k">Trainee</div><div class="v">${safe(traineeName)}</div></div><div><div class="k">Training number</div><div class="v">${safe(trainingNumber)}</div></div><div><div class="k">Programme</div><div class="v">${safe(sp.short)} + GIM</div></div><div><div class="k">Current year</div><div class="v">${safe(yr)}</div></div><div><div class="k">CCT date</div><div class="v">${safe(cct)}</div></div></div><div class="metrics"><div class="metric"><div class="num">${gimClinics.length}</div><div class="label">GIM clinics total</div></div><div class="metric spec"><div class="num">${specClinics.length}</div><div class="label">${safe(sp.short)} clinics (${yr})</div></div><div class="metric green"><div class="num">${procYr.length}</div><div class="label">Procedures (${yr})</div></div><div class="metric brown"><div class="num">${teachingYr.length}</div><div class="label">Teaching (${yr})</div></div><div class="metric"><div class="num">${sumHours(cpdAll)}h</div><div class="label">CPD — GIM + specialty</div></div><div class="metric"><div class="num">${sumHours(simAll)}h</div><div class="label">Simulation total</div></div></div>${reportSection('CLINICS')}${reportScopedTable(sp.short, specClinics, ['date','type','hospital','supervisor','patients','year','notes'], 'spec')}${reportScopedTable('GIM', gimClinics, ['date','type','hospital','supervisor','patients','year','notes'])}${reportSection('PROCEDURES')}${reportScopedTable(sp.short, entries('procedures').filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)), ['date','type','hospital','supervisor','dops','year','notes'], 'spec')}${reportScopedTable('GIM', entries('procedures').filter(e=>e.scope==='gim' && (!e.year||e.year===yr)), ['date','type','hospital','supervisor','dops','year','notes'])}${reportSection('CPD / STUDY LEAVE')}<div class="summary">GIM CPD Summary: Counted total: <strong>${sumHours(cpdAll,e=>e.scope==='gim')}h</strong> / 100h · ST7: <strong>${sumHours(cpdAll,e=>e.scope==='gim'&&e.year==='ST7')}h</strong> / 20h min</div>${reportScopedTable('GIM', cpdAll.filter(e=>e.scope==='gim'), ['date','type','title','hours','year','notes'])}<div class="summary spec">${safe(sp.short)} CPD: Total: <strong>${sumHours(cpdAll,e=>e.scope!=='gim'&&(!e.year||e.year===yr))}h</strong> in ${yr}</div>${reportScopedTable(sp.short, cpdAll.filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)), ['date','type','title','hours','year','notes'], 'spec')}${reportSection('SIMULATION')}<div class="summary">Simulation Summary: Total: <strong>${sumHours(simAll)}h</strong> / 12h · ST7: <strong>${sumHours(simAll,e=>e.year==='ST7')}h</strong> / 4h min</div>${reportScopedTable('GIM', simAll, ['date','course','title','hours','hospital','year','notes'])}${reportSection('TEACHING')}${reportScopedTable('Teaching', teachingYr, ['date','type','topic','audience','supervisor','signoff','year','notes'])}${reportSection('ACUTE TAKE (FIRTH CALCULATOR)')}<div class="summary">Acute Take Summary: Estimated total: <strong>${acuteAll.reduce((a,e)=>a+Number(e.estimated||0),0)}</strong> / 750 patients · ST7: <strong>${acuteAll.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.estimated||0),0)}</strong> / 100 patients min</div>${reportScopedTable('GIM', acuteAll, ['hospital','start','end','months','takes','patients','estimated','year','supervisor'])}${reportSection('WARD COVER')}<div class="summary">Ward Cover Summary: Total: <strong>${Math.round(wardAll.reduce((a,e)=>a+Number(e.months||0),0)*10)/10}</strong> / 12 months</div>${reportScopedTable('GIM', wardAll, ['hospital','start','end','months','year','supervisor'])}<div class="footer"><span>ARCP//01 · Auto-generated ARCP document · ${safe(traineeName)} · ${safe(trainingNumber)}</span><span>Generated ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'short',year:'numeric'})} · Confidential</span></div></body></html>`; win.document.write(report); win.document.close(); }
 function reportSection(title){ return `<div class="sec"><span>${safe(title)}</span></div>`; }
-const REPORT_COL_WIDTHS = { date:'80px', start:'80px', end:'80px', months:'70px', type:'140px', course:'140px', topic:'160px', title:'160px', hospital:'140px', supervisor:'130px', patients:'70px', year:'60px', dops:'70px', hours:'70px', takes:'80px', estimated:'90px', audience:'110px', signoff:'80px', notes:'auto' };
+const REPORT_COL_WIDTHS = { date:'80px', start:'80px', end:'80px', months:'70px', type:'180px', course:'160px', topic:'180px', title:'180px', hospital:'170px', supervisor:'150px', patients:'70px', year:'60px', dops:'70px', hours:'70px', takes:'80px', estimated:'90px', audience:'120px', signoff:'80px', notes:'220px' };
 function reportScopedTable(label, arr, fields, kind='gim'){
   const cols=fields.map(f=>`<col style="width:${REPORT_COL_WIDTHS[f]||'auto'}">`).join('');
   const head=`<tr>${fields.map(f=>`<th>${safe(f)}</th>`).join('')}</tr>`;
@@ -822,6 +845,126 @@ function reportScopedTable(label, arr, fields, kind='gim'){
 }
 function reportReqTable(scope, reqs, title){ return `<h2>${title} <span class="badge">${safe(scope)}</span></h2><table><tr><th>Requirement</th><th>Status</th><th>Value</th><th>Target</th><th>Deadline</th></tr>${Object.entries(reqs).map(([id,r])=>`<tr><td>${safe(r.label)}</td><td>${reqStatus(id,r)}</td><td>${r.type==='checkbox'?(getReqVal(id,r)?'Yes':'No'):getReqVal(id,r)}</td><td>${r.target||'—'} ${r.unit||''}</td><td>${r.deadline}</td></tr>`).join('')}</table>`; }
 function reportLogTable(title, arr, fields){ return `<h2>${title}</h2>${arr.length?`<table><tr>${fields.map(f=>`<th>${f}</th>`).join('')}</tr>${arr.map(e=>`<tr>${fields.map(f=>`<td>${safe(f.includes('date')||f==='start'||f==='end'?fmtDate(e[f]):e[f]||'')}</td>`).join('')}</tr>`).join('')}</table>`:'<p class="meta">No entries logged.</p>'}`; }
+
+// ─── CSV / ZIP EXPORT ───────────────────────────────────────────
+// CSV cell escape: wrap in double quotes if value contains comma, quote, or newline; double up internal quotes.
+function csvCell(v){ if(v===null||v===undefined) return ''; const s=String(v); return /[",\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
+function csvFromRows(headers, rows){ const lines=[headers.map(csvCell).join(',')]; rows.forEach(r=>lines.push(headers.map(h=>csvCell(r[h])).join(','))); return '\ufeff'+lines.join('\r\n'); } // BOM so Excel recognises UTF-8
+
+// CRC-32 table for ZIP entries
+const CRC_TABLE=(()=>{ const t=new Uint32Array(256); for(let i=0;i<256;i++){ let c=i; for(let k=0;k<8;k++) c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1); t[i]=c; } return t; })();
+function crc32(bytes){ let c=0xffffffff; for(let i=0;i<bytes.length;i++) c=CRC_TABLE[(c^bytes[i])&0xff]^(c>>>8); return (c^0xffffffff)>>>0; }
+
+// Build a ZIP file (STORED, no compression) from {filename: string} map. Returns a Blob.
+function makeZip(files){
+  const enc=new TextEncoder();
+  const localChunks=[], centralChunks=[]; let offset=0;
+  Object.entries(files).forEach(([name,content])=>{
+    const nameBytes=enc.encode(name);
+    const data=enc.encode(content);
+    const crc=crc32(data);
+    const size=data.length;
+    // Local file header (30 bytes + name)
+    const local=new Uint8Array(30+nameBytes.length);
+    const lv=new DataView(local.buffer);
+    lv.setUint32(0,0x04034b50,true); // signature
+    lv.setUint16(4,20,true);          // version needed
+    lv.setUint16(6,0,true);           // flags
+    lv.setUint16(8,0,true);           // method=stored
+    lv.setUint16(10,0,true);          // mod time
+    lv.setUint16(12,0,true);          // mod date
+    lv.setUint32(14,crc,true);
+    lv.setUint32(18,size,true);       // compressed size
+    lv.setUint32(22,size,true);       // uncompressed size
+    lv.setUint16(26,nameBytes.length,true);
+    lv.setUint16(28,0,true);          // extra field length
+    local.set(nameBytes,30);
+    const localBlock=new Uint8Array(local.length+data.length);
+    localBlock.set(local,0); localBlock.set(data,local.length);
+    localChunks.push(localBlock);
+    // Central directory header (46 bytes + name)
+    const central=new Uint8Array(46+nameBytes.length);
+    const cv=new DataView(central.buffer);
+    cv.setUint32(0,0x02014b50,true);
+    cv.setUint16(4,20,true);          // version made by
+    cv.setUint16(6,20,true);          // version needed
+    cv.setUint16(8,0,true);
+    cv.setUint16(10,0,true);
+    cv.setUint16(12,0,true);
+    cv.setUint16(14,0,true);
+    cv.setUint32(16,crc,true);
+    cv.setUint32(20,size,true);
+    cv.setUint32(24,size,true);
+    cv.setUint16(28,nameBytes.length,true);
+    cv.setUint16(30,0,true);          // extra
+    cv.setUint16(32,0,true);          // comment
+    cv.setUint16(34,0,true);          // disk
+    cv.setUint16(36,0,true);          // internal attrs
+    cv.setUint32(38,0,true);          // external attrs
+    cv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralChunks.push(central);
+    offset += localBlock.length;
+  });
+  const centralSize=centralChunks.reduce((a,c)=>a+c.length,0);
+  const eocd=new Uint8Array(22);
+  const ev=new DataView(eocd.buffer);
+  ev.setUint32(0,0x06054b50,true);
+  ev.setUint16(4,0,true); ev.setUint16(6,0,true);
+  ev.setUint16(8,centralChunks.length,true);
+  ev.setUint16(10,centralChunks.length,true);
+  ev.setUint32(12,centralSize,true);
+  ev.setUint32(16,offset,true);
+  ev.setUint16(20,0,true);
+  return new Blob([...localChunks,...centralChunks,eocd],{type:'application/zip'});
+}
+
+function exportLogbook(){
+  const sp=specCfg();
+  const profile=state.profile||{};
+  const safeName=(profile.name||'logbook').replace(/[^a-zA-Z0-9]+/g,'_');
+  const stamp=new Date().toISOString().slice(0,10);
+  const meta={ generated:new Date().toISOString(), trainee:profile.name||'', trainingNumber:profile.trainingNumber||'', email:profile.email||'', specialty:sp.label, currentYear, deanery:profile.deanery||'', baseHospital:profile.baseHospital||'' };
+
+  // Field schemas — ordered to put identifying columns first
+  const SCHEMAS={
+    clinics:    ['date','scope','type','hospital','supervisor','patients','year','notes'],
+    procedures: ['date','scope','type','hospital','supervisor','dops','year','notes'],
+    cpd:        ['date','scope','type','title','hours','year','notes'],
+    simulation: ['date','course','title','hours','hospital','year','notes'],
+    teaching:   ['date','type','topic','audience','supervisor','signoff','year','notes'],
+    acute:      ['hospital','start','end','months','takes','patients','estimated','year','supervisor'],
+    ward:       ['hospital','start','end','months','year','supervisor']
+  };
+  const KIND_LABELS={clinics:'Clinics',procedures:'Procedures',cpd:'CPD',simulation:'Simulation',teaching:'Teaching',acute:'Acute_take',ward:'GIM_ward_cover'};
+
+  const files={};
+  // Profile / metadata file
+  files['profile.csv']=csvFromRows(['field','value'], Object.entries(meta).map(([field,value])=>({field,value})));
+
+  // Per-kind CSVs
+  let total=0;
+  Object.entries(SCHEMAS).forEach(([k,headers])=>{
+    const arr=entries(k);
+    total+=arr.length;
+    files[`${KIND_LABELS[k]}.csv`]=csvFromRows(headers,arr);
+  });
+
+  // Summary file
+  const summaryRows=Object.entries(SCHEMAS).map(([k])=>({type:KIND_LABELS[k],total_entries:entries(k).length,this_year_only:entries(k).filter(e=>e.year===currentYear).length}));
+  files['_summary.csv']=csvFromRows(['type','total_entries','this_year_only'], summaryRows);
+
+  if(total===0){ alert('No logbook entries to export yet — add some entries first.'); return; }
+
+  const blob=makeZip(files);
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`Logbook_${safeName}_${stamp}.zip`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+window.exportLogbook=exportLogbook;
 function setSyncStatus(online,message){ const s=document.getElementById('sync'); if(!s)return; s.textContent='● Live'; s.style.color='var(--green)'; }
 window.addEventListener('firebase-status', e=>{ setSyncStatus(e.detail.online, e.detail.message); });
 setTimeout(()=>{ if(window.ARCP_FB?.online) setSyncStatus(true,'Live'); }, 800);
@@ -1467,7 +1610,9 @@ function renderRoadmap(){
       <h1 style="font-size:40px;font-weight:500;letter-spacing:-.025em;line-height:1.1;margin:0;color:var(--text)">Your training journey.</h1>
       <p style="font-size:14px;color:var(--text2);margin-top:12px;line-height:1.55">${heroPct}% overall coverage · ${days} days to ARCP · ${currentYear} in progress.</p>
     </div>
-    <button class="btn small" style="margin-top:6px;flex-shrink:0" onclick="printReport()">\u2398 Print ARCP report</button>
+    <div style="display:flex;gap:8px;flex-shrink:0;margin-top:6px;flex-wrap:wrap">
+      <button class="btn small" onclick="printReport()">\u2398 Print Logbook Report</button>
+    </div>
   </div>`;
 
   const yearRows=years.map((y,i)=>{
@@ -1483,6 +1628,26 @@ function renderRoadmap(){
     const statusColor=locked?'var(--green)':isCurrent?'var(--primary)':'var(--dim)';
     const statusBg=locked?'var(--green-soft)':isCurrent?'var(--primary-soft)':'var(--bg3)';
     const isLast=i===years.length-1;
+
+    // Build the subtitle line shown next to the year label.
+    // For locked years: "Satisfactory progress · locked Sep 2024"
+    // For others:      "X/Y milestones"
+    let yearSubtitle = `${yMet}/${yTotal} milestones`;
+    if(locked){
+      const outcomeKey = state.years[y]?.outcome;
+      const outcomeFull = outcomeKey ? OUTCOMES[outcomeKey] : '';
+      // Strip leading "Outcome N — " to get just the descriptor
+      const outcomeDesc = outcomeFull.replace(/^Outcome\s+\d+\s*[—–-]\s*/i,'').trim() || 'Locked';
+      const lockedAtTs = state.years[y]?.lockedAt;
+      const lockedDate = lockedAtTs ? new Date(lockedAtTs) : (state.arcpDates?.[y] ? new Date(state.arcpDates[y]) : null);
+      const lockedStr = lockedDate ? lockedDate.toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : '';
+      yearSubtitle = lockedStr ? `${outcomeDesc} \u00b7 locked ${lockedStr}` : `${outcomeDesc} \u00b7 locked`;
+    }
+    // Outcome pill: just "Outcome N" for locked years (the screenshot's bottom-left pill).
+    let outcomeNumberPill = '';
+    if(locked && state.years[y]?.outcome){
+      outcomeNumberPill = `<div style="margin-top:10px"><span style="display:inline-block;padding:4px 12px;background:var(--green-soft);color:var(--green);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;border-radius:999px;font-family:var(--font-mono);border:1px solid color-mix(in srgb, var(--green) 30%, transparent)">Outcome ${safe(state.years[y].outcome)}</span></div>`;
+    }
 
     const milestoneCards=items.length?items.map(({id,r,met,v})=>{
       const isCount=r.type==='number';
@@ -1530,11 +1695,12 @@ function renderRoadmap(){
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
           <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
             <span style="font-size:32px;font-weight:600;letter-spacing:-.025em;color:var(--text);font-family:var(--font)">${safe(y)}</span>
-            <span style="font-size:12px;color:var(--dim)">${yMet}/${yTotal} milestones</span>
+            <span style="font-size:12px;color:var(--dim)">${safe(yearSubtitle)}</span>
           </div>
-          <span style="padding:3px 10px;background:${statusBg};color:${statusColor};font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;border-radius:999px;font-family:var(--font-mono)">${safe(status)}</span>
+          ${locked?'':`<span style="padding:3px 10px;background:${statusBg};color:${statusColor};font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;border-radius:999px;font-family:var(--font-mono)">${safe(status)}</span>`}
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">${milestoneCards}</div>
+        ${outcomeNumberPill}
+        ${locked?'':`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:${outcomeNumberPill?'14px':'0'}">${milestoneCards}</div>`}
       </div>
     </div>`;
   }).join('');
@@ -1562,7 +1728,8 @@ function renderLogbookV2(){
       <div style="font-size:13px;color:var(--dim);margin-top:6px">${subs.map(([k,l])=>`${counts[k]} ${l.toLowerCase()}`).join(' · ')}</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button class="btn small" onclick="printReport()">\u2398 Print ARCP report</button>
+      <button class="btn small" onclick="exportLogbook()">\u21E9 Export CSV (.zip)</button>
+      <button class="btn small" onclick="printReport()">\u2398 Print Logbook Report</button>
       <button class="btn primary" onclick="openLogbookForm('${filterKey==='all'?'clinics':filterKey}')">+ New entry</button>
     </div>
   </div>`;
@@ -1572,8 +1739,8 @@ function renderLogbookV2(){
     ${subs.map(([k,l])=>`<button class="btn small ${filterKey===k?'primary':''}" onclick="logSubTab='${k}';renderLogbookV2()" style="border-radius:999px;font-family:var(--font-mono);letter-spacing:.04em">${l} · ${counts[k]}</button>`).join('')}
   </div>`;
 
-  const tableHead=`<div style="display:grid;grid-template-columns:90px 160px 1fr 150px 150px;padding:12px 22px;border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);background:var(--bg3)">
-    <span>Date</span><span>Type</span><span>Item</span><span>Hospital</span><span>Supervisor</span>
+  const tableHead=`<div class="lb-row lb-row-head" style="display:grid;grid-template-columns:90px 160px 1fr 150px 150px;padding:12px 22px;border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);background:var(--bg3)">
+    <span class="lb-cell lb-cell-date">Date</span><span class="lb-cell lb-cell-type">Type</span><span class="lb-cell lb-cell-item">Item</span><span class="lb-cell lb-cell-hospital">Hospital</span><span class="lb-cell lb-cell-supervisor">Supervisor</span>
   </div>`;
   const sp=specCfg();
   const tableRows=filtered.length?filtered.slice(0,80).map((e,i)=>{
@@ -1584,12 +1751,12 @@ function renderLogbookV2(){
     let scopePill='';
     if(e.scope==='gim') scopePill=`<span style="${scopePillBase} rgba(124,182,255,.3);background:var(--gim-soft);color:var(--gim)">GIM</span>`;
     else if(e.scope==='spec') scopePill=`<span style="${scopePillBase} rgba(216,255,94,.25);background:var(--primary-soft);color:var(--primary)">${safe(sp.short)}</span>`;
-    return `<div style="display:grid;grid-template-columns:90px 160px 1fr 150px 150px;padding:13px 22px;${i===filtered.length-1||i===79?'':'border-bottom:1px solid var(--line)'};align-items:center;font-size:13px">
-      <span class="o-mono" style="color:var(--dim);font-size:11px;letter-spacing:.06em;font-family:var(--font-mono)">${dateStr}</span>
-      <span style="display:inline-flex;gap:5px;flex-wrap:wrap"><span style="${typePillStyle}">${e._kind.slice(0,4)}</span>${scopePill}</span>
-      <span style="color:var(--text);font-weight:500">${safe(item)}</span>
-      <span style="color:var(--dim);font-size:12px">${safe(e.hospital||'—')}</span>
-      <span style="color:var(--dim);font-size:12px">${safe(e.supervisor||'—')}</span>
+    return `<div class="lb-row lb-row-data" style="display:grid;grid-template-columns:90px 160px 1fr 150px 150px;padding:13px 22px;${i===filtered.length-1||i===79?'':'border-bottom:1px solid var(--line)'};align-items:center;font-size:13px">
+      <span class="lb-cell lb-cell-date o-mono" style="color:var(--dim);font-size:11px;letter-spacing:.06em;font-family:var(--font-mono)">${dateStr}</span>
+      <span class="lb-cell lb-cell-type" style="display:inline-flex;gap:5px;flex-wrap:wrap"><span style="${typePillStyle}">${e._kind.slice(0,4)}</span>${scopePill}</span>
+      <span class="lb-cell lb-cell-item" style="color:var(--text);font-weight:500">${safe(item)}</span>
+      <span class="lb-cell lb-cell-hospital" style="color:var(--dim);font-size:12px">${safe(e.hospital||'—')}</span>
+      <span class="lb-cell lb-cell-supervisor" style="color:var(--dim);font-size:12px">${safe(e.supervisor||'—')}</span>
     </div>`;
   }).join(''):`<div style="padding:40px 22px;text-align:center;color:var(--dim);font-size:13px">No ${filterKey==='all'?'':filterKey+' '}entries logged yet.</div>`;
 
