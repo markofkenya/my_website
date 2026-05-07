@@ -73,8 +73,31 @@ body.focus .check{color:#fff}body.focus .btn.primary{color:#fff}body.focus .chec
 #gate{position:fixed;inset:0;background:rgba(10,13,12,.94);backdrop-filter:blur(10px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px} #gate.show{display:flex}
 .gate-card{width:min(720px,100%);background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius-lg);padding:32px 30px;box-shadow:0 30px 80px -20px rgba(0,0,0,.7)}
 .gate-title{font-size:30px;font-weight:500;color:var(--text);letter-spacing:-.03em;display:flex;align-items:center;gap:14px;font-family:var(--font)}.gate-title small{font-size:11px;color:var(--dim);font-weight:500;letter-spacing:.16em;text-transform:uppercase;font-family:var(--font-mono)}.gate-sub{font-size:14px;color:var(--text2);margin:8px 0 22px;line-height:1.6}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:8px}.field.full{grid-column:1/-1}.field label{font-size:10px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;font-family:var(--font-mono)}
-.input{width:100%;border:1px solid var(--line);background:var(--bg3);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;outline:none;font-size:14px;transition:border-color .15s,box-shadow .15s}.input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:8px;min-width:0}.field.full{grid-column:1/-1}.field label{font-size:10px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;font-family:var(--font-mono)}
+.input{width:100%;border:1px solid var(--line);background:var(--bg3);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;outline:none;font-size:14px;box-sizing:border-box;transition:border-color .15s,box-shadow .15s}.input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.input[type="date"],.input[type="time"],.input[type="datetime-local"],.input[type="month"]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%}
+.input[type="date"]::-webkit-date-and-time-value{text-align:left}
+@media (max-width: 640px){
+  /* iOS Safari auto-zooms into any input with font-size < 16px on focus, then often stays zoomed.
+     Bumping to 16px on mobile only stops the auto-zoom while keeping desktop typography intact. */
+  .input, select.input, textarea.input{ font-size:16px; }
+
+  /* Logbook V2 list: stack each row vertically on phones — desktop table layout (5 fixed columns ~700px)
+     doesn't fit a ~390px viewport. Each entry becomes a 3-line card: meta row (date + pills), item, details. */
+  .lb-row.lb-row-head{ display:none !important; }
+  .lb-row.lb-row-data{
+    grid-template-columns: auto 1fr !important;
+    grid-template-areas: "date type" "item item" "hosp sup" !important;
+    row-gap:6px; column-gap:10px;
+    padding:14px 16px !important;
+    align-items:start !important;
+  }
+  .lb-row-data .lb-cell-date{ grid-area: date; font-size:11px !important; align-self:center; }
+  .lb-row-data .lb-cell-type{ grid-area: type; justify-self:end; align-self:center; }
+  .lb-row-data .lb-cell-item{ grid-area: item; font-size:14px !important; line-height:1.35; }
+  .lb-row-data .lb-cell-hospital{ grid-area: hosp; font-size:11px !important; color:var(--dim); }
+  .lb-row-data .lb-cell-supervisor{ grid-area: sup; font-size:11px !important; color:var(--dim); justify-self:end; text-align:right; }
+}
 .btn{border:1px solid var(--line);background:transparent;color:var(--text2);border-radius:var(--radius-sm);padding:9px 13px;font-size:12px;font-weight:500;letter-spacing:.01em;transition:all .15s;font-family:var(--font)}.btn:hover{border-color:var(--line-strong);color:var(--text)}.btn.tiny{padding:3px 8px;font-size:10px;border-radius:6px}.btn.primary{background:var(--primary);border-color:var(--primary);color:#0e1110;font-weight:600}.btn.primary:hover{background:var(--primary2);border-color:var(--primary2);color:#0e1110}.btn.danger{border-color:rgba(248,113,113,.4);color:var(--red)}.btn.danger:hover{background:var(--red-soft);border-color:var(--red)}.btn.good{border-color:rgba(163,230,53,.4);color:var(--green)}.btn.good:hover{background:var(--green-soft);border-color:var(--green)}.btn.small{padding:6px 10px;font-size:11px;border-radius:7px}.hint{font-size:11px;color:var(--dim);line-height:1.6;font-family:var(--font-mono);letter-spacing:.02em}
 
 .gate-slogan{margin:14px 0 18px;padding:16px 18px;border:1px solid var(--line);background:var(--bg3);border-radius:var(--radius)}
@@ -88,6 +111,8 @@ body.focus .check{color:#fff}body.focus .btn.primary{color:#fff}body.focus .chec
 .top-row{display:flex;align-items:stretch;flex-wrap:wrap}
 .brand{padding:18px 24px;border-right:1px solid var(--line);min-width:230px;display:flex;align-items:center;gap:12px}
 .brand-mark{flex-shrink:0}
+body.focus .brand-mark .bm-arc{stroke:#0a4f4a}
+body.focus .brand-mark .bm-dot{fill:#1d8054}
 .brand-main{font-weight:500;font-size:20px;color:var(--text);letter-spacing:-.03em;font-family:var(--font);display:flex;align-items:baseline;gap:0}
 .brand-main span{color:var(--primary);font-weight:600}
 .brand-sub{font-size:10px;color:var(--dim);letter-spacing:.14em;margin-top:3px;text-transform:uppercase;font-family:var(--font-mono)}
@@ -147,13 +172,98 @@ main{padding:28px 32px 100px;max-width:1440px;margin:0 auto}
 .table th,.table td{border-bottom:1px solid var(--line);padding:11px 14px;text-align:left;vertical-align:top}
 .table th{font-size:10px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;background:var(--bg3);font-family:var(--font-mono);font-weight:600}
 .table tr:last-child td{border-bottom:none}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg2)}
+.table-wrap{overflow-x:auto;overflow-y:visible;max-width:100%;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg2);-webkit-overflow-scrolling:touch}
 .statusbar{position:fixed;left:0;right:0;bottom:0;background:var(--bg2);border-top:1px solid var(--line);padding:10px 24px;display:flex;justify-content:space-between;gap:10px;align-items:center;z-index:70}
 .status-left{display:flex;gap:18px;flex-wrap:wrap}
 .status-item{font-size:11px;color:var(--dim);font-family:var(--font-mono);letter-spacing:.04em}
 .status-item strong{color:var(--text2);font-weight:500}
 @media(max-width:680px){.form-grid{grid-template-columns:1fr}.brand,.metric{border-right:none;border-bottom:1px solid var(--line);width:50%}.grow{width:100%}main{padding:14px 14px 86px}.grid{grid-template-columns:1fr}.statusbar{align-items:flex-start;flex-direction:column}.statusbar .row{width:100%}}
+/* ─── TRAINING ACTIVITY DASHBOARD ─────────────────────────────────────── */
+.act-root{display:flex;flex-direction:column;gap:32px;max-width:1400px;margin:0 auto}
+.act-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:32px;flex-wrap:wrap}
+.act-title{font-size:48px;font-weight:500;letter-spacing:-.025em;line-height:1;margin:0;color:var(--text);font-family:var(--font)}
+.act-subtitle{font-size:15px;color:var(--text2);margin:14px 0 0;line-height:1.55;letter-spacing:-.005em}
+.act-trajectory{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:20px 24px;min-width:320px;backdrop-filter:blur(20px);position:relative;overflow:hidden}
+.act-trajectory::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--primary) 14%, transparent), transparent 60%);pointer-events:none}
+.act-trajectory-pct{font-size:48px;font-weight:500;letter-spacing:-.03em;line-height:1;font-family:var(--font);font-feature-settings:"tnum"}
+.act-trajectory-bar{height:4px;background:var(--bg3);border-radius:999px;overflow:hidden;margin:14px 0 16px;position:relative;z-index:1}
+.act-trajectory-bar > div{height:100%;border-radius:999px;transition:width .6s ease-out;box-shadow:0 0 8px color-mix(in srgb, var(--primary) 40%, transparent)}
+.act-trajectory-meta{display:flex;flex-direction:column;gap:8px;font-size:11px;position:relative;z-index:1}
+.act-trajectory-meta > div{display:flex;justify-content:space-between;gap:12px}
+.act-trajectory-key{color:var(--dim);font-family:var(--font-mono);letter-spacing:.14em;text-transform:uppercase;font-size:9.5px}
+.act-trajectory-meta span:not(.act-trajectory-key){color:var(--text2);font-weight:500}
+
+.act-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.act-kpi{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;transition:all .2s;cursor:default}
+.act-kpi::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--primary) 6%, transparent), transparent 70%);pointer-events:none;opacity:0;transition:opacity .25s}
+.act-kpi:hover{border-color:var(--line-strong);transform:translateY(-2px);box-shadow:0 8px 24px -8px color-mix(in srgb, var(--primary) 16%, transparent)}
+.act-kpi:hover::before{opacity:1}
+.act-kpi-label{font-size:10px;color:var(--dim);letter-spacing:.18em;text-transform:uppercase;font-family:var(--font-mono);font-weight:500;margin-bottom:14px}
+.act-kpi-value{font-size:34px;font-weight:600;letter-spacing:-.025em;line-height:1;font-family:var(--font);font-feature-settings:"tnum"}
+.act-kpi-sub{font-size:11px;color:var(--dim);margin-top:6px;font-family:var(--font-mono);letter-spacing:.02em}
+
+.act-grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
+.act-main{display:flex;flex-direction:column;gap:20px;min-width:0}
+.act-card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:22px;position:relative;overflow:hidden}
+.act-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.act-card-title{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-.01em;margin-bottom:4px}
+.act-card-sub{font-size:11px;color:var(--dim);font-family:var(--font-mono);letter-spacing:.04em;text-transform:uppercase}
+.act-consistency{text-align:right}
+.act-consistency-num{font-size:36px;font-weight:500;color:var(--primary);letter-spacing:-.03em;line-height:1;font-family:var(--font);font-feature-settings:"tnum"}
+.act-consistency-num span{font-size:18px;color:var(--dim);font-weight:400;margin-left:2px}
+.act-consistency-lab{font-size:9px;color:var(--dim);font-family:var(--font-mono);letter-spacing:.18em;text-transform:uppercase;margin-top:4px}
+
+.act-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.act-chip{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:6px 11px;border:1px solid var(--line);background:transparent;color:var(--text2);border-radius:999px;cursor:pointer;transition:all .15s;font-weight:500}
+.act-chip:hover{border-color:var(--line-strong);color:var(--text)}
+.act-chip.active{background:var(--primary);border-color:var(--primary);color:#0e1110;font-weight:600}
+
+.act-heatmap-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 0 4px;margin:0 -4px}
+.heatmap-svg{min-width:680px}
+.heatmap-svg .hm-cell{transition:filter .12s, transform .12s;cursor:pointer;transform-origin:center}
+.heatmap-svg .hm-cell:hover{filter:brightness(1.4) drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 60%, transparent))}
+.heatmap-svg .hm-month{font-family:var(--font-mono);font-size:9px;fill:var(--dim);letter-spacing:.06em;text-transform:uppercase}
+.heatmap-svg .hm-dow{font-family:var(--font-mono);font-size:9px;fill:var(--dim);letter-spacing:.04em}
+.act-heatmap-legend{display:flex;align-items:center;gap:6px;margin-top:14px;font-family:var(--font-mono);font-size:10px;color:var(--dim);letter-spacing:.06em;flex-wrap:wrap}
+.lg-cell{display:inline-block;width:10px;height:10px;border-radius:2px}
+.lg-cell.hm-b0{background:transparent;border:1px solid var(--line)}
+.lg-cell.hm-b1{background:rgba(216,255,94,.10)}
+.lg-cell.hm-b2{background:rgba(216,255,94,.28)}
+.lg-cell.hm-b3{background:rgba(216,255,94,.55)}
+.lg-cell.hm-b4{background:var(--primary)}
+
+.act-charts{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.act-trend-bars{display:flex;align-items:flex-end;gap:6px;padding-top:8px}
+.act-cat-bars,.act-proc-bars{display:flex;flex-direction:column;gap:14px;padding-top:6px}
+.act-cpd-line{padding-top:8px}
+
+.act-sidebar{display:flex;flex-direction:column;gap:10px;align-content:start}
+.act-sidebar-title{font-size:11px;font-weight:600;color:var(--dim);letter-spacing:.16em;text-transform:uppercase;font-family:var(--font-mono);padding:0 4px 6px}
+.act-insight{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;transition:all .2s;position:relative;overflow:hidden}
+.act-insight:hover{border-color:var(--line-strong);background:color-mix(in srgb, var(--bg2) 70%, var(--bg3))}
+.act-insight-label{font-size:9.5px;color:var(--dim);letter-spacing:.16em;text-transform:uppercase;font-family:var(--font-mono);font-weight:500;margin-bottom:8px}
+.act-insight-value{font-size:24px;font-weight:500;color:var(--text);letter-spacing:-.02em;line-height:1.1;font-family:var(--font);font-feature-settings:"tnum"}
+.act-insight-value.is-text{font-size:14px;letter-spacing:-.005em;line-height:1.35;font-weight:500;font-feature-settings:normal;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.act-insight-sub{font-size:10.5px;color:var(--dim);font-family:var(--font-mono);letter-spacing:.04em;margin-top:6px}
+
+.hm-tip{position:fixed;background:var(--bg);border:1px solid var(--line-strong);color:var(--text);padding:8px 11px;border-radius:6px;font-size:11px;font-family:var(--font-mono);letter-spacing:.02em;pointer-events:none;opacity:0;transition:opacity .12s;z-index:9999;max-width:300px;box-shadow:0 6px 20px -4px rgba(0,0,0,.5)}
+
+@media (max-width:920px){
+  .act-grid{grid-template-columns:1fr}
+  .act-charts{grid-template-columns:1fr}
+  .act-title{font-size:36px}
+  .act-trajectory{min-width:0;width:100%}
+}
+@media (max-width:640px){
+  .act-kpis{grid-template-columns:repeat(2,1fr)}
+  .act-kpi-value{font-size:28px}
+  .act-card{padding:16px}
+  .act-card-head{flex-direction:row;align-items:center}
+  .act-consistency{text-align:right;flex-shrink:0}
+  .act-consistency-num{font-size:28px}
+}
 @media print{.topbar,.statusbar,.tabs,.btn,.subtabs,#gate{display:none!important}#app{display:block!important}body{background:white;color:#111}main{padding:0}.card,.panel,.summary,.table-wrap{break-inside:avoid;border-color:#ddd;background:white}.card-title,.sec-title{color:#111}.table th{background:#f3f4f6;color:#444}.table td,.table th{border-color:#ddd}.deadline,.hint,.sec-note{color:#555}}
+
 
 .dops-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;width:100%}
 .dops-card{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--dim);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px}
@@ -236,6 +346,7 @@ body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,
     <div class="gate-slogan"><strong>Bye-bye spreadsheets. <em>Hello, Outcome1.</em></strong><span>Know your roadmap. Own your ARCP.</span></div>
     <div class="form-grid">
       <div class="field"><label>Name</label><input id="on-name" class="input" placeholder="Dr John Smith"></div>
+      <div class="field"><label>Training number (NTN / GMC)</label><input id="on-trainingNumber" class="input" placeholder="e.g. NTN GIM/1234 or GMC 7654321"></div>
       <div class="field"><label>Email</label><input id="on-email" class="input" type="email" placeholder="j.smith@nhs.net"></div>
       <div class="field"><label>Specialty</label><select id="on-specialty" class="input"></select></div>
       <div class="field"><label>Training year started</label><div class="row" style="gap:8px"><select id="on-year-start-month" class="input" style="flex:1"><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="2">February</option><option value="4">April</option><option value="6">June</option></select><select id="on-year-start-year" class="input" style="flex:1"></select></div></div>
@@ -260,7 +371,7 @@ body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,
   <header class="topbar">
     <div class="top-row">
       <div class="brand">
-        <span class="brand-mark"><svg width="34" height="34" viewBox="0 0 78 78" aria-hidden="true"><path d="M 14 56 A 28 28 0 1 1 64 38" stroke="#f0efe8" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="64" cy="38" r="7" fill="#d8ff5e"/></svg></span>
+        <span class="brand-mark"><svg width="34" height="34" viewBox="0 0 78 78" aria-hidden="true"><path class="bm-arc" d="M 14 56 A 28 28 0 1 1 64 38" stroke="#f0efe8" stroke-width="6" fill="none" stroke-linecap="round"/><circle class="bm-dot" cx="64" cy="38" r="7" fill="#d8ff5e"/></svg></span>
         <div>
           <div class="brand-main">Outcome<span>1</span></div>
           <div class="brand-sub" id="brand-sub">Portfolio Tracker</div>
@@ -281,12 +392,12 @@ body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,
   </header>
   <div id="beta-banner" class="beta-banner">
     <span id="beta-banner-text">🚀 Beta Trial: 30 days remaining</span>
-    <span class="row" style="gap:12px"><a href="/cdn-cgi/l/email-protection#036e6271686e6276646c43646e626a6f2d606c6e3c707661696660773e444a4e5771626068263133416677622631334566666761626068">Send feedback</a><button class="beta-close" onclick="dismissBetaBanner()" aria-label="Dismiss beta banner">×</button></span>
+    <span class="row" style="gap:12px"><a href="/cdn-cgi/l/email-protection#4825293a2325293d2f27082f25292124662b2725773b3d2a222d2b3c750f01051c3a292b236d7a780a2d3c296d7a780e2d2d2c2a292b23">Send feedback</a><button class="beta-close" onclick="dismissBetaBanner()" aria-label="Dismiss beta banner">×</button></span>
   </div>
   <div id="beta-expired-lock">
     <div class="expired-card">
       <div class="expired-title">Trial expired</div>
-      <div class="expired-msg">Your 30-day Outcome1 beta trial has ended.<br><br>Thank you for testing.</div> To continue using this beta account, please contact:<br><br><a href="/cdn-cgi/l/email-protection#701d11021b1d1105171f30171d11191c5e131f1d"><span class="__cf_email__" data-cfemail="afc2ceddc4c2cedac8c0efc8c2cec6c381ccc0c2">[email&#160;protected]</span></a></div>
+      <div class="expired-msg">Your 30-day Outcome1 beta trial has ended.<br><br>Thank you for testing.</div> To continue using this beta account, please contact:<br><br><a href="/cdn-cgi/l/email-protection#9af7fbe8f1f7fbeffdf5dafdf7fbf3f6b4f9f5f7"><span class="__cf_email__" data-cfemail="1a777b6871777b6f7d755a7d777b737634797577">[email&#160;protected]</span></a></div>
     </div>
   </div>
 
@@ -310,14 +421,14 @@ const LOCKING_OUTCOMES = ["1","2","6","8"];
 const PROFILE_KEY = "arcp_v2_profile";
 const STATE_KEY = "arcp_v2_state";
 let currentYear = localStorage.getItem("arcp_v2_current_year") || "ST4";
-let currentTab = localStorage.getItem("arcp_v2_tab") || "today";
+let currentTab = localStorage.getItem("arcp_v2_tab") || "roadmap"; if(currentTab==='today') currentTab='roadmap';
 let logSubTab = "clinics";
 let suppressRemote = false;
 const BETA_TRIAL_DAYS = 30;
 const BETA_FEEDBACK_EMAIL = "markmaugo@gmail.com";
 
 const SPECIALTIES = {
-  renal:{ label:"Renal Medicine", short:"Renal", color:"#a78bfa", color2:"#7c5fd4", icon:"◈",
+  renal:{ label:"Renal Medicine", short:"Renal", color:"#a78bfa", color2:"#7c5fd4", icon:"◈", procedureChecklist:true,
     reqs:{
       spec_mcrs:{label:"Specialty MCRs",type:"number",target:4,unit:"MCRs",deadline:"annual",note:"Specialty consultants"},
       spec_msf:{label:"Specialty MSF raters",type:"number",target:8,unit:"raters",deadline:"annual",note:"Contributes to total MSF"},
@@ -330,7 +441,7 @@ const SPECIALTIES = {
       spec_survey:{label:"Patient survey",type:"checkbox",deadline:"ST7",note:"Required before completion"},
       spec_mgmt:{label:"Management / leadership evidence",type:"checkbox",deadline:"ST7",note:"Course or equivalent"}
     },
-    logbook:{clinics:["General Nephrology clinic","HD clinic","Transplant clinic","HTN clinic","AKCC","Other"], procedures:["Temp HD catheter — femoral","Temp HD catheter — jugular","Tunnelled dialysis catheter","Tunnelled line removal","Native kidney biopsy","Transplant kidney biopsy","Other"], cpd:["Renal study day","Renal conference","Northern Postgraduate Nephrology Course","Grand round","M&M / mortality meeting","Departmental teaching / journal club","Other"]}
+    logbook:{clinics:["General Nephrology clinic","HD clinic","Transplant clinic","HTN clinic","AKCC","Other"], procedures:["Temp HD catheter — femoral","Temp HD catheter — jugular","Tunnelled dialysis catheter","Tunnelled line removal","Native kidney biopsy","Transplant kidney biopsy","Other"], cpd:["Renal study day","Renal conference","Renal Training Day","Grand round","M&M / mortality meeting","Departmental teaching / journal club","Other"]}
   },
   respiratory:{ label:"Respiratory Medicine", short:"Resp", color:"#34d399", color2:"#059669", icon:"◉",
     reqs:{
@@ -351,7 +462,32 @@ const SPECIALTIES = {
   },
   cardiology:{ label:"Cardiology", short:"Cardiology", color:"#f87171", color2:"#dc2626", icon:"◆", reqs:null, logbook:{clinics:["General cardiology clinic","Heart failure clinic","Valve clinic","Arrhythmia clinic","Other"], procedures:["DC cardioversion","Echo exposure","Device clinic exposure","Other"], cpd:["Cardiology study day","ESC / BCS course","Grand round","Other"]}},
   gastroenterology:{ label:"Gastroenterology", short:"Gastro", color:"#f59e0b", color2:"#d97706", icon:"▰", reqs:null, logbook:{clinics:["General gastro clinic","IBD clinic","Liver clinic","Endoscopy list","Other"], procedures:["Diagnostic gastroscopy","Colonoscopy exposure","Ascitic tap","Paracentesis","Other"], cpd:["Gastro study day","BSG course","Endoscopy teaching","Other"]}},
-  geriatric:{ label:"Geriatric Medicine", short:"Geriatrics", color:"#14b8a6", color2:"#0f766e", icon:"●", reqs:null, logbook:{clinics:["Falls clinic","Frailty clinic","Memory clinic","Movement disorder clinic","Other"], procedures:["CGA assessment","Capacity assessment","MDT discharge planning","Other"], cpd:["Geriatrics study day","BGS event","Grand round","Other"]}}
+  geriatric:{ label:"Geriatric Medicine", short:"Geriatrics", color:"#14b8a6", color2:"#0f766e", icon:"●", reqs:null, logbook:{clinics:["Falls clinic","Frailty clinic","Memory clinic","Movement disorder clinic","Other"], procedures:["CGA assessment","Capacity assessment","MDT discharge planning","Other"], cpd:["Geriatrics study day","BGS event","Grand round","Other"]}},
+  endocrinology:{ label:"Endocrinology & Diabetes", short:"Endo", color:"#f59e0b", color2:"#b45309", icon:"◆",
+    reqs:{
+      spec_mcrs:{label:"Specialty MCRs",type:"number",target:4,unit:"MCRs",deadline:"annual",note:"4–6 endo/diabetes consultants per year"},
+      spec_msf:{label:"MSF raters",type:"number",target:12,unit:"raters",deadline:"annual",note:"≥12 raters incl. 3 consultants; mix GIM + specialty"},
+      spec_sles:{label:"CbD / mini-CEX",type:"number",target:6,unit:"SLEs",deadline:"annual",note:"6 per year, minimum 4 CbDs"},
+      spec_es:{label:"Educational Supervisor Report",type:"checkbox",deadline:"annual",note:"One per year"},
+      spec_teaching:{label:"Specialty teaching attendance",type:"checkbox",deadline:"annual",note:"60h ST4–5 + 60h ST6–7 = 120h total"},
+      spec_research:{label:"Research / critical appraisal",type:"checkbox",deadline:"annual",note:"Local journal club ST4–5; regional/national ST6–7"},
+      spec_sce:{label:"SCE Endocrinology & Diabetes",type:"checkbox",deadline:"ST6",note:"Attempt by ST5; pass before CCT"},
+      spec_qip1:{label:"QIP / Audit #1 + QIPAT",type:"checkbox",deadline:"ST5",note:"Completed in ST4 or ST5"},
+      spec_qip2:{label:"QIP / Audit #2 + QIPAT",type:"checkbox",deadline:"ST7",note:"Completed in ST6 or ST7"},
+      spec_dafne:{label:"DAFNE / patient education programme",type:"checkbox",deadline:"ST5",note:"Lead/teach accredited diabetes programme by ST5"},
+      spec_teaching_obs_early:{label:"Teaching Observation (early)",type:"checkbox",deadline:"ST5",note:"By ST4 or ST5"},
+      spec_teaching_obs_late:{label:"Teaching Observation (late)",type:"checkbox",deadline:"ST7",note:"By ST6 or ST7"},
+      spec_survey_early:{label:"Patient Survey (early)",type:"checkbox",deadline:"ST5",note:"Early training"},
+      spec_survey_late:{label:"Patient Survey (late)",type:"checkbox",deadline:"ST7",note:"Late training"},
+      spec_teaching_course:{label:"Formal teaching course",type:"checkbox",deadline:"ST7",note:"Completed by end of ST7"},
+      spec_mgmt:{label:"Leadership & management course",type:"checkbox",deadline:"ST7",note:"Course or equivalent"}
+    },
+    logbook:{
+      clinics:["General endocrine clinic","Diabetes clinic","Antenatal diabetes clinic","Type 1 / insulin pump clinic","Diabetic foot clinic / MDT","Thyroid clinic","Pituitary clinic","Adrenal clinic","Reproductive / gonadal clinic","Bone / metabolic clinic","Adolescent & young adult diabetes clinic","Obesity / weight management clinic","Joint endocrine MDT","Other"],
+      procedures:["Short Synacthen test","Long Synacthen test","Insulin tolerance test","Water deprivation test","OGTT / acromegaly suppression","Overnight dexamethasone suppression","Diabetic foot exam (monofilament + Doppler)","Insulin pump start / review","CGM initiation / interpretation","Thyroid FNA — observed","Petrosal sinus sampling — observed","Other"],
+      cpd:["Regional endo/diabetes training day","Society for Endocrinology BES","Diabetes UK Professional Conference","EASD annual meeting","DAFNE facilitator course","Insulin pump / CGM training","Thyroid ultrasound course","Grand round","M&M / mortality meeting","Departmental teaching / journal club","Other"]
+    }
+  }
 };
 const DEFAULT_SPEC_REQS = {
   spec_mcrs:{label:"Specialty MCRs",type:"number",target:4,unit:"MCRs",deadline:"annual",note:"Specialty-specific targets can be refined later"},
@@ -452,10 +588,12 @@ function fbSave(){ if(!window.ARCP_FB?.online || !window.ARCP_FB.userRoot || sup
 function getSpecKey(){ return state.profile?.specialty || "renal"; }
 function specCfg(){ const key=getSpecKey(); const t=SPECIALTY_THEMES[key] || {}; return SPECIALTIES[key] || { label:t.label || SPECIALTY_OPTIONS[key] || "Specialty", short:t.short || SPECIALTY_OPTIONS[key] || "Specialty", color:t.color || "#a78bfa", color2:t.color2 || "#7c5fd4", icon:t.icon || "◈", reqs:null, logbook:{clinics:["Specialty clinic","Other"], procedures:["Specialty procedure","Other"], cpd:["Specialty study day","Other"]} }; }
 function specReqs(){
-  const key=getSpecKey();
-  if(key!=="renal" && key!=="respiratory") return {};
   const reqs = Object.assign({}, specCfg().reqs || DEFAULT_SPEC_REQS);
-  reqs.spec_teaching_obs = {label:"Teaching observation",type:"checkbox",deadline:"ST7",note:"Shared with GIM — ticking either one ticks both"};
+  // Auto-merge the GIM-shared Teaching Observation only if the specialty hasn't already defined one
+  const hasTeachingObs = Object.entries(reqs).some(([k,r])=>/teaching[_-]?obs/i.test(k) || /teaching observation/i.test(r.label||''));
+  if(!hasTeachingObs){
+    reqs.spec_teaching_obs = {label:"Teaching observation",type:"checkbox",deadline:"ST7",note:"Shared with GIM — ticking either one ticks both"};
+  }
   return reqs;
 }
 function yrIndex(y=currentYear){ return YEARS.indexOf(y); }
@@ -516,6 +654,7 @@ function initOnboarding(){
   const p=state.profile;
   if(p){
     document.getElementById('on-name').value=p.name||'';
+    const tnEl=document.getElementById('on-trainingNumber'); if(tnEl) tnEl.value=p.trainingNumber||'';
     document.getElementById('on-email').value=p.email||'';
     spSel.value=p.specialty||'renal';
     ySel.value=p.trainingYear||'ST4';
@@ -532,10 +671,29 @@ function initOnboarding(){
   renderBackfill();
 }
 function populateOnHospitals(){ const d=document.getElementById('on-deanery').value; const h=document.getElementById('on-hospital'); const list=DEANERIES[d]||[]; h.innerHTML=[...list,"Other / not listed"].map(x=>`<option>${safe(x)}</option>`).join(''); h.onchange=()=>{ const wrap=document.getElementById('on-hospital-other-wrap'); if(wrap) wrap.style.display=h.value==='Other / not listed'?'flex':'none'; }; h.onchange(); }
-function renderBackfill(){ const y=document.getElementById('on-year').value; const wrap=document.getElementById('backfill-panel'); const box=document.getElementById('backfill-years'); if(yrIndex(y)<1){wrap.style.display='none';return;} wrap.style.display='block'; const prev=YEARS.slice(0,yrIndex(y)); box.innerHTML=prev.map(yr=>`<div class="card"><div class="card-title">${yr}</div><select class="input" id="bf-${yr}"><option value="">Do not lock yet</option>${Object.entries(OUTCOMES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select><div class="deadline">Choose Outcome 1/2/6/8 to lock the completed year.</div></div>`).join(''); }
+function renderBackfill(){ const y=document.getElementById('on-year').value; const wrap=document.getElementById('backfill-panel'); const box=document.getElementById('backfill-years'); if(yrIndex(y)<1){wrap.style.display='none';return;} wrap.style.display='block'; const prev=YEARS.slice(0,yrIndex(y)); box.innerHTML=prev.map(yr=>{ const allowed=Object.entries(OUTCOMES).filter(([k])=>k!=='6'||yr==='ST7'); return `<div class="card"><div class="card-title">${yr}</div><select class="input" id="bf-${yr}"><option value="">Do not lock yet</option>${allowed.map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select><div class="deadline">Choose Outcome 1/2${yr==='ST7'?'/6':''}/8 to lock the completed year.</div></div>`; }).join(''); }
 function saveOnboarding(){
-  const dSel=document.getElementById('on-deanery').value; const deanery=dSel==='Other' ? (document.getElementById('on-deanery-other').value.trim()||'Other') : dSel;
-  const hospitalSel=document.getElementById('on-hospital').value; const baseHospital=hospitalSel==='Other / not listed' ? (document.getElementById('on-hospital-other')?.value.trim()||'') : hospitalSel; if(hospitalSel==='Other / not listed' && !baseHospital){ alert('Please type your base hospital.'); return; }   const ystartMonth=parseInt(document.getElementById('on-year-start-month')?.value||'8',10); const ystartYear=parseInt(document.getElementById('on-year-start-year')?.value||new Date().getFullYear(),10); const profile={ name:document.getElementById('on-name').value.trim(), email:document.getElementById('on-email').value.trim(), specialty:document.getElementById('on-specialty').value, trainingYear:document.getElementById('on-year').value, deanery, baseHospital, yearStart:{month:ystartMonth,year:ystartYear}, createdAt: state.profile?.createdAt || Date.now(), betaStart: state.profile?.betaStart || state.profile?.createdAt || Date.now(), betaDays: state.profile?.betaDays || BETA_TRIAL_DAYS };
+  const name=document.getElementById('on-name').value.trim();
+  const email=document.getElementById('on-email').value.trim();
+  const specialty=document.getElementById('on-specialty').value;
+  const trainingYear=document.getElementById('on-year').value;
+  const dSel=document.getElementById('on-deanery').value;
+  const hospitalSel=document.getElementById('on-hospital').value;
+  const ystartMonthRaw=document.getElementById('on-year-start-month')?.value;
+  const ystartYearRaw=document.getElementById('on-year-start-year')?.value;
+  const missing=[];
+  if(!name) missing.push('Name');
+  if(!email) missing.push('Email');
+  else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) missing.push('a valid email address');
+  if(!specialty) missing.push('Specialty');
+  if(!ystartMonthRaw||!ystartYearRaw) missing.push('Training year started');
+  if(!trainingYear) missing.push('Training year');
+  if(!dSel) missing.push('Deanery');
+  if(dSel==='Other' && !document.getElementById('on-deanery-other').value.trim()) missing.push('Other deanery name');
+  if(!hospitalSel) missing.push('Base hospital');
+  if(missing.length){ alert('Please complete the following before continuing:\n\n• '+missing.join('\n• ')); return; }
+  const deanery=dSel==='Other' ? (document.getElementById('on-deanery-other').value.trim()||'Other') : dSel;
+  const baseHospital=hospitalSel==='Other / not listed' ? (document.getElementById('on-hospital-other')?.value.trim()||'') : hospitalSel; if(hospitalSel==='Other / not listed' && !baseHospital){ alert('Please type your base hospital.'); return; }   const ystartMonth=parseInt(document.getElementById('on-year-start-month')?.value||'8',10); const ystartYear=parseInt(document.getElementById('on-year-start-year')?.value||new Date().getFullYear(),10); const profile={ name:document.getElementById('on-name').value.trim(), trainingNumber:document.getElementById('on-trainingNumber')?.value.trim()||'', email:document.getElementById('on-email').value.trim(), specialty:document.getElementById('on-specialty').value, trainingYear:document.getElementById('on-year').value, deanery, baseHospital, yearStart:{month:ystartMonth,year:ystartYear}, createdAt: state.profile?.createdAt || Date.now(), betaStart: state.profile?.betaStart || state.profile?.createdAt || Date.now(), betaDays: state.profile?.betaDays || BETA_TRIAL_DAYS };
   state.profile=profile; currentYear=profile.trainingYear; localStorage.setItem('arcp_v2_current_year', currentYear);
   const deaneryHosp=DEANERIES[dSel]||[]; state.hospitals=Array.from(new Set([...(state.hospitals||[]),...deaneryHosp,profile.baseHospital].filter(Boolean).filter(h=>h!=="Other / not listed")));
   YEARS.slice(0,yrIndex(profile.trainingYear)).forEach(yr=>{ const el=document.getElementById(`bf-${yr}`); if(el && el.value) setOutcomeLocal(yr, el.value); });
@@ -580,13 +738,13 @@ function forceLiveStatus(){ const s=document.getElementById('sync'); if(s){ s.te
 function renderHeader(){ const sp=specCfg(); document.getElementById('brand-sub').textContent=`${sp.label} + GIM · ${state.profile.deanery}`; document.getElementById('sb-year').textContent=currentYear; document.getElementById('sb-deanery').textContent=state.profile.deanery; document.getElementById('sb-specialty').textContent=sp.label; document.getElementById('spec-readiness-label').textContent=sp.short; renderYearButtons(); updateCountdown(); updateALS(); }
 function renderYearButtons(){ document.getElementById('year-buttons').innerHTML=YEARS.map(y=>`<button class="btn small ${y===currentYear?'primary':''} ${yearLocked(y)?'good':''}" onclick="setYear('${y}')" title="${yearLocked(y)?safe(OUTCOMES[outcome(y)]||'Locked'):''}">${y}${yearLocked(y)?' ✓':''}</button>`).join(''); }
 function setYear(y){ currentYear=y; localStorage.setItem('arcp_v2_current_year', y); render(); }
-function renderTabs(){ const tabs=[['today','Today'],['roadmap','Roadmap'],['specialty',specCfg().short],['gim','GIM'],['logbook','Logbook'],['overview','Overview'],['admin','Admin / Docs']]; document.getElementById('tabs').innerHTML=tabs.map(([id,label])=>`<button class="tab ${id==='gim'?'gim-tab':''} ${currentTab===id?'active':''}" onclick="setTab('${id}')">${label}</button>`).join(''); }
+function renderTabs(){ const tabs=[['roadmap','Roadmap'],['specialty',specCfg().short],['gim','GIM'],['logbook','Logbook'],['overview','Overview'],['admin','Admin & Docs']]; document.getElementById('tabs').innerHTML=tabs.map(([id,label])=>`<button class="tab ${id==='gim'?'gim-tab':''} ${currentTab===id?'active':''}" onclick="setTab('${id}')">${label}</button>`).join(''); }
 function setTab(t){ currentTab=t; localStorage.setItem('arcp_v2_tab',t); render(); }
 function updateCountdown(){ const d=new Date(state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]); const today=new Date(); today.setHours(0,0,0,0); const days=Math.round((d-today)/86400000); const el=document.getElementById('days-val'); el.textContent=days>=0?days:'PAST'; el.className='metric-val '+(days<60?'alert':days<120?'warn':''); }
 function updateALS(){ const val=state.als; const el=document.getElementById('als-val'); if(!val){el.textContent='NOT SET'; el.className='metric-val'; return;} const d=new Date(val); const days=Math.round((d-new Date())/86400000); el.textContent=days<0?`EXPIRED ${fmtDate(val)}`:`${fmtDate(val)} (${days}d)`; el.className='metric-val '+(days<0?'alert':days<183?'warn':''); }
 function renderLockedBlock(){ if(!yearLocked()) return ''; return `<div class="lock-banner"><div><div class="lock-title">✓ ${safe(OUTCOMES[outcome()]||'Year locked')}</div><div class="lock-note">${currentYear} is locked after ARCP outcome. Sections are collapsed to protect the record. Unlock only if you need to correct data.</div></div><div class="row"><button class="btn small primary" onclick="printReport()">Print report</button><button class="btn small" onclick="unlockYear()">Unlock</button></div></div>`; }
 function unlockYear(){ if(!confirm('Unlock this year? Use this only if you entered the outcome by mistake.'))return; state.years[currentYear]=state.years[currentYear]||{}; state.years[currentYear].locked=false; state.years[currentYear].outcome=''; delete state.years[currentYear].lockedAt; saveState(); render(); }
-function renderOutcomeSelector(){ return `<div class="panel"><div class="row"><strong style="font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase">ARCP Outcome</strong><select class="input" style="max-width:360px" onchange="setOutcome('${currentYear}',this.value)"><option value="">-- not yet --</option>${Object.entries(OUTCOMES).map(([k,v])=>`<option value="${k}" ${outcome()===k?'selected':''}>${v}</option>`).join('')}</select>${yearLocked()?'<span class="green" style="font-size:11px;font-weight:800">YEAR LOCKED</span>':''}</div></div>`; }
+function renderOutcomeSelector(){ const allowedOutcomes=Object.entries(OUTCOMES).filter(([k])=>k!=='6'||currentYear==='ST7'); return `<div class="panel"><div class="row"><strong style="font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase">ARCP Outcome</strong><select class="input" style="max-width:360px" onchange="setOutcome('${currentYear}',this.value)"><option value="">-- not yet --</option>${allowedOutcomes.map(([k,v])=>`<option value="${k}" ${outcome()===k?'selected':''}>${v}</option>`).join('')}</select>${yearLocked()?'<span class="green" style="font-size:11px;font-weight:800">YEAR LOCKED</span>':''}</div></div>`; }
 function makeReqCard(id, req, stream){
   const v=getReqVal(id,req), baseStatus=reqStatus(id,req), locked=yearLocked();
   const isFinalYearOnly=['gim_cpd_st7','gim_sim_st7','gim_acute_st7'].includes(id);
@@ -608,8 +766,8 @@ function section(title,note,cards){ return `<section class="section"><div class=
 function renderSpecialty(){
   if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
   const sp=specCfg();
-  if(!['renal','respiratory'].includes(getSpecKey())){
-    document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">${safe(sp.label)}</span><span class="sec-rule"></span></div><div class="panel"><div class="card-title" style="color:var(--primary)">Coming soon</div><div class="hint">This beta currently has full specialty requirement logic for Renal Medicine and Respiratory Medicine. Your GIM portfolio, logbook, hospitals, reports and profile still work while this specialty module is being built.</div></div></section>`;
+  if(!specCfg().reqs){
+    document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">${safe(sp.label)}</span><span class="sec-rule"></span></div><div class="panel"><div class="card-title" style="color:var(--primary)">Coming soon</div><div class="hint">This beta currently has full specialty requirement logic for ${Object.values(SPECIALTIES).filter(s=>s.reqs).map(s=>s.label).join(", ")}. Your GIM portfolio, logbook, hospitals, reports and profile still work while this specialty module is being built.</div></div></section>`;
     return;
   }
   const reqs=specReqs(); const annual=[], milestones=[];
@@ -677,16 +835,16 @@ function hideHospital(h){ deleteHospital(h); }
 function restoreDeaneryHospitals(){ state.deletedHospitals=[]; state.hiddenHospitals=[]; saveState(); renderAdmin(); }
 
 function optionsHtml(list, selected=''){ return list.map(x=>`<option value="${safe(x)}" ${selected===x?'selected':''}>${safe(x)}</option>`).join(''); }
-function renderLogbook(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','CPD'],['simulation','Simulation'],['teaching','Teaching'],['acute','Acute take'],['ward','Ward cover']]; document.getElementById('main').innerHTML=`<div class="subtabs">${subs.map(([id,l])=>`<button class="subtab ${logSubTab===id?'active':''}" onclick="logSubTab='${id}';renderLogbook()">${l}</button>`).join('')}</div><div class="row" style="justify-content:flex-end;margin-bottom:12px"><button class="btn small primary" onclick="printReport()">⎙ Print ARCP Report</button></div><div id="log-content"></div>`; if(logSubTab==='clinics') renderLogClinics(); if(logSubTab==='procedures') renderLogProcedures(); if(logSubTab==='cpd') renderLogCPD(); if(logSubTab==='simulation') renderSimpleLog('simulation','Simulation session', ['date','course','title','hours','hospital','year','notes'], ['Course','Title','Hours','Hospital','Year','Notes'], null); if(logSubTab==='teaching') renderSimpleLog('teaching','Teaching session', ['date','type','topic','audience','supervisor','signoff','year','notes'], ['Type','Topic','Audience','Observed by','Sign-off','Year','Notes'], ['Bedside teaching','Tutorial / seminar','Grand round presentation','Journal club','Simulation facilitation','Medical student supervision','Other']); if(logSubTab==='acute') renderAcute(); if(logSubTab==='ward') renderWard(); }
+function renderLogbook(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','CPD'],['simulation','Simulation'],['teaching','Teaching']]; document.getElementById('main').innerHTML=`<div class="subtabs">${subs.map(([id,l])=>`<button class="subtab ${logSubTab===id?'active':''}" onclick="logSubTab='${id}';renderLogbook()">${l}</button>`).join('')}</div><div class="row" style="justify-content:flex-end;margin-bottom:12px"><button class="btn small primary" onclick="printReport()">⎙ Print Logbook Report</button></div><div id="log-content"></div>`; if(logSubTab==='clinics') renderLogClinics(); if(logSubTab==='procedures') renderLogProcedures(); if(logSubTab==='cpd') renderLogCPD(); if(logSubTab==='simulation') renderSimpleLog('simulation','Simulation session', ['date','course','title','hours','hospital','year','notes'], ['Course','Title','Hours','Hospital','Year','Notes'], null); if(logSubTab==='teaching') renderSimpleLog('teaching','Teaching session', ['date','type','topic','audience','supervisor','signoff','year','notes'], ['Type','Topic','Audience','Observed by','Sign-off','Year','Notes'], ['Bedside teaching','Tutorial / seminar','Grand round presentation','Journal club','Simulation facilitation','Medical student supervision','Other']); }
 function formPanel(title, html, onsubmit){ return `<div class="panel"><div class="sec-head"><span class="sec-title">${title}</span><span class="sec-rule"></span></div><div class="form-grid">${html}<div class="field full"><button class="btn primary" onclick="${onsubmit}">ADD ENTRY ▸</button></div></div></div>`; }
 function hospitalField(id='hospital'){ const list=hospitalOptions(); return `<div class="field"><label>Hospital</label><input class="input" id="${id}" list="${id}-list" placeholder="Start typing or add manually"><datalist id="${id}-list">${list.map(h=>`<option value="${safe(h)}">`).join('')}</datalist></div>`; }
 function table(k, cols, mapper){ const arr=entries(k).slice().sort((a,b)=>(b.date||b.start||'').localeCompare(a.date||a.start||'')); return tableFromArray(k, arr, cols, mapper); }
 function tableFiltered(k, filterFn, cols, mapper){ const arr=entries(k).filter(filterFn).slice().sort((a,b)=>(b.date||b.start||'').localeCompare(a.date||a.start||'')); return tableFromArray(k, arr, cols, mapper); }
 function canEditEntry(e){ return Date.now() - Number(e.createdAt || e.id || 0) <= 86400000; }
 function tableFromArray(k, arr, cols, mapper){ if(!arr.length) return `<div class="hint">// no entries yet</div>`; return `<div class="table-wrap"><table class="table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}<th></th></tr></thead><tbody>${arr.map(e=>`<tr>${mapper(e).map(x=>`<td>${safe(x)}</td>`).join('')}<td><div class="row" style="gap:4px;justify-content:flex-end">${canEditEntry(e)?`<button class="btn tiny" title="Edit available for 24h after adding" onclick="editEntry('${k}',${e.id})">Edit</button>`:`<span class="hint" title="Editing window has passed">locked</span>`}<button class="btn tiny danger" onclick="deleteEntry('${k}',${e.id})">✕</button></div></td></tr>`).join('')}</tbody></table></div>`; }
-function addEntry(k, data){ if(yearLocked()) return alert('This year is locked. Unlock it before editing.'); const now=Date.now(); const arr=entries(k); arr.push({...data,id:now,createdAt:now,updatedAt:now,year:data.year||currentYear}); saveEntries(k,arr); renderLogbook(); }
-function deleteEntry(k,id){ if(yearLocked()) return alert('This year is locked. Unlock it before editing.'); if(!confirm('Delete this entry?')) return; saveEntries(k, entries(k).filter(e=>e.id!==id)); renderLogbook(); }
-function editEntry(k,id){ if(yearLocked()) return alert('This year is locked. Unlock it before editing.'); const arr=entries(k); const idx=arr.findIndex(e=>e.id===id); if(idx<0) return; const e=arr[idx]; if(!canEditEntry(e)) return alert('Editing is only available for 24 hours after adding an item.'); const editable=Object.keys(e).filter(x=>!['id','createdAt','updatedAt'].includes(x)); for(const field of editable){ const current=e[field]??''; const next=prompt(`Edit ${field}`, current); if(next===null) return; e[field]=next; } e.updatedAt=Date.now(); arr[idx]=e; saveEntries(k,arr); renderLogbook(); }
+function addEntry(k, data){ if(yearLocked()) return alert('This year is locked. Unlock it before editing.'); const now=Date.now(); const arr=entries(k); arr.push({...data,id:now,createdAt:now,updatedAt:now,year:data.year||currentYear}); saveEntries(k,arr); render(); }
+function deleteEntry(k,id){ if(yearLocked()) return alert('This year is locked. Unlock it before editing.'); if(!confirm('Delete this entry?')) return; saveEntries(k, entries(k).filter(e=>e.id!==id)); render(); }
+function editEntry(k,id){ if(yearLocked()) return alert('This year is locked. Unlock it before editing.'); const arr=entries(k); const idx=arr.findIndex(e=>e.id===id); if(idx<0) return; const e=arr[idx]; if(!canEditEntry(e)) return alert('Editing is only available for 24 hours after adding an item.'); const editable=Object.keys(e).filter(x=>!['id','createdAt','updatedAt'].includes(x)); for(const field of editable){ const current=e[field]??''; const next=prompt(`Edit ${field}`, current); if(next===null) return; e[field]=next; } e.updatedAt=Date.now(); arr[idx]=e; saveEntries(k,arr); render(); }
 function logSummaryCards(items){ return `<div class="summary-grid" style="margin-bottom:16px;">${items.map(it=>`<div class="summary"><div class="big ${it.cls||'primary'}">${it.value}</div><div class="hint">${it.label}</div></div>`).join('')}</div>`; }
 function otherClinicControl(id, list){ return `<select class="input" id="${id}" onchange="document.getElementById('${id}-other-wrap').style.display=this.value==='Other'?'flex':'none'">${optionsHtml(list)}</select><div class="field" id="${id}-other-wrap" style="display:none;margin-top:6px"><label>Specify clinic type</label><input class="input" id="${id}-other" placeholder="Type clinic name"></div>`; }
 function clinicTypeValue(id){ const v=val(id); return v==='Other' ? val(id+'-other') : v; }
@@ -708,16 +866,16 @@ function renderLogProcedures(){
   const sp=specCfg();
   const specEntries=entries('procedures').filter(e=>e.scope!=='gim');
   const gimEntries=entries('procedures').filter(e=>e.scope==='gim');
-  const specForm=`<input type="hidden" id="proc-spec-scope" value="spec"><div class="field"><label>Procedure</label><select class="input" id="proc-spec-type">${optionsHtml(sp.logbook.procedures)}</select></div><div class="field"><label>Date</label><input class="input" id="proc-spec-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Supervisor</label><input class="input" id="proc-spec-supervisor" placeholder="Supervising consultant"></div><div class="field"><label>DOPS signed?</label><select class="input" id="proc-spec-dops"><option>No</option><option>Yes</option></select></div><div class="field"><label>Training year</label><select class="input" id="proc-spec-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="proc-spec-notes" placeholder="Optional"></div>`;
-  const gimForm=`<input type="hidden" id="proc-gim-scope" value="gim"><div class="field"><label>Procedure</label><select class="input" id="proc-gim-type">${optionsHtml(GIM_LOGBOOK.procedures)}</select></div><div class="field"><label>Date</label><input class="input" id="proc-gim-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Supervisor</label><input class="input" id="proc-gim-supervisor" placeholder="Supervising consultant"></div><div class="field"><label>DOPS signed?</label><select class="input" id="proc-gim-dops"><option>No</option><option>Yes</option></select></div><div class="field"><label>Training year</label><select class="input" id="proc-gim-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="proc-gim-notes" placeholder="Optional"></div>`;
+  const specForm=`<input type="hidden" id="proc-spec-scope" value="spec"><div class="field"><label>Procedure</label><select class="input" id="proc-spec-type">${optionsHtml(sp.logbook.procedures)}</select></div><div class="field"><label>Date</label><input class="input" id="proc-spec-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Supervisor</label><input class="input" id="proc-spec-supervisor" placeholder="Supervising consultant"></div><div class="field"><label>DOPS signed?</label><select class="input" id="proc-spec-dops"><option>No</option><option>Yes</option></select></div>${hospitalField('proc-spec-hospital')}<div class="field"><label>Training year</label><select class="input" id="proc-spec-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="proc-spec-notes" placeholder="Optional"></div>`;
+  const gimForm=`<input type="hidden" id="proc-gim-scope" value="gim"><div class="field"><label>Procedure</label><select class="input" id="proc-gim-type">${optionsHtml(GIM_LOGBOOK.procedures)}</select></div><div class="field"><label>Date</label><input class="input" id="proc-gim-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Supervisor</label><input class="input" id="proc-gim-supervisor" placeholder="Supervising consultant"></div><div class="field"><label>DOPS signed?</label><select class="input" id="proc-gim-dops"><option>No</option><option>Yes</option></select></div>${hospitalField('proc-gim-hospital')}<div class="field"><label>Training year</label><select class="input" id="proc-gim-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="proc-gim-notes" placeholder="Optional"></div>`;
   document.getElementById('log-content').innerHTML=
     logSummaryCards([{value:specEntries.length,label:`${sp.short} procedures logged`,cls:'primary'},{value:gimEntries.length,label:`GIM procedures logged`,cls:'blue'}])+
     formPanel(`Add ${sp.short} procedure`,specForm,"saveProc('spec')")+
-    section(`${sp.short} procedures`,`${specEntries.length} entries`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('procedures',e=>e.scope!=='gim',['Date','Procedure','Supervisor','DOPS','Year','Notes'], e=>[fmtDate(e.date),e.type,e.supervisor,e.dops,e.year,e.notes])}</div>`])+
+    section(`${sp.short} procedures`,`${specEntries.length} entries`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('procedures',e=>e.scope!=='gim',['Date','Procedure','Hospital','Supervisor','DOPS','Year','Notes'], e=>[fmtDate(e.date),e.type,e.hospital,e.supervisor,e.dops,e.year,e.notes])}</div>`])+
     formPanel('Add GIM procedure',gimForm,"saveProc('gim')")+
-    section('GIM procedures',`${gimEntries.length} entries`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('procedures',e=>e.scope==='gim',['Date','Procedure','Supervisor','DOPS','Year','Notes'], e=>[fmtDate(e.date),e.type,e.supervisor,e.dops,e.year,e.notes])}</div>`]);
+    section('GIM procedures',`${gimEntries.length} entries`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('procedures',e=>e.scope==='gim',['Date','Procedure','Hospital','Supervisor','DOPS','Year','Notes'], e=>[fmtDate(e.date),e.type,e.hospital,e.supervisor,e.dops,e.year,e.notes])}</div>`]);
 }
-function saveProc(scope='spec'){ const prefix=`proc-${scope}`; addEntry('procedures',{scope,type:val(`${prefix}-type`),date:val(`${prefix}-date`),supervisor:val(`${prefix}-supervisor`),dops:val(`${prefix}-dops`),year:val(`${prefix}-year`),notes:val(`${prefix}-notes`)}); }
+function saveProc(scope='spec'){ const prefix=`proc-${scope}`; addEntry('procedures',{scope,type:val(`${prefix}-type`),date:val(`${prefix}-date`),supervisor:val(`${prefix}-supervisor`),dops:val(`${prefix}-dops`),hospital:val(`${prefix}-hospital`),year:val(`${prefix}-year`),notes:val(`${prefix}-notes`)}); addHospitalIfNew(val(`${prefix}-hospital`)); }
 function renderLogCPD(){
   const sp=specCfg();
   const specEntries=entries('cpd').filter(e=>e.scope!=='gim');
@@ -734,12 +892,12 @@ function renderLogCPD(){
     section('GIM CPD entries',`${gimEntries.length} entries · adds to cumulative target`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('cpd',e=>e.scope==='gim',['Date','Type','Title','Hours','Year','Notes'], e=>[fmtDate(e.date),e.type,e.title,e.hours,e.year,e.notes])}</div>`]);
 }
 function saveCPD(scope='spec'){ const prefix=`cpd-${scope}`; addEntry('cpd',{scope,type:val(`${prefix}-type`),date:val(`${prefix}-date`),title:val(`${prefix}-title`),hours:val(`${prefix}-hours`),year:val(`${prefix}-year`),notes:val(`${prefix}-notes`)}); }
-function renderSimpleLog(k,title,fields,cols,types){ const html=fields.map(f=>{ if(f==='date')return `<div class="field"><label>Date</label><input class="input" id="sl-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>`; if(f==='hospital')return hospitalField('sl-hospital'); if(f==='year')return `<div class="field"><label>Year</label><select class="input" id="sl-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div>`; if((f==='type'||f==='course') && Array.isArray(types))return `<div class="field"><label>${f}</label><select class="input" id="sl-${f}">${optionsHtml(types)}</select></div>`; return `<div class="field"><label>${f}</label><input class="input" id="sl-${f}" ${f==='hours'?'type="number" step="0.5" min="0"':''}></div>`; }).join(''); const arr=entries(k); document.getElementById('log-content').innerHTML=section(`Add ${title}`,'Manual entry',[`<div class="form-grid">${html}<div class="field full"><button class="btn primary" onclick="saveSimple('${k}','${fields.join('|')}')">ADD ENTRY ▸</button></div></div>`])+section(`${title} log`,`${arr.length} entries`,[`<div class="card" style="grid-column:1/-1">${table(k, cols, e=>fields.slice(1).map(f=>f==='date'?fmtDate(e[f]):e[f]))}</div>`]); }
+function renderSimpleLog(k,title,fields,cols,types){ const html=fields.map(f=>{ if(f==='date')return `<div class="field"><label>Date</label><input class="input" id="sl-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>`; if(f==='hospital')return hospitalField('sl-hospital'); if(f==='year')return `<div class="field"><label>Year</label><select class="input" id="sl-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div>`; if((f==='type'||f==='course') && Array.isArray(types))return `<div class="field"><label>${f}</label><select class="input" id="sl-${f}">${optionsHtml(types)}</select></div>`; return `<div class="field"><label>${f}</label><input class="input" id="sl-${f}" ${f==='hours'?'type="number" step="0.5" min="0"':''}></div>`; }).join(''); const arr=entries(k); document.getElementById('log-content').innerHTML=formPanel(`Add ${title}`,html,`saveSimple('${k}','${fields.join('|')}')`)+section(`${title} log`,`${arr.length} entries`,[`<div class="card" style="grid-column:1/-1">${table(k, cols, e=>fields.slice(1).map(f=>f==='date'?fmtDate(e[f]):e[f]))}</div>`]); }
 function saveSimple(k,fieldStr){ const data={}; fieldStr.split('|').forEach(f=>{ data[f]=val('sl-'+f); }); addEntry(k,data); if(data.hospital)addHospitalIfNew(data.hospital); }
-function renderAcute(){ const total=entries('acute').reduce((a,e)=>a+Number(e.estimated||0),0); const html=`${hospitalField('acute-hospital')}<div class="field"><label>Start</label><input class="input" id="acute-start" type="date" onchange="calcAcute()"></div><div class="field"><label>End</label><input class="input" id="acute-end" type="date" onchange="calcAcute()"></div><div class="field"><label>Takes / month</label><input class="input" id="acute-takes" type="number" oninput="calcAcute()"></div><div class="field"><label>Patients / take</label><input class="input" id="acute-patients" type="number" oninput="calcAcute()"></div><div class="field"><label>Estimated patients</label><input class="input" id="acute-estimated" readonly></div><div class="field"><label>Supervisor</label><input class="input" id="acute-supervisor"></div>`; document.getElementById('log-content').innerHTML=`<div class="summary-grid"><div class="summary"><div class="big blue">${Math.round(total)}</div><div class="hint">/ 750 estimated patients</div></div></div>`+formPanel('Add acute take placement',html,'saveAcute()')+section('Acute take log','Firth-style estimate', [`<div class="card" style="grid-column:1/-1">${table('acute',['Hospital','Start','End','Months','Takes/mo','Pts/take','Estimated','Year','Supervisor'], e=>[e.hospital,fmtDate(e.start),fmtDate(e.end),e.months,e.takes,e.patients,e.estimated,e.year,e.supervisor])}</div>`]); }
+function renderAcute(targetId){ const total=entries('acute').reduce((a,e)=>a+Number(e.estimated||0),0); const html=`${hospitalField('acute-hospital')}<div class="field"><label>Start</label><input class="input" id="acute-start" type="date" onchange="calcAcute()"></div><div class="field"><label>End</label><input class="input" id="acute-end" type="date" onchange="calcAcute()"></div><div class="field"><label>Takes / month</label><input class="input" id="acute-takes" type="number" oninput="calcAcute()"></div><div class="field"><label>Patients / take</label><input class="input" id="acute-patients" type="number" oninput="calcAcute()"></div><div class="field"><label>Estimated patients</label><input class="input" id="acute-estimated" readonly></div><div class="field"><label>Supervisor</label><input class="input" id="acute-supervisor"></div>`; const target=document.getElementById(targetId||'log-content'); if(!target) return; target.innerHTML=`<div class="summary-grid"><div class="summary"><div class="big blue">${Math.round(total)}</div><div class="hint">/ 750 estimated patients</div></div></div>`+formPanel('Add acute take placement',html,'saveAcute()')+section('Acute take log','Firth-style estimate', [`<div class="card" style="grid-column:1/-1">${table('acute',['Hospital','Start','End','Months','Takes/mo','Pts/take','Estimated','Year','Supervisor'], e=>[e.hospital,fmtDate(e.start),fmtDate(e.end),e.months,e.takes,e.patients,e.estimated,e.year,e.supervisor])}</div>`]); }
 function calcAcute(){ const s=val('acute-start'), e=val('acute-end'); const months=monthsBetween(s,e); const est=Math.round(months*Number(val('acute-takes')||0)*Number(val('acute-patients')||0)); document.getElementById('acute-estimated').value=est||''; }
 function saveAcute(){ const s=val('acute-start'), e=val('acute-end'); addEntry('acute',{hospital:val('acute-hospital'),start:s,end:e,months:monthsBetween(s,e),takes:val('acute-takes'),patients:val('acute-patients'),estimated:val('acute-estimated'),supervisor:val('acute-supervisor')}); addHospitalIfNew(val('acute-hospital')); }
-function renderWard(){ const total=entries('ward').reduce((a,e)=>a+Number(e.months||0),0); const html=`${hospitalField('ward-hospital')}<div class="field"><label>Start</label><input class="input" id="ward-start" type="date" onchange="calcWard()"></div><div class="field"><label>End</label><input class="input" id="ward-end" type="date" onchange="calcWard()"></div><div class="field"><label>Months</label><input class="input" id="ward-months" readonly></div><div class="field"><label>Supervisor</label><input class="input" id="ward-supervisor"></div>`; document.getElementById('log-content').innerHTML=`<div class="summary-grid"><div class="summary"><div class="big blue">${Math.round(total*10)/10}</div><div class="hint">/ 12 months ward cover</div></div></div>`+formPanel('Add ward cover placement',html,'saveWard()')+section('Ward cover log','', [`<div class="card" style="grid-column:1/-1">${table('ward',['Hospital','Start','End','Months','Year','Supervisor'], e=>[e.hospital,fmtDate(e.start),fmtDate(e.end),e.months,e.year,e.supervisor])}</div>`]); }
+function renderWard(targetId){ const total=entries('ward').reduce((a,e)=>a+Number(e.months||0),0); const html=`${hospitalField('ward-hospital')}<div class="field"><label>Start</label><input class="input" id="ward-start" type="date" onchange="calcWard()"></div><div class="field"><label>End</label><input class="input" id="ward-end" type="date" onchange="calcWard()"></div><div class="field"><label>Months</label><input class="input" id="ward-months" readonly></div><div class="field"><label>Supervisor</label><input class="input" id="ward-supervisor"></div>`; const target=document.getElementById(targetId||'log-content'); if(!target) return; target.innerHTML=`<div class="summary-grid"><div class="summary"><div class="big blue">${Math.round(total*10)/10}</div><div class="hint">/ 12 months ward cover</div></div></div>`+formPanel('Add GIM ward cover placement',html,'saveWard()')+section('GIM ward cover log','', [`<div class="card" style="grid-column:1/-1">${table('ward',['Hospital','Start','End','Months','Year','Supervisor'], e=>[e.hospital,fmtDate(e.start),fmtDate(e.end),e.months,e.year,e.supervisor])}</div>`]); }
 function calcWard(){ document.getElementById('ward-months').value=monthsBetween(val('ward-start'),val('ward-end'))||''; }
 function saveWard(){ addEntry('ward',{hospital:val('ward-hospital'),start:val('ward-start'),end:val('ward-end'),months:val('ward-months'),supervisor:val('ward-supervisor')}); addHospitalIfNew(val('ward-hospital')); }
 function monthsBetween(s,e){ if(!s||!e)return 0; const ms=new Date(e)-new Date(s); return Math.max(0,Math.round(ms/(86400000*30.44)*10)/10); }
@@ -757,47 +915,330 @@ function toggleFocus(){ document.body.classList.toggle('focus'); localStorage.se
 function updateModeButton(){ const b=document.getElementById('mode-toggle'); if(b) b.textContent=document.body.classList.contains('focus')?'DARK':'LIGHT'; }
 function countByYear(arr){ return arr.filter(e=>!e.year || e.year===currentYear).length; }
 function sumHours(arr, filter=()=>true){ return Math.round(arr.filter(filter).reduce((a,e)=>a+Number(e.hours||0),0)*10)/10; }
-function printReport(){ const sp=specCfg(); const yr=currentYear; const generated=new Date().toLocaleDateString('en-GB').replace(/\//g,'-'); const cct=state.profile?.cctDate ? new Date(state.profile.cctDate).toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : 'Dec 2030'; const specName=sp.short; const gimClinics=entries('clinics').filter(e=>e.scope==='gim'); const specClinics=entries('clinics').filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)); const procYr=entries('procedures').filter(e=>!e.year||e.year===yr); const teachingYr=entries('teaching').filter(e=>!e.year||e.year===yr); const cpdAll=entries('cpd'); const simAll=entries('simulation'); const acuteAll=entries('acute'); const wardAll=entries('ward'); const win=window.open('','_blank'); const report=`<!doctype html><html><head><title>ARCP Logbook Report — ${yr}</title><style>
-body{font-family:Inter,Arial,sans-serif;color:#111827;margin:18px 22px;background:#fff}button{margin-bottom:14px;padding:8px 12px;border:1px solid #0b5cad;background:white;color:#0b5cad;font-weight:700}.hero{background:#064f9e;color:white;padding:24px 28px;display:flex;justify-content:space-between;align-items:flex-start}.hero h1{font-size:24px;margin:0 0 6px}.hero .sub{font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.86}.hero .right{text-align:right;font-size:12px;line-height:1.6;font-weight:700}.info{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #cbd5e1;margin:16px 24px 14px}.info div{padding:10px 14px;border-right:1px solid #cbd5e1}.info div:last-child{border-right:none}.k{font-size:10px;color:#6b7280;letter-spacing:.14em;text-transform:uppercase;font-weight:800}.v{font-size:16px;color:#064f9e;font-weight:900;margin-top:2px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 24px 18px}.metric{border:1px solid #d1d5db;border-top:4px solid #064f9e;text-align:center;padding:10px}.metric.spec{border-top-color:${sp.color}}.metric.green{border-top-color:#0f766e}.metric.brown{border-top-color:#92400e}.metric .num{font-size:26px;color:#064f9e;font-weight:900}.metric .label{font-size:10px;color:#6b7280;letter-spacing:.14em;text-transform:uppercase}.sec{margin:22px 24px 8px;display:flex;align-items:center;gap:12px}.sec span{background:#064f9e;color:white;padding:7px 12px;font-size:12px;font-weight:900;letter-spacing:.18em}.sec:after{content:"";height:2px;background:#e5e7eb;flex:1}.tag{display:inline-block;color:white;background:#064f9e;font-size:10px;font-weight:900;padding:3px 8px;border-radius:2px;letter-spacing:.08em}.tag.spec{background:${sp.color}}.summary{margin:8px 24px;border-left:4px solid #064f9e;background:#f8fafc;border:1px solid #cbd5e1;padding:8px 10px;font-size:12px}.summary.spec{border-left-color:${sp.color}}table{width:calc(100% - 48px);margin:8px 24px 16px;border-collapse:collapse;font-size:12px}th{background:#075da8;color:#fff;text-align:left;padding:7px 8px;font-size:10px;letter-spacing:.08em;text-transform:uppercase}td{padding:7px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top}tr:nth-child(even) td{background:#f1f5f9}.empty{margin:8px 24px 16px;color:#6b7280;font-style:italic;font-size:12px}.footer{display:flex;justify-content:space-between;margin:28px 24px 0;color:#6b7280;font-size:11px;border-top:1px solid #e5e7eb;padding-top:10px}@media print{button{display:none}body{margin:0}.hero{break-inside:avoid}.sec{break-after:avoid}table{break-inside:auto}tr{break-inside:avoid}}
+function printReport(){
+  const sp=specCfg();
+  const yr=currentYear;
+  const generatedDate=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+  const generatedShort=new Date().toLocaleDateString('en-GB');
+  const cct=state.profile?.cctDate ? new Date(state.profile.cctDate).toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : 'Dec 2030';
+  const traineeName=state.profile?.name||'\u2014';
+  const trainingNumber=state.profile?.trainingNumber||'\u2014';
 
-.dops-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;width:100%}
-.dops-card{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--dim);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px}
-.dops-card.done{border-left-color:var(--green)}
-.dops-label{font-size:12px;color:var(--text);line-height:1.35}.chk{width:20px;height:20px;border:1px solid var(--line);background:var(--bg4);color:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer}.chk.checked{border-color:var(--green);background:color-mix(in srgb,var(--green) 15%,transparent)}
+  // Data slices
+  const gimClinics=entries('clinics').filter(e=>e.scope==='gim');
+  const specClinics=entries('clinics').filter(e=>e.scope!=='gim' && (!e.year||e.year===yr));
+  const specProcsYr=entries('procedures').filter(e=>e.scope!=='gim' && (!e.year||e.year===yr));
+  const gimProcsYr=entries('procedures').filter(e=>e.scope==='gim' && (!e.year||e.year===yr));
+  const procYrTotal=specProcsYr.length+gimProcsYr.length;
+  const teachingYr=entries('teaching').filter(e=>!e.year||e.year===yr);
+  const cpdAll=entries('cpd');
+  const gimCpd=cpdAll.filter(e=>e.scope==='gim');
+  const specCpd=cpdAll.filter(e=>e.scope!=='gim' && (!e.year||e.year===yr));
+  const simAll=entries('simulation');
+  const acuteAll=entries('acute');
+  const wardAll=entries('ward');
+  const acuteEstimate=acuteAll.reduce((a,e)=>a+Number(e.estimated||0),0);
+  const wardMonths=Math.round(wardAll.reduce((a,e)=>a+Number(e.months||0),0)*10)/10;
+  const totalCpd=sumHours(cpdAll);
 
-/* ── BETA TRIAL BANNER / LOCK ───────────────────────── */
-.beta-banner{display:none;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px;background:rgba(251,191,36,.10);border-top:1px solid rgba(251,191,36,.25);border-bottom:1px solid rgba(251,191,36,.35);color:var(--text);font-size:13px;font-weight:800;letter-spacing:.02em}
-.beta-banner.show{display:flex}.beta-banner a{color:var(--primary);text-decoration:none}.beta-banner .muted{color:var(--dim);font-weight:600}.beta-banner .critical{color:var(--red)}
-.beta-close{background:none;border:none;color:var(--dim);font-size:20px;line-height:1;cursor:pointer;padding:0 4px}.beta-close:hover{color:var(--red)}
-#beta-expired-lock{position:fixed;inset:0;background:rgba(8,10,16,.97);z-index:2000;display:none;align-items:center;justify-content:center;padding:22px}
-#beta-expired-lock.show{display:flex}.expired-card{width:min(520px,100%);background:var(--bg2);border:1px solid var(--red);border-top:4px solid var(--red);border-radius:18px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.45);text-align:center}.expired-title{font-size:22px;font-weight:900;color:var(--red);letter-spacing:.08em;margin-bottom:10px;text-transform:uppercase}.expired-msg{font-size:13px;color:var(--text2);line-height:1.8}.expired-msg a{color:var(--primary);font-weight:800}
-body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,10,.28)}
+  // Lede paragraph — autogenerated from real counts. Uses spec.short rather than hard-coded "renal".
+  const totalClinicsYr=specClinics.length+gimClinics.length;
+  const periodFromYearStart = state.profile?.yearStart ? new Date(state.profile.yearStart.year,(state.profile.yearStart.month||8)-1,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'}) : 'August 2025';
+  const periodTo = new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+  const ledeBits=[];
+  if(totalClinicsYr) ledeBits.push(`${totalClinicsYr} outpatient clinic ${totalClinicsYr===1?'attendance':'attendances'}`);
+  if(procYrTotal) ledeBits.push(`${procYrTotal} ${procYrTotal===1?'procedure':'procedures'}`);
+  if(totalCpd) ledeBits.push(`${totalCpd} hours of recorded continuing professional development`);
+  if(acuteEstimate) ledeBits.push(`an estimated ${acuteEstimate} unselected medical admissions across General Internal Medicine on-call placements`);
+  const ledeListing = ledeBits.length ? ledeBits.slice(0,-1).join(', ')+(ledeBits.length>1?', and ':'')+ledeBits[ledeBits.length-1] : 'a developing record of clinical and educational activity';
+  const ledeText = `A clinical and educational record covering the period from ${periodFromYearStart} through ${periodTo} \u2014 comprising ${ledeListing}.`;
 
-/* ARCP//01 beta branding */
-.gate-brand-img{display:none;width:min(520px,100%);max-height:210px;object-fit:contain;margin:0 auto 16px;border-radius:16px;border:1px solid var(--line);background:#f7f6f2;}
-.gate-title small{display:block;font-size:12px;color:var(--dim);letter-spacing:.16em;text-transform:uppercase;margin-top:4px;}
-.resp-summary-list{margin:10px 0 0 18px;color:var(--text2);font-size:12px;line-height:1.7;}
-.resp-proc-card{background:var(--bg2);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;}
-.resp-proc-card.ontrack{border-left-color:var(--green);}
-.resp-proc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
-.resp-proc-title{font-weight:800;color:var(--text);font-size:14px;}
-.resp-target{font-size:10px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;}
-.resp-status-pill{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;}
-.resp-status-pill.good{color:var(--green);}
-.resp-status-pill.warn{color:var(--amber);}
-.matrix-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--bg2);}
-.resp-matrix{width:100%;border-collapse:collapse;min-width:720px;font-size:12px;}
-.resp-matrix th,.resp-matrix td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:center;}
-.resp-matrix th:first-child,.resp-matrix td:first-child{text-align:left;min-width:210px;}
-.resp-matrix th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);background:var(--bg3);}
-.resp-matrix .current{background:rgba(107,140,255,.12);color:var(--gim);font-weight:900;}
-.resp-matrix .achieved{color:var(--green);font-weight:800;}
-.resp-matrix .notyet{color:var(--amber);font-weight:800;}
-</style></head><body><button onclick="print()">Print / Save PDF</button><div class="hero"><div><h1>ARCP Logbook Report</h1><div class="sub">${safe(sp.label).toUpperCase()} & GENERAL INTERNAL MEDICINE · DUAL CCT TRAINING</div></div><div class="right">Generated: ${generated}<br>Training Year: ${safe(yr)}<br>Programme: ${safe(sp.short)} + GIM ST4–ST7</div></div><div class="info"><div><div class="k">Programme</div><div class="v">${safe(sp.short)} Medicine + GIM</div></div><div><div class="k">Current year</div><div class="v">${safe(yr)}</div></div><div><div class="k">CCT date</div><div class="v">${safe(cct)}</div></div></div><div class="metrics"><div class="metric"><div class="num">${gimClinics.length}</div><div class="label">GIM clinics total</div></div><div class="metric spec"><div class="num">${specClinics.length}</div><div class="label">${safe(sp.short)} clinics (${yr})</div></div><div class="metric green"><div class="num">${procYr.length}</div><div class="label">Procedures (${yr})</div></div><div class="metric brown"><div class="num">${teachingYr.length}</div><div class="label">Teaching (${yr})</div></div><div class="metric"><div class="num">${sumHours(cpdAll)}h</div><div class="label">CPD — GIM + specialty</div></div><div class="metric"><div class="num">${sumHours(simAll)}h</div><div class="label">Simulation total</div></div></div>${reportSection('CLINICS')}${reportScopedTable(sp.short, specClinics, ['date','type','hospital','supervisor','patients','year','notes'], 'spec')}${reportScopedTable('GIM', gimClinics, ['date','type','hospital','supervisor','patients','year','notes'])}${reportSection('PROCEDURES')}${reportScopedTable(sp.short, entries('procedures').filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)), ['date','type','supervisor','dops','year','notes'], 'spec')}${reportScopedTable('GIM', entries('procedures').filter(e=>e.scope==='gim' && (!e.year||e.year===yr)), ['date','type','supervisor','dops','year','notes'])}${reportSection('CPD / STUDY LEAVE')}<div class="summary">GIM CPD Summary: Counted total: <strong>${sumHours(cpdAll,e=>e.scope==='gim')}h</strong> / 100h · ST7: <strong>${sumHours(cpdAll,e=>e.scope==='gim'&&e.year==='ST7')}h</strong> / 20h min</div>${reportScopedTable('GIM', cpdAll.filter(e=>e.scope==='gim'), ['date','type','title','hours','year','notes'])}<div class="summary spec">${safe(sp.short)} CPD: Total: <strong>${sumHours(cpdAll,e=>e.scope!=='gim'&&(!e.year||e.year===yr))}h</strong> in ${yr}</div>${reportScopedTable(sp.short, cpdAll.filter(e=>e.scope!=='gim' && (!e.year||e.year===yr)), ['date','type','title','hours','year','notes'], 'spec')}${reportSection('SIMULATION')}<div class="summary">Simulation Summary: Total: <strong>${sumHours(simAll)}h</strong> / 12h · ST7: <strong>${sumHours(simAll,e=>e.year==='ST7')}h</strong> / 4h min</div>${reportScopedTable('GIM', simAll, ['date','course','title','hours','hospital','year','notes'])}${reportSection('TEACHING')}${reportScopedTable('Teaching', teachingYr, ['date','type','topic','audience','supervisor','signoff','year','notes'])}${reportSection('ACUTE TAKE (FIRTH CALCULATOR)')}<div class="summary">Acute Take Summary: Estimated total: <strong>${acuteAll.reduce((a,e)=>a+Number(e.estimated||0),0)}</strong> / 750 patients · ST7: <strong>${acuteAll.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.estimated||0),0)}</strong> / 100 patients min</div>${reportScopedTable('GIM', acuteAll, ['hospital','start','end','months','takes','patients','estimated','year','supervisor'])}${reportSection('WARD COVER')}<div class="summary">Ward Cover Summary: Total: <strong>${Math.round(wardAll.reduce((a,e)=>a+Number(e.months||0),0)*10)/10}</strong> / 12 months</div>${reportScopedTable('GIM', wardAll, ['hospital','start','end','months','year','supervisor'])}<div class="footer"><span>ARCP//01 · Auto-generated ARCP document</span><span>Generated ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'short',year:'numeric'})} · Confidential</span></div></body></html>`; win.document.write(report); win.document.close(); }
-function reportSection(title){ return `<div class="sec"><span>${safe(title)}</span></div>`; }
-function reportScopedTable(label, arr, fields, kind='gim'){ return `<div style="margin:8px 24px 2px"><span class="tag ${kind==='spec'?'spec':''}">${safe(label).toUpperCase()}</span> <span style="font-size:11px;color:#6b7280;font-style:italic">${arr.length} entries</span></div>${arr.length?`<table><tr>${fields.map(f=>`<th>${safe(f)}</th>`).join('')}</tr>${arr.map(e=>`<tr>${fields.map(f=>`<td>${safe(['date','start','end'].includes(f)?fmtDate(e[f]):(f==='dops'&&e[f]==='Yes'?'✓ Yes':e[f]||'—'))}</td>`).join('')}</tr>`).join('')}</table>`:'<p class="empty">No entries logged</p>'}`; }
+  // Figures (top stats grid)
+  const figures = [
+    {n:gimClinics.length, lab:`GIM clinics<br>total`, accent:false},
+    {n:specClinics.length, lab:`${safe(sp.short)} clinics<br>(${safe(yr)})`, accent:true},
+    {n:procYrTotal, lab:`Procedures<br>(${safe(yr)})`, accent:false},
+    {n:teachingYr.length, lab:`Teaching<br>(${safe(yr)})`, accent:false},
+    {n:totalCpd+'h', lab:`CPD<br>both streams`, accent:false},
+    {n:sumHours(simAll)+'h', lab:`Simulation<br>total`, accent:false}
+  ];
+  const figuresHtml = figures.map(f=>`<div class="figure ${f.accent?'accent':''}"><span class="num">${safe(f.n)}</span><span class="lab">${f.lab}</span></div>`).join('');
+
+  const win=window.open('','_blank');
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Logbook Report \u2014 ${safe(yr)} \u2014 ${safe(traineeName)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0e0e0c;--ink-2:#36342f;--ink-3:#6b675f;--paper:#f7f3eb;--paper-2:#efe9dc;--rule:#1b1a18;--rule-soft:#bcb6a6;--accent:#8a1c1c;--serif:'EB Garamond',Georgia,'Times New Roman',serif;--mono:'IBM Plex Mono',ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}
+html,body{background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:11pt;line-height:1.45;margin:0;padding:0;font-feature-settings:"liga","onum","kern"}
+.page{max-width:780px;margin:0 auto;padding:48px 56px 64px;background:var(--paper);position:relative}
+.page::before{content:"";position:absolute;left:56px;right:56px;top:18px;height:3px;background:var(--rule);box-shadow:0 5px 0 0 var(--paper),0 6px 0 0 var(--rule)}
+.toolbar{display:flex;gap:10px;margin-bottom:32px}
+.toolbar button{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:8px 14px;cursor:pointer}
+.toolbar button:hover{background:var(--ink);color:var(--paper)}
+.colophon{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);padding:8px 0 28px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between}
+.masthead{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--rule);padding:32px 0 18px;margin-bottom:0}
+.masthead .left{flex:1}
+.eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.32em;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px}
+.masthead h1{font-family:var(--serif);font-weight:500;font-size:46px;line-height:1.02;letter-spacing:-.01em;margin:0;font-style:italic}
+.masthead h1 em{font-style:normal;color:var(--accent)}
+.masthead .right{font-family:var(--mono);font-size:9.5px;text-align:right;line-height:1.7;color:var(--ink-2);letter-spacing:.04em}
+.masthead .right b{color:var(--ink);font-weight:600}
+.info{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr;column-gap:0;border-bottom:1px solid var(--rule);padding:18px 0 22px;margin-bottom:34px}
+.info > div{padding:0 18px;border-right:1px solid var(--rule-soft)}
+.info > div:first-child{padding-left:0}
+.info > div:last-child{border-right:none;padding-right:0}
+.info dt{font-family:var(--mono);font-size:8.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px;font-weight:500}
+.info dd{margin:0;font-family:var(--serif);font-size:14pt;line-height:1.15;color:var(--ink);font-weight:500;letter-spacing:-.005em;font-feature-settings:"lnum"}
+.lede{font-family:var(--serif);font-style:italic;font-size:13pt;line-height:1.55;color:var(--ink-2);max-width:62ch;margin:0 0 38px;border-left:3px solid var(--accent);padding-left:18px}
+.lede::first-letter{font-size:48px;line-height:.85;float:left;margin:5px 8px 0 0;color:var(--accent);font-style:normal;font-weight:600}
+.figures{display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:0 0 40px}
+.figure{padding:20px 12px;border-right:1px solid var(--rule-soft);text-align:left}
+.figure:last-child{border-right:none}
+.figure .num{font-family:var(--serif);font-weight:500;font-size:38px;line-height:1;letter-spacing:-.02em;color:var(--ink);font-feature-settings:"lnum","tnum";display:block;margin-bottom:6px}
+.figure.accent .num{color:var(--accent)}
+.figure .lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);line-height:1.45}
+h2.section{font-family:var(--serif);font-weight:600;font-size:14pt;letter-spacing:-.005em;margin:32px 0 4px;padding-bottom:6px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:baseline}
+h2.section .smallcaps{font-family:var(--mono);font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.subhead{font-family:var(--serif);font-style:italic;font-size:11pt;color:var(--ink-2);margin:0 0 14px}
+.summary-line{font-family:var(--serif);font-size:10.5pt;color:var(--ink-2);margin:14px 0 18px;padding:10px 0;border-top:1px solid var(--rule-soft);border-bottom:1px solid var(--rule-soft)}
+.summary-line strong{font-weight:600;color:var(--accent);font-feature-settings:"lnum"}
+.scope-label{font-family:var(--mono);font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink);margin:18px 0 6px;display:flex;align-items:baseline;gap:10px}
+.scope-label::before{content:"\u00a7";font-family:var(--serif);font-style:italic;color:var(--accent);font-size:14px}
+.scope-label .count{font-family:var(--serif);font-style:italic;font-size:10pt;color:var(--ink-3);text-transform:none;letter-spacing:0;margin-left:auto}
+table{width:100%;border-collapse:collapse;margin:0 0 8px;font-family:var(--serif);font-size:10pt;table-layout:fixed}
+table thead th{text-align:left;font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);font-weight:500;padding:10px 8px 8px;border-top:1.5px solid var(--rule);border-bottom:1px solid var(--rule);background:transparent}
+table thead th.num{text-align:right}
+table tbody td{padding:9px 8px;border-bottom:1px dotted var(--rule-soft);font-feature-settings:"lnum","onum";color:var(--ink);vertical-align:top;overflow-wrap:break-word}
+table tbody td.num{font-feature-settings:"tnum";text-align:right;font-variant-numeric:tabular-nums}
+table tbody tr:last-child td{border-bottom:1px solid var(--rule)}
+table tbody td.dim{color:var(--ink-3);font-style:italic}
+table tbody td .yes{color:var(--accent);font-weight:500}
+table tbody td .no{color:var(--ink-3);font-style:italic}
+.empty-tbl{font-family:var(--serif);font-style:italic;color:var(--ink-3);padding:14px 8px;text-align:center;border-top:1.5px solid var(--rule);border-bottom:1px solid var(--rule);margin-bottom:8px;font-size:10.5pt}
+footer.colophon-foot{margin-top:60px;padding-top:14px;border-top:3px double var(--rule);font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between}
+footer.colophon-foot em{font-style:italic;text-transform:none;letter-spacing:.04em;color:var(--ink-2)}
+@media print{
+  .toolbar{display:none}
+  .page{padding:24px 36px;max-width:none}
+  .page::before{display:none}
+  body{background:white}
+  h2.section{break-after:avoid}
+  table{break-inside:auto}
+  tr{break-inside:avoid}
+  thead{display:table-header-group}
+}
+</style></head><body>
+<div class="page">
+  <div class="toolbar"><button onclick="window.print()">Print / Save PDF</button></div>
+  <div class="colophon"><span>Volume \u2014 ${safe(yr)}</span><span>Generated ${safe(generatedShort)}</span></div>
+  <header class="masthead">
+    <div class="left">
+      <div class="eyebrow">The ARCP Quarterly \u00b7 Trainee Record</div>
+      <h1>The ${safe(sp.short)} &amp; <em>General Medicine</em> Logbook</h1>
+    </div>
+    <div class="right">
+      Trainee: <b>${safe(traineeName)}</b><br>
+      Programme: <b>${safe(sp.short)} + GIM</b><br>
+      Year: <b>${safe(yr)}</b><br>
+      Generated: <b>${safe(generatedDate)}</b>
+    </div>
+  </header>
+  <dl class="info">
+    <div><dt>Trainee</dt><dd>${safe(traineeName)}</dd></div>
+    <div><dt>Training No.</dt><dd>${safe(trainingNumber)}</dd></div>
+    <div><dt>Programme</dt><dd>${safe(sp.short)} + GIM</dd></div>
+    <div><dt>Year</dt><dd>${safe(yr)}</dd></div>
+    <div><dt>CCT</dt><dd>${safe(cct)}</dd></div>
+  </dl>
+  <p class="lede">${safe(ledeText)}</p>
+  <div class="figures">${figuresHtml}</div>
+
+  ${formalSection('Clinics','I.','Outpatient attendances by sub-specialty and supervising consultant.')}
+  ${formalScopedTable(sp.short, specClinics, ['date','type','hospital','supervisor','patients','year'], 'spec')}
+  ${formalScopedTable('GIM', gimClinics, ['date','type','hospital','supervisor','patients','year'], 'gim')}
+
+  ${formalSection('Procedures','II.','Procedures performed under supervision, with directly observed assessment where indicated.')}
+  ${formalScopedTable(sp.short, specProcsYr, ['date','type','hospital','supervisor','dops','year'], 'spec', `${specProcsYr.filter(e=>e.dops==='Yes').length} DOPS-signed`)}
+  ${formalScopedTable('GIM', gimProcsYr, ['date','type','hospital','supervisor','dops','year'], 'gim', `${gimProcsYr.filter(e=>e.dops==='Yes').length} DOPS-signed`)}
+
+  ${formalSection('Continuing Professional Development','III.','Recorded study leave and professional development hours, by stream.')}
+  <div class="summary-line">GIM CPD \u2014 Counted total: <strong>${sumHours(gimCpd)} h</strong> against a 100-hour annual standard. ST7 minimum: <strong>${sumHours(gimCpd,e=>e.year==='ST7')} h</strong> / 20 h.</div>
+  ${formalScopedTable('GIM', gimCpd, ['date','type','title','hours','year'], 'gim')}
+  <div class="summary-line">${safe(sp.short)} CPD \u2014 Total: <strong>${sumHours(specCpd)} h</strong> in ${safe(yr)}.</div>
+  ${formalScopedTable(sp.short, specCpd, ['date','type','title','hours','year'], 'spec')}
+
+  ${formalSection('Simulation','IV.','Simulation-based training and assessed scenarios.')}
+  <div class="summary-line">Simulation \u2014 Total: <strong>${sumHours(simAll)} h</strong> against a 12-hour minimum. ST7: <strong>${sumHours(simAll,e=>e.year==='ST7')} h</strong> / 4 h.</div>
+  ${formalScopedTable('Simulation', simAll, ['date','course','title','hours','hospital','year'], 'gim')}
+
+  ${formalSection('Teaching','V.','Teaching delivered, by activity type and observer.')}
+  ${formalScopedTable('Teaching', teachingYr, ['date','type','topic','audience','supervisor','signoff','year'], 'gim')}
+
+  ${formalSection('Acute Medical Take','VI.','Firth-calculator estimate of unselected admissions across general medicine on-call placements.')}
+  <div class="summary-line">Estimated <strong>${acuteEstimate} patients</strong> against a 750-patient standard. ${safe(yr)} contribution: <strong>${acuteAll.filter(e=>e.year===yr).reduce((a,e)=>a+Number(e.estimated||0),0)}</strong>.</div>
+  ${formalScopedTable('Acute take', acuteAll, ['hospital','start','end','months','takes','patients','estimated','year'], 'gim')}
+
+  ${formalSection('Ward Cover','VII.','Months of dedicated General Internal Medicine ward cover.')}
+  <div class="summary-line">Recorded ward cover: <strong>${wardMonths} months</strong> against the 12-month minimum.</div>
+  ${formalScopedTable('Ward cover', wardAll, ['hospital','start','end','months','year','supervisor'], 'gim')}
+
+  <footer class="colophon-foot">
+    <span>Outcome 1 \u00b7 ARCP Logbook \u00b7 ${safe(traineeName)} \u00b7 ${safe(trainingNumber)}</span>
+    <em>Generated ${safe(generatedDate)} \u2014 confidential record</em>
+  </footer>
+</div>
+</body></html>`;
+  win.document.write(html); win.document.close();
+}
+
+// Formal report helpers — used only by printReport
+function formalSection(title, numeral, subhead){ return `<h2 class="section"><span>${safe(title)}</span><span class="smallcaps">${safe(numeral)}</span></h2>${subhead?`<p class="subhead">${safe(subhead)}</p>`:''}`; }
+const FORMAL_COL = { date:'74px', start:'74px', end:'74px', months:'56px', type:'auto', course:'150px', topic:'auto', title:'auto', hospital:'160px', supervisor:'130px', patients:'52px', year:'42px', dops:'56px', hours:'52px', takes:'62px', estimated:'72px', audience:'100px', signoff:'70px' };
+const FORMAL_NUM_COLS = new Set(['patients','dops','hours','takes','estimated','months']);
+const FORMAL_LABELS = { date:'Date', start:'Start', end:'End', months:'Mo', type:'Type', course:'Course', topic:'Topic', title:'Title', hospital:'Hospital', supervisor:'Supervisor', patients:'Pts', year:'Yr', dops:'DOPS', hours:'Hrs', takes:'Takes', estimated:'Est.', audience:'Audience', signoff:'Sign-off' };
+function formalScopedTable(label, arr, fields, kind, extra){
+  const cols=fields.map(f=>`<col style="width:${FORMAL_COL[f]||'auto'}">`).join('');
+  const head=`<thead><tr>${fields.map(f=>`<th${FORMAL_NUM_COLS.has(f)?' class="num"':''}>${safe(FORMAL_LABELS[f]||f)}</th>`).join('')}</tr></thead>`;
+  const heading=`<div class="scope-label">${safe(label)}<span class="count">${arr.length} ${arr.length===1?'entry':'entries'}${extra?' \u00b7 '+safe(extra):''}</span></div>`;
+  if(!arr.length){
+    return heading+`<div class="empty-tbl">No entries logged.</div>`;
+  }
+  const sorted = [...arr].sort((a,b)=>(b.date||b.start||'').localeCompare(a.date||a.start||''));
+  const body=`<tbody>${sorted.map(e=>`<tr>${fields.map(f=>{
+    let cell;
+    if(['date','start','end'].includes(f)) cell=fmtDate(e[f]);
+    else if(f==='dops') cell=e[f]==='Yes'?'<span class="yes">\u2713 Yes</span>':(e[f]?`<span class="no">${safe(e[f])}</span>`:'<span class="no">\u2014</span>');
+    else if(f==='year') cell=e[f]||'\u2014';
+    else cell=e[f]||'\u2014';
+    return `<td${FORMAL_NUM_COLS.has(f)?' class="num"':''}>${typeof cell==='string'&&cell.startsWith('<span')?cell:safe(cell)}</td>`;
+  }).join('')}</tr>`).join('')}</tbody>`;
+  return heading+`<table><colgroup>${cols}</colgroup>${head}${body}</table>`;
+}
 function reportReqTable(scope, reqs, title){ return `<h2>${title} <span class="badge">${safe(scope)}</span></h2><table><tr><th>Requirement</th><th>Status</th><th>Value</th><th>Target</th><th>Deadline</th></tr>${Object.entries(reqs).map(([id,r])=>`<tr><td>${safe(r.label)}</td><td>${reqStatus(id,r)}</td><td>${r.type==='checkbox'?(getReqVal(id,r)?'Yes':'No'):getReqVal(id,r)}</td><td>${r.target||'—'} ${r.unit||''}</td><td>${r.deadline}</td></tr>`).join('')}</table>`; }
 function reportLogTable(title, arr, fields){ return `<h2>${title}</h2>${arr.length?`<table><tr>${fields.map(f=>`<th>${f}</th>`).join('')}</tr>${arr.map(e=>`<tr>${fields.map(f=>`<td>${safe(f.includes('date')||f==='start'||f==='end'?fmtDate(e[f]):e[f]||'')}</td>`).join('')}</tr>`).join('')}</table>`:'<p class="meta">No entries logged.</p>'}`; }
+
+// ─── CSV / ZIP EXPORT ───────────────────────────────────────────
+// CSV cell escape: wrap in double quotes if value contains comma, quote, or newline; double up internal quotes.
+function csvCell(v){ if(v===null||v===undefined) return ''; const s=String(v); return /[",\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
+function csvFromRows(headers, rows){ const lines=[headers.map(csvCell).join(',')]; rows.forEach(r=>lines.push(headers.map(h=>csvCell(r[h])).join(','))); return '\ufeff'+lines.join('\r\n'); } // BOM so Excel recognises UTF-8
+
+// CRC-32 table for ZIP entries
+const CRC_TABLE=(()=>{ const t=new Uint32Array(256); for(let i=0;i<256;i++){ let c=i; for(let k=0;k<8;k++) c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1); t[i]=c; } return t; })();
+function crc32(bytes){ let c=0xffffffff; for(let i=0;i<bytes.length;i++) c=CRC_TABLE[(c^bytes[i])&0xff]^(c>>>8); return (c^0xffffffff)>>>0; }
+
+// Build a ZIP file (STORED, no compression) from {filename: string} map. Returns a Blob.
+function makeZip(files){
+  const enc=new TextEncoder();
+  const localChunks=[], centralChunks=[]; let offset=0;
+  Object.entries(files).forEach(([name,content])=>{
+    const nameBytes=enc.encode(name);
+    const data=enc.encode(content);
+    const crc=crc32(data);
+    const size=data.length;
+    // Local file header (30 bytes + name)
+    const local=new Uint8Array(30+nameBytes.length);
+    const lv=new DataView(local.buffer);
+    lv.setUint32(0,0x04034b50,true); // signature
+    lv.setUint16(4,20,true);          // version needed
+    lv.setUint16(6,0,true);           // flags
+    lv.setUint16(8,0,true);           // method=stored
+    lv.setUint16(10,0,true);          // mod time
+    lv.setUint16(12,0,true);          // mod date
+    lv.setUint32(14,crc,true);
+    lv.setUint32(18,size,true);       // compressed size
+    lv.setUint32(22,size,true);       // uncompressed size
+    lv.setUint16(26,nameBytes.length,true);
+    lv.setUint16(28,0,true);          // extra field length
+    local.set(nameBytes,30);
+    const localBlock=new Uint8Array(local.length+data.length);
+    localBlock.set(local,0); localBlock.set(data,local.length);
+    localChunks.push(localBlock);
+    // Central directory header (46 bytes + name)
+    const central=new Uint8Array(46+nameBytes.length);
+    const cv=new DataView(central.buffer);
+    cv.setUint32(0,0x02014b50,true);
+    cv.setUint16(4,20,true);          // version made by
+    cv.setUint16(6,20,true);          // version needed
+    cv.setUint16(8,0,true);
+    cv.setUint16(10,0,true);
+    cv.setUint16(12,0,true);
+    cv.setUint16(14,0,true);
+    cv.setUint32(16,crc,true);
+    cv.setUint32(20,size,true);
+    cv.setUint32(24,size,true);
+    cv.setUint16(28,nameBytes.length,true);
+    cv.setUint16(30,0,true);          // extra
+    cv.setUint16(32,0,true);          // comment
+    cv.setUint16(34,0,true);          // disk
+    cv.setUint16(36,0,true);          // internal attrs
+    cv.setUint32(38,0,true);          // external attrs
+    cv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralChunks.push(central);
+    offset += localBlock.length;
+  });
+  const centralSize=centralChunks.reduce((a,c)=>a+c.length,0);
+  const eocd=new Uint8Array(22);
+  const ev=new DataView(eocd.buffer);
+  ev.setUint32(0,0x06054b50,true);
+  ev.setUint16(4,0,true); ev.setUint16(6,0,true);
+  ev.setUint16(8,centralChunks.length,true);
+  ev.setUint16(10,centralChunks.length,true);
+  ev.setUint32(12,centralSize,true);
+  ev.setUint32(16,offset,true);
+  ev.setUint16(20,0,true);
+  return new Blob([...localChunks,...centralChunks,eocd],{type:'application/zip'});
+}
+
+function exportLogbook(){
+  const sp=specCfg();
+  const profile=state.profile||{};
+  const safeName=(profile.name||'logbook').replace(/[^a-zA-Z0-9]+/g,'_');
+  const stamp=new Date().toISOString().slice(0,10);
+  const meta={ generated:new Date().toISOString(), trainee:profile.name||'', trainingNumber:profile.trainingNumber||'', email:profile.email||'', specialty:sp.label, currentYear, deanery:profile.deanery||'', baseHospital:profile.baseHospital||'' };
+
+  // Field schemas — ordered to put identifying columns first
+  const SCHEMAS={
+    clinics:    ['date','scope','type','hospital','supervisor','patients','year','notes'],
+    procedures: ['date','scope','type','hospital','supervisor','dops','year','notes'],
+    cpd:        ['date','scope','type','title','hours','year','notes'],
+    simulation: ['date','course','title','hours','hospital','year','notes'],
+    teaching:   ['date','type','topic','audience','supervisor','signoff','year','notes'],
+    acute:      ['hospital','start','end','months','takes','patients','estimated','year','supervisor'],
+    ward:       ['hospital','start','end','months','year','supervisor']
+  };
+  const KIND_LABELS={clinics:'Clinics',procedures:'Procedures',cpd:'CPD',simulation:'Simulation',teaching:'Teaching',acute:'Acute_take',ward:'GIM_ward_cover'};
+
+  const files={};
+  // Profile / metadata file
+  files['profile.csv']=csvFromRows(['field','value'], Object.entries(meta).map(([field,value])=>({field,value})));
+
+  // Per-kind CSVs
+  let total=0;
+  Object.entries(SCHEMAS).forEach(([k,headers])=>{
+    const arr=entries(k);
+    total+=arr.length;
+    files[`${KIND_LABELS[k]}.csv`]=csvFromRows(headers,arr);
+  });
+
+  // Summary file
+  const summaryRows=Object.entries(SCHEMAS).map(([k])=>({type:KIND_LABELS[k],total_entries:entries(k).length,this_year_only:entries(k).filter(e=>e.year===currentYear).length}));
+  files['_summary.csv']=csvFromRows(['type','total_entries','this_year_only'], summaryRows);
+
+  if(total===0){ alert('No logbook entries to export yet — add some entries first.'); return; }
+
+  const blob=makeZip(files);
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`Logbook_${safeName}_${stamp}.zip`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+window.exportLogbook=exportLogbook;
 function setSyncStatus(online,message){ const s=document.getElementById('sync'); if(!s)return; s.textContent='● Live'; s.style.color='var(--green)'; }
 window.addEventListener('firebase-status', e=>{ setSyncStatus(e.detail.online, e.detail.message); });
 setTimeout(()=>{ if(window.ARCP_FB?.online) setSyncStatus(true,'Live'); }, 800);
@@ -993,8 +1434,8 @@ function renderRespProcedureProgression(){
 function renderSpecialty(){
   if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
   const sp=specCfg();
-  if(!['renal','respiratory'].includes(getSpecKey())){
-    document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">${safe(sp.label)}</span><span class="sec-rule"></span></div><div class="panel"><div class="card-title" style="color:var(--primary)">Coming soon</div><div class="hint">This beta currently has full specialty requirement logic for Renal Medicine and Respiratory Medicine. Your GIM portfolio, logbook, hospitals, reports and profile still work while this specialty module is being built.</div></div></section>`;
+  if(!specCfg().reqs){
+    document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">${safe(sp.label)}</span><span class="sec-rule"></span></div><div class="panel"><div class="card-title" style="color:var(--primary)">Coming soon</div><div class="hint">This beta currently has full specialty requirement logic for ${Object.values(SPECIALTIES).filter(s=>s.reqs).map(s=>s.label).join(", ")}. Your GIM portfolio, logbook, hospitals, reports and profile still work while this specialty module is being built.</div></div></section>`;
     return;
   }
   const reqs=specReqs(); const annual=[], milestones=[];
@@ -1084,8 +1525,8 @@ function renderRespProcedureProgression(){
 function renderSpecialty(){
   if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
   const sp=specCfg();
-  if(!['renal','respiratory'].includes(getSpecKey())){
-    document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">${safe(sp.label)}</span><span class="sec-rule"></span></div><div class="panel"><div class="card-title" style="color:var(--primary)">Coming soon</div><div class="hint">This beta currently has full specialty requirement logic for Renal Medicine and Respiratory Medicine. Your GIM portfolio, logbook, hospitals, reports and profile still work while this specialty module is being built.</div></div></section>`;
+  if(!specCfg().reqs){
+    document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">${safe(sp.label)}</span><span class="sec-rule"></span></div><div class="panel"><div class="card-title" style="color:var(--primary)">Coming soon</div><div class="hint">This beta currently has full specialty requirement logic for ${Object.values(SPECIALTIES).filter(s=>s.reqs).map(s=>s.label).join(", ")}. Your GIM portfolio, logbook, hospitals, reports and profile still work while this specialty module is being built.</div></div></section>`;
     return;
   }
   const reqs=specReqs(); const annual=[], milestones=[];
@@ -1094,10 +1535,31 @@ function renderSpecialty(){
   htmlOut += section(`${sp.label} annual requirements`,`For ${currentYear}`,annual);
   htmlOut += section('Specialty milestones','One-off items carry forward',milestones);
   if(getSpecKey()==='respiratory') htmlOut += renderRespProcedureProgression();
+  else if(specCfg().procedureChecklist) htmlOut += renderSpecProcedureChecklist();
   document.getElementById('main').innerHTML=htmlOut;
 }
 
-// Styling for the respiratory list to match the long-row layout in the screenshot.
+function renderSpecProcedureChecklist(){
+  const procs=(specCfg().logbook?.procedures||[]).filter(p=>p && p!=='Other');
+  if(!procs.length) return '';
+  const allEntries=entries('procedures').filter(e=>e.scope!=='gim');
+  const rows=procs.map(proc=>{
+    const matching=allEntries.filter(e=>e.type===proc);
+    const dopsCount=matching.filter(e=>e.dops==='Yes').length;
+    const totalCount=matching.length;
+    const signed=dopsCount>0;
+    const summary=totalCount===0 ? 'No entries yet' : `${totalCount} logged · ${dopsCount} DOPS signed`;
+    return `<div class="resp-dops-row ${signed?'done':''}">
+      <div class="resp-dops-name">${safe(proc)}</div>
+      <div class="resp-dops-target">${summary}</div>
+      <button class="btn small" onclick="openLogbookForm('procedures')">+ log entry</button>
+      <div class="resp-dops-status ${signed?'good':'warn'}">${signed?'✓ DOPS signed':'not yet'}</div>
+    </div>`;
+  }).join('');
+  const done=procs.filter(p=>allEntries.some(e=>e.type===p && e.dops==='Yes')).length;
+  return `<section class="section"><div class="sec-head"><span class="sec-title">${specCfg().short} procedures (DOPS)</span><span class="sec-rule"></span><span class="sec-note">${done} / ${procs.length} have at least one signed DOPS · entries from Logbook</span></div><div class="resp-dops-list">${rows}</div></section>`;
+}
+window.renderSpecProcedureChecklist=renderSpecProcedureChecklist;
 (function addV11Styles(){
   if(document.getElementById('v11-resp-dops-style')) return;
   const st=document.createElement('style');
@@ -1146,6 +1608,12 @@ function personalisedReq(req){
     .replace(/Specialty SLEs/gi, name+' SLEs')
     .replace(/Specialty Certificate Exam/gi, name+' SCE')
     .replace(/Specialty consultants/gi, name+' consultants')
+    .replace(/\bACATs?\b/g, m=>name+' '+m)
+    .replace(/\bMSF raters\b/gi, name+' MSF raters')
+    .replace(/\bMCRs?\b/g, m=>name+' '+m)
+    .replace(/\bMini[- ]?CEX(?:s)?\b/gi, m=>name+' '+m)
+    .replace(/\bCbDs?\b/g, m=>name+' '+m)
+    .replace(new RegExp('\\b'+name+' '+name+'\\b','g'), name)
     .replace(/Specialty/g, name)
     .replace(/specialty/g, name.toLowerCase());
   out.note=(out.note||'')
@@ -1166,6 +1634,15 @@ function specDopsStats(){
     const procs=Object.keys(RESP_PROCEDURE_TARGETS||{});
     return {met:procs.filter(p=>respProcMet(p,currentYear)).length,total:procs.length,label:'Resp DOPS'};
   }
+  if(getSpecKey()==='renal'){
+    if(currentYear==='ST4'){
+      const target='Temp HD catheter — femoral';
+      const met=entries('procedures').some(e=>e.scope!=='gim' && e.dops==='Yes' && e.type===target);
+      return {met:met?1:0, total:1, label:'Renal DOPS'};
+    }
+    return {met:0,total:0,label:''};
+  }
+  if(!specCfg().procedureChecklist) return {met:0,total:0,label:''};
   const procs=(specCfg().logbook?.procedures||[]).filter(p=>p && p!=='Other');
   const logged=entries('procedures').filter(e=>e.scope!=='gim' && e.dops==='Yes').map(e=>e.type);
   return {met:procs.filter(p=>logged.includes(p)).length,total:procs.length,label:specialtyDisplayName()+' DOPS'};
@@ -1226,7 +1703,9 @@ function renderGIM(){
 function renderAdmin(){
   if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
   const hosp=hospitalOptions();
-  document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Profile & deanery</span><span class="sec-rule"></span><span class="sec-note">Used in reports and hospital dropdowns</span></div><div class="panel"><div class="form-grid"><div class="field"><label>ALS expiry</label><input class="input" type="date" value="${state.als||''}" onchange="state.als=this.value;saveState();render()"></div><div class="field"><label>${currentYear} ARCP date</label><input class="input" type="date" value="${state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]}" onchange="state.arcpDates['${currentYear}']=this.value;saveState();render()"></div><div class="field full"><label>Add hospital</label><div class="row"><input class="input" id="new-hospital" placeholder="Add hospital not in deanery list"><button class="btn primary" onclick="addAdminHospital()">ADD</button></div></div></div></div></section><section class="section"><div class="sec-head"><span class="sec-title">Hospitals</span><span class="sec-rule"></span><span class="sec-note">${hosp.length} available · delete hospitals you are not rotating in</span></div><div class="grid">${hosp.map(h=>`<div class="card"><div class="card-title">${safe(h)}</div><button class="btn small danger" onclick="deleteHospital('${safe(h)}')">Delete from list</button></div>`).join('')}</div></section>`;
+  document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Profile & deanery</span><span class="sec-rule"></span><span class="sec-note">Used in reports and hospital dropdowns</span></div><div class="panel"><div class="form-grid"><div class="field"><label>ALS expiry</label><input class="input" type="date" value="${state.als||''}" onchange="state.als=this.value;saveState();render()"></div><div class="field"><label>${currentYear} ARCP date</label><input class="input" type="date" value="${state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]}" onchange="state.arcpDates['${currentYear}']=this.value;saveState();render()"></div><div class="field full"><label>Add hospital</label><div class="row"><input class="input" id="new-hospital" placeholder="Add hospital not in deanery list"><button class="btn primary" onclick="addAdminHospital()">ADD</button></div></div></div></div></section><section class="section"><div class="sec-head"><span class="sec-title">Hospitals</span><span class="sec-rule"></span><span class="sec-note">${hosp.length} available · delete hospitals you are not rotating in</span></div><div class="grid">${hosp.map(h=>`<div class="card"><div class="card-title">${safe(h)}</div><button class="btn small danger" onclick="deleteHospital('${safe(h)}')">Delete from list</button></div>`).join('')}</div></section><section class="section"><div class="sec-head"><span class="sec-title">GIM acute take</span><span class="sec-rule"></span><span class="sec-note">Firth-style placement records</span></div><div id="acute-admin-content"></div></section><section class="section"><div class="sec-head"><span class="sec-title">GIM ward cover</span><span class="sec-rule"></span><span class="sec-note">Months of dedicated GIM ward cover</span></div><div id="ward-admin-content"></div></section>`;
+  renderAcute('acute-admin-content');
+  renderWard('ward-admin-content');
 }
 function renderOverview(){
   if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
@@ -1278,14 +1757,383 @@ function renderGIM(){
     section('GIM milestones','One-off items',milestones)+
     section('GIM DOPS procedures',`${stats.met} / ${stats.total} completed`,[dopsCardGrid()]);
 }
+// ─── TRAINING ACTIVITY DASHBOARD (replaces previous Overview) ────────────────
+// Helpers below build a heatmap, KPIs, insights and charts from real logbook data.
+
+function _activityAllEntries(){
+  const out=[];
+  ['clinics','procedures','cpd','simulation','teaching'].forEach(k=>{
+    (state.logbook?.[k]||[]).forEach(e=>{ if(e.date) out.push({...e,_kind:k}); });
+  });
+  return out;
+}
+// Build {dateStr -> {total, clinics, procedures, cpd, simulation, teaching}}
+function _activityIndex(entries){
+  const idx={};
+  entries.forEach(e=>{
+    const d=e.date; if(!d) return;
+    if(!idx[d]) idx[d]={total:0,clinics:0,procedures:0,cpd:0,simulation:0,teaching:0};
+    idx[d].total++; idx[d][e._kind]=(idx[d][e._kind]||0)+1;
+  });
+  return idx;
+}
+// Compute current and longest streak from the activity index.
+function _activityStreaks(idx){
+  // longest: scan all sorted dates; current: walk back from today/yesterday.
+  const dates=Object.keys(idx).sort();
+  let longest=0, run=0, prev=null;
+  dates.forEach(d=>{
+    if(prev){
+      const diff=Math.round((new Date(d)-new Date(prev))/86400000);
+      run = diff===1 ? run+1 : 1;
+    } else { run=1; }
+    longest=Math.max(longest,run); prev=d;
+  });
+  // current streak: walk back from today; lenient — if today empty, start from yesterday
+  const today=new Date(); today.setHours(0,0,0,0);
+  const todayStr=today.toISOString().slice(0,10);
+  let cur=0, cursor=new Date(today);
+  if(!idx[todayStr]){ cursor.setDate(cursor.getDate()-1); }
+  while(true){
+    const s=cursor.toISOString().slice(0,10);
+    if(idx[s]) { cur++; cursor.setDate(cursor.getDate()-1); } else break;
+  }
+  return {current:cur,longest};
+}
+// Build the SVG heatmap. Returns HTML string.
+function _heatmapSVG(idx, filterKind){
+  // 53 weeks ending this week, Mon-Sun.
+  const today=new Date(); today.setHours(0,0,0,0);
+  const dow = (today.getDay()+6)%7; // Mon=0
+  const endOfWeek=new Date(today); endOfWeek.setDate(today.getDate()+(6-dow)); // Sunday at week end
+  const startSat = new Date(endOfWeek); startSat.setDate(endOfWeek.getDate()-(53*7)+1); // 53 weeks back, Mon
+  // We want week columns Mon..Sun, 53 cols
+  const cellSize=11, gap=3, cols=53, rows=7;
+  const w = cols*(cellSize+gap)+30; // +left label gutter
+  const h = rows*(cellSize+gap)+24; // +top month labels
+  // Find max count for scale (use the active filter)
+  let max=0; for(const d in idx){ const v = filterKind ? (idx[d][filterKind]||0) : idx[d].total; if(v>max) max=v; }
+  if(max<1) max=1;
+  // Helpers: bucket count into 0-4 intensity
+  const bucket=v=>v===0?0:v<=Math.max(1,max*0.25)?1:v<=Math.max(2,max*0.5)?2:v<=Math.max(3,max*0.75)?3:4;
+  const fillFor=b=>['transparent','rgba(216,255,94,0.10)','rgba(216,255,94,0.28)','rgba(216,255,94,0.55)','var(--primary)'][b];
+  const monthLabels=[]; let lastMonth=-1;
+  let cells='';
+  for(let c=0;c<cols;c++){
+    for(let r=0;r<rows;r++){
+      const dt=new Date(startSat); dt.setDate(startSat.getDate()+c*7+r);
+      if(dt>today) continue; // skip future
+      const key=dt.toISOString().slice(0,10);
+      const dayData=idx[key];
+      const v = dayData ? (filterKind ? (dayData[filterKind]||0) : dayData.total) : 0;
+      const b = bucket(v);
+      const x=30 + c*(cellSize+gap);
+      const y=24 + r*(cellSize+gap);
+      const tip = `${dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})} \u2014 ${v} ${v===1?'activity':'activities'}${dayData&&!filterKind?` (${[['clinics','clin'],['procedures','proc'],['cpd','cpd'],['simulation','sim'],['teaching','teach']].filter(([k])=>dayData[k]).map(([k,l])=>`${dayData[k]} ${l}`).join(' \u00b7 ')})`:''}`;
+      cells += `<rect class="hm-cell hm-b${b}" x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" rx="2" fill="${fillFor(b)}" stroke="${b===0?'var(--line)':'transparent'}" stroke-width="1" data-tip="${safe(tip)}"></rect>`;
+      // First Monday of month → month label
+      if(r===0 && dt.getDate()<=7){
+        if(dt.getMonth()!==lastMonth){
+          monthLabels.push(`<text x="${x}" y="14" class="hm-month">${dt.toLocaleDateString('en-GB',{month:'short'})}</text>`);
+          lastMonth=dt.getMonth();
+        }
+      }
+    }
+  }
+  const dowLabels=['Mon','','Wed','','Fri','',''];
+  const dowSvg=dowLabels.map((l,i)=>l?`<text x="0" y="${24+i*(cellSize+gap)+9}" class="hm-dow">${l}</text>`:'').join('');
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMinYMin meet" class="heatmap-svg" style="width:100%;height:auto;display:block">${monthLabels.join('')}${dowSvg}${cells}</svg>`;
+}
+// Compute consistency: % of last-90-days that had at least one entry. Round to int.
+function _consistencyScore(idx){
+  const today=new Date(); today.setHours(0,0,0,0);
+  let active=0;
+  for(let i=0;i<90;i++){
+    const d=new Date(today); d.setDate(today.getDate()-i);
+    if(idx[d.toISOString().slice(0,10)]) active++;
+  }
+  return Math.round((active/90)*100);
+}
+// Sparkline (last 12 weeks). Tiny SVG line.
+function _sparkline(values, accent){
+  if(!values.length) return '';
+  const w=72, h=20, max=Math.max(1,...values);
+  const pts=values.map((v,i)=>`${(i/(values.length-1||1))*w},${h-(v/max)*(h-2)-1}`).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="display:block;margin-top:6px"><polyline points="${pts}" fill="none" stroke="${accent||'var(--primary)'}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/><polyline points="${pts}" fill="none" stroke="${accent||'var(--primary)'}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".15"/></svg>`;
+}
+// Last-12-weeks counts for a kind (or 'all')
+function _last12Weeks(entries, kind){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const buckets=new Array(12).fill(0);
+  entries.forEach(e=>{
+    if(kind && e._kind!==kind) return;
+    if(!e.date) return;
+    const dt=new Date(e.date); const diff=Math.floor((today-dt)/86400000); if(diff<0||diff>=84) return;
+    const idx=11-Math.floor(diff/7); if(idx>=0&&idx<12) buckets[idx]++;
+  });
+  return buckets;
+}
+// Frequency: top N values for a field across an entry kind.
+function _topField(entries, kind, field, n=1){
+  const counts={};
+  entries.filter(e=>e._kind===kind && e[field]).forEach(e=>{ counts[e[field]]=(counts[e[field]]||0)+1; });
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,n);
+}
+
+// Monthly counts for last 12 calendar months — used for trend chart
+function _monthlyTrend(entries){
+  const today=new Date();
+  const months=[];
+  for(let i=11;i>=0;i--){ const d=new Date(today.getFullYear(),today.getMonth()-i,1); months.push({key:`${d.getFullYear()}-${d.getMonth()}`,label:d.toLocaleDateString('en-GB',{month:'short'}),count:0}); }
+  const map={}; months.forEach(m=>map[m.key]=m);
+  entries.forEach(e=>{ if(!e.date) return; const dt=new Date(e.date); const k=`${dt.getFullYear()}-${dt.getMonth()}`; if(map[k]) map[k].count++; });
+  return months;
+}
+// Category distribution
+function _categoryDist(entries){
+  const counts={clinics:0,procedures:0,cpd:0,simulation:0,teaching:0};
+  entries.forEach(e=>{ if(counts[e._kind]!==undefined) counts[e._kind]++; });
+  return counts;
+}
+// Most active month name (best calendar month from entries)
+function _mostActiveMonth(entries){
+  const counts={};
+  entries.forEach(e=>{ if(!e.date) return; const dt=new Date(e.date); const k=`${dt.getFullYear()}-${String(dt.getMonth()).padStart(2,'0')}`; counts[k]=(counts[k]||0)+1; });
+  const top=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  if(!top) return null;
+  const [y,m]=top[0].split('-'); return {label:new Date(+y,+m,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'}), count:top[1]};
+}
+// Cumulative CPD chart data (last 12 months)
+function _cpdCumulative(entries){
+  const months=_monthlyTrend(entries.filter(e=>e._kind==='cpd'));
+  let acc=0;
+  return months.map(m=>{ acc += entries.filter(e=>e._kind==='cpd' && e.date && new Date(e.date).getMonth()===new Date(m.key.split('-')[0],m.key.split('-')[1],1).getMonth() && new Date(e.date).getFullYear()===+m.key.split('-')[0]).reduce((a,e)=>a+(+e.hours||0),0); return {label:m.label,value:acc}; });
+}
+
 function renderOverview(){
   if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
-  const spec=calcReqsWithExtra(specReqs(), specDopsStats()), gim=calcReqsWithExtra(visibleGimReqs(), gimDopsStats());
-  const outstanding=[
-    ...Object.entries(specReqs()).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'spec')),
-    ...Object.entries(visibleGimReqs()).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'gim'))
+  const sp=specCfg();
+  const all=_activityAllEntries();
+  const idx=_activityIndex(all);
+  const filterKind = state._actFilter || null; // persisted across re-renders within session
+  const heatmap = _heatmapSVG(idx, filterKind);
+  const streaks = _activityStreaks(idx);
+  const consistency = _consistencyScore(idx);
+
+  // KPI counts (year so far, but using rolling 365-day for "active days")
+  const yrEntries = all.filter(e=>e.year===currentYear || (!e.year));
+  const totalActivities = yrEntries.length;
+  const counts = _categoryDist(yrEntries);
+  const cpdHours = (state.logbook?.cpd||[]).filter(e=>!e.year||e.year===currentYear).reduce((a,e)=>a+(+e.hours||0),0);
+  const activeDays = Object.keys(idx).filter(d=>{ const dt=new Date(d); return (Date.now()-dt.getTime())<365*86400000; }).length;
+
+  // ARCP trajectory
+  const spec=calcReqsWithExtra(specReqs(), specDopsStats());
+  const gim=calcReqsWithExtra(visibleGimReqs(), gimDopsStats());
+  const overall=Math.round((spec.pct+gim.pct)/2);
+  const projection = overall>=80 ? 'Outcome 1 trajectory' : overall>=55 ? 'On pace — keep evidencing' : 'Behind pace — focus needed';
+  const projColor = overall>=80?'var(--green)':overall>=55?'var(--primary)':'var(--amber)';
+
+  // Insights
+  const mostMonth = _mostActiveMonth(all);
+  const topProc = _topField(all,'procedures','type',1)[0];
+  const topClinic = _topField(all,'clinics','type',1)[0];
+  const recent4w = all.filter(e=>e.date && (Date.now()-new Date(e.date).getTime())<28*86400000).length;
+  const prev4w = all.filter(e=>e.date && (Date.now()-new Date(e.date).getTime())>=28*86400000 && (Date.now()-new Date(e.date).getTime())<56*86400000).length;
+  const momentum = prev4w===0 ? (recent4w>0?'Building':'Quiet') : recent4w>=prev4w*1.2 ? 'Accelerating' : recent4w>=prev4w*0.8 ? 'Steady' : 'Cooling';
+  const momentumColor = momentum==='Accelerating'?'var(--green)':momentum==='Steady'?'var(--primary)':momentum==='Building'?'var(--gim)':'var(--dim)';
+  const avgWeekly = Math.round(all.filter(e=>e.date && (Date.now()-new Date(e.date).getTime())<12*7*86400000).length / 12);
+
+  // Sparklines per KPI
+  const sparkAll = _sparkline(_last12Weeks(all,null));
+  const sparkClin = _sparkline(_last12Weeks(all,'clinics'));
+  const sparkProc = _sparkline(_last12Weeks(all,'procedures'));
+  const sparkCPD = _sparkline(_last12Weeks(all,'cpd'),'var(--gim)');
+  const sparkTeach = _sparkline(_last12Weeks(all,'teaching'));
+  const sparkSim = _sparkline(_last12Weeks(all,'simulation'));
+
+  // Charts
+  const trend=_monthlyTrend(all);
+  const trendMax=Math.max(1,...trend.map(t=>t.count));
+  const trendBars=trend.map((t,i)=>{
+    const bh = (t.count/trendMax)*100;
+    return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:6px;min-width:0">
+      <div style="height:120px;display:flex;align-items:flex-end;width:100%;justify-content:center">
+        <div title="${t.label}: ${t.count}" style="width:60%;max-width:22px;background:linear-gradient(to top, var(--primary) 0%, color-mix(in srgb, var(--primary) 60%, transparent) 100%);height:${bh}%;min-height:${t.count?'2px':'0'};border-radius:3px 3px 0 0;box-shadow:0 0 12px color-mix(in srgb, var(--primary) 40%, transparent)"></div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.08em;color:var(--dim);text-transform:uppercase">${t.label}</div>
+    </div>`;
+  }).join('');
+
+  const cat=counts; const catTotal=Object.values(cat).reduce((a,b)=>a+b,0)||1;
+  const catColors={clinics:'var(--primary)',procedures:'var(--green)',cpd:'var(--gim)',simulation:'#f0abfc',teaching:'#fb923c'};
+  const catLabels={clinics:'Clinics',procedures:'Procedures',cpd:'CPD',simulation:'Simulation',teaching:'Teaching'};
+  const catBars=Object.entries(cat).map(([k,v])=>{
+    const pct=(v/catTotal)*100;
+    return `<div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:11px"><span style="color:var(--text2);font-weight:500">${catLabels[k]}</span><span style="color:var(--dim);font-family:var(--font-mono)">${v} \u00b7 ${Math.round(pct)}%</span></div>
+      <div style="height:6px;background:var(--bg3);border-radius:999px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${catColors[k]};box-shadow:0 0 8px color-mix(in srgb, ${catColors[k]} 60%, transparent);border-radius:999px;transition:width .4s ease-out"></div></div>
+    </div>`;
+  }).join('');
+
+  // Procedure frequency (top 6)
+  const procFreq = Object.entries((state.logbook?.procedures||[]).reduce((a,e)=>{ if(e.type) a[e.type]=(a[e.type]||0)+1; return a; },{})).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const procMax=Math.max(1,...procFreq.map(([,v])=>v));
+  const procBars=procFreq.length?procFreq.map(([name,v])=>{
+    const pct=(v/procMax)*100;
+    return `<div style="display:flex;flex-direction:column;gap:5px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:11px"><span style="color:var(--text2);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:75%">${safe(name)}</span><span style="color:var(--dim);font-family:var(--font-mono)">${v}</span></div>
+      <div style="height:5px;background:var(--bg3);border-radius:999px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--green);box-shadow:0 0 6px color-mix(in srgb, var(--green) 50%, transparent);border-radius:999px"></div></div>
+    </div>`;
+  }).join(''):`<div class="hint" style="text-align:center;padding:16px 0">No procedures logged yet.</div>`;
+
+  // Cumulative CPD line chart (SVG)
+  const cpdMonths=_monthlyTrend(all);
+  const cpdData=cpdMonths.map(m=>{
+    const ms=(state.logbook?.cpd||[]).filter(e=>{ if(!e.date) return false; const dt=new Date(e.date); return dt.getMonth()===new Date(+m.key.split('-')[0],+m.key.split('-')[1],1).getMonth() && dt.getFullYear()===+m.key.split('-')[0]; }).reduce((a,e)=>a+(+e.hours||0),0);
+    return ms;
+  });
+  let acc=0; const cumul=cpdData.map(v=>{ acc+=v; return acc; });
+  const cpdMax=Math.max(1,...cumul);
+  const cw=320, chh=120;
+  const cpdPts=cumul.map((v,i)=>`${(i/(cumul.length-1||1))*(cw-12)+6},${chh-((v/cpdMax)*(chh-20))-10}`).join(' ');
+  const cpdAreaPts=`6,${chh-10} ${cpdPts} ${cw-6},${chh-10}`;
+  const cpdLineChart=`<svg viewBox="0 0 ${cw} ${chh+22}" style="width:100%;height:auto;display:block">
+    <defs><linearGradient id="cpdGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--gim)" stop-opacity=".35"/><stop offset="100%" stop-color="var(--gim)" stop-opacity="0"/></linearGradient></defs>
+    <polyline points="${cpdAreaPts}" fill="url(#cpdGrad)"/>
+    <polyline points="${cpdPts}" fill="none" stroke="var(--gim)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 4px color-mix(in srgb, var(--gim) 50%, transparent))"/>
+    ${cpdMonths.map((m,i)=>`<text x="${(i/(cumul.length-1||1))*(cw-12)+6}" y="${chh+18}" style="font-family:var(--font-mono);font-size:9px;fill:var(--dim);text-anchor:middle;letter-spacing:.06em;text-transform:uppercase">${m.label}</text>`).join('')}
+  </svg>`;
+
+  // Filter chip strip
+  const filterChips = [['','All'],['clinics','Clinics'],['procedures','Procedures'],['cpd','CPD'],['simulation','Simulation'],['teaching','Teaching']].map(([k,l])=>{
+    const active = (filterKind||'')===k;
+    return `<button class="act-chip ${active?'active':''}" onclick="state._actFilter=${k?`'${k}'`:'null'};render()">${l}</button>`;
+  }).join('');
+
+  // KPI cards
+  const kpis=[
+    {label:'Total activities',value:totalActivities,sub:`${currentYear} so far`,spark:sparkAll,accent:'var(--primary)'},
+    {label:'Clinics logged',value:counts.clinics,sub:'across spec + GIM',spark:sparkClin,accent:'var(--primary)'},
+    {label:'Procedures logged',value:counts.procedures,sub:`${(state.logbook?.procedures||[]).filter(e=>e.dops==='Yes').length} DOPS-signed`,spark:sparkProc,accent:'var(--green)'},
+    {label:'CPD hours',value:Math.round(cpdHours),sub:'this training year',spark:sparkCPD,accent:'var(--gim)'},
+    {label:'Teaching sessions',value:counts.teaching,sub:'all-time',spark:sparkTeach,accent:'var(--primary)'},
+    {label:'Simulation sessions',value:counts.simulation,sub:'all-time',spark:sparkSim,accent:'var(--primary)'},
+    {label:'Active days',value:activeDays,sub:'last 365 days',spark:'',accent:'var(--green)'}
   ];
-  document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Overview — ${currentYear}</span><span class="sec-rule"></span></div><div class="summary-grid"><div class="summary"><div class="big green">${spec.met}</div><div class="hint">${specCfg().short} complete</div></div><div class="summary"><div class="big red">${spec.open}</div><div class="hint">${specCfg().short} outstanding</div></div><div class="summary"><div class="big green">${gim.met}</div><div class="hint">GIM complete</div></div><div class="summary"><div class="big red">${gim.open}</div><div class="hint">GIM outstanding</div></div><div class="summary"><div class="big primary">${entries('clinics').length+entries('procedures').length+entries('cpd').length+entries('simulation').length+entries('teaching').length}</div><div class="hint">logbook entries</div></div></div></section>${outstanding.length?section('Outstanding / in progress','Editable unless year locked',outstanding):'<div class="panel green">✓ All visible requirements met for this year.</div>'}`;
+  const kpiHtml = kpis.map(k=>`<div class="act-kpi">
+    <div class="act-kpi-label">${safe(k.label)}</div>
+    <div class="act-kpi-value" style="color:${k.accent}">${k.value}</div>
+    <div class="act-kpi-sub">${safe(k.sub)}</div>
+    ${k.spark}
+  </div>`).join('');
+
+  // Insights sidebar
+  const insightCards = [
+    {label:'Most active month', value: mostMonth?mostMonth.label:'\u2014', sub: mostMonth?`${mostMonth.count} activities`:'no data yet'},
+    {label:'Longest streak', value: streaks.longest+'d', sub:`current: ${streaks.current} day${streaks.current===1?'':'s'}`},
+    {label:'Most logged procedure', value: topProc?topProc[0]:'\u2014', sub: topProc?`${topProc[1]} times`:'log a procedure to see this', isText:true},
+    {label:'Most common clinic', value: topClinic?topClinic[0]:'\u2014', sub: topClinic?`${topClinic[1]} attendances`:'log a clinic to see this', isText:true},
+    {label:'Avg weekly activity', value: avgWeekly, sub:'last 12 weeks'},
+    {label:'Current momentum', value: momentum, sub:`${recent4w} in last 4w \u00b7 ${prev4w} prior`, accent:momentumColor, isText:true}
+  ];
+  const insightsHtml = insightCards.map(c=>`<div class="act-insight">
+    <div class="act-insight-label">${safe(c.label)}</div>
+    <div class="act-insight-value ${c.isText?'is-text':''}" ${c.accent?`style="color:${c.accent}"`:''}>${safe(c.value)}</div>
+    <div class="act-insight-sub">${safe(c.sub)}</div>
+  </div>`).join('');
+
+  // Compose
+  document.getElementById('main').innerHTML = `
+  <div class="act-root">
+    <div class="act-hero">
+      <div>
+        <div class="sec-title" style="margin-bottom:12px">${safe(currentYear)} \u00b7 ${safe(sp.label)} \u00b7 Activity</div>
+        <h1 class="act-title">Training Activity.</h1>
+        <p class="act-subtitle">Your training year visualised.</p>
+      </div>
+      <div class="act-trajectory">
+        <div class="act-trajectory-pct" style="color:${projColor}">${overall}%</div>
+        <div class="act-trajectory-bar"><div style="width:${overall}%;background:${projColor}"></div></div>
+        <div class="act-trajectory-meta">
+          <div><span class="act-trajectory-key">Projection</span><span style="color:${projColor};font-weight:500">${projection}</span></div>
+          <div><span class="act-trajectory-key">Year</span><span>${safe(currentYear)} \u00b7 CCT ${state.profile?.cctDate?new Date(state.profile.cctDate).toLocaleDateString('en-GB',{month:'short',year:'numeric'}):'Dec 2030'}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="act-kpis">${kpiHtml}</div>
+
+    <div class="act-grid">
+      <div class="act-main">
+        <div class="act-card act-heatmap-card">
+          <div class="act-card-head">
+            <div>
+              <div class="act-card-title">Activity heatmap</div>
+              <div class="act-card-sub">${activeDays} active days \u00b7 last 12 months</div>
+            </div>
+            <div class="act-consistency">
+              <div class="act-consistency-num">${consistency}<span>%</span></div>
+              <div class="act-consistency-lab">90-day consistency</div>
+            </div>
+          </div>
+          <div class="act-chips">${filterChips}</div>
+          <div class="act-heatmap-wrap">${heatmap}</div>
+          <div class="act-heatmap-legend">
+            <span>Less</span>
+            <span class="lg-cell hm-b0"></span>
+            <span class="lg-cell hm-b1"></span>
+            <span class="lg-cell hm-b2"></span>
+            <span class="lg-cell hm-b3"></span>
+            <span class="lg-cell hm-b4"></span>
+            <span>More</span>
+            <span style="margin-left:auto;color:var(--dim);font-family:var(--font-mono);font-size:10px">\u25CF Current streak: ${streaks.current}d \u00b7 Longest: ${streaks.longest}d</span>
+          </div>
+        </div>
+
+        <div class="act-charts">
+          <div class="act-card">
+            <div class="act-card-title">Monthly activity</div>
+            <div class="act-card-sub">last 12 months</div>
+            <div class="act-trend-bars">${trendBars}</div>
+          </div>
+          <div class="act-card">
+            <div class="act-card-title">Evidence categories</div>
+            <div class="act-card-sub">share of all logged entries</div>
+            <div class="act-cat-bars">${catBars}</div>
+          </div>
+          <div class="act-card">
+            <div class="act-card-title">Procedure frequency</div>
+            <div class="act-card-sub">top 6 logged procedures</div>
+            <div class="act-proc-bars">${procBars}</div>
+          </div>
+          <div class="act-card">
+            <div class="act-card-title">CPD accumulation</div>
+            <div class="act-card-sub">cumulative hours, 12-month</div>
+            <div class="act-cpd-line">${cpdLineChart}</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="act-sidebar">
+        <div class="act-sidebar-title">Insights</div>
+        ${insightsHtml}
+      </aside>
+    </div>
+  </div>`;
+
+  // Tooltip behaviour
+  setTimeout(()=>{
+    const root=document.querySelector('.act-heatmap-wrap'); if(!root) return;
+    let tip=document.getElementById('hm-tip');
+    if(!tip){ tip=document.createElement('div'); tip.id='hm-tip'; tip.className='hm-tip'; document.body.appendChild(tip); }
+    root.querySelectorAll('.hm-cell').forEach(c=>{
+      c.addEventListener('mouseenter',e=>{ tip.textContent=c.getAttribute('data-tip'); tip.style.opacity='1'; });
+      c.addEventListener('mousemove',e=>{ tip.style.left=(e.clientX+12)+'px'; tip.style.top=(e.clientY+12)+'px'; });
+      c.addEventListener('mouseleave',()=>{ tip.style.opacity='0'; });
+      c.addEventListener('click',e=>{ tip.textContent=c.getAttribute('data-tip'); tip.style.opacity='1'; tip.style.left=(e.clientX+12)+'px'; tip.style.top=(e.clientY+12)+'px'; setTimeout(()=>{tip.style.opacity='0'},2400); });
+    });
+  },10);
 }
 function renderToday(){
   if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
@@ -1384,11 +2232,30 @@ function renderRoadmap(){
   const arcpDate=new Date(state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]);
   const today=new Date(); today.setHours(0,0,0,0);
   const days=Math.max(0,Math.round((arcpDate-today)/86400000));
+  const todayStr=today.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const firstName=(state.profile?.name||'').split(' ').filter(Boolean).pop()||'there';
+  let yearPct=heroPct;
+  if(state.profile?.yearStart){
+    const ys=state.profile.yearStart;
+    const start=new Date(ys.year, (ys.month||8)-1, 1);
+    const totalMs=arcpDate-start; const elapsed=today-start;
+    if(totalMs>0) yearPct=Math.max(0,Math.min(100,Math.round(elapsed/totalMs*100)));
+  }
 
-  const hero=`<div style="margin-bottom:28px;max-width:900px">
-    <div class="sec-title" style="margin-bottom:12px">Curriculum roadmap · ${safe(sp.label)} · ${safe(currentYear)}</div>
-    <h1 style="font-size:40px;font-weight:500;letter-spacing:-.025em;line-height:1.1;margin:0;color:var(--text)">Your training journey.</h1>
-    <p style="font-size:14px;color:var(--text2);margin-top:12px;line-height:1.55">${heroPct}% overall coverage · ${days} days to ARCP · ${currentYear} in progress.</p>
+  const greeting=`<div style="margin:0 0 20px;padding:18px 22px;background:linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, var(--bg2)) 0%, var(--bg2) 60%);border:1px solid var(--line);border-left:3px solid var(--primary);border-radius:14px;max-width:900px">
+    <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:8px">${todayStr} \u00b7 ${safe(currentYear)}</div>
+    <div style="font-size:24px;font-weight:500;letter-spacing:-.02em;line-height:1.25;color:var(--text)">Hello, ${safe(firstName)}. <span style="color:var(--dim)">You're <span style="color:var(--primary);font-weight:700">${yearPct}%</span> through ${safe(currentYear)}.</span></div>
+  </div>`;
+
+  const hero=`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:28px;max-width:900px;flex-wrap:wrap">
+    <div style="flex:1;min-width:260px">
+      <div class="sec-title" style="margin-bottom:12px">Curriculum roadmap · ${safe(sp.label)} · ${safe(currentYear)}</div>
+      <h1 style="font-size:40px;font-weight:500;letter-spacing:-.025em;line-height:1.1;margin:0;color:var(--text)">Your training journey.</h1>
+      <p style="font-size:14px;color:var(--text2);margin-top:12px;line-height:1.55">${heroPct}% overall coverage · ${days} days to ARCP · ${currentYear} in progress.</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-shrink:0;margin-top:6px;flex-wrap:wrap">
+      <button class="btn small" onclick="printReport()">\u2398 Print Logbook Report</button>
+    </div>
   </div>`;
 
   const yearRows=years.map((y,i)=>{
@@ -1405,15 +2272,60 @@ function renderRoadmap(){
     const statusBg=locked?'var(--green-soft)':isCurrent?'var(--primary-soft)':'var(--bg3)';
     const isLast=i===years.length-1;
 
+    // Build the subtitle line shown next to the year label.
+    // For locked years: "Satisfactory progress · locked Sep 2024"
+    // For others:      "X/Y milestones"
+    let yearSubtitle = `${yMet}/${yTotal} milestones`;
+    if(locked){
+      const outcomeKey = state.years[y]?.outcome;
+      const outcomeFull = outcomeKey ? OUTCOMES[outcomeKey] : '';
+      // Strip leading "Outcome N — " to get just the descriptor
+      const outcomeDesc = outcomeFull.replace(/^Outcome\s+\d+\s*[—–-]\s*/i,'').trim() || 'Locked';
+      const lockedAtTs = state.years[y]?.lockedAt;
+      const lockedDate = lockedAtTs ? new Date(lockedAtTs) : (state.arcpDates?.[y] ? new Date(state.arcpDates[y]) : null);
+      const lockedStr = lockedDate ? lockedDate.toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : '';
+      yearSubtitle = lockedStr ? `${outcomeDesc} \u00b7 locked ${lockedStr}` : `${outcomeDesc} \u00b7 locked`;
+    }
+    // Outcome pill: just "Outcome N" for locked years (the screenshot's bottom-left pill).
+    let outcomeNumberPill = '';
+    if(locked && state.years[y]?.outcome){
+      outcomeNumberPill = `<div style="margin-top:10px"><span style="display:inline-block;padding:4px 12px;background:var(--green-soft);color:var(--green);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;border-radius:999px;font-family:var(--font-mono);border:1px solid color-mix(in srgb, var(--green) 30%, transparent)">Outcome ${safe(state.years[y].outcome)}</span></div>`;
+    }
+
     const milestoneCards=items.length?items.map(({id,r,met,v})=>{
       const isCount=r.type==='number';
-      const pct=isCount?Math.min(100,Math.round((v||0)/(r.target||1)*100)):(met?100:0);
+      const target=r.target||1;
+      const pct=isCount?Math.min(100,Math.round((v||0)/target*100)):(met?100:0);
       const accent=met?'var(--green)':pct>0?'var(--amber)':'var(--line-strong)';
-      const note=isCount?`${v||0}/${r.target} ${r.unit||''}`:(r.note||'');
+      // varied microcopy
+      let note='';
+      if(met){
+        if(isCount && v>target) note=`${v-target} over target \u00b7 nicely done`;
+        else if(isCount) note='Target hit';
+        else note='Complete';
+      } else if(isCount){
+        const left=Math.max(0,target-(v||0));
+        if(isCurrent){
+          if(left===1) note='Need 1 more before ARCP';
+          else if(pct>=75) note=`Just ${left} left to reach annual target`;
+          else if(pct>=50) note=`${left} left \u00b7 on pace`;
+          else if(pct>0) note=`${left} to go \u00b7 keep at it`;
+          else note=`${target} ${r.unit||''} required this year`;
+        } else if(isUpcoming){
+          note=`${target} ${r.unit||''} due ${safe(y)}`;
+        } else {
+          note=`${v||0}/${target} \u00b7 below target`;
+        }
+      } else {
+        if(isCurrent) note=r.deadline===currentYear?`Due before ARCP`:`Annual requirement`;
+        else if(isUpcoming) note=`Due ${safe(y)}`;
+        else note='Not completed';
+      }
+      if(r.note && !met && pct===0 && !isCurrent) note=r.note;
       return `<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg3);border:1px solid var(--line);border-left:3px solid ${accent};border-radius:var(--radius-sm)">
-        <div class="check ${met?'checked':''}" style="pointer-events:none;width:18px;height:18px;font-size:11px">${met?'✓':''}</div>
-        <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:var(--text);line-height:1.3">${safe(r.label)}</div>${note?`<div style="font-size:11px;color:var(--dim);margin-top:2px;font-family:var(--font-mono)">${safe(note)}</div>`:''}</div>
-        ${isCount?`<div class="o-mono" style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:${met?'var(--green)':'var(--text2)'}">${v||0}<span style="color:var(--dim);font-weight:400">/${r.target}</span></div>`:''}
+        <div class="check ${met?'checked':''}" style="pointer-events:none;width:18px;height:18px;font-size:11px">${met?'\u2713':''}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:var(--text);line-height:1.3">${safe(r.label)}</div>${note?`<div style="font-size:11px;color:var(--dim);margin-top:2px">${safe(note)}</div>`:''}</div>
+        ${isCount?`<div class="o-mono" style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:${met?'var(--green)':'var(--text2)'}">${v||0}<span style="color:var(--dim);font-weight:400">/${target}</span></div>`:''}
       </div>`;
     }).join(''):`<div style="font-size:12px;color:var(--dim);padding:8px 0">No milestones for this year.</div>`;
 
@@ -1426,22 +2338,23 @@ function renderRoadmap(){
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
           <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
             <span style="font-size:32px;font-weight:600;letter-spacing:-.025em;color:var(--text);font-family:var(--font)">${safe(y)}</span>
-            <span style="font-size:12px;color:var(--dim)">${yMet}/${yTotal} milestones</span>
+            <span style="font-size:12px;color:var(--dim)">${safe(yearSubtitle)}</span>
           </div>
-          <span style="padding:3px 10px;background:${statusBg};color:${statusColor};font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;border-radius:999px;font-family:var(--font-mono)">${safe(status)}</span>
+          ${locked?'':`<span style="padding:3px 10px;background:${statusBg};color:${statusColor};font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;border-radius:999px;font-family:var(--font-mono)">${safe(status)}</span>`}
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">${milestoneCards}</div>
+        ${outcomeNumberPill}
+        ${locked?'':`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:${outcomeNumberPill?'14px':'0'}">${milestoneCards}</div>`}
       </div>
     </div>`;
   }).join('');
 
-  document.getElementById('main').innerHTML=hero+`<div style="display:flex;flex-direction:column">${yearRows}</div>`;
+  document.getElementById('main').innerHTML=greeting+hero+`<div style="display:flex;flex-direction:column">${yearRows}</div>`;
 }
 window.renderRoadmap=renderRoadmap;
 
 function renderLogbookV2(){
   if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
-  const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','CPD'],['simulation','Simulation'],['teaching','Teaching'],['oncall','On-call']];
+  const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','CPD'],['simulation','Simulation'],['teaching','Teaching']];
   const all=[]; subs.forEach(([k])=>{ (state.logbook?.[k]||[]).forEach(e=>all.push({...e,_kind:k})); });
   all.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const totalCount=all.length;
@@ -1457,7 +2370,11 @@ function renderLogbookV2(){
       <h1 style="font-size:38px;font-weight:500;letter-spacing:-.025em;margin:0;color:var(--text)"><span style="color:var(--primary)">${totalCount}</span> entries this year</h1>
       <div style="font-size:13px;color:var(--dim);margin-top:6px">${subs.map(([k,l])=>`${counts[k]} ${l.toLowerCase()}`).join(' · ')}</div>
     </div>
-    <button class="btn primary" onclick="openLogbookForm('${filterKey==='all'?'clinics':filterKey}')">+ New entry</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn small" onclick="exportLogbook()">\u21E9 Export CSV (.zip)</button>
+      <button class="btn small" onclick="printReport()">\u2398 Print Logbook Report</button>
+      <button class="btn primary" onclick="openLogbookForm('${filterKey==='all'?'clinics':filterKey}')">+ New entry</button>
+    </div>
   </div>`;
 
   const filterTabs=`<div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
@@ -1465,18 +2382,24 @@ function renderLogbookV2(){
     ${subs.map(([k,l])=>`<button class="btn small ${filterKey===k?'primary':''}" onclick="logSubTab='${k}';renderLogbookV2()" style="border-radius:999px;font-family:var(--font-mono);letter-spacing:.04em">${l} · ${counts[k]}</button>`).join('')}
   </div>`;
 
-  const tableHead=`<div style="display:grid;grid-template-columns:90px 110px 1fr 160px 160px;padding:12px 22px;border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);background:var(--bg3)">
-    <span>Date</span><span>Type</span><span>Item</span><span>Hospital</span><span>Supervisor</span>
+  const tableHead=`<div class="lb-row lb-row-head" style="display:grid;grid-template-columns:90px 160px 1fr 150px 150px;padding:12px 22px;border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);background:var(--bg3)">
+    <span class="lb-cell lb-cell-date">Date</span><span class="lb-cell lb-cell-type">Type</span><span class="lb-cell lb-cell-item">Item</span><span class="lb-cell lb-cell-hospital">Hospital</span><span class="lb-cell lb-cell-supervisor">Supervisor</span>
   </div>`;
+  const sp=specCfg();
   const tableRows=filtered.length?filtered.slice(0,80).map((e,i)=>{
     const dateStr=e.date?new Date(e.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}).toUpperCase():'—';
     const item=e.type||e.title||e.activity||'—';
-    return `<div style="display:grid;grid-template-columns:90px 110px 1fr 160px 160px;padding:13px 22px;${i===filtered.length-1||i===79?'':'border-bottom:1px solid var(--line)'};align-items:center;font-size:13px">
-      <span class="o-mono" style="color:var(--dim);font-size:11px;letter-spacing:.06em;font-family:var(--font-mono)">${dateStr}</span>
-      <span><span style="padding:3px 9px;background:var(--bg3);border:1px solid var(--line);font-size:9px;font-weight:600;color:var(--text2);letter-spacing:.1em;font-family:var(--font-mono);text-transform:uppercase;border-radius:4px">${e._kind.slice(0,4)}</span></span>
-      <span style="color:var(--text);font-weight:500">${safe(item)}</span>
-      <span style="color:var(--dim);font-size:12px">${safe(e.hospital||'—')}</span>
-      <span style="color:var(--dim);font-size:12px">${safe(e.supervisor||'—')}</span>
+    const typePillStyle=`display:inline-block;min-width:46px;text-align:center;padding:3px 7px;background:var(--bg3);border:1px solid var(--line);font-size:9px;font-weight:600;color:var(--text2);letter-spacing:.1em;font-family:var(--font-mono);text-transform:uppercase;border-radius:4px`;
+    const scopePillBase=`display:inline-block;min-width:46px;text-align:center;padding:3px 7px;font-size:9px;font-weight:600;letter-spacing:.1em;font-family:var(--font-mono);text-transform:uppercase;border-radius:4px;border:1px solid`;
+    let scopePill='';
+    if(e.scope==='gim') scopePill=`<span style="${scopePillBase} rgba(124,182,255,.3);background:var(--gim-soft);color:var(--gim)">GIM</span>`;
+    else if(e.scope==='spec') scopePill=`<span style="${scopePillBase} rgba(216,255,94,.25);background:var(--primary-soft);color:var(--primary)">${safe(sp.short)}</span>`;
+    return `<div class="lb-row lb-row-data" style="display:grid;grid-template-columns:90px 160px 1fr 150px 150px;padding:13px 22px;${i===filtered.length-1||i===79?'':'border-bottom:1px solid var(--line)'};align-items:center;font-size:13px">
+      <span class="lb-cell lb-cell-date o-mono" style="color:var(--dim);font-size:11px;letter-spacing:.06em;font-family:var(--font-mono)">${dateStr}</span>
+      <span class="lb-cell lb-cell-type" style="display:inline-flex;gap:5px;flex-wrap:wrap"><span style="${typePillStyle}">${e._kind.slice(0,4)}</span>${scopePill}</span>
+      <span class="lb-cell lb-cell-item" style="color:var(--text);font-weight:500">${safe(item)}</span>
+      <span class="lb-cell lb-cell-hospital" style="color:var(--dim);font-size:12px">${safe(e.hospital||'—')}</span>
+      <span class="lb-cell lb-cell-supervisor" style="color:var(--dim);font-size:12px">${safe(e.supervisor||'—')}</span>
     </div>`;
   }).join(''):`<div style="padding:40px 22px;text-align:center;color:var(--dim);font-size:13px">No ${filterKey==='all'?'':filterKey+' '}entries logged yet.</div>`;
 
