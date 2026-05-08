@@ -80,7 +80,10 @@
     window.dispatchEvent(new CustomEvent("firebase-status", { detail:{ online:true, message:"Live" }}));
     onValue(window.ARCP_FB.userRoot, snap => {
       const remote = snap.val();
-      if (!remote) return;
+      if (!remote) {
+        window.dispatchEvent(new CustomEvent("firebase-no-data"));
+        return;
+      }
       window.dispatchEvent(new CustomEvent("firebase-load", { detail: remote }));
     }, err => {
       console.error(err);
@@ -1320,8 +1323,36 @@ window.addEventListener('firebase-load', e=>{ if(!e.detail?.state) return; const
 
 // ─── AUTH GATE ────────────────────────────────────────
 let authMode='signin'; // or 'signup'
-function authShow(){ document.getElementById('auth-gate')?.classList.add('show'); document.getElementById('gate')?.classList.remove('show'); document.getElementById('app')?.classList.remove('ready'); }
-function authHide(){ document.getElementById('auth-gate')?.classList.remove('show'); }
+function authShow(){
+  document.getElementById('auth-gate')?.classList.add('show');
+  // Don't touch the onboarding gate — auth-gate is z-indexed above it. Hiding the onboarding gate here
+  // means signed-in new users see a blank screen until they save onboarding.
+}
+function authHide(){
+  document.getElementById('auth-gate')?.classList.remove('show');
+  // What happens next depends on whether this user has remote data:
+  //   - firebase-load fires for returning users → render() will hide the onboarding gate
+  //   - firebase-no-data fires for new sign-ups → we show the onboarding gate explicitly here
+  // Both events fire from the auth module after onValue subscribes.
+  // Safety fallback: if neither has fired in 2s, assume new user and show onboarding.
+  let handled=false;
+  const onLoad=()=>{ handled=true; };
+  const onNoData=()=>{
+    handled=true;
+    if(!state?.profile){
+      document.getElementById('gate')?.classList.add('show');
+      try{ initOnboarding(); }catch{}
+    }
+  };
+  window.addEventListener('firebase-load', onLoad, {once:true});
+  window.addEventListener('firebase-no-data', onNoData, {once:true});
+  setTimeout(()=>{
+    if(!handled && !state?.profile){
+      document.getElementById('gate')?.classList.add('show');
+      try{ initOnboarding(); }catch{}
+    }
+  }, 2500);
+}
 function authToggleMode(){
   authMode = authMode==='signin' ? 'signup' : 'signin';
   document.getElementById('auth-heading').textContent = authMode==='signup' ? 'Create your account' : 'Sign in';
