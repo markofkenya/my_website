@@ -646,7 +646,7 @@ const DEANERIES = {
   "West Midlands":["Queen Elizabeth Hospital Birmingham","Heartlands Hospital","Good Hope Hospital","City Hospital Birmingham","New Cross Hospital (Wolverhampton)","Russells Hall Hospital (Dudley)","Walsall Manor Hospital","Sandwell General Hospital","University Hospital Coventry & Warwickshire"],
   "London":["St Thomas’ Hospital","Guy’s Hospital","King’s College Hospital","UCLH","St Mary’s Hospital","Hammersmith Hospital","Charing Cross Hospital","Barts / Royal London","Northwick Park Hospital","Croydon University Hospital"],
   "North West":["Manchester Royal Infirmary","Wythenshawe Hospital","Salford Royal Hospital","Liverpool University Hospitals","Lancashire Teaching Hospitals"],
-  "Yorkshire & Humber":["Leeds Teaching Hospitals","Sheffield Teaching Hospitals","Hull Royal Infirmary","York Hospital","Scarborough Hospital","Mid Yorkshire Hospitals"],
+  "Yorkshire & Humber":["Leeds Teaching Hospitals","Northern General Hospital","Hull Royal Infirmary","York Hospital","Scarborough Hospital","Mid Yorkshire Hospitals"],
   "North East":["Royal Victoria Infirmary (Newcastle)","Freeman Hospital","Sunderland Royal Hospital","James Cook University Hospital (Middlesbrough)"],
   "Scotland — North":["Aberdeen Royal Infirmary","Raigmore Hospital (Inverness)","Dr Gray’s Hospital (Elgin)","Western Isles Hospital","Gilbert Bain Hospital (Shetland)","Woodend Hospital"],
   "Scotland — South East":["Royal Infirmary of Edinburgh","Western General Hospital","St John’s Hospital","Borders General Hospital"],
@@ -1650,7 +1650,7 @@ try { initOnboarding(); render(); forceLiveStatus(); } catch(e) { console.warn('
 // Correct Yorkshire & Humber hospital wording requested by user.
 if (DEANERIES["Yorkshire & Humber"]) {
   DEANERIES["Yorkshire & Humber"] = DEANERIES["Yorkshire & Humber"]
-    .map(h => h === "Sheffield Royal Hallamshire Hospital" ? "Sheffield Teaching Hospitals" : h)
+    .map(h => h === "Sheffield Royal Hallamshire Hospital" ? "Northern General Hospital" : h)
     .filter((h, i, arr) => arr.indexOf(h) === i);
 }
 
