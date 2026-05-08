@@ -670,7 +670,24 @@ function saveState(push=true){
   // trigger a stale-feeling re-render (the round-trip will have updatedAt <= this value).
   if(push){ localStorage.setItem('arcp_v2_remote_ts', String(Date.now())); fbSave(); }
 }
-function fbSave(){ if(!window.ARCP_FB?.online || !window.ARCP_FB.userRoot || suppressRemote) return; const payload={ state, updatedAt:Date.now(), version:"2.2-modular-logbook" }; window.ARCP_FB.update(window.ARCP_FB.userRoot, payload).catch(console.error); }
+function fbSave(){
+  if(!window.ARCP_FB?.online || !window.ARCP_FB.userRoot || suppressRemote) return;
+  const payload={ state: encodeStateForFirebase(state), updatedAt:Date.now(), version:"2.2-modular-logbook" };
+  window.ARCP_FB.update(window.ARCP_FB.userRoot, payload).catch(err=>{
+    console.error('[Outcome1] Firebase save failed:', err?.message || err);
+    // Surface to UI: turn the live indicator amber and add a tooltip
+    const s=document.getElementById('sync');
+    if(s){ s.textContent='\u25CF Sync error'; s.style.color='var(--amber)'; s.title=String(err?.message||err); }
+  });
+}
+
+// Firebase Realtime Database forbids "." "#" "$" "/" "[" "]" in keys. state.req uses dotted keys
+// like "cum.gim_clinics" and "ST4.spec_mcrs". Encode "." → "__" before save, reverse on load.
+const FB_KEY_DOT_TOKEN = '__';
+function encodeReqKeys(reqObj){ if(!reqObj || typeof reqObj!=='object') return reqObj; const out={}; for(const k of Object.keys(reqObj)){ out[k.replace(/\./g, FB_KEY_DOT_TOKEN)] = reqObj[k]; } return out; }
+function decodeReqKeys(reqObj){ if(!reqObj || typeof reqObj!=='object') return reqObj; const out={}; for(const k of Object.keys(reqObj)){ out[k.split(FB_KEY_DOT_TOKEN).join('.')] = reqObj[k]; } return out; }
+function encodeStateForFirebase(s){ if(!s) return s; return { ...s, req: encodeReqKeys(s.req||{}) }; }
+function decodeStateFromFirebase(s){ if(!s) return s; return { ...s, req: decodeReqKeys(s.req||{}) }; }
 function getSpecKey(){ return state.profile?.specialty || "renal"; }
 function specCfg(){ const key=getSpecKey(); const t=SPECIALTY_THEMES[key] || {}; return SPECIALTIES[key] || { label:t.label || SPECIALTY_OPTIONS[key] || "Specialty", short:t.short || SPECIALTY_OPTIONS[key] || "Specialty", color:t.color || "#a78bfa", color2:t.color2 || "#7c5fd4", icon:t.icon || "◈", reqs:null, logbook:{clinics:["Specialty clinic","Other"], procedures:["Specialty procedure","Other"], cpd:["Specialty study day","Other"]} }; }
 function specReqs(){
@@ -1328,7 +1345,7 @@ window.exportLogbook=exportLogbook;
 function setSyncStatus(online,message){ const s=document.getElementById('sync'); if(!s)return; s.textContent='● Live'; s.style.color='var(--green)'; }
 window.addEventListener('firebase-status', e=>{ setSyncStatus(e.detail.online, e.detail.message); });
 setTimeout(()=>{ if(window.ARCP_FB?.online) setSyncStatus(true,'Live'); }, 800);
-window.addEventListener('firebase-load', e=>{ if(!e.detail?.state) return; const remoteTs=e.detail.updatedAt||0; const local=JSON.parse(localStorage.getItem('arcp_v2_remote_ts')||'0'); if(remoteTs>local){ suppressRemote=true; state=Object.assign(blankState(), e.detail.state); localStorage.setItem(STATE_KEY,JSON.stringify(state)); localStorage.setItem('arcp_v2_remote_ts',String(remoteTs)); suppressRemote=false; render(); } });
+window.addEventListener('firebase-load', e=>{ if(!e.detail?.state) return; const remoteTs=e.detail.updatedAt||0; const local=JSON.parse(localStorage.getItem('arcp_v2_remote_ts')||'0'); if(remoteTs>local){ suppressRemote=true; state=Object.assign(blankState(), decodeStateFromFirebase(e.detail.state)); localStorage.setItem(STATE_KEY,JSON.stringify(state)); localStorage.setItem('arcp_v2_remote_ts',String(remoteTs)); suppressRemote=false; render(); } });
 
 // ─── AUTH GATE ────────────────────────────────────────
 let authMode='signin'; // or 'signup'
