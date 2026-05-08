@@ -376,6 +376,10 @@ body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,
 </style>
 </head>
 <body>
+<div id="boot-loader" style="position:fixed;inset:0;background:#0e1110;z-index:1200;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:#f0efe8;font-family:'Inter',system-ui,sans-serif">
+  <svg width="48" height="48" viewBox="0 0 78 78" aria-hidden="true"><path d="M 14 56 A 28 28 0 1 1 64 38" stroke="#f0efe8" stroke-width="6" fill="none" stroke-linecap="round" opacity=".3"/><circle cx="64" cy="38" r="7" fill="#d8ff5e"><animate attributeName="opacity" values="1;.3;1" dur="1.4s" repeatCount="indefinite"/></circle></svg>
+  <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#888;font-family:'IBM Plex Mono',ui-monospace,monospace">Loading…</div>
+</div>
 <div id="auth-gate" class="show">
   <div class="gate-card">
     <div class="gate-title">
@@ -646,7 +650,7 @@ const DEANERIES = {
   "West Midlands":["Queen Elizabeth Hospital Birmingham","Heartlands Hospital","Good Hope Hospital","City Hospital Birmingham","New Cross Hospital (Wolverhampton)","Russells Hall Hospital (Dudley)","Walsall Manor Hospital","Sandwell General Hospital","University Hospital Coventry & Warwickshire"],
   "London":["St Thomas’ Hospital","Guy’s Hospital","King’s College Hospital","UCLH","St Mary’s Hospital","Hammersmith Hospital","Charing Cross Hospital","Barts / Royal London","Northwick Park Hospital","Croydon University Hospital"],
   "North West":["Manchester Royal Infirmary","Wythenshawe Hospital","Salford Royal Hospital","Liverpool University Hospitals","Lancashire Teaching Hospitals"],
-  "Yorkshire & Humber":["Leeds Teaching Hospitals","Northern General Hospital","Hull Royal Infirmary","York Hospital","Scarborough Hospital","Mid Yorkshire Hospitals"],
+  "Yorkshire & Humber":["Leeds Teaching Hospitals","Sheffield Teaching Hospitals","Hull Royal Infirmary","York Hospital","Scarborough Hospital","Mid Yorkshire Hospitals"],
   "North East":["Royal Victoria Infirmary (Newcastle)","Freeman Hospital","Sunderland Royal Hospital","James Cook University Hospital (Middlesbrough)"],
   "Scotland — North":["Aberdeen Royal Infirmary","Raigmore Hospital (Inverness)","Dr Gray’s Hospital (Elgin)","Western Isles Hospital","Gilbert Bain Hospital (Shetland)","Woodend Hospital"],
   "Scotland — South East":["Royal Infirmary of Edinburgh","Western General Hospital","St John’s Hospital","Borders General Hospital"],
@@ -660,7 +664,12 @@ const DEANERY_COLORS = {"East of England":"#6b8cff","South West — Peninsula":"
 function blankState(){ return { profile:null, years:{}, req:{}, logbook:{}, hospitals:[], hiddenHospitals:[], deletedHospitals:[], als:"", arcpDates:{...ARCP_DEFAULTS} }; }
 let state = loadState();
 function loadState(){ try { return Object.assign(blankState(), JSON.parse(localStorage.getItem(STATE_KEY)||"{}")); } catch { return blankState(); } }
-function saveState(push=true){ localStorage.setItem(STATE_KEY, JSON.stringify(state)); if(push) fbSave(); }
+function saveState(push=true){
+  localStorage.setItem(STATE_KEY, JSON.stringify(state));
+  // Bump the local "remote sync" timestamp so the Firebase round-trip from this save doesn't
+  // trigger a stale-feeling re-render (the round-trip will have updatedAt <= this value).
+  if(push){ localStorage.setItem('arcp_v2_remote_ts', String(Date.now())); fbSave(); }
+}
 function fbSave(){ if(!window.ARCP_FB?.online || !window.ARCP_FB.userRoot || suppressRemote) return; const payload={ state, updatedAt:Date.now(), version:"2.2-modular-logbook" }; window.ARCP_FB.update(window.ARCP_FB.userRoot, payload).catch(console.error); }
 function getSpecKey(){ return state.profile?.specialty || "renal"; }
 function specCfg(){ const key=getSpecKey(); const t=SPECIALTY_THEMES[key] || {}; return SPECIALTIES[key] || { label:t.label || SPECIALTY_OPTIONS[key] || "Specialty", short:t.short || SPECIALTY_OPTIONS[key] || "Specialty", color:t.color || "#a78bfa", color2:t.color2 || "#7c5fd4", icon:t.icon || "◈", reqs:null, logbook:{clinics:["Specialty clinic","Other"], procedures:["Specialty procedure","Other"], cpd:["Specialty study day","Other"]} }; }
@@ -1325,11 +1334,13 @@ window.addEventListener('firebase-load', e=>{ if(!e.detail?.state) return; const
 let authMode='signin'; // or 'signup'
 function authShow(){
   document.getElementById('auth-gate')?.classList.add('show');
+  document.getElementById('boot-loader')?.remove();
   // Don't touch the onboarding gate — auth-gate is z-indexed above it. Hiding the onboarding gate here
   // means signed-in new users see a blank screen until they save onboarding.
 }
 function authHide(){
   document.getElementById('auth-gate')?.classList.remove('show');
+  document.getElementById('boot-loader')?.remove();
   // What happens next depends on whether this user has remote data:
   //   - firebase-load fires for returning users → render() will hide the onboarding gate
   //   - firebase-no-data fires for new sign-ups → we show the onboarding gate explicitly here
@@ -1650,7 +1661,7 @@ try { initOnboarding(); render(); forceLiveStatus(); } catch(e) { console.warn('
 // Correct Yorkshire & Humber hospital wording requested by user.
 if (DEANERIES["Yorkshire & Humber"]) {
   DEANERIES["Yorkshire & Humber"] = DEANERIES["Yorkshire & Humber"]
-    .map(h => h === "Sheffield Royal Hallamshire Hospital" ? "Northern General Hospital" : h)
+    .map(h => h === "Sheffield Royal Hallamshire Hospital" ? "Sheffield Teaching Hospitals" : h)
     .filter((h, i, arr) => arr.indexOf(h) === i);
 }
 
