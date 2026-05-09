@@ -586,7 +586,7 @@ const GIM_REQS = {
   gim_msf:{label:"GIM MSF raters",type:"number",target:4,unit:"raters",deadline:"annual",note:"Part of overall MSF"},
   gim_es:{label:"GIM Educational Supervisor Report",type:"checkbox",deadline:"annual",note:"One per year"},
   gim_clinics:{label:"GIM Clinics",type:"number",target:20,unit:"clinics",deadline:"ST7",cumulative:true,note:"Cumulative"},
-  gim_cpd:{label:"External GIM CPD hours",type:"number",target:100,unit:"hours",deadline:"ST7",cumulative:true,note:"Cumulative across training"},
+  gim_cpd:{label:"External GIM CPD hours",type:"number",target:100,unit:"hours",deadline:"ST7",cumulative:true,note:"Only Regional training days, RCP/RSM/BMA courses, and other external CPD count. Grand rounds and departmental teaching don't."},
   gim_cpd_st7:{label:"Final-year IM CPD hours",type:"number",target:20,unit:"hours",deadline:"ST7",cumulative:true,note:"At least 20h must be completed in ST7"},
   gim_sim:{label:"Simulation hours",type:"number",target:12,unit:"hours",deadline:"ST7",cumulative:true,note:"Cumulative across training"},
   gim_sim_st7:{label:"Final-year simulation hours",type:"number",target:4,unit:"hours",deadline:"ST7",cumulative:true,note:"At least 4h must be completed in ST7"},
@@ -723,17 +723,9 @@ function outcome(y=currentYear){ return state.years[y]?.outcome || ""; }
 function yearLocked(y=currentYear){ return !!state.years[y]?.locked || LOCKING_OUTCOMES.includes(outcome(y)); }
 function setOutcome(y, v){ state.years[y] = state.years[y] || {}; state.years[y].outcome = v; state.years[y].locked = LOCKING_OUTCOMES.includes(v); if(state.years[y].locked) state.years[y].lockedAt = Date.now(); saveState(); render(); }
 function setTheme(){
-  /* Direction B Dark: lock --primary to design token; do not override at runtime */
+  /* Direction B Dark: lock --primary to design token; do not override at runtime.
+     Per-specialty colour application via state.profile.theme is intentionally retired. */
   document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0e1110');
-  return;
-  const sp=specCfg();
-  const custom = state.profile?.theme;
-  const color = custom?.color || sp.color;
-  const color2 = custom?.color2 || sp.color2;
-  document.documentElement.style.setProperty('--primary', color);
-  document.documentElement.style.setProperty('--primary2', color2);
-  document.documentElement.style.setProperty('--gim', '#6b8cff');
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', color2);
 }
 function safe(s){ return String(s??"").replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function fmtDate(d){ if(!d) return "—"; const p=String(d).split('-'); return p.length===3 ? `${p[2]}/${p[1]}/${p[0]}` : d; }
@@ -1006,7 +998,10 @@ function saveWard(){ addEntry('ward',{hospital:val('ward-hospital'),start:val('w
 function monthsBetween(s,e){ if(!s||!e)return 0; const ms=new Date(e)-new Date(s); return Math.max(0,Math.round(ms/(86400000*30.44)*10)/10); }
 function val(id){ return document.getElementById(id)?.value?.trim() || ''; }
 function addHospitalIfNew(h){ if(!h) return; state.hospitals=Array.from(new Set([...(state.hospitals||[]),h])); saveState(false); }
-function syncLogbookTargets(){ const clinics=entries('clinics').filter(e=>e.scope==='gim').length; const gimCpdEntries=entries('cpd').filter(e=>e.scope==='gim'); const simEntries=entries('simulation'); const acuteEntries=entries('acute'); state.req['cum.gim_clinics']=clinics; state.req['cum.gim_cpd']=Math.round(gimCpdEntries.reduce((a,e)=>a+Number(e.hours||0),0)); state.req['cum.gim_cpd_st7']=Math.round(gimCpdEntries.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.hours||0),0)); state.req['cum.gim_sim']=Math.round(simEntries.reduce((a,e)=>a+Number(e.hours||0),0)*10)/10; state.req['cum.gim_sim_st7']=Math.round(simEntries.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.hours||0),0)*10)/10; state.req['cum.gim_acute']=Math.round(acuteEntries.reduce((a,e)=>a+Number(e.estimated||0),0)); state.req['cum.gim_acute_st7']=Math.round(acuteEntries.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.estimated||0),0)); state.req['cum.gim_ward']=Math.round(entries('ward').reduce((a,e)=>a+Number(e.months||0),0)*10)/10; }
+// External GIM CPD types — only these count toward the 100h external requirement.
+// Internal types like Grand round / Journal club / Departmental teaching don't count.
+const EXTERNAL_GIM_CPD_TYPES = new Set(['Regional GIM training day','RCP / RSM / BMA approved course','Other external CPD']);
+function syncLogbookTargets(){ const clinics=entries('clinics').filter(e=>e.scope==='gim').length; const gimCpdEntries=entries('cpd').filter(e=>e.scope==='gim'); const externalGimCpd=gimCpdEntries.filter(e=>EXTERNAL_GIM_CPD_TYPES.has(e.type)); const simEntries=entries('simulation'); const acuteEntries=entries('acute'); state.req['cum.gim_clinics']=clinics; state.req['cum.gim_cpd']=Math.round(externalGimCpd.reduce((a,e)=>a+Number(e.hours||0),0)); state.req['cum.gim_cpd_st7']=Math.round(externalGimCpd.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.hours||0),0)); state.req['cum.gim_sim']=Math.round(simEntries.reduce((a,e)=>a+Number(e.hours||0),0)*10)/10; state.req['cum.gim_sim_st7']=Math.round(simEntries.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.hours||0),0)*10)/10; state.req['cum.gim_acute']=Math.round(acuteEntries.reduce((a,e)=>a+Number(e.estimated||0),0)); state.req['cum.gim_acute_st7']=Math.round(acuteEntries.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.estimated||0),0)); state.req['cum.gim_ward']=Math.round(entries('ward').reduce((a,e)=>a+Number(e.months||0),0)*10)/10; }
 function renderAdmin(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const hosp=hospitalOptions(); document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Profile & deanery</span><span class="sec-rule"></span><span class="sec-note">Used in reports and hospital dropdowns</span></div><div class="panel"><div class="form-grid"><div class="field"><label>ALS expiry</label><input class="input" type="date" value="${state.als||''}" onchange="state.als=this.value;saveState();render()"></div><div class="field"><label>${currentYear} ARCP date</label><input class="input" type="date" value="${state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]}" onchange="state.arcpDates['${currentYear}']=this.value;saveState();render()"></div><div class="field full"><label>Add hospital</label><div class="row"><input class="input" id="new-hospital" placeholder="Add hospital not in deanery list"><button class="btn primary" onclick="addAdminHospital()">ADD</button></div></div></div></div></section><section class="section"><div class="sec-head"><span class="sec-title">Hospitals</span><span class="sec-rule"></span><span class="sec-note">${hosp.length} available · delete hospitals you are not rotating in</span></div><div class="grid">${hosp.map(h=>`<div class="card"><div class="card-title">${safe(h)}</div><button class="btn small danger" onclick="deleteHospital('${safe(h)}')">Delete from list</button></div>`).join('')}</div></section>`; }
 function addAdminHospital(){ const h=val('new-hospital'); if(!h)return; addHospitalIfNew(h); renderAdmin(); }
 function removeHospital(h){ state.hospitals=(state.hospitals||[]).filter(x=>x!==h); saveState(); renderAdmin(); }
@@ -1202,6 +1197,13 @@ function formalSection(title, numeral, subhead){ return `<h2 class="section"><sp
 const FORMAL_COL = { date:'74px', start:'74px', end:'74px', months:'56px', type:'auto', course:'150px', topic:'auto', title:'auto', hospital:'160px', supervisor:'130px', patients:'52px', year:'42px', dops:'56px', hours:'52px', takes:'62px', estimated:'72px', audience:'100px', signoff:'70px' };
 const FORMAL_NUM_COLS = new Set(['patients','dops','hours','takes','estimated','months']);
 const FORMAL_LABELS = { date:'Date', start:'Start', end:'End', months:'Mo', type:'Type', course:'Course', topic:'Topic', title:'Title', hospital:'Hospital', supervisor:'Supervisor', patients:'Pts', year:'Yr', dops:'DOPS', hours:'Hrs', takes:'Takes', estimated:'Est.', audience:'Audience', signoff:'Sign-off' };
+// Short date for the formal report tables: "08 Apr" — year is implicit from the report header.
+function fmtDateShort(d){
+  if(!d) return "\u2014";
+  const dt = new Date(d);
+  if(isNaN(dt)) return d;
+  return dt.toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
+}
 function formalScopedTable(label, arr, fields, kind, extra){
   const cols=fields.map(f=>`<col style="width:${FORMAL_COL[f]||'auto'}">`).join('');
   const head=`<thead><tr>${fields.map(f=>`<th${FORMAL_NUM_COLS.has(f)?' class="num"':''}>${safe(FORMAL_LABELS[f]||f)}</th>`).join('')}</tr></thead>`;
@@ -1212,7 +1214,7 @@ function formalScopedTable(label, arr, fields, kind, extra){
   const sorted = [...arr].sort((a,b)=>(b.date||b.start||'').localeCompare(a.date||a.start||''));
   const body=`<tbody>${sorted.map(e=>`<tr>${fields.map(f=>{
     let cell;
-    if(['date','start','end'].includes(f)) cell=fmtDate(e[f]);
+    if(['date','start','end'].includes(f)) cell=fmtDateShort(e[f]);
     else if(f==='dops') cell=e[f]==='Yes'?'<span class="yes">\u2713 Yes</span>':(e[f]?`<span class="no">${safe(e[f])}</span>`:'<span class="no">\u2014</span>');
     else if(f==='year') cell=e[f]||'\u2014';
     else cell=e[f]||'\u2014';
@@ -2144,8 +2146,26 @@ function renderOverview(){
   const spec=calcReqsWithExtra(specReqs(), specDopsStats());
   const gim=calcReqsWithExtra(visibleGimReqs(), gimDopsStats());
   const overall=Math.round((spec.pct+gim.pct)/2);
-  const projection = overall>=80 ? 'Outcome 1 trajectory' : overall>=55 ? 'On pace — keep evidencing' : 'Behind pace — focus needed';
-  const projColor = overall>=80?'var(--green)':overall>=55?'var(--primary)':'var(--amber)';
+  // Pace label: compare actual coverage against expected coverage at this point in the year.
+  // Expected curve: a trainee should ramp up gradually but is not expected to be 100% complete
+  // until very near ARCP. We use 90% of yearPct as the linear "expected" line — generous enough
+  // that a trainee logging steadily isn't flagged behind, strict enough to catch genuine drift.
+  let expectedPct = 50; // sensible default if yearStart isn't set
+  if(state.profile?.yearStart){
+    const ys=state.profile.yearStart;
+    const start=new Date(ys.year, (ys.month||8)-1, 1);
+    const arcpDt=new Date(state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]);
+    const today=new Date(); today.setHours(0,0,0,0);
+    const total=arcpDt-start, elapsed=today-start;
+    if(total>0){ const yp=Math.max(0,Math.min(100,(elapsed/total)*100)); expectedPct = yp * 0.9; }
+  }
+  const pace = overall - expectedPct;
+  // Three bands relative to expected pace, plus a top band for completion-trajectory.
+  let projection, projColor;
+  if(overall >= 90){ projection='Outcome 1 trajectory'; projColor='var(--green)'; }
+  else if(pace >= -10){ projection='On pace \u2014 keep evidencing'; projColor='var(--primary)'; }
+  else if(pace >= -25){ projection='Slightly behind \u2014 catch up soon'; projColor='var(--gim)'; }
+  else { projection='Behind pace \u2014 focus needed'; projColor='var(--amber)'; }
 
   // Insights
   const mostMonth = _mostActiveMonth(all);
@@ -2155,7 +2175,25 @@ function renderOverview(){
   const prev4w = all.filter(e=>e.date && (Date.now()-new Date(e.date).getTime())>=28*86400000 && (Date.now()-new Date(e.date).getTime())<56*86400000).length;
   const momentum = prev4w===0 ? (recent4w>0?'Building':'Quiet') : recent4w>=prev4w*1.2 ? 'Accelerating' : recent4w>=prev4w*0.8 ? 'Steady' : 'Cooling';
   const momentumColor = momentum==='Accelerating'?'var(--green)':momentum==='Steady'?'var(--primary)':momentum==='Building'?'var(--gim)':'var(--dim)';
-  const avgWeekly = Math.round(all.filter(e=>e.date && (Date.now()-new Date(e.date).getTime())<12*7*86400000).length / 12);
+  // WBA count: GIM SLEs (mini-CEX/CbD) + GIM ACATs + specialty SLEs, all this-year fields.
+  // Reading via getReqVal handles the year-prefixed key correctly.
+  const wbaSlesGim = (GIM_REQS.gim_sles ? Number(state.req[`${currentYear}.gim_sles`]||0) : 0);
+  const wbaAcatsGim = (GIM_REQS.gim_acats ? Number(state.req[`${currentYear}.gim_acats`]||0) : 0);
+  const wbaSlesSpec = Number(state.req[`${currentYear}.spec_sles`]||0);
+  const wbaTotal = wbaSlesGim + wbaAcatsGim + wbaSlesSpec;
+
+  // Most consistent day-of-week — what % of activity falls on the most-frequent weekday
+  const DOW_NAMES = ['Sundays','Mondays','Tuesdays','Wednesdays','Thursdays','Fridays','Saturdays'];
+  const dowCounts = [0,0,0,0,0,0,0];
+  all.forEach(e=>{ if(e.date){ const d=new Date(e.date); if(!isNaN(d)) dowCounts[d.getDay()]++; }});
+  const dowTotal = dowCounts.reduce((a,b)=>a+b,0);
+  let mostDay='\u2014', mostDayPct='no data yet';
+  if(dowTotal>0){
+    const maxIdx = dowCounts.indexOf(Math.max(...dowCounts));
+    mostDay = DOW_NAMES[maxIdx];
+    const pct = Math.round((dowCounts[maxIdx]/dowTotal)*100);
+    mostDayPct = `${pct}% of activity`;
+  }
 
   // Sparklines per KPI
   const sparkAll = _sparkline(_last12Weeks(all,null));
@@ -2178,10 +2216,13 @@ function renderOverview(){
     </div>`;
   }).join('');
 
-  const cat=counts; const catTotal=Object.values(cat).reduce((a,b)=>a+b,0)||1;
-  const catColors={clinics:'var(--primary)',procedures:'var(--green)',cpd:'var(--gim)',simulation:'#f0abfc',teaching:'#fb923c'};
-  const catLabels={clinics:'Clinics',procedures:'Procedures',cpd:'CPD',simulation:'Simulation',teaching:'Teaching'};
-  const catBars=Object.entries(cat).map(([k,v])=>{
+  // Evidence categories chart: simulation is excluded — its target is tracked separately as
+  // cumulative GIM hours (gim_sim) rather than as an event-count category like the others.
+  const catEntries = Object.entries(counts).filter(([k])=>k!=='simulation');
+  const catTotal = catEntries.reduce((a,[,v])=>a+v,0)||1;
+  const catColors={clinics:'var(--primary)',procedures:'var(--green)',cpd:'var(--gim)',teaching:'#fb923c'};
+  const catLabels={clinics:'Clinics',procedures:'Procedures',cpd:'CPD',teaching:'Teaching'};
+  const catBars=catEntries.map(([k,v])=>{
     const pct=(v/catTotal)*100;
     return `<div style="display:flex;flex-direction:column;gap:6px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:11px"><span style="color:var(--text2);font-weight:500">${catLabels[k]}</span><span style="color:var(--dim);font-family:var(--font-mono)">${v} \u00b7 ${Math.round(pct)}%</span></div>
@@ -2231,7 +2272,7 @@ function renderOverview(){
     {label:'Procedures logged',value:counts.procedures,sub:`${(state.logbook?.procedures||[]).filter(e=>e.dops==='Yes').length} DOPS-signed`,spark:sparkProc,accent:'var(--green)'},
     {label:'CPD hours',value:Math.round(cpdHours),sub:'this training year',spark:sparkCPD,accent:'var(--gim)'},
     {label:'Teaching sessions',value:counts.teaching,sub:'all-time',spark:sparkTeach,accent:'var(--primary)'},
-    {label:'Simulation sessions',value:counts.simulation,sub:'all-time',spark:sparkSim,accent:'var(--primary)'},
+    {label:'WBAs completed',value:wbaTotal,sub:`${currentYear} \u00b7 SLEs + ACATs`,spark:'',accent:'var(--gim)'},
     {label:'Active days',value:activeDays,sub:'last 365 days',spark:'',accent:'var(--green)'}
   ];
   const kpiHtml = kpis.map(k=>`<div class="act-kpi">
@@ -2247,7 +2288,7 @@ function renderOverview(){
     {label:'Longest streak', value: streaks.longest+'d', sub:`current: ${streaks.current} day${streaks.current===1?'':'s'}`},
     {label:'Most logged procedure', value: topProc?topProc[0]:'\u2014', sub: topProc?`${topProc[1]} times`:'log a procedure to see this', isText:true},
     {label:'Most common clinic', value: topClinic?topClinic[0]:'\u2014', sub: topClinic?`${topClinic[1]} attendances`:'log a clinic to see this', isText:true},
-    {label:'Avg weekly activity', value: avgWeekly, sub:'last 12 weeks'},
+    {label:'Most consistent day', value: mostDay, sub: mostDayPct, isText:true},
     {label:'Current momentum', value: momentum, sub:`${recent4w} in last 4w \u00b7 ${prev4w} prior`, accent:momentumColor, isText:true}
   ];
   const insightsHtml = insightCards.map(c=>`<div class="act-insight">
