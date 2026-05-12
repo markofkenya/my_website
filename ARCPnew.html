@@ -350,17 +350,6 @@ body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,
 /* V13 PATCH — mobile friendliness and non-sticky header/tabs */
 .topbar{position:static!important;top:auto!important;z-index:auto!important;}
 .tabs{position:static!important;top:auto!important;}
-.tab-strip{display:flex;align-items:center;gap:14px;margin:0 0 22px;padding:0 0 14px;border-bottom:1px solid var(--line);max-width:1040px}
-.tab-strip .ts-eyebrow{font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);flex-shrink:0}
-.tab-strip .ts-title{font-size:18px;font-weight:600;letter-spacing:-.02em;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tab-strip .ts-meta{font-family:var(--font-mono);font-size:11px;color:var(--dim);flex-shrink:0;font-feature-settings:'tnum'}
-.tab-strip .ts-meta b{color:var(--text);font-weight:600}
-@media (max-width: 640px){
-  .tab-strip{gap:10px;margin-bottom:16px;padding-bottom:10px}
-  .tab-strip .ts-eyebrow{display:none}
-  .tab-strip .ts-title{font-size:15px}
-  .tab-strip .ts-meta{font-size:10px}
-}
 @media (max-width: 640px){
   /* Roadmap header — tighter on mobile: hide eyebrow, scale H1, horizontal-scroll stats */
   .rm-eyebrow{display:none !important}
@@ -436,7 +425,7 @@ body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,
     </div>
 
     <div id="auth-signup-note" style="display:none;margin-top:18px;padding:12px 14px;background:var(--bg3);border:1px solid var(--line);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);line-height:1.6">
-      <strong style="color:var(--primary);font-weight:600">Beta note.</strong> The email doesn't have to be a real working address \u2014 anything in the right format works (e.g. <code style="font-family:var(--font-mono);font-size:11.5px;color:var(--text2)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c9a4a8bba289abacbda8e7aaa6a4">[email&#160;protected]</a></code>). Just remember it: it's how you sign in on your other devices.
+      <strong style="color:var(--primary);font-weight:600">Beta note.</strong> The email doesn't have to be a real working address \u2014 anything in the right format works (e.g. <code style="font-family:var(--font-mono);font-size:11.5px;color:var(--text2)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0a676b78614a686f7e6b24696567">[email&#160;protected]</a></code>). Just remember it: it's how you sign in on your other devices.
     </div>
   </div>
 </div>
@@ -1773,7 +1762,7 @@ function renderSpecialty(){
   htmlOut += section('Specialty milestones','One-off items carry forward',milestones);
   if(getSpecKey()==='respiratory') htmlOut += renderRespProcedureProgression();
   else if(specCfg().procedureChecklist) htmlOut += renderSpecProcedureChecklist();
-  document.getElementById('main').innerHTML=compactHeader(sp.label+' \u00b7 curriculum requirements')+htmlOut;
+  document.getElementById('main').innerHTML=htmlOut;
 }
 
 function renderSpecProcedureChecklist(){
@@ -1942,7 +1931,7 @@ function renderAdmin(){
   const hosp=hospitalOptions();
   const userEmail = window.ARCP_FB?.user?.email || '\u2014';
   const accountBlock = `<section class="section"><div class="sec-head"><span class="sec-title">Account</span><span class="sec-rule"></span><span class="sec-note">Signed in across devices</span></div><div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap"><div><div style="font-size:11px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;font-family:var(--font-mono);margin-bottom:6px">Signed in as</div><div style="font-size:15px;color:var(--text);font-weight:500;word-break:break-all">${safe(userEmail)}</div></div><button class="btn small danger" onclick="signOutUser()">Sign out</button></div></div></section>`;
-  document.getElementById('main').innerHTML=compactHeader('Admin & docs')+accountBlock+`<section class="section"><div class="sec-head"><span class="sec-title">Profile & deanery</span><span class="sec-rule"></span><span class="sec-note">Used in reports and hospital dropdowns</span></div><div class="panel"><div class="form-grid"><div class="field"><label>ALS expiry</label><input class="input" type="date" value="${state.als||''}" onchange="state.als=this.value;saveState();render()"></div><div class="field"><label>${currentYear} ARCP date</label><input class="input" type="date" value="${state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]}" onchange="state.arcpDates['${currentYear}']=this.value;saveState();render()"></div><div class="field full"><label>Add hospital</label><div class="row"><input class="input" id="new-hospital" placeholder="Add hospital not in deanery list"><button class="btn primary" onclick="addAdminHospital()">ADD</button></div></div></div></div></section><section class="section"><div class="sec-head"><span class="sec-title">Hospitals</span><span class="sec-rule"></span><span class="sec-note">${hosp.length} available · delete hospitals you are not rotating in</span></div><div class="grid">${hosp.map(h=>`<div class="card"><div class="card-title">${safe(h)}</div><button class="btn small danger" onclick="deleteHospital('${safe(h)}')">Delete from list</button></div>`).join('')}</div></section><section class="section"><div class="sec-head"><span class="sec-title">GIM acute take</span><span class="sec-rule"></span><span class="sec-note">Firth-style placement records</span></div><div id="acute-admin-content"></div></section><section class="section"><div class="sec-head"><span class="sec-title">GIM ward cover</span><span class="sec-rule"></span><span class="sec-note">Months of dedicated GIM ward cover</span></div><div id="ward-admin-content"></div></section>`;
+  document.getElementById('main').innerHTML=accountBlock+`<section class="section"><div class="sec-head"><span class="sec-title">Profile & deanery</span><span class="sec-rule"></span><span class="sec-note">Used in reports and hospital dropdowns</span></div><div class="panel"><div class="form-grid"><div class="field"><label>ALS expiry</label><input class="input" type="date" value="${state.als||''}" onchange="state.als=this.value;saveState();render()"></div><div class="field"><label>${currentYear} ARCP date</label><input class="input" type="date" value="${state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]}" onchange="state.arcpDates['${currentYear}']=this.value;saveState();render()"></div><div class="field full"><label>Add hospital</label><div class="row"><input class="input" id="new-hospital" placeholder="Add hospital not in deanery list"><button class="btn primary" onclick="addAdminHospital()">ADD</button></div></div></div></div></section><section class="section"><div class="sec-head"><span class="sec-title">Hospitals</span><span class="sec-rule"></span><span class="sec-note">${hosp.length} available · delete hospitals you are not rotating in</span></div><div class="grid">${hosp.map(h=>`<div class="card"><div class="card-title">${safe(h)}</div><button class="btn small danger" onclick="deleteHospital('${safe(h)}')">Delete from list</button></div>`).join('')}</div></section><section class="section"><div class="sec-head"><span class="sec-title">GIM acute take</span><span class="sec-rule"></span><span class="sec-note">Firth-style placement records</span></div><div id="acute-admin-content"></div></section><section class="section"><div class="sec-head"><span class="sec-title">GIM ward cover</span><span class="sec-rule"></span><span class="sec-note">Months of dedicated GIM ward cover</span></div><div id="ward-admin-content"></div></section>`;
   renderAcute('acute-admin-content');
   renderWard('ward-admin-content');
 }
@@ -1990,7 +1979,6 @@ function renderGIM(){
   const stats=gimDopsStats();
   const cumulativeNote = currentYear==='ST7' ? 'End-of-training totals including final-year minimums' : 'End-of-training cumulative targets';
   document.getElementById('main').innerHTML =
-    compactHeader('GIM \u00b7 internal medicine')+
     renderOutcomeSelector()+
     section('GIM annual requirements',`For ${currentYear}`,annual)+
     section('GIM cumulative targets',cumulativeNote,cumulative)+
@@ -2443,7 +2431,11 @@ function renderToday(){
   const gimColor=gim.pct>=70?'var(--green)':gim.pct>=50?'var(--primary)':'var(--amber)';
   const specColor=spec.pct>=70?'var(--green)':spec.pct>=50?'var(--primary)':'var(--amber)';
 
-  const greeting='';
+  const greeting=`<div style="margin-bottom:28px;max-width:900px">
+    <div class="sec-title" style="margin-bottom:12px">${todayStr} \u00b7 ${safe(currentYear)} \u00b7 ${safe(sp.label)}</div>
+    <h1 style="font-size:42px;font-weight:500;letter-spacing:-.025em;line-height:1.1;margin:0;color:var(--text)">Hello, ${safe(name)}. <span style="color:var(--dim)">You're <span style="color:var(--primary)">${yearPct}%</span> through ${safe(currentYear)}.</span></h1>
+    <p style="font-size:15px;color:var(--text2);margin-top:14px;line-height:1.55">${days} days to ARCP. ${gim.pct<spec.pct?'GIM evidence needs your attention.':'Specialty and GIM tracking together \u2014 keep going.'}</p>
+  </div>`;
 
   const stats=[
     {k:`${sp.short} evidence`,v:spec.pct+'%',sub:`${spec.met} of ${spec.total} met`,color:specColor},
@@ -2487,7 +2479,7 @@ function renderToday(){
     <div style="display:flex;flex-direction:column;gap:14px">${arcpCard}</div>
   </div>`;
 
-  document.getElementById('main').innerHTML=compactHeader('Overview \u00b7 training activity')+statRow+grid;
+  document.getElementById('main').innerHTML=greeting+statRow+grid;
 }
 function renderRoadmap(){
   const sp=specCfg();
@@ -2642,14 +2634,6 @@ function renderRoadmap(){
   document.getElementById('main').innerHTML=greeting+hero+`<div style="display:flex;flex-direction:column">${yearRows}</div>`;
 }
 window.renderRoadmap=renderRoadmap;
-function compactHeader(title){
-  const sp=(typeof specCfg==='function')?specCfg():{label:''};
-  const arcpDate=new Date(state.arcpDates?.[currentYear]||ARCP_DEFAULTS[currentYear]);
-  const today=new Date(); today.setHours(0,0,0,0);
-  const days=Math.max(0,Math.round((arcpDate-today)/86400000));
-  return `<div class="tab-strip"><span class="ts-eyebrow">${safe(sp.label||'')} \u00b7 ${safe(currentYear)}</span><span class="ts-title">${safe(title)}</span><span class="ts-meta"><b>${days}</b>d to ARCP</span></div>`;
-}
-window.compactHeader=compactHeader;
 
 function renderLogbookV2(){
   if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
@@ -2702,7 +2686,7 @@ function renderLogbookV2(){
     </div>`;
   }).join(''):`<div style="padding:40px 22px;text-align:center;color:var(--dim);font-size:13px">No ${filterKey==='all'?'':filterKey+' '}entries logged yet.</div>`;
 
-  document.getElementById('main').innerHTML=compactHeader('Logbook')+filterTabs+`<div class="card" style="padding:0;overflow:hidden">${tableHead}${tableRows}</div>`;
+  document.getElementById('main').innerHTML=hero+filterTabs+`<div class="card" style="padding:0;overflow:hidden">${tableHead}${tableRows}</div>`;
 }
 window.renderLogbookV2=renderLogbookV2;
 function openLogbookForm(sub){ logSubTab=sub||'clinics'; setTab('logbook-form'); }
