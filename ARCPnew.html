@@ -412,7 +412,7 @@ body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,
     </div>
 
     <div id="auth-signup-note" style="display:none;margin-top:18px;padding:12px 14px;background:var(--bg3);border:1px solid var(--line);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);line-height:1.6">
-      <strong style="color:var(--primary);font-weight:600">Beta note.</strong> The email doesn't have to be a real working address \u2014 anything in the right format works (e.g. <code style="font-family:var(--font-mono);font-size:11.5px;color:var(--text2)">mark@beta.com</code>). Just remember it: it's how you sign in on your other devices.
+      <strong style="color:var(--primary);font-weight:600">Beta note.</strong> The email doesn't have to be a real working address \u2014 anything in the right format works (e.g. <code style="font-family:var(--font-mono);font-size:11.5px;color:var(--text2)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="90fdf1e2fbd0f2f5e4f1bef3fffd">[email&#160;protected]</a></code>). Just remember it: it's how you sign in on your other devices.
     </div>
   </div>
 </div>
@@ -494,7 +494,7 @@ body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 const YEARS = ["ST4","ST5","ST6","ST7"];
 const ARCP_DEFAULTS = { ST4:"2026-12-01", ST5:"2027-12-01", ST6:"2028-12-01", ST7:"2029-12-01" };
 const OUTCOMES = {"1":"Outcome 1 — Satisfactory progress","2":"Outcome 2 — Development needs identified","3":"Outcome 3 — Inadequate progress","4":"Outcome 4 — Released from programme","5":"Outcome 5 — Incomplete evidence","6":"Outcome 6 — Completion of training","8":"Outcome 8 — Out of programme"};
@@ -2488,27 +2488,38 @@ function renderRoadmap(){
   const days=Math.max(0,Math.round((arcpDate-today)/86400000));
   const todayStr=today.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const firstName=(state.profile?.name||'').split(' ').filter(Boolean).pop()||'there';
-  let yearPct=heroPct;
-  if(state.profile?.yearStart){
-    const ys=state.profile.yearStart;
-    const start=new Date(ys.year, (ys.month||8)-1, 1);
-    const totalMs=arcpDate-start; const elapsed=today-start;
+  // % through the CURRENT ST year only — not across all training years.
+  // Start = previous year's ARCP date (if known) else arcpDate minus 12 months.
+  let yearPct=0;
+  {
+    const prevIdx=yrIndex(currentYear)-1;
+    const prevYear=prevIdx>=0?YEARS[prevIdx]:null;
+    const prevArcp=prevYear?(state.arcpDates?.[prevYear]||ARCP_DEFAULTS[prevYear]):null;
+    let start;
+    if(prevArcp){
+      start=new Date(prevArcp);
+    } else if(state.profile?.yearStart){
+      const ys=state.profile.yearStart;
+      start=new Date(ys.year,(ys.month||8)-1,1);
+    } else {
+      start=new Date(arcpDate); start.setFullYear(start.getFullYear()-1);
+    }
+    const totalMs=arcpDate-start, elapsed=today-start;
     if(totalMs>0) yearPct=Math.max(0,Math.min(100,Math.round(elapsed/totalMs*100)));
   }
 
-  const greeting=`<div style="margin:0 0 20px;padding:18px 22px;background:linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, var(--bg2)) 0%, var(--bg2) 60%);border:1px solid var(--line);border-left:3px solid var(--primary);border-radius:14px;max-width:900px">
-    <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:8px">${todayStr} \u00b7 ${safe(currentYear)}</div>
-    <div style="font-size:24px;font-weight:500;letter-spacing:-.02em;line-height:1.25;color:var(--text)">Hello, ${safe(firstName)}. <span style="color:var(--dim)">You're <span style="color:var(--primary);font-weight:700">${yearPct}%</span> through ${safe(currentYear)}.</span></div>
-  </div>`;
-
-  const hero=`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:28px;max-width:900px;flex-wrap:wrap">
-    <div style="flex:1;min-width:260px">
-      <div class="sec-title" style="margin-bottom:12px">Curriculum roadmap · ${safe(sp.label)} · ${safe(currentYear)}</div>
-      <h1 style="font-size:40px;font-weight:500;letter-spacing:-.025em;line-height:1.1;margin:0;color:var(--text)">Your training journey.</h1>
-      <p style="font-size:14px;color:var(--text2);margin-top:12px;line-height:1.55">${heroPct}% overall coverage · ${days} days to ARCP · ${currentYear} in progress.</p>
+  // Unified header: eyebrow (date + spec) + headline + supporting stats row, no duplicate "hello" card
+  const greeting='';
+  const hero=`<div style="margin-bottom:32px;max-width:1040px">
+    <div style="font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:14px">${todayStr} \u00b7 ${safe(sp.label)} \u00b7 ${safe(currentYear)}</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap">
+      <h1 style="font-size:44px;font-weight:500;letter-spacing:-.03em;line-height:1.05;margin:0;color:var(--text);max-width:720px">Hello, ${safe(firstName)}. <span style="color:var(--dim)">You're </span><span style="color:var(--primary)">${yearPct}%</span><span style="color:var(--dim)"> through ${safe(currentYear)}.</span></h1>
+      <button class="btn small" onclick="printReport()" style="flex-shrink:0">\u2398 Print Logbook Report</button>
     </div>
-    <div style="display:flex;gap:8px;flex-shrink:0;margin-top:6px;flex-wrap:wrap">
-      <button class="btn small" onclick="printReport()">\u2398 Print Logbook Report</button>
+    <div style="display:flex;gap:32px;margin-top:22px;flex-wrap:wrap;padding-top:18px;border-top:1px solid var(--line)">
+      <div><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)">Coverage</div><div style="font-size:22px;font-weight:600;color:var(--primary);margin-top:4px;font-feature-settings:'tnum'">${heroPct}%</div></div>
+      <div><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)">Days to ARCP</div><div style="font-size:22px;font-weight:600;color:var(--text);margin-top:4px;font-feature-settings:'tnum'">${days}</div></div>
+      <div><div style="font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)">Stage</div><div style="font-size:22px;font-weight:600;color:var(--text);margin-top:4px">${safe(currentYear)} \u00b7 in progress</div></div>
     </div>
   </div>`;
 
@@ -2540,10 +2551,11 @@ function renderRoadmap(){
       const lockedStr = lockedDate ? lockedDate.toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : '';
       yearSubtitle = lockedStr ? `${outcomeDesc} \u00b7 locked ${lockedStr}` : `${outcomeDesc} \u00b7 locked`;
     }
-    // Outcome pill: just "Outcome N" for locked years (the screenshot's bottom-left pill).
+    // Outcome pill is rendered inline next to the year status pill — keep variable empty for legacy slot.
     let outcomeNumberPill = '';
+    let inlineOutcomePill = '';
     if(locked && state.years[y]?.outcome){
-      outcomeNumberPill = `<div style="margin-top:10px"><span style="display:inline-block;padding:4px 12px;background:var(--green-soft);color:var(--green);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;border-radius:999px;font-family:var(--font-mono);border:1px solid color-mix(in srgb, var(--green) 30%, transparent)">Outcome ${safe(state.years[y].outcome)}</span></div>`;
+      inlineOutcomePill = `<span style="padding:3px 10px;background:var(--green-soft);color:var(--green);font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;border-radius:999px;font-family:var(--font-mono);border:1px solid color-mix(in srgb, var(--green) 30%, transparent)">Outcome ${safe(state.years[y].outcome)}</span>`;
     }
 
     const milestoneCards=items.length?items.map(({id,r,met,v})=>{
@@ -2583,21 +2595,25 @@ function renderRoadmap(){
       </div>`;
     }).join(''):`<div style="font-size:12px;color:var(--dim);padding:8px 0">No milestones for this year.</div>`;
 
+    const yearPctRow = yTotal>0 ? Math.round(yMet/yTotal*100) : 0;
+    const pillColor = locked?'var(--green)':isCurrent?'var(--primary)':'var(--dim)';
+    const pillBg = locked?'var(--green-soft)':isCurrent?'var(--primary-soft)':'var(--bg3)';
+    const statusPill = locked ? inlineOutcomePill : `<span style="padding:3px 10px;background:${pillBg};color:${pillColor};font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;border-radius:999px;font-family:var(--font-mono)">${safe(status)}</span>`;
     return `<div style="display:flex;gap:24px;position:relative">
-      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
-        <div style="width:22px;height:22px;border-radius:50%;background:${dotFill};border:2px solid ${dotColor};margin-top:18px;display:grid;place-items:center;color:#0e1110;font-size:11px;font-weight:800">${locked?'✓':''}</div>
-        ${!isLast?`<div style="width:2px;flex:1;background:var(--line);min-height:60px;margin-top:4px"></div>`:''}
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:22px">
+        <div style="width:22px;height:22px;border-radius:50%;background:${dotFill};border:2px solid ${dotColor};margin-top:22px;display:grid;place-items:center;color:#0e1110;font-size:11px;font-weight:800;flex-shrink:0">${locked?'✓':''}</div>
+        ${!isLast?`<div style="width:2px;flex:1;background:var(--line);min-height:40px;margin-top:6px"></div>`:''}
       </div>
-      <div style="flex:1;background:${isCurrent?'var(--bg2)':'transparent'};border:1px solid ${isCurrent?'var(--line-strong)':'var(--line)'};border-radius:var(--radius);padding:20px;margin-bottom:${isLast?'0':'14px'};opacity:${isUpcoming?'.7':'1'}">
-        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+      <div style="flex:1;background:${isCurrent?'var(--bg2)':'transparent'};border:1px solid ${isCurrent?'var(--line-strong)':'var(--line)'};border-radius:var(--radius);padding:22px 24px;margin-bottom:${isLast?'0':'16px'};opacity:${isUpcoming?'.65':'1'}">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:${locked?'0':'18px'}">
           <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
-            <span style="font-size:32px;font-weight:600;letter-spacing:-.025em;color:var(--text);font-family:var(--font)">${safe(y)}</span>
-            <span style="font-size:12px;color:var(--dim)">${safe(yearSubtitle)}</span>
+            <span style="font-size:30px;font-weight:600;letter-spacing:-.025em;color:var(--text);font-family:var(--font);line-height:1">${safe(y)}</span>
+            <span style="font-size:12px;color:var(--dim);font-family:var(--font-mono);letter-spacing:.02em">${safe(yearSubtitle)}</span>
           </div>
-          ${locked?'':`<span style="padding:3px 10px;background:${statusBg};color:${statusColor};font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;border-radius:999px;font-family:var(--font-mono)">${safe(status)}</span>`}
+          ${statusPill}
         </div>
-        ${outcomeNumberPill}
-        ${locked?'':`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:${outcomeNumberPill?'14px':'0'}">${milestoneCards}</div>`}
+        ${!locked && yTotal>0 ? `<div style="height:3px;background:var(--line);border-radius:2px;margin-bottom:16px;overflow:hidden"><div style="width:${yearPctRow}%;height:100%;background:${isCurrent?'var(--primary)':'var(--dim)'};border-radius:2px"></div></div>`:''}
+        ${locked?'':`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">${milestoneCards}</div>`}
       </div>
     </div>`;
   }).join('');
