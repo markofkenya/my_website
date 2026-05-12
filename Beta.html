@@ -149,6 +149,14 @@ body.focus .check{color:#fff}body.focus .btn.primary{color:#fff}body.focus .chec
 
 #app{display:none}#app.ready{display:block}
 .topbar{background:var(--bg2);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+body.topbar-collapsed .topbar .metric,
+body.topbar-collapsed .topbar .grow{display:none!important}
+body.topbar-collapsed .topbar .brand{padding:10px 24px;border-right:0}
+body.topbar-collapsed .topbar .brand-mark svg{width:26px;height:26px}
+body.topbar-collapsed .topbar .brand-main{font-size:18px}
+body.topbar-collapsed .topbar .brand-sub{display:none}
+body.topbar-collapsed .topbar .top-row{align-items:center}
+@media (max-width:760px){body.topbar-collapsed .topbar .brand{padding:8px 14px}}
 .top-row{display:flex;align-items:stretch;flex-wrap:wrap}
 .brand{padding:18px 24px;border-right:1px solid var(--line);min-width:230px;display:flex;align-items:center;gap:12px}
 .brand-mark{flex-shrink:0}
@@ -425,7 +433,7 @@ body.focus .beta-banner{background:rgba(154,95,10,.08);border-color:rgba(154,95,
     </div>
 
     <div id="auth-signup-note" style="display:none;margin-top:18px;padding:12px 14px;background:var(--bg3);border:1px solid var(--line);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);line-height:1.6">
-      <strong style="color:var(--primary);font-weight:600">Beta note.</strong> The email doesn't have to be a real working address \u2014 anything in the right format works (e.g. <code style="font-family:var(--font-mono);font-size:11.5px;color:var(--text2)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0a676b78614a686f7e6b24696567">[email&#160;protected]</a></code>). Just remember it: it's how you sign in on your other devices.
+      <strong style="color:var(--primary);font-weight:600">Beta note.</strong> The email doesn't have to be a real working address \u2014 anything in the right format works (e.g. <code style="font-family:var(--font-mono);font-size:11.5px;color:var(--text2)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="167b77647d56747362773875797b">[email&#160;protected]</a></code>). Just remember it: it's how you sign in on your other devices.
     </div>
   </div>
 </div>
@@ -811,7 +819,7 @@ function setOutcomeLocal(y,v){ state.years[y]=state.years[y]||{}; state.years[y]
 function openSettings(){ initOnboarding(); document.getElementById('gate').classList.add('show'); }
 function startFreshProfile(){ if(!confirm('Start a fresh test profile on this browser? This clears the local V2 profile and overwrites this anonymous Firebase test user with a blank profile.')) return; state=blankState(); currentYear='ST4'; localStorage.setItem('arcp_v2_current_year','ST4'); saveState(); initOnboarding(); document.getElementById('app').classList.remove('ready'); document.getElementById('gate').classList.add('show'); }
 
-function render(){ if(!state.profile){ initOnboarding(); return; } syncLogbookTargets(); setTheme(); document.getElementById('app').classList.add('ready'); document.getElementById('gate').classList.remove('show'); renderHeader(); renderTabs(); const trialExpired = renderBetaTrial(); if(trialExpired){ updateReadiness(); return; } if(currentTab==='today') renderToday(); if(currentTab==='roadmap') renderRoadmap(); if(currentTab==='specialty') renderSpecialty(); if(currentTab==='gim') renderGIM(); if(currentTab==='logbook') renderLogbookV2(); if(currentTab==='logbook-form') renderLogbookFormWrap(); if(currentTab==='admin') renderAdmin(); if(currentTab==='overview') renderOverview(); updateReadiness(); forceLiveStatus(); }
+function render(){ if(!state.profile){ initOnboarding(); return; } syncLogbookTargets(); setTheme(); document.getElementById('app').classList.add('ready'); document.getElementById('gate').classList.remove('show'); document.body.classList.toggle('topbar-collapsed', currentTab!=='roadmap'); renderHeader(); renderTabs(); const trialExpired = renderBetaTrial(); if(trialExpired){ updateReadiness(); return; } if(currentTab==='today') renderToday(); if(currentTab==='roadmap') renderRoadmap(); if(currentTab==='specialty') renderSpecialty(); if(currentTab==='gim') renderGIM(); if(currentTab==='logbook') renderLogbookV2(); if(currentTab==='logbook-form') renderLogbookFormWrap(); if(currentTab==='admin') renderAdmin(); if(currentTab==='overview') renderOverview(); updateReadiness(); forceLiveStatus(); }
 
 function betaTrialInfo(){
   if(!state.profile) return {expired:false, daysLeft:BETA_TRIAL_DAYS, start:Date.now(), end:Date.now()+BETA_TRIAL_DAYS*86400000};
@@ -2431,11 +2439,7 @@ function renderToday(){
   const gimColor=gim.pct>=70?'var(--green)':gim.pct>=50?'var(--primary)':'var(--amber)';
   const specColor=spec.pct>=70?'var(--green)':spec.pct>=50?'var(--primary)':'var(--amber)';
 
-  const greeting=`<div style="margin-bottom:28px;max-width:900px">
-    <div class="sec-title" style="margin-bottom:12px">${todayStr} \u00b7 ${safe(currentYear)} \u00b7 ${safe(sp.label)}</div>
-    <h1 style="font-size:42px;font-weight:500;letter-spacing:-.025em;line-height:1.1;margin:0;color:var(--text)">Hello, ${safe(name)}. <span style="color:var(--dim)">You're <span style="color:var(--primary)">${yearPct}%</span> through ${safe(currentYear)}.</span></h1>
-    <p style="font-size:15px;color:var(--text2);margin-top:14px;line-height:1.55">${days} days to ARCP. ${gim.pct<spec.pct?'GIM evidence needs your attention.':'Specialty and GIM tracking together \u2014 keep going.'}</p>
-  </div>`;
+  const greeting='';
 
   const stats=[
     {k:`${sp.short} evidence`,v:spec.pct+'%',sub:`${spec.met} of ${spec.total} met`,color:specColor},
@@ -2479,7 +2483,7 @@ function renderToday(){
     <div style="display:flex;flex-direction:column;gap:14px">${arcpCard}</div>
   </div>`;
 
-  document.getElementById('main').innerHTML=greeting+statRow+grid;
+  document.getElementById('main').innerHTML=statRow+grid;
 }
 function renderRoadmap(){
   const sp=specCfg();
@@ -2686,7 +2690,7 @@ function renderLogbookV2(){
     </div>`;
   }).join(''):`<div style="padding:40px 22px;text-align:center;color:var(--dim);font-size:13px">No ${filterKey==='all'?'':filterKey+' '}entries logged yet.</div>`;
 
-  document.getElementById('main').innerHTML=hero+filterTabs+`<div class="card" style="padding:0;overflow:hidden">${tableHead}${tableRows}</div>`;
+  document.getElementById('main').innerHTML=filterTabs+`<div class="card" style="padding:0;overflow:hidden">${tableHead}${tableRows}</div>`;
 }
 window.renderLogbookV2=renderLogbookV2;
 function openLogbookForm(sub){ logSubTab=sub||'clinics'; setTab('logbook-form'); }
