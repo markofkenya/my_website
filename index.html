@@ -296,6 +296,28 @@
     .investigations { grid-template-columns: 1fr; }
   }
 
+  /* Vitals block */
+  .vitals {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
+    padding: 10px; background: var(--panel-2);
+    border: 1px solid var(--line); border-radius: 6px;
+  }
+  .vital-cell {
+    display: flex; flex-direction: column; gap: 2px; position: relative;
+  }
+  .vital-cell input {
+    padding: 6px 8px; font-size: 13px; font-weight: 500;
+    background: var(--bg);
+  }
+  .vital-unit {
+    font-size: 9px; color: var(--ink-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    padding-left: 2px;
+  }
+  @media (max-width: 700px) {
+    .vitals { grid-template-columns: repeat(3, 1fr); }
+  }
+
   /* Save buttons */
   .save-row {
     display: flex; gap: 6px; margin-top: 4px;
@@ -509,6 +531,14 @@
         <label for="patientDob">Age / DOB</label>
         <input id="patientDob" type="text" placeholder="72y" />
       </div>
+      <div class="field" style="flex: 0.4;">
+        <label for="patientSex">Sex</label>
+        <select id="patientSex">
+          <option value=""></option>
+          <option value="M">M</option>
+          <option value="F">F</option>
+        </select>
+      </div>
     </div>
 
     <div class="field">
@@ -548,8 +578,8 @@
         <input id="baselineCr" type="text" class="mono-inp" placeholder="μmol/L" />
       </div>
       <div>
-        <label for="baselineEgfr">Baseline eGFR</label>
-        <input id="baselineEgfr" type="text" class="mono-inp" placeholder="ml/min" />
+        <label for="baselineEgfr">eGFR <span style="text-transform:none;color:var(--blue);font-weight:500;letter-spacing:0;">· auto (CKD-EPI 2021)</span></label>
+        <input id="baselineEgfr" type="text" class="mono-inp" placeholder="auto" readonly style="background:var(--panel);color:var(--accent);" />
       </div>
     </div>
 
@@ -618,9 +648,9 @@
         </div>
         <div class="urine-dip">
           <label style="margin-bottom: 4px;">Urine Dip</label>
-          <div class="dip-grid">
+          <div class="dip-grid" style="grid-template-columns: 1fr 1fr;">
             <div class="dip-cell">
-              <span class="dip-lbl">Pro</span>
+              <span class="dip-lbl">Protein</span>
               <select id="dipProtein">
                 <option value=""></option><option>neg</option><option>tr</option>
                 <option>+</option><option>++</option><option>+++</option><option>++++</option>
@@ -633,35 +663,45 @@
                 <option>+</option><option>++</option><option>+++</option><option>++++</option>
               </select>
             </div>
-            <div class="dip-cell">
-              <span class="dip-lbl">Leuc</span>
-              <select id="dipLeuc">
-                <option value=""></option><option>neg</option><option>tr</option>
-                <option>+</option><option>++</option><option>+++</option>
-              </select>
-            </div>
-            <div class="dip-cell">
-              <span class="dip-lbl">Nit</span>
-              <select id="dipNitrites">
-                <option value=""></option><option>neg</option><option>pos</option>
-              </select>
-            </div>
-            <div class="dip-cell">
-              <span class="dip-lbl">Glu</span>
-              <select id="dipGlucose">
-                <option value=""></option><option>neg</option><option>tr</option>
-                <option>+</option><option>++</option><option>+++</option>
-              </select>
-            </div>
-            <div class="dip-cell">
-              <span class="dip-lbl">Ket</span>
-              <select id="dipKetones">
-                <option value=""></option><option>neg</option><option>tr</option>
-                <option>+</option><option>++</option><option>+++</option>
-              </select>
-            </div>
           </div>
-          <input id="dipOther" type="text" placeholder="pH, SG, other notes" style="margin-top: 5px; font-size: 12px; padding: 5px 8px;" />
+          <input id="dipOther" type="text" placeholder="Other dip findings (leuc, nit, glu…)" style="margin-top: 5px; font-size: 12px; padding: 5px 8px;" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Vitals -->
+    <div>
+      <label style="display:block; margin-bottom: 5px;">Vitals</label>
+      <div class="vitals">
+        <div class="vital-cell">
+          <span class="dip-lbl">HR</span>
+          <input id="vHr" type="text" class="mono-inp" placeholder="—" />
+          <span class="vital-unit">bpm</span>
+        </div>
+        <div class="vital-cell">
+          <span class="dip-lbl">BP</span>
+          <input id="vBp" type="text" class="mono-inp" placeholder="—/—" />
+          <span class="vital-unit">mmHg</span>
+        </div>
+        <div class="vital-cell">
+          <span class="dip-lbl">RR</span>
+          <input id="vRr" type="text" class="mono-inp" placeholder="—" />
+          <span class="vital-unit">/min</span>
+        </div>
+        <div class="vital-cell">
+          <span class="dip-lbl">SpO₂</span>
+          <input id="vSats" type="text" class="mono-inp" placeholder="—" />
+          <span class="vital-unit">%</span>
+        </div>
+        <div class="vital-cell">
+          <span class="dip-lbl">Temp</span>
+          <input id="vTemp" type="text" class="mono-inp" placeholder="—" />
+          <span class="vital-unit">°C</span>
+        </div>
+        <div class="vital-cell">
+          <span class="dip-lbl">NEWS2</span>
+          <input id="vNews" type="text" class="mono-inp" placeholder="—" />
+          <span class="vital-unit"></span>
         </div>
       </div>
     </div>
@@ -806,20 +846,91 @@
   }
   function validateNHS(num) {
     const clean = (num||'').replace(/\D/g,'');
-    if (clean.length !== 10) return { ok: false, msg: clean.length===0 ? '' : `${clean.length}/10 digits` };
-    const digits = clean.split('').map(Number);
-    const sum = digits.slice(0,9).reduce((s,d,i) => s + d*(10-i), 0);
-    let check = 11 - (sum % 11);
-    if (check === 11) check = 0;
-    if (check === 10) return { ok: false, msg: 'Invalid NHS checksum' };
-    if (check !== digits[9]) return { ok: false, msg: 'Invalid NHS checksum' };
-    return { ok: true, msg: '✓ Valid' };
+    if (clean.length === 0) return { ok: false, msg: '' };
+    if (clean.length === 10) return { ok: true, msg: '✓ 10 digits' };
+    return { ok: false, msg: `${clean.length}/10 digits` };
   }
   function parseNum(s) {
     if (!s) return null;
     const m = String(s).match(/-?\d+\.?\d*/);
     return m ? parseFloat(m[0]) : null;
   }
+
+  // Parse age from "72y", "72", "72 years", or DOB like "12/03/1953"
+  function parseAge(s) {
+    if (!s) return null;
+    const str = String(s).trim();
+    // Try DOB formats: DD/MM/YYYY or DD-MM-YYYY or YYYY-MM-DD
+    const dmy = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+    if (dmy) {
+      let [_, d, m, y] = dmy;
+      d = parseInt(d); m = parseInt(m); y = parseInt(y);
+      if (y < 100) y += y < 30 ? 2000 : 1900;
+      const dob = new Date(y, m-1, d);
+      if (!isNaN(dob)) {
+        const now = new Date();
+        let age = now.getFullYear() - dob.getFullYear();
+        const monthDiff = now.getMonth() - dob.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getDate())) age--;
+        return age;
+      }
+    }
+    const ymd = str.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+    if (ymd) {
+      const dob = new Date(parseInt(ymd[1]), parseInt(ymd[2])-1, parseInt(ymd[3]));
+      if (!isNaN(dob)) {
+        const now = new Date();
+        let age = now.getFullYear() - dob.getFullYear();
+        const monthDiff = now.getMonth() - dob.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getDate())) age--;
+        return age;
+      }
+    }
+    // Just a number, possibly with "y" suffix
+    const n = parseNum(str);
+    return n;
+  }
+
+  // CKD-EPI 2021 (race-free). Cr in μmol/L → mg/dL via /88.4
+  // Returns eGFR in ml/min/1.73m²
+  function calcEgfrCkdEpi2021(crUmol, age, sex) {
+    if (!crUmol || !age || !sex) return null;
+    if (crUmol <= 0 || age <= 0) return null;
+    const scr = crUmol / 88.4;  // convert to mg/dL
+    const isFemale = sex === 'F';
+    const kappa = isFemale ? 0.7 : 0.9;
+    const alpha = isFemale ? -0.241 : -0.302;
+    const minVal = Math.min(scr / kappa, 1);
+    const maxVal = Math.max(scr / kappa, 1);
+    const sexCoef = isFemale ? 1.012 : 1.0;
+    const egfr = 142
+      * Math.pow(minVal, alpha)
+      * Math.pow(maxVal, -1.200)
+      * Math.pow(0.9938, age)
+      * sexCoef;
+    return Math.round(egfr);
+  }
+
+  function updateEgfr() {
+    const crStr = document.getElementById('baselineCr').value;
+    const ageStr = document.getElementById('patientDob').value;
+    const sex = document.getElementById('patientSex').value;
+    const cr = parseNum(crStr);
+    const age = parseAge(ageStr);
+    const egfrField = document.getElementById('baselineEgfr');
+    if (!cr || !age || !sex) {
+      egfrField.value = '';
+      egfrField.placeholder = !sex && cr && age ? 'need sex' : !age && cr ? 'need age' : 'auto';
+      return;
+    }
+    const egfr = calcEgfrCkdEpi2021(cr, age, sex);
+    egfrField.value = egfr ? `${egfr} ml/min` : '';
+  }
+  // Wire up live recalc — these elements exist by the time script runs
+  ['baselineCr','patientDob','patientSex'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateEgfr);
+    document.getElementById(id).addEventListener('change', updateEgfr);
+  });
 
   // ============ BLOOD FLAGGING ============
   // Returns { level: 'danger'|'warn'|null, msg: '' }
@@ -1019,7 +1130,7 @@
           (e.modalities||[]).join(' '), (e.scenarios||[]).join(' '),
           e.ckdStage, e.baselineCr, e.baselineEgfr,
           e.bK, e.bCr, e.bUrea, e.bHb, e.bPh, e.bUo, e.bCrTrend, e.bOther,
-          e.imaging, urineDipString(e)
+          e.imaging, urineDipString(e), vitalsString(e)
         ].join(' ').toLowerCase();
         return blob.includes(search);
       });
@@ -1088,6 +1199,7 @@
           ${scenarioTags}
         </div>
         ${bloods ? `<div class="pt-bloods">${bloods}</div>` : ''}
+        ${hasVitals(e) ? `<div class="pt-bloods" style="background:var(--blue-dim);border-color:var(--blue);color:var(--blue);">${escapeHtml(vitalsString(e))}</div>` : ''}
         ${baselineLine}
         ${e.imaging ? `<div class="pt-row"><span class="lbl">Imaging</span><span>${escapeHtml(e.imaging)}</span></div>` : ''}
         ${hasUrineDip(e) ? `<div class="pt-row"><span class="lbl">Urine Dip</span><span class="mono" style="font-size:12px;">${escapeHtml(urineDipString(e))}</span></div>` : ''}
@@ -1106,10 +1218,11 @@
   function getInput(id) { return document.getElementById(id).value.trim(); }
 
   function clearForm() {
-    ['hospital','callerName','callerRole','patientName','patientDob','hospNum',
+    ['hospital','callerName','callerRole','patientName','patientDob','patientSex','hospNum',
      'ckdStage','baselineCr','baselineEgfr',
      'bK','bCr','bUrea','bHb','bPh','bUo','bCrTrend','bOther',
-     'imaging','dipProtein','dipBlood','dipLeuc','dipNitrites','dipGlucose','dipKetones','dipOther',
+     'imaging','dipProtein','dipBlood','dipOther',
+     'vHr','vBp','vRr','vSats','vTemp','vNews',
      'background','referralReason','adviceGiven'
     ].forEach(id => document.getElementById(id).value = '');
     document.getElementById('hospNumType').value = 'NHS';
@@ -1125,6 +1238,7 @@
       const f = cell.querySelector('.blood-flag');
       f.classList.remove('danger','warn'); f.textContent = '';
     });
+    document.getElementById('baselineEgfr').placeholder = 'auto';
   }
 
   function saveReferral() {
@@ -1136,9 +1250,6 @@
     const hospNumType = document.getElementById('hospNumType').value;
     const hospNumRaw = getInput('hospNum');
     const hospNum = hospNumType === 'NHS' ? hospNumRaw.replace(/\D/g,'') : hospNumRaw;
-    if (hospNumType === 'NHS' && hospNum && !validateNHS(hospNum).ok) {
-      if (!confirm('NHS number invalid. Save anyway?')) return;
-    }
 
     const entry = {
       id: Date.now() + '-' + Math.random().toString(36).slice(2,8),
@@ -1149,6 +1260,7 @@
       callerRole: getInput('callerRole'),
       patientName,
       patientDob: getInput('patientDob'),
+      patientSex: getInput('patientSex'),
       hospNumType, hospNum,
       modalities: [...selectedModalities],
       scenarios: [...selectedScenarios],
@@ -1162,11 +1274,13 @@
       imaging: getInput('imaging'),
       dipProtein: getInput('dipProtein'),
       dipBlood: getInput('dipBlood'),
-      dipLeuc: getInput('dipLeuc'),
-      dipNitrites: getInput('dipNitrites'),
-      dipGlucose: getInput('dipGlucose'),
-      dipKetones: getInput('dipKetones'),
       dipOther: getInput('dipOther'),
+      vHr: getInput('vHr'),
+      vBp: getInput('vBp'),
+      vRr: getInput('vRr'),
+      vSats: getInput('vSats'),
+      vTemp: getInput('vTemp'),
+      vNews: getInput('vNews'),
       background: getInput('background'),
       referralReason: getInput('referralReason'),
       adviceGiven: getInput('adviceGiven')
@@ -1280,16 +1394,27 @@
     const parts = [];
     if (e.dipProtein) parts.push(`pro ${e.dipProtein}`);
     if (e.dipBlood) parts.push(`blood ${e.dipBlood}`);
-    if (e.dipLeuc) parts.push(`leuc ${e.dipLeuc}`);
-    if (e.dipNitrites) parts.push(`nit ${e.dipNitrites}`);
-    if (e.dipGlucose) parts.push(`glu ${e.dipGlucose}`);
-    if (e.dipKetones) parts.push(`ket ${e.dipKetones}`);
     if (e.dipOther) parts.push(e.dipOther);
     return parts.join(', ');
   }
 
   function hasUrineDip(e) {
-    return !!(e.dipProtein || e.dipBlood || e.dipLeuc || e.dipNitrites || e.dipGlucose || e.dipKetones || e.dipOther);
+    return !!(e.dipProtein || e.dipBlood || e.dipOther);
+  }
+
+  function vitalsString(e) {
+    const parts = [];
+    if (e.vHr) parts.push(`HR ${e.vHr}`);
+    if (e.vBp) parts.push(`BP ${e.vBp}`);
+    if (e.vRr) parts.push(`RR ${e.vRr}`);
+    if (e.vSats) parts.push(`SpO₂ ${e.vSats}%`);
+    if (e.vTemp) parts.push(`T ${e.vTemp}°C`);
+    if (e.vNews) parts.push(`NEWS2 ${e.vNews}`);
+    return parts.join(', ');
+  }
+
+  function hasVitals(e) {
+    return !!(e.vHr || e.vBp || e.vRr || e.vSats || e.vTemp || e.vNews);
   }
 
   function renalBackgroundSentence(e) {
@@ -1341,6 +1466,10 @@
     if (bloods) s4 = `Current bloods: ${bloods}.`;
     if (e.bUo) s4 += (s4 ? ' ' : '') + `Urine output ${e.bUo}.`;
 
+    // Sentence 4a: vitals
+    let s4a = '';
+    if (hasVitals(e)) s4a = `Observations: ${vitalsString(e)}.`;
+
     // Sentence 4b: investigations
     let s4b = '';
     if (e.imaging) {
@@ -1377,7 +1506,7 @@
       triageLine = `Triaged as ${map[e.triage]}.`;
     }
 
-    return [s1, s2, s3, s4, s4b, s5, s6, triageLine].filter(Boolean).join(' ');
+    return [s1, s2, s3, s4, s4a, s4b, s5, s6, triageLine].filter(Boolean).join(' ');
   }
 
   function generateSBARNote(e) {
@@ -1404,6 +1533,7 @@
     lines.push(`ASSESSMENT`);
     const aBits = [];
     const bloods = bloodsSentence(e);
+    if (hasVitals(e)) aBits.push(`Obs: ${vitalsString(e)}`);
     if (bloods) aBits.push(`Bloods: ${bloods}`);
     if (e.bUo) aBits.push(`Urine output: ${e.bUo}`);
     if (e.imaging) aBits.push(`Imaging: ${e.imaging.trim()}`);
@@ -1434,6 +1564,7 @@
     const lines = [line1];
     if (bg) lines.push(`Bg: ${bg}.`);
     if (e.background) lines.push(`Hx: ${e.background.trim()}`);
+    if (hasVitals(e)) lines.push(`Obs: ${vitalsString(e)}.`);
     if (bloods) lines.push(`Bloods: ${bloods}.`);
     if (e.imaging) lines.push(`Imaging: ${e.imaging.trim()}`);
     if (hasUrineDip(e)) lines.push(`Dip: ${urineDipString(e)}.`);
@@ -1543,19 +1674,19 @@
   // ============ EXPORT ============
   document.getElementById('exportBtn').addEventListener('click', () => {
     if (entries.length === 0) { alert('No entries to export.'); return; }
-    const headers = ['Timestamp','Triage','Hospital','Caller','Role','Patient','Age/DOB','ID Type','Hospital Number',
+    const headers = ['Timestamp','Triage','Hospital','Caller','Role','Patient','Age/DOB','Sex','ID Type','Hospital Number',
       'Modalities','Scenarios','CKD Stage','Baseline Cr','Baseline eGFR',
       'K+','Cr','Urea','Hb','pH/HCO3','Urine Output','Cr Trend','Other Bloods',
-      'Renal Imaging','Urine Dip',
+      'Renal Imaging','Urine Dip','Vitals',
       'Background','Reason','Advice','Clinical Note'];
     const rows = entries.map(e => [
       e.timestamp, e.triage, e.hospital, e.callerName, e.callerRole,
-      e.patientName, e.patientDob, e.hospNumType,
+      e.patientName, e.patientDob, e.patientSex, e.hospNumType,
       e.hospNumType === 'NHS' ? formatNHS(e.hospNum) : e.hospNum,
       (e.modalities||[]).join('; '), (e.scenarios||[]).join('; '),
       e.ckdStage, e.baselineCr, e.baselineEgfr,
       e.bK, e.bCr, e.bUrea, e.bHb, e.bPh, e.bUo, e.bCrTrend, e.bOther,
-      e.imaging, urineDipString(e),
+      e.imaging, urineDipString(e), vitalsString(e),
       e.background, e.referralReason, e.adviceGiven,
       generateProseNote(e)
     ]);
