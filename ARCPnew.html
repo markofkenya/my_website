@@ -989,11 +989,11 @@ function renderLogCPD(){
   const specEntries=entries('cpd').filter(e=>e.scope!=='gim');
   const gimEntries=entries('cpd').filter(e=>e.scope==='gim');
   const specHours=Math.round(specEntries.reduce((a,e)=>a+Number(e.hours||0),0)*10)/10;
-  const gimHours=Math.round(gimEntries.reduce((a,e)=>a+Number(e.hours||0),0)*10)/10;
+  const gimHours=gimExternalCpdHours();
   const specForm=`<input type="hidden" id="cpd-spec-scope" value="spec"><div class="field"><label>CPD type</label><select class="input" id="cpd-spec-type">${optionsHtml(sp.logbook.cpd)}</select></div><div class="field"><label>Date</label><input class="input" id="cpd-spec-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Title / event</label><input class="input" id="cpd-spec-title"></div><div class="field"><label>Hours</label><input class="input" id="cpd-spec-hours" type="number" min="0" step="0.5"></div><div class="field"><label>Training year</label><select class="input" id="cpd-spec-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="cpd-spec-notes" placeholder="Optional"></div>`;
   const gimForm=`<input type="hidden" id="cpd-gim-scope" value="gim"><div class="field"><label>CPD type</label><select class="input" id="cpd-gim-type">${optionsHtml(GIM_LOGBOOK.cpd)}</select></div><div class="field"><label>Date</label><input class="input" id="cpd-gim-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Title / event</label><input class="input" id="cpd-gim-title"></div><div class="field"><label>Hours</label><input class="input" id="cpd-gim-hours" type="number" min="0" step="0.5"></div><div class="field"><label>Training year</label><select class="input" id="cpd-gim-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="cpd-gim-notes" placeholder="Optional"></div>`;
   document.getElementById('log-content').innerHTML=
-    logSummaryCards([{value:specHours,label:`${sp.short} CPD hours`,cls:'primary'},{value:gimHours,label:`GIM CPD hours · cumulative`,cls:'blue'}])+
+    logSummaryCards([{value:specHours,label:`${sp.short} CPD hours`,cls:'primary'},{value:gimHours,label:`External GIM CPD hours · cumulative`,cls:'blue'}])+
     formPanel(`Add ${sp.short} CPD / study leave`,specForm,"saveCPD('spec')")+
     section(`${sp.short} CPD entries`,`${specEntries.length} entries`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('cpd',e=>e.scope!=='gim',['Date','Type','Title','Hours','Year','Notes'], e=>[fmtDate(e.date),e.type,e.title,e.hours,e.year,e.notes])}</div>`])+
     formPanel('Add GIM CPD / study leave',gimForm,"saveCPD('gim')")+
@@ -1014,6 +1014,15 @@ function addHospitalIfNew(h){ if(!h) return; state.hospitals=Array.from(new Set(
 // External GIM CPD types — only these count toward the 100h external requirement.
 // Internal types like Grand round / Journal club / Departmental teaching don't count.
 const EXTERNAL_GIM_CPD_TYPES = new Set(['Regional GIM training day','RCP / RSM / BMA approved course','Other external CPD']);
+  function gimExternalCpdHours(filter=()=>true){
+  return Math.round(
+    entries('cpd')
+      .filter(e => e.scope==='gim' && EXTERNAL_GIM_CPD_TYPES.has(e.type))
+      .filter(filter)
+      .reduce((a,e)=>a+Number(e.hours||0),0)*10
+  )/10;
+}
+
 function syncLogbookTargets(){ const clinics=entries('clinics').filter(e=>e.scope==='gim').length; const gimCpdEntries=entries('cpd').filter(e=>e.scope==='gim'); const externalGimCpd=gimCpdEntries.filter(e=>EXTERNAL_GIM_CPD_TYPES.has(e.type)); const simEntries=entries('simulation'); const acuteEntries=entries('acute'); state.req['cum.gim_clinics']=clinics; state.req['cum.gim_cpd']=Math.round(externalGimCpd.reduce((a,e)=>a+Number(e.hours||0),0)); state.req['cum.gim_cpd_st7']=Math.round(externalGimCpd.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.hours||0),0)); state.req['cum.gim_sim']=Math.round(simEntries.reduce((a,e)=>a+Number(e.hours||0),0)*10)/10; state.req['cum.gim_sim_st7']=Math.round(simEntries.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.hours||0),0)*10)/10; state.req['cum.gim_acute']=Math.round(acuteEntries.reduce((a,e)=>a+Number(e.estimated||0),0)); state.req['cum.gim_acute_st7']=Math.round(acuteEntries.filter(e=>e.year==='ST7').reduce((a,e)=>a+Number(e.estimated||0),0)); state.req['cum.gim_ward']=Math.round(entries('ward').reduce((a,e)=>a+Number(e.months||0),0)*10)/10; }
 function renderAdmin(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const hosp=hospitalOptions(); document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Profile & deanery</span><span class="sec-rule"></span><span class="sec-note">Used in reports and hospital dropdowns</span></div><div class="panel"><div class="form-grid"><div class="field"><label>ALS expiry</label><input class="input" type="date" value="${state.als||''}" onchange="state.als=this.value;saveState();render()"></div><div class="field"><label>${currentYear} ARCP date</label><input class="input" type="date" value="${state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]}" onchange="state.arcpDates['${currentYear}']=this.value;saveState();render()"></div><div class="field full"><label>Add hospital</label><div class="row"><input class="input" id="new-hospital" placeholder="Add hospital not in deanery list"><button class="btn primary" onclick="addAdminHospital()">ADD</button></div></div></div></div></section><section class="section"><div class="sec-head"><span class="sec-title">Hospitals</span><span class="sec-rule"></span><span class="sec-note">${hosp.length} available · delete hospitals you are not rotating in</span></div><div class="grid">${hosp.map(h=>`<div class="card"><div class="card-title">${safe(h)}</div><button class="btn small danger" onclick="deleteHospital('${safe(h)}')">Delete from list</button></div>`).join('')}</div></section>`; }
 function addAdminHospital(){ const h=val('new-hospital'); if(!h)return; addHospitalIfNew(h); renderAdmin(); }
@@ -1176,7 +1185,7 @@ footer.colophon-foot em{font-style:italic;text-transform:none;letter-spacing:.04
   ${formalScopedTable('GIM', gimProcsYr, ['date','type','hospital','supervisor','dops','year'], 'gim', `${gimProcsYr.filter(e=>e.dops==='Yes').length} DOPS-signed`)}
 
   ${formalSection('Continuing Professional Development','III.','Recorded study leave and professional development hours, by stream.')}
-  <div class="summary-line">GIM CPD \u2014 Counted total: <strong>${sumHours(gimCpd)} h</strong> against a 100-hour annual standard. ST7 minimum: <strong>${sumHours(gimCpd,e=>e.year==='ST7')} h</strong> / 20 h.</div>
+  <div class="summary-line">GIM CPD \u2014 External total: <strong>${gimExternalCpdHours()} h</strong> against a 100-hour annual standard. ST7 minimum: <strong>${gimExternalCpdHours(e=>e.year==='ST7')} h</strong> / 20 h.</div>
   ${formalScopedTable('GIM', gimCpd, ['date','type','title','hours','year'], 'gim')}
   <div class="summary-line">${safe(sp.short)} CPD \u2014 Total: <strong>${sumHours(specCpd)} h</strong> in ${safe(yr)}.</div>
   ${formalScopedTable(sp.short, specCpd, ['date','type','title','hours','year'], 'spec')}
