@@ -62,10 +62,6 @@
       --dimmest: #1a1208;
 
       --font: 'JetBrains Mono', 'Courier New', monospace;
-      --scanline: repeating-linear-gradient(
-        0deg, transparent, transparent 2px,
-        rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px
-      );
 
       /* Priority colours */
       --p-emergency: #ff3333;
@@ -79,9 +75,7 @@
       font-family: var(--font);
       font-size: 13px;
       min-height: 100vh;
-      background-image: var(--scanline);
     }
-    body { text-shadow: 0 0 6px rgba(255,176,0,0.2); }
 
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
@@ -119,8 +113,8 @@
     .stat-val {
       font-size: 26px; font-weight: 700; line-height: 1; color: var(--amber);
     }
-    .stat-val.emerg { color: var(--red);    text-shadow: 0 0 10px rgba(255,51,51,0.5); }
-    .stat-val.urg   { color: var(--orange); text-shadow: 0 0 8px rgba(255,102,0,0.4); }
+    .stat-val.emerg { color: var(--red); }
+    .stat-val.urg   { color: var(--orange); }
     .stat-key { font-size: 8px; color: var(--amber3); letter-spacing: 0.2em; margin-top: 3px; }
 
     .header-clock {
@@ -141,9 +135,9 @@
       display: none;
       padding: 5px 24px; font-size: 10px; font-weight: 700;
       letter-spacing: 0.2em; text-shadow: none;
-      animation: strobe 1.5s ease-in-out infinite;
     }
     #priority-strip.show { display: block; }
+    #priority-strip.flashing { animation: strobe 1.5s ease-in-out infinite; }
     #priority-strip.emerg { background: var(--red);    color: #fff; }
     #priority-strip.urg   { background: var(--orange); color: #fff; }
     @keyframes strobe { 0%,100%{opacity:1} 50%{opacity:0.7} }
@@ -736,6 +730,7 @@ const JOB_TYPES = [
 ];
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxQNlt-BhB6dNuvksNHsyJCb5LwTHYdRz4HX8UZ4QVQml2RZgyVfJKVqdF4zE0Q-Hw/exec";
 const PRI_ORDER = { emergency: 0, urgent: 1, routine: 2 };
+const IMMINENT_MS = 15 * 60 * 1000;   // flash strip when something is due within this window (or overdue)
 
 // ── State ────────────────────────────────────────────────────
 let tasks = {}, filterStatus="active", filterPri="all", filterType="all";
@@ -1137,6 +1132,36 @@ function emailHandover() {
 }
 
 
+// ── Priority strip ───────────────────────────────────────────
+// Strip is visible whenever there are outstanding emergencies/urgents.
+// It only FLASHES (strobe) when at least one pending job has a reminder
+// due within IMMINENT_MS, or is already overdue.
+function updatePriorityStrip() {
+  const strip = document.getElementById("priority-strip");
+  if (!strip) return;
+
+  const pending = Object.values(tasks).filter(t => !t.completed);
+  const emergCt = pending.filter(t => t.priority === "emergency").length;
+  const urgCt   = pending.filter(t => t.priority === "urgent").length;
+
+  const now = Date.now();
+  const imminent = pending.some(t => t.remindAt && (t.remindAt - now) <= IMMINENT_MS);
+
+  let cls = "";
+  if (emergCt > 0) {
+    cls = "show emerg";
+    strip.textContent = `!! ${emergCt} EMERGENCY JOB${emergCt>1?"S":""} OUTSTANDING !!`;
+  } else if (urgCt > 0) {
+    cls = "show urg";
+    strip.textContent = `▲ ${urgCt} URGENT JOB${urgCt>1?"S":""} OUTSTANDING`;
+  }
+  if (cls && imminent) cls += " flashing";
+  strip.className = cls;
+}
+
+// Re-check imminence on a timer so the flash kicks in without needing a data event.
+setInterval(updatePriorityStrip, 30000);
+
 // ── Render ───────────────────────────────────────────────────
 function render() {
   const tbody = document.getElementById("task-body");
@@ -1171,17 +1196,8 @@ function render() {
   document.getElementById("sb-pend").textContent    = pending.length;
   document.getElementById("sb-done").textContent    = doneCt;
 
-  // Priority strip
-  const strip = document.getElementById("priority-strip");
-  if (emergCt > 0) {
-    strip.className = "show emerg";
-    strip.textContent = `!! ${emergCt} EMERGENCY JOB${emergCt>1?"S":""} OUTSTANDING !!`;
-  } else if (urgCt > 0) {
-    strip.className = "show urg";
-    strip.textContent = `▲ ${urgCt} URGENT JOB${urgCt>1?"S":""} OUTSTANDING`;
-  } else {
-    strip.className = "";
-  }
+  // Priority strip — see updatePriorityStrip() for flashing logic
+  updatePriorityStrip();
 
   tbody.innerHTML = "";
   if (arr.length===0) { empty.style.display="block"; return; }
