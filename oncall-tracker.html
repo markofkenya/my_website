@@ -136,10 +136,10 @@
       padding: 5px 24px; font-size: 10px; font-weight: 700;
       letter-spacing: 0.2em; text-shadow: none;
     }
-    #priority-strip.show { display: block; }
-    #priority-strip.flashing { animation: strobe 1.5s ease-in-out infinite; }
-    #priority-strip.emerg { background: var(--red);    color: #fff; }
-    #priority-strip.urg   { background: var(--orange); color: #fff; }
+    #priority-strip.show { display: block; animation: strobe 1.5s ease-in-out infinite; }
+    #priority-strip.emerg   { background: var(--red);    color: #fff; }
+    #priority-strip.urg     { background: var(--orange); color: #fff; }
+    #priority-strip.routine { background: var(--amber);  color: #000; }
     @keyframes strobe { 0%,100%{opacity:1} 50%{opacity:0.7} }
 
     /* ── Command bar ─────────────────────────────────────── */
@@ -312,9 +312,18 @@
 
     .tbl-row {
       border-bottom: 1px solid var(--dimmest);
-      transition: background 0.08s; animation: rowIn 0.18s ease;
+      transition: background 0.08s, opacity 0.7s ease;
+      animation: rowIn 0.18s ease;
     }
     @keyframes rowIn { from{opacity:0;transform:translateX(-4px)} to{opacity:1;transform:translateX(0)} }
+    .tbl-row.new-pulse {
+      animation: rowIn 0.18s ease, newPulse 1.8s ease-out 1;
+    }
+    @keyframes newPulse {
+      0%   { background: rgba(255,176,0,0.32); box-shadow: inset 3px 0 0 var(--amber); }
+      60%  { background: rgba(255,176,0,0.14); box-shadow: inset 3px 0 0 var(--amber2); }
+      100% { background: transparent;          box-shadow: inset 3px 0 0 transparent; }
+    }
     .tbl-row:hover { background: var(--bg3); }
     .tbl-row.done  { opacity: 0.3; }
     .tbl-row td    { padding: 8px 12px; vertical-align: middle; font-size: 12px; }
@@ -623,8 +632,8 @@
       <input class="inp" id="f-patient" placeholder="JD" maxlength="8" />
     </div>
         <div class="field">
-      <label class="lbl">dob_year</label>
-      <input class="inp" id="f-dobyear" placeholder="1958" type="number" maxlength="4" />
+      <label class="lbl">age</label>
+      <input class="inp" id="f-age" placeholder="67" type="number" min="0" max="120" maxlength="3" />
     </div>
     <div class="field">
       <label class="lbl">location</label>
@@ -732,6 +741,111 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxQNlt-BhB6dNu
 const PRI_ORDER = { emergency: 0, urgent: 1, routine: 2 };
 const IMMINENT_MS = 15 * 60 * 1000;   // flash strip when something is due within this window (or overdue)
 
+// ── Offline cache + write queue ──────────────────────────────
+// Tasks are cached in localStorage so the UI works on cold start when offline.
+// Writes are queued in localStorage; the queue survives page reloads and is
+// flushed to Firebase whenever the connection comes back.
+const LS_CACHE = "oct_tasks_cache";
+const LS_QUEUE = "oct_pending_ops";
+let fbConnected = false;
+let flushInFlight = false;
+
+function lsLoad(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch(e) { return fallback; }
+}
+function lsSave(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+}
+
+const saveCache = () => lsSave(LS_CACHE, tasks);
+const getQueue  = () => lsLoad(LS_QUEUE, []);
+const setQueueLS = (q) => lsSave(LS_QUEUE, q);
+
+function generateLocalId() {
+  return "loc_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,7);
+}
+
+const isOnline = () => navigator.onLine && fbConnected;
+
+function updateSyncStatus() {
+  const el = document.getElementById("sb-sync");
+  if (!el) return;
+  const qLen = getQueue().length;
+  if (!isOnline()) {
+    el.textContent = qLen ? `db: offline · ${qLen} queued` : "db: offline";
+    el.style.color = "var(--orange)";
+    const live = document.getElementById("sync-live");
+    if (live) live.style.display = "none";
+  } else if (qLen) {
+    el.textContent = `db: syncing · ${qLen} pending`;
+    el.style.color = "var(--amber2)";
+  } else {
+    el.textContent = "db: connected";
+    el.style.color = "var(--amber3)";
+    const live = document.getElementById("sync-live");
+    if (live) live.style.display = "block";
+  }
+}
+
+// Apply an op to local `tasks` state (optimistic update). Used by both
+// queuedWrite (immediate apply) and the onValue handler (replaying queue
+// on top of fresh Firebase data so optimistic changes don't disappear).
+function applyOpLocally(op) {
+  const m = op.path.match(/^onCallTasks\/(.+)$/);
+  if (m) {
+    const id = m[1];
+    if (op.type === "remove") delete tasks[id];
+    else if (op.type === "update") tasks[id] = { ...(tasks[id] || {}), ...op.data };
+    else if (op.type === "set")    tasks[id] = op.data;
+  } else if (op.path === "onCallTasks" && op.type === "set" && op.data === null) {
+    tasks = {};
+  }
+}
+
+// Queue + apply optimistically + try to flush
+function queuedWrite(op) {
+  applyOpLocally(op);
+  saveCache();
+  render();
+  const q = getQueue();
+  q.push(op);
+  setQueueLS(q);
+  updateSyncStatus();
+  flushQueue();
+}
+
+async function flushQueue() {
+  if (flushInFlight || !isOnline() || !window._fb) return;
+  flushInFlight = true;
+  try {
+    const { db, ref, set, update, remove } = window._fb;
+    let q = getQueue();
+    while (q.length) {
+      const op = q[0];
+      try {
+        const fbRef = ref(db, op.path);
+        if      (op.type === "set")    await set(fbRef, op.data);
+        else if (op.type === "update") await update(fbRef, op.data);
+        else if (op.type === "remove") await remove(fbRef);
+        q.shift();
+        setQueueLS(q);
+        updateSyncStatus();
+      } catch (err) {
+        console.warn("[OCT] sync failed, will retry:", op, err);
+        break;
+      }
+    }
+  } finally {
+    flushInFlight = false;
+    updateSyncStatus();
+  }
+}
+
+// Browser-level online/offline events
+window.addEventListener("online",  () => { updateSyncStatus(); flushQueue(); });
+window.addEventListener("offline", () => { updateSyncStatus(); });
+
 // ── State ────────────────────────────────────────────────────
 let tasks = {}, filterStatus="active", filterPri="all", filterType="all";
 let selPriority  = "routine";
@@ -740,11 +854,19 @@ let selRemind    = 0;
 let selRemindAt  = null; 
 let editingId    = null;
 let shiftStart   = Date.now();
+let knownTaskIds = null;   // null until first render; tracks IDs to detect newly added tasks
 // ── Helpers ──────────────────────────────────────────────────
 const nowTimeStr = () => new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
 const esc        = s  => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const fmtTime    = s  => s || "--:--";
 const typeObj    = k  => JOB_TYPES.find(t=>t.key===k) || JOB_TYPES[JOB_TYPES.length-1];
+
+// Age: prefer new `age` field, fall back to legacy `dobYear` for old records
+function getAge(t) {
+  if (t.age) return parseInt(t.age);
+  if (t.dobYear) return new Date().getFullYear() - parseInt(t.dobYear);
+  return null;
+}
 
 function timeAgo(timeStr) {
   if (!timeStr) return "";
@@ -776,22 +898,43 @@ setInterval(tickClock, 1000);
 
 
 // ── Firebase ─────────────────────────────────────────────────
-function initFirebase() {
-  const { onValue, tasksRef } = window._fb;
+// Hydrate from localStorage immediately so the UI works offline on cold start.
+const cachedTasks = lsLoad(LS_CACHE, null);
+if (cachedTasks && Object.keys(cachedTasks).length) {
+  tasks = cachedTasks;
+  // Replay any queue on top so optimistic-but-not-yet-synced changes show
+  for (const op of getQueue()) applyOpLocally(op);
+  render();
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("task-table").classList.add("show");
+}
+updateSyncStatus();
 
-  document.getElementById("sync-live").style.display = "block";
-  document.getElementById("sb-sync").textContent = "db: connected";
-  document.getElementById("sb-sync").style.color = "var(--amber3)";
+function initFirebase() {
+  const { onValue, tasksRef, ref, db } = window._fb;
+
+  // Track Firebase's own connection state separately from navigator.onLine.
+  // navigator.onLine can lie (captive portals, partial connectivity).
+  onValue(ref(db, ".info/connected"), snap => {
+    fbConnected = snap.val() === true;
+    updateSyncStatus();
+    if (fbConnected) flushQueue();
+  });
 
   onValue(tasksRef, snap => {
+    // Firebase is source of truth on the read side. Replace local state
+    // with whatever Firebase says, then layer any not-yet-flushed queued
+    // ops on top so optimistic changes don't disappear mid-flight.
     tasks = snap.val() || {};
+    for (const op of getQueue()) applyOpLocally(op);
+    saveCache();
     render();
     document.getElementById("loading").style.display = "none";
     document.getElementById("task-table").classList.add("show");
+    updateSyncStatus();
   });
 }
 
-// 👇 THIS replaces the old listener
 if (window._fb) {
   initFirebase();
 } else {
@@ -849,7 +992,7 @@ function openDrawer(taskId) {
 
   if (task) {
     document.getElementById("f-patient").value  = task.patient  || "";
-    document.getElementById("f-dobyear").value  = task.dobYear  || "";
+    document.getElementById("f-age").value      = task.age || (task.dobYear ? (new Date().getFullYear() - parseInt(task.dobYear)) : "");
     document.getElementById("f-location").value = task.location || "";
     document.getElementById("f-time").value     = task.timeIn   || "";
     document.getElementById("f-task").value     = task.task     || "";
@@ -869,7 +1012,7 @@ function openDrawer(taskId) {
     selType = typeObj(task.type);
     setPriority(selPriority);
   } else {
-        ["f-patient","f-dobyear","f-location","f-task","f-notes"].forEach(id=>document.getElementById(id).value="");
+        ["f-patient","f-age","f-location","f-task","f-notes"].forEach(id=>document.getElementById(id).value="");
 
     document.getElementById("f-time").value   = nowTimeStr();
     selPriority = "routine";
@@ -919,7 +1062,7 @@ function saveJob() {
 
   const payload = {
     patient,
-    dobYear:  document.getElementById("f-dobyear").value || "",
+    age:      document.getElementById("f-age").value || "",
     location: document.getElementById("f-location").value.trim(),
     timeIn:   document.getElementById("f-time").value,
     priority: selPriority,
@@ -932,11 +1075,13 @@ function saveJob() {
 
 
   if (editingId) {
-    const { db, ref, update } = window._fb;
-    update(ref(db, `onCallTasks/${editingId}`), payload);
+    queuedWrite({ type: "update", path: `onCallTasks/${editingId}`, data: payload });
   } else {
-    window._fb.push(window._fb.tasksRef, {
-      ...payload, completed: false, createdAt: Date.now(), completedAt: null,
+    const id = generateLocalId();
+    queuedWrite({
+      type: "set",
+      path: `onCallTasks/${id}`,
+      data: { ...payload, completed: false, createdAt: Date.now(), completedAt: null }
     });
   }
   closeDrawer();
@@ -945,17 +1090,19 @@ function saveJob() {
 // ── Mutations ────────────────────────────────────────────────
 function toggleDone(id) {
   const t = tasks[id]; if (!t) return;
-  const { db, ref, update } = window._fb;
-  update(ref(db,`onCallTasks/${id}`),{
-    completed: !t.completed,
-    completedAt: !t.completed ? Date.now() : null,
+  queuedWrite({
+    type: "update",
+    path: `onCallTasks/${id}`,
+    data: {
+      completed: !t.completed,
+      completedAt: !t.completed ? Date.now() : null,
+    }
   });
   const el = document.querySelector(`#tr-${id} .cb`);
   if (el) { el.style.transform="scale(1.35)"; setTimeout(()=>el.style.transform="",180); }
 }
 function deleteJob(id) {
-  const { db, ref, remove } = window._fb;
-  remove(ref(db, `onCallTasks/${id}`));
+  queuedWrite({ type: "remove", path: `onCallTasks/${id}` });
 }
 function toggleExpand(id) {
   document.getElementById("tr-"+id)?.classList.toggle("expanded");
@@ -970,7 +1117,7 @@ function toggleExpand(id) {
   document.getElementById("drawer-exec-btn").textContent   = "EXECUTE ▸";
 
   document.getElementById("f-patient").value  = task.patient  || "";
-    document.getElementById("f-dobyear").value  = task.dobYear  || "";
+    document.getElementById("f-age").value      = task.age || (task.dobYear ? (new Date().getFullYear() - parseInt(task.dobYear)) : "");
   
 
   document.getElementById("f-location").value = task.location || "";
@@ -993,8 +1140,7 @@ function toggleExpand(id) {
 }
 function clearShift() {
   if (!confirm("END_SHIFT: clear all tasks? This cannot be undone.")) return;
-  const { db, ref, set } = window._fb;
-  set(ref(db, "onCallTasks"), null);
+  queuedWrite({ type: "set", path: "onCallTasks", data: null });
 }
 
 // ── Handover export ──────────────────────────────────────────
@@ -1023,7 +1169,8 @@ function openHandover() {
     pending.forEach((t, i) => {
       const icon    = PRI_ICON[t.priority] || "── ";
       const pri     = (t.priority||"routine").toUpperCase();
-      const patient = `${t.patient||"?"}${t.dobYear?" (age "+(new Date().getFullYear()-parseInt(t.dobYear))+")":""}`;
+      const age     = getAge(t);
+      const patient = `${t.patient||"?"}${age?" (age "+age+")":""}`;
       const type    = (t.type||"other").toUpperCase();
       const time    = t.timeIn || "??:??";
       const dueStr = t.remindAt ? String(new Date(t.remindAt).getHours()).padStart(2,"0")+":"+String(new Date(t.remindAt).getMinutes()).padStart(2,"0") : time;
@@ -1041,7 +1188,8 @@ function openHandover() {
     out += `  COMPLETED JOBS (${completed.length})\n`;
     out += `${d}\n`;
     completed.forEach(t => {
-      const patient = `${t.patient||"?"}${t.dobYear?" (age "+(new Date().getFullYear()-parseInt(t.dobYear))+")":""}`;
+      const age     = getAge(t);
+      const patient = `${t.patient||"?"}${age?" (age "+age+")":""}`;
 
       const type    = (t.type||"other").toUpperCase();
       const time    = t.timeIn || "??:??";
@@ -1133,41 +1281,80 @@ function emailHandover() {
 
 
 // ── Priority strip ───────────────────────────────────────────
-// Strip is visible whenever there are outstanding emergencies/urgents.
-// It only FLASHES (strobe) when at least one pending job has a reminder
-// due within IMMINENT_MS, or is already overdue.
+// Strip appears AND strobes together — both triggered solely by imminence.
+// A job is "imminent" if its remindAt is within IMMINENT_MS or already overdue.
+// Hidden entirely when nothing is imminent (header stats show the backlog).
 function updatePriorityStrip() {
   const strip = document.getElementById("priority-strip");
   if (!strip) return;
 
-  const pending = Object.values(tasks).filter(t => !t.completed);
-  const emergCt = pending.filter(t => t.priority === "emergency").length;
-  const urgCt   = pending.filter(t => t.priority === "urgent").length;
-
   const now = Date.now();
-  const imminent = pending.some(t => t.remindAt && (t.remindAt - now) <= IMMINENT_MS);
+  const imminent = Object.values(tasks).filter(t =>
+    !t.completed && t.remindAt && (t.remindAt - now) <= IMMINENT_MS
+  );
 
-  let cls = "";
-  if (emergCt > 0) {
-    cls = "show emerg";
-    strip.textContent = `!! ${emergCt} EMERGENCY JOB${emergCt>1?"S":""} OUTSTANDING !!`;
-  } else if (urgCt > 0) {
-    cls = "show urg";
-    strip.textContent = `▲ ${urgCt} URGENT JOB${urgCt>1?"S":""} OUTSTANDING`;
+  if (imminent.length === 0) {
+    strip.className = "";
+    strip.textContent = "";
+    return;
   }
-  if (cls && imminent) cls += " flashing";
-  strip.className = cls;
+
+  // Colour by highest priority among imminent jobs
+  const topPri = imminent.some(t => t.priority === "emergency") ? "emerg"
+              : imminent.some(t => t.priority === "urgent")    ? "urg"
+              : "routine";
+
+  // Text: describe what's imminent
+  let text;
+  if (imminent.length === 1) {
+    const t = imminent[0];
+    const diffMs = t.remindAt - now;
+    const mins = Math.max(0, Math.round(Math.abs(diffMs) / 60000));
+    const tag = (t.patient || "JOB").toUpperCase();
+    text = diffMs < 0
+      ? `!! ${tag} OVERDUE BY ${mins}M !!`
+      : `!! ${tag} DUE IN ${mins}M !!`;
+  } else {
+    const overdueCt = imminent.filter(t => (t.remindAt - now) < 0).length;
+    text = overdueCt
+      ? `!! ${imminent.length} JOBS DUE WITHIN 15M · ${overdueCt} OVERDUE !!`
+      : `!! ${imminent.length} JOBS DUE WITHIN 15M !!`;
+  }
+
+  strip.textContent = text;
+  strip.className = `show ${topPri}`;
 }
 
 // Re-check imminence on a timer so the flash kicks in without needing a data event.
 setInterval(updatePriorityStrip, 30000);
+
+// Retry pending writes periodically (covers cases where neither the online
+// event nor a Firebase .info/connected change has prodded us)
+setInterval(() => { if (getQueue().length) flushQueue(); }, 30000);
 
 // ── Render ───────────────────────────────────────────────────
 function render() {
   const tbody = document.getElementById("task-body");
   const empty = document.getElementById("empty");
 
-  let arr = Object.entries(tasks).map(([id,t])=>({id,...t}));
+  // Detect newly-added task IDs since last render (for pulse animation).
+  // First render is initialisation — don't pulse everything that was already there.
+  const currentIds = new Set(Object.keys(tasks));
+  const newIds = knownTaskIds === null
+    ? new Set()
+    : new Set([...currentIds].filter(id => !knownTaskIds.has(id)));
+  knownTaskIds = currentIds;
+
+  // ALL outstanding emergencies are pinned at the top regardless of filters.
+  // This is a safety property — you can't accidentally hide a live emergency.
+  const allTasks = Object.entries(tasks).map(([id,t])=>({id,...t}));
+  const pinned = allTasks
+    .filter(t => t.priority === "emergency" && !t.completed)
+    .sort((a,b) => (a.timeIn||"").localeCompare(b.timeIn||""));
+  const pinnedIds = new Set(pinned.map(t => t.id));
+
+  // Apply filters to the rest
+  let arr = allTasks.filter(t => !pinnedIds.has(t.id));
   if (filterStatus==="active")    arr=arr.filter(t=>!t.completed);
   if (filterStatus==="completed") arr=arr.filter(t=> t.completed);
   if (filterPri!=="all")          arr=arr.filter(t=>t.priority===filterPri);
@@ -1200,17 +1387,22 @@ function render() {
   updatePriorityStrip();
 
   tbody.innerHTML = "";
-  if (arr.length===0) { empty.style.display="block"; return; }
+  if (pinned.length === 0 && arr.length === 0) { empty.style.display = "block"; return; }
   empty.style.display = "none";
 
-  // Sections for active view
-  const groups = filterStatus==="active"
-    ? [
-        { label:"EMERGENCY", items:arr.filter(t=>t.priority==="emergency"&&!t.completed) },
-        { label:"URGENT",    items:arr.filter(t=>t.priority==="urgent"&&!t.completed) },
-        { label:"ROUTINE",   items:arr.filter(t=>t.priority==="routine"&&!t.completed) },
-      ].filter(g=>g.items.length)
-    : [{ label:null, items:arr }];
+  // Build display groups
+  const groups = [];
+  if (pinned.length) {
+    groups.push({ label:"EMERGENCY · PINNED", items: pinned });
+  }
+  if (filterStatus === "active") {
+    const urg = arr.filter(t => t.priority === "urgent");
+    const rou = arr.filter(t => t.priority === "routine");
+    if (urg.length) groups.push({ label:"URGENT",  items: urg });
+    if (rou.length) groups.push({ label:"ROUTINE", items: rou });
+  } else if (arr.length) {
+    groups.push({ label: null, items: arr });
+  }
 
   groups.forEach(g => {
     if (g.label) {
@@ -1219,16 +1411,16 @@ function render() {
       sep.innerHTML = `<td colspan="7" data-count="${g.items.length}">${g.label}</td>`;
       tbody.appendChild(sep);
     }
-    g.items.forEach(task => tbody.appendChild(buildRow(task)));
+    g.items.forEach(task => tbody.appendChild(buildRow(task, newIds.has(task.id))));
   });
 }
 
-function buildRow(task) {
+function buildRow(task, isNew) {
   const t    = typeObj(task.type);
   const pri  = task.priority || "routine";
 
   const tr = document.createElement("tr");
-  tr.className = `tbl-row p-${pri}${task.completed?" done":""}`;
+  tr.className = `tbl-row p-${pri}${task.completed?" done":""}${isNew?" new-pulse":""}`;
   tr.id = "tr-"+task.id;
 
   tr.innerHTML = `
@@ -1242,7 +1434,7 @@ function buildRow(task) {
     </td>
     <td class="td-patient">
       <div class="patient-str">${esc(task.patient||"?")}</div>
-      ${task.dobYear?`<div style="font-size:9px;color:var(--amber4)">DOB: ${esc(task.dobYear)} · age ${new Date().getFullYear() - parseInt(task.dobYear)}</div>`:""}
+      ${(()=>{ const a = getAge(task); return a ? `<div style="font-size:9px;color:var(--amber4)">age ${a}</div>` : ""; })()}
       ${task.location?`<div style="font-size:9px;color:var(--amber4)">${esc(task.location)}</div>`:""}
       ${task.oncall?`<div style="font-size:9px;color:var(--amber4)">${esc(task.oncall)}</div>`:""}
     </td>
