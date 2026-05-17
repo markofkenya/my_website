@@ -328,6 +328,11 @@
       opacity: 0.3;
       animation: none;   /* mount already-dimmed; prevents flash on tab switch */
     }
+    .tbl-row.no-anim { animation: none; }   /* existing row on re-render: suppress rowIn */
+    .tbl-row.done.just-completed {
+      animation: fadeToDone 0.7s ease forwards;   /* preserves fade-on-completion */
+    }
+    @keyframes fadeToDone { from{opacity:1} to{opacity:0.3} }
     .tbl-row td    { padding: 8px 12px; vertical-align: middle; font-size: 12px; }
 
     /* Checkbox */
@@ -544,20 +549,22 @@
       }
       .tbl-section td::after { content: ""; }
 
-      /* Each row becomes a card — grid lays out a footer row of
-         [time | actions | checkbox], all sharing the bottom of the card */
+      /* Each row becomes a card.
+         Content stacks vertically. Footer row has time on the left and
+         edit/dup/del on the right. Checkbox is absolutely positioned
+         top-right (where it was) — padding-right reserves space for it. */
       .tbl-row {
         display: grid;
         grid-template-areas:
-          "pri      pri      pri"
-          "patient  patient  patient"
-          "task     task     task"
-          "time     actions  cb";
-        grid-template-columns: 1fr auto auto;
+          "pri      pri"
+          "patient  patient"
+          "task     task"
+          "time     actions";
+        grid-template-columns: auto 1fr;
         align-items: center;
         gap: 6px 10px;
         margin: 8px 12px;
-        padding: 14px;
+        padding: 14px 60px 12px 14px;   /* right pad reserves space for the absolute checkbox */
         background: var(--bg2);
         border: 1px solid var(--amber5);
         border-left: 4px solid var(--amber);
@@ -576,21 +583,26 @@
       }
       .td-type { display: none; }   /* type pill takes too much width on phone */
 
-      /* Footer row — all three cells share one line at card bottom */
-      .td-cb      { grid-area: cb;      justify-self: end; }
-      .td-pri     { grid-area: pri; }
-      .td-patient { grid-area: patient; margin-bottom: 0; }
-      .td-task    { grid-area: task;    margin-bottom: 0; }
-      .td-time    { grid-area: time;    margin-bottom: 0; text-align: left !important; }
-      .td-actions { grid-area: actions; margin-top: 0;   text-align: right !important; }
-
+      /* Checkbox: large tap target, top-right corner — same place it was */
+      .td-cb {
+        position: absolute; top: 14px; right: 12px;
+        margin: 0;
+      }
       .cb {
         width: 36px; height: 36px; font-size: 18px;
       }
-      .patient-str { font-size: 14px; }   /* bumped from 13px for readability */
+
+      .td-pri     { grid-area: pri; }
+      .td-patient { grid-area: patient; margin-bottom: 0; }
+      .td-task    { grid-area: task;    margin-bottom: 0; }
+      .td-time    { grid-area: time;    margin-bottom: 0; text-align: left !important;
+                    font-size: 11px; color: var(--amber4); align-self: center; }
+      .td-actions { grid-area: actions; margin-top: 0;    text-align: right !important;
+                    align-self: center; white-space: nowrap; }
+
+      .patient-str { font-size: 14px; }
       .task-str    { font-size: 14px; line-height: 1.4; }
       .task-notes  { font-size: 11px; }
-      .td-time     { font-size: 11px; color: var(--amber4); }
       .edt, .dup, .del {
         padding: 6px 11px; font-size: 11px;
       }
@@ -974,6 +986,7 @@ let selRemindAt  = null;
 let editingId    = null;
 let shiftStart   = Date.now();
 let knownTaskIds = null;   // null until first render; tracks IDs to detect newly added tasks
+let knownDoneStates = {};  // { [id]: completedBool } from last render; used to detect just-completed transitions
 // ── Helpers ──────────────────────────────────────────────────
 const nowTimeStr = () => new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
 const esc        = s  => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -1449,13 +1462,25 @@ function render() {
   const tbody = document.getElementById("task-body");
   const empty = document.getElementById("empty");
 
-  // Detect newly-added task IDs since last render (for pulse animation).
-  // First render is initialisation — don't pulse everything that was already there.
+  // Detect what changed since last render. Drives animation classes on rows:
+  //   - first render        → everything fades in normally via rowIn
+  //   - existing unchanged  → suppress rowIn (no flash on re-render)
+  //   - new                 → new-pulse animation
+  //   - just-completed      → fadeToDone animation (active→done transition)
+  const isInitialRender = knownTaskIds === null;
   const currentIds = new Set(Object.keys(tasks));
-  const newIds = knownTaskIds === null
+  const newIds = isInitialRender
     ? new Set()
     : new Set([...currentIds].filter(id => !knownTaskIds.has(id)));
+  const justCompletedIds = new Set();
+  if (!isInitialRender) {
+    for (const id of currentIds) {
+      if (tasks[id].completed && knownDoneStates[id] === false) justCompletedIds.add(id);
+    }
+  }
   knownTaskIds = currentIds;
+  knownDoneStates = {};
+  for (const id of currentIds) knownDoneStates[id] = !!tasks[id].completed;
 
   // ALL outstanding emergencies are pinned at the top regardless of filters.
   // This is a safety property — you can't accidentally hide a live emergency.
@@ -1523,16 +1548,27 @@ function render() {
       sep.innerHTML = `<td colspan="7" data-count="${g.items.length}">${g.label}</td>`;
       tbody.appendChild(sep);
     }
-    g.items.forEach(task => tbody.appendChild(buildRow(task, newIds.has(task.id))));
+    g.items.forEach(task => {
+      const isNew           = newIds.has(task.id);
+      const isJustCompleted = justCompletedIds.has(task.id);
+      const isExisting      = !isInitialRender && !isNew;
+      tbody.appendChild(buildRow(task, isNew, isJustCompleted, isExisting));
+    });
   });
 }
 
-function buildRow(task, isNew) {
+function buildRow(task, isNew, isJustCompleted, isExisting) {
   const t    = typeObj(task.type);
   const pri  = task.priority || "routine";
 
+  const cls = ["tbl-row", `p-${pri}`];
+  if (task.completed)      cls.push("done");
+  if (isNew)               cls.push("new-pulse");
+  if (isJustCompleted)     cls.push("just-completed");
+  else if (isExisting)     cls.push("no-anim");
+
   const tr = document.createElement("tr");
-  tr.className = `tbl-row p-${pri}${task.completed?" done":""}${isNew?" new-pulse":""}`;
+  tr.className = cls.join(" ");
   tr.id = "tr-"+task.id;
 
   tr.innerHTML = `
