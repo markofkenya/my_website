@@ -139,7 +139,6 @@
     #priority-strip.show { display: block; animation: strobe 1.5s ease-in-out infinite; }
     #priority-strip.emerg   { background: var(--red);    color: #fff; }
     #priority-strip.urg     { background: var(--orange); color: #fff; }
-    #priority-strip.routine { background: var(--amber);  color: #000; }
     @keyframes strobe { 0%,100%{opacity:1} 50%{opacity:0.7} }
 
     /* ── Command bar ─────────────────────────────────────── */
@@ -514,13 +513,124 @@
     }
     .btn-clr:hover { border-color: var(--red); color: var(--red); }
 
+    /* Mobile bottom bar: hidden by default, shown only on mobile */
+    #mobile-bar { display: none; }
+
     /* ── Responsive ──────────────────────────────────────── */
     @media (max-width: 680px) {
       .header-clock { display: none; }
       .header-stats .stat-cell:nth-child(n+4) { display: none; }
       .drawer-body { grid-template-columns: 1fr 1fr; }
       .field.s4 { grid-column: span 2; }
-      .td-type { display: none; }
+
+      /* Top NEW_JOB/HANDOVER move to the bottom bar */
+      .cmd-right .btn-handover,
+      .cmd-right .btn-new { display: none; }
+      .cmd-right { flex: 1; min-width: 0; }
+      .cmd-search { width: 100%; flex: 1; }
+
+      /* ── Table → card layout ──────────────────────────── */
+      #task-table, #task-table > tbody { display: block; width: 100%; }
+      #task-table > thead { display: none; }
+
+      /* Section separator restyled for card flow */
+      .tbl-section { display: block; }
+      .tbl-section td {
+        display: block; padding: 14px 14px 4px;
+        font-size: 9px; border-bottom: none;
+      }
+      .tbl-section td::after { content: ""; }
+
+      /* Each row becomes a card */
+      .tbl-row {
+        display: block; position: relative;
+        margin: 8px 12px;
+        padding: 14px 56px 12px 14px;   /* right pad reserves space for checkbox */
+        background: var(--bg2);
+        border: 1px solid var(--amber5);
+        border-left: 4px solid var(--amber);
+        border-bottom: 1px solid var(--amber5);
+      }
+      .tbl-row.p-emergency { border-left-color: var(--red); }
+      .tbl-row.p-urgent    { border-left-color: var(--orange); }
+      .tbl-row.p-routine   { border-left-color: var(--amber); }
+      .tbl-row:hover { background: var(--bg2); }   /* no hover state on touch */
+
+      .tbl-row td {
+        display: block; padding: 0;
+        border: none; vertical-align: top;
+        width: auto !important; min-width: 0;
+        white-space: normal;
+      }
+      .td-type { display: none; }   /* type pill takes too much width on phone */
+
+      /* Checkbox: large tap target, top-right corner */
+      .td-cb {
+        position: absolute; top: 12px; right: 12px;
+      }
+      .cb {
+        width: 36px; height: 36px; font-size: 18px;
+      }
+
+      .td-pri    { margin-bottom: 6px; }
+      .td-patient{ margin-bottom: 6px; }
+      .patient-str { font-size: 13px; }
+
+      .td-task     { margin-bottom: 8px; }
+      .task-str    { font-size: 14px; line-height: 1.4; }
+      .task-notes  { font-size: 11px; }
+
+      .td-time {
+        text-align: left !important;
+        font-size: 11px; color: var(--amber4); margin-bottom: 8px;
+      }
+
+      .td-actions {
+        text-align: right !important; margin-top: 4px;
+      }
+      .edt, .dup, .del {
+        padding: 6px 11px; font-size: 11px;
+      }
+
+      /* Statusbar: no longer sticky on mobile (bottom bar takes that slot) */
+      #statusbar {
+        position: static;
+        flex-wrap: wrap; gap: 8px;
+      }
+
+      /* ── Sticky bottom action bar ─────────────────────── */
+      #mobile-bar {
+        display: flex; gap: 10px;
+        position: fixed; left: 0; right: 0; bottom: 0;
+        background: var(--bg2);
+        border-top: 2px solid var(--amber3);
+        padding: 10px 12px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+        z-index: 100;
+      }
+      .mbar-btn {
+        flex: 1; padding: 14px 12px;
+        font-family: var(--font); font-size: 12px;
+        font-weight: 700; letter-spacing: 0.12em;
+        cursor: pointer;
+      }
+      .mbar-secondary {
+        background: transparent;
+        border: 1px solid var(--amber4);
+        color: var(--amber3);
+      }
+      .mbar-primary {
+        background: var(--amber4);
+        border: 1px solid var(--amber);
+        color: var(--amber);
+        flex: 1.4;   /* primary gets slightly more weight */
+      }
+      .mbar-primary:active { background: var(--amber3); }
+
+      /* Push body content above the bar so nothing hides behind it */
+      body {
+        padding-bottom: calc(72px + env(safe-area-inset-bottom));
+      }
     }
   </style>
 </head>
@@ -722,6 +832,12 @@
     <span class="status-item" id="sb-sync" style="color:var(--amber4)">db: --</span>
   </div>
   <button class="btn-clr" onclick="clearShift()">END_SHIFT</button>
+</div>
+
+<!-- Mobile sticky action bar -->
+<div id="mobile-bar">
+  <button class="mbar-btn mbar-secondary" onclick="openHandover()">HANDOVER ▸▸</button>
+  <button class="mbar-btn mbar-primary"   onclick="openDrawer()">+ NEW_JOB</button>
 </div>
 
 <script>
@@ -1281,48 +1397,41 @@ function emailHandover() {
 
 
 // ── Priority strip ───────────────────────────────────────────
-// Strip appears AND strobes together — both triggered solely by imminence.
-// A job is "imminent" if its remindAt is within IMMINENT_MS or already overdue.
-// Hidden entirely when nothing is imminent (header stats show the backlog).
+// Strip appears AND strobes together — visibility still tied to imminence
+// (a pending job within IMMINENT_MS of its remindAt, or overdue), but the
+// text is the old outstanding-count format. Hidden entirely when nothing
+// urgent enough is outstanding, or when nothing is imminent.
 function updatePriorityStrip() {
   const strip = document.getElementById("priority-strip");
   if (!strip) return;
 
-  const now = Date.now();
-  const imminent = Object.values(tasks).filter(t =>
-    !t.completed && t.remindAt && (t.remindAt - now) <= IMMINENT_MS
-  );
+  const pending = Object.values(tasks).filter(t => !t.completed);
+  const emergCt = pending.filter(t => t.priority === "emergency").length;
+  const urgCt   = pending.filter(t => t.priority === "urgent").length;
 
-  if (imminent.length === 0) {
+  // Nothing emerg/urgent outstanding → strip not relevant
+  if (emergCt === 0 && urgCt === 0) {
     strip.className = "";
     strip.textContent = "";
     return;
   }
 
-  // Colour by highest priority among imminent jobs
-  const topPri = imminent.some(t => t.priority === "emergency") ? "emerg"
-              : imminent.some(t => t.priority === "urgent")    ? "urg"
-              : "routine";
-
-  // Text: describe what's imminent
-  let text;
-  if (imminent.length === 1) {
-    const t = imminent[0];
-    const diffMs = t.remindAt - now;
-    const mins = Math.max(0, Math.round(Math.abs(diffMs) / 60000));
-    const tag = (t.patient || "JOB").toUpperCase();
-    text = diffMs < 0
-      ? `!! ${tag} OVERDUE BY ${mins}M !!`
-      : `!! ${tag} DUE IN ${mins}M !!`;
-  } else {
-    const overdueCt = imminent.filter(t => (t.remindAt - now) < 0).length;
-    text = overdueCt
-      ? `!! ${imminent.length} JOBS DUE WITHIN 15M · ${overdueCt} OVERDUE !!`
-      : `!! ${imminent.length} JOBS DUE WITHIN 15M !!`;
+  // Outstanding exists, but show strip only if at least one pending
+  // job is imminent (or overdue)
+  const now = Date.now();
+  const imminent = pending.some(t => t.remindAt && (t.remindAt - now) <= IMMINENT_MS);
+  if (!imminent) {
+    strip.className = "";
+    return;
   }
 
-  strip.textContent = text;
-  strip.className = `show ${topPri}`;
+  if (emergCt > 0) {
+    strip.textContent = `!! ${emergCt} EMERGENCY JOB${emergCt > 1 ? "S" : ""} OUTSTANDING !!`;
+    strip.className = "show emerg";
+  } else {
+    strip.textContent = `▲ ${urgCt} URGENT JOB${urgCt > 1 ? "S" : ""} OUTSTANDING`;
+    strip.className = "show urg";
+  }
 }
 
 // Re-check imminence on a timer so the flash kicks in without needing a data event.
@@ -1487,6 +1596,32 @@ document.getElementById("pri-filter").addEventListener("change",  e=>{filterPri=
 document.getElementById("type-filter").addEventListener("change", e=>{filterType=e.target.value; render();});
 
 window.addEventListener('keydown', (e) => {
+  // Escape works even from inputs/textareas — it's how you bail out
+  if (e.key === 'Escape') {
+    if (document.getElementById('handover-overlay').classList.contains('show')) {
+      e.preventDefault();
+      closeHandover();
+      return;
+    }
+    if (document.getElementById('add-drawer').classList.contains('open')) {
+      e.preventDefault();
+      closeDrawer();
+      return;
+    }
+  }
+
+  // Enter inside the drawer saves the job — except inside the textarea
+  // (where Enter is the normal newline) and on buttons (where Enter clicks them)
+  if (e.key === 'Enter'
+      && document.getElementById('add-drawer').classList.contains('open')
+      && e.target.tagName !== 'TEXTAREA'
+      && e.target.tagName !== 'BUTTON') {
+    e.preventDefault();
+    saveJob();
+    return;
+  }
+
+  // The shortcuts below should NOT fire while typing in a field
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
   switch (e.key.toLowerCase()) {
