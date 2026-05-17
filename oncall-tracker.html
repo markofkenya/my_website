@@ -324,7 +324,10 @@
       100% { background: transparent;          box-shadow: inset 3px 0 0 transparent; }
     }
     .tbl-row:hover { background: var(--bg3); }
-    .tbl-row.done  { opacity: 0.3; }
+    .tbl-row.done  {
+      opacity: 0.3;
+      animation: none;   /* mount already-dimmed; prevents flash on tab switch */
+    }
     .tbl-row td    { padding: 8px 12px; vertical-align: middle; font-size: 12px; }
 
     /* Checkbox */
@@ -541,15 +544,24 @@
       }
       .tbl-section td::after { content: ""; }
 
-      /* Each row becomes a card */
+      /* Each row becomes a card — grid lays out a footer row of
+         [time | actions | checkbox], all sharing the bottom of the card */
       .tbl-row {
-        display: block; position: relative;
+        display: grid;
+        grid-template-areas:
+          "pri      pri      pri"
+          "patient  patient  patient"
+          "task     task     task"
+          "time     actions  cb";
+        grid-template-columns: 1fr auto auto;
+        align-items: center;
+        gap: 6px 10px;
         margin: 8px 12px;
-        padding: 14px 56px 12px 14px;   /* right pad reserves space for checkbox */
+        padding: 14px;
         background: var(--bg2);
         border: 1px solid var(--amber5);
         border-left: 4px solid var(--amber);
-        border-bottom: 1px solid var(--amber5);
+        position: relative;
       }
       .tbl-row.p-emergency { border-left-color: var(--red); }
       .tbl-row.p-urgent    { border-left-color: var(--orange); }
@@ -564,30 +576,21 @@
       }
       .td-type { display: none; }   /* type pill takes too much width on phone */
 
-      /* Checkbox: large tap target, top-right corner */
-      .td-cb {
-        position: absolute; top: 12px; right: 12px;
-      }
+      /* Footer row — all three cells share one line at card bottom */
+      .td-cb      { grid-area: cb;      justify-self: end; }
+      .td-pri     { grid-area: pri; }
+      .td-patient { grid-area: patient; margin-bottom: 0; }
+      .td-task    { grid-area: task;    margin-bottom: 0; }
+      .td-time    { grid-area: time;    margin-bottom: 0; text-align: left !important; }
+      .td-actions { grid-area: actions; margin-top: 0;   text-align: right !important; }
+
       .cb {
         width: 36px; height: 36px; font-size: 18px;
       }
-
-      .td-pri    { margin-bottom: 6px; }
-      .td-patient{ margin-bottom: 6px; }
-      .patient-str { font-size: 13px; }
-
-      .td-task     { margin-bottom: 8px; }
+      .patient-str { font-size: 14px; }   /* bumped from 13px for readability */
       .task-str    { font-size: 14px; line-height: 1.4; }
       .task-notes  { font-size: 11px; }
-
-      .td-time {
-        text-align: left !important;
-        font-size: 11px; color: var(--amber4); margin-bottom: 8px;
-      }
-
-      .td-actions {
-        text-align: right !important; margin-top: 4px;
-      }
+      .td-time     { font-size: 11px; color: var(--amber4); }
       .edt, .dup, .del {
         padding: 6px 11px; font-size: 11px;
       }
