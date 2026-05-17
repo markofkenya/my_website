@@ -1077,9 +1077,7 @@ function renderTab(tab) {
 function renderOverview() {
   const el = document.getElementById("tab-overview");
   const s = computeStats();
-  const cats = [...new Set(KSAP.map(q => q.category))].sort();
-
-  // Find weakest
+  const cats = [...new Set(KSAP.map(q => effectiveCat(q)))].sort();
   let weakest = null, weakestPct = 101;
   cats.forEach(cat => {
     const cs = computeCatStats(cat);
@@ -1160,10 +1158,10 @@ function renderKSAP() {
 
   if (!isModule) {
     // Category view
-    const cats = [...new Set(KSAP.map(q => q.category))].sort();
+    const cats = [...new Set(KSAP.map(q => effectiveCat(q)))].sort();
     html += `<div style="padding-top:10px;">`;
     cats.forEach(cat => {
-      const allQs = KSAP.filter(q => q.category === cat);
+      const allQs = KSAP.filter(q => effectiveCat(q) === cat);
       const qs = allQs.filter(q => {
         const d = getQ(q.code);
         const attempted = d.p1correct || d.p1incorrect || d.p2correct || d.p2incorrect;
@@ -1233,9 +1231,8 @@ function qRow(q, pass) {
   const p2c = d.p2correct, p2i = d.p2incorrect;
   const conf = d.confidence || 0;
   const note = d.note || "";
-  const d2 = getQ(q.code);
-  const effectiveCat = d2.reassignedCategory || q.category;
-  const color = CAT_COLORS[effectiveCat] || "var(--cyan)";
+  const ec = effectiveCat(q);
+  const color = CAT_COLORS[ec] || "var(--cyan)";
 
   const p1badge = p1c ? `<span class="pass-badge p1done">P1✓</span>` :
                   p1i ? `<span class="pass-badge p1">P1✗</span>` :
@@ -1251,7 +1248,7 @@ function qRow(q, pass) {
   const incorrectField = isP1 ? "p1incorrect" : "p2incorrect";
 
   const flagged = d.flagged || false;
-  const cats = [...new Set(KSAP.map(q => q.category))].sort();
+  const cats = [...new Set(KSAP.map(q => effectiveCat(q)))].sort();
 
   const isCorrect   = curCorrect;
   const isIncorrect = curIncorrect;
@@ -1271,7 +1268,7 @@ function qRow(q, pass) {
       <div style="position:relative;display:inline-block;">
         <button class="q-btn" onclick="toggleReassign('${q.code}')" title="Reassign category">✎</button>
         <div id="reassign-${q.code}" style="display:none;position:absolute;right:0;top:100%;z-index:200;background:var(--bg2);border:1px solid var(--yellow);min-width:220px;max-height:200px;overflow-y:auto;">
-          ${cats.map(c => `<div style="padding:6px 10px;font-size:10px;cursor:pointer;color:${c===effectiveCat?'var(--yellow)':'var(--white)'};border-bottom:1px solid var(--border);"
+          ${cats.map(c => `<div style="padding:6px 10px;font-size:10px;cursor:pointer;color:${c===ec?'var(--yellow)':'var(--white)'};border-bottom:1px solid var(--border);"
             onmousedown="reassignQ('${q.code}','${c.replace(/'/g,"\\'")}');document.getElementById('reassign-${q.code}').style.display='none';renderKSAP();"
             >${c}</div>`).join('')}
         </div>
@@ -1298,6 +1295,19 @@ function reassignQ(code, newCategory) {
   const q = KSAP.find(q => q.code === code);
   if (q) q.category = newCategory;
   saveQ(code, { reassignedCategory: newCategory });
+  // Persist the canonical category back to sceConfig/ksap so the change
+  // sticks across refreshes (otherwise KSAP is rebuilt from Firebase with
+  // the old category and the question reappears in its previous group).
+  saveKsapToFirebase();
+}
+
+// Effective category: prefer the per-question override in sceData,
+// falling back to the canonical q.category from sceConfig.
+// This makes the KSAP list honour any historical reassignments that were
+// only saved as overrides before reassignQ persisted to sceConfig.
+function effectiveCat(q) {
+  const d = getQ(q.code);
+  return d.reassignedCategory || q.category;
 }
 
 function toggleQ(code, field, otherField, current) {
@@ -1479,8 +1489,9 @@ function renderErrorLog() {
   if (errSort === "cat") {
     const byCat = {};
     sorted.forEach(({ q, d }) => {
-      if (!byCat[q.category]) byCat[q.category] = [];
-      byCat[q.category].push({ q, d });
+      const ec = effectiveCat(q);
+      if (!byCat[ec]) byCat[ec] = [];
+      byCat[ec].push({ q, d });
     });
 
     Object.entries(byCat).forEach(([cat, items]) => {
@@ -1497,7 +1508,8 @@ function renderErrorLog() {
 }
 
 function makeErrRow(q, d) {
-  const color    = CAT_COLORS[q.category] || "var(--cyan)";
+  const ec       = effectiveCat(q);
+  const color    = CAT_COLORS[ec] || "var(--cyan)";
   const conf     = d.confidence || 0;
   const resolved = d.resolved || false;
   const flagged  = d.flagged  || false;
@@ -1510,7 +1522,7 @@ function makeErrRow(q, d) {
   row.innerHTML = `
     <div class="err-header">
       <span class="err-code" style="color:${color}">${q.code}</span>
-      <span class="err-cat">${q.category}</span>
+      <span class="err-cat">${ec}</span>
       <span style="font-size:8px;color:var(--grey2);">${q.module}</span>
       <div class="err-conf">
         ${[1,2,3].map(n => `<div class="conf-dot ${conf>=n?'lit':''}" style="pointer-events:none;"></div>`).join("")}
@@ -1521,7 +1533,7 @@ function makeErrRow(q, d) {
         ${resolved ? "✓ RESOLVED" : "MARK RESOLVED"}
       </button>
       <button class="filter-btn" style="font-size:8px;padding:1px 8px;"
-        onclick="setTab('ksap');setKsapMode('category');expandedCats.clear();expandedCats.add('${q.category.replace(/'/g,"\'")}');renderKSAP();">
+        onclick="setTab('ksap');setKsapMode('category');expandedCats.clear();expandedCats.add('${ec.replace(/'/g,"\'")}');renderKSAP();">
         → KSAP
       </button>
     </div>
