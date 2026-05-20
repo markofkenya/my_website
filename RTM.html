@@ -523,6 +523,9 @@
     .btn-connect:hover { background: var(--green3); }
     .config-note { margin-top: 12px; font-size: 9px; color: var(--green4); line-height: 1.8; }
 
+    /* Mobile bottom bar: hidden on desktop, shown only at narrow widths */
+    #mobile-bar { display: none; }
+
     /* ── Responsive ──────────────────────────────────────── */
     @media (max-width: 680px) {
       .header-clock, .td-actions .snz-group { display: none; }
@@ -531,6 +534,35 @@
       .field.s4 { grid-column: span 2; }
       .td-cat, .td-flag { display: none; }
       #header, #cmdbar, #task-table, #statusbar, #add-drawer { font-size: 11px; }
+
+      /* Top NEW_TASK moves to the sticky bottom bar */
+      .cmd-right { display: none; }
+
+      /* ── Sticky bottom action bar ─────────────────────── */
+      #mobile-bar {
+        display: flex;
+        position: fixed; left: 0; right: 0; bottom: 0;
+        background: var(--bg2);
+        border-top: 2px solid var(--green3);
+        padding: 10px 12px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+        z-index: 100;
+      }
+      .mbar-primary {
+        flex: 1; padding: 14px 12px;
+        background: var(--green4);
+        border: 1px solid var(--green);
+        color: var(--green);
+        font-family: var(--font);
+        font-size: 13px; font-weight: 700; letter-spacing: 0.15em;
+        cursor: pointer;
+      }
+      .mbar-primary:active { background: var(--green3); }
+
+      /* Push body content above the bar so statusbar isn't hidden */
+      body {
+        padding-bottom: calc(72px + env(safe-area-inset-bottom));
+      }
     }
   </style>
 </head>
@@ -709,6 +741,11 @@
     <span class="status-item" id="sb-sync" style="color:var(--green4)">db: --</span>
   </div>
   <button class="btn-clr" onclick="clearCompleted()">CLEAR_DONE</button>
+</div>
+
+<!-- Mobile sticky new-task bar -->
+<div id="mobile-bar">
+  <button class="mbar-primary" onclick="openDrawer()">+ NEW_TASK</button>
 </div>
 
 <script>
