@@ -544,8 +544,7 @@
         position: fixed; left: 0; right: 0; bottom: 0;
         background: var(--bg2);
         border-top: 2px solid var(--green3);
-        padding: 10px 12px;
-        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+        padding: 8px 12px env(safe-area-inset-bottom, 0);
         z-index: 100;
       }
       .mbar-primary {
@@ -561,8 +560,12 @@
 
       /* Push body content above the bar so statusbar isn't hidden */
       body {
-        padding-bottom: calc(72px + env(safe-area-inset-bottom));
+        padding-bottom: calc(60px + env(safe-area-inset-bottom));
       }
+
+      /* iOS Safari auto-zooms into any input with font-size < 16px.
+         Bumping form fields to 16px on mobile prevents the unwanted zoom. */
+      .inp, textarea.inp, select.inp { font-size: 16px; }
     }
   </style>
 </head>
