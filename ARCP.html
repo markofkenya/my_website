@@ -2983,7 +2983,7 @@ function openLbEditModal(type, entryId, opts) {
   overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;";
 
   const modal = document.createElement("div");
-  modal.style.cssText = "background:var(--bg2);border:1px solid var(--blue4);border-top:2px solid var(--blue);max-width:720px;width:100%;max-height:90vh;overflow-y:auto;padding:20px;";
+  modal.style.cssText = "background:var(--bg2);border:1px solid var(--blue4);border-top:2px solid var(--blue);max-width:720px;width:100%;max-height:90vh;overflow-y:auto;overflow-x:hidden;padding:16px;box-sizing:border-box;";
 
   const head = document.createElement("div");
   head.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--blue5);padding-bottom:10px;";
@@ -2993,16 +2993,17 @@ function openLbEditModal(type, entryId, opts) {
   modal.appendChild(head);
 
   const grid = document.createElement("div");
-  grid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;";
+  grid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));gap:10px;";
 
   const editId = "lb-edit";
 
   fields.forEach(f => {
     const wrap = document.createElement("div");
-    wrap.style.cssText = "display:flex;flex-direction:column;gap:4px;";
+    wrap.style.cssText = "display:flex;flex-direction:column;gap:4px;min-width:0;";
     const val = entry[f.id] != null ? String(entry[f.id]) : "";
 
     let input = "";
+    const baseInputStyle = "width:100%;min-width:0;max-width:100%;box-sizing:border-box;";
     if (f.type === "select" || f.type === "select_other") {
       const otherId = f.otherId || (f.id + "_other");
       const otherLabel = f.otherLabel || "Please specify";
@@ -3013,7 +3014,7 @@ function openLbEditModal(type, entryId, opts) {
       // For select_other, if value isn't in options, select the "Other..." entry (one starting with "Other")
       const otherOption = isSelectOther ? opts.find(o => o.startsWith("Other")) : null;
 
-      input = `<select id="${editId}-${f.id}" class="req-input" style="width:100%;padding:5px 8px;"
+      input = `<select id="${editId}-${f.id}" class="req-input" style="${baseInputStyle}padding:5px 8px;"
           ${isSelectOther ? `onchange="var ow=document.getElementById('${editId}-${otherId}-wrap');if(ow)ow.style.display=this.value.startsWith('Other')?'flex':'none';"` : ""}>
         ${opts.map(o => {
           const selected = isOtherValue ? (o === otherOption) : (o === val);
@@ -3024,15 +3025,15 @@ function openLbEditModal(type, entryId, opts) {
         const showOther = isOtherValue;
         input += `<div id="${editId}-${otherId}-wrap" style="display:${showOther ? "flex" : "none"};flex-direction:column;gap:4px;margin-top:4px;">
           <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── ${otherLabel}</label>
-          <input id="${editId}-${otherId}" class="req-input" type="text" value="${showOther ? val.replace(/"/g,'&quot;') : ""}" placeholder="${otherLabel}" style="width:100%;" />
+          <input id="${editId}-${otherId}" class="req-input" type="text" value="${showOther ? val.replace(/"/g,'&quot;') : ""}" placeholder="${otherLabel}" style="${baseInputStyle}" />
         </div>`;
       }
     } else if (f.type === "date") {
-      input = `<input id="${editId}-${f.id}" class="req-input date-inp" type="date" value="${val}" style="width:100%;" />`;
+      input = `<input id="${editId}-${f.id}" class="req-input" type="date" value="${val}" style="${baseInputStyle}" />`;
     } else if (f.type === "number") {
-      input = `<input id="${editId}-${f.id}" class="req-input" type="number" min="0" step="0.5" value="${val}" placeholder="${f.placeholder||''}" style="width:100%;" ${f.readonly ? "readonly" : ""} />`;
+      input = `<input id="${editId}-${f.id}" class="req-input" type="number" min="0" step="0.5" value="${val}" placeholder="${f.placeholder||''}" style="${baseInputStyle}" ${f.readonly ? "readonly" : ""} />`;
     } else {
-      input = `<input id="${editId}-${f.id}" class="req-input" type="text" value="${val.replace(/"/g,'&quot;')}" placeholder="${f.placeholder||''}" style="width:100%;" />`;
+      input = `<input id="${editId}-${f.id}" class="req-input" type="text" value="${val.replace(/"/g,'&quot;')}" placeholder="${f.placeholder||''}" style="${baseInputStyle}" />`;
     }
     wrap.innerHTML = `<label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── ${f.label}</label>${input}`;
     grid.appendChild(wrap);
