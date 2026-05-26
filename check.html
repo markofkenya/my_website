@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renal Clinic Checklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style> 
+  :root {
+    --paper: #fdfbf7;       /* warm paper */
+    --ink: #2d2d2d;         /* soft pencil black */
+    --muted: #e5e0d8;       /* erased pencil / old paper */
+    --accent: #ff4d4d;      /* red correction marker */
+    --blue: #2d5da1;        /* blue ballpoint */
+    --postit: #fff9c4;      /* post-it yellow */
+    --white: #ffffff;
+    /* wobbly radii */
+    --wobbly: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    --wobblyMd: 30px 8px 28px 10px / 10px 28px 8px 30px;
+    --wobblySm: 12px 5px 14px 6px / 6px 14px 5px 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Patrick Hand', cursive;
+    background-color: var(--paper);
+    background-image: radial-gradient(var(--muted) 1px, transparent 1px);
+    background-size: 24px 24px;
+    color: var(--ink);
+    min-height: 100vh; font-size: 16px; line-height: 1.5;
+  }
+  h1, h2, h3, .font-head { font-family: 'Kalam', cursive; font-weight: 700; }
+
+  /* ── TOP BAR ───────────────────────────────── */
+  .topbar {
+    background: var(--paper);
+    border-bottom: 3px dashed var(--ink);
+    padding: 14px 24px; position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; }
+  .brand h1 {
+    font-size: 1.7rem; color: var(--ink); line-height: 1;
+    transform: rotate(-2deg);
+  }
+  .brand .sub {
+    font-size: 0.85rem; color: var(--accent); font-family: 'Kalam', cursive;
+    font-weight: 700; transform: rotate(1deg);
+  }
+  .clinic-tabs { display: flex; gap: 10px; margin-left: auto; flex-wrap: wrap; }
+  .clinic-tab {
+    padding: 8px 18px; background: var(--white);
+    border: 3px solid var(--ink); color: var(--ink);
+    border-radius: var(--wobblySm);
+    cursor: pointer; font-family: 'Patrick Hand', cursive;
+    font-size: 1rem; font-weight: 400;
+    box-shadow: 3px 3px 0 0 var(--ink);
+    transition: transform 0.1s, box-shadow 0.1s, background 0.1s, color 0.1s;
+  }
+  .clinic-tab:nth-child(odd) { transform: rotate(-1.5deg); }
+  .clinic-tab:nth-child(even) { transform: rotate(1.5deg); }
+  .clinic-tab:hover {
+    background: var(--accent); color: var(--white);
+    transform: rotate(0deg) translate(1px,1px);
+    box-shadow: 2px 2px 0 0 var(--ink);
+  }
+  .clinic-tab.active {
+    background: var(--ink); color: var(--paper);
+    box-shadow: 4px 4px 0 0 var(--accent);
+  }
+  .clinic-tab .full { display: inline; }
+  .clinic-tab .abbr { display: none; }
+
+  /* ── LAYOUT ────────────────────────────────── */
+  .layout {
+    display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 26px; padding: 28px 24px 60px; max-width: 1400px; margin: 0 auto;
+  }
+  @media (max-width: 980px) {
+    .layout { grid-template-columns: 1fr; }
+    .clinic-tab .full { display: none; }
+    .clinic-tab .abbr { display: inline; }
+  }
+
+  .checklist-panel { display: flex; flex-direction: column; gap: 22px; }
+
+  /* ── CLINIC INTRO ──────────────────────────── */
+  .clinic-intro {
+    background: var(--postit);
+    border: 3px solid var(--ink);
+    border-radius: var(--wobblyMd);
+    padding: 18px 22px; position: relative;
+    box-shadow: 5px 5px 0 0 var(--ink);
+    transform: rotate(-1deg);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px; flex-wrap: wrap;
+  }
+  /* tape strip on the intro post-it */
+  .clinic-intro::before {
+    content: ''; position: absolute; top: -12px; left: 50%;
+    width: 90px; height: 24px; transform: translateX(-50%) rotate(-3deg);
+    background: rgba(45,45,45,0.12);
+    border: 1px dashed rgba(45,45,45,0.3);
+  }
+  .clinic-intro .title { font-family: 'Kalam', cursive; font-weight: 700; font-size: 1.7rem; color: var(--ink); line-height: 1.05; }
+  .clinic-intro .desc { font-size: 1rem; color: var(--ink); opacity: 0.7; margin-top: 2px; }
+  .clinic-intro .checked-count {
+    font-family: 'Kalam', cursive; font-weight: 700; font-size: 0.95rem; color: var(--ink);
+    background: var(--white); border: 3px solid var(--ink);
+    padding: 8px 16px; border-radius: var(--wobblySm); white-space: nowrap;
+    box-shadow: 3px 3px 0 0 var(--accent); transform: rotate(2deg);
+  }
+  .clinic-intro .checked-count strong { color: var(--accent); }
+
+  /* ── GROUP CARDS ───────────────────────────── */
+  .group {
+    background: var(--white);
+    border: 3px solid var(--ink);
+    border-radius: var(--wobblyMd);
+    box-shadow: 4px 4px 0 0 var(--ink);
+    position: relative;
+  }
+  .group:nth-child(3n+1) { transform: rotate(-0.6deg); }
+  .group:nth-child(3n+2) { transform: rotate(0.5deg); }
+  .group:nth-child(3n+3) { transform: rotate(-0.3deg); }
+  .group-head {
+    padding: 12px 18px; font-family: 'Kalam', cursive; font-weight: 700;
+    font-size: 1.05rem; color: var(--ink);
+    border-bottom: 2px dashed var(--ink);
+    display: flex; align-items: center; gap: 11px;
+    cursor: pointer; user-select: none;
+  }
+  .group-head .dot {
+    width: 14px; height: 14px; border: 2.5px solid var(--ink);
+    border-radius: 60% 40% 55% 45% / 45% 55% 45% 55%;
+    flex-shrink: 0;
+  }
+  .group-head .chev { margin-left: auto; color: var(--accent); font-weight: 700; transition: transform 0.15s; }
+  .group.collapsed .chev { transform: rotate(-90deg); }
+  .group.collapsed .group-body { display: none; }
+  .group-body { padding: 8px; }
+
+  /* info "i" button + guideline panel */
+  .group-head .info-btn {
+    margin-left: 4px; flex-shrink: 0;
+    width: 24px; height: 24px;
+    border: 2.5px solid var(--blue); background: var(--white);
+    color: var(--blue); border-radius: 50% 45% 55% 50% / 50% 55% 45% 50%;
+    font-family: 'Kalam', cursive; font-weight: 700; font-size: 0.95rem;
+    cursor: pointer; line-height: 1; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.1s, background 0.1s, color 0.1s;
+  }
+  .group-head .info-btn:hover { background: var(--blue); color: var(--white); transform: rotate(-8deg) scale(1.1); }
+  .group-head .info-btn.active { background: var(--blue); color: var(--white); }
+  .guideline {
+    margin: 0 8px 8px; padding: 12px 16px;
+    background: #eaf0f8;
+    border: 2.5px dashed var(--blue);
+    border-radius: var(--wobblySm);
+    color: var(--blue); font-size: 0.95rem; line-height: 1.5;
+    transform: rotate(-0.4deg);
+    display: none;
+  }
+  .guideline.show { display: block; }
+  .guideline b { color: var(--blue); }
+  .guideline ul { margin: 4px 0 0; padding-left: 18px; }
+  .guideline li { margin-bottom: 3px; }
+  .guideline .gl-title {
+    font-family: 'Kalam', cursive; font-weight: 700; font-size: 1rem;
+    display: block; margin-bottom: 4px;
+  }
+
+  /* ── CHECK ITEMS ───────────────────────────── */
+  .check-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 9px 12px; border-radius: var(--wobblySm); cursor: pointer;
+    border: 2px solid transparent;
+    transition: background 0.1s, transform 0.1s, border-color 0.1s;
+  }
+  .check-item:hover { background: var(--paper); transform: rotate(-0.5deg); }
+  .check-item.checked {
+    background: var(--postit);
+    border: 2px solid var(--ink);
+    transform: rotate(0.4deg);
+  }
+  .check-item input[type=checkbox] {
+    appearance: none; -webkit-appearance: none;
+    width: 22px; height: 22px; flex-shrink: 0; margin-top: 1px;
+    border: 3px solid var(--ink); background: var(--white);
+    border-radius: 40% 60% 55% 45% / 55% 45% 60% 40%;
+    cursor: pointer; position: relative;
+    transition: background 0.1s;
+  }
+  .check-item input[type=checkbox]:checked { background: var(--accent); }
+  .check-item input[type=checkbox]:checked::after {
+    content: '✓'; position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--white); font-family: 'Kalam', cursive; font-weight: 700;
+    font-size: 16px; line-height: 1; transform: rotate(-8deg);
+  }
+  .check-item .ci-body { flex: 1; min-width: 0; }
+  .check-item .ci-label { font-size: 1.02rem; line-height: 1.3; }
+  .check-item .ci-value { margin-top: 8px; display: none; }
+  .check-item.has-value.checked .ci-value { display: block; }
+  .check-item .ci-value input {
+    width: 100%; background: var(--white);
+    border: 2.5px solid var(--ink); border-radius: var(--wobblySm);
+    padding: 8px 12px; font-family: 'Patrick Hand', cursive;
+    font-size: 1rem; color: var(--ink);
+    box-shadow: 2px 2px 0 0 rgba(45,45,45,0.2);
+  }
+  .check-item .ci-value input::placeholder { color: rgba(45,45,45,0.4); }
+  .check-item .ci-value input:focus {
+    outline: none; border-color: var(--blue);
+    box-shadow: 2px 2px 0 0 var(--blue);
+  }
+
+  /* ── NOTE PANEL ────────────────────────────── */
+  .note-panel { align-self: start; position: sticky; top: 86px; }
+  @media (max-width: 980px) { .note-panel { position: static; } }
+  .note-card {
+    background: var(--white);
+    border: 3px solid var(--ink);
+    border-radius: var(--wobblyMd);
+    box-shadow: 8px 8px 0 0 var(--ink);
+    position: relative; transform: rotate(0.6deg);
+  }
+  /* thumbtack on note card */
+  .note-card::before {
+    content: ''; position: absolute; top: -10px; left: 50%;
+    width: 20px; height: 20px; transform: translateX(-50%);
+    background: var(--accent); border: 2.5px solid var(--ink);
+    border-radius: 50%;
+    box-shadow: inset -2px -2px 0 rgba(0,0,0,0.15);
+    z-index: 2;
+  }
+  .note-head {
+    padding: 16px 20px 12px; border-bottom: 2px dashed var(--ink);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  }
+  .note-head .title { font-family: 'Kalam', cursive; font-weight: 700; font-size: 1.4rem; color: var(--ink); transform: rotate(-1.5deg); }
+  .note-head .style-toggle { display: flex; gap: 6px; }
+  .note-head .style-toggle button {
+    padding: 5px 14px; border-radius: var(--wobblySm); font-size: 0.9rem;
+    font-family: 'Patrick Hand', cursive;
+    border: 2.5px solid var(--ink); background: var(--white); color: var(--ink);
+    cursor: pointer; box-shadow: 2px 2px 0 0 var(--ink);
+    transition: all 0.1s;
+  }
+  .note-head .style-toggle button:hover { transform: translate(1px,1px); box-shadow: 1px 1px 0 0 var(--ink); }
+  .note-head .style-toggle button.active { background: var(--blue); color: var(--white); }
+  .note-body {
+    padding: 18px 20px; min-height: 220px; max-height: 60vh; overflow-y: auto;
+    font-size: 1.02rem; line-height: 1.65; white-space: pre-wrap;
+    font-family: 'Patrick Hand', cursive; color: var(--ink);
+  }
+  .note-body.empty { color: rgba(45,45,45,0.4); display: flex; align-items: center; justify-content: center; text-align: center; font-style: normal; }
+  .note-body .note-section-title {
+    font-family: 'Kalam', cursive; font-weight: 700; font-size: 0.95rem;
+    letter-spacing: 0.02em; text-transform: uppercase; color: var(--accent);
+    margin: 16px 0 5px; display: block;
+    text-decoration: underline wavy var(--accent) 1px; text-underline-offset: 4px;
+  }
+  .note-body .note-section-title:first-child { margin-top: 0; }
+  .note-foot {
+    padding: 14px 20px; border-top: 2px dashed var(--ink);
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .note-foot .wordcount { font-size: 0.9rem; color: var(--ink); opacity: 0.6; margin-right: auto; font-family: 'Kalam', cursive; }
+  .btn {
+    padding: 9px 18px; border-radius: var(--wobblySm); font-family: 'Patrick Hand', cursive;
+    font-size: 1rem; cursor: pointer; border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 0 var(--ink);
+    transition: transform 0.1s, box-shadow 0.1s, background 0.1s, color 0.1s;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .btn:hover { transform: translate(2px,2px); box-shadow: 2px 2px 0 0 var(--ink); }
+  .btn:active { transform: translate(4px,4px); box-shadow: 0 0 0 0 var(--ink); }
+  .btn-primary { background: var(--white); color: var(--ink); }
+  .btn-primary:hover { background: var(--accent); color: var(--white); }
+  .btn-ghost { background: var(--muted); color: var(--ink); }
+  .btn-ghost:hover { background: var(--blue); color: var(--white); }
+
+  /* ── TOAST ─────────────────────────────────── */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(10px) rotate(-1.5deg);
+    background: var(--ink); color: var(--paper); padding: 12px 22px;
+    border: 3px solid var(--ink); border-radius: var(--wobblySm);
+    font-family: 'Kalam', cursive; font-weight: 700; font-size: 0.95rem;
+    box-shadow: 4px 4px 0 0 var(--accent);
+    opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 200;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0) rotate(-1.5deg); }
+
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 6px; border: 2px solid var(--paper); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <h1>Renal Clinic</h1>
+    <span class="sub">Checklist → Note</span>
+  </div>
+  <div class="clinic-tabs" id="clinicTabs"></div>
+</div>
+
+<div class="layout">
+  <div class="checklist-panel">
+    <div class="clinic-intro">
+      <div>
+        <div class="title" id="clinicTitle">—</div>
+        <div class="desc" id="clinicDesc">—</div>
+      </div>
+      <div class="checked-count">Checked: <strong id="checkedCount">0</strong></div>
+    </div>
+    <div id="groupsContainer"></div>
+  </div>
+
+  <div class="note-panel">
+    <div class="note-card">
+      <div class="note-head">
+        <div class="title">Generated Note</div>
+        <div class="style-toggle">
+          <button data-style="prose" class="active">Prose</button>
+          <button data-style="bullets">Bullets</button>
+        </div>
+      </div>
+      <div class="note-body empty" id="noteBody">Tick items on the left and the note builds itself here.</div>
+      <div class="note-foot">
+        <span class="wordcount" id="wordCount">0 words</span>
+        <button class="btn btn-ghost" id="resetBtn">↺ Reset</button>
+        <button class="btn btn-primary" id="copyBtn">📋 Copy</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   CHECKLIST DEFINITIONS
+   Each item: { id, label, sentence }  OR
+              { id, label, tpl: "text [V] more", vhint, prefix }
+   - sentence: fixed text added to note when checked
+   - tpl with [V]: [V] replaced by the typed value; if blank, whole item still
+     contributes using the label's fallback (tpl with [V] removed cleanly)
+   dot colour per group is cosmetic.
+═══════════════════════════════════════════════════════ */
+const CLINICS = {
+  newckd: {
+    name: "New CKD Clinic",
+    abbr: "New CKD",
+    desc: "First attendance — full CKD workup & baseline",
+    groups: [
+      { title: "Referral & Background", dot: "var(--blue)", items: [
+        { id:"nc_referral", label:"Referral reason noted", tpl:"Referred by [V].", vhint:"e.g. GP with declining eGFR on routine bloods" },
+        { id:"nc_pmh", label:"Past medical history taken", tpl:"Background: [V].", vhint:"e.g. T2DM, hypertension, IHD" },
+        { id:"nc_drughx", label:"Drug history reviewed", tpl:"Current medications: [V].", vhint:"e.g. ramipril, metformin, amlodipine" },
+        { id:"nc_allergies", label:"Allergies documented", tpl:"Allergies: [V].", vhint:"e.g. penicillin (rash) / NKDA" },
+        { id:"nc_fhx", label:"Family history of renal disease", tpl:"Family history: [V].", vhint:"e.g. no known inherited renal disease" },
+        { id:"nc_social", label:"Social / smoking / alcohol", tpl:"Social history: [V].", vhint:"e.g. ex-smoker, minimal alcohol, retired" },
+      ]},
+      { title: "Suspected Aetiology", dot: "var(--accent)", info: "<b>Common causes of CKD</b><ul><li>Diabetic nephropathy</li><li>Hypertensive nephrosclerosis</li><li>Glomerulonephritis</li><li>ADPKD (polycystic kidney disease)</li><li>Obstructive uropathy</li><li>Reflux nephropathy</li><li>Drug-induced</li><li>Renovascular disease</li><li>Myeloma / paraprotein</li><li>Tubulointerstitial nephritis</li><li>Post-AKI</li><li>Congenital</li><li>Unknown</li></ul>", items: [
+        { id:"nc_cause", label:"Likely cause considered", tpl:"Suspected aetiology: [V].", vhint:"e.g. diabetic nephropathy with hypertensive component" },
+        { id:"nc_nephrotoxin", label:"Nephrotoxin exposure reviewed", tpl:"Nephrotoxin exposure: [V].", vhint:"e.g. regular NSAID use, now stopped" },
+      ]},
+      { title: "Examination", dot: "var(--ink)", info: "<b>NICE NG203 — BP targets in CKD</b><ul><li>CKD without diabetes and ACR &lt;70: target <b>&lt;140/90</b></li><li>CKD with diabetes, or ACR ≥70 mg/mmol: target <b>&lt;130/80</b></li><li>Aim systolic ≥120 to avoid syncope/falls, especially in the elderly</li></ul>", items: [
+        { id:"nc_bp", label:"Blood pressure", tpl:"Blood pressure today was [V].", vhint:"e.g. 152/88" },
+        { id:"nc_weight", label:"Weight & BMI", tpl:"Weight and BMI: [V].", vhint:"e.g. 84 kg, BMI 28" },
+        { id:"nc_volume", label:"Volume status / oedema", tpl:"Volume status: [V].", vhint:"e.g. euvolaemic, no peripheral oedema" },
+        { id:"nc_exam", label:"Other examination findings", tpl:"Examination otherwise: [V].", vhint:"e.g. chest clear, no bruits, abdomen soft" },
+      ]},
+      { title: "Investigations", dot: "var(--accent)", info: "<b>Proteinuria & haematuria (NICE/KDIGO)</b><ul><li>Quantify dipstick proteinuria with <b>ACR</b> on an early-morning sample</li><li>ACR &gt;30 (A3): high renal &amp; CV risk — RAAS blockade essential</li><li>Persistent non-visible haematuria + CKD: investigate (USS; urology if &gt;45y or smoker)</li><li>Visible haematuria → 2-week-wait urology referral</li></ul>", items: [
+        { id:"nc_bloods", label:"Bloods reviewed", tpl:"Bloods reviewed today showed [V].", vhint:"e.g. creatinine 178, eGFR 34, K⁺ 4.7, Hb 119" },
+        { id:"nc_acr", label:"Albuminuria / ACR", tpl:"Urine ACR: [V].", vhint:"e.g. 42 mg/mmol (A3)" },
+        { id:"nc_urinedip", label:"Urine dip performed", tpl:"Urine dipstick: [V].", vhint:"e.g. protein ++, no blood" },
+        { id:"nc_imaging", label:"Imaging reviewed / requested", tpl:"Imaging: [V].", vhint:"e.g. renal USS requested" },
+      ]},
+      { title: "Staging & Risk", dot: "var(--blue)", info: "<b>KDIGO 2024 — staging &amp; referral triggers</b><ul><li><b>G:</b> G1 ≥90 · G2 60–89 · G3a 45–59 · G3b 30–44 · G4 15–29 · G5 &lt;15</li><li><b>A:</b> A1 &lt;3 · A2 3–30 · A3 &gt;30 mg/mmol</li><li><b>Refer:</b> eGFR &lt;30 · 5-yr KFRE ≥5% · ACR ≥70 · sustained eGFR fall &gt;15% · uncontrolled HTN on 4 agents</li><li><b>RRT planning:</b> 2-yr KFRE &gt;10% or eGFR &lt;15–20</li></ul>", items: [
+        { id:"nc_stage", label:"CKD stage assigned", tpl:"CKD stage: [V].", vhint:"e.g. G3b A3" },
+        { id:"nc_kfre", label:"KFRE risk noted", tpl:"Kidney failure risk (KFRE): [V].", vhint:"e.g. 2-year 8%, 5-year 24%" },
+        { id:"nc_trajectory", label:"Baseline trajectory documented", tpl:"Trajectory: [V].", vhint:"e.g. first assessment, no prior eGFR for comparison" },
+      ]},
+      { title: "Workup Requested", dot: "var(--blue)", items: [
+        { id:"nc_uss", label:"Renal USS arranged", sentence:"A renal ultrasound was arranged." },
+        { id:"nc_immunology", label:"Immunology screen sent", sentence:"An immunology screen was requested (including ANA, ANCA and complement where indicated)." },
+        { id:"nc_myeloma", label:"Myeloma screen sent", sentence:"A myeloma screen was requested (serum free light chains and electrophoresis)." },
+        { id:"nc_virology", label:"Virology screen sent", sentence:"Virology was checked (HIV, hepatitis B and C) in anticipation of future management." },
+        { id:"nc_bone", label:"Bone profile / PTH / Vit D", sentence:"Bone profile, PTH and vitamin D were checked." },
+        { id:"nc_iron", label:"Iron studies sent", sentence:"Iron studies were requested." },
+        { id:"nc_biopsy", label:"Renal biopsy considered", tpl:"Renal biopsy: [V].", vhint:"e.g. considered but deferred pending USS" },
+      ]},
+      { title: "Management", dot: "var(--accent)", info: "<b>Disease-modifying therapy</b><ul><li><b>ACE-i/ARB:</b> if ACR ≥30 (or diabetes + any ACR); recheck U&amp;E 1–2 wks after start/uptitration</li><li><b>SGLT2i:</b> start if eGFR ≥20 — slows progression in diabetic &amp; non-diabetic CKD (DAPA-CKD, EMPA-KIDNEY)</li><li><b>Finerenone:</b> non-steroidal MRA for diabetic CKD with albuminuria. Start if eGFR ≥25, K⁺ ≤4.8–5.0, on max-tolerated ACE-i/ARB. Recheck K⁺ at 4 wks. Reduces CKD progression &amp; CV events (FIDELIO-DKD, FIGARO-DKD)</li><li><b>Statin:</b> atorvastatin 20 mg in all adults with CKD (KDIGO)</li><li><b>Glycaemic control:</b> individualised HbA1c (typically 53–58 mmol/mol in CKD); SGLT2i and GLP-1 RAs preferred for renal/CV benefit; avoid hypos</li><li><b>Bicarbonate:</b> if serum HCO₃ persistently &lt;22 mmol/L</li></ul>", items: [
+        { id:"nc_raas", label:"ACE-i / ARB started or optimised", tpl:"ACE inhibitor / ARB: [V].", vhint:"e.g. ramipril increased to 10 mg, U&E to recheck in 2 weeks" },
+        { id:"nc_sglt2", label:"SGLT2 inhibitor addressed", tpl:"SGLT2 inhibitor: [V].", vhint:"e.g. dapagliflozin 10 mg commenced" },
+        { id:"nc_finerenone", label:"Finerenone considered", tpl:"Finerenone: [V].", vhint:"e.g. commenced 10 mg; K⁺ 4.6, recheck in 4 weeks" },
+        { id:"nc_glycaemic", label:"Glycaemic control optimised", tpl:"Glycaemic control: [V].", vhint:"e.g. HbA1c 58, metformin continued, target individualised" },
+        { id:"nc_statin", label:"Statin / CV risk", sentence:"Cardiovascular risk was addressed and statin therapy commenced or reviewed." },
+        { id:"nc_bicarb", label:"Acidosis / bicarbonate", tpl:"Acidosis: [V].", vhint:"e.g. sodium bicarbonate started for HCO₃ 19" },
+      ]},
+      { title: "Discussion & Education", dot: "var(--blue)", items: [
+        { id:"nc_diagnosis", label:"Diagnosis & prognosis explained", sentence:"The diagnosis of chronic kidney disease and its prognosis were explained to the patient." },
+        { id:"nc_sickday", label:"Sick day rules explained", sentence:"Sick day rules were explained (to hold ACE-i/ARB, SGLT2i, diuretics, metformin and NSAIDs during intercurrent illness)." },
+        { id:"nc_diet", label:"Dietary & lifestyle advice", sentence:"Dietary and lifestyle advice was given, including salt restriction, weight management and smoking cessation where relevant." },
+        { id:"nc_bpmonitor", label:"Home BP monitoring advised", sentence:"Home blood pressure monitoring was advised." },
+        { id:"nc_vaccines", label:"Vaccinations addressed", sentence:"Vaccination status was addressed (influenza, pneumococcal, COVID-19)." },
+      ]},
+      { title: "Plan", dot: "var(--blue)", items: [
+        { id:"nc_repeatbloods", label:"Repeat bloods arranged", tpl:"Repeat bloods arranged: [V].", vhint:"e.g. U&E and ACR in 4 weeks" },
+        { id:"nc_referral_out", label:"Onward referral made", tpl:"Referral made to [V].", vhint:"e.g. renal dietitian" },
+        { id:"nc_followup", label:"Follow-up arranged", tpl:"To be reviewed again in [V].", vhint:"e.g. 3 months in clinic" },
+        { id:"nc_safetynet", label:"Safety netting given", sentence:"Safety netting advice was provided regarding symptoms warranting earlier review." },
+      ]},
+    ]
+  },
+
+  genneph: {
+    name: "CKD Follow-up",
+    abbr: "CKD FU",
+    desc: "Established CKD — interval review & optimisation",
+    groups: [
+      { title: "Interval History", dot: "var(--accent)", items: [
+        { id:"gn_well", label:"Generally well, no new concerns", sentence:"The patient reports being generally well with no new concerns." },
+        { id:"gn_symptoms", label:"Symptoms reviewed", tpl:"Symptoms reviewed today: [V].", vhint:"e.g. mild ankle oedema, otherwise asymptomatic" },
+        { id:"gn_events", label:"Interval events", tpl:"Since last review: [V].", vhint:"e.g. one admission with chest infection" },
+        { id:"gn_compliance", label:"Medication compliance discussed", sentence:"Medication compliance was discussed and appears satisfactory." },
+        { id:"gn_homebp", label:"Home BP readings reviewed", tpl:"Home blood pressure readings reviewed: [V].", vhint:"e.g. averaging 132/80" },
+      ]},
+      { title: "Examination", dot: "var(--danger)", info: "<b>NICE NG203 — BP targets in CKD</b><ul><li>CKD without diabetes and ACR &lt;70: target <b>&lt;140/90</b></li><li>CKD with diabetes, or ACR ≥70 mg/mmol: target <b>&lt;130/80</b></li><li>Aim systolic ≥120 to avoid syncope/falls</li></ul>", items: [
+        { id:"gn_bp", label:"Blood pressure", tpl:"Blood pressure today was [V].", vhint:"e.g. 138/84" },
+        { id:"gn_weight", label:"Weight / fluid status", tpl:"Weight and volume status assessed: [V].", vhint:"e.g. stable weight, euvolaemic" },
+        { id:"gn_oedema", label:"Oedema assessed", tpl:"Peripheral oedema: [V].", vhint:"e.g. none / mild ankle oedema" },
+        { id:"gn_exam", label:"Other examination findings", tpl:"Examination otherwise: [V].", vhint:"e.g. chest clear, heart sounds normal" },
+      ]},
+      { title: "Investigations", dot: "var(--accent)", info: "<b>KDIGO/NICE — CKD biochemistry targets</b><ul><li><b>K⁺:</b> 3.5–5.5 · &gt;6.0 urgent · consider binder if barrier to RAAS</li><li><b>HCO₃:</b> ≥22 · sodium bicarb if persistently &lt;22</li><li><b>PO₄:</b> 0.8–1.5 · diet then binders</li><li><b>Hb:</b> 100–120 · iron first (ferritin &gt;100, TSAT &gt;20%); ESA if &lt;100 after iron</li><li><b>HbA1c:</b> 53–58 in diabetes with CKD (individualise)</li></ul>", items: [
+        { id:"gn_bloods", label:"Bloods reviewed", tpl:"Bloods reviewed today showed [V].", vhint:"e.g. creatinine 168, eGFR 36, K⁺ 4.6, Hb 118" },
+        { id:"gn_egfrtrend", label:"eGFR trajectory", tpl:"eGFR trajectory: [V].", vhint:"e.g. stable over the past year / declined from 42" },
+        { id:"gn_acr", label:"Albuminuria / ACR reviewed", tpl:"Urine ACR: [V].", vhint:"e.g. 28 mg/mmol, stable" },
+        { id:"gn_urinedip", label:"Urine dip performed", tpl:"Urine dipstick: [V].", vhint:"e.g. protein +, no blood" },
+        { id:"gn_imaging", label:"Imaging reviewed", tpl:"Imaging reviewed: [V].", vhint:"e.g. USS — normal-sized kidneys, no obstruction" },
+      ]},
+      { title: "Management", dot: "var(--blue)", info: "<b>Disease-modifying therapy</b><ul><li><b>ACE-i/ARB:</b> max tolerated if ACR ≥30 or diabetes; recheck U&amp;E after uptitration</li><li><b>SGLT2i:</b> start/continue if eGFR ≥20 — slows progression (DAPA-CKD, EMPA-KIDNEY)</li><li><b>Finerenone:</b> non-steroidal MRA for diabetic CKD with albuminuria. Start if eGFR ≥25, K⁺ ≤4.8–5.0, on max-tolerated ACE-i/ARB. Recheck K⁺ at 4 wks (FIDELIO-DKD, FIGARO-DKD)</li><li><b>Statin:</b> atorvastatin 20 mg in all adults with CKD</li><li><b>Glycaemic control:</b> individualised HbA1c (typically 53–58 mmol/mol in CKD); SGLT2i / GLP-1 RA preferred for renal &amp; CV benefit; avoid hypos</li></ul>", items: [
+        { id:"gn_bptarget", label:"BP optimisation discussed", sentence:"Blood pressure management was optimised towards target." },
+        { id:"gn_raas", label:"ACE-i / ARB reviewed", sentence:"ACE inhibitor / ARB therapy was reviewed and continued at maximum tolerated dose." },
+        { id:"gn_sglt2", label:"SGLT2 inhibitor addressed", tpl:"SGLT2 inhibitor: [V].", vhint:"e.g. continued / newly started dapagliflozin 10 mg" },
+        { id:"gn_finerenone", label:"Finerenone considered", tpl:"Finerenone: [V].", vhint:"e.g. continued 10 mg; K⁺ 4.7" },
+        { id:"gn_glycaemic", label:"Glycaemic control optimised", tpl:"Glycaemic control: [V].", vhint:"e.g. HbA1c 56, stable on current therapy" },
+        { id:"gn_statin", label:"Statin / CV risk reviewed", sentence:"Cardiovascular risk was reviewed and statin therapy addressed." },
+        { id:"gn_nephrotoxins", label:"Nephrotoxins reviewed", sentence:"Medications were reviewed and nephrotoxins (including NSAIDs) avoided." },
+        { id:"gn_medchanges", label:"Medication changes made", tpl:"Medication changes made today: [V].", vhint:"e.g. ramipril increased to 10 mg" },
+      ]},
+      { title: "Discussion & Education", dot: "var(--blue)", items: [
+        { id:"gn_sickday", label:"Sick day rules explained", sentence:"Sick day rules were explained (to hold ACE-i/ARB, SGLT2i, diuretics, metformin and NSAIDs during intercurrent illness)." },
+        { id:"gn_diet", label:"Dietary advice given", sentence:"Dietary advice was given, including salt restriction and appropriate protein intake." },
+        { id:"gn_lifestyle", label:"Lifestyle / smoking / weight", sentence:"Lifestyle measures were discussed, including weight management, exercise and smoking cessation where relevant." },
+        { id:"gn_prognosis", label:"Prognosis / trajectory discussed", sentence:"The patient's CKD trajectory and prognosis were discussed." },
+      ]},
+      { title: "Plan", dot: "var(--accent)", items: [
+        { id:"gn_repeatbloods", label:"Repeat bloods arranged", tpl:"Repeat bloods arranged: [V].", vhint:"e.g. U&E and ACR in 3 months" },
+        { id:"gn_referral", label:"Referral made", tpl:"Referral made to [V].", vhint:"e.g. dietitian / low clearance MDT" },
+        { id:"gn_followup", label:"Follow-up arranged", tpl:"To be reviewed again in [V].", vhint:"e.g. 6 months / clinic / by GP" },
+        { id:"gn_safetynet", label:"Safety netting given", sentence:"Safety netting advice was provided regarding when to seek further review." },
+      ]},
+    ]
+  },
+
+  akcc: {
+    name: "Advanced Kidney Care Clinic",
+    abbr: "AKCC",
+    desc: "Low clearance / pre-dialysis pathway",
+    groups: [
+      { title: "Symptoms & Wellbeing", dot: "var(--accent)", items: [
+        { id:"ak_uraemic", label:"Uraemic symptoms reviewed", tpl:"Uraemic symptoms reviewed: [V].", vhint:"e.g. mild fatigue, no nausea or pruritus" },
+        { id:"ak_fluid", label:"Fluid / breathlessness assessed", tpl:"Fluid status and breathlessness: [V].", vhint:"e.g. euvolaemic, no orthopnoea" },
+        { id:"ak_appetite", label:"Appetite / nutrition discussed", sentence:"Appetite and nutritional status were discussed." },
+        { id:"ak_function", label:"Functional status / frailty", tpl:"Functional status: [V].", vhint:"e.g. independent, mobilising well" },
+      ]},
+      { title: "Investigations", dot: "var(--accent)", items: [
+        { id:"ak_bloods", label:"Bloods reviewed", tpl:"Bloods reviewed today showed [V].", vhint:"e.g. eGFR 14, K⁺ 5.3, HCO₃ 19, Hb 102, PO₄ 1.7" },
+        { id:"ak_egfr", label:"eGFR / decline rate noted", tpl:"eGFR trajectory: [V].", vhint:"e.g. 14, declining ~4 mL/min/year" },
+        { id:"ak_kfre", label:"KFRE discussed", tpl:"Kidney failure risk (KFRE): [V].", vhint:"e.g. 2-year 18%, 5-year 52%" },
+      ]},
+      { title: "RRT Preparation", dot: "var(--blue)", info: "<b>RRT planning thresholds (KDIGO)</b><ul><li>Discuss modalities &amp; access when 2-yr KFRE &gt;10% or eGFR &lt;15–20</li><li>AVF ideally ~6 months before anticipated haemodialysis</li><li>Pre-emptive transplant listing when eGFR &lt;20 if a candidate</li><li>Preserve non-dominant arm veins; hepatitis B vaccination ahead of RRT</li></ul>", items: [
+        { id:"ak_modality", label:"RRT modalities discussed", sentence:"Renal replacement therapy options were discussed, including haemodialysis, peritoneal dialysis, transplantation and conservative care." },
+        { id:"ak_preference", label:"Patient preference explored", tpl:"Patient's current preference: [V].", vhint:"e.g. leaning towards home haemodialysis" },
+        { id:"ak_access", label:"Vascular / PD access planning", tpl:"Access planning: [V].", vhint:"e.g. referred for AV fistula formation" },
+        { id:"ak_transplant", label:"Transplant work-up addressed", tpl:"Transplant work-up: [V].", vhint:"e.g. listed / being assessed / not suitable" },
+        { id:"ak_hepb", label:"Hepatitis B vaccination", sentence:"Hepatitis B vaccination status was checked and addressed." },
+        { id:"ak_veins", label:"Vein preservation advised", sentence:"Vein preservation advice was given to protect the non-dominant arm." },
+      ]},
+      { title: "Complication Management", dot: "var(--accent)", items: [
+        { id:"ak_anaemia", label:"Anaemia managed", tpl:"Anaemia management: [V].", vhint:"e.g. iron replete, ESA continued, Hb 105" },
+        { id:"ak_mbd", label:"CKD-MBD managed", tpl:"Mineral-bone disorder: [V].", vhint:"e.g. phosphate binder continued, PTH stable" },
+        { id:"ak_acidosis", label:"Acidosis treated", tpl:"Metabolic acidosis: [V].", vhint:"e.g. sodium bicarbonate started, HCO₃ 19" },
+        { id:"ak_potassium", label:"Potassium addressed", tpl:"Potassium management: [V].", vhint:"e.g. dietary advice, K⁺ 5.3" },
+      ]},
+      { title: "Support & Planning", dot: "var(--blue)", items: [
+        { id:"ak_dietitian", label:"Renal dietitian involved", sentence:"The renal dietitian is involved in ongoing care." },
+        { id:"ak_psychosocial", label:"Psychosocial support offered", sentence:"Psychological and social support were offered." },
+        { id:"ak_acp", label:"Advance care planning", sentence:"Advance care planning was discussed." },
+        { id:"ak_conservative", label:"Conservative care explored", sentence:"Conservative kidney management was explored as an option." },
+      ]},
+      { title: "Plan", dot: "var(--accent)", items: [
+        { id:"ak_repeatbloods", label:"Repeat bloods arranged", tpl:"Repeat bloods arranged: [V].", vhint:"e.g. in 4–6 weeks" },
+        { id:"ak_followup", label:"Follow-up arranged", tpl:"To be reviewed again in [V].", vhint:"e.g. 6 weeks in AKCC" },
+        { id:"ak_safetynet", label:"Safety netting given", sentence:"Safety netting advice was provided regarding symptoms warranting earlier review." },
+      ]},
+    ]
+  },
+
+  transplant: {
+    name: "Transplant Clinic",
+    abbr: "Tx",
+    desc: "Post-transplant follow-up",
+    groups: [
+      { title: "Graft & Wellbeing", dot: "var(--accent)", items: [
+        { id:"tx_well", label:"Generally well, graft functioning", sentence:"The patient is generally well with a functioning graft." },
+        { id:"tx_symptoms", label:"Symptoms reviewed", tpl:"Symptoms reviewed: [V].", vhint:"e.g. no graft tenderness, fevers or urinary symptoms" },
+        { id:"tx_graftfn", label:"Graft function reviewed", tpl:"Graft function: [V].", vhint:"e.g. creatinine 128, eGFR 55, stable" },
+      ]},
+      { title: "Immunosuppression", dot: "var(--blue)", items: [
+        { id:"tx_levels", label:"Immunosuppression levels reviewed", tpl:"Immunosuppression levels: [V].", vhint:"e.g. tacrolimus trough 6.8" },
+        { id:"tx_regimen", label:"Regimen confirmed", tpl:"Current regimen: [V].", vhint:"e.g. tacrolimus, MMF and prednisolone" },
+        { id:"tx_adherence", label:"Adherence reinforced", sentence:"The importance of immunosuppression adherence was reinforced." },
+        { id:"tx_dosechange", label:"Dose change made", tpl:"Dose adjustment made: [V].", vhint:"e.g. tacrolimus reduced to 3 mg BD" },
+      ]},
+      { title: "Infection Surveillance", dot: "var(--blue)", items: [
+        { id:"tx_cmv", label:"CMV status reviewed", tpl:"CMV: [V].", vhint:"e.g. PCR negative" },
+        { id:"tx_bk", label:"BK virus reviewed", tpl:"BK virus: [V].", vhint:"e.g. urine/plasma PCR negative" },
+        { id:"tx_prophylaxis", label:"Prophylaxis reviewed", sentence:"Infection prophylaxis was reviewed and continued as appropriate." },
+        { id:"tx_vaccines", label:"Vaccinations addressed", sentence:"Vaccination status was addressed (avoiding live vaccines)." },
+      ]},
+      { title: "Long-term Risk", dot: "var(--accent)", items: [
+        { id:"tx_bp", label:"Blood pressure", tpl:"Blood pressure: [V].", vhint:"e.g. 134/82" },
+        { id:"tx_cvrisk", label:"Cardiovascular risk reviewed", sentence:"Cardiovascular risk factors were reviewed and managed." },
+        { id:"tx_diabetes", label:"Glucose / NODAT screened", sentence:"Screening for post-transplant diabetes was undertaken." },
+        { id:"tx_malignancy", label:"Malignancy surveillance", sentence:"Malignancy surveillance was addressed." },
+        { id:"tx_skin", label:"Skin protection advised", sentence:"Skin cancer surveillance and sun-protection advice were reinforced." },
+      ]},
+      { title: "Investigations", dot: "var(--accent)", items: [
+        { id:"tx_bloods", label:"Bloods reviewed", tpl:"Bloods reviewed today showed [V].", vhint:"e.g. creatinine 128, eGFR 55, tacrolimus 6.8, FBC normal" },
+        { id:"tx_dsa", label:"DSA / immunology reviewed", tpl:"Donor-specific antibodies: [V].", vhint:"e.g. none detected" },
+        { id:"tx_proteinuria", label:"Proteinuria reviewed", tpl:"Proteinuria: [V].", vhint:"e.g. PCR 18, stable" },
+      ]},
+      { title: "Plan", dot: "var(--accent)", items: [
+        { id:"tx_repeatbloods", label:"Repeat bloods arranged", tpl:"Repeat bloods arranged: [V].", vhint:"e.g. in 4 weeks with tacrolimus level" },
+        { id:"tx_followup", label:"Follow-up arranged", tpl:"To be reviewed again in [V].", vhint:"e.g. 6 weeks in transplant clinic" },
+        { id:"tx_safetynet", label:"Safety netting given", sentence:"Safety netting advice was provided, including to seek urgent review for fever, reduced urine output or graft tenderness." },
+      ]},
+    ]
+  }
+};
+
+/* ═══════════════════════════════════════════════════════
+   STATE & RENDER
+═══════════════════════════════════════════════════════ */
+let currentClinic = 'newckd';
+let noteStyle = 'prose';
+const state = {}; // id -> { checked, value }
+
+function initState() {
+  Object.values(CLINICS).forEach(clinic => {
+    clinic.groups.forEach(g => g.items.forEach(it => {
+      if (!state[it.id]) state[it.id] = { checked: false, value: '' };
+    }));
+  });
+}
+
+function renderTabs() {
+  const tabs = document.getElementById('clinicTabs');
+  tabs.innerHTML = Object.entries(CLINICS).map(([key, c]) =>
+    `<button class="clinic-tab ${key===currentClinic?'active':''}" data-clinic="${key}">
+       <span class="full">${c.name}</span><span class="abbr">${c.abbr}</span>
+     </button>`
+  ).join('');
+  tabs.querySelectorAll('.clinic-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentClinic = btn.dataset.clinic;
+      renderTabs(); renderClinic(); buildNote();
+    });
+  });
+}
+
+function renderClinic() {
+  const c = CLINICS[currentClinic];
+  document.getElementById('clinicTitle').textContent = c.name;
+  document.getElementById('clinicDesc').textContent = c.desc;
+  const container = document.getElementById('groupsContainer');
+  container.innerHTML = c.groups.map((g, gi) => `
+    <div class="group" data-gi="${gi}">
+      <div class="group-head">
+        <span class="dot" style="background:${g.dot}"></span>
+        ${g.title}
+        ${g.info ? `<button class="info-btn" data-info="${gi}" title="Guideline reference">i</button>` : ''}
+        <span class="chev">▾</span>
+      </div>
+      ${g.info ? `<div class="guideline" data-glpanel="${gi}">${g.info}</div>` : ''}
+      <div class="group-body">
+        ${g.items.map(it => {
+          const st = state[it.id];
+          const hasValue = !!it.tpl;
+          return `
+          <label class="check-item ${hasValue?'has-value':''} ${st.checked?'checked':''}" data-id="${it.id}">
+            <input type="checkbox" ${st.checked?'checked':''}>
+            <div class="ci-body">
+              <div class="ci-label">${it.label}</div>
+              ${hasValue ? `<div class="ci-value">
+                <input type="text" placeholder="${escapeAttr(it.vhint||'enter detail...')}" value="${escapeAttr(st.value)}">
+              </div>` : ''}
+            </div>
+          </label>`;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  // Group collapse
+  container.querySelectorAll('.group-head').forEach(h => {
+    h.addEventListener('click', (e) => {
+      if (e.target.closest('.info-btn')) return; // info button handled separately
+      h.closest('.group').classList.toggle('collapsed');
+    });
+  });
+
+  // Info / guideline toggle
+  container.querySelectorAll('.info-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const gi = btn.dataset.info;
+      const panel = container.querySelector(`.guideline[data-glpanel="${gi}"]`);
+      if (!panel) return;
+      const showing = panel.classList.toggle('show');
+      btn.classList.toggle('active', showing);
+    });
+  });
+
+  // Checkbox toggles
+  container.querySelectorAll('.check-item').forEach(item => {
+    const id = item.dataset.id;
+    const cb = item.querySelector('input[type=checkbox]');
+    const valInput = item.querySelector('.ci-value input');
+    cb.addEventListener('change', () => {
+      state[id].checked = cb.checked;
+      item.classList.toggle('checked', cb.checked);
+      buildNote();
+      if (cb.checked && valInput) setTimeout(()=>valInput.focus(), 30);
+    });
+    if (valInput) {
+      valInput.addEventListener('input', () => { state[id].value = valInput.value; buildNote(); });
+      // prevent label click toggling checkbox when typing
+      valInput.addEventListener('click', e => e.preventDefault());
+      item.querySelector('.ci-value').addEventListener('click', e => e.stopPropagation());
+    }
+  });
+  updateCount();
+}
+
+function itemSentence(it) {
+  const st = state[it.id];
+  if (!st.checked) return null;
+  if (it.sentence) return it.sentence;
+  if (it.tpl) {
+    const v = (st.value||'').trim();
+    if (v) return it.tpl.replace('[V]', v);
+    // No value entered — produce a clean fallback by removing the "[V]" clause
+    // Turn "Bloods reviewed today showed [V]." -> "Bloods were reviewed today."
+    return fallbackSentence(it);
+  }
+  return null;
+}
+
+function fallbackSentence(it) {
+  // Reasonable generic line when a value-item is checked but left blank
+  const map = {
+    nc_referral:"The referral was reviewed.",
+    nc_pmh:"Past medical history was taken.",
+    nc_drughx:"Drug history was reviewed.",
+    nc_allergies:"Allergies were documented.",
+    nc_fhx:"Family history was reviewed.",
+    nc_social:"Social history was taken.",
+    nc_cause:"The likely cause of CKD was considered.",
+    nc_nephrotoxin:"Nephrotoxin exposure was reviewed.",
+    nc_bp:"Blood pressure was recorded.",
+    nc_weight:"Weight and BMI were recorded.",
+    nc_volume:"Volume status was assessed.",
+    nc_exam:"Examination was performed.",
+    nc_bloods:"Bloods were reviewed today.",
+    nc_acr:"Urine ACR was reviewed.",
+    nc_urinedip:"Urine dipstick was performed.",
+    nc_imaging:"Imaging was addressed.",
+    nc_stage:"CKD stage was assigned.",
+    nc_kfre:"Kidney failure risk was estimated.",
+    nc_trajectory:"Baseline trajectory was documented.",
+    nc_biopsy:"Renal biopsy was considered.",
+    nc_raas:"ACE inhibitor / ARB therapy was addressed.",
+    nc_sglt2:"SGLT2 inhibitor therapy was addressed.",
+    nc_finerenone:"Finerenone therapy was considered.",
+    nc_glycaemic:"Glycaemic control was optimised.",
+    nc_bicarb:"Metabolic acidosis was addressed.",
+    nc_repeatbloods:"Repeat bloods were arranged.",
+    nc_referral_out:"An onward referral was made.",
+    nc_followup:"Follow-up was arranged.",
+    gn_symptoms:"Symptoms were reviewed.",
+    gn_events:"Interval events were reviewed.",
+    gn_homebp:"Home blood pressure readings were reviewed.",
+    gn_bp:"Blood pressure was recorded.",
+    gn_weight:"Weight and volume status were assessed.",
+    gn_oedema:"Peripheral oedema was assessed.",
+    gn_exam:"Examination was performed.",
+    gn_bloods:"Bloods were reviewed today.",
+    gn_egfrtrend:"eGFR trajectory was reviewed.",
+    gn_acr:"Urine ACR was reviewed.",
+    gn_urinedip:"Urine dipstick was performed.",
+    gn_imaging:"Imaging was reviewed.",
+    gn_sglt2:"SGLT2 inhibitor therapy was addressed.",
+    gn_finerenone:"Finerenone therapy was considered.",
+    gn_glycaemic:"Glycaemic control was optimised.",
+    gn_medchanges:"Medication changes were made.",
+    gn_repeatbloods:"Repeat bloods were arranged.",
+    gn_referral:"A referral was made.",
+    gn_followup:"Follow-up was arranged.",
+    ak_uraemic:"Uraemic symptoms were reviewed.",
+    ak_fluid:"Fluid status was assessed.",
+    ak_function:"Functional status was assessed.",
+    ak_bloods:"Bloods were reviewed today.",
+    ak_egfr:"eGFR trajectory was reviewed.",
+    ak_kfre:"Kidney failure risk was discussed.",
+    ak_preference:"The patient's RRT preference was explored.",
+    ak_access:"Access planning was addressed.",
+    ak_transplant:"Transplant work-up was addressed.",
+    ak_anaemia:"Anaemia was reviewed.",
+    ak_mbd:"Mineral-bone disorder was reviewed.",
+    ak_acidosis:"Metabolic acidosis was addressed.",
+    ak_potassium:"Potassium was addressed.",
+    ak_repeatbloods:"Repeat bloods were arranged.",
+    ak_followup:"Follow-up was arranged.",
+    tx_symptoms:"Symptoms were reviewed.",
+    tx_graftfn:"Graft function was reviewed.",
+    tx_levels:"Immunosuppression levels were reviewed.",
+    tx_regimen:"The immunosuppression regimen was confirmed.",
+    tx_dosechange:"An immunosuppression dose change was made.",
+    tx_cmv:"CMV status was reviewed.",
+    tx_bk:"BK virus status was reviewed.",
+    tx_bp:"Blood pressure was recorded.",
+    tx_bloods:"Bloods were reviewed today.",
+    tx_dsa:"Donor-specific antibodies were reviewed.",
+    tx_proteinuria:"Proteinuria was reviewed.",
+    tx_repeatbloods:"Repeat bloods were arranged.",
+    tx_followup:"Follow-up was arranged.",
+  };
+  return map[it.id] || it.label + ".";
+}
+
+function buildNote() {
+  const c = CLINICS[currentClinic];
+  const body = document.getElementById('noteBody');
+  const sections = [];
+  c.groups.forEach(g => {
+    const lines = g.items.map(itemSentence).filter(Boolean);
+    if (lines.length) sections.push({ title: g.title, lines });
+  });
+
+  if (!sections.length) {
+    body.className = 'note-body empty';
+    body.textContent = 'Tick items on the left and the note builds itself here.';
+    document.getElementById('wordCount').textContent = '0 words';
+    updateCount();
+    return;
+  }
+  body.className = 'note-body';
+
+  let html = '';
+  let plain = '';
+  sections.forEach(s => {
+    html += `<span class="note-section-title">${s.title}</span>`;
+    plain += s.title.toUpperCase() + '\n';
+    if (noteStyle === 'bullets') {
+      s.lines.forEach(l => { html += '• ' + escapeHtml(l) + '\n'; plain += '• ' + l + '\n'; });
+    } else {
+      const para = s.lines.join(' ');
+      html += escapeHtml(para) + '\n';
+      plain += para + '\n';
+    }
+    html += '\n'; plain += '\n';
+  });
+  body.innerHTML = html.trim();
+  body._plain = plain.trim();
+
+  const words = plain.trim().split(/\s+/).filter(Boolean).length;
+  document.getElementById('wordCount').textContent = words + ' words';
+  updateCount();
+}
+
+function updateCount() {
+  const c = CLINICS[currentClinic];
+  let n = 0;
+  c.groups.forEach(g => g.items.forEach(it => { if (state[it.id].checked) n++; }));
+  document.getElementById('checkedCount').textContent = n;
+}
+
+function escapeHtml(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function escapeAttr(s){return String(s||'').replace(/"/g,'&quot;');}
+
+/* Style toggle */
+document.querySelectorAll('.style-toggle button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.style-toggle button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    noteStyle = b.dataset.style;
+    buildNote();
+  });
+});
+
+/* Copy */
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const body = document.getElementById('noteBody');
+  const text = body._plain || '';
+  if (!text) { showToast('Nothing to copy yet'); return; }
+  navigator.clipboard.writeText(text).then(()=>showToast('Note copied to clipboard ✓'));
+});
+
+/* Reset */
+document.getElementById('resetBtn').addEventListener('click', () => {
+  const c = CLINICS[currentClinic];
+  let any = false;
+  c.groups.forEach(g => g.items.forEach(it => { if (state[it.id].checked || state[it.id].value) any = true; }));
+  if (!any) { showToast('Nothing to reset'); return; }
+  if (!confirm('Clear all ticks for this clinic?')) return;
+  c.groups.forEach(g => g.items.forEach(it => { state[it.id] = { checked:false, value:'' }; }));
+  renderClinic(); buildNote();
+  showToast('Cleared');
+});
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 2000);
+}
+
+/* INIT */
+initState();
+renderTabs();
+renderClinic();
+buildNote();
+</script>
+</body>
+</html>
