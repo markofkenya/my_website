@@ -270,10 +270,16 @@
   .paid-toggle:hover{background:var(--paper-2)}
   .paid-toggle:hover::before{border-color:var(--good)}
   .paid-toggle:active::before{transform:scale(.88)}
-  .item.is-paid{background:rgba(46,125,84,.09)}
+  .item.is-paid{background:rgba(46,125,84,.06);opacity:.72}
+  .item.is-paid:hover{opacity:1}
   .item.is-paid .paid-toggle::before{background:var(--good);border-color:var(--good);animation:pop .28s cubic-bezier(.34,1.56,.64,1)}
   .item.is-paid .nm{color:var(--good);text-decoration:line-through;text-decoration-color:rgba(46,125,84,.5);text-decoration-thickness:1.5px}
   .item.is-paid .cell input{color:#9bbfa9}
+  /* divider between unpaid and paid sections */
+  .paid-divider{display:flex;align-items:center;gap:9px;padding:10px 6px 4px;margin-top:2px}
+  .paid-divider .pd-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent)}
+  .paid-divider .pd-label{font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--good);opacity:.7;white-space:nowrap}
+  .move-hidden{width:18px}  /* keeps action column width consistent when move buttons are hidden */
   @keyframes pop{0%{transform:scale(.4)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
   .col-head{display:grid;grid-template-columns:34px 1fr 26px 64px 64px 64px;gap:4px;padding:6px 6px 2px;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
   .col-head span:nth-child(4),.col-head span:nth-child(5){text-align:right}
@@ -942,7 +948,16 @@ function oneoffRow(o){
 
 function bucketHTML(d,m){
   const head=getComputedStyle(document.documentElement).getPropertyValue(d.c).trim();
-  const rows=m[d.key].map((it,i,arr)=>itemRow(d.key,it,i,arr.length)).join("");
+  const arr=m[d.key];
+  // Visual-only sort: unpaid first, paid pushed below a divider. Original indices preserved
+  // so the up/down move buttons still operate on the underlying array.
+  const unpaid=arr.map((it,i)=>({it,i})).filter(x=>!x.it.paid);
+  const paid=arr.map((it,i)=>({it,i})).filter(x=>x.it.paid);
+  const unpaidRows=unpaid.map(x=>itemRow(d.key,x.it,x.i,arr.length,arr)).join("");
+  const paidRows=paid.map(x=>itemRow(d.key,x.it,x.i,arr.length,arr)).join("");
+  const divider=paid.length
+    ? `<div class="paid-divider"><span class="pd-line"></span><span class="pd-label">✓ ${paid.length} paid</span><span class="pd-line"></span></div>`
+    : "";
   const colHead=`<div class="col-head"><span>Paid</span><span>Item</span><span class="who-head">Who</span><span>Budget</span><span>Spent</span><span></span></div>`;
   return `
   <div class="bucket" data-bucket="${d.key}">
@@ -957,16 +972,27 @@ function bucketHTML(d,m){
       <div class="spent-cap"><span data-spentcap="${d.key}">spent £0</span><span data-paidcap="${d.key}">✓ 0 of 0 paid</span></div>
     </div>
     ${colHead}
-    <div class="items" data-items="${d.key}">${rows}</div>
+    <div class="items" data-items="${d.key}">${unpaidRows}${divider}${paidRows}</div>
     <button class="add-item" data-add="${d.key}">+ Add item</button>
   </div>`;
 }
-function itemRow(bucket,it,idx,total){
+function itemRow(bucket,it,idx,total,arr){
   const tag = bucket==="future"
     ? `<button class="tag-toggle" data-tag="${it.id}" style="${it.type==='invest'?'background:var(--future-bg);color:var(--future-ink);border-color:var(--future)':''}">${it.type==='invest'?'Invest':'Save'}</button>`
     : ``;
-  const upDis=idx===0?"disabled":"", downDis=idx===total-1?"disabled":"";
-  const moveBtns=`<div class="move-stack"><button class="move-btn" data-move="up" data-id="${it.id}" title="Move up" aria-label="Move up" ${upDis}>▲</button><button class="move-btn" data-move="down" data-id="${it.id}" title="Move down" aria-label="Move down" ${downDis}>▼</button></div>`;
+  // boundary among unpaid items only — paid rows have move buttons hidden
+  let upDis="", downDis="";
+  if(arr){
+    const hasUnpaidAbove=arr.slice(0,idx).some(x=>!x.paid);
+    const hasUnpaidBelow=arr.slice(idx+1).some(x=>!x.paid);
+    upDis=hasUnpaidAbove?"":"disabled";
+    downDis=hasUnpaidBelow?"":"disabled";
+  } else {
+    upDis=idx===0?"disabled":""; downDis=idx===total-1?"disabled":"";
+  }
+  const moveBtns=it.paid
+    ? `<div class="move-stack move-hidden" aria-hidden="true"></div>`
+    : `<div class="move-stack"><button class="move-btn" data-move="up" data-id="${it.id}" title="Move up" aria-label="Move up" ${upDis}>▲</button><button class="move-btn" data-move="down" data-id="${it.id}" title="Move down" aria-label="Move down" ${downDis}>▼</button></div>`;
   const delBtn=`<button class="del" data-del="${it.id}" title="Remove">×</button>`;
   const last = bucket==="future"
     ? `<div style="display:flex;align-items:center;gap:2px;justify-content:flex-end">${moveBtns}${tag}${delBtn}</div>`
@@ -1298,8 +1324,19 @@ function shiftMonth(dir){
 }
 document.getElementById("newMonth").onclick=()=>{
   const last=cm();
-  const nm=seedMonth(nextLabel(last.label,1));
-  // copy current plan, reset spent + note for a fresh start
+  const newLabel=nextLabel(last.label,1);
+  // If a month with this label already exists, offer to switch to it instead of duplicating
+  const existing=state.months.find(m=>m.label.trim().toLowerCase()===newLabel.trim().toLowerCase());
+  if(existing){
+    if(confirm(`"${existing.label}" already exists. Switch to it instead of creating a duplicate?`)){
+      state.current=existing.id; activeTab="month";
+      document.querySelector('.tab[data-tab="month"]').click();
+      save(); toast("Switched to "+existing.label);
+    }
+    return;
+  }
+  if(!confirm(`Start "${newLabel}"?\n\nThis copies your plan forward (income, items, who tags, order) and resets Spent, Paid, one-offs, and the note for a fresh month.`))return;
+  const nm=seedMonth(newLabel);
   nm.income={...last.income};
   nm.fundamental=last.fundamental.map(i=>({...i,id:uid(),spent:0,paid:false}));
   nm.fun=last.fun.map(i=>({...i,id:uid(),spent:0,paid:false}));
@@ -1309,7 +1346,8 @@ document.getElementById("newMonth").onclick=()=>{
   state.months.splice(idx+1,0,nm);
   state.current=nm.id; activeTab="month";
   document.querySelector('.tab[data-tab="month"]').click();
-  toast("New month started from last month's plan ✨");
+  save();
+  toast("New month started — plan copied, Spent & Paid reset ✨");
 };
 document.getElementById("monthLabel").oninput=e=>{cm().label=e.target.value;save();
   document.getElementById("monthCount").textContent=state.months.length+(state.months.length===1?" month tracked":" months tracked");};
@@ -1382,6 +1420,12 @@ document.getElementById("buckets").addEventListener("click",e=>{
     refreshDerived();save();
     if(it.paid && cm()[bucket].every(x=>x.paid)) toast(bucketName(bucket)+" — all paid! 🎉");
     else if(it.paid) toast("✓ "+(it.name||"Item")+" marked paid"+(num(it.spent)?" · "+fmt(num(it.spent)):""));
+    // let the pop animation play, then re-render so the row settles into the right section
+    setTimeout(()=>{renderMonth();
+      // flash the row in its new home
+      const moved=document.querySelector(`[data-bucket="${bucket}"] .item[data-id="${it.id}"]`);
+      if(moved){moved.classList.add("just-moved");setTimeout(()=>moved.classList.remove("just-moved"),700);}
+    },350);
     return;
   }
   // who-chip cycle
@@ -1394,18 +1438,21 @@ document.getElementById("buckets").addEventListener("click",e=>{
     refreshDerived();save();
     return;
   }
-  // move up/down
+  // move up/down — operates on underlying array but skips over paid items
+  // so reordering only shuffles unpaid items relative to each other
   const moveBtn=e.target.closest("[data-move]");
   if(moveBtn){
     const row=moveBtn.closest(".item");const bucket=row.closest("[data-bucket]").dataset.bucket;
     const arr=cm()[bucket];
     const idx=arr.findIndex(x=>x.id===moveBtn.dataset.id);
+    if(idx<0)return;
     const dir=moveBtn.dataset.move==="up"?-1:1;
-    const ni=idx+dir;
-    if(idx<0 || ni<0 || ni>=arr.length)return;
+    // find next UNPAID neighbour in that direction (skip over paid items)
+    let ni=idx+dir;
+    while(ni>=0 && ni<arr.length && arr[ni].paid) ni+=dir;
+    if(ni<0 || ni>=arr.length)return;
     [arr[idx],arr[ni]]=[arr[ni],arr[idx]];
     renderMonth();save();
-    // briefly flash the moved row so the eye follows it
     const moved=document.querySelector(`[data-bucket="${bucket}"] .item[data-id="${moveBtn.dataset.id}"]`);
     if(moved){moved.classList.add("just-moved");setTimeout(()=>moved.classList.remove("just-moved"),700);}
     return;
