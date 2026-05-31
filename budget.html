@@ -1116,9 +1116,11 @@ function refreshDebt(){
     const paid=Math.max(0,st-bal);
     const pct=st>0?Math.min(100,paid/st*100):0;
     card.querySelector("[data-debtfill]").style.width=pct+"%";
-    const needsStart = bal>0 && st<=bal;
-    card.querySelector("[data-debtpaid]").innerHTML= needsStart
-      ? `<span style="color:var(--warn)">⚠ set a starting balance to track progress</span>`
+    const noStart = bal>0 && st<=0;
+    const noProgress = bal>0 && st>0 && st<=bal;
+    card.querySelector("[data-debtpaid]").innerHTML=
+      noStart ? `<span style="color:var(--warn)">⚠ set a starting balance to track progress</span>`
+      : noProgress ? `<span style="color:var(--muted)">not paid down yet · ${fmt(bal)} left</span>`
       : `<b style="color:var(--good)">${pct.toFixed(0)}%</b> paid · ${fmt(bal)} left`;
     const ml=num(d.pay)>0?Math.ceil(bal/num(d.pay)):0;
     card.querySelector("[data-monthsleft]").value=ml>0?ml+" mo":"—";
@@ -1129,10 +1131,13 @@ function refreshDebt(){
   const paidAll=Math.max(0,start-total), pctAll=start>0?Math.min(100,paidAll/start*100):0;
   document.getElementById("debtTotalFill").style.width=pctAll+"%";
   document.getElementById("debtPaidPct").textContent=pctAll.toFixed(0)+"%";
-  const skipped=state.debts.filter(d=>num(d.balance)>0 && num(d.start)<=num(d.balance)).length;
-  const skippedNote = skipped>0
-    ? ` <span style="color:var(--warn)">· ${skipped} debt${skipped>1?"s":""} excluded (no starting balance)</span>`
-    : "";
+  // The exclusion above only skips rows with start<=0; rows where start=balance contribute
+  // zero progress but aren't excluded. Distinguish those cases so the message doesn't lie.
+  const missingStart=state.debts.filter(d=>num(d.balance)>0 && num(d.start)<=0).length;
+  const noProgressYet=state.debts.filter(d=>num(d.balance)>0 && num(d.start)>0 && num(d.start)===num(d.balance)).length;
+  let skippedNote="";
+  if(missingStart>0) skippedNote += ` <span style="color:var(--warn)">· ${missingStart} excluded (no starting balance)</span>`;
+  if(noProgressYet>0) skippedNote += ` <span style="color:var(--muted)">· ${noProgressYet} not paid down yet</span>`;
   document.getElementById("debtPaidAmt").innerHTML=`<b>${fmt(paidAll)}</b> cleared of ${fmt(start)}${skippedNote}`;
   const totalPay=state.debts.reduce((s,d)=>s+num(d.pay),0);
   const months=totalPay>0?Math.ceil(totalAllBalances/totalPay):0;
