@@ -1346,7 +1346,7 @@ document.getElementById("buckets").addEventListener("click",e=>{
   // add
   const add=e.target.closest("[data-add]");
   if(add){const k=add.dataset.add;const o={id:uid(),name:"",budget:0,spent:0,paid:false};if(k==="future")o.type="save";
-    cm()[k].push(o);renderMonth();
+    cm()[k].push(o);renderMonth();save();
     const last=document.querySelector(`[data-items="${k}"] .item:last-child .nm`);if(last)last.focus();return;}
   // paid toggle
   const paidBtn=e.target.closest("[data-paid]");
@@ -1377,10 +1377,10 @@ document.getElementById("buckets").addEventListener("click",e=>{
   // delete
   const del=e.target.closest("[data-del]");
   if(del){const item=del.closest(".item");const bucket=item.closest("[data-bucket]").dataset.bucket;
-    cm()[bucket]=cm()[bucket].filter(x=>x.id!==del.dataset.del);renderMonth();return;}
+    cm()[bucket]=cm()[bucket].filter(x=>x.id!==del.dataset.del);renderMonth();save();return;}
   // tag toggle (future)
   const tag=e.target.closest("[data-tag]");
-  if(tag){const it=cm().future.find(x=>x.id===tag.dataset.tag);if(it){it.type=it.type==="save"?"invest":"save";renderMonth();}}
+  if(tag){const it=cm().future.find(x=>x.id===tag.dataset.tag);if(it){it.type=it.type==="save"?"invest":"save";renderMonth();save();}}
 });
 function bucketName(k){return {fundamental:"Fundamental",fun:"Fun",future:"Future You"}[k]||k;}
 function nextWho(w){return w==null?"a":w==="a"?"b":w==="b"?"s":null;}
@@ -1459,15 +1459,15 @@ document.getElementById("debtList").addEventListener("input",e=>{
 document.getElementById("debtList").addEventListener("click",e=>{
   const del=e.target.closest("[data-deldebt]");if(del){
     if(state.debts.length<=1){toast("Keep at least one row — set it to 0 instead");return;}
-    state.debts=state.debts.filter(x=>x.id!==del.dataset.deldebt);renderDebt();}
+    state.debts=state.debts.filter(x=>x.id!==del.dataset.deldebt);renderDebt();save();}
 });
-document.getElementById("addDebt").onclick=()=>{state.debts.push({id:uid(),name:"",balance:0,start:0,pay:0});renderDebt();
+document.getElementById("addDebt").onclick=()=>{state.debts.push({id:uid(),name:"",balance:0,start:0,pay:0});renderDebt();save();
   const l=document.querySelector("#debtList .debt-card:last-child .nm");if(l)l.focus();};
 
 // goals + travel events
 function goalCollClick(e){
   const del=e.target.closest("[data-delgoal]");
-  if(del){const coll=del.dataset.coll;state[coll]=state[coll].filter(x=>x.id!==del.dataset.delgoal);renderGoals();}
+  if(del){const coll=del.dataset.coll;state[coll]=state[coll].filter(x=>x.id!==del.dataset.delgoal);renderGoals();save();}
 }
 function goalInput(e){
   const card=e.target.closest("[data-goal]");if(!card)return;
@@ -1482,9 +1482,9 @@ function goalInput(e){
   document.getElementById(id).addEventListener("input",goalInput);
   document.getElementById(id).addEventListener("click",goalCollClick);
 });
-document.getElementById("addGoal").onclick=()=>{state.goals.push({id:uid(),name:"",current:0,target:0});renderGoals();
+document.getElementById("addGoal").onclick=()=>{state.goals.push({id:uid(),name:"",current:0,target:0});renderGoals();save();
   const l=document.querySelector("#goalList .goal-card:last-child .nm");if(l)l.focus();};
-document.getElementById("addTravel").onclick=()=>{state.travel.push({id:uid(),name:"",current:0,target:0});renderGoals();
+document.getElementById("addTravel").onclick=()=>{state.travel.push({id:uid(),name:"",current:0,target:0});renderGoals();save();
   const l=document.querySelector("#travelList .goal-card:last-child .nm");if(l)l.focus();};
 
 // investments
@@ -1494,9 +1494,9 @@ document.getElementById("invList").addEventListener("input",e=>{
   const f=e.target.dataset.vf;v[f]= f==="name"?e.target.value:num(e.target.value);save();
 });
 document.getElementById("invList").addEventListener("click",e=>{
-  const del=e.target.closest("[data-delinv]");if(del){state.investments=state.investments.filter(x=>x.id!==del.dataset.delinv);renderGoals();}
+  const del=e.target.closest("[data-delinv]");if(del){state.investments=state.investments.filter(x=>x.id!==del.dataset.delinv);renderGoals();save();}
 });
-document.getElementById("addInv").onclick=()=>{state.investments.push({id:uid(),name:"",value:0});renderGoals();
+document.getElementById("addInv").onclick=()=>{state.investments.push({id:uid(),name:"",value:0});renderGoals();save();
   const l=document.querySelector("#invList .inv-row:last-child .nm");if(l)l.focus();};
 
 // settings
