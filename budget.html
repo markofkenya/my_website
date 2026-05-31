@@ -232,11 +232,11 @@
   .spent-cap{font-size:11px;opacity:.92;margin-top:5px;font-weight:600;display:flex;justify-content:space-between}
 
   .items{padding:8px 10px 4px;flex:1}
-  .item{display:grid;grid-template-columns:34px 1fr 72px 72px 30px;gap:5px;align-items:center;padding:4px 2px;border-radius:10px;transition:background .12s,opacity .12s}
+  .item{display:grid;grid-template-columns:34px 1fr 26px 68px 68px 30px;gap:4px;align-items:center;padding:4px 2px;border-radius:10px;transition:background .12s,opacity .12s}
   .item:hover{background:var(--paper-2)}
   .item .nm{border:none;background:transparent;font-family:var(--body);font-weight:600;font-size:13.5px;color:var(--ink);padding:5px 6px;border-radius:7px;min-width:0}
   .item .nm:focus{outline:none;background:#fff;box-shadow:inset 0 0 0 1px var(--line)}
-  .cell{width:72px}
+  .cell{width:68px}
   .cell input{width:100%;border:1px solid transparent;background:transparent;text-align:right;font-family:var(--body);font-weight:700;font-size:13px;padding:5px 6px;border-radius:7px;color:var(--ink);transition:.12s}
   .cell input::placeholder{color:var(--muted);font-weight:500}
   .cell input:focus{outline:none;background:#fff;border-color:var(--line-strong)}
@@ -257,11 +257,20 @@
   .item.is-paid .nm{color:var(--good);text-decoration:line-through;text-decoration-color:rgba(46,125,84,.5);text-decoration-thickness:1.5px}
   .item.is-paid .cell input{color:#9bbfa9}
   @keyframes pop{0%{transform:scale(.4)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
-  .col-head{display:grid;grid-template-columns:34px 1fr 72px 72px 30px;gap:5px;padding:6px 6px 2px;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
-  .col-head span:nth-child(n+3){text-align:right}
-  .col-head span:first-child{text-align:center;font-size:9px}
+  .col-head{display:grid;grid-template-columns:34px 1fr 26px 68px 68px 30px;gap:4px;padding:6px 6px 2px;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+  .col-head span:nth-child(4),.col-head span:nth-child(5){text-align:right}
+  .col-head span:first-child,.col-head span:nth-child(3){text-align:center;font-size:9px}
   [data-paidcap]{font-weight:700}
   @media(hover:none){.del{opacity:.5}}
+
+  /* who chip — Mine / Partner's / Shared assignment */
+  .who-chip{width:22px;height:22px;border-radius:50%;border:1.5px dashed var(--line-strong);background:transparent;cursor:pointer;padding:0;display:grid;place-items:center;font-family:var(--body);font-weight:800;font-size:9.5px;color:transparent;-webkit-tap-highlight-color:transparent;transition:transform .12s,background .15s,border-color .15s,color .15s;justify-self:center}
+  .who-chip:hover{transform:scale(1.12);border-color:var(--ink-soft);border-style:solid;color:var(--muted)}
+  .who-chip.is-a{background:var(--fund);border-color:var(--fund);border-style:solid;color:#fff}
+  .who-chip.is-b{background:var(--future);border-color:var(--future);border-style:solid;color:#fff}
+  .who-chip.is-s{background:var(--gold);border-color:var(--gold);border-style:solid;color:#fff}
+  .who-chip.is-a:hover,.who-chip.is-b:hover,.who-chip.is-s:hover{opacity:.85}
+  .col-head .who-head{font-size:8.5px}
   .add-item{margin:6px 12px 14px;border:1px dashed var(--line-strong);background:transparent;border-radius:10px;padding:9px;width:calc(100% - 24px);font-weight:700;font-size:12.5px;color:var(--ink-soft);cursor:pointer;transition:.15s}
   .add-item:hover{background:var(--paper-2);border-color:currentColor}
 
@@ -272,7 +281,7 @@
 
   /* one-off list */
   .oneoff-list{display:flex;flex-direction:column;gap:0}
-  .oneoff{display:grid;grid-template-columns:100px 1fr 110px 30px;gap:8px;align-items:center;padding:8px 4px;border-bottom:1px dashed var(--line)}
+  .oneoff{display:grid;grid-template-columns:100px 1fr 26px 100px 30px;gap:8px;align-items:center;padding:8px 4px;border-bottom:1px dashed var(--line)}
   .oneoff:last-child{border-bottom:none}
   .oneoff input{border:1px solid transparent;background:transparent;font-family:var(--body);font-weight:600;font-size:13.5px;color:var(--ink);padding:7px 9px;border-radius:8px;transition:.12s;min-width:0}
   .oneoff input:focus{outline:none;background:#fff;border-color:var(--line-strong);box-shadow:0 0 0 2px var(--fun-bg)}
@@ -282,10 +291,11 @@
   .oneoff .del{opacity:.4}
   .oneoff:hover .del{opacity:1}
   @media(max-width:560px){
-    .oneoff{grid-template-columns:1fr 96px 28px;grid-template-areas:"name name name" "date amt del";gap:5px 8px;padding:10px 4px}
+    .oneoff{grid-template-columns:1fr 96px 26px 28px;grid-template-areas:"name name name name" "date amt who del";gap:5px 8px;padding:10px 4px}
     .oneoff .o-name{grid-area:name}
     .oneoff .o-date{grid-area:date}
     .oneoff .o-amt{grid-area:amt}
+    .oneoff .who-chip{grid-area:who}
     .oneoff .del{grid-area:del}
   }
 
@@ -362,8 +372,44 @@
   .hidden{display:none!important}
 
   /* toast */
-  #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:30px;font-weight:600;font-size:13.5px;z-index:200;box-shadow:var(--shadow-md);transition:transform .35s cubic-bezier(.22,1,.36,1);max-width:90vw;text-align:center}
+  #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:30px;font-weight:600;font-size:13.5px;z-index:210;box-shadow:var(--shadow-md);transition:transform .35s cubic-bezier(.22,1,.36,1);max-width:90vw;text-align:center}
   #toast.show{transform:translateX(-50%) translateY(0)}
+  body.has-splitbar #toast{bottom:130px}
+  body.has-splitbar.split-collapsed #toast{bottom:74px}
+
+  /* floating split / transfer bar */
+  #splitBar{position:fixed;left:50%;bottom:14px;transform:translate(-50%,140px);width:min(720px,calc(100vw - 24px));z-index:180;
+    background:linear-gradient(180deg,var(--card),#fbf5e6);
+    border:1px solid var(--line-strong);border-radius:18px;box-shadow:0 12px 36px rgba(54,40,20,.18),0 2px 8px rgba(54,40,20,.08);
+    padding:13px 14px;transition:transform .35s cubic-bezier(.22,1,.36,1)}
+  #splitBar.show{transform:translate(-50%,0)}
+  #splitBar.collapsed{padding:8px 14px}
+  .sb-top{display:flex;align-items:center;gap:10px}
+  .sb-title{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:-.2px;display:flex;align-items:center;gap:7px;color:var(--ink)}
+  .sb-total{margin-left:auto;font-family:var(--display);font-weight:600;font-size:21px;letter-spacing:-.4px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .sb-toggle{border:none;background:transparent;cursor:pointer;width:30px;height:30px;border-radius:9px;color:var(--ink-soft);font-size:16px;display:grid;place-items:center;transition:.15s}
+  .sb-toggle:hover{background:var(--paper-2);color:var(--ink)}
+  #splitBar.collapsed .sb-toggle{transform:rotate(180deg)}
+  .sb-body{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center;transition:max-height .25s ease,opacity .2s ease,margin .25s ease}
+  #splitBar.collapsed .sb-body{max-height:0;opacity:0;overflow:hidden;margin-top:0;pointer-events:none}
+  .sb-pill{border:1.5px solid var(--line-strong);background:#fff;border-radius:30px;padding:7px 12px 7px 8px;font-family:var(--body);font-weight:700;font-size:12.5px;color:var(--ink-soft);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.15s;-webkit-tap-highlight-color:transparent}
+  .sb-pill:hover{border-color:var(--ink-soft);color:var(--ink)}
+  .sb-pill .sb-dot{width:11px;height:11px;border-radius:50%;flex:none}
+  .sb-pill[data-w="a"] .sb-dot{background:var(--fund)}
+  .sb-pill[data-w="b"] .sb-dot{background:var(--future)}
+  .sb-pill[data-w="s"] .sb-dot{background:var(--gold)}
+  .sb-pill[data-w="a"].on{background:var(--fund-bg);border-color:var(--fund);color:var(--fund-ink)}
+  .sb-pill[data-w="b"].on{background:var(--future-bg);border-color:var(--future);color:var(--future-ink)}
+  .sb-pill[data-w="s"].on{background:rgba(217,154,28,.16);border-color:var(--gold);color:#7a5408}
+  .sb-pill .sb-amt{font-weight:800;font-variant-numeric:tabular-nums}
+  .sb-hint{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:8px;line-height:1.45}
+  @media(max-width:560px){
+    #splitBar{left:8px;right:8px;width:auto;transform:translateY(160px);padding:11px 12px}
+    #splitBar.show{transform:translateY(0)}
+    .sb-total{font-size:19px}
+    .sb-title{font-size:13px}
+    .sb-pill{padding:6px 10px 6px 7px;font-size:12px}
+  }
 
   /* settings sheet */
   .overlay{position:fixed;inset:0;background:rgba(42,36,32,.45);backdrop-filter:blur(3px);z-index:150;display:none;align-items:center;justify-content:center;padding:18px}
@@ -563,6 +609,21 @@
       <div class="legend" id="splitLegend"></div>
     </div>
   </section>
+</div>
+
+<!-- floating split / transfer bar -->
+<div id="splitBar" aria-live="polite">
+  <div class="sb-top">
+    <div class="sb-title">💰 Transfer from joint</div>
+    <div class="sb-total" id="sbTotal">£0</div>
+    <button class="sb-toggle" id="sbToggle" title="Collapse" aria-label="Collapse">▾</button>
+  </div>
+  <div class="sb-body">
+    <button class="sb-pill" data-w="a"><span class="sb-dot"></span><span class="sb-name">Mark</span> <span class="sb-amt" id="sbAmtA">£0</span></button>
+    <button class="sb-pill" data-w="b"><span class="sb-dot"></span><span class="sb-name">Peggy</span> <span class="sb-amt" id="sbAmtB">£0</span></button>
+    <button class="sb-pill" data-w="s"><span class="sb-dot"></span>Shared <span class="sb-amt" id="sbAmtS">£0</span></button>
+    <div class="sb-hint" style="flex-basis:100%">Tap a pill to add/remove it from the transfer. Tag items by tapping the circle next to each name.</div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -855,6 +916,7 @@ function oneoffRow(o){
   return `<div class="oneoff" data-oid="${o.id}">
     <input class="o-date" type="date" data-of="date" value="${o.date||""}" title="Date">
     <input class="o-name" type="text" data-of="name" value="${escapeHtml(o.name||"")}" placeholder="What was it? (e.g. desk, gift, parking)">
+    ${whoChip(o.who,"o:"+o.id)}
     <input class="o-amt" type="number" inputmode="decimal" data-of="amount" value="${o.amount||""}" placeholder="0" title="Amount">
     <button class="del" data-deloneoff="${o.id}" title="Remove">×</button>
   </div>`;
@@ -863,7 +925,7 @@ function oneoffRow(o){
 function bucketHTML(d,m){
   const head=getComputedStyle(document.documentElement).getPropertyValue(d.c).trim();
   const rows=m[d.key].map(it=>itemRow(d.key,it)).join("");
-  const colHead=`<div class="col-head"><span>Paid</span><span>Item</span><span>Budget</span><span>Spent</span><span></span></div>`;
+  const colHead=`<div class="col-head"><span>Paid</span><span>Item</span><span class="who-head">Who</span><span>Budget</span><span>Spent</span><span></span></div>`;
   return `
   <div class="bucket" data-bucket="${d.key}">
     <div class="bucket-head" style="background:linear-gradient(135deg,var(${d.c}),${head}cc)">
@@ -893,10 +955,18 @@ function itemRow(bucket,it){
   <div class="item${it.paid?' is-paid':''}" data-id="${it.id}">
     <button class="paid-toggle" data-paid="${it.id}" title="${it.paid?'Mark as not paid':'Mark as paid'}" aria-label="paid">${it.paid?checkSvg():''}</button>
     <input class="nm" data-f="name" value="${escapeHtml(it.name)}" placeholder="Name">
+    ${whoChip(it.who,it.id)}
     <div class="cell"><input type="number" inputmode="decimal" data-f="budget" value="${it.budget||""}" placeholder="0"></div>
     <div class="cell spent"><input type="number" inputmode="decimal" data-f="spent" value="${it.spent||""}" placeholder="0"></div>
     ${last}
   </div>`;
+}
+function whoChip(w,id){
+  const map={a:["is-a",state.settings.a],b:["is-b",state.settings.b],s:["is-s","Shared"]};
+  const cls=map[w]?map[w][0]:"";
+  const title=map[w]?map[w][1]+" — tap to change":"Whose? Tap to assign";
+  const letter=w==="a"?(state.settings.a||"A")[0].toUpperCase():w==="b"?(state.settings.b||"B")[0].toUpperCase():w==="s"?"S":"·";
+  return `<button class="who-chip ${cls}" data-who="${id}" title="${escapeHtml(title)}" aria-label="${escapeHtml(title)}">${letter}</button>`;
 }
 function checkSvg(){return '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 6.5"/></svg>';}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
@@ -958,6 +1028,7 @@ function refreshDerived(){
   }
   if(window.__wasBalanced===false && Math.abs(left)<1 && t.income>0) celebrate();
   window.__wasBalanced=Math.abs(left)<1;
+  refreshSplitBar();
 }
 function setText(sel,txt){const e=document.querySelector(sel);if(e)e.textContent=txt;}
 
@@ -1193,6 +1264,7 @@ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
   document.getElementById("tab-goals").classList.toggle("hidden",activeTab!=="goals");
   document.getElementById("tab-trends").classList.toggle("hidden",activeTab!=="trends");
   render();
+  refreshSplitBar();
 });
 
 // month nav
@@ -1238,6 +1310,16 @@ document.getElementById("oneoffList").addEventListener("input",e=>{
   save();
 });
 document.getElementById("oneoffList").addEventListener("click",e=>{
+  // who-chip cycle (chips have id like "o:<oneoffid>")
+  const whoBtn=e.target.closest("[data-who]");
+  if(whoBtn && whoBtn.dataset.who.startsWith("o:")){
+    const oid=whoBtn.dataset.who.slice(2);
+    const o=cm().oneoffs.find(x=>x.id===oid);if(!o)return;
+    o.who=nextWho(o.who);
+    whoBtn.outerHTML=whoChip(o.who,"o:"+o.id);
+    refreshDerived();save();
+    return;
+  }
   const del=e.target.closest("[data-deloneoff]");if(!del)return;
   const m=cm();m.oneoffs=m.oneoffs.filter(x=>x.id!==del.dataset.deloneoff);
   renderOneoffs();refreshDerived();save();
@@ -1282,6 +1364,16 @@ document.getElementById("buckets").addEventListener("click",e=>{
     else if(it.paid) toast("✓ "+(it.name||"Item")+" marked paid"+(num(it.spent)?" · "+fmt(num(it.spent)):""));
     return;
   }
+  // who-chip cycle
+  const whoBtn=e.target.closest("[data-who]");
+  if(whoBtn){
+    const row=whoBtn.closest(".item");const bucket=row.closest("[data-bucket]").dataset.bucket;
+    const it=cm()[bucket].find(x=>x.id===whoBtn.dataset.who);if(!it)return;
+    it.who=nextWho(it.who);
+    whoBtn.outerHTML=whoChip(it.who,it.id);
+    refreshDerived();save();
+    return;
+  }
   // delete
   const del=e.target.closest("[data-del]");
   if(del){const item=del.closest(".item");const bucket=item.closest("[data-bucket]").dataset.bucket;
@@ -1291,6 +1383,71 @@ document.getElementById("buckets").addEventListener("click",e=>{
   if(tag){const it=cm().future.find(x=>x.id===tag.dataset.tag);if(it){it.type=it.type==="save"?"invest":"save";renderMonth();}}
 });
 function bucketName(k){return {fundamental:"Fundamental",fun:"Fun",future:"Future You"}[k]||k;}
+function nextWho(w){return w==null?"a":w==="a"?"b":w==="b"?"s":null;}
+
+/* ---- Split / transfer bar ---- */
+function splitItemAmount(it){
+  // prefer actual spend if recorded, else the budget
+  const s=num(it.spent), b=num(it.budget);
+  return s>0?s:b;
+}
+function splitTotals(){
+  const m=cm();
+  const tot={a:0,b:0,s:0};
+  ["fundamental","fun","future"].forEach(k=>{
+    (m[k]||[]).forEach(it=>{ if(it.who && tot[it.who]!=null) tot[it.who]+=splitItemAmount(it); });
+  });
+  (m.oneoffs||[]).forEach(o=>{ if(o.who && tot[o.who]!=null) tot[o.who]+=num(o.amount); });
+  return tot;
+}
+function refreshSplitBar(){
+  const bar=document.getElementById("splitBar");
+  const tot=splitTotals();
+  const hasAny=(tot.a+tot.b+tot.s)>0;
+  // visible only on This Month tab AND when at least one item is tagged
+  const show = activeTab==="month" && hasAny;
+  bar.classList.toggle("show",show);
+  document.body.classList.toggle("has-splitbar",show);
+  document.body.classList.toggle("split-collapsed", show && bar.classList.contains("collapsed"));
+  if(!show)return;
+  // update pill names from current settings (in case partner names changed)
+  bar.querySelector('[data-w="a"] .sb-name').textContent=state.settings.a;
+  bar.querySelector('[data-w="b"] .sb-name').textContent=state.settings.b;
+  document.getElementById("sbAmtA").textContent=fmt(tot.a);
+  document.getElementById("sbAmtB").textContent=fmt(tot.b);
+  document.getElementById("sbAmtS").textContent=fmt(tot.s);
+  // recompute total from selected pills
+  let sum=0;
+  ["a","b","s"].forEach(w=>{
+    const pill=bar.querySelector(`[data-w="${w}"]`);
+    if(pill.classList.contains("on"))sum+=tot[w];
+  });
+  document.getElementById("sbTotal").textContent=fmt(sum);
+}
+const SB_SEL_KEY="ispend_sb_selection_v1";
+const SB_COL_KEY="ispend_sb_collapsed_v1";
+function loadSbSelection(){try{const r=localStorage.getItem(SB_SEL_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+function saveSbSelection(){try{const sel=["a","b","s"].filter(w=>document.querySelector(`#splitBar [data-w="${w}"]`).classList.contains("on"));localStorage.setItem(SB_SEL_KEY,JSON.stringify(sel));}catch(e){}}
+function initSplitBar(){
+  // restore selection — default to all 3 selected on first run
+  const sel=loadSbSelection() || ["a","b","s"];
+  ["a","b","s"].forEach(w=>{
+    document.querySelector(`#splitBar [data-w="${w}"]`).classList.toggle("on",sel.includes(w));
+  });
+  // restore collapsed
+  let col=false;try{col=localStorage.getItem(SB_COL_KEY)==="1";}catch(e){}
+  document.getElementById("splitBar").classList.toggle("collapsed",col);
+  // pill toggles
+  document.querySelectorAll("#splitBar .sb-pill").forEach(p=>{
+    p.addEventListener("click",()=>{p.classList.toggle("on");saveSbSelection();refreshSplitBar();});
+  });
+  document.getElementById("sbToggle").onclick=()=>{
+    const bar=document.getElementById("splitBar");
+    bar.classList.toggle("collapsed");
+    try{localStorage.setItem(SB_COL_KEY,bar.classList.contains("collapsed")?"1":"0");}catch(e){}
+    document.body.classList.toggle("split-collapsed", bar.classList.contains("show") && bar.classList.contains("collapsed"));
+  };
+}
 
 // debt events
 document.getElementById("debtList").addEventListener("input",e=>{
@@ -1534,6 +1691,7 @@ function toast(msg){const e=document.getElementById("toast");e.textContent=msg;e
 
 /* ---------------- go ---------------- */
 window.__wasBalanced=null;
+initSplitBar();
 render();
 setSyncStatus(syncConfigured()?(safeCode(getCode())?"connecting":"nocode"):"local");
 initSync();
