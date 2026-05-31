@@ -584,7 +584,7 @@
     </div>
     <div class="row-head" style="margin-bottom:14px">
       <h2>💳 Loans &amp; credit cards</h2>
-      <p>Set a starting balance to watch the bar fill as you pay it down. "Months left" is estimated from the current balance and monthly payment.</p>
+      <p><b>Starting balance</b> = the original loan amount (or the peak credit card balance). Set this <b>once</b>. <b>Balance now</b> = what you currently owe — update this when you make a payment. The progress bar fills as the gap between them grows.</p>
     </div>
     <div class="section-grid" id="debtList"></div>
     <button class="add-block" id="addDebt" style="margin-top:16px">+ Add a debt</button>
@@ -1085,15 +1085,18 @@ function renderDebt(){
   refreshDebt();
 }
 function debtHTML(d){
+  const startSet=num(d.start)>0;
   return `<div class="card debt-card" data-debt="${d.id}">
     <div class="top">
       <input class="nm" data-df="name" value="${escapeHtml(d.name)}">
       <button class="del" style="opacity:1" data-deldebt="${d.id}" title="Remove">×</button>
     </div>
     <div class="debt-grid">
-      <div class="field"><label>Balance now</label><input type="number" inputmode="decimal" data-df="balance" value="${d.balance||""}"></div>
-      <div class="field"><label>Starting balance</label><input type="number" inputmode="decimal" data-df="start" value="${d.start||""}"></div>
-      <div class="field"><label>Monthly payment</label><input type="number" inputmode="decimal" data-df="pay" value="${d.pay||""}"></div>
+      <div class="field"><label>Balance now</label><input type="number" inputmode="decimal" data-df="balance" value="${d.balance||""}" placeholder="0"></div>
+      <div class="field"><label title="The original loan amount (or peak credit card balance). Set this once — it's the baseline the progress bar measures from.">Starting balance ⓘ</label>
+        <input type="number" inputmode="decimal" data-df="start" value="${d.start||""}" placeholder="original loan amount" ${startSet?'data-startset="1"':''} style="${startSet?'background:var(--paper-2)':'background:#fff;border-color:var(--gold);box-shadow:0 0 0 2px rgba(217,154,28,.12)'}">
+      </div>
+      <div class="field"><label>Monthly payment</label><input type="number" inputmode="decimal" data-df="pay" value="${d.pay||""}" placeholder="0"></div>
       <div class="field"><label>Months left</label><input type="text" value="" data-monthsleft readonly style="background:var(--paper-2);font-weight:700"></div>
     </div>
     <div class="debt-prog"><i data-debtfill></i></div>
@@ -1101,25 +1104,39 @@ function debtHTML(d){
   </div>`;
 }
 function refreshDebt(){
-  let total=0,start=0;
-  state.debts.forEach(d=>{total+=num(d.balance);start+=num(d.start);
+  let total=0,start=0;          // overall totals (only counts debts with a valid start)
+  let totalAllBalances=0;        // separate sum used for the big headline + "months to debt-free"
+  state.debts.forEach(d=>{
+    const bal=num(d.balance), st=num(d.start);
+    totalAllBalances+=bal;
+    // only include rows that have a starting balance set — otherwise the row would
+    // contribute to "balance" without contributing to "start", dragging % down
+    if(st>0){ total+=bal; start+=st; }
     const card=document.querySelector(`[data-debt="${d.id}"]`);if(!card)return;
-    const paid=Math.max(0,num(d.start)-num(d.balance));
-    const pct=num(d.start)>0?Math.min(100,paid/num(d.start)*100):0;
+    const paid=Math.max(0,st-bal);
+    const pct=st>0?Math.min(100,paid/st*100):0;
     card.querySelector("[data-debtfill]").style.width=pct+"%";
-    card.querySelector("[data-debtpaid]").innerHTML=`<b style="color:var(--good)">${pct.toFixed(0)}%</b> paid · ${fmt(num(d.balance))} left`;
-    const ml=num(d.pay)>0?Math.ceil(num(d.balance)/num(d.pay)):0;
+    const needsStart = bal>0 && st<=bal;
+    card.querySelector("[data-debtpaid]").innerHTML= needsStart
+      ? `<span style="color:var(--warn)">⚠ set a starting balance to track progress</span>`
+      : `<b style="color:var(--good)">${pct.toFixed(0)}%</b> paid · ${fmt(bal)} left`;
+    const ml=num(d.pay)>0?Math.ceil(bal/num(d.pay)):0;
     card.querySelector("[data-monthsleft]").value=ml>0?ml+" mo":"—";
     card.querySelector("[data-debtfreedate]").textContent=ml>0?("≈ "+freeDate(ml)):"";
   });
-  document.getElementById("debtTotal").textContent=fmt(total);
+  // headline shows full outstanding (every debt, even those without a start set)
+  document.getElementById("debtTotal").textContent=fmt(totalAllBalances);
   const paidAll=Math.max(0,start-total), pctAll=start>0?Math.min(100,paidAll/start*100):0;
   document.getElementById("debtTotalFill").style.width=pctAll+"%";
   document.getElementById("debtPaidPct").textContent=pctAll.toFixed(0)+"%";
-  document.getElementById("debtPaidAmt").innerHTML=`<b>${fmt(paidAll)}</b> cleared of ${fmt(start)}`;
+  const skipped=state.debts.filter(d=>num(d.balance)>0 && num(d.start)<=num(d.balance)).length;
+  const skippedNote = skipped>0
+    ? ` <span style="color:var(--warn)">· ${skipped} debt${skipped>1?"s":""} excluded (no starting balance)</span>`
+    : "";
+  document.getElementById("debtPaidAmt").innerHTML=`<b>${fmt(paidAll)}</b> cleared of ${fmt(start)}${skippedNote}`;
   const totalPay=state.debts.reduce((s,d)=>s+num(d.pay),0);
-  const months=totalPay>0?Math.ceil(total/totalPay):0;
-  document.getElementById("debtFreeLine").textContent= total<=0 ? "🎉 You're debt-free!"
+  const months=totalPay>0?Math.ceil(totalAllBalances/totalPay):0;
+  document.getElementById("debtFreeLine").textContent= totalAllBalances<=0 ? "🎉 You're debt-free!"
     : months>0 ? `At ${fmt(totalPay)}/mo you'll be debt-free in about ${months} month${months>1?"s":""} — around ${freeDate(months)}.`
     : "Add monthly payments to estimate your debt-free date.";
 }
