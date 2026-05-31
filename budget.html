@@ -232,17 +232,35 @@
   .spent-cap{font-size:11px;opacity:.92;margin-top:5px;font-weight:600;display:flex;justify-content:space-between}
 
   .items{padding:8px 10px 4px;flex:1}
-  .item{display:grid;grid-template-columns:34px 1fr 26px 68px 68px 30px;gap:4px;align-items:center;padding:4px 2px;border-radius:10px;transition:background .12s,opacity .12s}
+  .item{display:grid;grid-template-columns:34px 1fr 26px 64px 64px 64px;gap:4px;align-items:center;padding:4px 2px;border-radius:10px;transition:background .12s,opacity .12s}
   .item:hover{background:var(--paper-2)}
   .item .nm{border:none;background:transparent;font-family:var(--body);font-weight:600;font-size:13.5px;color:var(--ink);padding:5px 6px;border-radius:7px;min-width:0}
   .item .nm:focus{outline:none;background:#fff;box-shadow:inset 0 0 0 1px var(--line)}
-  .cell{width:68px}
+  .cell{width:64px}
   .cell input{width:100%;border:1px solid transparent;background:transparent;text-align:right;font-family:var(--body);font-weight:700;font-size:13px;padding:5px 6px;border-radius:7px;color:var(--ink);transition:.12s}
   .cell input::placeholder{color:var(--muted);font-weight:500}
   .cell input:focus{outline:none;background:#fff;border-color:var(--line-strong)}
   .cell.spent input{color:var(--ink-soft)}
-  .del{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:17px;width:30px;height:30px;border-radius:8px;opacity:.35;transition:.12s;display:grid;place-items:center}
+  .del{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:16px;width:22px;height:26px;border-radius:7px;opacity:.4;transition:.12s;display:grid;place-items:center;flex:none}
   .item:hover .del{opacity:1}
+  .del:hover{background:#FBE1DC;color:var(--bad)}
+  /* up/down move buttons */
+  .move-btn{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:8px;width:18px;height:13px;border-radius:5px;padding:0;display:grid;place-items:center;opacity:.45;transition:.12s;flex:none;line-height:1}
+  .move-btn:hover{background:var(--paper-2);color:var(--ink-soft);opacity:1}
+  .move-btn:active{background:var(--fund-bg);color:var(--fund);transform:scale(.92)}
+  .move-btn:disabled{opacity:.15;cursor:default}
+  .item:hover .move-btn{opacity:.85}
+  .move-stack{display:inline-flex;flex-direction:column;gap:1px}
+  /* on mobile, stack them vertically as a single column */
+  @media(hover:none){.move-btn{opacity:.55}.move-btn:disabled{opacity:.15}}
+  .item.just-moved{animation:flashMove .7s ease-out}
+  @keyframes flashMove{0%{background:var(--fund-bg);box-shadow:inset 0 0 0 1.5px var(--fund)}100%{background:transparent;box-shadow:none}}
+  /* tighter action area on mobile */
+  @media(max-width:560px){
+    .item{grid-template-columns:30px 1fr 24px 56px 56px 56px;gap:3px}
+    .col-head{grid-template-columns:30px 1fr 24px 56px 56px 56px;gap:3px}
+    .cell{width:56px}
+  }
   .del:hover{background:#FBE1DC;color:var(--bad)}
   .tag-toggle{font-size:9.5px;font-weight:800;letter-spacing:.4px;border:1px solid var(--line-strong);background:#fff;border-radius:20px;padding:3px 7px;cursor:pointer;text-transform:uppercase;color:var(--ink-soft);transition:.12s}
   /* paid toggle — large, easy tap target */
@@ -257,7 +275,7 @@
   .item.is-paid .nm{color:var(--good);text-decoration:line-through;text-decoration-color:rgba(46,125,84,.5);text-decoration-thickness:1.5px}
   .item.is-paid .cell input{color:#9bbfa9}
   @keyframes pop{0%{transform:scale(.4)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
-  .col-head{display:grid;grid-template-columns:34px 1fr 26px 68px 68px 30px;gap:4px;padding:6px 6px 2px;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+  .col-head{display:grid;grid-template-columns:34px 1fr 26px 64px 64px 64px;gap:4px;padding:6px 6px 2px;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
   .col-head span:nth-child(4),.col-head span:nth-child(5){text-align:right}
   .col-head span:first-child,.col-head span:nth-child(3){text-align:center;font-size:9px}
   [data-paidcap]{font-weight:700}
@@ -924,7 +942,7 @@ function oneoffRow(o){
 
 function bucketHTML(d,m){
   const head=getComputedStyle(document.documentElement).getPropertyValue(d.c).trim();
-  const rows=m[d.key].map(it=>itemRow(d.key,it)).join("");
+  const rows=m[d.key].map((it,i,arr)=>itemRow(d.key,it,i,arr.length)).join("");
   const colHead=`<div class="col-head"><span>Paid</span><span>Item</span><span class="who-head">Who</span><span>Budget</span><span>Spent</span><span></span></div>`;
   return `
   <div class="bucket" data-bucket="${d.key}">
@@ -943,14 +961,16 @@ function bucketHTML(d,m){
     <button class="add-item" data-add="${d.key}">+ Add item</button>
   </div>`;
 }
-function itemRow(bucket,it){
+function itemRow(bucket,it,idx,total){
   const tag = bucket==="future"
     ? `<button class="tag-toggle" data-tag="${it.id}" style="${it.type==='invest'?'background:var(--future-bg);color:var(--future-ink);border-color:var(--future)':''}">${it.type==='invest'?'Invest':'Save'}</button>`
     : ``;
+  const upDis=idx===0?"disabled":"", downDis=idx===total-1?"disabled":"";
+  const moveBtns=`<div class="move-stack"><button class="move-btn" data-move="up" data-id="${it.id}" title="Move up" aria-label="Move up" ${upDis}>▲</button><button class="move-btn" data-move="down" data-id="${it.id}" title="Move down" aria-label="Move down" ${downDis}>▼</button></div>`;
   const delBtn=`<button class="del" data-del="${it.id}" title="Remove">×</button>`;
   const last = bucket==="future"
-    ? `<div style="display:flex;align-items:center;gap:4px">${tag}${delBtn}</div>`
-    : delBtn;
+    ? `<div style="display:flex;align-items:center;gap:2px;justify-content:flex-end">${moveBtns}${tag}${delBtn}</div>`
+    : `<div style="display:flex;align-items:center;gap:2px;justify-content:flex-end">${moveBtns}${delBtn}</div>`;
   return `
   <div class="item${it.paid?' is-paid':''}" data-id="${it.id}">
     <button class="paid-toggle" data-paid="${it.id}" title="${it.paid?'Mark as not paid':'Mark as paid'}" aria-label="paid">${it.paid?checkSvg():''}</button>
@@ -1372,6 +1392,22 @@ document.getElementById("buckets").addEventListener("click",e=>{
     it.who=nextWho(it.who);
     whoBtn.outerHTML=whoChip(it.who,it.id);
     refreshDerived();save();
+    return;
+  }
+  // move up/down
+  const moveBtn=e.target.closest("[data-move]");
+  if(moveBtn){
+    const row=moveBtn.closest(".item");const bucket=row.closest("[data-bucket]").dataset.bucket;
+    const arr=cm()[bucket];
+    const idx=arr.findIndex(x=>x.id===moveBtn.dataset.id);
+    const dir=moveBtn.dataset.move==="up"?-1:1;
+    const ni=idx+dir;
+    if(idx<0 || ni<0 || ni>=arr.length)return;
+    [arr[idx],arr[ni]]=[arr[ni],arr[idx]];
+    renderMonth();save();
+    // briefly flash the moved row so the eye follows it
+    const moved=document.querySelector(`[data-bucket="${bucket}"] .item[data-id="${moveBtn.dataset.id}"]`);
+    if(moved){moved.classList.add("just-moved");setTimeout(()=>moved.classList.remove("just-moved"),700);}
     return;
   }
   // delete
