@@ -3,10 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black" />
-
-  <link rel="apple-touch-icon" href="budget.png"/>
 <title>Intentional Spending · Mark & Peggy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -274,6 +270,25 @@
   .note-card textarea{width:100%;border:1px solid var(--line);background:#FFFDF8;border-radius:12px;padding:13px 15px;font-family:var(--body);font-size:14px;color:var(--ink);resize:vertical;min-height:62px;line-height:1.5}
   .note-card textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(217,154,28,.13)}
 
+  /* one-off list */
+  .oneoff-list{display:flex;flex-direction:column;gap:0}
+  .oneoff{display:grid;grid-template-columns:100px 1fr 110px 30px;gap:8px;align-items:center;padding:8px 4px;border-bottom:1px dashed var(--line)}
+  .oneoff:last-child{border-bottom:none}
+  .oneoff input{border:1px solid transparent;background:transparent;font-family:var(--body);font-weight:600;font-size:13.5px;color:var(--ink);padding:7px 9px;border-radius:8px;transition:.12s;min-width:0}
+  .oneoff input:focus{outline:none;background:#fff;border-color:var(--line-strong);box-shadow:0 0 0 2px var(--fun-bg)}
+  .oneoff input::placeholder{color:var(--muted);font-weight:500}
+  .oneoff .o-date{font-size:12.5px;color:var(--ink-soft);font-weight:700}
+  .oneoff .o-amt{text-align:right;font-weight:700;color:var(--fun-ink);font-variant-numeric:tabular-nums}
+  .oneoff .del{opacity:.4}
+  .oneoff:hover .del{opacity:1}
+  @media(max-width:560px){
+    .oneoff{grid-template-columns:1fr 96px 28px;grid-template-areas:"name name name" "date amt del";gap:5px 8px;padding:10px 4px}
+    .oneoff .o-name{grid-area:name}
+    .oneoff .o-date{grid-area:date}
+    .oneoff .o-amt{grid-area:amt}
+    .oneoff .del{grid-area:del}
+  }
+
   /* ---------- DEBT ---------- */
   .section-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
   @media(max-width:760px){.section-grid{grid-template-columns:1fr}}
@@ -458,6 +473,22 @@
     </div>
 
     <div class="buckets" id="buckets"></div>
+
+    <div class="card oneoff-card" style="margin-top:18px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div>
+          <div class="eyebrow">⚡ One-off spends</div>
+          <div class="card-title" style="margin-top:4px">Things outside the usual plan</div>
+        </div>
+        <div style="text-align:right">
+          <div class="eyebrow" style="font-size:10px">This month</div>
+          <div style="font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:-.4px;color:var(--fun-ink)" id="oneoffTotal">£0</div>
+        </div>
+      </div>
+      <div class="hint" style="font-size:12.5px;color:var(--muted);margin-bottom:8px">Add ad-hoc purchases here — a desk, a parking fine, a birthday gift. Counted in your Spend total but kept out of the recurring buckets so they stay clean. Won't carry to next month.</div>
+      <div id="oneoffList" class="oneoff-list"></div>
+      <button class="add-block" id="addOneoff" style="margin-top:10px;min-height:54px">+ Add a one-off spend</button>
+    </div>
 
     <div class="card note-card">
       <div class="eyebrow" style="margin-bottom:8px">📌 Note to each other</div>
@@ -649,6 +680,7 @@ function applyRemote(incoming){
   if(!state.months||!state.months.length)state=seedState();
   if(!state.current||!state.months.find(m=>m.id===state.current))state.current=state.months[0].id;
   if(!state.travel)state.travel=[];if(!state.investments)state.investments=[];
+  state.months.forEach(m=>{if(!m.oneoffs)m.oneoffs=[];});
   activeTab=keepTab;
   Sync.lastBlob=JSON.stringify(state);
   saveLocal();
@@ -701,7 +733,8 @@ function seedMonth(label){
       ["Emergency fund",200,"save"],["Extra debt payments",0,"save"],["House fund",200,"save"],
       ["Vacation fund",0,"save"],["Moraa fund",0,"save"],
       ["Stock market",300,"invest"],["Self-development",0,"invest"],["Education",0,"invest"]
-    ].map(([n,b,t])=>({id:uid(),name:n,budget:b,spent:0,type:t,paid:false}))
+    ].map(([n,b,t])=>({id:uid(),name:n,budget:b,spent:0,type:t,paid:false})),
+    oneoffs:[]
   };
 }
 function seedState(){
@@ -731,6 +764,7 @@ function seedState(){
 }
 
 let state=loadLocal()||seedState();
+state.months.forEach(m=>{if(!m.oneoffs)m.oneoffs=[];});
 let activeTab="month";
 
 /* ---------------- helpers ---------------- */
@@ -760,9 +794,10 @@ function bucketTotals(m){
   const fund=sum(m.fundamental), fun=sum(m.fun);
   const save=m.future.filter(i=>i.type==="save").reduce((s,i)=>s+num(i.budget),0);
   const invest=m.future.filter(i=>i.type==="invest").reduce((s,i)=>s+num(i.budget),0);
+  const oneoffs=(m.oneoffs||[]).reduce((s,i)=>s+num(i.amount),0);
   return {
     fundamental:fund, fun:fun, future:save+invest,
-    save, invest, spend:fund+fun,
+    save, invest, spend:fund+fun+oneoffs, oneoffs,
     income:num(m.income.a)+num(m.income.b)+num(m.income.side),
     spentFund:spent(m.fundamental), spentFun:spent(m.fun), spentFuture:spent(m.future)
   };
@@ -802,7 +837,27 @@ function renderMonth(){
   ];
   const wrap=document.getElementById("buckets");
   wrap.innerHTML=defs.map(d=>bucketHTML(d,m)).join("");
+  renderOneoffs();
   refreshDerived();
+}
+
+function renderOneoffs(){
+  const m=cm();
+  if(!m.oneoffs)m.oneoffs=[];
+  const list=document.getElementById("oneoffList");
+  if(!m.oneoffs.length){
+    list.innerHTML=`<div style="padding:14px 4px;color:var(--muted);font-size:13px;font-style:italic">Nothing this month yet. Tap below to log a one-off purchase.</div>`;
+    return;
+  }
+  list.innerHTML=m.oneoffs.map(o=>oneoffRow(o)).join("");
+}
+function oneoffRow(o){
+  return `<div class="oneoff" data-oid="${o.id}">
+    <input class="o-date" type="date" data-of="date" value="${o.date||""}" title="Date">
+    <input class="o-name" type="text" data-of="name" value="${escapeHtml(o.name||"")}" placeholder="What was it? (e.g. desk, gift, parking)">
+    <input class="o-amt" type="number" inputmode="decimal" data-of="amount" value="${o.amount||""}" placeholder="0" title="Amount">
+    <button class="del" data-deloneoff="${o.id}" title="Remove">×</button>
+  </div>`;
 }
 
 function bucketHTML(d,m){
@@ -850,6 +905,8 @@ function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":
 function refreshDerived(){
   const m=cm(), t=bucketTotals(m);
   document.getElementById("incTotal").textContent=fmt(t.income);
+  const oneEl=document.getElementById("oneoffTotal");
+  if(oneEl)oneEl.textContent=fmt(t.oneoffs);
 
   // bucket summaries
   [["fundamental",t.fundamental,t.spentFund],["fun",t.fun,t.spentFun],["future",t.future,t.spentFuture]].forEach(([k,bud,sp])=>{
@@ -1170,6 +1227,28 @@ document.querySelectorAll("[data-inc]").forEach(inp=>inp.oninput=e=>{
   cm().income[e.target.dataset.inc]=num(e.target.value);refreshDerived();save();
 });
 document.getElementById("monthNote").oninput=e=>{cm().note=e.target.value;save();};
+
+// one-offs
+document.getElementById("oneoffList").addEventListener("input",e=>{
+  const row=e.target.closest("[data-oid]");if(!row)return;
+  const o=cm().oneoffs.find(x=>x.id===row.dataset.oid);if(!o)return;
+  const f=e.target.dataset.of;
+  o[f]= f==="amount"?num(e.target.value):e.target.value;
+  if(f==="amount")refreshDerived();
+  save();
+});
+document.getElementById("oneoffList").addEventListener("click",e=>{
+  const del=e.target.closest("[data-deloneoff]");if(!del)return;
+  const m=cm();m.oneoffs=m.oneoffs.filter(x=>x.id!==del.dataset.deloneoff);
+  renderOneoffs();refreshDerived();save();
+});
+document.getElementById("addOneoff").onclick=()=>{
+  const m=cm();if(!m.oneoffs)m.oneoffs=[];
+  const today=new Date().toISOString().slice(0,10);
+  m.oneoffs.push({id:uid(),date:today,name:"",amount:0});
+  renderOneoffs();refreshDerived();save();
+  const last=document.querySelector("#oneoffList .oneoff:last-child .o-name");if(last)last.focus();
+};
 
 // delegated item events on buckets
 document.getElementById("buckets").addEventListener("input",e=>{
