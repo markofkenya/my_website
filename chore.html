@@ -48,6 +48,8 @@
   .complete-btn { border: none; border-radius: 9px; padding: 6px 11px; color: #fff; font-weight: 800; font-size: 11px; cursor: pointer; white-space: nowrap; font-family: inherit; }
   .complete-btn-a { background: #FF6B6B; }
   .complete-btn-b { background: #11998e; }
+  .del-btn { flex-shrink:0; width:22px; height:22px; border:none; border-radius:50%; background:#f3f4f6; color:#9ca3af; font-size:11px; font-weight:800; cursor:pointer; line-height:1; padding:0; }
+  .del-btn:hover { background:#fca5a5; color:#fff; }
 
   .add-btn { width: 100%; padding: 10px; border-radius: 12px; border: 2px dashed; background: transparent; font-weight: 800; font-size: 13px; cursor: pointer; margin-top: 4px; font-family: inherit; }
   .col-a .add-btn { border-color: #FF6B6B; color: #FF6B6B; }
@@ -257,11 +259,26 @@ function logTask(person, taskData) {
   var other = person === 'a' ? 'b' : 'a';
   var base = Date.now();
   var rid = Math.floor(Math.random()*100000);
-  fbWrite({ id: 't' + base + 'x' + rid, label: taskData.label, icon: taskData.icon, type: taskData.type, owner: person, status: 'done', ts: base });
-  fbWrite({ id: 't' + (base+1) + 'x' + (rid+1), label: taskData.label, icon: taskData.icon, type: taskData.type, owner: other, status: 'pending', ts: base+1 });
+  var pair = 'p' + base + 'x' + rid;
+  fbWrite({ id: 't' + base + 'x' + rid, pair: pair, label: taskData.label, icon: taskData.icon, type: taskData.type, owner: person, status: 'done', ts: base });
+  fbWrite({ id: 't' + (base+1) + 'x' + (rid+1), pair: pair, label: taskData.label, icon: taskData.icon, type: taskData.type, owner: other, status: 'pending', ts: base+1 });
   closePanel();
   showToast((person === 'a' ? '👩🏾 Peggy' : '👨🏾 Mark') + ' did: ' + taskData.label + ' — ' + (other === 'a' ? "Peggy's" : "Mark's") + ' turn next!');
   launchConfetti();
+}
+
+function deleteTask(id) {
+  var tasks = getTasks();
+  var t = tasks.filter(function(x){ return x.id === id; })[0];
+  if (!t) return;
+  if (!confirm('Delete "' + t.label + '"? This removes it for both of you.')) return;
+  // remove this card and its paired twin (the mirrored task)
+  tasks.forEach(function(x){
+    if (x.id === id || (t.pair && x.pair === t.pair)) {
+      if (window._fb) window._fb.remove(window._fb.ref(window._fb.db, "households/hometeam/tasks/" + x.id));
+    }
+  });
+  showToast('🗑️ Removed: ' + t.label);
 }
 
 function completeTask(id) {
@@ -299,14 +316,15 @@ function render() {
 function buildCard(t) {
   var card = document.createElement('div');
   var tagHtml = '<span class="tag tag-' + t.type + '">' + (t.type === 'mental' ? '🧠 mental' : '💪 physical') + '</span>';
+  var del = '<button class="del-btn" title="Delete" onclick="deleteTask(\'' + t.id + '\')">✕</button>';
   if (t.status === 'done') {
     card.className = 'task-card done';
     var time = new Date(t.ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-    card.innerHTML = '<span class="task-icon">' + t.icon + '</span><div class="task-info"><div class="task-label">' + t.label + '</div><div class="task-meta">' + tagHtml + time + '</div></div><span class="done-check">✅</span>';
+    card.innerHTML = '<span class="task-icon">' + t.icon + '</span><div class="task-info"><div class="task-label">' + t.label + '</div><div class="task-meta">' + tagHtml + time + '</div></div><span class="done-check">✅</span>' + del;
   } else {
     card.className = 'task-card pending-' + t.owner;
     var btn = '<button class="complete-btn complete-btn-' + t.owner + '" onclick="completeTask(\'' + t.id + '\')">Done ✓</button>';
-    card.innerHTML = '<span class="task-icon">' + t.icon + '</span><div class="task-info"><div class="task-label">' + t.label + '</div><div class="task-meta">' + tagHtml + 'your turn</div></div>' + btn;
+    card.innerHTML = '<span class="task-icon">' + t.icon + '</span><div class="task-info"><div class="task-label">' + t.label + '</div><div class="task-meta">' + tagHtml + 'your turn</div></div>' + btn + del;
   }
   return card;
 }
