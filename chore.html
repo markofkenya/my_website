@@ -12,6 +12,11 @@
   header p { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 4px; }
   .sync-pill { display:inline-flex; align-items:center; gap:6px; margin-top:10px; background:rgba(255,255,255,0.15); color:#fff; font-size:11px; font-weight:700; padding:4px 12px; border-radius:99px; }
   #sync-indicator { font-size:11px; font-weight:800; }
+  .month-switch { display:flex; align-items:center; justify-content:center; gap:14px; margin-top:12px; }
+  .month-arrow { width:30px; height:30px; border:none; border-radius:50%; background:rgba(255,255,255,0.18); color:#fff; font-size:18px; font-weight:800; cursor:pointer; line-height:1; padding:0; }
+  .month-arrow:disabled { opacity:0.3; cursor:default; }
+  #month-label { color:#fff; font-weight:800; font-size:15px; min-width:130px; text-align:center; }
+  .viewing-past { background:#fef3c7; color:#92400e; text-align:center; font-size:12px; font-weight:700; padding:8px; }
 
   .tabs { display: flex; background: #fff; border-bottom: 1px solid #e8e8e8; }
   .tab-btn { flex: 1; padding: 14px; background: none; border: none; border-bottom: 3px solid transparent; font-size: 13px; font-weight: 700; color: #9ca3af; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -110,6 +115,11 @@
   #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-60px); background: #1f2937; color: #fff; padding: 12px 20px; border-radius: 16px; font-weight: 700; font-size: 13px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.3); white-space: nowrap; transition: transform 0.35s ease; pointer-events: none; }
   #toast.show { transform: translateX(-50%) translateY(0); }
   #confetti-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9998; }
+  #prize-overlay { position:fixed; inset:0; background:rgba(45,27,105,0.55); backdrop-filter:blur(4px); z-index:10000; display:flex; align-items:center; justify-content:center; padding:24px; }
+  #prize-card { background:#fff; border-radius:24px; padding:30px 26px; max-width:340px; width:100%; text-align:center; box-shadow:0 24px 70px rgba(0,0,0,0.35); animation:pop 0.4s cubic-bezier(.18,1.25,.4,1); }
+  @keyframes pop { from { transform:scale(0.8); opacity:0; } to { transform:scale(1); opacity:1; } }
+  .week-race { background:#fff; padding:10px 16px; border-bottom:1px solid #f0f0f0; font-size:12px; font-weight:700; color:#6b7280; text-align:center; }
+  .week-race b { color:#2d1b69; }
 </style>
 </head>
 <body>
@@ -117,11 +127,27 @@
 <canvas id="confetti-canvas"></canvas>
 <div id="toast"></div>
 
+<div id="prize-overlay" style="display:none">
+  <div id="prize-card">
+    <div id="prize-emoji" style="font-size:46px">🏆</div>
+    <div id="prize-winner" style="font-weight:900;font-size:20px;color:#1f2937;margin-top:6px"></div>
+    <div id="prize-score" style="font-size:12px;color:#9ca3af;margin-top:4px"></div>
+    <div id="prize-heading" style="font-size:12px;font-weight:800;color:#11998e;margin-top:18px;text-transform:uppercase;letter-spacing:1px">This week's prize</div>
+    <div id="prize-text" style="font-size:17px;font-weight:700;color:#2d1b69;margin-top:8px;line-height:1.35"></div>
+    <button id="prize-close" style="margin-top:22px;padding:11px 26px;border:none;border-radius:12px;background:linear-gradient(135deg,#2d1b69,#11998e);color:#fff;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit">Claim it 🎉</button>
+  </div>
+</div>
+
 <header>
   <div style="font-size:28px;margin-bottom:4px">🏠</div>
   <h1>Home Team Tracker</h1>
   <p>50/50 — every task you do, your partner matches</p>
   <div class="sync-pill"><span id="sync-indicator" style="color:#fbbf24">● CONNECTING…</span></div>
+  <div class="month-switch">
+    <button id="month-prev" class="month-arrow">‹</button>
+    <span id="month-label">—</span>
+    <button id="month-next" class="month-arrow">›</button>
+  </div>
 </header>
 
 <div class="tabs">
@@ -130,6 +156,8 @@
 </div>
 
 <div id="tab-board">
+  <div id="past-banner" class="viewing-past" style="display:none">📅 Viewing a past month — read only</div>
+  <div class="week-race" id="week-race">🏁 This week's race for the mystery prize — log tasks to take the lead!</div>
   <div class="score-strip">
     <span style="font-size:18px">👩🏾</span>
     <div class="score-bar-wrap"><div class="score-bar-a" id="strip-a"></div><div class="score-bar-b" id="strip-b"></div></div>
@@ -196,15 +224,14 @@
   signInAnonymously(getAuth(app)).then(c => console.log("UID:", c.user.uid)).catch(e => console.error("Auth:", e));
   const db = getDatabase(app);
   const HOUSEHOLD = "hometeam"; // change to a private code you both share
-  const tasksRef = ref(db, "households/" + HOUSEHOLD + "/tasks");
+  const monthsRef = ref(db, "households/" + HOUSEHOLD + "/months");
 
   // Expose to global scope for the main script
-  window._fb = { db, ref, onValue, update, set, remove, tasksRef };
+  window._fb = { db, ref, onValue, update, set, remove, monthsRef, HOUSEHOLD };
   window.dispatchEvent(new Event("firebase-ready"));
 
-  onValue(tasksRef, snap => {
-    const data = snap.val() || {};
-    window._tasksData = data;
+  onValue(monthsRef, snap => {
+    window._monthsData = snap.val() || {};
     document.getElementById("sync-indicator").textContent = "● LIVE";
     document.getElementById("sync-indicator").style.color = "#4ade80";
     if (window.renderFromFirebase) window.renderFromFirebase();
@@ -237,25 +264,174 @@ var PRESETS = [
 
 var activePerson = null;
 var customType = "physical";
+var viewMonth = monthKey(new Date()); // currently displayed month
 
-// Read live data from the Firebase snapshot global
+/* ---------- Weekly prize pool (shhh 🤫) ---------- */
+var PRIZE_POOL = [
+  "Winner picks the next date night — no veto allowed 🎬",
+  "Breakfast in bed, made by the runner-up ☕🍳",
+  "A 20-minute back & shoulder massage 💆",
+  "Loser does the bins for the whole next week 🗑️",
+  "Winner controls the remote for a full evening 📺",
+  "A homemade dessert of the winner's choosing 🍰",
+  "One 'get out of a chore free' card to use anytime 🎟️",
+  "Runner-up makes the morning coffee all week ☕",
+  "Winner picks the next takeaway, loser pays 🥡",
+  "A lie-in this weekend — partner handles the morning 😴",
+  "Winner chooses the next song / playlist on every car trip 🎶",
+  "A heartfelt note listing 5 things they love about the winner 💌",
+  "Loser owes a foot rub on demand (one use) 🦶",
+  "Winner gets the last slice / final bite, always, this week 🍕",
+  "An uninterrupted hour of 'me time' — partner covers everything ⏰",
+  "Partner runs you a bath with the works 🛁",
+  "Winner picks the weekend activity, no complaints allowed 🗺️",
+  "A surprise small treat under £10, chosen with love 🎁",
+  "Loser handles bedtime routine solo for two nights 🌙",
+  "Winner gets a 'yes day' — one reasonable request can't be refused ✨"
+];
+function pickPrize() { return PRIZE_POOL[Math.floor(Math.random() * PRIZE_POOL.length)]; }
+
+function weekKey(d) {
+  // ISO-ish week key: year + week number, Monday-based
+  var dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  var day = dt.getUTCDay() || 7;
+  dt.setUTCDate(dt.getUTCDate() + 4 - day);
+  var yearStart = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
+  var weekNo = Math.ceil((((dt - yearStart) / 86400000) + 1) / 7);
+  return dt.getUTCFullYear() + '-W' + String(weekNo).padStart(2, '0');
+}
+function currentWeekKey() { return weekKey(new Date()); }
+
+function monthKey(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+function monthName(key) {
+  var parts = key.split('-');
+  var d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, 1);
+  return d.toLocaleDateString([], { month:'long', year:'numeric' });
+}
+function currentMonthKey() { return monthKey(new Date()); }
+function isCurrentMonth() { return viewMonth === currentMonthKey(); }
+
+// All months present in the data, plus the current month, sorted
+function allMonthKeys() {
+  var data = window._monthsData || {};
+  var keys = Object.keys(data).filter(function(k){ return k.charAt(0) !== '_'; });
+  var cur = currentMonthKey();
+  if (keys.indexOf(cur) === -1) keys.push(cur);
+  keys.sort();
+  return keys;
+}
+
+// Read live data for the currently viewed month
 function getTasks() {
-  var data = window._tasksData || {};
-  return Object.keys(data).map(function(k){ return data[k]; });
+  var data = window._monthsData || {};
+  var m = data[viewMonth];
+  var tasks = (m && m.tasks) ? m.tasks : {};
+  return Object.keys(tasks).map(function(k){ return tasks[k]; });
 }
 
 // Firebase pushes new data -> re-render
-window.renderFromFirebase = function() { render(); };
+window.renderFromFirebase = function() { render(); updateMonthSwitch(); checkWeeklyPrize(); };
 
-/* ---------- Writes (go straight to Firebase) ---------- */
+/* ---------- Weekly prize check ---------- */
+function getAllTasksAcrossMonths() {
+  var data = window._monthsData || {};
+  var out = [];
+  Object.keys(data).forEach(function(mk){
+    if (mk.charAt(0) === '_') return; // skip _prizes and other meta nodes
+    var t = data[mk].tasks || {};
+    Object.keys(t).forEach(function(k){ out.push(t[k]); });
+  });
+  return out;
+}
+
+function getPrizesNode() {
+  var data = window._monthsData || {};
+  return data._prizes || {};
+}
+
+function tasksForWeek(wk) {
+  return getAllTasksAcrossMonths().filter(function(t){
+    return t.status === 'done' && t.ts && weekKey(new Date(t.ts)) === wk;
+  });
+}
+
+function lastWeekKey() {
+  var d = new Date();
+  d.setDate(d.getDate() - 7);
+  return weekKey(d);
+}
+
+function checkWeeklyPrize() {
+  if (!window._fb) return;
+  var prizes = getPrizesNode();
+  var lw = lastWeekKey();
+
+  // already drawn for last week? show it (once)
+  if (prizes[lw]) { maybeShowPrize(prizes[lw], lw); return; }
+
+  // do we have any completed tasks from last week to judge?
+  var done = tasksForWeek(lw);
+  if (done.length === 0) return;
+  var a = done.filter(function(t){ return t.owner === 'a'; }).length;
+  var b = done.filter(function(t){ return t.owner === 'b'; }).length;
+  var total = a + b;
+  var share = Math.max(a, b) / total; // winning share, 0.5 = perfect
+
+  var prize;
+  if (share <= 0.60) {
+    // balanced week — both win together
+    prize = { mode: 'balanced', text: pickPrize(), a: a, b: b, drawn: Date.now() };
+  } else {
+    // lopsided — the one who did less owes the prize to the one who did more
+    var ahead = a > b ? 'a' : 'b';
+    var behind = a > b ? 'b' : 'a';
+    prize = { mode: 'owed', ahead: ahead, behind: behind, text: pickPrize(), a: a, b: b, drawn: Date.now() };
+  }
+  // lock it into Firebase so both phones see the same prize
+  window._fb.set(window._fb.ref(window._fb.db, "households/" + window._fb.HOUSEHOLD + "/months/_prizes/" + lw), prize);
+}
+
+function maybeShowPrize(prize, wk) {
+  if (sessionStorage.getItem('prizeShown-' + wk)) return;
+  sessionStorage.setItem('prizeShown-' + wk, '1');
+  showPrizeModal(prize);
+}
+
+function showPrizeModal(prize) {
+  var ov = document.getElementById('prize-overlay');
+  var nameFor = function(p){ return p === 'a' ? 'Peggy 👩🏾' : 'Mark 👨🏾'; };
+
+  if (prize.mode === 'balanced') {
+    document.getElementById('prize-emoji').textContent = '⚖️';
+    document.getElementById('prize-winner').textContent = 'A balanced week — you both win!';
+    document.getElementById('prize-score').textContent = 'Peggy ' + prize.a + ' · Mark ' + prize.b + ' — nicely shared 🤝';
+    document.getElementById('prize-heading').textContent = "This week's shared reward";
+    document.getElementById('prize-text').textContent = prize.text;
+  } else {
+    document.getElementById('prize-emoji').textContent = '🎁';
+    document.getElementById('prize-winner').textContent = nameFor(prize.ahead) + ' carried the week';
+    document.getElementById('prize-score').textContent = 'Peggy ' + prize.a + ' · Mark ' + prize.b;
+    document.getElementById('prize-heading').textContent = nameFor(prize.behind).split(' ')[0] + ' owes ' + nameFor(prize.ahead).split(' ')[0] + ':';
+    document.getElementById('prize-text').textContent = prize.text;
+  }
+  ov.style.display = 'flex';
+  launchConfetti(); setTimeout(launchConfetti, 400); setTimeout(launchConfetti, 800);
+}
+
+/* ---------- Writes (always to the CURRENT month) ---------- */
+function basePath() { return "households/" + (window._fb ? window._fb.HOUSEHOLD : "hometeam") + "/months/" + currentMonthKey() + "/tasks/"; }
 function fbWrite(task) {
-  if (window._fb) window._fb.set(window._fb.ref(window._fb.db, "households/hometeam/tasks/" + task.id), task);
+  if (window._fb) window._fb.set(window._fb.ref(window._fb.db, basePath() + task.id), task);
 }
 function fbUpdate(id, changes) {
-  if (window._fb) window._fb.update(window._fb.ref(window._fb.db, "households/hometeam/tasks/" + id), changes);
+  if (window._fb) window._fb.update(window._fb.ref(window._fb.db, basePath() + id), changes);
 }
 
 function logTask(person, taskData) {
+  // logging always happens in the current month
+  if (!isCurrentMonth()) { viewMonth = currentMonthKey(); }
   var other = person === 'a' ? 'b' : 'a';
   var base = Date.now();
   var rid = Math.floor(Math.random()*100000);
@@ -268,14 +444,14 @@ function logTask(person, taskData) {
 }
 
 function deleteTask(id) {
+  if (!isCurrentMonth()) return; // past months are read-only
   var tasks = getTasks();
   var t = tasks.filter(function(x){ return x.id === id; })[0];
   if (!t) return;
   if (!confirm('Delete "' + t.label + '"? This removes it for both of you.')) return;
-  // remove this card and its paired twin (the mirrored task)
   tasks.forEach(function(x){
     if (x.id === id || (t.pair && x.pair === t.pair)) {
-      if (window._fb) window._fb.remove(window._fb.ref(window._fb.db, "households/hometeam/tasks/" + x.id));
+      if (window._fb) window._fb.remove(window._fb.ref(window._fb.db, basePath() + x.id));
     }
   });
   showToast('🗑️ Removed: ' + t.label);
@@ -290,8 +466,8 @@ function completeTask(id) {
 }
 
 function resetAll() {
-  if (!confirm('Clear all tasks for BOTH phones? This cannot be undone.')) return;
-  if (window._fb) window._fb.remove(window._fb.ref(window._fb.db, "households/hometeam/tasks"));
+  if (!confirm('Clear all tasks for ' + monthName(viewMonth) + ' (both phones)? This cannot be undone.')) return;
+  if (window._fb) window._fb.remove(window._fb.ref(window._fb.db, "households/" + window._fb.HOUSEHOLD + "/months/" + viewMonth));
 }
 
 /* ---------- Render ---------- */
@@ -315,16 +491,19 @@ function render() {
 
 function buildCard(t) {
   var card = document.createElement('div');
+  var readOnly = !isCurrentMonth();
   var tagHtml = '<span class="tag tag-' + t.type + '">' + (t.type === 'mental' ? '🧠 mental' : '💪 physical') + '</span>';
-  var del = '<button class="del-btn" title="Delete" onclick="deleteTask(\'' + t.id + '\')">✕</button>';
+  var del = readOnly ? '' : '<button class="del-btn" title="Delete" onclick="deleteTask(\'' + t.id + '\')">✕</button>';
   if (t.status === 'done') {
     card.className = 'task-card done';
     var time = new Date(t.ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
     card.innerHTML = '<span class="task-icon">' + t.icon + '</span><div class="task-info"><div class="task-label">' + t.label + '</div><div class="task-meta">' + tagHtml + time + '</div></div><span class="done-check">✅</span>' + del;
   } else {
     card.className = 'task-card pending-' + t.owner;
-    var btn = '<button class="complete-btn complete-btn-' + t.owner + '" onclick="completeTask(\'' + t.id + '\')">Done ✓</button>';
-    card.innerHTML = '<span class="task-icon">' + t.icon + '</span><div class="task-info"><div class="task-label">' + t.label + '</div><div class="task-meta">' + tagHtml + 'your turn</div></div>' + btn + del;
+    var right = readOnly
+      ? '<span class="done-check" style="opacity:0.4">⏳</span>'
+      : '<button class="complete-btn complete-btn-' + t.owner + '" onclick="completeTask(\'' + t.id + '\')">Done ✓</button>';
+    card.innerHTML = '<span class="task-icon">' + t.icon + '</span><div class="task-info"><div class="task-label">' + t.label + '</div><div class="task-meta">' + tagHtml + (readOnly ? 'not done' : 'your turn') + '</div></div>' + right + del;
   }
   return card;
 }
@@ -352,6 +531,25 @@ function updateScores(tasks) {
   else if (diff <= 10) { v.className='verdict verdict-balanced'; vi.textContent='⚖️'; vt.textContent='Perfectly balanced — great teamwork! 🎉'; }
   else if (pA > pB) { v.className='verdict verdict-imbalanced'; vi.textContent='📊'; vt.textContent='Mark has pending tasks to catch up on'; }
   else { v.className='verdict verdict-imbalanced'; vi.textContent='📊'; vt.textContent='Peggy has pending tasks to catch up on'; }
+  updateWeekRace();
+}
+
+function updateWeekRace() {
+  var el = document.getElementById('week-race');
+  if (!el) return;
+  var done = tasksForWeek(currentWeekKey());
+  var a = done.filter(function(t){ return t.owner==='a'; }).length;
+  var b = done.filter(function(t){ return t.owner==='b'; }).length;
+  var total = a + b;
+  if (total === 0) { el.innerHTML = '🏁 This week — keep it balanced to both win the mystery prize! 🎁'; return; }
+  var share = Math.max(a, b) / total;
+  if (share <= 0.60) {
+    el.innerHTML = '⚖️ This week: <b>balanced ' + a + '–' + b + '</b> — on track to both win! 🎁';
+  } else {
+    var ahead = a > b ? 'Peggy 👩🏾' : 'Mark 👨🏾';
+    var behind = a > b ? 'Mark' : 'Peggy';
+    el.innerHTML = '⚠️ This week: <b>' + a + '–' + b + '</b>, a bit lopsided — ' + behind + ' has catching up to do!';
+  }
 }
 
 /* ---------- Panel ---------- */
@@ -422,7 +620,35 @@ function launchConfetti() {
   requestAnimationFrame(draw);
 }
 
+/* ---------- Month switcher ---------- */
+function updateMonthSwitch() {
+  var keys = allMonthKeys();
+  var idx = keys.indexOf(viewMonth);
+  if (idx === -1) { viewMonth = currentMonthKey(); idx = keys.indexOf(viewMonth); }
+  document.getElementById('month-label').textContent = monthName(viewMonth);
+  document.getElementById('month-prev').disabled = (idx <= 0);
+  document.getElementById('month-next').disabled = (idx >= keys.length - 1);
+  document.getElementById('past-banner').style.display = isCurrentMonth() ? 'none' : 'block';
+  document.getElementById('week-race').style.display = isCurrentMonth() ? 'block' : 'none';
+  // hide the add buttons on past months
+  var show = isCurrentMonth() ? '' : 'none';
+  document.getElementById('addbtn-a').style.display = show;
+  document.getElementById('addbtn-b').style.display = show;
+}
+function stepMonth(dir) {
+  var keys = allMonthKeys();
+  var idx = keys.indexOf(viewMonth);
+  var next = idx + dir;
+  if (next < 0 || next >= keys.length) return;
+  viewMonth = keys[next];
+  render();
+  updateMonthSwitch();
+}
+
 /* ---------- Wire up ---------- */
+document.getElementById('month-prev').addEventListener('click', function(){ stepMonth(-1); });
+document.getElementById('month-next').addEventListener('click', function(){ stepMonth(1); });
+document.getElementById('prize-close').addEventListener('click', function(){ document.getElementById('prize-overlay').style.display = 'none'; });
 document.getElementById('tabbtn-board').addEventListener('click', function(){ switchTab('board'); });
 document.getElementById('tabbtn-scores').addEventListener('click', function(){ switchTab('scores'); });
 document.getElementById('addbtn-a').addEventListener('click', function(){ togglePanel('a'); });
@@ -434,6 +660,7 @@ document.getElementById('reset-btn').addEventListener('click', resetAll);
 
 // Initial render (Firebase will re-render once data arrives)
 render();
+updateMonthSwitch();
 </script>
 </body>
 </html>
