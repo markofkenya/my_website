@@ -6,36 +6,19 @@
 <title>Home Team Tracker</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background: #f8f7f4;
-    min-height: 100vh;
-    color: #1a1a2e;
-  }
-  header {
-    background: linear-gradient(135deg, #2d1b69 0%, #11998e 100%);
-    padding: 28px 20px 22px;
-    text-align: center;
-  }
-  header h1 { color: #fff; font-size: 24px; font-weight: 800; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8f7f4; min-height: 100vh; color: #1a1a2e; }
+  header { background: linear-gradient(135deg, #2d1b69 0%, #11998e 100%); padding: 26px 20px 20px; text-align: center; }
+  header h1 { color: #fff; font-size: 23px; font-weight: 800; }
   header p { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 4px; }
+  .sync-pill { display:inline-flex; align-items:center; gap:6px; margin-top:10px; background:rgba(255,255,255,0.15); color:#fff; font-size:11px; font-weight:700; padding:4px 12px; border-radius:99px; }
+  #sync-indicator { font-size:11px; font-weight:800; }
 
   .tabs { display: flex; background: #fff; border-bottom: 1px solid #e8e8e8; }
-  .tab-btn {
-    flex: 1; padding: 14px; background: none; border: none;
-    border-bottom: 3px solid transparent; font-size: 13px; font-weight: 700;
-    color: #9ca3af; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
-  }
+  .tab-btn { flex: 1; padding: 14px; background: none; border: none; border-bottom: 3px solid transparent; font-size: 13px; font-weight: 700; color: #9ca3af; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
   .tab-btn.active { color: #2d1b69; border-bottom-color: #2d1b69; }
 
-  .score-strip {
-    background: #fff; padding: 14px 16px; display: flex; align-items: center;
-    gap: 10px; border-bottom: 1px solid #f0f0f0;
-  }
-  .score-bar-wrap {
-    flex: 1; height: 10px; background: #f0f0f0; border-radius: 99px;
-    overflow: hidden; display: flex;
-  }
+  .score-strip { background: #fff; padding: 14px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #f0f0f0; }
+  .score-bar-wrap { flex: 1; height: 10px; background: #f0f0f0; border-radius: 99px; overflow: hidden; display: flex; }
   .score-bar-a { background: #FF6B6B; transition: width 0.5s ease; width: 50%; }
   .score-bar-b { background: #11998e; transition: width 0.5s ease; width: 50%; }
   .score-label { font-size: 12px; font-weight: 800; color: #9ca3af; white-space: nowrap; }
@@ -46,18 +29,14 @@
   .col-b .column-header { background: #11998e; }
   .col-header-name { color: #fff; font-weight: 900; font-size: 16px; }
   .col-header-sub { color: rgba(255,255,255,0.8); font-size: 11px; font-weight: 600; margin-top: 2px; }
-
-  .col-body {
-    border: 2px solid; border-top: none; border-radius: 0 0 16px 16px;
-    padding: 10px 8px; min-height: 200px; background: #fafafa;
-  }
+  .col-body { border: 2px solid; border-top: none; border-radius: 0 0 16px 16px; padding: 10px 8px; min-height: 200px; background: #fafafa; }
   .col-a .col-body { border-color: #FF6B6B; }
   .col-b .col-body { border-color: #11998e; }
 
-  .task-card {
-    background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px;
-    padding: 10px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
-  }
+  .task-card { border-radius: 12px; padding: 10px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .task-card.done { background: #f0fdf4; border: 1.5px solid #86efac; opacity: 0.7; }
+  .task-card.pending-a { background: #fff0f0; border: 1.5px solid #FF6B6B; }
+  .task-card.pending-b { background: #e6faf8; border: 1.5px solid #11998e; }
   .task-icon { font-size: 20px; flex-shrink: 0; }
   .task-info { flex: 1; min-width: 0; }
   .task-label { font-weight: 700; font-size: 13px; color: #1f2937; }
@@ -66,34 +45,24 @@
   .tag-physical { background: #dbeafe; color: #1d4ed8; }
   .tag-mental { background: #ede9fe; color: #7c3aed; }
   .done-check { font-size: 18px; }
+  .complete-btn { border: none; border-radius: 9px; padding: 6px 11px; color: #fff; font-weight: 800; font-size: 11px; cursor: pointer; white-space: nowrap; font-family: inherit; }
+  .complete-btn-a { background: #FF6B6B; }
+  .complete-btn-b { background: #11998e; }
 
-  .add-btn {
-    width: 100%; padding: 10px; border-radius: 12px; border: 2px dashed;
-    background: transparent; font-weight: 800; font-size: 13px; cursor: pointer;
-    margin-top: 4px; font-family: inherit;
-  }
+  .add-btn { width: 100%; padding: 10px; border-radius: 12px; border: 2px dashed; background: transparent; font-weight: 800; font-size: 13px; cursor: pointer; margin-top: 4px; font-family: inherit; }
   .col-a .add-btn { border-color: #FF6B6B; color: #FF6B6B; }
   .col-b .add-btn { border-color: #11998e; color: #11998e; }
 
-  .add-panel {
-    background: #fff; border-radius: 20px; padding: 18px; margin: 0 12px 14px;
-    border: 2px solid #e8e8e8; box-shadow: 0 8px 32px rgba(0,0,0,0.08); display: none;
-  }
+  .add-panel { background: #fff; border-radius: 20px; padding: 18px; margin: 0 12px 14px; border: 2px solid #e8e8e8; box-shadow: 0 8px 32px rgba(0,0,0,0.08); display: none; }
   .add-panel.visible { display: block; }
   .add-panel.for-a { border-top: 4px solid #FF6B6B; }
   .add-panel.for-b { border-top: 4px solid #11998e; }
   .panel-title { font-weight: 900; font-size: 15px; color: #1f2937; margin-bottom: 14px; }
-
   .preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 16px; }
-  .preset-btn {
-    padding: 9px 8px; border-radius: 10px; border: 1.5px solid #e8e8e8;
-    background: #fafafa; cursor: pointer; text-align: left; display: flex;
-    align-items: center; gap: 7px; font-family: inherit;
-  }
+  .preset-btn { padding: 9px 8px; border-radius: 10px; border: 1.5px solid #e8e8e8; background: #fafafa; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 7px; font-family: inherit; }
   .preset-btn-icon { font-size: 18px; }
   .preset-btn-label { font-weight: 700; font-size: 12px; color: #374151; }
   .preset-btn-type { font-size: 10px; color: #9ca3af; }
-
   .divider { border-top: 2px dashed #e8e8e8; padding-top: 14px; }
   .divider-label { font-size: 12px; font-weight: 700; color: #9ca3af; margin-bottom: 10px; }
   .custom-row { display: flex; gap: 8px; margin-bottom: 8px; }
@@ -106,7 +75,6 @@
   .log-btn { padding: 8px 18px; border: none; border-radius: 10px; color: #fff; font-weight: 800; font-size: 13px; cursor: pointer; font-family: inherit; }
   .log-btn-a { background: #FF6B6B; }
   .log-btn-b { background: #11998e; }
-
   .empty-state { text-align: center; color: #d1d5db; font-size: 12px; padding: 24px 0; }
 
   .scores-pane { padding: 20px 16px; }
@@ -135,13 +103,9 @@
   .how-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
   .how-icon { font-size: 18px; }
   .how-text { font-size: 13px; color: #6b7280; line-height: 1.4; }
+  .reset-btn { width:100%; margin-top:8px; padding:10px; border:2px solid #e8e8e8; background:#fff; border-radius:12px; color:#9ca3af; font-weight:700; font-size:12px; cursor:pointer; font-family:inherit; }
 
-  #toast {
-    position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-60px);
-    background: #1f2937; color: #fff; padding: 12px 20px; border-radius: 16px;
-    font-weight: 700; font-size: 13px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    white-space: nowrap; transition: transform 0.35s ease; pointer-events: none;
-  }
+  #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-60px); background: #1f2937; color: #fff; padding: 12px 20px; border-radius: 16px; font-weight: 700; font-size: 13px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.3); white-space: nowrap; transition: transform 0.35s ease; pointer-events: none; }
   #toast.show { transform: translateX(-50%) translateY(0); }
   #confetti-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9998; }
 </style>
@@ -152,9 +116,10 @@
 <div id="toast"></div>
 
 <header>
-  <div style="font-size:30px;margin-bottom:6px">🏠</div>
+  <div style="font-size:28px;margin-bottom:4px">🏠</div>
   <h1>Home Team Tracker</h1>
-  <p>Both doing their bit — every bit counts</p>
+  <p>50/50 — every task you do, your partner matches</p>
+  <div class="sync-pill"><span id="sync-indicator" style="color:#fbbf24">● CONNECTING…</span></div>
 </header>
 
 <div class="tabs">
@@ -165,60 +130,27 @@
 <div id="tab-board">
   <div class="score-strip">
     <span style="font-size:18px">👩🏾</span>
-    <div class="score-bar-wrap">
-      <div class="score-bar-a" id="strip-a"></div>
-      <div class="score-bar-b" id="strip-b"></div>
-    </div>
+    <div class="score-bar-wrap"><div class="score-bar-a" id="strip-a"></div><div class="score-bar-b" id="strip-b"></div></div>
     <span style="font-size:18px">👨🏾</span>
     <span class="score-label" id="strip-label">0 vs 0</span>
   </div>
-
   <div class="board">
     <div class="col-a">
-      <div class="column-header">
-        <span style="font-size:28px">👩🏾</span>
-        <div>
-          <div class="col-header-name">Peggy</div>
-          <div class="col-header-sub" id="sub-a">0 tasks</div>
-        </div>
-      </div>
-      <div class="col-body">
-        <div id="tasks-a"></div>
-        <div class="empty-state" id="empty-a">No tasks logged yet</div>
-        <button class="add-btn" id="addbtn-a">+ I did this</button>
-      </div>
+      <div class="column-header"><span style="font-size:28px">👩🏾</span><div><div class="col-header-name">Peggy</div><div class="col-header-sub" id="sub-a">0 done</div></div></div>
+      <div class="col-body"><div id="tasks-a"></div><div class="empty-state" id="empty-a">No tasks yet</div><button class="add-btn" id="addbtn-a">+ I did this</button></div>
     </div>
-
     <div class="col-b">
-      <div class="column-header">
-        <span style="font-size:28px">👨🏾</span>
-        <div>
-          <div class="col-header-name">Mark</div>
-          <div class="col-header-sub" id="sub-b">0 tasks</div>
-        </div>
-      </div>
-      <div class="col-body">
-        <div id="tasks-b"></div>
-        <div class="empty-state" id="empty-b">No tasks logged yet</div>
-        <button class="add-btn" id="addbtn-b">+ I did this</button>
-      </div>
+      <div class="column-header"><span style="font-size:28px">👨🏾</span><div><div class="col-header-name">Mark</div><div class="col-header-sub" id="sub-b">0 done</div></div></div>
+      <div class="col-body"><div id="tasks-b"></div><div class="empty-state" id="empty-b">No tasks yet</div><button class="add-btn" id="addbtn-b">+ I did this</button></div>
     </div>
   </div>
-
   <div id="add-panel" class="add-panel">
     <div class="panel-title" id="panel-title">Log a task</div>
     <div class="preset-grid" id="preset-grid"></div>
     <div class="divider">
       <div class="divider-label">Or add something custom:</div>
-      <div class="custom-row">
-        <input class="emoji-input" id="custom-icon" value="✨" maxlength="2">
-        <input class="text-input" id="custom-label" placeholder="What did you do?">
-      </div>
-      <div class="type-row">
-        <button class="type-btn" id="type-physical">💪 Physical</button>
-        <button class="type-btn" id="type-mental">🧠 Mental</button>
-        <button class="log-btn" id="log-custom-btn">Log ✓</button>
-      </div>
+      <div class="custom-row"><input class="emoji-input" id="custom-icon" value="✨" maxlength="2"><input class="text-input" id="custom-label" placeholder="What did you do?"></div>
+      <div class="type-row"><button class="type-btn" id="type-physical">💪 Physical</button><button class="type-btn" id="type-mental">🧠 Mental</button><button class="log-btn" id="log-custom-btn">Log ✓</button></div>
     </div>
   </div>
 </div>
@@ -227,46 +159,61 @@
   <div class="scores-pane">
     <div class="score-card">
       <h2>🏆 Who's doing what?</h2>
-      <div class="score-person">
-        <div class="score-person-header">
-          <div class="score-person-left">
-            <span class="score-person-emoji">👩🏾</span>
-            <div>
-              <div class="score-person-name">Peggy</div>
-              <div class="score-person-sub" id="sc-sub-a">0 tasks completed</div>
-            </div>
-          </div>
-          <div class="score-pct score-pct-a" id="sc-pct-a">50%</div>
-        </div>
-        <div class="bar-track"><div class="bar-fill bar-fill-a" id="sc-bar-a" style="width:50%"></div></div>
-      </div>
-      <div class="score-person">
-        <div class="score-person-header">
-          <div class="score-person-left">
-            <span class="score-person-emoji">👨🏾</span>
-            <div>
-              <div class="score-person-name">Mark</div>
-              <div class="score-person-sub" id="sc-sub-b">0 tasks completed</div>
-            </div>
-          </div>
-          <div class="score-pct score-pct-b" id="sc-pct-b">50%</div>
-        </div>
-        <div class="bar-track"><div class="bar-fill bar-fill-b" id="sc-bar-b" style="width:50%"></div></div>
-      </div>
-      <div class="verdict verdict-balanced" id="verdict">
-        <div class="verdict-icon" id="verdict-icon">⚖️</div>
-        <div class="verdict-text" id="verdict-text">Log tasks to see how the balance looks!</div>
-      </div>
+      <div class="score-person"><div class="score-person-header"><div class="score-person-left"><span class="score-person-emoji">👩🏾</span><div><div class="score-person-name">Peggy</div><div class="score-person-sub" id="sc-sub-a">0 completed</div></div></div><div class="score-pct score-pct-a" id="sc-pct-a">50%</div></div><div class="bar-track"><div class="bar-fill bar-fill-a" id="sc-bar-a" style="width:50%"></div></div></div>
+      <div class="score-person"><div class="score-person-header"><div class="score-person-left"><span class="score-person-emoji">👨🏾</span><div><div class="score-person-name">Mark</div><div class="score-person-sub" id="sc-sub-b">0 completed</div></div></div><div class="score-pct score-pct-b" id="sc-pct-b">50%</div></div><div class="bar-track"><div class="bar-fill bar-fill-b" id="sc-bar-b" style="width:50%"></div></div></div>
+      <div class="verdict verdict-balanced" id="verdict"><div class="verdict-icon" id="verdict-icon">⚖️</div><div class="verdict-text" id="verdict-text">Log a task to get started!</div></div>
     </div>
     <div class="how-card">
       <h3>How it works</h3>
-      <div class="how-row"><span class="how-icon">📝</span><span class="how-text">Each person logs their own completed tasks independently</span></div>
-      <div class="how-row"><span class="how-icon">🧠</span><span class="how-text">Mental load counts equally — booking appointments, planning, remembering things</span></div>
-      <div class="how-row"><span class="how-icon">🏆</span><span class="how-text">Watch the scoreboard over time and have honest conversations about balance</span></div>
-      <div class="how-row"><span class="how-icon">🎉</span><span class="how-text">No blame — just visibility. Awareness is the first step!</span></div>
+      <div class="how-row"><span class="how-icon">📝</span><span class="how-text">When you log a task you did, the same task appears as pending for your partner</span></div>
+      <div class="how-row"><span class="how-icon">✅</span><span class="how-text">They mark it done when they take their turn — keeping it strictly 50/50</span></div>
+      <div class="how-row"><span class="how-icon">🔄</span><span class="how-text">Everything syncs live between both your phones</span></div>
+      <div class="how-row"><span class="how-icon">🎉</span><span class="how-text">Confetti every time a task gets done!</span></div>
+      <button class="reset-btn" id="reset-btn">🗑️ Reset everything (both phones)</button>
     </div>
   </div>
 </div>
+
+<!-- ══════════════════════════════════════════════════════
+     FIREBASE — ES module, same project & pattern as your
+     other trackers. Writes to its own branch: homeTeamTasks
+     ══════════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getDatabase, ref, onValue, update, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyB...PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
+    authDomain:        "task-monitor-bd7ee.firebaseapp.com",
+    databaseURL:       "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:         "task-monitor-bd7ee",
+    storageBucket:     "task-monitor-bd7ee.firebasestorage.app",
+    messagingSenderId: "544624731364",
+    appId:             "1:544624731364:web:419d52fa061c5c7b4f38f1",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  signInAnonymously(getAuth(app)).then(c => console.log("UID:", c.user.uid)).catch(e => console.error("Auth:", e));
+  const db = getDatabase(app);
+  const tasksRef = ref(db, "homeTeamTasks");
+
+  // Expose to global scope for the main script
+  window._fb = { db, ref, onValue, update, set, remove, tasksRef };
+  window.dispatchEvent(new Event("firebase-ready"));
+
+  onValue(tasksRef, snap => {
+    const data = snap.val() || {};
+    window._tasksData = data;
+    document.getElementById("sync-indicator").textContent = "● LIVE";
+    document.getElementById("sync-indicator").style.color = "#4ade80";
+    if (window.renderFromFirebase) window.renderFromFirebase();
+  }, err => {
+    console.error("Firebase error:", err);
+    document.getElementById("sync-indicator").textContent = "● OFFLINE";
+    document.getElementById("sync-indicator").style.color = "#f87171";
+  });
+</script>
 
 <script>
 var PRESETS = [
@@ -288,175 +235,190 @@ var PRESETS = [
   { label: "Booking holidays", icon: "✈️", type: "mental" }
 ];
 
-var scores = { a: 0, b: 0 };
 var activePerson = null;
 var customType = "physical";
 
+// Read live data from the Firebase snapshot global
+function getTasks() {
+  var data = window._tasksData || {};
+  return Object.keys(data).map(function(k){ return data[k]; });
+}
+
+// Firebase pushes new data -> re-render
+window.renderFromFirebase = function() { render(); };
+
+/* ---------- Writes (go straight to Firebase) ---------- */
+function fbWrite(task) {
+  if (window._fb) window._fb.set(window._fb.ref(window._fb.db, "homeTeamTasks/" + task.id), task);
+}
+function fbUpdate(id, changes) {
+  if (window._fb) window._fb.update(window._fb.ref(window._fb.db, "homeTeamTasks/" + id), changes);
+}
+
+function logTask(person, taskData) {
+  var other = person === 'a' ? 'b' : 'a';
+  var base = Date.now();
+  var rid = Math.floor(Math.random()*100000);
+  fbWrite({ id: 't' + base + 'x' + rid, label: taskData.label, icon: taskData.icon, type: taskData.type, owner: person, status: 'done', ts: base });
+  fbWrite({ id: 't' + (base+1) + 'x' + (rid+1), label: taskData.label, icon: taskData.icon, type: taskData.type, owner: other, status: 'pending', ts: base+1 });
+  closePanel();
+  showToast((person === 'a' ? '👩🏾 Peggy' : '👨🏾 Mark') + ' did: ' + taskData.label + ' — ' + (other === 'a' ? "Peggy's" : "Mark's") + ' turn next!');
+  launchConfetti();
+}
+
+function completeTask(id) {
+  var t = getTasks().filter(function(x){ return x.id === id; })[0];
+  if (!t) return;
+  fbUpdate(id, { status: 'done', ts: Date.now() });
+  showToast((t.owner === 'a' ? '👩🏾 Peggy' : '👨🏾 Mark') + ' completed: ' + t.label + ' — balanced! ⚖️');
+  launchConfetti();
+}
+
+function resetAll() {
+  if (!confirm('Clear all tasks for BOTH phones? This cannot be undone.')) return;
+  if (window._fb) window._fb.remove(window._fb.ref(window._fb.db, "homeTeamTasks"));
+}
+
+/* ---------- Render ---------- */
+function render() {
+  var tasks = getTasks();
+  ['a','b'].forEach(function(p) {
+    var container = document.getElementById('tasks-' + p);
+    if (!container) return;
+    container.innerHTML = '';
+    var mine = tasks.filter(function(t){ return t.owner === p; })
+      .sort(function(a,b){
+        if (a.status === 'pending' && b.status !== 'pending') return -1;
+        if (a.status !== 'pending' && b.status === 'pending') return 1;
+        return (b.ts||0) - (a.ts||0);
+      });
+    document.getElementById('empty-' + p).style.display = mine.length ? 'none' : 'block';
+    mine.forEach(function(t){ container.appendChild(buildCard(t)); });
+  });
+  updateScores(tasks);
+}
+
+function buildCard(t) {
+  var card = document.createElement('div');
+  var tagHtml = '<span class="tag tag-' + t.type + '">' + (t.type === 'mental' ? '🧠 mental' : '💪 physical') + '</span>';
+  if (t.status === 'done') {
+    card.className = 'task-card done';
+    var time = new Date(t.ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    card.innerHTML = '<span class="task-icon">' + t.icon + '</span><div class="task-info"><div class="task-label">' + t.label + '</div><div class="task-meta">' + tagHtml + time + '</div></div><span class="done-check">✅</span>';
+  } else {
+    card.className = 'task-card pending-' + t.owner;
+    var btn = '<button class="complete-btn complete-btn-' + t.owner + '" onclick="completeTask(\'' + t.id + '\')">Done ✓</button>';
+    card.innerHTML = '<span class="task-icon">' + t.icon + '</span><div class="task-info"><div class="task-label">' + t.label + '</div><div class="task-meta">' + tagHtml + 'your turn</div></div>' + btn;
+  }
+  return card;
+}
+
+function updateScores(tasks) {
+  var a = tasks.filter(function(t){ return t.owner==='a' && t.status==='done'; }).length;
+  var b = tasks.filter(function(t){ return t.owner==='b' && t.status==='done'; }).length;
+  var total = a + b;
+  var pA = total ? Math.round((a/total)*100) : 50;
+  var pB = 100 - pA;
+  document.getElementById('strip-a').style.width = pA + '%';
+  document.getElementById('strip-b').style.width = pB + '%';
+  document.getElementById('strip-label').textContent = a + ' vs ' + b;
+  document.getElementById('sub-a').textContent = a + ' done';
+  document.getElementById('sub-b').textContent = b + ' done';
+  document.getElementById('sc-sub-a').textContent = a + ' completed';
+  document.getElementById('sc-sub-b').textContent = b + ' completed';
+  document.getElementById('sc-pct-a').textContent = pA + '%';
+  document.getElementById('sc-pct-b').textContent = pB + '%';
+  document.getElementById('sc-bar-a').style.width = pA + '%';
+  document.getElementById('sc-bar-b').style.width = pB + '%';
+  var v = document.getElementById('verdict'), vt = document.getElementById('verdict-text'), vi = document.getElementById('verdict-icon');
+  var diff = Math.abs(pA - pB);
+  if (total === 0) { v.className='verdict verdict-balanced'; vi.textContent='⚖️'; vt.textContent='Log a task to get started!'; }
+  else if (diff <= 10) { v.className='verdict verdict-balanced'; vi.textContent='⚖️'; vt.textContent='Perfectly balanced — great teamwork! 🎉'; }
+  else if (pA > pB) { v.className='verdict verdict-imbalanced'; vi.textContent='📊'; vt.textContent='Mark has pending tasks to catch up on'; }
+  else { v.className='verdict verdict-imbalanced'; vi.textContent='📊'; vt.textContent='Peggy has pending tasks to catch up on'; }
+}
+
+/* ---------- Panel ---------- */
 function togglePanel(person) {
   var panel = document.getElementById('add-panel');
-  var btnA = document.getElementById('addbtn-a');
-  var btnB = document.getElementById('addbtn-b');
-
-  if (activePerson === person && panel.classList.contains('visible')) {
-    closePanel();
-    return;
-  }
+  if (activePerson === person && panel.classList.contains('visible')) { closePanel(); return; }
   activePerson = person;
-  panel.classList.remove('for-a', 'for-b');
+  panel.classList.remove('for-a','for-b');
   panel.classList.add('for-' + person, 'visible');
-
   var name = person === 'a' ? 'Peggy' : 'Mark';
-  document.getElementById('panel-title').textContent = (person === 'a' ? '👩🏾 ' : '👨🏾 ') + name + ' — what did you do?';
+  document.getElementById('panel-title').textContent = (person==='a'?'👩🏾 ':'👨🏾 ') + name + ' — what did you do?';
   document.getElementById('custom-label').value = '';
   document.getElementById('custom-icon').value = '✨';
   setType('physical');
-
-  if (person === 'a') {
-    btnA.textContent = '✕ Cancel'; btnB.textContent = '+ I did this';
-  } else {
-    btnB.textContent = '✕ Cancel'; btnA.textContent = '+ I did this';
-  }
-
-  var grid = document.getElementById('preset-grid');
-  grid.innerHTML = '';
-  PRESETS.forEach(function(p) {
+  document.getElementById('addbtn-a').textContent = person==='a' ? '✕ Cancel' : '+ I did this';
+  document.getElementById('addbtn-b').textContent = person==='b' ? '✕ Cancel' : '+ I did this';
+  var grid = document.getElementById('preset-grid'); grid.innerHTML = '';
+  PRESETS.forEach(function(p){
     var btn = document.createElement('button');
     btn.className = 'preset-btn';
-    btn.innerHTML = '<span class="preset-btn-icon">' + p.icon + '</span><div><div class="preset-btn-label">' + p.label + '</div><div class="preset-btn-type">' + p.type + '</div></div>';
-    btn.onclick = function() { logTask(person, { label: p.label, icon: p.icon, type: p.type }); };
+    btn.innerHTML = '<span class="preset-btn-icon">'+p.icon+'</span><div><div class="preset-btn-label">'+p.label+'</div><div class="preset-btn-type">'+p.type+'</div></div>';
+    btn.onclick = function(){ logTask(person, { label:p.label, icon:p.icon, type:p.type }); };
     grid.appendChild(btn);
   });
-
   document.getElementById('log-custom-btn').className = 'log-btn log-btn-' + person;
 }
-
 function setType(t) {
   customType = t;
   var p = activePerson || 'a';
-  document.getElementById('type-physical').className = 'type-btn' + (t === 'physical' ? ' selected-' + p : '');
-  document.getElementById('type-mental').className = 'type-btn' + (t === 'mental' ? ' selected-' + p : '');
+  document.getElementById('type-physical').className = 'type-btn' + (t==='physical'?' selected-'+p:'');
+  document.getElementById('type-mental').className = 'type-btn' + (t==='mental'?' selected-'+p:'');
 }
-
 function logCustom() {
   var label = document.getElementById('custom-label').value.trim();
   var icon = document.getElementById('custom-icon').value || '✨';
   if (!label || !activePerson) return;
-  logTask(activePerson, { label: label, icon: icon, type: customType });
+  logTask(activePerson, { label:label, icon:icon, type:customType });
 }
-
-function logTask(person, taskData) {
-  scores[person]++;
-  var time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  document.getElementById('empty-' + person).style.display = 'none';
-  var container = document.getElementById('tasks-' + person);
-  var card = document.createElement('div');
-  card.className = 'task-card';
-  card.innerHTML =
-    '<span class="task-icon">' + taskData.icon + '</span>' +
-    '<div class="task-info"><div class="task-label">' + taskData.label + '</div>' +
-    '<div class="task-meta"><span class="tag tag-' + taskData.type + '">' +
-    (taskData.type === 'mental' ? '🧠 mental' : '💪 physical') + '</span>' + time + '</div></div>' +
-    '<span class="done-check">✅</span>';
-  container.insertBefore(card, container.firstChild);
-  updateScores();
-  closePanel();
-  showToast((person === 'a' ? '👩🏾 Peggy' : '👨🏾 Mark') + ' logged: ' + taskData.label + '!');
-  launchConfetti();
-}
-
 function closePanel() {
   document.getElementById('add-panel').classList.remove('visible');
   activePerson = null;
   document.getElementById('addbtn-a').textContent = '+ I did this';
   document.getElementById('addbtn-b').textContent = '+ I did this';
 }
-
-function updateScores() {
-  var total = scores.a + scores.b;
-  var pA = total ? Math.round((scores.a / total) * 100) : 50;
-  var pB = 100 - pA;
-  document.getElementById('strip-a').style.width = pA + '%';
-  document.getElementById('strip-b').style.width = pB + '%';
-  document.getElementById('strip-label').textContent = scores.a + ' vs ' + scores.b;
-  document.getElementById('sub-a').textContent = scores.a + ' task' + (scores.a !== 1 ? 's' : '');
-  document.getElementById('sub-b').textContent = scores.b + ' task' + (scores.b !== 1 ? 's' : '');
-  document.getElementById('sc-sub-a').textContent = scores.a + ' tasks completed';
-  document.getElementById('sc-sub-b').textContent = scores.b + ' tasks completed';
-  document.getElementById('sc-pct-a').textContent = pA + '%';
-  document.getElementById('sc-pct-b').textContent = pB + '%';
-  document.getElementById('sc-bar-a').style.width = pA + '%';
-  document.getElementById('sc-bar-b').style.width = pB + '%';
-  var v = document.getElementById('verdict');
-  var vt = document.getElementById('verdict-text');
-  var vi = document.getElementById('verdict-icon');
-  var diff = Math.abs(pA - pB);
-  if (total === 0) { v.className = 'verdict verdict-balanced'; vi.textContent = '⚖️'; vt.textContent = 'Log tasks to see how the balance looks!'; }
-  else if (diff <= 10) { v.className = 'verdict verdict-balanced'; vi.textContent = '⚖️'; vt.textContent = 'Looking balanced — great teamwork! 🎉'; }
-  else if (pA > pB) { v.className = 'verdict verdict-imbalanced'; vi.textContent = '📊'; vt.textContent = 'Peggy is carrying ' + diff + '% more right now'; }
-  else { v.className = 'verdict verdict-imbalanced'; vi.textContent = '📊'; vt.textContent = 'Mark is carrying ' + diff + '% more right now'; }
-}
-
 function switchTab(tab) {
-  document.getElementById('tab-board').style.display = tab === 'board' ? '' : 'none';
-  document.getElementById('tab-scores').style.display = tab === 'scores' ? '' : 'none';
-  document.getElementById('tabbtn-board').classList.toggle('active', tab === 'board');
-  document.getElementById('tabbtn-scores').classList.toggle('active', tab === 'scores');
+  document.getElementById('tab-board').style.display = tab==='board' ? '' : 'none';
+  document.getElementById('tab-scores').style.display = tab==='scores' ? '' : 'none';
+  document.getElementById('tabbtn-board').classList.toggle('active', tab==='board');
+  document.getElementById('tabbtn-scores').classList.toggle('active', tab==='scores');
 }
-
 function showToast(msg) {
   var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(function() { t.classList.remove('show'); }, 3000);
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
 }
-
 function launchConfetti() {
-  var canvas = document.getElementById('confetti-canvas');
-  var ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  var canvas = document.getElementById('confetti-canvas'), ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
   var colors = ['#FF6B6B','#11998e','#FFE66D','#A8E6CF','#FF8B94','#B4F8C8','#c084fc'];
-  var particles = [];
-  for (var i = 0; i < 80; i++) {
-    particles.push({
-      x: Math.random() * canvas.width, y: -10, r: Math.random() * 7 + 3,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      vx: (Math.random() - 0.5) * 3, vy: Math.random() * 3 + 1.5,
-      g: 0.1, op: 1, rot: Math.random() * 360, rs: (Math.random() - 0.5) * 6,
-      rect: Math.random() > 0.5
-    });
-  }
+  var parts = [];
+  for (var i=0;i<80;i++) parts.push({ x:Math.random()*canvas.width, y:-10, r:Math.random()*7+3, color:colors[Math.floor(Math.random()*colors.length)], vx:(Math.random()-0.5)*3, vy:Math.random()*3+1.5, g:0.1, op:1, rot:Math.random()*360, rs:(Math.random()-0.5)*6, rect:Math.random()>0.5 });
   var frame = 0;
   function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(function(p) {
-      p.x += p.vx; p.y += p.vy; p.vy += p.g; p.rot += p.rs; p.op -= 0.01;
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, p.op);
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rot * Math.PI / 180);
-      ctx.fillStyle = p.color;
-      if (p.rect) ctx.fillRect(-p.r, -p.r/2, p.r*2, p.r);
-      else { ctx.beginPath(); ctx.arc(0,0,p.r/2,0,Math.PI*2); ctx.fill(); }
-      ctx.restore();
-    });
-    frame++;
-    if (frame < 160) requestAnimationFrame(draw);
-    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    parts.forEach(function(p){ p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.rot+=p.rs; p.op-=0.01; ctx.save(); ctx.globalAlpha=Math.max(0,p.op); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180); ctx.fillStyle=p.color; if(p.rect) ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r); else { ctx.beginPath(); ctx.arc(0,0,p.r/2,0,Math.PI*2); ctx.fill(); } ctx.restore(); });
+    frame++; if (frame<160) requestAnimationFrame(draw); else ctx.clearRect(0,0,canvas.width,canvas.height);
   }
   requestAnimationFrame(draw);
 }
 
-// Wire up event listeners after DOM is ready
-document.getElementById('tabbtn-board').addEventListener('click', function() { switchTab('board'); });
-document.getElementById('tabbtn-scores').addEventListener('click', function() { switchTab('scores'); });
-document.getElementById('addbtn-a').addEventListener('click', function() { togglePanel('a'); });
-document.getElementById('addbtn-b').addEventListener('click', function() { togglePanel('b'); });
-document.getElementById('type-physical').addEventListener('click', function() { setType('physical'); });
-document.getElementById('type-mental').addEventListener('click', function() { setType('mental'); });
+/* ---------- Wire up ---------- */
+document.getElementById('tabbtn-board').addEventListener('click', function(){ switchTab('board'); });
+document.getElementById('tabbtn-scores').addEventListener('click', function(){ switchTab('scores'); });
+document.getElementById('addbtn-a').addEventListener('click', function(){ togglePanel('a'); });
+document.getElementById('addbtn-b').addEventListener('click', function(){ togglePanel('b'); });
+document.getElementById('type-physical').addEventListener('click', function(){ setType('physical'); });
+document.getElementById('type-mental').addEventListener('click', function(){ setType('mental'); });
 document.getElementById('log-custom-btn').addEventListener('click', logCustom);
-document.getElementById('strip-a').style.width = '50%';
-document.getElementById('strip-b').style.width = '50%';
+document.getElementById('reset-btn').addEventListener('click', resetAll);
+
+// Initial render (Firebase will re-render once data arrives)
+render();
 </script>
 </body>
 </html>
+ 
