@@ -213,7 +213,7 @@
     <div class="brand">
       <div class="eyebrow">SCE / ESENeph · May 2027</div>
       <h1>Topic <em>Tracker</em></h1>
-      <p class="sub">Pass 1 — read your source(s), BMJ OnExam, KSAP mixed, then build the review sheet + flashcards. Pass 2 — review the sheets, then KSAP. Subtopics track reading coverage; question steps stay at topic level.</p>
+      <p class="sub">Pass 1 — read your source(s), the relevant KDIGO guideline, StudyPRN, then build the review sheet + flashcards. Pass 2 — review the sheets, then KSAP. Subtopics track reading coverage; question steps stay at topic level.</p>
     </div>
     <div class="overall">
       <div class="ring-wrap">
@@ -238,9 +238,9 @@
     <h3>Pass 1</h3>
     <div class="step"><span class="dot d-read"></span>Read (OHB / ERA / CCN)</div>
     <span class="arrow">→</span>
-    <div class="step"><span class="dot d-q"></span>OnExam</div>
+    <div class="step"><span class="dot d-rev"></span>KDIGO</div>
     <span class="arrow">→</span>
-    <div class="step"><span class="dot d-q"></span>KSAP</div>
+    <div class="step"><span class="dot d-q"></span>StudyPRN</div>
     <span class="arrow">→</span>
     <div class="step"><span class="dot d-rev"></span>Sheet + flashcards</div>
     <div class="step p2"><h3 style="margin:0 6px 0 0">Pass 2</h3><span class="dot d-rev"></span>Review sheets</div>
@@ -349,14 +349,27 @@ const SUBS={
   pd:['Modalities & prescription','Peritonitis','Other complications'],
 };
 const TOTAL_Q=200;
+const KDIGO={
+  gn:'Glomerular Diseases 2021 (living) · Lupus Nephritis 2024',
+  aki:'AKI & AKD 2012 / ongoing update',
+  ckd:'CKD 2024 · Diabetes in CKD 2023',
+  oth:'BP in CKD 2021',
+  cvd:'BP in CKD 2021 · Diabetes in CKD 2023',
+  uro:'',
+  inh:'ADPKD 2025',
+  hd:'',
+  tx:'Transplant Recipients 2009 · Living Donors 2017',
+  bone:'CKD-MBD 2017 · Anaemia in CKD 2012',
+  pd:'ISPD Peritonitis Guidelines',
+};
 const SOURCES=[['ohb','OHB'],['era','ERA'],['ccn','CCN']];
-const P1=[{key:'oe1',kind:'q',lbl:'BMJ OnExam'},{key:'ks1',kind:'q',lbl:'KSAP mixed'},{key:'rev',kind:'rev',lbl:'Review sheet made'},{key:'fc',kind:'rev',lbl:'Flashcards made'}];
-const P2=[{key:'rr2',kind:'rev',lbl:'Review the review sheets'},{key:'ks2',kind:'q',lbl:'KSAP questions'}];
+const P1=[{key:'kd',kind:'rev',lbl:'KDIGO guideline(s)'},{key:'oe1',kind:'q',lbl:'StudyPRN'},{key:'rev',kind:'rev',lbl:'Review sheet made'},{key:'fc',kind:'rev',lbl:'Flashcards made'}];
+const P2=[{key:'rr2',kind:'rev',lbl:'Review the review sheets'},{key:'ks1',kind:'q',lbl:'KSAP mixed'},{key:'ks2',kind:'q',lbl:'KSAP questions'}];
 const TICK='<svg viewBox="0 0 12 12" fill="none"><path d="M2 6.2l2.6 2.6L10 3" stroke="#231d10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 /* ---------- state (subtopics keyed by index so Firebase keys stay valid) ---------- */
 let state={};
-function blankTopic(id){const subs={},subConf={};(SUBS[id]||[]).forEach((s,i)=>{subs[i]=false;subConf[i]=0;});return{sources:[],subs,subConf,conf:0,oe1:false,ks1:false,rev:false,fc:false,rr2:false,ks2:false};}
+function blankTopic(id){const subs={},subConf={};(SUBS[id]||[]).forEach((s,i)=>{subs[i]=false;subConf[i]=0;});return{sources:[],subs,subConf,conf:0,kd:false,oe1:false,ks1:false,rev:false,fc:false,rr2:false,ks2:false};}
 function blank(){const o={};TOPICS.forEach(t=>o[t.id]=blankTopic(t.id));return o;}
 function normalize(){
   if(!state||typeof state!=='object')state=blank();
@@ -370,7 +383,7 @@ function normalize(){
       if(typeof s.subs[i]!=='boolean')s.subs[i]=!!s.subs[i];
       if(typeof s.subConf[i]!=='number')s.subConf[i]=+s.subConf[i]||0;
     });
-    ['oe1','ks1','rev','fc','rr2','ks2'].forEach(k=>{if(typeof s[k]!=='boolean')s[k]=!!s[k];});
+    ['kd','oe1','ks1','rev','fc','rr2','ks2'].forEach(k=>{if(typeof s[k]!=='boolean')s[k]=!!s[k];});
   });
 }
 
@@ -378,9 +391,11 @@ function normalize(){
 function subsList(id){return SUBS[id]||[];}
 function subsDone(id){const l=subsList(id);return l.length?l.every((_,i)=>state[id].subs[i]):true;}
 function readDone(id){return state[id].sources.length>0 && subsDone(id);}
-function checkpoints(id){const s=state[id];return[readDone(id),s.oe1,s.ks1,s.rev,s.fc,s.rr2,s.ks2];}
+function kdDone(id){return KDIGO[id]?state[id].kd:true;}
+function checkpoints(id){const s=state[id];return[readDone(id),kdDone(id),s.oe1,s.rev,s.fc,s.rr2,s.ks1,s.ks2];}
 function topicCount(id){return checkpoints(id).filter(Boolean).length;}
-function topicFP(id){const s=state[id];return readDone(id)&&s.oe1&&s.ks1&&s.rev&&s.fc;}
+function topicMax(id){return KDIGO[id]?8:7;}
+function topicFP(id){const s=state[id];return readDone(id)&&kdDone(id)&&s.oe1&&s.rev&&s.fc;}
 function topicDone(id){return checkpoints(id).every(Boolean);}
 
 /* ---------- render ---------- */
@@ -425,12 +440,21 @@ function render(){
       h+=`</div></details>`;
     }
 
-    P1.forEach(st=>{h+=`<div class="check${s[st.key]?' on':''}" data-kind="${st.kind}" data-tid="${t.id}" data-key="${st.key}"><div class="box">${TICK}</div><div class="lbl">${st.lbl}</div></div>`;});
+    P1.forEach(st=>{
+      if(st.key==='kd'){
+        if(!KDIGO[t.id])return; // no guideline for this topic
+        const isISPD=KDIGO[t.id].indexOf('ISPD')===0;
+        const head=isISPD?'Guideline':'KDIGO';
+        h+=`<div class="check${s.kd?' on':''}" data-kind="rev" data-tid="${t.id}" data-key="kd"><div class="box">${TICK}</div><div class="lbl">${head} <span style="color:var(--faint);font-size:11.5px">— ${KDIGO[t.id]}</span></div></div>`;
+      }else{
+        h+=`<div class="check${s[st.key]?' on':''}" data-kind="${st.kind}" data-tid="${t.id}" data-key="${st.key}"><div class="box">${TICK}</div><div class="lbl">${st.lbl}</div></div>`;
+      }
+    });
     h+=`<div class="pass-label">Second pass</div>`;
     P2.forEach(st=>{h+=`<div class="check${s[st.key]?' on':''}" data-kind="${st.kind}" data-tid="${t.id}" data-key="${st.key}"><div class="box">${TICK}</div><div class="lbl">${st.lbl}</div></div>`;});
 
-    const c=topicCount(t.id);
-    h+=`<div class="mini"><div class="mini-bar"><div class="mini-fill" style="width:${(c/7)*100}%"></div></div><div class="mini-txt">${c}/7</div></div>`;
+    const c=topicCount(t.id),mx=topicMax(t.id);
+    h+=`<div class="mini"><div class="mini-bar"><div class="mini-fill" style="width:${(c/mx)*100}%"></div></div><div class="mini-txt">${c}/${mx}</div></div>`;
     card.innerHTML=h;
     grid.appendChild(card);
   });
@@ -452,9 +476,9 @@ function bind(){
     commit();};});
 }
 function updateOverall(){
-  let done=0,fp=0,full=0;
-  TOPICS.forEach(t=>{done+=topicCount(t.id);if(topicFP(t.id))fp++;if(topicDone(t.id))full++;});
-  const pct=Math.round((done/(TOPICS.length*7))*100);
+  let done=0,max=0,fp=0,full=0;
+  TOPICS.forEach(t=>{done+=topicCount(t.id);max+=topicMax(t.id);if(topicFP(t.id))fp++;if(topicDone(t.id))full++;});
+  const pct=Math.round((done/max)*100);
   document.getElementById('ringPct').textContent=pct+'%';
   document.getElementById('fpCount').textContent=fp;
   document.getElementById('fullCount').textContent=full;
