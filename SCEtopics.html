@@ -38,6 +38,8 @@
   .ring-num span{font-family:'Spline Sans Mono',monospace;font-size:9.5px;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;margin-top:3px}
   .stat-line{font-family:'Spline Sans Mono',monospace;font-size:12px;color:var(--muted);margin-top:14px}
   .stat-line b{color:var(--cream)}
+  .focus-line{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--muted);margin-top:6px}
+  .focus-line b{color:var(--rust)}
 
   .flow{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-bottom:34px;display:flex;gap:22px;flex-wrap:wrap;align-items:center}
   .flow h3{font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.24em;text-transform:uppercase;color:var(--faint);margin-right:2px}
@@ -56,6 +58,9 @@
   .card:hover{border-color:#4a4230;background:var(--card-hi)}
   @keyframes rise{to{opacity:1;transform:none}}
   .card.done::after{content:"";position:absolute;inset:0;border-radius:16px;pointer-events:none;box-shadow:inset 0 0 0 1.5px var(--sage-deep)}
+  .card.conf1{border-left:3px solid var(--rust)}
+  .card.conf2{border-left:3px solid var(--amber)}
+  .card.conf3{border-left:3px solid var(--sage)}
   .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
   .rank{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--faint);letter-spacing:0.1em}
   .card h2{font-family:'Fraunces',serif;font-weight:600;font-size:18.5px;line-height:1.15;letter-spacing:-0.01em;margin:6px 0 2px;padding-right:4px}
@@ -81,6 +86,16 @@
   .chip:hover{border-color:var(--amber-deep);color:var(--muted)}
   .chip.sel{background:var(--amber);border-color:var(--amber);color:#231d10;font-weight:600}
 
+  .conf-row{display:flex;align-items:center;gap:10px;margin:4px 0 6px}
+  .conf-row .clbl{font-family:'Spline Sans Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--faint)}
+  .rate{display:inline-flex;gap:5px;align-items:center}
+  .rate .rdot{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--faint);background:transparent;cursor:pointer;transition:transform .12s,background .15s,border-color .15s}
+  .rate .rdot:hover{transform:scale(1.18)}
+  .rate.sm .rdot{width:9px;height:9px;border-width:1.3px}
+  .rdot.on.c1{background:var(--rust);border-color:var(--rust)}
+  .rdot.on.c2{background:var(--amber);border-color:var(--amber)}
+  .rdot.on.c3{background:var(--sage);border-color:var(--sage)}
+
   details.subs{margin:2px 0 4px 0;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,0.14);overflow:hidden}
   details.subs summary{list-style:none;cursor:pointer;padding:9px 12px;display:flex;align-items:center;gap:10px;font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.04em;color:var(--muted)}
   details.subs summary::-webkit-details-marker{display:none}
@@ -98,6 +113,7 @@
   .sub-row.on .sbox svg{opacity:1}
   .sub-row .stext{font-size:12.5px;color:var(--muted)}
   .sub-row.on .stext{color:var(--cream)}
+  .sub-row .rate{margin-left:auto}
 
   .check{display:flex;align-items:center;gap:11px;padding:7px 9px;border-radius:9px;cursor:pointer;transition:background .15s;user-select:none}
   .check:hover{background:rgba(255,255,255,0.03)}
@@ -110,23 +126,6 @@
   .check[data-kind="q"]{--accent:var(--sage)}
   .check[data-kind="rev"]{--accent:var(--rust)}
 
-  /* confidence rating */
-  .conf-row{display:flex;align-items:center;gap:10px;margin:4px 0 6px}
-  .conf-row .clbl{font-family:'Spline Sans Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--faint)}
-  .rate{display:inline-flex;gap:5px;align-items:center}
-  .rate .rdot{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--faint);background:transparent;cursor:pointer;transition:transform .12s,background .15s,border-color .15s}
-  .rate .rdot:hover{transform:scale(1.18)}
-  .rate.sm .rdot{width:9px;height:9px;border-width:1.3px}
-  .rdot.on.c1{background:var(--rust);border-color:var(--rust)}
-  .rdot.on.c2{background:var(--amber);border-color:var(--amber)}
-  .rdot.on.c3{background:var(--sage);border-color:var(--sage)}
-  .sub-row .rate{margin-left:auto}
-  .card.conf1{border-left:3px solid var(--rust)}
-  .card.conf2{border-left:3px solid var(--amber)}
-  .card.conf3{border-left:3px solid var(--sage)}
-  .focus-line{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--muted);margin-top:6px}
-  .focus-line b{color:var(--rust)}
-
   .mini{margin-top:14px;display:flex;align-items:center;gap:10px}
   .mini-bar{flex:1;height:5px;background:var(--line);border-radius:3px;overflow:hidden}
   .mini-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--sage));border-radius:3px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
@@ -134,10 +133,69 @@
 
   footer{margin-top:42px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
   footer .fnote{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--faint);letter-spacing:0.05em}
+  .status{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.04em}
+  .status.live{color:var(--sage)} .status.wait{color:var(--amber)} .status.off{color:var(--rust)}
   .reset{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;background:transparent;border:1px solid var(--line);color:var(--muted);padding:9px 16px;border-radius:9px;cursor:pointer;transition:all .18s}
   .reset:hover{border-color:var(--rust);color:var(--rust)}
-  .saved{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--sage);opacity:0;transition:opacity .3s}
+  .saved{color:var(--sage);opacity:0;transition:opacity .3s}
   .saved.show{opacity:1}
+
+  /* tabs */
+  .tabs{display:flex;gap:8px;margin-bottom:30px}
+  .tab{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;background:var(--ink-2);border:1px solid var(--line);color:var(--muted);padding:11px 20px;border-radius:11px;cursor:pointer;transition:all .18s}
+  .tab:hover{border-color:var(--amber-deep);color:var(--cream)}
+  .tab.on{background:var(--amber);border-color:var(--amber);color:#231d10;font-weight:600}
+  .view{display:none}
+  .view.on{display:block;animation:fade .35s}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* biopsy */
+  .bx-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:24px}
+  .bx-week{display:flex;gap:7px;align-items:center;margin:10px 0 4px}
+  .pip{width:26px;height:26px;border-radius:8px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;transition:all .25s}
+  .pip.full{background:var(--sage);border-color:var(--sage)}
+  .pip svg{width:13px;height:13px;opacity:0;transition:opacity .2s}
+  .pip.full svg{opacity:1}
+  .bx-meta{font-family:'Spline Sans Mono',monospace;font-size:12px;color:var(--muted)}
+  .bx-meta b{color:var(--cream)}
+  .warn{background:rgba(201,106,68,0.10);border:1px solid rgba(201,106,68,0.4);border-radius:10px;padding:11px 15px;font-size:12.5px;color:#e8b59c;margin-bottom:22px;display:flex;gap:10px;align-items:flex-start}
+  .warn b{color:#f0c9b4}
+
+  .bx-form{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:24px}
+  .bx-form .frow{margin-bottom:14px}
+  .bx-form label{display:block;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+  .bx-form input[type=text],.bx-form textarea{width:100%;background:var(--ink);border:1px solid var(--line);border-radius:10px;color:var(--cream);font-family:'Spline Sans',sans-serif;font-size:14px;padding:11px 13px;resize:vertical}
+  .bx-form input[type=text]:focus,.bx-form textarea:focus{outline:none;border-color:var(--amber-deep)}
+  .bx-form textarea{min-height:74px;line-height:1.5}
+  .drop{border:1.5px dashed var(--line);border-radius:11px;padding:18px;text-align:center;cursor:pointer;transition:all .18s;color:var(--muted);font-size:13px}
+  .drop:hover{border-color:var(--amber-deep);color:var(--cream);background:rgba(224,164,78,0.04)}
+  .drop input{display:none}
+  .thumb-prev{max-height:160px;border-radius:9px;margin:10px auto 0;display:block}
+  .bx-actions{display:flex;gap:10px;align-items:center;margin-top:4px}
+  .btn{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;border-radius:10px;padding:11px 20px;cursor:pointer;border:1px solid var(--line);transition:all .18s;text-decoration:none;display:inline-block}
+  .btn-primary{background:var(--sage);border-color:var(--sage);color:#16210f;font-weight:600}
+  .btn-primary:hover{background:var(--sage-deep)}
+  .btn-primary:disabled{opacity:0.4;cursor:not-allowed}
+  .btn-ghost{background:transparent;color:var(--muted)}
+  .btn-ghost:hover{border-color:var(--muted);color:var(--cream)}
+  .form-hint{font-family:'Spline Sans Mono',monospace;font-size:10.5px;color:var(--faint);margin-left:auto}
+
+  .bx-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .bx-card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:border-color .2s}
+  .bx-card:hover{border-color:#4a4230}
+  .bx-img{width:100%;aspect-ratio:16/10;object-fit:cover;background:var(--ink-2);cursor:zoom-in;display:block}
+  .bx-noimg{width:100%;aspect-ratio:16/10;background:var(--ink-2);display:flex;align-items:center;justify-content:center;color:var(--faint);font-family:'Spline Sans Mono',monospace;font-size:11px}
+  .bx-body{padding:14px 15px 15px}
+  .bx-dx{font-family:'Fraunces',serif;font-size:16.5px;font-weight:600;line-height:1.2;margin-bottom:6px}
+  .bx-feat{font-size:13px;color:var(--muted);line-height:1.5;white-space:pre-wrap}
+  .bx-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-family:'Spline Sans Mono',monospace;font-size:10.5px;color:var(--faint)}
+  .bx-del{background:transparent;border:none;color:var(--faint);cursor:pointer;font-family:'Spline Sans Mono',monospace;font-size:10.5px;padding:3px 6px;border-radius:6px;transition:all .15s}
+  .bx-del:hover{color:var(--rust);background:rgba(201,106,68,0.1)}
+  .bx-empty{text-align:center;padding:50px 20px;color:var(--faint);font-family:'Spline Sans Mono',monospace;font-size:13px}
+
+  .lightbox{position:fixed;inset:0;background:rgba(8,7,4,0.92);z-index:50;display:none;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+  .lightbox.on{display:flex}
+  .lightbox img{max-width:100%;max-height:100%;border-radius:10px}
 
   @media(max-width:560px){
     .wrap{padding:26px 16px 70px}
@@ -145,6 +203,7 @@
     .overall{text-align:left}.ring-wrap{margin-left:0}
     .flow{gap:14px 18px}.flow .p2{border-left:none;padding-left:0;margin-left:0}
     .grid{grid-template-columns:1fr}
+    .bx-list{grid-template-columns:1fr}
   }
 </style>
 </head>
@@ -169,6 +228,12 @@
     </div>
   </header>
 
+  <div class="tabs">
+    <button class="tab on" data-view="topics">Topics</button>
+    <button class="tab" data-view="biopsy">Biopsies</button>
+  </div>
+
+  <div class="view on" id="view-topics">
   <div class="flow">
     <h3>Pass 1</h3>
     <div class="step"><span class="dot d-read"></span>Read (OHB / ERA / CCN)</div>
@@ -183,16 +248,80 @@
     <div class="step"><span class="dot d-q"></span>KSAP</div>
   </div>
 
-  <div id="loading"><span class="pulse"></span>Loading your progress…</div>
+  <div id="loading"><span class="pulse"></span>Connecting to your database…</div>
   <div class="grid" id="grid" style="display:none"></div>
+  </div><!-- /view-topics -->
+
+  <div class="view" id="view-biopsy">
+    <div class="bx-head">
+      <div>
+        <div class="bx-week" id="bxWeek"></div>
+        <div class="bx-meta"><b id="bxWeekN">0</b>/5 this week · <b id="bxTotal">0</b> total logged</div>
+      </div>
+      <a class="btn btn-ghost" id="bxOpen" href="https://www.kidneypathology.com/English_version/Archives_cases.html" target="_blank" rel="noopener">Open Kidney Pathology ↗</a>
+    </div>
+
+    <div class="warn">
+      <span>⚠</span>
+      <div><b>De-identified images only.</b> This database is currently readable by anyone with the link. Crop out names, hospital numbers and dates before saving. Teaching images from the case site are fine.</div>
+    </div>
+
+    <div class="bx-form">
+      <div class="frow">
+        <label>Case # <span style="text-transform:none;letter-spacing:0;color:var(--faint)">(optional — matches the site)</span></label>
+        <input type="text" id="bxCase" placeholder="e.g. Case 1" maxlength="40">
+      </div>
+      <div class="frow">
+        <label>Diagnosis</label>
+        <input type="text" id="bxDx" placeholder="e.g. IgA nephropathy, MEST-C M1E1S0T0C0" maxlength="200">
+      </div>
+      <div class="frow">
+        <label>Key features / my reasoning</label>
+        <textarea id="bxFeat" placeholder="Mesangial hypercellularity, IgA-dominant deposits on IF, what tipped me off, what I'd have missed…"></textarea>
+      </div>
+      <div class="frow">
+        <label>Pathology image (optional, de-identified)</label>
+        <div class="drop" id="bxDrop">
+          Tap to add an image — it'll be compressed before saving
+          <input type="file" id="bxFile" accept="image/*">
+          <img class="thumb-prev" id="bxPrev" style="display:none">
+        </div>
+      </div>
+      <div class="bx-actions">
+        <button class="btn btn-primary" id="bxSave" disabled>Save case</button>
+        <button class="btn btn-ghost" id="bxClear">Clear</button>
+        <span class="form-hint" id="bxHint"></span>
+      </div>
+    </div>
+
+    <div class="bx-list" id="bxList"></div>
+  </div><!-- /view-biopsy -->
+
+  <div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""></div>
 
   <footer>
-    <span class="fnote">Progress saves automatically · <span class="saved" id="saved">saved ✓</span></span>
+    <span class="fnote"><span class="status wait" id="status">● Connecting…</span> · <span class="saved" id="saved">saved ✓</span></span>
     <button class="reset" id="reset">Reset all progress</button>
   </footer>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-database-compat.js"></script>
 <script>
+/* ---------- your Firebase project ---------- */
+const firebaseConfig={
+  apiKey:"AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
+  authDomain:"task-monitor-bd7ee.firebaseapp.com",
+  databaseURL:"https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"task-monitor-bd7ee",
+  storageBucket:"task-monitor-bd7ee.firebasestorage.app",
+  messagingSenderId:"544624731364",
+  appId:"1:544624731364:web:419d52fa061c5c7b4f38f1"
+};
+const DB_PATH='sceData/topicTracker';   // sits alongside your existing nodes
+const BX_PATH='sceData/biopsyLog';       // renal pathology case log
+
+/* ---------- exam blueprint ---------- */
 const TOPICS=[
   {id:'gn', name:'Glomerulonephritis & tubulointerstitial nephritis', short:'GN', note:'incl. vasculitis, anti-GBM, SLE', q:30},
   {id:'aki',name:'AKI, acute RRT, fluid / electrolytes / acid-base', short:'AKI', note:'', q:26},
@@ -223,49 +352,43 @@ const TOTAL_Q=200;
 const SOURCES=[['ohb','OHB'],['era','ERA'],['ccn','CCN']];
 const P1=[{key:'oe1',kind:'q',lbl:'BMJ OnExam'},{key:'ks1',kind:'q',lbl:'KSAP mixed'},{key:'rev',kind:'rev',lbl:'Review sheet made'},{key:'fc',kind:'rev',lbl:'Flashcards made'}];
 const P2=[{key:'rr2',kind:'rev',lbl:'Review the review sheets'},{key:'ks2',kind:'q',lbl:'KSAP questions'}];
-const KEY='eseneph-tracker-v2';
 const TICK='<svg viewBox="0 0 12 12" fill="none"><path d="M2 6.2l2.6 2.6L10 3" stroke="#231d10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+/* ---------- state (subtopics keyed by index so Firebase keys stay valid) ---------- */
 let state={};
-function blankTopic(id){const subs={},subConf={};(SUBS[id]||[]).forEach(s=>{subs[s]=false;subConf[s]=0;});return{sources:[],subs,subConf,conf:0,oe1:false,ks1:false,rev:false,fc:false,rr2:false,ks2:false};}
+function blankTopic(id){const subs={},subConf={};(SUBS[id]||[]).forEach((s,i)=>{subs[i]=false;subConf[i]=0;});return{sources:[],subs,subConf,conf:0,oe1:false,ks1:false,rev:false,fc:false,rr2:false,ks2:false};}
 function blank(){const o={};TOPICS.forEach(t=>o[t.id]=blankTopic(t.id));return o;}
-
-async function load(){
-  try{const r=await window.storage.get(KEY);state=r&&r.value?JSON.parse(r.value):blank();}
-  catch(e){state=blank();}
+function normalize(){
+  if(!state||typeof state!=='object')state=blank();
   TOPICS.forEach(t=>{
-    if(!state[t.id])state[t.id]=blankTopic(t.id);
-    if(!Array.isArray(state[t.id].sources))state[t.id].sources=[];
-    if(!state[t.id].subs)state[t.id].subs={};
-    if(typeof state[t.id].conf!=='number')state[t.id].conf=0;
-    if(!state[t.id].subConf)state[t.id].subConf={};
-    (SUBS[t.id]||[]).forEach(s=>{
-      if(!(s in state[t.id].subs))state[t.id].subs[s]=false;
-      if(!(s in state[t.id].subConf))state[t.id].subConf[s]=0;
+    const s=state[t.id]||(state[t.id]=blankTopic(t.id));
+    if(!Array.isArray(s.sources))s.sources=s.sources?Object.values(s.sources):[];
+    if(!s.subs)s.subs={};
+    if(!s.subConf)s.subConf={};
+    if(typeof s.conf!=='number')s.conf=0;
+    (SUBS[t.id]||[]).forEach((_,i)=>{
+      if(typeof s.subs[i]!=='boolean')s.subs[i]=!!s.subs[i];
+      if(typeof s.subConf[i]!=='number')s.subConf[i]=+s.subConf[i]||0;
     });
+    ['oe1','ks1','rev','fc','rr2','ks2'].forEach(k=>{if(typeof s[k]!=='boolean')s[k]=!!s[k];});
   });
-  document.getElementById('loading').style.display='none';
-  document.getElementById('grid').style.display='grid';
-  render();
 }
-let saveTimer;
-async function save(){try{await window.storage.set(KEY,JSON.stringify(state));flash();}catch(e){console.error(e);}}
-function flash(){const s=document.getElementById('saved');s.classList.add('show');clearTimeout(saveTimer);saveTimer=setTimeout(()=>s.classList.remove('show'),1400);}
 
+/* ---------- derived ---------- */
 function subsList(id){return SUBS[id]||[];}
-function subsDone(id){const l=subsList(id);if(!l.length)return true;return l.every(s=>state[id].subs[s]);}
+function subsDone(id){const l=subsList(id);return l.length?l.every((_,i)=>state[id].subs[i]):true;}
 function readDone(id){return state[id].sources.length>0 && subsDone(id);}
 function checkpoints(id){const s=state[id];return[readDone(id),s.oe1,s.ks1,s.rev,s.fc,s.rr2,s.ks2];}
 function topicCount(id){return checkpoints(id).filter(Boolean).length;}
 function topicFP(id){const s=state[id];return readDone(id)&&s.oe1&&s.ks1&&s.rev&&s.fc;}
 function topicDone(id){return checkpoints(id).every(Boolean);}
 
+/* ---------- render ---------- */
 function rateDots(val,small,tid,sub){
-  let h=`<div class="rate${small?' sm':''}" data-rate="${sub!=null?'sub':'topic'}" data-tid="${tid}"${sub!=null?` data-sub="${encodeURIComponent(sub)}"`:''} title="1 = weak · 3 = strong">`;
+  let h=`<div class="rate${small?' sm':''}" data-rate="${sub!=null?'sub':'topic'}" data-tid="${tid}"${sub!=null?` data-sub="${sub}"`:''} title="1 = weak · 3 = strong">`;
   for(let l=1;l<=3;l++)h+=`<span class="rdot ${l<=val?'on c'+val:''}" data-lvl="${l}"></span>`;
   return h+`</div>`;
 }
-
 function render(){
   const grid=document.getElementById('grid');grid.innerHTML='';
   TOPICS.forEach((t,i)=>{
@@ -274,7 +397,7 @@ function render(){
     card.className='card'+(topicDone(t.id)?' done':'')+(s.conf?' conf'+s.conf:'');
     card.style.animationDelay=(i*45)+'ms';
     const pct=Math.round((t.q/TOTAL_Q)*100);
-    const subs=subsList(t.id), subDoneN=subs.filter(x=>s.subs[x]).length;
+    const subs=subsList(t.id), subDoneN=subs.filter((_,k)=>s.subs[k]).length;
 
     let h=`<div class="card-top"><div>
         <div class="rank">#${String(i+1).padStart(2,'0')}</div>
@@ -285,7 +408,8 @@ function render(){
       <div class="conf-row"><span class="clbl">Confidence</span>${rateDots(s.conf,false,t.id,null)}</div>
       <div class="pass-label">First pass</div>`;
 
-    h+=`<div class="src-row${readDone(t.id)?' read':''}"><div class="mini-check">${TICK}</div><div class="lbl">Read source(s)</div>${(s.sources.length>0&&subs.length&&!subsDone(t.id))?`<span class="hint">${subs.length-subDoneN} subtopic${subs.length-subDoneN>1?'s':''} left</span>`:''}</div>
+    const left=subs.length-subDoneN;
+    h+=`<div class="src-row${readDone(t.id)?' read':''}"><div class="mini-check">${TICK}</div><div class="lbl">Read source(s)</div>${(s.sources.length>0&&subs.length&&!subsDone(t.id))?`<span class="hint">${left} subtopic${left>1?'s':''} left</span>`:''}</div>
         <div class="chips" data-tid="${t.id}">`;
     SOURCES.forEach(([v,lbl])=>{h+=`<button class="chip${s.sources.includes(v)?' sel':''}" data-src="${v}">${lbl}</button>`;});
     h+=`</div>`;
@@ -297,12 +421,11 @@ function render(){
           <span class="sub-bar"><span class="sub-fill" style="width:${(subDoneN/subs.length)*100}%"></span></span>
           <span class="sub-count">${subDoneN}/${subs.length}</span>
         </summary><div class="sub-body" data-tid="${t.id}">`;
-      subs.forEach(sb=>{h+=`<div class="sub-row${s.subs[sb]?' on':''}" data-sub="${encodeURIComponent(sb)}"><div class="sbox">${TICK}</div><div class="stext">${sb}</div>${rateDots(s.subConf[sb]||0,true,t.id,sb)}</div>`;});
+      subs.forEach((sb,k)=>{h+=`<div class="sub-row${s.subs[k]?' on':''}" data-sub="${k}"><div class="sbox">${TICK}</div><div class="stext">${sb}</div>${rateDots(s.subConf[k]||0,true,t.id,k)}</div>`;});
       h+=`</div></details>`;
     }
 
     P1.forEach(st=>{h+=`<div class="check${s[st.key]?' on':''}" data-kind="${st.kind}" data-tid="${t.id}" data-key="${st.key}"><div class="box">${TICK}</div><div class="lbl">${st.lbl}</div></div>`;});
-
     h+=`<div class="pass-label">Second pass</div>`;
     P2.forEach(st=>{h+=`<div class="check${s[st.key]?' on':''}" data-kind="${st.kind}" data-tid="${t.id}" data-key="${st.key}"><div class="box">${TICK}</div><div class="lbl">${st.lbl}</div></div>`;});
 
@@ -313,22 +436,20 @@ function render(){
   });
   bind();updateOverall();
 }
-
 function bind(){
   document.querySelectorAll('.chip').forEach(b=>{b.onclick=()=>{
     const tid=b.parentElement.dataset.tid,v=b.dataset.src,arr=state[tid].sources,k=arr.indexOf(v);
-    if(k>=0)arr.splice(k,1);else arr.push(v);save();render();};});
+    if(k>=0)arr.splice(k,1);else arr.push(v);commit();};});
   document.querySelectorAll('.sub-row').forEach(r=>{r.onclick=()=>{
-    const tid=r.parentElement.dataset.tid,sb=decodeURIComponent(r.dataset.sub);
-    state[tid].subs[sb]=!state[tid].subs[sb];save();render();};});
+    const tid=r.parentElement.dataset.tid,k=+r.dataset.sub;state[tid].subs[k]=!state[tid].subs[k];commit();};});
   document.querySelectorAll('.check').forEach(el=>{el.onclick=()=>{
-    const tid=el.dataset.tid,key=el.dataset.key;state[tid][key]=!state[tid][key];save();render();};});
+    const tid=el.dataset.tid,key=el.dataset.key;state[tid][key]=!state[tid][key];commit();};});
   document.querySelectorAll('.rate .rdot').forEach(d=>{d.onclick=(e)=>{
     e.stopPropagation();
-    const wrap=d.parentElement,tid=wrap.dataset.tid,lvl=+d.dataset.lvl;
-    if(wrap.dataset.rate==='sub'){const sb=decodeURIComponent(wrap.dataset.sub);state[tid].subConf[sb]=(state[tid].subConf[sb]===lvl?0:lvl);}
+    const w=d.parentElement,tid=w.dataset.tid,lvl=+d.dataset.lvl;
+    if(w.dataset.rate==='sub'){const k=+w.dataset.sub;state[tid].subConf[k]=(state[tid].subConf[k]===lvl?0:lvl);}
     else{state[tid].conf=(state[tid].conf===lvl?0:lvl);}
-    save();render();};});
+    commit();};});
 }
 function updateOverall(){
   let done=0,fp=0,full=0;
@@ -339,11 +460,159 @@ function updateOverall(){
   document.getElementById('fullCount').textContent=full;
   document.getElementById('ring').style.strokeDashoffset=(2*Math.PI*54)*(1-pct/100);
   const weak=TOPICS.filter(t=>state[t.id].conf===1).map(t=>t.short);
-  const f=document.getElementById('focus');
-  f.innerHTML=weak.length?('Focus: <b>'+weak.join(' · ')+'</b>'):'No topics rated weak yet';
+  document.getElementById('focus').innerHTML=weak.length?('Focus: <b>'+weak.join(' · ')+'</b>'):'No topics rated weak yet';
 }
-document.getElementById('reset').onclick=async()=>{if(!confirm('Reset progress for all 11 topics? This cannot be undone.'))return;state=blank();await save();render();};
-load();
+
+/* ---------- Firebase sync ---------- */
+let fbRef=null,saveTimer=null,flashTimer=null,ready=false;
+let bxRef=null,bxData={},bxPendingImg=null;
+function showGrid(){if(!ready){ready=true;document.getElementById('loading').style.display='none';document.getElementById('grid').style.display='grid';}}
+function setStatus(txt,cls){const e=document.getElementById('status');if(e){e.textContent='● '+txt;e.className='status '+(cls||'');}}
+function flash(){const s=document.getElementById('saved');if(!s)return;s.classList.add('show');clearTimeout(flashTimer);flashTimer=setTimeout(()=>s.classList.remove('show'),1400);}
+function commit(){render();save();}
+function save(){
+  if(fbRef){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{fbRef.set(state).then(flash).catch(err=>setStatus('Write failed: '+err.message,'off'));},300);}
+  else{flash();}
+}
+function initFirebase(){
+  if(typeof firebase==='undefined'||!firebase.initializeApp){
+    setStatus('Offline — open the downloaded file to sync','off');return false;
+  }
+  try{
+    firebase.initializeApp(firebaseConfig);
+    const db=firebase.database();
+    fbRef=db.ref(DB_PATH);
+    bxRef=db.ref(BX_PATH);
+    db.ref('.info/connected').on('value',s=>{
+      const on=!!s.val();
+      setStatus(on?'Live · synced across devices':'Connecting…',on?'live':'wait');
+    });
+    fbRef.on('value',snap=>{
+      const v=snap.val();
+      state=(v&&typeof v==='object')?v:blank();
+      normalize();showGrid();render();
+    },err=>{setStatus('Sync error: '+err.message,'off');state=blank();normalize();showGrid();render();});
+    bxRef.on('value',snap=>{bxData=snap.val()||{};renderBiopsy();});
+    return true;
+  }catch(e){setStatus('Init error: '+e.message,'off');return false;}
+}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(t=>{t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='view-'+t.dataset.view));
+};});
+
+/* ---------- biopsy log ---------- */
+function isoWeekKey(d){
+  const dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const day=dt.getUTCDay()||7; dt.setUTCDate(dt.getUTCDate()+4-day);
+  const yStart=new Date(Date.UTC(dt.getUTCFullYear(),0,1));
+  const wk=Math.ceil((((dt-yStart)/86400000)+1)/7);
+  return dt.getUTCFullYear()+'-W'+String(wk).padStart(2,'0');
+}
+function compressImage(file,cb){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=900;let{width:w,height:h}=img;
+      if(w>max||h>max){if(w>=h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;}}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      cb(c.toDataURL('image/jpeg',0.7));
+    };
+    img.onerror=()=>cb(null);
+    img.src=e.target.result;
+  };
+  reader.onerror=()=>cb(null);
+  reader.readAsDataURL(file);
+}
+function bxRefreshSaveBtn(){
+  const dx=document.getElementById('bxDx').value.trim();
+  document.getElementById('bxSave').disabled=!dx;
+}
+function bxBindForm(){
+  const file=document.getElementById('bxFile'),drop=document.getElementById('bxDrop'),prev=document.getElementById('bxPrev'),hint=document.getElementById('bxHint');
+  document.getElementById('bxDx').oninput=bxRefreshSaveBtn;
+  drop.onclick=()=>file.click();
+  file.onchange=()=>{
+    const f=file.files[0];if(!f)return;
+    hint.textContent='Compressing…';
+    compressImage(f,data=>{
+      if(!data){hint.textContent='Could not read image';return;}
+      bxPendingImg=data;prev.src=data;prev.style.display='block';
+      hint.textContent='~'+Math.round(data.length/1024)+' KB';
+    });
+  };
+  document.getElementById('bxClear').onclick=bxResetForm;
+  document.getElementById('bxSave').onclick=()=>{
+    const dx=document.getElementById('bxDx').value.trim();
+    if(!dx)return;
+    const feat=document.getElementById('bxFeat').value.trim();
+    const caseNo=document.getElementById('bxCase').value.trim();
+    const rec={dx,feat,caseNo:caseNo||null,img:bxPendingImg||null,ts:Date.now(),week:isoWeekKey(new Date())};
+    if(bxRef){bxRef.push(rec).then(()=>{flash();bxResetForm();}).catch(e=>{hint.textContent='Save failed: '+e.message;});}
+    else{const id='local-'+Date.now();bxData[id]=rec;bxResetForm();renderBiopsy();flash();}
+  };
+}
+function bxResetForm(){
+  document.getElementById('bxCase').value='';
+  document.getElementById('bxDx').value='';
+  document.getElementById('bxFeat').value='';
+  document.getElementById('bxFile').value='';
+  document.getElementById('bxPrev').style.display='none';
+  document.getElementById('bxHint').textContent='';
+  bxPendingImg=null;bxRefreshSaveBtn();
+}
+function bxDelete(id){
+  if(!confirm('Delete this case?'))return;
+  if(bxRef){bxRef.child(id).remove().catch(()=>{});}
+  else{delete bxData[id];renderBiopsy();}
+}
+function openLightbox(src){const lb=document.getElementById('lightbox');document.getElementById('lightboxImg').src=src;lb.classList.add('on');}
+document.getElementById('lightbox').onclick=()=>document.getElementById('lightbox').classList.remove('on');
+
+function renderBiopsy(){
+  const entries=Object.entries(bxData).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
+  const thisWeek=isoWeekKey(new Date());
+  const weekN=entries.filter(([,r])=>r.week===thisWeek).length;
+  document.getElementById('bxTotal').textContent=entries.length;
+  document.getElementById('bxWeekN').textContent=weekN;
+  // week pips
+  let pips='';
+  for(let i=0;i<5;i++)pips+=`<div class="pip${i<weekN?' full':''}">${i<weekN?TICK_S:''}</div>`;
+  document.getElementById('bxWeek').innerHTML=pips;
+  // list
+  const list=document.getElementById('bxList');
+  if(!entries.length){list.innerHTML='<div class="bx-empty">No cases logged yet — add your first review above.</div>';return;}
+  list.innerHTML='';
+  entries.forEach(([id,r])=>{
+    const d=new Date(r.ts||Date.now());
+    const date=d.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
+    const card=document.createElement('div');card.className='bx-card';
+    card.innerHTML=
+      (r.img?`<img class="bx-img" src="${r.img}" alt="">`:`<div class="bx-noimg">No image</div>`)+
+      `<div class="bx-body">
+        <div class="bx-dx">${escapeHtml(r.dx||'Untitled')}</div>
+        ${r.feat?`<div class="bx-feat">${escapeHtml(r.feat)}</div>`:''}
+        <div class="bx-foot"><span>${r.caseNo?escapeHtml(r.caseNo)+' · ':''}${date}</span><button class="bx-del" data-id="${id}">Delete</button></div>
+      </div>`;
+    const im=card.querySelector('.bx-img');if(im)im.onclick=()=>openLightbox(r.img);
+    card.querySelector('.bx-del').onclick=()=>bxDelete(id);
+    list.appendChild(card);
+  });
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+const TICK_S='<svg viewBox="0 0 12 12" fill="none"><path d="M2 6.2l2.6 2.6L10 3" stroke="#16210f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+bxBindForm();renderBiopsy();
+
+document.getElementById('reset').onclick=()=>{
+  if(!confirm('Reset progress for all 11 topics? This cannot be undone.'))return;
+  state=blank();normalize();render();save();
+};
+
+if(!initFirebase()){state=blank();normalize();showGrid();render();renderBiopsy();}
 </script>
 </body>
 </html>
