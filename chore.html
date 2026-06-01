@@ -193,7 +193,8 @@
   const app = initializeApp(firebaseConfig);
   signInAnonymously(getAuth(app)).then(c => console.log("UID:", c.user.uid)).catch(e => console.error("Auth:", e));
   const db = getDatabase(app);
-  const tasksRef = ref(db, "homeTeamTasks");
+  const HOUSEHOLD = "hometeam"; // change to a private code you both share
+  const tasksRef = ref(db, "households/" + HOUSEHOLD + "/tasks");
 
   // Expose to global scope for the main script
   window._fb = { db, ref, onValue, update, set, remove, tasksRef };
@@ -246,10 +247,10 @@ window.renderFromFirebase = function() { render(); };
 
 /* ---------- Writes (go straight to Firebase) ---------- */
 function fbWrite(task) {
-  if (window._fb) window._fb.set(window._fb.ref(window._fb.db, "homeTeamTasks/" + task.id), task);
+  if (window._fb) window._fb.set(window._fb.ref(window._fb.db, "households/hometeam/tasks/" + task.id), task);
 }
 function fbUpdate(id, changes) {
-  if (window._fb) window._fb.update(window._fb.ref(window._fb.db, "homeTeamTasks/" + id), changes);
+  if (window._fb) window._fb.update(window._fb.ref(window._fb.db, "households/hometeam/tasks/" + id), changes);
 }
 
 function logTask(person, taskData) {
@@ -273,7 +274,7 @@ function completeTask(id) {
 
 function resetAll() {
   if (!confirm('Clear all tasks for BOTH phones? This cannot be undone.')) return;
-  if (window._fb) window._fb.remove(window._fb.ref(window._fb.db, "homeTeamTasks"));
+  if (window._fb) window._fb.remove(window._fb.ref(window._fb.db, "households/hometeam/tasks"));
 }
 
 /* ---------- Render ---------- */
