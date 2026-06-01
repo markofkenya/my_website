@@ -197,6 +197,24 @@
   .lightbox.on{display:flex}
   .lightbox img{max-width:100%;max-height:100%;border-radius:10px}
 
+  /* final push */
+  .final{margin-top:34px;border:1px solid var(--line);border-radius:16px;background:var(--ink-2);padding:22px 22px 18px;position:relative}
+  .final.locked{opacity:0.55}
+  .final h3{font-family:'Fraunces',serif;font-weight:600;font-size:20px;letter-spacing:-0.01em;margin-bottom:2px}
+  .final .fsub{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.04em;color:var(--muted);margin-bottom:16px}
+  .final .lock-tag{position:absolute;top:22px;right:22px;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--amber-deep)}
+  .final-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .fitem{display:flex;align-items:center;gap:12px;padding:14px 15px;border:1px solid var(--line);border-radius:12px;background:var(--card);cursor:pointer;transition:all .18s}
+  .fitem:hover{border-color:#4a4230;background:var(--card-hi)}
+  .fitem.on{border-color:var(--sage-deep)}
+  .fitem .box{width:21px;height:21px;border-radius:6px;border:1.5px solid var(--faint);flex:none;display:flex;align-items:center;justify-content:center;transition:all .18s}
+  .fitem.on .box{background:var(--sage);border-color:var(--sage)}
+  .fitem .box svg{width:12px;height:12px;opacity:0;transition:opacity .18s}
+  .fitem.on .box svg{opacity:1}
+  .fitem .ftext{font-size:14px;color:var(--muted)}
+  .fitem.on .ftext{color:var(--cream)}
+  .fitem[data-locked="1"]{cursor:not-allowed}
+
   @media(max-width:560px){
     .wrap{padding:26px 16px 70px}
     header{flex-direction:column;align-items:flex-start}
@@ -250,6 +268,13 @@
 
   <div id="loading"><span class="pulse"></span>Connecting to your database…</div>
   <div class="grid" id="grid" style="display:none"></div>
+
+  <div class="final locked" id="final">
+    <span class="lock-tag" id="finalLock">🔒 unlocks when all 11 topics complete</span>
+    <h3>Final push</h3>
+    <div class="fsub">High-volume mixed practice once every topic is done</div>
+    <div class="final-grid" id="finalGrid"></div>
+  </div>
   </div><!-- /view-topics -->
 
   <div class="view" id="view-biopsy">
@@ -364,15 +389,22 @@ const KDIGO={
 };
 const SOURCES=[['ohb','OHB'],['era','ERA'],['ccn','CCN']];
 const P1=[{key:'kd',kind:'rev',lbl:'KDIGO guideline(s)'},{key:'oe1',kind:'q',lbl:'StudyPRN'},{key:'rev',kind:'rev',lbl:'Review sheet made'},{key:'fc',kind:'rev',lbl:'Flashcards made'}];
-const P2=[{key:'rr2',kind:'rev',lbl:'Review the review sheets'},{key:'ks1',kind:'q',lbl:'KSAP mixed'},{key:'ks2',kind:'q',lbl:'KSAP questions'}];
+const P2=[{key:'rr2',kind:'rev',lbl:'Review the review sheets'},{key:'ks1',kind:'q',lbl:'KSAP mixed'}];
+const FINAL=[
+  {key:'nephroshots',lbl:'Nephro Shots'},
+  {key:'bof200',lbl:'200 Best of Five'},
+  {key:'rcmcq',lbl:'Royal College ESENeph MCQs'},
+];
 const TICK='<svg viewBox="0 0 12 12" fill="none"><path d="M2 6.2l2.6 2.6L10 3" stroke="#231d10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 /* ---------- state (subtopics keyed by index so Firebase keys stay valid) ---------- */
 let state={};
-function blankTopic(id){const subs={},subConf={};(SUBS[id]||[]).forEach((s,i)=>{subs[i]=false;subConf[i]=0;});return{sources:[],subs,subConf,conf:0,kd:false,oe1:false,ks1:false,rev:false,fc:false,rr2:false,ks2:false};}
+function blankTopic(id){const subs={},subConf={};(SUBS[id]||[]).forEach((s,i)=>{subs[i]=false;subConf[i]=0;});return{sources:[],subs,subConf,conf:0,kd:false,oe1:false,ks1:false,rev:false,fc:false,rr2:false};}
 function blank(){const o={};TOPICS.forEach(t=>o[t.id]=blankTopic(t.id));return o;}
 function normalize(){
   if(!state||typeof state!=='object')state=blank();
+  if(!state._final||typeof state._final!=='object')state._final={};
+  FINAL.forEach(f=>{if(typeof state._final[f.key]!=='boolean')state._final[f.key]=!!state._final[f.key];});
   TOPICS.forEach(t=>{
     const s=state[t.id]||(state[t.id]=blankTopic(t.id));
     if(!Array.isArray(s.sources))s.sources=s.sources?Object.values(s.sources):[];
@@ -383,7 +415,7 @@ function normalize(){
       if(typeof s.subs[i]!=='boolean')s.subs[i]=!!s.subs[i];
       if(typeof s.subConf[i]!=='number')s.subConf[i]=+s.subConf[i]||0;
     });
-    ['kd','oe1','ks1','rev','fc','rr2','ks2'].forEach(k=>{if(typeof s[k]!=='boolean')s[k]=!!s[k];});
+    ['kd','oe1','ks1','rev','fc','rr2'].forEach(k=>{if(typeof s[k]!=='boolean')s[k]=!!s[k];});
   });
 }
 
@@ -391,11 +423,17 @@ function normalize(){
 function subsList(id){return SUBS[id]||[];}
 function subsDone(id){const l=subsList(id);return l.length?l.every((_,i)=>state[id].subs[i]):true;}
 function readDone(id){return state[id].sources.length>0 && subsDone(id);}
-function kdDone(id){return KDIGO[id]?state[id].kd:true;}
-function checkpoints(id){const s=state[id];return[readDone(id),kdDone(id),s.oe1,s.rev,s.fc,s.rr2,s.ks1,s.ks2];}
+function hasKD(id){return !!KDIGO[id];}
+function checkpoints(id){
+  const s=state[id];
+  const arr=[readDone(id)];
+  if(hasKD(id))arr.push(s.kd);
+  arr.push(s.oe1,s.rev,s.fc,s.rr2,s.ks1);
+  return arr;
+}
 function topicCount(id){return checkpoints(id).filter(Boolean).length;}
-function topicMax(id){return KDIGO[id]?8:7;}
-function topicFP(id){const s=state[id];return readDone(id)&&kdDone(id)&&s.oe1&&s.rev&&s.fc;}
+function topicMax(id){return hasKD(id)?7:6;}
+function topicFP(id){const s=state[id];return readDone(id)&&(!hasKD(id)||s.kd)&&s.oe1&&s.rev&&s.fc;}
 function topicDone(id){return checkpoints(id).every(Boolean);}
 
 /* ---------- render ---------- */
@@ -458,7 +496,23 @@ function render(){
     card.innerHTML=h;
     grid.appendChild(card);
   });
-  bind();updateOverall();
+  bind();updateOverall();renderFinal();
+}
+function renderFinal(){
+  const allDone=TOPICS.every(t=>topicDone(t.id));
+  const box=document.getElementById('final');if(!box)return;
+  box.classList.toggle('locked',!allDone);
+  document.getElementById('finalLock').style.display=allDone?'none':'block';
+  const grid=document.getElementById('finalGrid');grid.innerHTML='';
+  FINAL.forEach(f=>{
+    const on=state._final&&state._final[f.key];
+    const el=document.createElement('div');
+    el.className='fitem'+(on?' on':'');
+    el.dataset.locked=allDone?'0':'1';
+    el.innerHTML=`<div class="box">${TICK}</div><div class="ftext">${f.lbl}</div>`;
+    if(allDone)el.onclick=()=>{state._final[f.key]=!state._final[f.key];commit();};
+    grid.appendChild(el);
+  });
 }
 function bind(){
   document.querySelectorAll('.chip').forEach(b=>{b.onclick=()=>{
