@@ -399,6 +399,8 @@ const TICK='<svg viewBox="0 0 12 12" fill="none"><path d="M2 6.2l2.6 2.6L10 3" s
 
 /* ---------- state (subtopics keyed by index so Firebase keys stay valid) ---------- */
 let state={};
+let firstRender=true;
+const openSubs=new Set();
 function blankTopic(id){const subs={},subConf={};(SUBS[id]||[]).forEach((s,i)=>{subs[i]=false;subConf[i]=0;});return{sources:[],subs,subConf,conf:0,kd:false,oe1:false,ks1:false,rev:false,fc:false,rr2:false};}
 function blank(){const o={};TOPICS.forEach(t=>o[t.id]=blankTopic(t.id));return o;}
 function normalize(){
@@ -448,7 +450,7 @@ function render(){
     const s=state[t.id];
     const card=document.createElement('div');
     card.className='card'+(topicDone(t.id)?' done':'')+(s.conf?' conf'+s.conf:'');
-    card.style.animationDelay=(i*45)+'ms';
+    if(firstRender)card.style.animationDelay=(i*45)+'ms';else card.style.animation='none';
     const pct=Math.round((t.q/TOTAL_Q)*100);
     const subs=subsList(t.id), subDoneN=subs.filter((_,k)=>s.subs[k]).length;
 
@@ -468,8 +470,8 @@ function render(){
     h+=`</div>`;
 
     if(subs.length){
-      const open=(subDoneN>0&&subDoneN<subs.length)?' open':'';
-      h+=`<details class="subs"${open}>
+      const open=openSubs.has(t.id)?' open':'';
+      h+=`<details class="subs" data-tid="${t.id}"${open}>
         <summary><span class="caret">▶</span> Subtopics
           <span class="sub-bar"><span class="sub-fill" style="width:${(subDoneN/subs.length)*100}%"></span></span>
           <span class="sub-count">${subDoneN}/${subs.length}</span>
@@ -497,6 +499,7 @@ function render(){
     grid.appendChild(card);
   });
   bind();updateOverall();renderFinal();
+  firstRender=false;
 }
 function renderFinal(){
   const allDone=TOPICS.every(t=>topicDone(t.id));
@@ -515,6 +518,8 @@ function renderFinal(){
   });
 }
 function bind(){
+  document.querySelectorAll('details.subs').forEach(d=>{d.ontoggle=()=>{
+    const tid=d.dataset.tid;if(d.open)openSubs.add(tid);else openSubs.delete(tid);};});
   document.querySelectorAll('.chip').forEach(b=>{b.onclick=()=>{
     const tid=b.parentElement.dataset.tid,v=b.dataset.src,arr=state[tid].sources,k=arr.indexOf(v);
     if(k>=0)arr.splice(k,1);else arr.push(v);commit();};});
@@ -542,14 +547,14 @@ function updateOverall(){
 }
 
 /* ---------- Firebase sync ---------- */
-let fbRef=null,saveTimer=null,flashTimer=null,ready=false;
+let fbRef=null,saveTimer=null,flashTimer=null,ready=false,lastWritten=null;
 let bxRef=null,bxData={},bxPendingImg=null;
 function showGrid(){if(!ready){ready=true;document.getElementById('loading').style.display='none';document.getElementById('grid').style.display='grid';}}
 function setStatus(txt,cls){const e=document.getElementById('status');if(e){e.textContent='● '+txt;e.className='status '+(cls||'');}}
 function flash(){const s=document.getElementById('saved');if(!s)return;s.classList.add('show');clearTimeout(flashTimer);flashTimer=setTimeout(()=>s.classList.remove('show'),1400);}
 function commit(){render();save();}
 function save(){
-  if(fbRef){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{fbRef.set(state).then(flash).catch(err=>setStatus('Write failed: '+err.message,'off'));},300);}
+  if(fbRef){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{lastWritten=JSON.stringify(state);fbRef.set(state).then(flash).catch(err=>setStatus('Write failed: '+err.message,'off'));},300);}
   else{flash();}
 }
 function initFirebase(){
@@ -567,6 +572,9 @@ function initFirebase(){
     });
     fbRef.on('value',snap=>{
       const v=snap.val();
+      const incoming=JSON.stringify(v||{});
+      // Echo of our own write — state already reflects it, don't re-render (prevents flicker)
+      if(incoming===lastWritten){showGrid();return;}
       state=(v&&typeof v==='object')?v:blank();
       normalize();showGrid();render();
     },err=>{setStatus('Sync error: '+err.message,'off');state=blank();normalize();showGrid();render();});
