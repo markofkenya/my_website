@@ -3,711 +3,664 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESENeph Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Spline+Sans+Mono:wght@400;500;600&family=Spline+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Home Team Tracker</title>
 <style>
-  :root{
-    --ink:#14130e;--ink-2:#1c1b14;--card:#201e16;--card-hi:#26241a;--line:#352f22;
-    --cream:#f3ecd9;--muted:#a89c80;--faint:#6f654f;
-    --amber:#e0a44e;--amber-deep:#c2832f;--sage:#8fae7e;--sage-deep:#6f9159;--rust:#c96a44;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{
-    background:var(--ink);color:var(--cream);font-family:'Spline Sans',sans-serif;line-height:1.5;min-height:100vh;
-    background-image:radial-gradient(900px 500px at 85% -10%, rgba(224,164,78,0.10), transparent 60%),radial-gradient(700px 400px at -5% 100%, rgba(143,174,126,0.07), transparent 60%);
-  }
-  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0.035;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
-  .wrap{max-width:1180px;margin:0 auto;padding:38px 24px 90px;position:relative;z-index:2}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8f7f4; min-height: 100vh; color: #1a1a2e; }
+  header { background: linear-gradient(135deg, #2d1b69 0%, #11998e 100%); padding: 26px 20px 20px; text-align: center; }
+  header h1 { color: #fff; font-size: 23px; font-weight: 800; }
+  header p { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 4px; }
+  .sync-pill { display:inline-flex; align-items:center; gap:6px; margin-top:10px; background:rgba(255,255,255,0.15); color:#fff; font-size:11px; font-weight:700; padding:4px 12px; border-radius:99px; }
+  #sync-indicator { font-size:11px; font-weight:800; }
+  .month-switch { display:flex; align-items:center; justify-content:center; gap:14px; margin-top:12px; }
+  .month-arrow { width:30px; height:30px; border:none; border-radius:50%; background:rgba(255,255,255,0.18); color:#fff; font-size:18px; font-weight:800; cursor:pointer; line-height:1; padding:0; }
+  .month-arrow:disabled { opacity:0.3; cursor:default; }
+  #month-label { color:#fff; font-weight:800; font-size:15px; min-width:130px; text-align:center; }
+  .viewing-past { background:#fef3c7; color:#92400e; text-align:center; font-size:12px; font-weight:700; padding:8px; }
 
-  header{display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:26px;margin-bottom:34px}
-  .brand .eyebrow{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.32em;text-transform:uppercase;color:var(--amber);margin-bottom:10px}
-  .brand h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(38px,6vw,64px);line-height:0.92;letter-spacing:-0.02em}
-  .brand h1 em{font-style:italic;font-weight:500;color:var(--amber)}
-  .brand .sub{color:var(--muted);font-size:14px;margin-top:12px;max-width:440px}
-  .overall{text-align:right;min-width:220px}
-  .ring-wrap{position:relative;width:128px;height:128px;margin-left:auto}
-  .ring-wrap svg{transform:rotate(-90deg)}
-  .ring-bg{stroke:var(--line)}
-  .ring-fg{stroke:var(--amber);stroke-linecap:round;transition:stroke-dashoffset 0.9s cubic-bezier(.2,.8,.2,1)}
-  .ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .ring-num b{font-family:'Fraunces',serif;font-size:32px;font-weight:900;line-height:1}
-  .ring-num span{font-family:'Spline Sans Mono',monospace;font-size:9.5px;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;margin-top:3px}
-  .stat-line{font-family:'Spline Sans Mono',monospace;font-size:12px;color:var(--muted);margin-top:14px}
-  .stat-line b{color:var(--cream)}
-  .focus-line{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--muted);margin-top:6px}
-  .focus-line b{color:var(--rust)}
+  .tabs { display: flex; background: #fff; border-bottom: 1px solid #e8e8e8; }
+  .tab-btn { flex: 1; padding: 14px; background: none; border: none; border-bottom: 3px solid transparent; font-size: 13px; font-weight: 700; color: #9ca3af; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
+  .tab-btn.active { color: #2d1b69; border-bottom-color: #2d1b69; }
 
-  .flow{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-bottom:34px;display:flex;gap:22px;flex-wrap:wrap;align-items:center}
-  .flow h3{font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.24em;text-transform:uppercase;color:var(--faint);margin-right:2px}
-  .flow .step{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted)}
-  .flow .dot{width:9px;height:9px;border-radius:50%;flex:none}
-  .flow .arrow{color:var(--faint);font-size:13px}
-  .d-read{background:var(--amber)} .d-q{background:var(--sage)} .d-rev{background:var(--rust)}
-  .flow .p2{border-left:1px solid var(--line);padding-left:22px;margin-left:2px}
+  .score-strip { background: #fff; padding: 14px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #f0f0f0; }
+  .score-bar-wrap { flex: 1; height: 10px; background: #f0f0f0; border-radius: 99px; overflow: hidden; display: flex; }
+  .score-bar-a { background: #FF6B6B; transition: width 0.5s ease; width: 50%; }
+  .score-bar-b { background: #11998e; transition: width 0.5s ease; width: 50%; }
+  .score-label { font-size: 12px; font-weight: 800; color: #9ca3af; white-space: nowrap; }
 
-  #loading{text-align:center;padding:80px 0;color:var(--muted);font-family:'Spline Sans Mono',monospace;font-size:13px;letter-spacing:0.1em}
-  .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-right:8px;animation:pulse 1s infinite}
-  @keyframes pulse{0%,100%{opacity:0.3}50%{opacity:1}}
+  .board { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px 12px; }
+  .column-header { border-radius: 16px 16px 0 0; padding: 14px; display: flex; align-items: center; gap: 10px; }
+  .col-a .column-header { background: #FF6B6B; }
+  .col-b .column-header { background: #11998e; }
+  .col-header-name { color: #fff; font-weight: 900; font-size: 16px; }
+  .col-header-sub { color: rgba(255,255,255,0.8); font-size: 11px; font-weight: 600; margin-top: 2px; }
+  .col-body { border: 2px solid; border-top: none; border-radius: 0 0 16px 16px; padding: 10px 8px; min-height: 200px; background: #fafafa; }
+  .col-a .col-body { border-color: #FF6B6B; }
+  .col-b .col-body { border-color: #11998e; }
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 20px 18px;position:relative;overflow:hidden;opacity:0;transform:translateY(14px);animation:rise 0.5s forwards;transition:border-color .25s,background .25s}
-  .card:hover{border-color:#4a4230;background:var(--card-hi)}
-  @keyframes rise{to{opacity:1;transform:none}}
-  .card.done::after{content:"";position:absolute;inset:0;border-radius:16px;pointer-events:none;box-shadow:inset 0 0 0 1.5px var(--sage-deep)}
-  .card.conf1{border-left:3px solid var(--rust)}
-  .card.conf2{border-left:3px solid var(--amber)}
-  .card.conf3{border-left:3px solid var(--sage)}
-  .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-  .rank{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--faint);letter-spacing:0.1em}
-  .card h2{font-family:'Fraunces',serif;font-weight:600;font-size:18.5px;line-height:1.15;letter-spacing:-0.01em;margin:6px 0 2px;padding-right:4px}
-  .weight{text-align:right;flex:none}
-  .weight b{font-family:'Fraunces',serif;font-size:26px;font-weight:900;display:block;line-height:1}
-  .weight span{font-family:'Spline Sans Mono',monospace;font-size:9.5px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase}
-  .note{font-family:'Spline Sans Mono',monospace;font-size:10.5px;color:var(--muted);letter-spacing:0.04em;margin-bottom:2px}
-  .qpct{font-family:'Spline Sans Mono',monospace;font-size:10.5px;color:var(--amber);letter-spacing:0.1em;margin:8px 0 14px}
+  .task-card { border-radius: 12px; padding: 10px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .task-card.done { background: #f0fdf4; border: 1.5px solid #86efac; opacity: 0.7; }
+  .task-card.pending-a { background: #fff0f0; border: 1.5px solid #FF6B6B; }
+  .task-card.pending-b { background: #e6faf8; border: 1.5px solid #11998e; }
+  .task-icon { font-size: 20px; flex-shrink: 0; }
+  .task-info { flex: 1; min-width: 0; }
+  .task-label { font-weight: 700; font-size: 13px; color: #1f2937; }
+  .task-meta { font-size: 10px; color: #9ca3af; margin-top: 3px; }
+  .tag { display: inline-block; border-radius: 99px; padding: 1px 6px; font-weight: 700; font-size: 10px; margin-right: 4px; }
+  .tag-physical { background: #dbeafe; color: #1d4ed8; }
+  .tag-mental { background: #ede9fe; color: #7c3aed; }
+  .done-check { font-size: 18px; }
+  .complete-btn { border: none; border-radius: 9px; padding: 6px 11px; color: #fff; font-weight: 800; font-size: 11px; cursor: pointer; white-space: nowrap; font-family: inherit; }
+  .complete-btn-a { background: #FF6B6B; }
+  .complete-btn-b { background: #11998e; }
+  .del-btn { flex-shrink:0; width:22px; height:22px; border:none; border-radius:50%; background:#f3f4f6; color:#9ca3af; font-size:11px; font-weight:800; cursor:pointer; line-height:1; padding:0; }
+  .del-btn:hover { background:#fca5a5; color:#fff; }
 
-  .pass-label{font-family:'Spline Sans Mono',monospace;font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--faint);margin:14px 0 9px;display:flex;align-items:center;gap:8px}
-  .pass-label::after{content:"";flex:1;height:1px;background:var(--line)}
+  .add-btn { width: 100%; padding: 10px; border-radius: 12px; border: 2px dashed; background: transparent; font-weight: 800; font-size: 13px; cursor: pointer; margin-top: 4px; font-family: inherit; }
+  .col-a .add-btn { border-color: #FF6B6B; color: #FF6B6B; }
+  .col-b .add-btn { border-color: #11998e; color: #11998e; }
 
-  .src-row{display:flex;align-items:center;gap:11px;padding:5px 9px;margin-bottom:2px}
-  .src-row .mini-check{width:19px;height:19px;border-radius:6px;border:1.5px solid var(--faint);flex:none;display:flex;align-items:center;justify-content:center;transition:all .18s}
-  .src-row.read .mini-check{background:var(--amber);border-color:var(--amber)}
-  .src-row .mini-check svg{width:11px;height:11px;opacity:0;transition:opacity .18s}
-  .src-row.read .mini-check svg{opacity:1}
-  .src-row .lbl{font-size:13.5px;color:var(--muted)}
-  .src-row.read .lbl{color:var(--cream)}
-  .src-row .hint{font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.04em;color:var(--amber-deep);margin-left:auto}
-  .chips{display:flex;gap:6px;margin:0 0 6px 39px;flex-wrap:wrap}
-  .chip{font-family:'Spline Sans Mono',monospace;font-size:10.5px;letter-spacing:0.04em;background:transparent;border:1px solid var(--line);color:var(--faint);padding:4px 11px;border-radius:7px;cursor:pointer;transition:all .15s}
-  .chip:hover{border-color:var(--amber-deep);color:var(--muted)}
-  .chip.sel{background:var(--amber);border-color:var(--amber);color:#231d10;font-weight:600}
+  .add-panel { background: #fff; border-radius: 20px; padding: 18px; margin: 0 12px 14px; border: 2px solid #e8e8e8; box-shadow: 0 8px 32px rgba(0,0,0,0.08); display: none; }
+  .add-panel.visible { display: block; }
+  .add-panel.for-a { border-top: 4px solid #FF6B6B; }
+  .add-panel.for-b { border-top: 4px solid #11998e; }
+  .panel-title { font-weight: 900; font-size: 15px; color: #1f2937; margin-bottom: 14px; }
+  .preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 16px; }
+  .preset-btn { padding: 9px 8px; border-radius: 10px; border: 1.5px solid #e8e8e8; background: #fafafa; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 7px; font-family: inherit; }
+  .preset-btn-icon { font-size: 18px; }
+  .preset-btn-label { font-weight: 700; font-size: 12px; color: #374151; }
+  .preset-btn-type { font-size: 10px; color: #9ca3af; }
+  .divider { border-top: 2px dashed #e8e8e8; padding-top: 14px; }
+  .divider-label { font-size: 12px; font-weight: 700; color: #9ca3af; margin-bottom: 10px; }
+  .custom-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .emoji-input { width: 48px; padding: 8px; border-radius: 10px; border: 2px solid #e8e8e8; font-size: 20px; text-align: center; }
+  .text-input { flex: 1; padding: 8px 12px; border-radius: 10px; border: 2px solid #e8e8e8; font-size: 13px; font-weight: 600; font-family: inherit; }
+  .type-row { display: flex; gap: 8px; }
+  .type-btn { flex: 1; padding: 8px; border-radius: 10px; border: 2px solid #e8e8e8; background: #fff; font-weight: 700; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .type-btn.selected-a { border-color: #FF6B6B; background: #fff0f0; color: #FF6B6B; }
+  .type-btn.selected-b { border-color: #11998e; background: #e6faf8; color: #11998e; }
+  .log-btn { padding: 8px 18px; border: none; border-radius: 10px; color: #fff; font-weight: 800; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .log-btn-a { background: #FF6B6B; }
+  .log-btn-b { background: #11998e; }
+  .empty-state { text-align: center; color: #d1d5db; font-size: 12px; padding: 24px 0; }
 
-  .conf-row{display:flex;align-items:center;gap:10px;margin:4px 0 6px}
-  .conf-row .clbl{font-family:'Spline Sans Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--faint)}
-  .rate{display:inline-flex;gap:5px;align-items:center}
-  .rate .rdot{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--faint);background:transparent;cursor:pointer;transition:transform .12s,background .15s,border-color .15s}
-  .rate .rdot:hover{transform:scale(1.18)}
-  .rate.sm .rdot{width:9px;height:9px;border-width:1.3px}
-  .rdot.on.c1{background:var(--rust);border-color:var(--rust)}
-  .rdot.on.c2{background:var(--amber);border-color:var(--amber)}
-  .rdot.on.c3{background:var(--sage);border-color:var(--sage)}
+  .scores-pane { padding: 20px 16px; }
+  .score-card { background: #fff; border-radius: 20px; padding: 22px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 14px; }
+  .score-card h2 { font-size: 17px; font-weight: 900; color: #1f2937; margin-bottom: 18px; }
+  .score-person { margin-bottom: 18px; }
+  .score-person-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .score-person-left { display: flex; align-items: center; gap: 10px; }
+  .score-person-emoji { font-size: 30px; }
+  .score-person-name { font-weight: 800; font-size: 16px; color: #1f2937; }
+  .score-person-sub { font-size: 12px; color: #6b7280; }
+  .score-pct { border-radius: 99px; padding: 4px 14px; font-weight: 900; font-size: 18px; }
+  .score-pct-a { background: #FFE5E5; color: #FF6B6B; }
+  .score-pct-b { background: #e6faf8; color: #11998e; }
+  .bar-track { height: 14px; background: #f3f4f6; border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+  .bar-fill-a { background: #FF6B6B; }
+  .bar-fill-b { background: #11998e; }
+  .verdict { border-radius: 14px; padding: 14px 16px; text-align: center; }
+  .verdict-balanced { background: #f0fdf4; border: 2px solid #86efac; }
+  .verdict-imbalanced { background: #fef2f2; border: 2px solid #fca5a5; }
+  .verdict-icon { font-size: 24px; margin-bottom: 4px; }
+  .verdict-text { font-weight: 800; font-size: 14px; color: #374151; }
+  .how-card { background: #fff; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+  .how-card h3 { font-size: 14px; font-weight: 800; color: #374151; margin-bottom: 12px; }
+  .how-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
+  .how-icon { font-size: 18px; }
+  .how-text { font-size: 13px; color: #6b7280; line-height: 1.4; }
+  .reset-btn { width:100%; margin-top:8px; padding:10px; border:2px solid #e8e8e8; background:#fff; border-radius:12px; color:#9ca3af; font-weight:700; font-size:12px; cursor:pointer; font-family:inherit; }
 
-  details.subs{margin:2px 0 4px 0;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,0.14);overflow:hidden}
-  details.subs summary{list-style:none;cursor:pointer;padding:9px 12px;display:flex;align-items:center;gap:10px;font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.04em;color:var(--muted)}
-  details.subs summary::-webkit-details-marker{display:none}
-  .caret{transition:transform .2s;color:var(--faint);font-size:9px}
-  details[open] .caret{transform:rotate(90deg)}
-  .sub-count{margin-left:auto;color:var(--sage)}
-  .sub-bar{flex:1;max-width:90px;height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-left:8px}
-  .sub-fill{height:100%;background:var(--amber);border-radius:2px;transition:width .4s}
-  .sub-body{padding:2px 8px 8px}
-  .sub-row{display:flex;align-items:center;gap:10px;padding:5px 7px;border-radius:7px;cursor:pointer;transition:background .15s}
-  .sub-row:hover{background:rgba(255,255,255,0.03)}
-  .sub-row .sbox{width:16px;height:16px;border-radius:5px;border:1.4px solid var(--faint);flex:none;display:flex;align-items:center;justify-content:center;transition:all .18s}
-  .sub-row.on .sbox{background:var(--amber);border-color:var(--amber)}
-  .sub-row .sbox svg{width:9px;height:9px;opacity:0;transition:opacity .18s}
-  .sub-row.on .sbox svg{opacity:1}
-  .sub-row .stext{font-size:12.5px;color:var(--muted)}
-  .sub-row.on .stext{color:var(--cream)}
-  .sub-row .rate{margin-left:auto}
-
-  .check{display:flex;align-items:center;gap:11px;padding:7px 9px;border-radius:9px;cursor:pointer;transition:background .15s;user-select:none}
-  .check:hover{background:rgba(255,255,255,0.03)}
-  .box{width:19px;height:19px;border-radius:6px;border:1.5px solid var(--faint);flex:none;display:flex;align-items:center;justify-content:center;transition:all .18s}
-  .box svg{width:11px;height:11px;opacity:0;transform:scale(.5);transition:all .18s}
-  .check.on .box{background:var(--accent,var(--sage));border-color:var(--accent,var(--sage))}
-  .check.on .box svg{opacity:1;transform:scale(1)}
-  .check .lbl{font-size:13.5px;color:var(--muted);transition:color .15s}
-  .check.on .lbl{color:var(--cream)}
-  .check[data-kind="q"]{--accent:var(--sage)}
-  .check[data-kind="rev"]{--accent:var(--rust)}
-
-  .mini{margin-top:14px;display:flex;align-items:center;gap:10px}
-  .mini-bar{flex:1;height:5px;background:var(--line);border-radius:3px;overflow:hidden}
-  .mini-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--sage));border-radius:3px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
-  .mini-txt{font-family:'Spline Sans Mono',monospace;font-size:10.5px;color:var(--muted);white-space:nowrap}
-
-  footer{margin-top:42px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
-  footer .fnote{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--faint);letter-spacing:0.05em}
-  .status{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.04em}
-  .status.live{color:var(--sage)} .status.wait{color:var(--amber)} .status.off{color:var(--rust)}
-  .reset{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;background:transparent;border:1px solid var(--line);color:var(--muted);padding:9px 16px;border-radius:9px;cursor:pointer;transition:all .18s}
-  .reset:hover{border-color:var(--rust);color:var(--rust)}
-  .saved{color:var(--sage);opacity:0;transition:opacity .3s}
-  .saved.show{opacity:1}
-
-  /* tabs */
-  .tabs{display:flex;gap:8px;margin-bottom:30px}
-  .tab{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;background:var(--ink-2);border:1px solid var(--line);color:var(--muted);padding:11px 20px;border-radius:11px;cursor:pointer;transition:all .18s}
-  .tab:hover{border-color:var(--amber-deep);color:var(--cream)}
-  .tab.on{background:var(--amber);border-color:var(--amber);color:#231d10;font-weight:600}
-  .view{display:none}
-  .view.on{display:block;animation:fade .35s}
-  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-
-  /* biopsy */
-  .bx-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:24px}
-  .bx-week{display:flex;gap:7px;align-items:center;margin:10px 0 4px}
-  .pip{width:26px;height:26px;border-radius:8px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;transition:all .25s}
-  .pip.full{background:var(--sage);border-color:var(--sage)}
-  .pip svg{width:13px;height:13px;opacity:0;transition:opacity .2s}
-  .pip.full svg{opacity:1}
-  .bx-meta{font-family:'Spline Sans Mono',monospace;font-size:12px;color:var(--muted)}
-  .bx-meta b{color:var(--cream)}
-  .warn{background:rgba(201,106,68,0.10);border:1px solid rgba(201,106,68,0.4);border-radius:10px;padding:11px 15px;font-size:12.5px;color:#e8b59c;margin-bottom:22px;display:flex;gap:10px;align-items:flex-start}
-  .warn b{color:#f0c9b4}
-
-  .bx-form{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:24px}
-  .bx-form .frow{margin-bottom:14px}
-  .bx-form label{display:block;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--faint);margin-bottom:7px}
-  .bx-form input[type=text],.bx-form textarea{width:100%;background:var(--ink);border:1px solid var(--line);border-radius:10px;color:var(--cream);font-family:'Spline Sans',sans-serif;font-size:14px;padding:11px 13px;resize:vertical}
-  .bx-form input[type=text]:focus,.bx-form textarea:focus{outline:none;border-color:var(--amber-deep)}
-  .bx-form textarea{min-height:74px;line-height:1.5}
-  .drop{border:1.5px dashed var(--line);border-radius:11px;padding:18px;text-align:center;cursor:pointer;transition:all .18s;color:var(--muted);font-size:13px}
-  .drop:hover{border-color:var(--amber-deep);color:var(--cream);background:rgba(224,164,78,0.04)}
-  .drop input{display:none}
-  .thumb-prev{max-height:160px;border-radius:9px;margin:10px auto 0;display:block}
-  .bx-actions{display:flex;gap:10px;align-items:center;margin-top:4px}
-  .btn{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;border-radius:10px;padding:11px 20px;cursor:pointer;border:1px solid var(--line);transition:all .18s;text-decoration:none;display:inline-block}
-  .btn-primary{background:var(--sage);border-color:var(--sage);color:#16210f;font-weight:600}
-  .btn-primary:hover{background:var(--sage-deep)}
-  .btn-primary:disabled{opacity:0.4;cursor:not-allowed}
-  .btn-ghost{background:transparent;color:var(--muted)}
-  .btn-ghost:hover{border-color:var(--muted);color:var(--cream)}
-  .form-hint{font-family:'Spline Sans Mono',monospace;font-size:10.5px;color:var(--faint);margin-left:auto}
-
-  .bx-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-  .bx-card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:border-color .2s}
-  .bx-card:hover{border-color:#4a4230}
-  .bx-img{width:100%;aspect-ratio:16/10;object-fit:cover;background:var(--ink-2);cursor:zoom-in;display:block}
-  .bx-noimg{width:100%;aspect-ratio:16/10;background:var(--ink-2);display:flex;align-items:center;justify-content:center;color:var(--faint);font-family:'Spline Sans Mono',monospace;font-size:11px}
-  .bx-body{padding:14px 15px 15px}
-  .bx-dx{font-family:'Fraunces',serif;font-size:16.5px;font-weight:600;line-height:1.2;margin-bottom:6px}
-  .bx-feat{font-size:13px;color:var(--muted);line-height:1.5;white-space:pre-wrap}
-  .bx-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-family:'Spline Sans Mono',monospace;font-size:10.5px;color:var(--faint)}
-  .bx-del{background:transparent;border:none;color:var(--faint);cursor:pointer;font-family:'Spline Sans Mono',monospace;font-size:10.5px;padding:3px 6px;border-radius:6px;transition:all .15s}
-  .bx-del:hover{color:var(--rust);background:rgba(201,106,68,0.1)}
-  .bx-empty{text-align:center;padding:50px 20px;color:var(--faint);font-family:'Spline Sans Mono',monospace;font-size:13px}
-
-  .lightbox{position:fixed;inset:0;background:rgba(8,7,4,0.92);z-index:50;display:none;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
-  .lightbox.on{display:flex}
-  .lightbox img{max-width:100%;max-height:100%;border-radius:10px}
-
-  /* final push */
-  .final{margin-top:34px;border:1px solid var(--line);border-radius:16px;background:var(--ink-2);padding:22px 22px 18px;position:relative}
-  .final.locked{opacity:0.55}
-  .final h3{font-family:'Fraunces',serif;font-weight:600;font-size:20px;letter-spacing:-0.01em;margin-bottom:2px}
-  .final .fsub{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.04em;color:var(--muted);margin-bottom:16px}
-  .final .lock-tag{display:inline-block;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--amber-deep);margin-bottom:16px;padding:5px 10px;border:1px solid rgba(194,131,47,0.4);border-radius:7px}
-  .final-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-  .fitem{display:flex;align-items:center;gap:12px;padding:14px 15px;border:1px solid var(--line);border-radius:12px;background:var(--card);cursor:pointer;transition:all .18s}
-  .fitem:hover{border-color:#4a4230;background:var(--card-hi)}
-  .fitem.on{border-color:var(--sage-deep)}
-  .fitem .box{width:21px;height:21px;border-radius:6px;border:1.5px solid var(--faint);flex:none;display:flex;align-items:center;justify-content:center;transition:all .18s}
-  .fitem.on .box{background:var(--sage);border-color:var(--sage)}
-  .fitem .box svg{width:12px;height:12px;opacity:0;transition:opacity .18s}
-  .fitem.on .box svg{opacity:1}
-  .fitem .ftext{font-size:14px;color:var(--muted)}
-  .fitem.on .ftext{color:var(--cream)}
-  .fitem[data-locked="1"]{cursor:not-allowed}
-
-  @media(max-width:560px){
-    .wrap{padding:26px 16px 70px}
-    header{flex-direction:column;align-items:flex-start}
-    .overall{text-align:left}.ring-wrap{margin-left:0}
-    .flow{gap:14px 18px}.flow .p2{border-left:none;padding-left:0;margin-left:0}
-    .grid{grid-template-columns:1fr}
-    .bx-list{grid-template-columns:1fr}
-  }
+  #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-60px); background: #1f2937; color: #fff; padding: 12px 20px; border-radius: 16px; font-weight: 700; font-size: 13px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.3); white-space: nowrap; transition: transform 0.35s ease; pointer-events: none; }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  #confetti-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9998; }
+  #prize-overlay { position:fixed; inset:0; background:rgba(45,27,105,0.55); backdrop-filter:blur(4px); z-index:10000; display:flex; align-items:center; justify-content:center; padding:24px; }
+  #prize-card { background:#fff; border-radius:24px; padding:30px 26px; max-width:340px; width:100%; text-align:center; box-shadow:0 24px 70px rgba(0,0,0,0.35); animation:pop 0.4s cubic-bezier(.18,1.25,.4,1); }
+  @keyframes pop { from { transform:scale(0.8); opacity:0; } to { transform:scale(1); opacity:1; } }
+  .week-race { background:#fff; padding:10px 16px; border-bottom:1px solid #f0f0f0; font-size:12px; font-weight:700; color:#6b7280; text-align:center; }
+  .week-race b { color:#2d1b69; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="brand">
-      <div class="eyebrow">SCE / ESENeph · May 2027</div>
-      <h1>Topic <em>Tracker</em></h1>
-      <p class="sub">Pass 1 — read your source(s), the relevant KDIGO guideline, StudyPRN, then build the review sheet + flashcards. Pass 2 — review the sheets, then KSAP. Subtopics track reading coverage; question steps stay at topic level.</p>
-    </div>
-    <div class="overall">
-      <div class="ring-wrap">
-        <svg width="128" height="128" viewBox="0 0 128 128">
-          <circle class="ring-bg" cx="64" cy="64" r="54" fill="none" stroke-width="11"/>
-          <circle class="ring-fg" id="ring" cx="64" cy="64" r="54" fill="none" stroke-width="11" stroke-dasharray="339.3" stroke-dashoffset="339.3"/>
-        </svg>
-        <div class="ring-num"><b id="ringPct">0%</b><span>Overall</span></div>
-      </div>
-      <div class="stat-line"><b id="fpCount">0</b>/11 first-pass · <b id="fullCount">0</b>/11 complete</div>
-      <div class="focus-line" id="focus"></div>
-    </div>
-  </header>
 
-  <div class="tabs">
-    <button class="tab on" data-view="topics">Topics</button>
-    <button class="tab" data-view="biopsy">Biopsies</button>
+<canvas id="confetti-canvas"></canvas>
+<div id="toast"></div>
+
+<div id="prize-overlay" style="display:none">
+  <div id="prize-card">
+    <div id="prize-emoji" style="font-size:46px">🏆</div>
+    <div id="prize-winner" style="font-weight:900;font-size:20px;color:#1f2937;margin-top:6px"></div>
+    <div id="prize-score" style="font-size:12px;color:#9ca3af;margin-top:4px"></div>
+    <div id="prize-heading" style="font-size:12px;font-weight:800;color:#11998e;margin-top:18px;text-transform:uppercase;letter-spacing:1px">This week's prize</div>
+    <div id="prize-text" style="font-size:17px;font-weight:700;color:#2d1b69;margin-top:8px;line-height:1.35"></div>
+    <button id="prize-close" style="margin-top:22px;padding:11px 26px;border:none;border-radius:12px;background:linear-gradient(135deg,#2d1b69,#11998e);color:#fff;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit">Claim it 🎉</button>
   </div>
-
-  <div class="view on" id="view-topics">
-  <div class="flow">
-    <h3>Pass 1</h3>
-    <div class="step"><span class="dot d-read"></span>Read (OHB / ERA / CCN)</div>
-    <span class="arrow">→</span>
-    <div class="step"><span class="dot d-rev"></span>KDIGO</div>
-    <span class="arrow">→</span>
-    <div class="step"><span class="dot d-q"></span>StudyPRN</div>
-    <span class="arrow">→</span>
-    <div class="step"><span class="dot d-rev"></span>Sheet + flashcards</div>
-    <div class="step p2"><h3 style="margin:0 6px 0 0">Pass 2</h3><span class="dot d-rev"></span>Review sheets</div>
-    <span class="arrow">→</span>
-    <div class="step"><span class="dot d-q"></span>KSAP</div>
-  </div>
-
-  <div id="loading"><span class="pulse"></span>Connecting to your database…</div>
-  <div class="grid" id="grid" style="display:none"></div>
-
-  <div class="final locked" id="final">
-    <h3>Final push</h3>
-    <div class="fsub">High-volume mixed practice once every topic is done</div>
-    <span class="lock-tag" id="finalLock">🔒 Unlocks when all 11 topics complete</span>
-    <div class="final-grid" id="finalGrid"></div>
-  </div>
-  </div><!-- /view-topics -->
-
-  <div class="view" id="view-biopsy">
-    <div class="bx-head">
-      <div>
-        <div class="bx-week" id="bxWeek"></div>
-        <div class="bx-meta"><b id="bxWeekN">0</b>/5 this week · <b id="bxTotal">0</b> total logged</div>
-      </div>
-      <a class="btn btn-ghost" id="bxOpen" href="https://www.kidneypathology.com/English_version/Archives_cases.html" target="_blank" rel="noopener">Open Kidney Pathology ↗</a>
-    </div>
-
-    <div class="warn">
-      <span>⚠</span>
-      <div><b>De-identified images only.</b> This database is currently readable by anyone with the link. Crop out names, hospital numbers and dates before saving. Teaching images from the case site are fine.</div>
-    </div>
-
-    <div class="bx-form">
-      <div class="frow">
-        <label>Case # <span style="text-transform:none;letter-spacing:0;color:var(--faint)">(optional — matches the site)</span></label>
-        <input type="text" id="bxCase" placeholder="e.g. Case 1" maxlength="40">
-      </div>
-      <div class="frow">
-        <label>Diagnosis</label>
-        <input type="text" id="bxDx" placeholder="e.g. IgA nephropathy, MEST-C M1E1S0T0C0" maxlength="200">
-      </div>
-      <div class="frow">
-        <label>Key features / my reasoning</label>
-        <textarea id="bxFeat" placeholder="Mesangial hypercellularity, IgA-dominant deposits on IF, what tipped me off, what I'd have missed…"></textarea>
-      </div>
-      <div class="frow">
-        <label>Pathology image (optional, de-identified)</label>
-        <div class="drop" id="bxDrop">
-          Tap to add an image — it'll be compressed before saving
-          <input type="file" id="bxFile" accept="image/*">
-          <img class="thumb-prev" id="bxPrev" style="display:none">
-        </div>
-      </div>
-      <div class="bx-actions">
-        <button class="btn btn-primary" id="bxSave" disabled>Save case</button>
-        <button class="btn btn-ghost" id="bxClear">Clear</button>
-        <span class="form-hint" id="bxHint"></span>
-      </div>
-    </div>
-
-    <div class="bx-list" id="bxList"></div>
-  </div><!-- /view-biopsy -->
-
-  <div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""></div>
-
-  <footer>
-    <span class="fnote"><span class="status wait" id="status">● Connecting…</span> · <span class="saved" id="saved">saved ✓</span></span>
-    <button class="reset" id="reset">Reset all progress</button>
-  </footer>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-database-compat.js"></script>
+<header>
+  <div style="font-size:28px;margin-bottom:4px">🏠</div>
+  <h1>Home Team Tracker</h1>
+  <p>50/50 — every task you do, your partner matches</p>
+  <div class="sync-pill"><span id="sync-indicator" style="color:#fbbf24">● CONNECTING…</span></div>
+  <div class="month-switch">
+    <button id="month-prev" class="month-arrow">‹</button>
+    <span id="month-label">—</span>
+    <button id="month-next" class="month-arrow">›</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" id="tabbtn-board">📋 Task Board</button>
+  <button class="tab-btn" id="tabbtn-scores">🏆 Scoreboard</button>
+</div>
+
+<div id="tab-board">
+  <div id="past-banner" class="viewing-past" style="display:none">📅 Viewing a past month — read only</div>
+  <div class="week-race" id="week-race">🏁 This week's race for the mystery prize — log tasks to take the lead!</div>
+  <div class="score-strip">
+    <span style="font-size:18px">👩🏾</span>
+    <div class="score-bar-wrap"><div class="score-bar-a" id="strip-a"></div><div class="score-bar-b" id="strip-b"></div></div>
+    <span style="font-size:18px">👨🏾</span>
+    <span class="score-label" id="strip-label">0 vs 0</span>
+  </div>
+  <div class="board">
+    <div class="col-a">
+      <div class="column-header"><span style="font-size:28px">👩🏾</span><div><div class="col-header-name">Peggy</div><div class="col-header-sub" id="sub-a">0 done</div></div></div>
+      <div class="col-body"><div id="tasks-a"></div><div class="empty-state" id="empty-a">No tasks yet</div><button class="add-btn" id="addbtn-a">+ I did this</button></div>
+    </div>
+    <div class="col-b">
+      <div class="column-header"><span style="font-size:28px">👨🏾</span><div><div class="col-header-name">Mark</div><div class="col-header-sub" id="sub-b">0 done</div></div></div>
+      <div class="col-body"><div id="tasks-b"></div><div class="empty-state" id="empty-b">No tasks yet</div><button class="add-btn" id="addbtn-b">+ I did this</button></div>
+    </div>
+  </div>
+  <div id="add-panel" class="add-panel">
+    <div class="panel-title" id="panel-title">Log a task</div>
+    <div class="preset-grid" id="preset-grid"></div>
+    <div class="divider">
+      <div class="divider-label">Or add something custom:</div>
+      <div class="custom-row"><input class="emoji-input" id="custom-icon" value="✨" maxlength="2"><input class="text-input" id="custom-label" placeholder="What did you do?"></div>
+      <div class="type-row"><button class="type-btn" id="type-physical">💪 Physical</button><button class="type-btn" id="type-mental">🧠 Mental</button><button class="log-btn" id="log-custom-btn">Log ✓</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="tab-scores" style="display:none">
+  <div class="scores-pane">
+    <div class="score-card">
+      <h2>🏆 Who's doing what?</h2>
+      <div class="score-person"><div class="score-person-header"><div class="score-person-left"><span class="score-person-emoji">👩🏾</span><div><div class="score-person-name">Peggy</div><div class="score-person-sub" id="sc-sub-a">0 completed</div></div></div><div class="score-pct score-pct-a" id="sc-pct-a">50%</div></div><div class="bar-track"><div class="bar-fill bar-fill-a" id="sc-bar-a" style="width:50%"></div></div></div>
+      <div class="score-person"><div class="score-person-header"><div class="score-person-left"><span class="score-person-emoji">👨🏾</span><div><div class="score-person-name">Mark</div><div class="score-person-sub" id="sc-sub-b">0 completed</div></div></div><div class="score-pct score-pct-b" id="sc-pct-b">50%</div></div><div class="bar-track"><div class="bar-fill bar-fill-b" id="sc-bar-b" style="width:50%"></div></div></div>
+      <div class="verdict verdict-balanced" id="verdict"><div class="verdict-icon" id="verdict-icon">⚖️</div><div class="verdict-text" id="verdict-text">Log a task to get started!</div></div>
+    </div>
+    <div class="how-card">
+      <h3>How it works</h3>
+      <div class="how-row"><span class="how-icon">📝</span><span class="how-text">When you log a task you did, the same task appears as pending for your partner</span></div>
+      <div class="how-row"><span class="how-icon">✅</span><span class="how-text">They mark it done when they take their turn — keeping it strictly 50/50</span></div>
+      <div class="how-row"><span class="how-icon">🔄</span><span class="how-text">Everything syncs live between both your phones</span></div>
+      <div class="how-row"><span class="how-icon">🎉</span><span class="how-text">Confetti every time a task gets done!</span></div>
+      <button class="reset-btn" id="reset-btn">🗑️ Reset everything (both phones)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     FIREBASE — ES module, same project & pattern as your
+     other trackers. Writes to its own branch: homeTeamTasks
+     ══════════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getDatabase, ref, onValue, update, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:      "AIzaSyB5RQUiw5PFG8BHEK-6vgT-w6Rj62PcYfI",
+    authDomain:  "budget-bb9ed.firebaseapp.com",
+    databaseURL: "https://budget-bb9ed-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:   "budget-bb9ed",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  signInAnonymously(getAuth(app)).then(c => console.log("UID:", c.user.uid)).catch(e => console.error("Auth:", e));
+  const db = getDatabase(app);
+  const HOUSEHOLD = "hometeam"; // change to a private code you both share
+  const monthsRef = ref(db, "households/" + HOUSEHOLD + "/months");
+
+  // Expose to global scope for the main script
+  window._fb = { db, ref, onValue, update, set, remove, monthsRef, HOUSEHOLD };
+  window.dispatchEvent(new Event("firebase-ready"));
+
+  onValue(monthsRef, snap => {
+    window._monthsData = snap.val() || {};
+    document.getElementById("sync-indicator").textContent = "● LIVE";
+    document.getElementById("sync-indicator").style.color = "#4ade80";
+    if (window.renderFromFirebase) window.renderFromFirebase();
+  }, err => {
+    console.error("Firebase error:", err);
+    document.getElementById("sync-indicator").textContent = "● OFFLINE";
+    document.getElementById("sync-indicator").style.color = "#f87171";
+  });
+</script>
+
 <script>
-/* ---------- your Firebase project ---------- */
-const firebaseConfig={
-  apiKey:"AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
-  authDomain:"task-monitor-bd7ee.firebaseapp.com",
-  databaseURL:"https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:"task-monitor-bd7ee",
-  storageBucket:"task-monitor-bd7ee.firebasestorage.app",
-  messagingSenderId:"544624731364",
-  appId:"1:544624731364:web:419d52fa061c5c7b4f38f1"
-};
-const DB_PATH='sceData/topicTracker';   // sits alongside your existing nodes
-const BX_PATH='sceData/biopsyLog';       // renal pathology case log
-
-/* ---------- exam blueprint ---------- */
-const TOPICS=[
-  {id:'gn', name:'Glomerulonephritis & tubulointerstitial nephritis', short:'GN', note:'incl. vasculitis, anti-GBM, SLE', q:30},
-  {id:'aki',name:'AKI, acute RRT, fluid / electrolytes / acid-base', short:'AKI', note:'', q:26},
-  {id:'ckd',name:'Chronic kidney disease, haematuria, proteinuria', short:'CKD', note:'', q:24},
-  {id:'oth',name:'Other', short:'Other', note:'prescribing · pregnancy · infection · EOL', q:24},
-  {id:'cvd',name:'CVD, hypertension, renovascular & diabetes', short:'CVD/HTN', note:'', q:20},
-  {id:'uro',name:'Urological — stones, UTI & obstruction', short:'Urology', note:'', q:14},
-  {id:'inh',name:'Inherited & rarer diseases', short:'Inherited', note:'', q:14},
-  {id:'hd', name:'Haemodialysis', short:'HD', note:'', q:14},
-  {id:'tx', name:'Renal transplantation', short:'Transplant', note:'', q:14},
-  {id:'bone',name:'Renal bone disease & renal anaemia', short:'Bone/anaemia', note:'', q:12},
-  {id:'pd', name:'Peritoneal dialysis', short:'PD', note:'', q:8},
+var PRESETS = [
+  { label: "Groceries", icon: "🛒", type: "physical" },
+  { label: "Cooking dinner", icon: "🍳", type: "physical" },
+  { label: "Laundry", icon: "👕", type: "physical" },
+  { label: "School pickup", icon: "🏫", type: "physical" },
+  { label: "Dishes", icon: "🍽️", type: "physical" },
+  { label: "Vacuuming", icon: "🧹", type: "physical" },
+  { label: "Bathrooms", icon: "🚿", type: "physical" },
+  { label: "Bins", icon: "🗑️", type: "physical" },
+  { label: "Bedtime routine", icon: "🌙", type: "physical" },
+  { label: "Dr appointments", icon: "🩺", type: "mental" },
+  { label: "Meal planning", icon: "📋", type: "mental" },
+  { label: "School admin", icon: "📚", type: "mental" },
+  { label: "Budget tracking", icon: "💰", type: "mental" },
+  { label: "Gift buying", icon: "🎁", type: "mental" },
+  { label: "Birthdays", icon: "🎂", type: "mental" },
+  { label: "Booking holidays", icon: "✈️", type: "mental" }
 ];
-const SUBS={
-  gn:['IgA nephropathy','Membranous nephropathy','MCD / FSGS','Lupus nephritis','ANCA-associated vasculitis','Anti-GBM disease','MPGN / C3 glomerulopathy','Tubulointerstitial nephritis'],
-  aki:['Pre-renal & ATN','Acute interstitial nephritis','Nephrotoxins & contrast','Rhabdomyolysis & tumour lysis','Hepatorenal & cardiorenal','Acute RRT (CRRT / IHD)','Fluid & electrolyte disorders','Acid-base disorders'],
-  ckd:['Staging & progression','Haematuria workup','Proteinuria workup','Complications of CKD','Slowing progression (RAAS / SGLT2)','Preparing for RRT'],
-  oth:['Therapeutics & safe prescribing','Renal disease in pregnancy','Infection in the renal patient','Nutrition','Active supportive (non-dialysis) care','Practical procedures','Sexual health','Adult–paediatric interface','End-of-life care'],
-  cvd:['Hypertension management','Renovascular disease','Diabetic kidney disease','CV risk in CKD','Resistant / secondary HTN'],
-  uro:['Stone disease','Urinary tract infection','Obstruction'],
-  inh:['ADPKD','Alport syndrome','Fabry disease','Tubular disorders (Bartter / Gitelman)','Other cystic & rare'],
-  hd:['Vascular access','Adequacy & prescription','Intradialytic complications','Dialysis emergencies'],
-  tx:['Immunosuppression','Rejection','Post-transplant infection','Recurrent / de novo disease','Donor assessment'],
-  bone:['CKD-MBD','Renal anaemia'],
-  pd:['Modalities & prescription','Peritonitis','Other complications'],
-};
-const TOTAL_Q=200;
-const KDIGO={
-  gn:'Glomerular Diseases 2021 (living) · Lupus Nephritis 2024',
-  aki:'AKI & AKD 2012 / ongoing update',
-  ckd:'CKD 2024 · Diabetes in CKD 2023',
-  oth:'BP in CKD 2021',
-  cvd:'BP in CKD 2021 · Diabetes in CKD 2023',
-  uro:'',
-  inh:'ADPKD 2025',
-  hd:'',
-  tx:'Transplant Recipients 2009 · Living Donors 2017',
-  bone:'CKD-MBD 2017 · Anaemia in CKD 2012',
-  pd:'ISPD Peritonitis Guidelines',
-};
-const SOURCES=[['ohb','OHB'],['era','ERA'],['ccn','CCN']];
-const P1=[{key:'kd',kind:'rev',lbl:'KDIGO guideline(s)'},{key:'oe1',kind:'q',lbl:'StudyPRN'},{key:'rev',kind:'rev',lbl:'Review sheet made'},{key:'fc',kind:'rev',lbl:'Flashcards made'}];
-const P2=[{key:'rr2',kind:'rev',lbl:'Review the review sheets'},{key:'ks1',kind:'q',lbl:'KSAP mixed'}];
-const FINAL=[
-  {key:'nephroshots',lbl:'Nephro Shots'},
-  {key:'bof200',lbl:'200 Best of Five'},
-  {key:'rcmcq',lbl:'Royal College ESENeph MCQs'},
+
+var activePerson = null;
+var customType = "physical";
+var viewMonth = monthKey(new Date()); // currently displayed month
+
+/* ---------- Weekly prize pool (shhh 🤫) ---------- */
+var PRIZE_POOL = [
+  "Winner picks the next date night — no veto allowed 🎬",
+  "Breakfast in bed, made by the runner-up ☕🍳",
+  "A 20-minute back & shoulder massage 💆",
+  "Loser does the bins for the whole next week 🗑️",
+  "Winner controls the remote for a full evening 📺",
+  "A homemade dessert of the winner's choosing 🍰",
+  "One 'get out of a chore free' card to use anytime 🎟️",
+  "Runner-up makes the morning coffee all week ☕",
+  "Winner picks the next takeaway, loser pays 🥡",
+  "A lie-in this weekend — partner handles the morning 😴",
+  "Winner chooses the next song / playlist on every car trip 🎶",
+  "A heartfelt note listing 5 things they love about the winner 💌",
+  "Loser owes a foot rub on demand (one use) 🦶",
+  "Winner gets the last slice / final bite, always, this week 🍕",
+  "An uninterrupted hour of 'me time' — partner covers everything ⏰",
+  "Partner runs you a bath with the works 🛁",
+  "Winner picks the weekend activity, no complaints allowed 🗺️",
+  "A surprise small treat under £10, chosen with love 🎁",
+  "Loser handles bedtime routine solo for two nights 🌙",
+  "Winner gets a 'yes day' — one reasonable request can't be refused ✨"
 ];
-const TICK='<svg viewBox="0 0 12 12" fill="none"><path d="M2 6.2l2.6 2.6L10 3" stroke="#231d10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function pickPrize() { return PRIZE_POOL[Math.floor(Math.random() * PRIZE_POOL.length)]; }
 
-/* ---------- state (subtopics keyed by index so Firebase keys stay valid) ---------- */
-let state={};
-let firstRender=true;
-const openSubs=new Set();
-function blankTopic(id){const subs={},subConf={};(SUBS[id]||[]).forEach((s,i)=>{subs[i]=false;subConf[i]=0;});return{sources:[],subs,subConf,conf:0,kd:false,oe1:false,ks1:false,rev:false,fc:false,rr2:false};}
-function blank(){const o={};TOPICS.forEach(t=>o[t.id]=blankTopic(t.id));return o;}
-function normalize(){
-  if(!state||typeof state!=='object')state=blank();
-  if(!state._final||typeof state._final!=='object')state._final={};
-  FINAL.forEach(f=>{if(typeof state._final[f.key]!=='boolean')state._final[f.key]=!!state._final[f.key];});
-  TOPICS.forEach(t=>{
-    const s=state[t.id]||(state[t.id]=blankTopic(t.id));
-    if(!Array.isArray(s.sources))s.sources=s.sources?Object.values(s.sources):[];
-    if(!s.subs)s.subs={};
-    if(!s.subConf)s.subConf={};
-    if(typeof s.conf!=='number')s.conf=0;
-    (SUBS[t.id]||[]).forEach((_,i)=>{
-      if(typeof s.subs[i]!=='boolean')s.subs[i]=!!s.subs[i];
-      if(typeof s.subConf[i]!=='number')s.subConf[i]=+s.subConf[i]||0;
-    });
-    ['kd','oe1','ks1','rev','fc','rr2'].forEach(k=>{if(typeof s[k]!=='boolean')s[k]=!!s[k];});
+function weekKey(d) {
+  // ISO-ish week key: year + week number, Monday-based
+  var dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  var day = dt.getUTCDay() || 7;
+  dt.setUTCDate(dt.getUTCDate() + 4 - day);
+  var yearStart = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
+  var weekNo = Math.ceil((((dt - yearStart) / 86400000) + 1) / 7);
+  return dt.getUTCFullYear() + '-W' + String(weekNo).padStart(2, '0');
+}
+function currentWeekKey() { return weekKey(new Date()); }
+
+function monthKey(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+function monthName(key) {
+  var parts = key.split('-');
+  var d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, 1);
+  return d.toLocaleDateString([], { month:'long', year:'numeric' });
+}
+function currentMonthKey() { return monthKey(new Date()); }
+function isCurrentMonth() { return viewMonth === currentMonthKey(); }
+
+// All months present in the data, plus the current month, sorted
+function allMonthKeys() {
+  var data = window._monthsData || {};
+  var keys = Object.keys(data).filter(function(k){ return k.charAt(0) !== '_'; });
+  var cur = currentMonthKey();
+  if (keys.indexOf(cur) === -1) keys.push(cur);
+  keys.sort();
+  return keys;
+}
+
+// Read live data for the currently viewed month
+function getTasks() {
+  var data = window._monthsData || {};
+  var m = data[viewMonth];
+  var tasks = (m && m.tasks) ? m.tasks : {};
+  return Object.keys(tasks).map(function(k){ return tasks[k]; });
+}
+
+// Firebase pushes new data -> re-render
+window.renderFromFirebase = function() { render(); updateMonthSwitch(); checkWeeklyPrize(); };
+
+/* ---------- Weekly prize check ---------- */
+function getAllTasksAcrossMonths() {
+  var data = window._monthsData || {};
+  var out = [];
+  Object.keys(data).forEach(function(mk){
+    if (mk.charAt(0) === '_') return; // skip _prizes and other meta nodes
+    var t = data[mk].tasks || {};
+    Object.keys(t).forEach(function(k){ out.push(t[k]); });
+  });
+  return out;
+}
+
+function getPrizesNode() {
+  var data = window._monthsData || {};
+  return data._prizes || {};
+}
+
+function tasksForWeek(wk) {
+  return getAllTasksAcrossMonths().filter(function(t){
+    return t.status === 'done' && t.ts && weekKey(new Date(t.ts)) === wk;
   });
 }
 
-/* ---------- derived ---------- */
-function subsList(id){return SUBS[id]||[];}
-function subsDone(id){const l=subsList(id);return l.length?l.every((_,i)=>state[id].subs[i]):true;}
-function readDone(id){return state[id].sources.length>0 && subsDone(id);}
-function hasKD(id){return !!KDIGO[id];}
-function checkpoints(id){
-  const s=state[id];
-  const arr=[readDone(id)];
-  if(hasKD(id))arr.push(s.kd);
-  arr.push(s.oe1,s.rev,s.fc,s.rr2,s.ks1);
-  return arr;
-}
-function topicCount(id){return checkpoints(id).filter(Boolean).length;}
-function topicMax(id){return hasKD(id)?7:6;}
-function topicFP(id){const s=state[id];return readDone(id)&&(!hasKD(id)||s.kd)&&s.oe1&&s.rev&&s.fc;}
-function topicDone(id){return checkpoints(id).every(Boolean);}
-
-/* ---------- render ---------- */
-function rateDots(val,small,tid,sub){
-  let h=`<div class="rate${small?' sm':''}" data-rate="${sub!=null?'sub':'topic'}" data-tid="${tid}"${sub!=null?` data-sub="${sub}"`:''} title="1 = weak · 3 = strong">`;
-  for(let l=1;l<=3;l++)h+=`<span class="rdot ${l<=val?'on c'+val:''}" data-lvl="${l}"></span>`;
-  return h+`</div>`;
-}
-function render(){
-  try{ renderInner(); }
-  catch(e){ console.error('render error:',e); setStatus('Render error — see console','off'); }
-}
-function renderInner(){
-  const grid=document.getElementById('grid');grid.innerHTML='';
-  TOPICS.forEach((t,i)=>{
-    const s=state[t.id];
-    const card=document.createElement('div');
-    card.className='card'+(topicDone(t.id)?' done':'')+(s.conf?' conf'+s.conf:'');
-    if(firstRender)card.style.animationDelay=(i*45)+'ms';else card.style.animation='none';
-    const pct=Math.round((t.q/TOTAL_Q)*100);
-    const subs=subsList(t.id), subDoneN=subs.filter((_,k)=>s.subs[k]).length;
-
-    let h=`<div class="card-top"><div>
-        <div class="rank">#${String(i+1).padStart(2,'0')}</div>
-        <h2>${t.name}</h2>
-        ${t.note?`<div class="note">${t.note}</div>`:''}
-      </div><div class="weight"><b>${t.q}</b><span>questions</span></div></div>
-      <div class="qpct">${pct}% of the paper</div>
-      <div class="conf-row"><span class="clbl">Confidence</span>${rateDots(s.conf,false,t.id,null)}</div>
-      <div class="pass-label">First pass</div>`;
-
-    const left=subs.length-subDoneN;
-    h+=`<div class="src-row${readDone(t.id)?' read':''}"><div class="mini-check">${TICK}</div><div class="lbl">Read source(s)</div>${(s.sources.length>0&&subs.length&&!subsDone(t.id))?`<span class="hint">${left} subtopic${left>1?'s':''} left</span>`:''}</div>
-        <div class="chips" data-tid="${t.id}">`;
-    SOURCES.forEach(([v,lbl])=>{h+=`<button class="chip${s.sources.includes(v)?' sel':''}" data-src="${v}">${lbl}</button>`;});
-    h+=`</div>`;
-
-    if(subs.length){
-      const open=openSubs.has(t.id)?' open':'';
-      h+=`<details class="subs" data-tid="${t.id}"${open}>
-        <summary><span class="caret">▶</span> Subtopics
-          <span class="sub-bar"><span class="sub-fill" style="width:${(subDoneN/subs.length)*100}%"></span></span>
-          <span class="sub-count">${subDoneN}/${subs.length}</span>
-        </summary><div class="sub-body" data-tid="${t.id}">`;
-      subs.forEach((sb,k)=>{h+=`<div class="sub-row${s.subs[k]?' on':''}" data-tid="${t.id}" data-sub="${k}"><div class="sbox">${TICK}</div><div class="stext">${sb}</div>${rateDots(s.subConf[k]||0,true,t.id,k)}</div>`;});
-      h+=`</div></details>`;
-    }
-
-    P1.forEach(st=>{
-      if(st.key==='kd'){
-        if(!KDIGO[t.id])return; // no guideline for this topic
-        const isISPD=KDIGO[t.id].indexOf('ISPD')===0;
-        const head=isISPD?'Guideline':'KDIGO';
-        h+=`<div class="check${s.kd?' on':''}" data-kind="rev" data-tid="${t.id}" data-key="kd"><div class="box">${TICK}</div><div class="lbl">${head} <span style="color:var(--faint);font-size:11.5px">— ${KDIGO[t.id]}</span></div></div>`;
-      }else{
-        h+=`<div class="check${s[st.key]?' on':''}" data-kind="${st.kind}" data-tid="${t.id}" data-key="${st.key}"><div class="box">${TICK}</div><div class="lbl">${st.lbl}</div></div>`;
-      }
-    });
-    h+=`<div class="pass-label">Second pass</div>`;
-    P2.forEach(st=>{h+=`<div class="check${s[st.key]?' on':''}" data-kind="${st.kind}" data-tid="${t.id}" data-key="${st.key}"><div class="box">${TICK}</div><div class="lbl">${st.lbl}</div></div>`;});
-
-    const c=topicCount(t.id),mx=topicMax(t.id);
-    h+=`<div class="mini"><div class="mini-bar"><div class="mini-fill" style="width:${(c/mx)*100}%"></div></div><div class="mini-txt">${c}/${mx}</div></div>`;
-    card.innerHTML=h;
-    grid.appendChild(card);
-  });
-  bind();updateOverall();renderFinal();
-  firstRender=false;
-}
-function renderFinal(){
-  const allDone=TOPICS.every(t=>topicDone(t.id));
-  const box=document.getElementById('final');if(!box)return;
-  box.classList.toggle('locked',!allDone);
-  document.getElementById('finalLock').style.display=allDone?'none':'inline-block';
-  const grid=document.getElementById('finalGrid');grid.innerHTML='';
-  FINAL.forEach(f=>{
-    const on=state._final&&state._final[f.key];
-    const el=document.createElement('div');
-    el.className='fitem'+(on?' on':'');
-    el.dataset.locked=allDone?'0':'1';
-    el.innerHTML=`<div class="box">${TICK}</div><div class="ftext">${f.lbl}</div>`;
-    if(allDone)el.onclick=()=>{state._final[f.key]=!state._final[f.key];commit();};
-    grid.appendChild(el);
-  });
-}
-function bind(){
-  document.querySelectorAll('details.subs').forEach(d=>{d.ontoggle=()=>{
-    const tid=d.dataset.tid;if(d.open)openSubs.add(tid);else openSubs.delete(tid);};});
-  document.querySelectorAll('.chip').forEach(b=>{b.onclick=()=>{
-    const tid=b.parentElement.dataset.tid;if(!state[tid])return;
-    const v=b.dataset.src,arr=state[tid].sources,k=arr.indexOf(v);
-    if(k>=0)arr.splice(k,1);else arr.push(v);commit();};});
-  document.querySelectorAll('.sub-row').forEach(r=>{r.onclick=()=>{
-    const tid=r.dataset.tid,k=+r.dataset.sub;if(!state[tid])return;
-    state[tid].subs[k]=!state[tid].subs[k];commit();};});
-  document.querySelectorAll('.check').forEach(el=>{el.onclick=()=>{
-    const tid=el.dataset.tid,key=el.dataset.key;if(!state[tid])return;
-    state[tid][key]=!state[tid][key];commit();};});
-  document.querySelectorAll('.rate').forEach(w=>{
-    w.querySelectorAll('.rdot').forEach(d=>{d.onclick=(e)=>{
-      e.stopPropagation();
-      const tid=w.dataset.tid,lvl=+d.dataset.lvl;if(!state[tid])return;
-      if(w.dataset.rate==='sub'){const k=+w.dataset.sub;state[tid].subConf[k]=(state[tid].subConf[k]===lvl?0:lvl);}
-      else{state[tid].conf=(state[tid].conf===lvl?0:lvl);}
-      commit();};});
-  });
-}
-function updateOverall(){
-  let done=0,max=0,fp=0,full=0;
-  TOPICS.forEach(t=>{done+=topicCount(t.id);max+=topicMax(t.id);if(topicFP(t.id))fp++;if(topicDone(t.id))full++;});
-  const pct=Math.round((done/max)*100);
-  document.getElementById('ringPct').textContent=pct+'%';
-  document.getElementById('fpCount').textContent=fp;
-  document.getElementById('fullCount').textContent=full;
-  document.getElementById('ring').style.strokeDashoffset=(2*Math.PI*54)*(1-pct/100);
-  const weak=TOPICS.filter(t=>state[t.id].conf===1).map(t=>t.short);
-  document.getElementById('focus').innerHTML=weak.length?('Focus: <b>'+weak.join(' · ')+'</b>'):'No topics rated weak yet';
+function lastWeekKey() {
+  var d = new Date();
+  d.setDate(d.getDate() - 7);
+  return weekKey(d);
 }
 
-/* ---------- Firebase sync ---------- */
-let fbRef=null,saveTimer=null,flashTimer=null,ready=false,lastWritten=null;
-let bxRef=null,bxData={},bxPendingImg=null;
-function showGrid(){if(!ready){ready=true;document.getElementById('loading').style.display='none';document.getElementById('grid').style.display='grid';}}
-function setStatus(txt,cls){const e=document.getElementById('status');if(e){e.textContent='● '+txt;e.className='status '+(cls||'');}}
-function flash(){const s=document.getElementById('saved');if(!s)return;s.classList.add('show');clearTimeout(flashTimer);flashTimer=setTimeout(()=>s.classList.remove('show'),1400);}
-function commit(){render();save();}
-function save(){
-  if(fbRef){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{lastWritten=JSON.stringify(state);fbRef.set(state).then(flash).catch(err=>setStatus('Write failed: '+err.message,'off'));},300);}
-  else{flash();}
-}
-function initFirebase(){
-  if(typeof firebase==='undefined'||!firebase.initializeApp){
-    setStatus('Offline — open the downloaded file to sync','off');return false;
+function checkWeeklyPrize() {
+  if (!window._fb) return;
+  var prizes = getPrizesNode();
+  var lw = lastWeekKey();
+
+  // already drawn for last week? show it (once)
+  if (prizes[lw]) { maybeShowPrize(prizes[lw], lw); return; }
+
+  // do we have any completed tasks from last week to judge?
+  var done = tasksForWeek(lw);
+  if (done.length === 0) return;
+  var a = done.filter(function(t){ return t.owner === 'a'; }).length;
+  var b = done.filter(function(t){ return t.owner === 'b'; }).length;
+  var total = a + b;
+  var share = Math.max(a, b) / total; // winning share, 0.5 = perfect
+
+  var prize;
+  if (share <= 0.60) {
+    // balanced week — both win together
+    prize = { mode: 'balanced', text: pickPrize(), a: a, b: b, drawn: Date.now() };
+  } else {
+    // lopsided — the one who did less owes the prize to the one who did more
+    var ahead = a > b ? 'a' : 'b';
+    var behind = a > b ? 'b' : 'a';
+    prize = { mode: 'owed', ahead: ahead, behind: behind, text: pickPrize(), a: a, b: b, drawn: Date.now() };
   }
-  try{
-    firebase.initializeApp(firebaseConfig);
-    const db=firebase.database();
-    fbRef=db.ref(DB_PATH);
-    bxRef=db.ref(BX_PATH);
-    db.ref('.info/connected').on('value',s=>{
-      const on=!!s.val();
-      setStatus(on?'Live · synced across devices':'Connecting…',on?'live':'wait');
-    });
-    fbRef.on('value',snap=>{
-      const v=snap.val();
-      const incoming=JSON.stringify(v||{});
-      // Echo of our own write — state already reflects it, don't re-render (prevents flicker)
-      if(incoming===lastWritten){showGrid();return;}
-      state=(v&&typeof v==='object')?v:blank();
-      normalize();showGrid();render();
-    },err=>{setStatus('Sync error: '+err.message,'off');state=blank();normalize();showGrid();render();});
-    bxRef.on('value',snap=>{bxData=snap.val()||{};renderBiopsy();});
-    return true;
-  }catch(e){setStatus('Init error: '+e.message,'off');return false;}
+  // lock it into Firebase so both phones see the same prize
+  window._fb.set(window._fb.ref(window._fb.db, "households/" + window._fb.HOUSEHOLD + "/months/_prizes/" + lw), prize);
 }
 
-/* ---------- tabs ---------- */
-document.querySelectorAll('.tab').forEach(t=>{t.onclick=()=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
-  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='view-'+t.dataset.view));
-};});
+function maybeShowPrize(prize, wk) {
+  if (sessionStorage.getItem('prizeShown-' + wk)) return;
+  sessionStorage.setItem('prizeShown-' + wk, '1');
+  showPrizeModal(prize);
+}
 
-/* ---------- biopsy log ---------- */
-function isoWeekKey(d){
-  const dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
-  const day=dt.getUTCDay()||7; dt.setUTCDate(dt.getUTCDate()+4-day);
-  const yStart=new Date(Date.UTC(dt.getUTCFullYear(),0,1));
-  const wk=Math.ceil((((dt-yStart)/86400000)+1)/7);
-  return dt.getUTCFullYear()+'-W'+String(wk).padStart(2,'0');
-}
-function compressImage(file,cb){
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const img=new Image();
-    img.onload=()=>{
-      const max=900;let{width:w,height:h}=img;
-      if(w>max||h>max){if(w>=h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;}}
-      const c=document.createElement('canvas');c.width=w;c.height=h;
-      c.getContext('2d').drawImage(img,0,0,w,h);
-      cb(c.toDataURL('image/jpeg',0.7));
-    };
-    img.onerror=()=>cb(null);
-    img.src=e.target.result;
-  };
-  reader.onerror=()=>cb(null);
-  reader.readAsDataURL(file);
-}
-function bxRefreshSaveBtn(){
-  const dx=document.getElementById('bxDx').value.trim();
-  document.getElementById('bxSave').disabled=!dx;
-}
-function bxBindForm(){
-  const file=document.getElementById('bxFile'),drop=document.getElementById('bxDrop'),prev=document.getElementById('bxPrev'),hint=document.getElementById('bxHint');
-  document.getElementById('bxDx').oninput=bxRefreshSaveBtn;
-  drop.onclick=()=>file.click();
-  file.onchange=()=>{
-    const f=file.files[0];if(!f)return;
-    hint.textContent='Compressing…';
-    compressImage(f,data=>{
-      if(!data){hint.textContent='Could not read image';return;}
-      bxPendingImg=data;prev.src=data;prev.style.display='block';
-      hint.textContent='~'+Math.round(data.length/1024)+' KB';
-    });
-  };
-  document.getElementById('bxClear').onclick=bxResetForm;
-  document.getElementById('bxSave').onclick=()=>{
-    const dx=document.getElementById('bxDx').value.trim();
-    if(!dx)return;
-    const feat=document.getElementById('bxFeat').value.trim();
-    const caseNo=document.getElementById('bxCase').value.trim();
-    const rec={dx,feat,caseNo:caseNo||null,img:bxPendingImg||null,ts:Date.now(),week:isoWeekKey(new Date())};
-    if(bxRef){bxRef.push(rec).then(()=>{flash();bxResetForm();}).catch(e=>{hint.textContent='Save failed: '+e.message;});}
-    else{const id='local-'+Date.now();bxData[id]=rec;bxResetForm();renderBiopsy();flash();}
-  };
-}
-function bxResetForm(){
-  document.getElementById('bxCase').value='';
-  document.getElementById('bxDx').value='';
-  document.getElementById('bxFeat').value='';
-  document.getElementById('bxFile').value='';
-  document.getElementById('bxPrev').style.display='none';
-  document.getElementById('bxHint').textContent='';
-  bxPendingImg=null;bxRefreshSaveBtn();
-}
-function bxDelete(id){
-  if(!confirm('Delete this case?'))return;
-  if(bxRef){bxRef.child(id).remove().catch(()=>{});}
-  else{delete bxData[id];renderBiopsy();}
-}
-function openLightbox(src){const lb=document.getElementById('lightbox');document.getElementById('lightboxImg').src=src;lb.classList.add('on');}
-document.getElementById('lightbox').onclick=()=>document.getElementById('lightbox').classList.remove('on');
+function showPrizeModal(prize) {
+  var ov = document.getElementById('prize-overlay');
+  var nameFor = function(p){ return p === 'a' ? 'Peggy 👩🏾' : 'Mark 👨🏾'; };
 
-function renderBiopsy(){
-  const entries=Object.entries(bxData).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
-  const thisWeek=isoWeekKey(new Date());
-  const weekN=entries.filter(([,r])=>r.week===thisWeek).length;
-  document.getElementById('bxTotal').textContent=entries.length;
-  document.getElementById('bxWeekN').textContent=weekN;
-  // week pips
-  let pips='';
-  for(let i=0;i<5;i++)pips+=`<div class="pip${i<weekN?' full':''}">${i<weekN?TICK_S:''}</div>`;
-  document.getElementById('bxWeek').innerHTML=pips;
-  // list
-  const list=document.getElementById('bxList');
-  if(!entries.length){list.innerHTML='<div class="bx-empty">No cases logged yet — add your first review above.</div>';return;}
-  list.innerHTML='';
-  entries.forEach(([id,r])=>{
-    const d=new Date(r.ts||Date.now());
-    const date=d.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
-    const card=document.createElement('div');card.className='bx-card';
-    card.innerHTML=
-      (r.img?`<img class="bx-img" src="${r.img}" alt="">`:`<div class="bx-noimg">No image</div>`)+
-      `<div class="bx-body">
-        <div class="bx-dx">${escapeHtml(r.dx||'Untitled')}</div>
-        ${r.feat?`<div class="bx-feat">${escapeHtml(r.feat)}</div>`:''}
-        <div class="bx-foot"><span>${r.caseNo?escapeHtml(r.caseNo)+' · ':''}${date}</span><button class="bx-del" data-id="${id}">Delete</button></div>
-      </div>`;
-    const im=card.querySelector('.bx-img');if(im)im.onclick=()=>openLightbox(r.img);
-    card.querySelector('.bx-del').onclick=()=>bxDelete(id);
-    list.appendChild(card);
+  if (prize.mode === 'balanced') {
+    document.getElementById('prize-emoji').textContent = '⚖️';
+    document.getElementById('prize-winner').textContent = 'A balanced week — you both win!';
+    document.getElementById('prize-score').textContent = 'Peggy ' + prize.a + ' · Mark ' + prize.b + ' — nicely shared 🤝';
+    document.getElementById('prize-heading').textContent = "This week's shared reward";
+    document.getElementById('prize-text').textContent = prize.text;
+  } else {
+    document.getElementById('prize-emoji').textContent = '🎁';
+    document.getElementById('prize-winner').textContent = nameFor(prize.ahead) + ' carried the week';
+    document.getElementById('prize-score').textContent = 'Peggy ' + prize.a + ' · Mark ' + prize.b;
+    document.getElementById('prize-heading').textContent = nameFor(prize.behind).split(' ')[0] + ' owes ' + nameFor(prize.ahead).split(' ')[0] + ':';
+    document.getElementById('prize-text').textContent = prize.text;
+  }
+  ov.style.display = 'flex';
+  launchConfetti(); setTimeout(launchConfetti, 400); setTimeout(launchConfetti, 800);
+}
+
+/* ---------- Writes (always to the CURRENT month) ---------- */
+function basePath() { return "households/" + (window._fb ? window._fb.HOUSEHOLD : "hometeam") + "/months/" + currentMonthKey() + "/tasks/"; }
+function fbWrite(task) {
+  if (window._fb) window._fb.set(window._fb.ref(window._fb.db, basePath() + task.id), task);
+}
+function fbUpdate(id, changes) {
+  if (window._fb) window._fb.update(window._fb.ref(window._fb.db, basePath() + id), changes);
+}
+
+function logTask(person, taskData) {
+  // logging always happens in the current month
+  if (!isCurrentMonth()) { viewMonth = currentMonthKey(); }
+  var other = person === 'a' ? 'b' : 'a';
+  var base = Date.now();
+  var rid = Math.floor(Math.random()*100000);
+  var pair = 'p' + base + 'x' + rid;
+  fbWrite({ id: 't' + base + 'x' + rid, pair: pair, label: taskData.label, icon: taskData.icon, type: taskData.type, owner: person, status: 'done', ts: base });
+  fbWrite({ id: 't' + (base+1) + 'x' + (rid+1), pair: pair, label: taskData.label, icon: taskData.icon, type: taskData.type, owner: other, status: 'pending', ts: base+1 });
+  closePanel();
+  showToast((person === 'a' ? '👩🏾 Peggy' : '👨🏾 Mark') + ' did: ' + taskData.label + ' — ' + (other === 'a' ? "Peggy's" : "Mark's") + ' turn next!');
+  launchConfetti();
+}
+
+function deleteTask(id) {
+  if (!isCurrentMonth()) return; // past months are read-only
+  var tasks = getTasks();
+  var t = tasks.filter(function(x){ return x.id === id; })[0];
+  if (!t) return;
+  if (!confirm('Delete "' + t.label + '"? This removes it for both of you.')) return;
+  tasks.forEach(function(x){
+    if (x.id === id || (t.pair && x.pair === t.pair)) {
+      if (window._fb) window._fb.remove(window._fb.ref(window._fb.db, basePath() + x.id));
+    }
   });
+  showToast('🗑️ Removed: ' + t.label);
 }
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-const TICK_S='<svg viewBox="0 0 12 12" fill="none"><path d="M2 6.2l2.6 2.6L10 3" stroke="#16210f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-bxBindForm();renderBiopsy();
 
-document.getElementById('reset').onclick=()=>{
-  if(!confirm('Reset progress for all 11 topics? This cannot be undone.'))return;
-  state=blank();normalize();render();save();
-};
+function completeTask(id) {
+  var t = getTasks().filter(function(x){ return x.id === id; })[0];
+  if (!t) return;
+  fbUpdate(id, { status: 'done', ts: Date.now() });
+  showToast((t.owner === 'a' ? '👩🏾 Peggy' : '👨🏾 Mark') + ' completed: ' + t.label + ' — balanced! ⚖️');
+  launchConfetti();
+}
 
-if(!initFirebase()){state=blank();normalize();showGrid();render();renderBiopsy();}
+function resetAll() {
+  if (!confirm('Clear all tasks for ' + monthName(viewMonth) + ' (both phones)? This cannot be undone.')) return;
+  if (window._fb) window._fb.remove(window._fb.ref(window._fb.db, "households/" + window._fb.HOUSEHOLD + "/months/" + viewMonth));
+}
+
+/* ---------- Render ---------- */
+function render() {
+  var tasks = getTasks();
+  ['a','b'].forEach(function(p) {
+    var container = document.getElementById('tasks-' + p);
+    if (!container) return;
+    container.innerHTML = '';
+    var mine = tasks.filter(function(t){ return t.owner === p; })
+      .sort(function(a,b){
+        if (a.status === 'pending' && b.status !== 'pending') return -1;
+        if (a.status !== 'pending' && b.status === 'pending') return 1;
+        return (b.ts||0) - (a.ts||0);
+      });
+    document.getElementById('empty-' + p).style.display = mine.length ? 'none' : 'block';
+    mine.forEach(function(t){ container.appendChild(buildCard(t)); });
+  });
+  updateScores(tasks);
+}
+
+function buildCard(t) {
+  var card = document.createElement('div');
+  var readOnly = !isCurrentMonth();
+  var tagHtml = '<span class="tag tag-' + t.type + '">' + (t.type === 'mental' ? '🧠 mental' : '💪 physical') + '</span>';
+  var del = readOnly ? '' : '<button class="del-btn" title="Delete" onclick="deleteTask(\'' + t.id + '\')">✕</button>';
+  if (t.status === 'done') {
+    card.className = 'task-card done';
+    var time = new Date(t.ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    card.innerHTML = '<span class="task-icon">' + t.icon + '</span><div class="task-info"><div class="task-label">' + t.label + '</div><div class="task-meta">' + tagHtml + time + '</div></div><span class="done-check">✅</span>' + del;
+  } else {
+    card.className = 'task-card pending-' + t.owner;
+    var right = readOnly
+      ? '<span class="done-check" style="opacity:0.4">⏳</span>'
+      : '<button class="complete-btn complete-btn-' + t.owner + '" onclick="completeTask(\'' + t.id + '\')">Done ✓</button>';
+    card.innerHTML = '<span class="task-icon">' + t.icon + '</span><div class="task-info"><div class="task-label">' + t.label + '</div><div class="task-meta">' + tagHtml + (readOnly ? 'not done' : 'your turn') + '</div></div>' + right + del;
+  }
+  return card;
+}
+
+function updateScores(tasks) {
+  var a = tasks.filter(function(t){ return t.owner==='a' && t.status==='done'; }).length;
+  var b = tasks.filter(function(t){ return t.owner==='b' && t.status==='done'; }).length;
+  var total = a + b;
+  var pA = total ? Math.round((a/total)*100) : 50;
+  var pB = 100 - pA;
+  document.getElementById('strip-a').style.width = pA + '%';
+  document.getElementById('strip-b').style.width = pB + '%';
+  document.getElementById('strip-label').textContent = a + ' vs ' + b;
+  document.getElementById('sub-a').textContent = a + ' done';
+  document.getElementById('sub-b').textContent = b + ' done';
+  document.getElementById('sc-sub-a').textContent = a + ' completed';
+  document.getElementById('sc-sub-b').textContent = b + ' completed';
+  document.getElementById('sc-pct-a').textContent = pA + '%';
+  document.getElementById('sc-pct-b').textContent = pB + '%';
+  document.getElementById('sc-bar-a').style.width = pA + '%';
+  document.getElementById('sc-bar-b').style.width = pB + '%';
+  var v = document.getElementById('verdict'), vt = document.getElementById('verdict-text'), vi = document.getElementById('verdict-icon');
+  var diff = Math.abs(pA - pB);
+  if (total === 0) { v.className='verdict verdict-balanced'; vi.textContent='⚖️'; vt.textContent='Log a task to get started!'; }
+  else if (diff <= 10) { v.className='verdict verdict-balanced'; vi.textContent='⚖️'; vt.textContent='Perfectly balanced — great teamwork! 🎉'; }
+  else if (pA > pB) { v.className='verdict verdict-imbalanced'; vi.textContent='📊'; vt.textContent='Mark has pending tasks to catch up on'; }
+  else { v.className='verdict verdict-imbalanced'; vi.textContent='📊'; vt.textContent='Peggy has pending tasks to catch up on'; }
+  updateWeekRace();
+}
+
+function updateWeekRace() {
+  var el = document.getElementById('week-race');
+  if (!el) return;
+  var done = tasksForWeek(currentWeekKey());
+  var a = done.filter(function(t){ return t.owner==='a'; }).length;
+  var b = done.filter(function(t){ return t.owner==='b'; }).length;
+  var total = a + b;
+  if (total === 0) { el.innerHTML = '🏁 This week — keep it balanced to both win the mystery prize! 🎁'; return; }
+  var share = Math.max(a, b) / total;
+  if (share <= 0.60) {
+    el.innerHTML = '⚖️ This week: <b>balanced ' + a + '–' + b + '</b> — on track to both win! 🎁';
+  } else {
+    var ahead = a > b ? 'Peggy 👩🏾' : 'Mark 👨🏾';
+    var behind = a > b ? 'Mark' : 'Peggy';
+    el.innerHTML = '⚠️ This week: <b>' + a + '–' + b + '</b>, a bit lopsided — ' + behind + ' has catching up to do!';
+  }
+}
+
+/* ---------- Panel ---------- */
+function togglePanel(person) {
+  var panel = document.getElementById('add-panel');
+  if (activePerson === person && panel.classList.contains('visible')) { closePanel(); return; }
+  activePerson = person;
+  panel.classList.remove('for-a','for-b');
+  panel.classList.add('for-' + person, 'visible');
+  var name = person === 'a' ? 'Peggy' : 'Mark';
+  document.getElementById('panel-title').textContent = (person==='a'?'👩🏾 ':'👨🏾 ') + name + ' — what did you do?';
+  document.getElementById('custom-label').value = '';
+  document.getElementById('custom-icon').value = '✨';
+  setType('physical');
+  document.getElementById('addbtn-a').textContent = person==='a' ? '✕ Cancel' : '+ I did this';
+  document.getElementById('addbtn-b').textContent = person==='b' ? '✕ Cancel' : '+ I did this';
+  var grid = document.getElementById('preset-grid'); grid.innerHTML = '';
+  PRESETS.forEach(function(p){
+    var btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.innerHTML = '<span class="preset-btn-icon">'+p.icon+'</span><div><div class="preset-btn-label">'+p.label+'</div><div class="preset-btn-type">'+p.type+'</div></div>';
+    btn.onclick = function(){ logTask(person, { label:p.label, icon:p.icon, type:p.type }); };
+    grid.appendChild(btn);
+  });
+  document.getElementById('log-custom-btn').className = 'log-btn log-btn-' + person;
+}
+function setType(t) {
+  customType = t;
+  var p = activePerson || 'a';
+  document.getElementById('type-physical').className = 'type-btn' + (t==='physical'?' selected-'+p:'');
+  document.getElementById('type-mental').className = 'type-btn' + (t==='mental'?' selected-'+p:'');
+}
+function logCustom() {
+  var label = document.getElementById('custom-label').value.trim();
+  var icon = document.getElementById('custom-icon').value || '✨';
+  if (!label || !activePerson) return;
+  logTask(activePerson, { label:label, icon:icon, type:customType });
+}
+function closePanel() {
+  document.getElementById('add-panel').classList.remove('visible');
+  activePerson = null;
+  document.getElementById('addbtn-a').textContent = '+ I did this';
+  document.getElementById('addbtn-b').textContent = '+ I did this';
+}
+function switchTab(tab) {
+  document.getElementById('tab-board').style.display = tab==='board' ? '' : 'none';
+  document.getElementById('tab-scores').style.display = tab==='scores' ? '' : 'none';
+  document.getElementById('tabbtn-board').classList.toggle('active', tab==='board');
+  document.getElementById('tabbtn-scores').classList.toggle('active', tab==='scores');
+}
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+function launchConfetti() {
+  var canvas = document.getElementById('confetti-canvas'), ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  var colors = ['#FF6B6B','#11998e','#FFE66D','#A8E6CF','#FF8B94','#B4F8C8','#c084fc'];
+  var parts = [];
+  for (var i=0;i<80;i++) parts.push({ x:Math.random()*canvas.width, y:-10, r:Math.random()*7+3, color:colors[Math.floor(Math.random()*colors.length)], vx:(Math.random()-0.5)*3, vy:Math.random()*3+1.5, g:0.1, op:1, rot:Math.random()*360, rs:(Math.random()-0.5)*6, rect:Math.random()>0.5 });
+  var frame = 0;
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    parts.forEach(function(p){ p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.rot+=p.rs; p.op-=0.01; ctx.save(); ctx.globalAlpha=Math.max(0,p.op); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180); ctx.fillStyle=p.color; if(p.rect) ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r); else { ctx.beginPath(); ctx.arc(0,0,p.r/2,0,Math.PI*2); ctx.fill(); } ctx.restore(); });
+    frame++; if (frame<160) requestAnimationFrame(draw); else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  requestAnimationFrame(draw);
+}
+
+/* ---------- Month switcher ---------- */
+function updateMonthSwitch() {
+  var keys = allMonthKeys();
+  var idx = keys.indexOf(viewMonth);
+  if (idx === -1) { viewMonth = currentMonthKey(); idx = keys.indexOf(viewMonth); }
+  document.getElementById('month-label').textContent = monthName(viewMonth);
+  document.getElementById('month-prev').disabled = (idx <= 0);
+  document.getElementById('month-next').disabled = (idx >= keys.length - 1);
+  document.getElementById('past-banner').style.display = isCurrentMonth() ? 'none' : 'block';
+  document.getElementById('week-race').style.display = isCurrentMonth() ? 'block' : 'none';
+  // hide the add buttons on past months
+  var show = isCurrentMonth() ? '' : 'none';
+  document.getElementById('addbtn-a').style.display = show;
+  document.getElementById('addbtn-b').style.display = show;
+}
+function stepMonth(dir) {
+  var keys = allMonthKeys();
+  var idx = keys.indexOf(viewMonth);
+  var next = idx + dir;
+  if (next < 0 || next >= keys.length) return;
+  viewMonth = keys[next];
+  render();
+  updateMonthSwitch();
+}
+
+/* ---------- Wire up ---------- */
+document.getElementById('month-prev').addEventListener('click', function(){ stepMonth(-1); });
+document.getElementById('month-next').addEventListener('click', function(){ stepMonth(1); });
+document.getElementById('prize-close').addEventListener('click', function(){ document.getElementById('prize-overlay').style.display = 'none'; });
+document.getElementById('tabbtn-board').addEventListener('click', function(){ switchTab('board'); });
+document.getElementById('tabbtn-scores').addEventListener('click', function(){ switchTab('scores'); });
+document.getElementById('addbtn-a').addEventListener('click', function(){ togglePanel('a'); });
+document.getElementById('addbtn-b').addEventListener('click', function(){ togglePanel('b'); });
+document.getElementById('type-physical').addEventListener('click', function(){ setType('physical'); });
+document.getElementById('type-mental').addEventListener('click', function(){ setType('mental'); });
+document.getElementById('log-custom-btn').addEventListener('click', logCustom);
+document.getElementById('reset-btn').addEventListener('click', resetAll);
+
+// Initial render (Firebase will re-render once data arrives)
+render();
+updateMonthSwitch();
 </script>
 </body>
 </html>
