@@ -202,7 +202,7 @@
   .final.locked{opacity:0.55}
   .final h3{font-family:'Fraunces',serif;font-weight:600;font-size:20px;letter-spacing:-0.01em;margin-bottom:2px}
   .final .fsub{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:0.04em;color:var(--muted);margin-bottom:16px}
-  .final .lock-tag{position:absolute;top:22px;right:22px;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--amber-deep)}
+  .final .lock-tag{display:inline-block;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--amber-deep);margin-bottom:16px;padding:5px 10px;border:1px solid rgba(194,131,47,0.4);border-radius:7px}
   .final-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
   .fitem{display:flex;align-items:center;gap:12px;padding:14px 15px;border:1px solid var(--line);border-radius:12px;background:var(--card);cursor:pointer;transition:all .18s}
   .fitem:hover{border-color:#4a4230;background:var(--card-hi)}
@@ -270,9 +270,9 @@
   <div class="grid" id="grid" style="display:none"></div>
 
   <div class="final locked" id="final">
-    <span class="lock-tag" id="finalLock">🔒 unlocks when all 11 topics complete</span>
     <h3>Final push</h3>
     <div class="fsub">High-volume mixed practice once every topic is done</div>
+    <span class="lock-tag" id="finalLock">🔒 Unlocks when all 11 topics complete</span>
     <div class="final-grid" id="finalGrid"></div>
   </div>
   </div><!-- /view-topics -->
@@ -445,6 +445,15 @@ function rateDots(val,small,tid,sub){
   return h+`</div>`;
 }
 function render(){
+  try{ renderInner(); }
+  catch(e){
+    console.error('render error:',e);
+    setStatus('Render error — see console','off');
+    const g=document.getElementById('grid');
+    if(g){const d=document.createElement('div');d.style.cssText='grid-column:1/-1;background:#3a1d12;border:1px solid #c96a44;border-radius:12px;padding:16px;color:#f0c9b4;font-family:monospace;font-size:12px;white-space:pre-wrap';d.textContent='Render error: '+(e&&e.message)+'\n'+((e&&e.stack)||'').split('\n').slice(0,3).join('\n');g.innerHTML='';g.appendChild(d);}
+  }
+}
+function renderInner(){
   const grid=document.getElementById('grid');grid.innerHTML='';
   TOPICS.forEach((t,i)=>{
     const s=state[t.id];
@@ -476,7 +485,7 @@ function render(){
           <span class="sub-bar"><span class="sub-fill" style="width:${(subDoneN/subs.length)*100}%"></span></span>
           <span class="sub-count">${subDoneN}/${subs.length}</span>
         </summary><div class="sub-body" data-tid="${t.id}">`;
-      subs.forEach((sb,k)=>{h+=`<div class="sub-row${s.subs[k]?' on':''}" data-sub="${k}"><div class="sbox">${TICK}</div><div class="stext">${sb}</div>${rateDots(s.subConf[k]||0,true,t.id,k)}</div>`;});
+      subs.forEach((sb,k)=>{h+=`<div class="sub-row${s.subs[k]?' on':''}" data-tid="${t.id}" data-sub="${k}"><div class="sbox">${TICK}</div><div class="stext">${sb}</div>${rateDots(s.subConf[k]||0,true,t.id,k)}</div>`;});
       h+=`</div></details>`;
     }
 
@@ -502,18 +511,19 @@ function render(){
   firstRender=false;
 }
 function renderFinal(){
-  const allDone=TOPICS.every(t=>topicDone(t.id));
   const box=document.getElementById('final');if(!box)return;
+  const allDone=TOPICS.every(t=>topicDone(t.id));
   box.classList.toggle('locked',!allDone);
-  document.getElementById('finalLock').style.display=allDone?'none':'block';
-  const grid=document.getElementById('finalGrid');grid.innerHTML='';
+  const lock=document.getElementById('finalLock');if(lock)lock.style.display=allDone?'none':'inline-block';
+  const grid=document.getElementById('finalGrid');if(!grid)return;
+  grid.innerHTML='';
   FINAL.forEach(f=>{
     const on=state._final&&state._final[f.key];
     const el=document.createElement('div');
     el.className='fitem'+(on?' on':'');
     el.dataset.locked=allDone?'0':'1';
     el.innerHTML=`<div class="box">${TICK}</div><div class="ftext">${f.lbl}</div>`;
-    if(allDone)el.onclick=()=>{state._final[f.key]=!state._final[f.key];commit();};
+    if(allDone)el.onclick=()=>{if(!state._final)state._final={};state._final[f.key]=!state._final[f.key];commit();};
     grid.appendChild(el);
   });
 }
@@ -521,29 +531,35 @@ function bind(){
   document.querySelectorAll('details.subs').forEach(d=>{d.ontoggle=()=>{
     const tid=d.dataset.tid;if(d.open)openSubs.add(tid);else openSubs.delete(tid);};});
   document.querySelectorAll('.chip').forEach(b=>{b.onclick=()=>{
-    const tid=b.parentElement.dataset.tid,v=b.dataset.src,arr=state[tid].sources,k=arr.indexOf(v);
+    const tid=b.parentElement.dataset.tid;if(!state[tid])return;
+    const v=b.dataset.src,arr=state[tid].sources,k=arr.indexOf(v);
     if(k>=0)arr.splice(k,1);else arr.push(v);commit();};});
   document.querySelectorAll('.sub-row').forEach(r=>{r.onclick=()=>{
-    const tid=r.parentElement.dataset.tid,k=+r.dataset.sub;state[tid].subs[k]=!state[tid].subs[k];commit();};});
+    const tid=r.dataset.tid,k=+r.dataset.sub;if(!state[tid])return;
+    state[tid].subs[k]=!state[tid].subs[k];commit();};});
   document.querySelectorAll('.check').forEach(el=>{el.onclick=()=>{
-    const tid=el.dataset.tid,key=el.dataset.key;state[tid][key]=!state[tid][key];commit();};});
-  document.querySelectorAll('.rate .rdot').forEach(d=>{d.onclick=(e)=>{
-    e.stopPropagation();
-    const w=d.parentElement,tid=w.dataset.tid,lvl=+d.dataset.lvl;
-    if(w.dataset.rate==='sub'){const k=+w.dataset.sub;state[tid].subConf[k]=(state[tid].subConf[k]===lvl?0:lvl);}
-    else{state[tid].conf=(state[tid].conf===lvl?0:lvl);}
-    commit();};});
+    const tid=el.dataset.tid,key=el.dataset.key;if(!state[tid])return;
+    state[tid][key]=!state[tid][key];commit();};});
+  document.querySelectorAll('.rate').forEach(w=>{
+    w.querySelectorAll('.rdot').forEach(d=>{d.onclick=(e)=>{
+      e.stopPropagation();
+      const tid=w.dataset.tid,lvl=+d.dataset.lvl;if(!state[tid])return;
+      if(w.dataset.rate==='sub'){const k=+w.dataset.sub;state[tid].subConf[k]=(state[tid].subConf[k]===lvl?0:lvl);}
+      else{state[tid].conf=(state[tid].conf===lvl?0:lvl);}
+      commit();};});
+  });
 }
 function updateOverall(){
   let done=0,max=0,fp=0,full=0;
   TOPICS.forEach(t=>{done+=topicCount(t.id);max+=topicMax(t.id);if(topicFP(t.id))fp++;if(topicDone(t.id))full++;});
-  const pct=Math.round((done/max)*100);
-  document.getElementById('ringPct').textContent=pct+'%';
-  document.getElementById('fpCount').textContent=fp;
-  document.getElementById('fullCount').textContent=full;
-  document.getElementById('ring').style.strokeDashoffset=(2*Math.PI*54)*(1-pct/100);
-  const weak=TOPICS.filter(t=>state[t.id].conf===1).map(t=>t.short);
-  document.getElementById('focus').innerHTML=weak.length?('Focus: <b>'+weak.join(' · ')+'</b>'):'No topics rated weak yet';
+  const pct=max?Math.round((done/max)*100):0;
+  const set=(id,prop,val)=>{const e=document.getElementById(id);if(e)e[prop]=val;};
+  set('ringPct','textContent',pct+'%');
+  set('fpCount','textContent',fp);
+  set('fullCount','textContent',full);
+  const ring=document.getElementById('ring');if(ring)ring.style.strokeDashoffset=(2*Math.PI*54)*(1-pct/100);
+  const weak=TOPICS.filter(t=>state[t.id]&&state[t.id].conf===1).map(t=>t.short);
+  set('focus','innerHTML',weak.length?('Focus: <b>'+weak.join(' · ')+'</b>'):'No topics rated weak yet');
 }
 
 /* ---------- Firebase sync ---------- */
