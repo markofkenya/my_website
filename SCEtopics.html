@@ -563,14 +563,14 @@ function updateOverall(){
 }
 
 /* ---------- Firebase sync ---------- */
-let fbRef=null,saveTimer=null,flashTimer=null,ready=false,lastWritten=null;
+let fbRef=null,saveTimer=null,flashTimer=null,ready=false,selfWrite=false;
 let bxRef=null,bxData={},bxPendingImg=null;
 function showGrid(){if(!ready){ready=true;document.getElementById('loading').style.display='none';document.getElementById('grid').style.display='grid';}}
 function setStatus(txt,cls){const e=document.getElementById('status');if(e){e.textContent='● '+txt;e.className='status '+(cls||'');}}
 function flash(){const s=document.getElementById('saved');if(!s)return;s.classList.add('show');clearTimeout(flashTimer);flashTimer=setTimeout(()=>s.classList.remove('show'),1400);}
 function commit(){render();save();}
 function save(){
-  if(fbRef){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{lastWritten=JSON.stringify(state);fbRef.set(state).then(flash).catch(err=>setStatus('Write failed: '+err.message,'off'));},300);}
+  if(fbRef){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{selfWrite=true;fbRef.set(state).then(flash).catch(err=>{selfWrite=false;setStatus('Write failed: '+err.message,'off');});},300);}
   else{flash();}
 }
 function initFirebase(){
@@ -587,10 +587,9 @@ function initFirebase(){
       setStatus(on?'Live · synced across devices':'Connecting…',on?'live':'wait');
     });
     fbRef.on('value',snap=>{
+      // Ignore the echo of our own writes — local state is already correct and complete.
+      if(selfWrite){selfWrite=false;showGrid();return;}
       const v=snap.val();
-      const incoming=JSON.stringify(v||{});
-      // Echo of our own write — state already reflects it, don't re-render (prevents flicker)
-      if(incoming===lastWritten){showGrid();return;}
       state=(v&&typeof v==='object')?v:blank();
       normalize();showGrid();render();
     },err=>{setStatus('Sync error: '+err.message,'off');state=blank();normalize();showGrid();render();});
