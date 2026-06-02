@@ -146,7 +146,7 @@
   .tab:hover{border-color:var(--amber-deep);color:var(--cream)}
   .tab.on{background:var(--amber);border-color:var(--amber);color:#231d10;font-weight:600}
   .view{display:none}
-  .view.on{display:block;animation:fade .35s}
+  .view.on{display:block}
   @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
   /* biopsy */
@@ -459,7 +459,8 @@ function renderInner(){
     const s=state[t.id];
     const card=document.createElement('div');
     card.className='card'+(topicDone(t.id)?' done':'')+(s.conf?' conf'+s.conf:'');
-    if(firstRender)card.style.animationDelay=(i*45)+'ms';else card.style.animation='none';
+    if(firstRender){card.style.animationDelay=(i*45)+'ms';}
+    else{card.style.animation='none';card.style.opacity='1';card.style.transform='none';}
     const pct=Math.round((t.q/TOTAL_Q)*100);
     const subs=subsList(t.id), subDoneN=subs.filter((_,k)=>s.subs[k]).length;
 
@@ -509,6 +510,7 @@ function renderInner(){
   });
   bind();updateOverall();renderFinal();
   firstRender=false;
+  const g=document.getElementById('grid');if(g)g.style.display='grid';
 }
 function renderFinal(){
   const box=document.getElementById('final');if(!box)return;
