@@ -733,8 +733,8 @@ function metricHtml(title, sub, a, b){
     const aHeavier=a>b; cls=aHeavier?"a":"b";
     if(aHeavier){ leanStyle=`left:${50-w}%;width:${w}%`; knobLeft=50-w; }
     else{ leanStyle=`left:50%;width:${w}%`; knobLeft=50+w; }
-    const owed=aHeavier?state.people.B.name:state.people.A.name;
-    tag=`${escapeHtml(owed)} owed ${gap}`; tagCls="off";
+    const behind=aHeavier?state.people.B.name:state.people.A.name;
+    tag=`${escapeHtml(behind)} ${gap} behind`; tagCls="off";
   }
   return `<div class="metric">
     <div class="metric-top"><div class="mt-l">${title} <span>${sub}</span></div><div class="metric-tag ${tagCls}">${tag}</div></div>
@@ -753,8 +753,8 @@ function renderBalance(){
   else if(t.A.unsoc===t.B.unsoc && t.A.total===t.B.total){ vCls="even"; vIco="✓"; vTxt="Fairly balanced"; vSub="Weekends, bank holidays and totals are level."; }
   else {
     vCls="off"; vIco="!";
-    if(t.A.unsoc!==t.B.unsoc){ const owed=t.A.unsoc<t.B.unsoc?nameA:nameB; const g=Math.abs(t.A.unsoc-t.B.unsoc); vTxt=`${owed} is owed ${g} unsociable`; vSub="Weekends & bank holidays are the priority to even up."; }
-    else { const owed=t.A.total<t.B.total?nameA:nameB; const g=Math.abs(t.A.total-t.B.total); vTxt=`${owed} is owed ${g} shift${g>1?"s":""}`; vSub="Unsociable shifts are even — overall totals differ."; }
+    if(t.A.unsoc!==t.B.unsoc){ const behind=t.A.unsoc<t.B.unsoc?nameA:nameB; const g=Math.abs(t.A.unsoc-t.B.unsoc); vTxt=`${behind} is ${g} behind on unsociable`; vSub="Weekends & bank holidays are the priority to even up."; }
+    else { const behind=t.A.total<t.B.total?nameA:nameB; const g=Math.abs(t.A.total-t.B.total); vTxt=`${behind} is ${g} behind overall`; vSub="Unsociable shifts are even — overall totals differ."; }
   }
   const nu=t.A.unsoc===t.B.unsoc
     ? `<div class="next-up"><span class="tag">Next unsociable</span><div>Even right now — either of you can take the next weekend or bank holiday.</div></div>`
@@ -1169,22 +1169,47 @@ function prefOf(d,key){ const a=state.assignments[d]; return (a&&a.prefs&&a.pref
 function splitFairly(){
   const pool=poolDates(); if(!pool.length) return;
   const base=standings(); const cnt={A:{...base.A}, B:{...base.B}}; const result={};
-  const order=pool.slice().sort(); const other=w=>w==="A"?"B":"A";
+  const order=pool.slice().sort();
+  const other=w=>w==="A"?"B":"A";
+  // who is on a given date, considering this batch first, then anything already on the calendar
+  const whoOn=d=>{ if(result[d]) return result[d]; const a=state.assignments[d]; return (a&&(a.p==="A"||a.p==="B"))?a.p:null; };
+  const touches=(d,w)=> whoOn(shiftDate(d,-1))===w || whoOn(shiftDate(d,1))===w;
+
+  // greedy pass (chronological) — hard-avoid back-to-back against already-decided/existing days
   for(const d of order){
-    const metric=isUnsociable(d)?"unsoc":"soc"; const pa=prefOf(d,"A"), pb=prefOf(d,"B");
+    const metric=isUnsociable(d)?"unsoc":"soc";
+    const pa=prefOf(d,"A"), pb=prefOf(d,"B");
     if(pa==="on" && pb!=="on"){ result[d]="A"; cnt.A[metric]++; cnt.A.total++; continue; }
     if(pb==="on" && pa!=="on"){ result[d]="B"; cnt.B[metric]++; cnt.B.total++; continue; }
     let cands=["A","B"].filter(w=>(w==="A"?pa:pb)!=="off"); if(!cands.length) cands=["A","B"];
     let best=null, bestScore=Infinity;
     shuffle(cands).forEach(w=>{
       const wantsOn=(w==="A"?pa:pb)==="on"; let s=0;
+      if(touches(d,w) && !wantsOn) s += 100000;     // hard-avoid back-to-back
       s += cnt[w][metric]*12; s += cnt[w].total*3;
-      const prevSame=result[shiftDate(d,-1)]===w; if(prevSame && !wantsOn) s += 1000;
       if(wantsOn) s -= 50; s += Math.random()*4;
       if(s<bestScore){ bestScore=s; best=w; }
     });
     result[d]=best; cnt[best][metric]++; cnt[best].total++;
   }
+
+  // repair pass — flip any avoidable back-to-back (checks both sides; converges)
+  let changed=true, guard=0;
+  while(changed && guard++<12){
+    changed=false;
+    for(const d of order){
+      const w=result[d];
+      if(prefOf(d,w)==="on") continue;                 // this person requested it → allowed
+      if(!(whoOn(shiftDate(d,-1))===w || whoOn(shiftDate(d,1))===w)) continue;  // no adjacency
+      const o=other(w);
+      if(prefOf(d,o)==="off") continue;                // other can't take it → genuinely forced
+      if(whoOn(shiftDate(d,-1))===o || whoOn(shiftDate(d,1))===o) continue;     // flip would just create another
+      const metric=isUnsociable(d)?"unsoc":"soc";
+      cnt[w][metric]--; cnt[w].total--; cnt[o][metric]++; cnt[o].total++;
+      result[d]=o; changed=true;
+    }
+  }
+
   for(const d of pool){ const prev=state.assignments[d]; state.assignments[d]={p:result[d], type:(prev&&prev.type)?prev.type:"oncall", rota:state.rotaId}; }
   persist(); renderAll();
 }
