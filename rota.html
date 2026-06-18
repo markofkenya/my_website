@@ -126,6 +126,14 @@
   .pool-chip .rm:hover{color:var(--warn)}
   .pool-divide{display:flex;gap:9px;margin-top:17px;flex-wrap:wrap}
   .pool-divide .btn{flex:1;min-width:120px}
+  .ready-box{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2)}
+  .ready-lead{font-size:12.5px;color:var(--ink-soft);margin-bottom:11px;line-height:1.5}
+  .ready-chips{display:flex;gap:9px;flex-wrap:wrap}
+  .ready-chip{flex:1;min-width:130px;padding:12px 14px;border-radius:11px;border:1px dashed var(--line);background:var(--surface);color:var(--ink-soft);font-family:var(--font-b);font-weight:600;font-size:13px;cursor:pointer;transition:transform .05s;text-align:center}
+  .ready-chip:active{transform:scale(.98)}
+  .ready-chip.a{border-color:var(--a-edge)} .ready-chip.b{border-color:var(--b-edge)}
+  .ready-chip.a.on{background:var(--a-tint);border-style:solid;border-color:var(--a);color:var(--a)}
+  .ready-chip.b.on{background:var(--b-tint);border-style:solid;border-color:var(--b);color:var(--b)}
   .paste-details{margin-top:11px}
   .paste-details summary{font-size:12.5px;color:var(--a);cursor:pointer;font-weight:600;list-style:none;user-select:none}
   .paste-details summary::-webkit-details-marker{display:none}
@@ -142,6 +150,11 @@
   .btn:hover{opacity:.92} .btn:active{transform:translateY(1px)}
   .btn.block{width:100%;padding:14px;font-size:15px}
   .btn.ghost{background:var(--surface);color:var(--ink-soft);border:1px solid var(--line)}
+  .btn.key{background:var(--a);color:#fff;box-shadow:0 1px 0 var(--a-edge),0 7px 16px -9px var(--a)}
+  .btn.key:hover{filter:brightness(1.05)}
+  .req-badge{display:inline-block;background:rgba(255,255,255,.24);border-radius:999px;padding:1px 8px;margin-left:7px;font-size:12.5px;font-weight:700;font-family:var(--font-m)}
+  .pool-divide .btn.key{flex:2}
+  .pool-divide #clearPool{flex:1;min-width:106px}
   .btn.ghost:hover{background:var(--surface-2)}
   .btn.primary{background:var(--a)}
   .btn.danger{background:var(--warn)}
@@ -197,6 +210,24 @@
   .swap-composer input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:var(--font-b);font-size:13.5px;color:var(--ink);background:var(--surface);margin-bottom:10px}
   .swap-composer input:focus,.swap-sel:focus{outline:none;border-color:var(--a)}
   .swap-composer .btn{width:100%}
+  .comments{margin-top:18px;border-top:1px solid var(--line);padding-top:15px}
+  .comments-label{font-family:var(--font-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 11px}
+  .comment-list{display:flex;flex-direction:column;gap:9px;margin-bottom:12px;max-height:340px;overflow-y:auto}
+  .comment{padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-soft);max-width:88%}
+  .comment.mine{align-self:flex-end;background:var(--a-tint);border-color:var(--a-edge)}
+  .comment.mine.b{background:var(--b-tint);border-color:var(--b-edge)}
+  .comment-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:3px}
+  .comment-who{font-weight:700;font-size:12px}
+  .comment-who.a{color:var(--a)} .comment-who.b{color:var(--b)}
+  .comment-time{font-family:var(--font-m);font-size:10px;color:var(--ink-faint)}
+  .comment-text{font-size:13.5px;color:var(--ink);line-height:1.45;word-wrap:break-word}
+  .comment-del{background:none;border:none;color:var(--ink-faint);font-size:11px;cursor:pointer;padding:2px 4px;margin-top:3px}
+  .comment-empty{font-size:12.5px;color:var(--ink-faint);padding:4px 0 10px}
+  .comment-compose{display:flex;gap:8px}
+  .comment-compose input{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:var(--font-b);font-size:13.5px;color:var(--ink);background:var(--surface)}
+  .comment-compose input:focus{outline:none;border-color:var(--a)}
+  .comment-compose .btn{width:auto;padding:10px 16px;flex-shrink:0}
+  .comment-new{font-family:var(--font-m);font-size:10px;color:var(--gold);margin-left:8px}
   .alert-item{border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px;background:var(--surface-2);text-align:left}
   .alert-desc{font-size:13.5px;margin-bottom:3px}
   .alert-note{font-size:12.5px;color:var(--ink-soft);font-style:italic;margin-bottom:9px}
@@ -350,6 +381,14 @@
   .login-dialog .assign-opts{margin-bottom:14px}
   .sync-err{color:var(--warn);font-size:12.5px;min-height:14px;margin:4px 0 8px}
   .sync-help{font-size:12.5px;color:var(--ink-soft);line-height:1.55}
+  .print-dialog{max-width:430px}
+  .print-dialog h3{margin:0 0 4px}
+  .print-opts{display:flex;flex-direction:column;gap:10px;margin:14px 0 4px}
+  .print-opt{display:flex;flex-direction:column;gap:3px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:13px 15px;cursor:pointer;transition:transform .05s,border-color .1s}
+  .print-opt:hover{border-color:var(--a);background:var(--surface-2)}
+  .print-opt:active{transform:scale(.99)}
+  .po-n{font-family:var(--font-d);font-weight:600;font-size:14.5px;color:var(--ink)}
+  .po-d{font-size:12px;color:var(--ink-soft);line-height:1.4}
 </style>
 </head>
 <body>
@@ -420,6 +459,14 @@
       <button class="btn" id="addNote">Send request</button>
     </div>
     <div id="noteList"></div>
+    <div class="comments">
+      <p class="comments-label">Messages</p>
+      <div id="commentList" class="comment-list"></div>
+      <div class="comment-compose">
+        <input id="commentInput" type="text" placeholder="Message" maxlength="400">
+        <button class="btn" id="postComment">Post</button>
+      </div>
+    </div>
   </section>
 
   <section class="card agree">
@@ -543,6 +590,20 @@
   </div>
 </div>
 
+<!-- PRINT STYLE CHOOSER -->
+<div class="overlay center" id="printOverlay">
+  <div class="mini-dialog print-dialog">
+    <h3>Choose a print style</h3>
+    <p>Opens a clean, signable copy you can save as PDF or print. Shows date, day and who’s on call.</p>
+    <div class="print-opts">
+      <button class="print-opt" data-style="ledger"><span class="po-n">Ledger</span><span class="po-d">Clean black-and-white, ruled rows. Photocopier-safe.</span></button>
+      <button class="print-opt" data-style="tone"><span class="po-n">Colour-coded</span><span class="po-d">Each person’s shifts tinted in their colour, with a key.</span></button>
+      <button class="print-opt" data-style="editorial"><span class="po-n">Editorial</span><span class="po-d">Formal letterhead with a signature block.</span></button>
+    </div>
+    <div class="dialog-actions"><button class="btn ghost" id="printCancel">Cancel</button></div>
+  </div>
+</div>
+
 <!-- MY ROTA (personal view) -->
 <div class="rota-overlay" id="rotaOverlay">
   <div class="rota-inner">
@@ -605,6 +666,8 @@ const FIREBASE_CONFIG = {
   appId: "1:471078637472:web:39604ff65883fd39a6dec5"
 };
 const CODE_STORE = "slotshare-code";   // device-local rota code (entered at login)
+const CACHE_OWNER = "slotshare-cachecode";  // which code the locally-cached rota belongs to ("" = offline/unowned)
+let cacheCode = "";
 let rotaCode = "";
 let syncPath = "";
 let syncRef = null;
@@ -646,7 +709,7 @@ const THEME_KEY = "slotshare-theme";
 let mem = null;
 const defaultState = () => ({
   people:{ A:{name:"Mark", initials:"MM"}, B:{name:"Ed", initials:"EB"} },
-  assignments:{}, notes:[], rotaId:1, accept:{}, myShifts:{}
+  assignments:{}, notes:[], rotaId:1, accept:{}, myShifts:{}, ready:{A:false,B:false}, comments:[]
 });
 let state = defaultState();
 let scope = "rota";
@@ -709,7 +772,7 @@ function renderStepper(){
   const pool=poolDates(), rota=currentRotaShifts(), both=bothAgreed();
   const steps=[
     {t:"Add dates", s:"from your rota", done:(pool.length>0||rota.length>0), go:openPicker},
-    {t:"Split fairly", s:pool.length?`${pool.length} waiting`:"divide the pool", done:(rota.length>0&&pool.length===0), go:()=>{ if(pool.length){ splitFairly(); } else document.getElementById("poolCard").scrollIntoView({behavior:"smooth",block:"center"}); }},
+    {t:"Divide", s:pool.length?`${pool.length} waiting · both confirm`:"split the pool", done:(rota.length>0&&pool.length===0), go:()=>document.getElementById("poolCard").scrollIntoView({behavior:"smooth",block:"center"})},
     {t:"Agree", s:both?"both signed":"both sign off", done:both, go:()=>document.querySelector(".agree").scrollIntoView({behavior:"smooth",block:"center"})},
     {t:"Export", s:"send the PDF", done:false, go:()=>{ if(both) exportPdf(); else document.querySelector(".agree").scrollIntoView({behavior:"smooth",block:"center"}); }}
   ];
@@ -889,6 +952,37 @@ function addNote(){
   persist(); renderNotes();
 }
 
+/* ===== comments / messages ===== */
+const SEEN_COMMENT = "slotshare-seencomment";
+function loadSeenComment(){ try{ return +localStorage.getItem(SEEN_COMMENT)||0; }catch(e){ return 0; } }
+function saveSeenComment(ts){ try{ localStorage.setItem(SEEN_COMMENT, String(ts)); }catch(e){} }
+function newCommentsForMe(){ if(!meKey) return []; const seen=loadSeenComment(); return (state.comments||[]).filter(c=>c.by!==meKey && c.ts>seen); }
+function markCommentsSeen(){ const cs=state.comments||[]; if(cs.length) saveSeenComment(Math.max(...cs.map(c=>c.ts))); }
+function renderComments(){
+  const list=document.getElementById("commentList"); if(!list) return;
+  const cs=(state.comments||[]).slice().sort((a,b)=>a.ts-b.ts);
+  if(!cs.length){ list.innerHTML=`<div class="comment-empty">No messages yet. Leave a note for your call partner — they'll see it next time they open the app.</div>`; return; }
+  list.innerHTML="";
+  cs.forEach(c=>{
+    const mine = meKey && c.by===meKey;
+    const div=document.createElement("div"); div.className="comment"+(mine?" mine "+String(c.by).toLowerCase():"");
+    const when=new Date(c.ts); const wstr=`${String(when.getDate()).padStart(2,"0")} ${MONTHS[when.getMonth()].slice(0,3)} · ${String(when.getHours()).padStart(2,"0")}:${String(when.getMinutes()).padStart(2,"0")}`;
+    const who=state.people[c.by]?state.people[c.by].name:c.by;
+    div.innerHTML=`<div class="comment-head"><span class="comment-who ${String(c.by).toLowerCase()}">${escapeHtml(who)}</span><span class="comment-time">${wstr}</span></div><div class="comment-text">${escapeHtml(c.text)}</div>`;
+    if(mine){ const del=document.createElement("button"); del.className="comment-del"; del.textContent="delete"; del.onclick=()=>{ state.comments=state.comments.filter(x=>x.id!==c.id); persist(); renderComments(); }; div.appendChild(del); }
+    list.appendChild(div);
+  });
+  list.scrollTop=list.scrollHeight;
+}
+function postComment(){
+  if(!meKey){ openLogin(); return; }
+  const inp=document.getElementById("commentInput"); if(!inp) return;
+  const text=(inp.value||"").trim(); if(!text) return;
+  if(!Array.isArray(state.comments)) state.comments=[];
+  state.comments.push({ id:Date.now()+"-"+Math.random().toString(36).slice(2,7), by:meKey, ts:Date.now(), text });
+  inp.value=""; markCommentsSeen(); persist(); renderComments();
+}
+
 /* ===== device identity + alerts ===== */
 function loadMe(){ try{ return localStorage.getItem(ME_STORE); }catch(e){ return null; } }
 function saveMe(k){ try{ localStorage.setItem(ME_STORE,k); }catch(e){} }
@@ -900,17 +994,34 @@ function openMeChooser(){
 }
 function chooseMe(k){ meKey=k; saveMe(k); document.getElementById("meOverlay").classList.remove("show"); renderComposer(); maybeAlert(); }
 function pendingForMe(){ if(!meKey) return []; return state.notes.filter(n=>n.status==="pending" && (n.from==="A"?"B":"A")===meKey); }
-function maybeAlert(){ const fresh=pendingForMe().filter(n=>!notified.has(n.id)); if(!fresh.length) return; pendingForMe().forEach(n=>notified.add(n.id)); renderAlert(); document.getElementById("alertOverlay").classList.add("show"); }
+function maybeAlert(){
+  const freshReq=pendingForMe().filter(n=>!notified.has(n.id));
+  const freshCom=newCommentsForMe().filter(c=>!notified.has(c.id));
+  if(!freshReq.length && !freshCom.length) return;
+  pendingForMe().forEach(n=>notified.add(n.id));
+  newCommentsForMe().forEach(c=>notified.add(c.id));
+  renderAlert(); document.getElementById("alertOverlay").classList.add("show");
+}
 function renderAlert(){
-  const list=pendingForMe();
-  document.getElementById("alertTitle").textContent = list.length>1 ? `You have ${list.length} swap requests` : "You have a swap request";
+  const reqs=pendingForMe(), coms=newCommentsForMe();
+  let title;
+  if(reqs.length && coms.length) title="You have updates";
+  else if(reqs.length) title = reqs.length>1?`You have ${reqs.length} swap requests`:"You have a swap request";
+  else title = coms.length>1?`${coms.length} new messages`:"New message";
+  document.getElementById("alertTitle").textContent=title;
   const el=document.getElementById("alertList");
-  el.innerHTML=list.map(n=>`<div class="alert-item"><div class="alert-desc">${describeReq(n)}</div>${n.text?`<div class="alert-note">“${escapeHtml(n.text)}”</div>`:""}<div class="alert-actions"><button class="btn accept-a" data-id="${n.id}">Accept</button><button class="btn ghost unavail-a" data-id="${n.id}">Unavailable</button></div></div>`).join("");
+  let html=reqs.map(n=>`<div class="alert-item"><div class="alert-desc">${describeReq(n)}</div>${n.text?`<div class="alert-note">“${escapeHtml(n.text)}”</div>`:""}<div class="alert-actions"><button class="btn accept-a" data-id="${n.id}">Accept</button><button class="btn ghost unavail-a" data-id="${n.id}">Unavailable</button></div></div>`).join("");
+  if(coms.length){
+    html+=`<div class="alert-item"><div class="alert-desc">${coms.length>1?"New messages":"New message"} from ${escapeHtml(state.people[coms[0].by]?state.people[coms[0].by].name:coms[0].by)}</div>`
+      + coms.map(c=>`<div class="alert-note" style="font-style:normal">“${escapeHtml(c.text)}”</div>`).join("")
+      + `</div>`;
+  }
+  el.innerHTML=html;
   el.querySelectorAll(".accept-a").forEach(b=>b.onclick=()=>{ const n=state.notes.find(x=>x.id===b.dataset.id); if(n){ applyReq(n); n.status="accepted"; persist(); renderAll(); } afterAlertAction(); });
   el.querySelectorAll(".unavail-a").forEach(b=>b.onclick=()=>{ const n=state.notes.find(x=>x.id===b.dataset.id); if(n){ n.status="rejected"; persist(); renderAll(); } afterAlertAction(); });
 }
-function afterAlertAction(){ if(!pendingForMe().length) closeAlert(); else renderAlert(); }
-function closeAlert(){ document.getElementById("alertOverlay").classList.remove("show"); }
+function afterAlertAction(){ if(!pendingForMe().length){ markCommentsSeen(); closeAlert(); } else renderAlert(); }
+function closeAlert(){ markCommentsSeen(); document.getElementById("alertOverlay").classList.remove("show"); renderComments(); }
 
 /* ===== sign-off + PDF ===== */
 function currentRotaShifts(){
@@ -949,34 +1060,41 @@ async function ensurePdfLib(){
     return !!(window.jspdf && window.jspdf.jsPDF);
   }catch(e){ return false; }
 }
-async function exportPdf(){
-  if(!bothAgreed()) return;
-  const shifts=currentRotaShifts();
+function exportPdf(){ if(!bothAgreed()) return; document.getElementById("printOverlay").classList.add("show"); }
+function closePrint(){ document.getElementById("printOverlay").classList.remove("show"); }
+function runPrint(style){
+  closePrint();
+  const shifts=currentRotaShifts(); if(!shifts.length) return;
   const nameA=state.people.A.name, nameB=state.people.B.name;
   const first=longDate(shifts[0].date).date, last=longDate(shifts[shifts.length-1].date).date;
-  const rangeTxt = first===last ? first : `${first} – ${last}`;
-  const body=shifts.map(s=>{ const L=longDate(s.date); return [L.date, L.day, state.people[s.p].name, shiftLabel(s.type)]; });
-  const ok=await ensurePdfLib();
-  if(ok){
-    const { jsPDF }=window.jspdf; const doc=new jsPDF();
-    doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.setTextColor(30);
-    doc.text("On-call rota — agreed allocation", 14, 20);
-    doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(90);
-    doc.text(`${nameA} & ${nameB}`, 14, 27); doc.text(rangeTxt, 14, 32);
-    doc.autoTable({ startY:38, head:[["Date","Day","On-call","Shift"]], body, styles:{fontSize:9, cellPadding:3}, headStyles:{fillColor:[32,40,48], textColor:255}, alternateRowStyles:{fillColor:[244,246,247]}, margin:{left:14, right:14} });
-    const y=(doc.lastAutoTable?doc.lastAutoTable.finalY:40)+10;
-    doc.setFontSize(9); doc.setTextColor(110); doc.text(`Agreed by ${nameA} and ${nameB}.`, 14, y);
-    doc.save("on-call-rota-agreed.pdf");
-  } else { printRota(rangeTxt, body, nameA, nameB); }
-}
-function printRota(rangeTxt, body, nameA, nameB){
-  const rows=body.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${escapeHtml(r[2])}</td><td>${r[3]}</td></tr>`).join("");
+  const rangeTxt=first===last?first:`${first} – ${last}`;
+  const data=shifts.map(s=>{ const L=longDate(s.date); return {date:L.date, day:L.day, name:state.people[s.p].name, pk:s.p, un:isUnsociable(s.date)}; });
+  const html=buildRotaHtml(style, data, {rangeTxt, nameA, nameB});
   const w=window.open("","_blank"); if(!w){ alert("Allow pop-ups to export the rota, or try again."); return; }
-  w.document.write(`<!doctype html><html><head><title>On-call rota — agreed</title><style>body{font-family:Arial,Helvetica,sans-serif;color:#202830;margin:32px}h1{font-size:18px;margin:0 0 4px}.sub{color:#5a666e;font-size:12px;margin:0 0 16px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #d7dee2;padding:7px 9px;text-align:left}th{background:#202830;color:#fff}tr:nth-child(even) td{background:#f4f6f7}.foot{margin-top:14px;color:#5a666e;font-size:11px}</style></head><body><h1>On-call rota — agreed allocation</h1><p class="sub">${escapeHtml(nameA)} &amp; ${escapeHtml(nameB)} · ${rangeTxt}</p><table><thead><tr><th>Date</th><th>Day</th><th>On-call</th><th>Shift</th></tr></thead><tbody>${rows}</tbody></table><p class="foot">Agreed by ${escapeHtml(nameA)} and ${escapeHtml(nameB)}.</p></body></html>`);
-  w.document.close(); w.focus(); setTimeout(()=>w.print(), 350);
+  w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>{ try{ w.print(); }catch(e){} }, 450);
+}
+function buildRotaHtml(style, data, m){
+  const esc=escapeHtml, A="#0e6f78", Ae="#0a565d", At="#e2f1f1", B="#8a3b6b", Be="#6f2e55", Bt="#f5e8ef", gold="#b3842a";
+  const head=`<thead><tr><th>Date</th><th>Day</th><th>On-call</th></tr></thead>`;
+  const sign=`<div class="sign"><div>${esc(m.nameA)} — signed</div><div>${esc(m.nameB)} — signed</div></div>`;
+  let css="", inner="";
+  if(style==="tone"){
+    const rows=data.map(r=>`<tr class="${r.pk.toLowerCase()}"><td class="date">${r.date}</td><td class="day">${r.day}${r.un?'<span class="un">wknd/BH</span>':''}</td><td class="who">${esc(r.name)}</td></tr>`).join("");
+    css=`*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#202830;margin:40px 44px}h1{font-size:19px;margin:0 0 3px}.sub{color:#5a666e;font-size:12.5px;margin:0 0 15px}.key{display:flex;gap:18px;margin:0 0 18px;font-size:12px}.key span{display:inline-flex;align-items:center;gap:7px}.sw{width:13px;height:13px;border-radius:4px;display:inline-block}table{border-collapse:separate;border-spacing:0 5px;width:100%;font-size:12.5px}thead th{text-align:left;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8c979e;font-weight:600;padding:0 13px 4px}tbody td{padding:11px 13px}tbody tr td:first-child{border-radius:9px 0 0 9px}tbody tr td:last-child{border-radius:0 9px 9px 0}tr.a td{background:${At}}tr.b td{background:${Bt}}td.who{font-weight:700}tr.a td.who{color:${Ae}}tr.b td.who{color:${Be}}td.date{white-space:nowrap}td.day{color:#5a666e}.un{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:${gold};margin-left:8px;font-weight:700}.foot{margin-top:22px;font-size:11px;color:#8c979e}`;
+    inner=`<h1>On-call rota — agreed allocation</h1><p class="sub">${m.rangeTxt}</p><div class="key"><span><i class="sw" style="background:${A}"></i>${esc(m.nameA)}</span><span><i class="sw" style="background:${B}"></i>${esc(m.nameB)}</span></div><table>${head}<tbody>${rows}</tbody></table><p class="foot">Agreed by ${esc(m.nameA)} and ${esc(m.nameB)}.</p>`;
+  } else if(style==="editorial"){
+    const rows=data.map(r=>`<tr class="${r.un?'un':''}"><td class="date">${r.date}</td><td class="day">${r.day}</td><td class="who">${esc(r.name)}</td></tr>`).join("");
+    css=`*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}body{font-family:Georgia,'Times New Roman',serif;color:#202830;margin:0}.band{background:#202830;color:#fff;padding:30px 48px}.band h1{font-size:22px;margin:0 0 5px;font-weight:600}.band .sub{color:#c2cace;font-size:13px;margin:0}.body{padding:30px 48px 48px}table{border-collapse:collapse;width:100%;font-size:13px}thead th{text-align:left;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#8c979e;font-weight:normal;padding:0 12px 10px;border-bottom:1px solid #c8d0d4}tbody td{padding:11px 12px;border-bottom:1px solid #eceff1}tr.un td{background:#faf6ec}td.date{white-space:nowrap}td.who{font-weight:bold}.sign{margin-top:46px;display:flex;gap:50px}.sign div{flex:1;border-top:1px solid #202830;padding-top:7px;font-size:11px;color:#5a666e;font-family:Arial,sans-serif}.foot{margin-top:18px;font-size:11px;color:#8c979e;font-family:Arial,sans-serif}`;
+    inner=`<div class="band"><h1>On-call rota</h1><p class="sub">${esc(m.nameA)} &amp; ${esc(m.nameB)} · ${m.rangeTxt}</p></div><div class="body"><table>${head}<tbody>${rows}</tbody></table>${sign}<p class="foot">Agreed allocation — weekends &amp; bank holidays shaded.</p></div>`;
+  } else { // ledger
+    const rows=data.map(r=>`<tr class="${r.un?'un':''}"><td class="date">${r.date}</td><td class="day">${r.day}${r.un?' ·':''}</td><td class="who">${esc(r.name)}</td></tr>`).join("");
+    css=`*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#202830;margin:42px 46px}h1{font-size:19px;font-weight:700;margin:0 0 3px}.sub{color:#5a666e;font-size:12px;margin:0 0 24px;font-variant:small-caps;letter-spacing:.05em}table{border-collapse:collapse;width:100%;font-size:12.5px}thead th{text-align:left;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8c979e;font-weight:600;padding:0 10px 8px;border-bottom:1.5px solid #202830}tbody td{padding:9px 10px;border-bottom:1px solid #e3e8ea}td.date{font-family:'SFMono-Regular',Consolas,'Liberation Mono',monospace;white-space:nowrap}td.day{color:#5a666e}td.who{font-weight:600}tr.un td{background:#faf6ec}.foot{margin-top:24px;font-size:11px;color:#5a666e}.sign{margin-top:34px;display:flex;gap:44px}.sign div{flex:1;border-top:1px solid #aab3b8;padding-top:6px;font-size:11px;color:#8c979e}`;
+    inner=`<h1>On-call rota — agreed allocation</h1><p class="sub">${esc(m.nameA)} &amp; ${esc(m.nameB)} · ${m.rangeTxt}</p><table>${head}<tbody>${rows}</tbody></table>${sign}<p class="foot">Agreed allocation. Rows marked “·” are weekends or bank holidays.</p>`;
+  }
+  return `<!doctype html><html><head><meta charset="utf-8"><title>On-call rota — agreed</title><style>@page{margin:14mm}${css}</style></head><body>${inner}</body></html>`;
 }
 
-function renderAll(){ renderPeople(); renderStepper(); renderComposer(); renderBalance(); renderPool(); renderCalendar(); renderNotes(); renderAgree(); if(document.getElementById("rotaOverlay").classList.contains("show")) renderMyCalendar(); }
+function renderAll(){ renderPeople(); renderStepper(); renderComposer(); renderBalance(); renderPool(); renderCalendar(); renderNotes(); renderComments(); renderAgree(); if(document.getElementById("rotaOverlay").classList.contains("show")) renderMyCalendar(); }
 
 /* ===== My rota (personal sessions + on-calls → ICS) ===== */
 function getMyArr(ds){ if(!meKey) return []; const m=state.myShifts&&state.myShifts[meKey]; return (m&&m[ds])||[]; }
@@ -1124,7 +1242,7 @@ function addPoolDates(){
   const {ok,bad}=parseDates(ta.value); const fb=document.getElementById("parseFeedback");
   let added=0, already=0;
   ok.forEach(ds=>{ if(state.assignments[ds]) already++; else { state.assignments[ds]={p:"pool",type:"oncall"}; added++; } });
-  if(added){ ta.value=""; persist(); renderAll(); }
+  if(added){ ta.value=""; resetReady(); persist(); renderAll(); }
   const msg=[]; if(added) msg.push(`${added} added`); if(already) msg.push(`${already} already on calendar`); if(bad.length) msg.push(`couldn’t read: ${bad.slice(0,3).join(", ")}${bad.length>3?"…":""}`);
   const fb2=document.getElementById("parseFeedback"); if(fb2){ fb2.textContent=msg.join(" · ")||"Nothing to add"; fb2.className="parse-feedback"+(bad.length&&!added?" err":""); }
 }
@@ -1142,19 +1260,28 @@ function renderPool(){
   } else {
     const chips=pool.map(d=>{ const dt=new Date(d+"T00:00:00"); const lab=`${String(dt.getDate()).padStart(2,"0")} ${MONTHS[dt.getMonth()].slice(0,3)}`; const un=isUnsociable(d); return `<span class="pool-chip ${un?"un":""}">${lab}${un?" ◆":""}<span class="rm" data-d="${d}">✕</span></span>`; }).join("");
     const reqCount=pool.filter(d=>prefOf(d,"A")||prefOf(d,"B")).length;
-    html=`<p class="pool-hint">These dates are waiting to be divided. Split them fairly — or set day requests first.</p>
+    const nA=escapeHtml(state.people.A.name), nB=escapeHtml(state.people.B.name);
+    const rd=state.ready||{A:false,B:false};
+    html=`<p class="pool-hint">These dates are waiting to be divided. Set any day requests, then both of you mark you're happy — the rota splits itself.</p>
       <div class="pool-summary"><div class="pool-line"><b>${pool.length}</b> date${pool.length>1?"s":""} to divide · <b>${unsoc.length}</b> unsociable${reqCount?` · <b>${reqCount}</b> with a request`:""}</div><div class="pool-chips">${chips}</div></div>
-      <div class="pool-divide"><button class="btn ghost" id="prefsBtn">Day requests</button><button class="btn primary" id="splitBtn">Split fairly</button><button class="btn ghost" id="clearPool">Clear</button></div>
+      <div class="pool-divide"><button class="btn key" id="prefsBtn">Day requests${reqCount?`<span class="req-badge">${reqCount}</span>`:""}</button><button class="btn ghost" id="clearPool">Clear pool</button></div>
+      <div class="ready-box">
+        <div class="ready-lead">Happy with the day requests? When you're both ready, the rota splits automatically.</div>
+        <div class="ready-chips">
+          <button class="ready-chip a ${rd.A?"on":""}" data-k="A">${rd.A?"✓ ":""}${nA} ${rd.A?"is ready":"— I'm happy"}</button>
+          <button class="ready-chip b ${rd.B?"on":""}" data-k="B">${rd.B?"✓ ":""}${nB} ${rd.B?"is ready":"— I'm happy"}</button>
+        </div>
+      </div>
       <details class="paste-details"><summary>add more dates</summary><button class="btn block ghost" id="pickDates" style="margin-bottom:10px">Pick from calendar</button><textarea id="poolInput" placeholder="12/07/2026, 13/07/2026"></textarea><div class="pool-actions"><button class="btn ghost" id="addPool">Add typed list</button><span class="parse-feedback" id="parseFeedback"></span></div></details>`;
   }
   body.innerHTML=html;
   const $=id=>document.getElementById(id);
   if($("pickDates")) $("pickDates").onclick=openPicker;
   if($("addPool")) $("addPool").onclick=addPoolDates;
-  if($("splitBtn")) $("splitBtn").onclick=splitFairly;
   if($("prefsBtn")) $("prefsBtn").onclick=openPrefs;
   if($("clearPool")) $("clearPool").onclick=clearPool;
-  body.querySelectorAll(".rm").forEach(x=>x.onclick=()=>{ delete state.assignments[x.dataset.d]; persist(); renderAll(); });
+  body.querySelectorAll(".ready-chip").forEach(c=>c.onclick=()=>toggleReady(c.dataset.k));
+  body.querySelectorAll(".rm").forEach(x=>x.onclick=()=>{ delete state.assignments[x.dataset.d]; resetReady(); persist(); renderAll(); });
 }
 function standings(){
   const t={A:{total:0,unsoc:0,soc:0},B:{total:0,unsoc:0,soc:0}};
@@ -1168,57 +1295,78 @@ function standings(){
 function prefOf(d,key){ const a=state.assignments[d]; return (a&&a.prefs&&a.prefs[key])||null; }
 function splitFairly(){
   const pool=poolDates(); if(!pool.length) return;
-  const base=standings(); const cnt={A:{...base.A}, B:{...base.B}}; const result={};
   const order=pool.slice().sort();
   const other=w=>w==="A"?"B":"A";
-  // who is on a given date, considering this batch first, then anything already on the calendar
-  const whoOn=d=>{ if(result[d]) return result[d]; const a=state.assignments[d]; return (a&&(a.p==="A"||a.p==="B"))?a.p:null; };
-  const touches=(d,w)=> whoOn(shiftDate(d,-1))===w || whoOn(shiftDate(d,1))===w;
-
-  // greedy pass (chronological) — hard-avoid back-to-back against already-decided/existing days
-  for(const d of order){
-    const metric=isUnsociable(d)?"unsoc":"soc";
-    const pa=prefOf(d,"A"), pb=prefOf(d,"B");
-    if(pa==="on" && pb!=="on"){ result[d]="A"; cnt.A[metric]++; cnt.A.total++; continue; }
-    if(pb==="on" && pa!=="on"){ result[d]="B"; cnt.B[metric]++; cnt.B.total++; continue; }
-    let cands=["A","B"].filter(w=>(w==="A"?pa:pb)!=="off"); if(!cands.length) cands=["A","B"];
-    let best=null, bestScore=Infinity;
-    shuffle(cands).forEach(w=>{
-      const wantsOn=(w==="A"?pa:pb)==="on"; let s=0;
-      if(touches(d,w) && !wantsOn) s += 100000;     // hard-avoid back-to-back
-      s += cnt[w][metric]*12; s += cnt[w].total*3;
-      if(wantsOn) s -= 50; s += Math.random()*4;
-      if(s<bestScore){ bestScore=s; best=w; }
-    });
-    result[d]=best; cnt[best][metric]++; cnt[best].total++;
+  // existing on-call dates already on the calendar (anchors for adjacency)
+  const existing={};
+  for(const k in state.assignments){ const a=state.assignments[k]; if(a&&(a.p==="A"||a.p==="B")) existing[k]=a.p; }
+  const base=standings();
+  // all adjacent calendar-day pairs among assigned dates (pool + existing)
+  const allDates=new Set(order); Object.keys(existing).forEach(d=>allDates.add(d));
+  // adjacency = consecutive ON-CALL shifts in date order (not merely calendar-adjacent days),
+  // so the same person never takes two on-calls in a row in the rota sequence — even when spread out
+  const seq=[...allDates].sort();
+  const adjPairs=[]; for(let i=1;i<seq.length;i++) adjPairs.push([seq[i-1], seq[i]]);
+  // resolve fixed days from requests
+  const fixedOn={}, forced={};
+  order.forEach(d=>{ const pa=prefOf(d,"A"), pb=prefOf(d,"B");
+    if(pa==="on" && pb!=="on") fixedOn[d]="A";
+    else if(pb==="on" && pa!=="on") fixedOn[d]="B";
+    else if(pa==="off" && pb!=="off") forced[d]="B";
+    else if(pb==="off" && pa!=="off") forced[d]="A";
+  });
+  const canFlip=d=> !fixedOn[d] && !forced[d];
+  let result={};
+  const whoOn=d=> result[d] || existing[d] || null;
+  const initRandom=()=>{ const r={}; order.forEach(d=>{ r[d]=fixedOn[d]||forced[d]||(Math.random()<0.5?"A":"B"); }); return r; };
+  const initGreedy=()=>{ const r={}; let prevW=null;
+      for(const d of seq){                                     // walk the whole on-call sequence in order
+        if(existing[d]){ prevW=existing[d]; continue; }        // step over days already on the calendar
+        if(fixedOn[d]){ r[d]=fixedOn[d]; prevW=r[d]; continue; }
+        if(forced[d]){ r[d]=forced[d]; prevW=r[d]; continue; }
+        r[d] = prevW ? other(prevW) : (Math.random()<0.5?"A":"B");   // alternate off the previous on-call
+        prevW=r[d];
+      } return r; };
+  function cost(){
+    let uA=base.A.unsoc,uB=base.B.unsoc,tA=base.A.total,tB=base.B.total;
+    for(const d of order){ const w=result[d], u=isUnsociable(d); if(w==="A"){tA++; if(u)uA++;} else {tB++; if(u)uB++;} }
+    let c=Math.abs(uA-uB)*8 + Math.abs(tA-tB)*3;                       // balance
+    for(const [d,d2] of adjPairs){ const a=whoOn(d), b=whoOn(d2); if(a&&b&&a===b) c+=1000; }  // back-to-back
+    return c;
   }
-
-  // repair pass — flip any avoidable back-to-back (checks both sides; converges)
-  let changed=true, guard=0;
-  while(changed && guard++<12){
-    changed=false;
-    for(const d of order){
-      const w=result[d];
-      if(prefOf(d,w)==="on") continue;                 // this person requested it → allowed
-      if(!(whoOn(shiftDate(d,-1))===w || whoOn(shiftDate(d,1))===w)) continue;  // no adjacency
-      const o=other(w);
-      if(prefOf(d,o)==="off") continue;                // other can't take it → genuinely forced
-      if(whoOn(shiftDate(d,-1))===o || whoOn(shiftDate(d,1))===o) continue;     // flip would just create another
-      const metric=isUnsociable(d)?"unsoc":"soc";
-      cnt[w][metric]--; cnt[w].total--; cnt[o][metric]++; cnt[o].total++;
-      result[d]=o; changed=true;
+  // local search: greedy alternating start, then accept sideways moves so lone defects can walk to an edge and vanish
+  const flippable=order.filter(canFlip);
+  let best=null, bestCost=Infinity;
+  for(let restart=0; restart<8 && bestCost>0; restart++){
+    result = restart===0 ? initGreedy() : initRandom();
+    let cur=cost(); if(cur<bestCost){ bestCost=cur; best=Object.assign({},result); }
+    for(let it=0; it<700 && bestCost>0 && flippable.length; it++){
+      const d=flippable[Math.floor(Math.random()*flippable.length)];
+      const old=result[d]; result[d]=other(old); const nc=cost();
+      if(nc<=cur){ cur=nc; if(nc<bestCost){ bestCost=nc; best=Object.assign({},result); } }
+      else result[d]=old;
     }
   }
-
+  result=best;
   for(const d of pool){ const prev=state.assignments[d]; state.assignments[d]={p:result[d], type:(prev&&prev.type)?prev.type:"oncall", rota:state.rotaId}; }
   persist(); renderAll();
 }
-function clearPool(){ poolDates().forEach(d=>delete state.assignments[d]); persist(); renderAll(); }
+function clearPool(){ poolDates().forEach(d=>delete state.assignments[d]); state.ready={A:false,B:false}; persist(); renderAll(); }
+function resetReady(){ if(state.ready&&(state.ready.A||state.ready.B)) state.ready={A:false,B:false}; }
+function toggleReady(k){
+  if(!meKey){ openLogin(); return; }
+  if(!state.ready) state.ready={A:false,B:false};
+  state.ready[k]=!state.ready[k];
+  if(state.ready.A && state.ready.B && poolDates().length){
+    state.ready={A:false,B:false};
+    splitFairly();                       // both happy → divide automatically (persists + renders)
+  } else { persist(); renderPool(); }
+}
 
 /* ===== day requests ===== */
 function openPrefs(){ renderPrefs(); document.getElementById("prefsOverlay").classList.add("show"); }
 function closePrefs(){ document.getElementById("prefsOverlay").classList.remove("show"); }
-function setPref(d,key,val){ const a=state.assignments[d]; if(!a) return; if(!a.prefs) a.prefs={A:null,B:null}; a.prefs[key]= a.prefs[key]===val ? null : val; persist(); renderPrefs(); renderPool(); }
+function setPref(d,key,val){ const a=state.assignments[d]; if(!a) return; if(!a.prefs) a.prefs={A:null,B:null}; a.prefs[key]= a.prefs[key]===val ? null : val; resetReady(); persist(); renderPrefs(); renderPool(); }
 function renderPrefs(){
   const pool=poolDates(); const list=document.getElementById("prefsList");
   if(!pool.length){ list.innerHTML=`<div class="empty">No pooled dates to set requests on.</div>`; document.getElementById("prefsCount").textContent=""; return; }
@@ -1266,7 +1414,7 @@ function togglePick(ds, cell){
   else { pickerSel.add(ds); cell.classList.add("sel"); if(!cell.querySelector(".check")){ const c=document.createElement("div"); c.className="check"; c.textContent="✓"; cell.appendChild(c); } }
   updatePickerCount();
 }
-function addPicked(){ poolDates().forEach(d=>{ if(!pickerSel.has(d)) delete state.assignments[d]; }); pickerSel.forEach(d=>{ if(!state.assignments[d]) state.assignments[d]={p:"pool",type:"oncall"}; }); persist(); renderAll(); closePicker(); }
+function addPicked(){ poolDates().forEach(d=>{ if(!pickerSel.has(d)) delete state.assignments[d]; }); pickerSel.forEach(d=>{ if(!state.assignments[d]) state.assignments[d]={p:"pool",type:"oncall"}; }); resetReady(); persist(); renderAll(); closePicker(); }
 
 /* ===== confirm + new rota ===== */
 let confirmCb=null;
@@ -1274,7 +1422,7 @@ function openConfirm(title,msg,okLabel,cb){ document.getElementById("confirmTitl
 function closeConfirm(){ document.getElementById("confirmOverlay").classList.remove("show"); confirmCb=null; }
 function newRota(){
   openConfirm("Start a new rota?","This starts a fresh per-rota fairness count and clears the pool so you can allocate the new dates. Shifts already on the calendar stay as history and still count under “All time”.","Start new rota",
-    ()=>{ poolDates().forEach(d=>delete state.assignments[d]); state.rotaId=(state.rotaId||1)+1; scope="rota"; document.querySelectorAll("#scope button").forEach(x=>x.classList.toggle("on", x.dataset.scope==="rota")); persist(); renderAll(); });
+    ()=>{ poolDates().forEach(d=>delete state.assignments[d]); state.rotaId=(state.rotaId||1)+1; state.comments=[]; state.ready={A:false,B:false}; scope="rota"; document.querySelectorAll("#scope button").forEach(x=>x.classList.toggle("on", x.dataset.scope==="rota")); persist(); renderAll(); });
 }
 
 /* ===== editor ===== */
@@ -1347,11 +1495,13 @@ async function ensureFirebase(){
   db=firebase.database();
   return true;
 }
-function attachSync(isSwitch){
+function loadCacheCode(){ try{ return localStorage.getItem(CACHE_OWNER)||""; }catch(e){ return ""; } }
+function saveCacheCode(c){ cacheCode=c; try{ localStorage.setItem(CACHE_OWNER, c); }catch(e){} }
+function attachSync(){
   if(!db) return;
   if(syncRef){ try{ syncRef.off(); }catch(e){} }
   syncRef=db.ref(syncPath);
-  let first=true, seeded=false;
+  let seeded=false;
   syncRef.on("value", snap=>{
     const val=snap.val();
     const remoteHasContent = val && val.people && (
@@ -1360,32 +1510,30 @@ function attachSync(isSwitch){
       (val.myShifts && Object.keys(val.myShifts).length)
     );
     if(remoteHasContent){
-      applyingRemote=true; state=Object.assign(defaultState(), val); normalize(); writeLocal(state); renderAll(); applyingRemote=false; maybeAlert();
+      applyingRemote=true; state=Object.assign(defaultState(), val); normalize(); writeLocal(state); saveCacheCode(rotaCode); renderAll(); applyingRemote=false; maybeAlert();
     } else if(!seeded){
-      seeded=true;
-      if(first && isSwitch){
-        // switched into an empty rota code → start fresh, don't carry the old rota over
-        const fresh=defaultState(); fresh.people=state.people; state=fresh; normalize(); writeLocal(state); renderAll();
-      }
-      syncRef.set(state);   // seed the empty room (with our existing rota on first setup, or a fresh one on switch)
+      seeded=true; saveCacheCode(rotaCode); syncRef.set(state);   // empty room → seed with whatever's on screen now (already correct: see connectWithCode)
     }
-    first=false;
   }, err=>{ console.warn(err); setSyncStatus("local","Sync error — saved on this device. Tap to retry."); });
   setSyncStatus("live", `Live · rota code “${rotaCode}”. Tap to change.`);
 }
 async function connectWithCode(code){
-  const switching = !!syncRef;   // already in a room → this is a code switch, not first setup
+  // if the cached rota belongs to a different code, don't let it leak into this room
+  const movingRooms = (cacheCode!=="" && cacheCode!==code);
   rotaCode=code; saveCode(code); syncPath="slotShare/"+code;
+  if(movingRooms){
+    const fresh=defaultState(); fresh.people=state.people; state=fresh; normalize(); writeLocal(state); renderAll();
+  }
   setSyncStatus("connecting","Connecting…");
   try{
     const ok=await ensureFirebase();
-    if(ok){ attachSync(switching); }
+    if(ok){ attachSync(); }
     else { setSyncStatus("local","Saved on this device"); }
   }catch(e){ console.warn("sync failed", e); setSyncStatus("local","Couldn’t connect — saved on this device. Tap to retry."); }
 }
 function goOffline(){
   if(syncRef){ try{ syncRef.off(); }catch(e){} syncRef=null; }
-  rotaCode=""; saveCode(""); syncPath="";
+  rotaCode=""; saveCode(""); saveCacheCode(""); syncPath="";
   setSyncStatus("local","Saved on this device · tap to sync");
 }
 
@@ -1419,6 +1567,8 @@ function loginOffline(){
 /* ===== normalize + boot ===== */
 function normalize(){
   if(!state.rotaId) state.rotaId=1; if(!state.accept) state.accept={}; if(!state.myShifts) state.myShifts={};
+  if(!state.ready || typeof state.ready!=="object") state.ready={A:false,B:false};
+  if(!Array.isArray(state.comments)) state.comments=[];
   ["A","B"].forEach(k=>{ if(!state.people[k]) state.people[k]={name:k==="A"?"Mark":"Ed"}; if(state.people[k].initials===undefined) state.people[k].initials=""; });
   Object.values(state.assignments||{}).forEach(a=>{ if((a.p==="A"||a.p==="B") && a.rota===undefined) a.rota=state.rotaId; });
   const statusMap={requested:"pending", agreed:"accepted", done:"accepted"};
@@ -1441,6 +1591,8 @@ function boot(){
   document.getElementById("nameOverlay").onclick=e=>{ if(e.target.id==="nameOverlay") document.getElementById("nameOverlay").classList.remove("show"); };
 
   document.getElementById("addNote").onclick=addNote;
+  document.getElementById("postComment").onclick=postComment;
+  document.getElementById("commentInput").addEventListener("keydown",e=>{ if(e.key==="Enter") postComment(); });
   document.getElementById("swapYou").onclick=openMeChooser;
   document.getElementById("noteInput").addEventListener("keydown",e=>{ if(e.key==="Enter") addNote(); });
   document.getElementById("alertLater").onclick=closeAlert;
@@ -1469,6 +1621,8 @@ function boot(){
   document.getElementById("exportIcs").onclick=exportICS;
   document.getElementById("acceptRotaBtn").onclick=toggleAgree;
   document.getElementById("pdfBtn").onclick=exportPdf;
+  document.getElementById("printCancel").onclick=closePrint;
+  document.querySelectorAll(".print-opt").forEach(b=>b.onclick=()=>runPrint(b.dataset.style));
   document.getElementById("confirmCancel").onclick=closeConfirm;
   document.getElementById("confirmOk").onclick=()=>{ if(confirmCb) confirmCb(); closeConfirm(); };
   document.getElementById("confirmOverlay").onclick=e=>{ if(e.target.id==="confirmOverlay") closeConfirm(); };
@@ -1480,7 +1634,7 @@ function boot(){
   let curTheme="clinical"; try{ curTheme=localStorage.getItem(THEME_KEY)||"clinical"; }catch(e){}
   document.querySelectorAll("#themeSwitch button").forEach(b=>{ b.classList.toggle("on", b.dataset.theme===curTheme); b.onclick=()=>applyTheme(b.dataset.theme); });
 
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); document.getElementById("nameOverlay").classList.remove("show"); } });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); closePrint(); document.getElementById("nameOverlay").classList.remove("show"); } });
 
   document.getElementById("syncStatus").onclick=openLogin;
   document.getElementById("accountBtn").onclick=openLogin;
@@ -1491,6 +1645,7 @@ function boot(){
 
   meKey=loadMe();
   rotaCode=loadCode();
+  cacheCode=loadCacheCode();
   renderAll();
   refreshBankHolidays();
 
