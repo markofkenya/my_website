@@ -341,6 +341,13 @@
   .my-add{border:1.5px solid var(--line); background:var(--surface); font-family:var(--font-b); font-weight:600; font-size:12px; padding:7px 11px; border-radius:9px; cursor:pointer}
   .my-add:hover{background:var(--surface-2)}
   #myDayOverlay{z-index:70}
+  .login-dialog{max-width:400px}
+  .login-dialog h3{margin:0 0 4px}
+  .login-dialog input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:15px;font-family:var(--font-b);margin-bottom:6px;background:var(--surface)}
+  .login-dialog input:focus{outline:none;border-color:var(--a)}
+  .login-dialog .assign-opts{margin-bottom:14px}
+  .sync-err{color:var(--warn);font-size:12.5px;min-height:14px;margin:4px 0 8px}
+  .sync-help{font-size:12.5px;color:var(--ink-soft);line-height:1.55}
 </style>
 </head>
 <body>
@@ -506,9 +513,30 @@
     <input id="nameInput" type="text" maxlength="30" placeholder="Name">
     <label class="fld-label">Initials — calendar mark</label>
     <input id="iniInput" type="text" maxlength="3" placeholder="MM">
-    <label class="fld-label">Email — for swap-request alerts</label>
-    <input id="emailInput" type="email" placeholder="name@nhs.net">
     <div class="dialog-actions"><button class="btn ghost" id="nameCancel">Cancel</button><button class="btn" id="nameSave">Save</button></div>
+  </div>
+</div>
+
+<!-- LOGIN (rota code + identity) -->
+<div class="overlay center" id="loginOverlay">
+  <div class="mini-dialog login-dialog">
+    <div class="kicker" style="margin-bottom:2px">LTFT On-call · Slot Share</div>
+    <h3>Connect your rota</h3>
+    <p>You and your call partner type the <b>same rota code</b> to share one live rota. First, pick who you are on this device.</p>
+    <label class="fld-label">Who are you on this device?</label>
+    <div class="assign-opts" id="loginWho"></div>
+    <label class="fld-label">Rota code</label>
+    <input id="loginCode" type="text" placeholder="e.g. ngh-renal-2026" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="sync-err" id="loginErr"></div>
+    <div class="dialog-actions">
+      <button class="btn ghost danger-ghost" id="loginDisconnect" style="display:none">Disconnect</button>
+      <button class="btn ghost" id="loginOffline">Use offline</button>
+      <button class="btn" id="loginConnect">Connect</button>
+    </div>
+    <details class="paste-details" style="margin-top:12px">
+      <summary>What’s a rota code?</summary>
+      <div class="sync-help">Any word or phrase you both agree on — it decides which shared rota you join. Keep it private: anyone who knows it (and has this app) can see the rota. To start a fresh shared rota later, both enter a new code.</div>
+    </details>
   </div>
 </div>
 
@@ -573,8 +601,10 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "471078637472",
   appId: "1:471078637472:web:39604ff65883fd39a6dec5"
 };
-const SYNC_CODE = "main";
-let syncPath = "slotShare/" + SYNC_CODE;
+const CODE_STORE = "slotshare-code";   // device-local rota code (entered at login)
+let rotaCode = "";
+let syncPath = "";
+let syncRef = null;
 
 const BH_FALLBACK = {
   "2025-01-01":"New Year’s Day","2025-04-18":"Good Friday","2025-04-21":"Easter Monday",
@@ -612,7 +642,7 @@ const STORE_KEY = "slotshare-v1";
 const THEME_KEY = "slotshare-theme";
 let mem = null;
 const defaultState = () => ({
-  people:{ A:{name:"Mark", initials:"MM", email:""}, B:{name:"Ed", initials:"EB", email:""} },
+  people:{ A:{name:"Mark", initials:"MM"}, B:{name:"Ed", initials:"EB"} },
   assignments:{}, notes:[], rotaId:1, accept:{}, myShifts:{}
 });
 let state = defaultState();
@@ -1250,12 +1280,11 @@ function openRename(key){
   renamingKey=key; document.getElementById("nameTitle").textContent=`Edit ${state.people[key].name}`;
   document.getElementById("nameInput").value=state.people[key].name;
   document.getElementById("iniInput").value=state.people[key].initials||"";
-  document.getElementById("emailInput").value=state.people[key].email||"";
   document.getElementById("nameOverlay").classList.add("show");
   setTimeout(()=>{ const inp=document.getElementById("nameInput"); inp.focus(); inp.select(); },50);
 }
 function saveRename(){
-  if(renamingKey){ const p=state.people[renamingKey]; const v=document.getElementById("nameInput").value.trim(); if(v) p.name=v; p.initials=document.getElementById("iniInput").value.trim().toUpperCase(); p.email=document.getElementById("emailInput").value.trim(); persist(); renderAll(); }
+  if(renamingKey){ const p=state.people[renamingKey]; const v=document.getElementById("nameInput").value.trim(); if(v) p.name=v; p.initials=document.getElementById("iniInput").value.trim().toUpperCase(); persist(); renderAll(); }
   document.getElementById("nameOverlay").classList.remove("show"); renamingKey=null;
 }
 
@@ -1281,26 +1310,77 @@ async function refreshBankHolidays(){
 /* ===== live sync ===== */
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
 function setSyncStatus(kind, text){ const el=document.getElementById("syncStatus"); if(!el) return; const cls = kind==="live"?"live" : kind==="connecting"?"" : "local"; el.innerHTML=`<span class="syncdot ${cls}"></span> ${text}`; }
-async function initSync(){
-  if(!FIREBASE_CONFIG.databaseURL){ setSyncStatus("local","Saved on this device"); return; }
+function loadCode(){ try{ return localStorage.getItem(CODE_STORE)||""; }catch(e){ return ""; } }
+function saveCode(c){ try{ localStorage.setItem(CODE_STORE, c); }catch(e){} }
+async function ensureFirebase(){
+  if(!FIREBASE_CONFIG.databaseURL) return false;
+  if(!window.firebase){ await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"); await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"); }
+  if(!(firebase.apps && firebase.apps.length)) firebase.initializeApp(FIREBASE_CONFIG);
+  db=firebase.database();
+  return true;
+}
+function attachSync(){
+  if(!db) return;
+  if(syncRef){ try{ syncRef.off(); }catch(e){} }
+  syncRef=db.ref(syncPath);
+  syncRef.on("value", snap=>{
+    const val=snap.val();
+    const remoteHasContent = val && val.people && (
+      (val.assignments && Object.keys(val.assignments).length) ||
+      (val.notes && val.notes.length) ||
+      (val.myShifts && Object.keys(val.myShifts).length)
+    );
+    if(remoteHasContent){ applyingRemote=true; state=Object.assign(defaultState(), val); normalize(); writeLocal(state); renderAll(); applyingRemote=false; maybeAlert(); }
+    else { syncRef.set(state); }   // shared copy empty/uninitialised → seed it with ours
+  }, err=>{ console.warn(err); setSyncStatus("local","Sync error — saved on this device. Tap to retry."); });
+  setSyncStatus("live", `Live · rota code “${rotaCode}”. Tap to change.`);
+}
+async function connectWithCode(code){
+  rotaCode=code; saveCode(code); syncPath="slotShare/"+code;
   setSyncStatus("connecting","Connecting…");
   try{
-    if(!window.firebase){ await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"); await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"); }
-    if(!(firebase.apps && firebase.apps.length)) firebase.initializeApp(FIREBASE_CONFIG);
-    db=firebase.database();
-    db.ref(syncPath).on("value", snap=>{
-      const val=snap.val();
-      if(val && val.people && val.assignments){ applyingRemote=true; state=Object.assign(defaultState(), val); normalize(); writeLocal(state); renderAll(); applyingRemote=false; maybeAlert(); }
-      else { db.ref(syncPath).set(state); }
-    }, err=>{ console.warn(err); setSyncStatus("local","Sync error — saved on this device"); });
-    setSyncStatus("live","Live — shared with your call partner");
-  }catch(e){ console.warn("sync failed", e); setSyncStatus("local","Couldn’t connect — saved on this device"); }
+    const ok=await ensureFirebase();
+    if(ok){ attachSync(); }
+    else { setSyncStatus("local","Saved on this device"); }
+  }catch(e){ console.warn("sync failed", e); setSyncStatus("local","Couldn’t connect — saved on this device. Tap to retry."); }
+}
+function goOffline(){
+  if(syncRef){ try{ syncRef.off(); }catch(e){} syncRef=null; }
+  rotaCode=""; saveCode(""); syncPath="";
+  setSyncStatus("local","Saved on this device · tap to sync");
+}
+
+/* ---- login (rota code + identity) ---- */
+function renderLoginWho(){
+  const opts=document.getElementById("loginWho");
+  opts.innerHTML=["A","B"].map(k=>`<div class="opt ${k.toLowerCase()} ${meKey===k?"sel":""}" data-k="${k}"><span class="sw">${personIni(k)}</span>${escapeHtml(state.people[k].name)}</div>`).join("");
+  opts.querySelectorAll(".opt").forEach(o=>o.onclick=()=>{ meKey=o.dataset.k; saveMe(meKey); renderLoginWho(); });
+}
+function openLogin(){
+  document.getElementById("loginErr").textContent="";
+  document.getElementById("loginCode").value=rotaCode||"";
+  document.getElementById("loginDisconnect").style.display = syncRef ? "" : "none";
+  renderLoginWho();
+  document.getElementById("loginOverlay").classList.add("show");
+}
+function closeLogin(){ document.getElementById("loginOverlay").classList.remove("show"); }
+function submitLogin(){
+  const err=document.getElementById("loginErr");
+  if(!meKey){ err.textContent="First, tap who you are on this device."; return; }
+  const code=(document.getElementById("loginCode").value||"").trim().replace(/[^A-Za-z0-9_-]/g,"");
+  if(!code){ err.textContent="Enter a rota code — you and your call partner type the same one."; return; }
+  closeLogin(); renderComposer(); renderAll();
+  connectWithCode(code);
+}
+function loginOffline(){
+  if(!meKey){ document.getElementById("loginErr").textContent="Tap who you are first."; return; }
+  closeLogin(); goOffline(); renderAll();
 }
 
 /* ===== normalize + boot ===== */
 function normalize(){
   if(!state.rotaId) state.rotaId=1; if(!state.accept) state.accept={}; if(!state.myShifts) state.myShifts={};
-  ["A","B"].forEach(k=>{ if(!state.people[k]) state.people[k]={name:k==="A"?"Mark":"Ed"}; if(state.people[k].initials===undefined) state.people[k].initials=""; if(state.people[k].email===undefined) state.people[k].email=""; });
+  ["A","B"].forEach(k=>{ if(!state.people[k]) state.people[k]={name:k==="A"?"Mark":"Ed"}; if(state.people[k].initials===undefined) state.people[k].initials=""; });
   Object.values(state.assignments||{}).forEach(a=>{ if((a.p==="A"||a.p==="B") && a.rota===undefined) a.rota=state.rotaId; });
   const statusMap={requested:"pending", agreed:"accepted", done:"accepted"};
   (state.notes||[]).forEach(n=>{ if(!n.from) n.from="A"; if(statusMap[n.status]) n.status=statusMap[n.status]; if(!["pending","accepted","rejected"].includes(n.status)) n.status="pending"; });
@@ -1363,11 +1443,20 @@ function boot(){
 
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); document.getElementById("nameOverlay").classList.remove("show"); } });
 
+  document.getElementById("syncStatus").onclick=openLogin;
+  document.getElementById("loginConnect").onclick=submitLogin;
+  document.getElementById("loginOffline").onclick=loginOffline;
+  document.getElementById("loginDisconnect").onclick=()=>{ closeLogin(); goOffline(); };
+  document.getElementById("loginCode").addEventListener("keydown",e=>{ if(e.key==="Enter") submitLogin(); });
+
   meKey=loadMe();
+  rotaCode=loadCode();
   renderAll();
   refreshBankHolidays();
-  initSync();
-  if(!meKey) openMeChooser(); else maybeAlert();
+
+  if(!meKey){ openLogin(); }
+  else if(rotaCode){ connectWithCode(rotaCode); maybeAlert(); }
+  else { setSyncStatus("local","Saved on this device · tap to sync"); maybeAlert(); }
 }
 boot();
 })();
