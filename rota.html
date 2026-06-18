@@ -312,6 +312,8 @@
   .head-right{display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end}
   .myrota-btn{border:1px solid var(--a); background:var(--a-tint); color:var(--a-edge); font-family:var(--font-b); font-weight:600; font-size:13px; padding:9px 15px; border-radius:11px; cursor:pointer; white-space:nowrap}
   .myrota-btn:hover{background:var(--surface)}
+  .acct-btn{border:1px solid var(--line); background:var(--surface); color:var(--ink-soft); font-family:var(--font-b); font-weight:600; font-size:13px; padding:9px 15px; border-radius:11px; cursor:pointer; white-space:nowrap}
+  .acct-btn:hover{background:var(--surface-2)}
   .rota-overlay{position:fixed; inset:0; background:var(--bg); z-index:60; display:none; overflow-y:auto}
   .rota-overlay.show{display:block; animation:fadein .18s ease}
   .rota-inner{max-width:780px; margin:0 auto; padding:18px 16px 90px}
@@ -359,6 +361,7 @@
       <h1>The Split<span class="dot">.</span></h1>
     </div>
     <div class="head-right">
+      <button class="acct-btn" id="accountBtn">Sign in</button>
       <button class="myrota-btn" id="openMyRota">My rota</button>
       <div class="people" id="people"></div>
     </div>
@@ -1309,7 +1312,7 @@ async function refreshBankHolidays(){
 
 /* ===== live sync ===== */
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
-function setSyncStatus(kind, text){ const el=document.getElementById("syncStatus"); if(!el) return; const cls = kind==="live"?"live" : kind==="connecting"?"" : "local"; el.innerHTML=`<span class="syncdot ${cls}"></span> ${text}`; }
+function setSyncStatus(kind, text){ const el=document.getElementById("syncStatus"); const btn=document.getElementById("accountBtn"); if(btn) btn.textContent = kind==="live" ? "Account" : "Sign in"; if(!el) return; const cls = kind==="live"?"live" : kind==="connecting"?"" : "local"; el.innerHTML=`<span class="syncdot ${cls}"></span> ${text}`; }
 function loadCode(){ try{ return localStorage.getItem(CODE_STORE)||""; }catch(e){ return ""; } }
 function saveCode(c){ try{ localStorage.setItem(CODE_STORE, c); }catch(e){} }
 async function ensureFirebase(){
@@ -1319,10 +1322,11 @@ async function ensureFirebase(){
   db=firebase.database();
   return true;
 }
-function attachSync(){
+function attachSync(isSwitch){
   if(!db) return;
   if(syncRef){ try{ syncRef.off(); }catch(e){} }
   syncRef=db.ref(syncPath);
+  let first=true, seeded=false;
   syncRef.on("value", snap=>{
     const val=snap.val();
     const remoteHasContent = val && val.people && (
@@ -1330,17 +1334,27 @@ function attachSync(){
       (val.notes && val.notes.length) ||
       (val.myShifts && Object.keys(val.myShifts).length)
     );
-    if(remoteHasContent){ applyingRemote=true; state=Object.assign(defaultState(), val); normalize(); writeLocal(state); renderAll(); applyingRemote=false; maybeAlert(); }
-    else { syncRef.set(state); }   // shared copy empty/uninitialised → seed it with ours
+    if(remoteHasContent){
+      applyingRemote=true; state=Object.assign(defaultState(), val); normalize(); writeLocal(state); renderAll(); applyingRemote=false; maybeAlert();
+    } else if(!seeded){
+      seeded=true;
+      if(first && isSwitch){
+        // switched into an empty rota code → start fresh, don't carry the old rota over
+        const fresh=defaultState(); fresh.people=state.people; state=fresh; normalize(); writeLocal(state); renderAll();
+      }
+      syncRef.set(state);   // seed the empty room (with our existing rota on first setup, or a fresh one on switch)
+    }
+    first=false;
   }, err=>{ console.warn(err); setSyncStatus("local","Sync error — saved on this device. Tap to retry."); });
   setSyncStatus("live", `Live · rota code “${rotaCode}”. Tap to change.`);
 }
 async function connectWithCode(code){
+  const switching = !!syncRef;   // already in a room → this is a code switch, not first setup
   rotaCode=code; saveCode(code); syncPath="slotShare/"+code;
   setSyncStatus("connecting","Connecting…");
   try{
     const ok=await ensureFirebase();
-    if(ok){ attachSync(); }
+    if(ok){ attachSync(switching); }
     else { setSyncStatus("local","Saved on this device"); }
   }catch(e){ console.warn("sync failed", e); setSyncStatus("local","Couldn’t connect — saved on this device. Tap to retry."); }
 }
@@ -1444,6 +1458,7 @@ function boot(){
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); document.getElementById("nameOverlay").classList.remove("show"); } });
 
   document.getElementById("syncStatus").onclick=openLogin;
+  document.getElementById("accountBtn").onclick=openLogin;
   document.getElementById("loginConnect").onclick=submitLogin;
   document.getElementById("loginOffline").onclick=loginOffline;
   document.getElementById("loginDisconnect").onclick=()=>{ closeLogin(); goOffline(); };
