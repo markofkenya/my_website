@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Slot Share — On-call tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:"IBM Plex Sans",system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.45;-webkit-font-smoothing:antialiased}
+  @keyframes rise{from{transform:translateY(20px);opacity:.4}to{transform:translateY(0);opacity:1}}
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  :root{
+    --ink:#202830;--ink-soft:#5a666e;--ink-faint:#8c979e;
+    --bg:#eceff1;--surface:#ffffff;--surface-2:#f4f6f7;
+    --line:#dde3e6;--line-soft:#e9edec;
+    --a:#0e6f78;--a-tint:#e2f1f1;--a-edge:#0a565d;
+    --b:#8a3b6b;--b-tint:#f5e8ef;--b-edge:#6f2e55;
+    --gold:#b3842a;--gold-tint:#f7eed6;--gold-line:#e7d3a0;
+    --good:#2f8f5b;--warn:#c2683a;
+    --shadow:0 1px 2px rgba(32,40,48,.05),0 8px 24px rgba(32,40,48,.05);
+    --shadow-lg:0 24px 60px rgba(20,28,34,.22);
+    --r:16px;
+    --font-d:"Space Grotesk",system-ui,sans-serif;
+    --font-b:"IBM Plex Sans",system-ui,sans-serif;
+    --font-m:"IBM Plex Mono",ui-monospace,monospace;
+    font-family:var(--font-b);
+  }
+  :root[data-theme="sage"]{--a:#2f6f5e;--a-tint:#e3efe9;--a-edge:#245446;--b:#bf764a;--b-tint:#f6e9df;--b-edge:#9a5b35;--gold:#a98a2f;--gold-tint:#f5eed9;--gold-line:#e2d0a2}
+  :root[data-theme="indigo"]{--a:#3a57c7;--a-tint:#e7eafb;--a-edge:#2b40a0;--b:#c0468a;--b-tint:#f7e6f0;--b-edge:#9c3570;--gold:#b3842a;--gold-tint:#f7eed6;--gold-line:#e7d3a0}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:22px 18px 80px}
+
+  /* header */
+  header.app{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .brand .kicker{font-family:var(--font-m);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint)}
+  .brand h1{font-family:var(--font-d);font-weight:700;font-size:30px;letter-spacing:-.015em;margin:3px 0 0}
+  .brand h1 .dot{color:var(--a)}
+  .people{display:flex;gap:10px;flex-wrap:wrap}
+  .person-chip{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 14px 7px 9px;cursor:pointer;box-shadow:var(--shadow);transition:transform .12s ease}
+  .person-chip:hover{transform:translateY(-1px)}
+  .swatch{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;font-family:var(--font-m);font-size:10px;font-weight:600;color:#fff}
+  .person-chip.a .swatch{background:var(--a)} .person-chip.b .swatch{background:var(--b)}
+  .person-chip .nm{font-weight:600;font-size:13.5px}
+  .person-chip .edit{font-size:11px;color:var(--ink-faint)}
+
+  /* step guide */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+  .step{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:12px 13px;box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s;cursor:pointer;text-align:left}
+  .step .num{flex:0 0 auto;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-m);font-size:12px;font-weight:600;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-soft)}
+  .step .stx{min-width:0}
+  .step .stx{display:flex;flex-direction:column}
+  .step .st-t{display:block;font-size:13px;font-weight:600;line-height:1.2}
+  .step .st-s{font-size:11px;color:var(--ink-faint);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .step.active{border-color:var(--a);box-shadow:0 0 0 3px var(--a-tint),var(--shadow)}
+  .step.active .num{background:var(--a);border-color:var(--a);color:#fff}
+  .step.done .num{background:var(--good);border-color:var(--good);color:#fff}
+  .step.done .st-t{color:var(--ink-soft)}
+
+  /* layout */
+  .cols{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:16px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+  .section-label{font-family:var(--font-m);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 12px}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+
+  /* fairness */
+  .balance{padding:18px 20px 18px}
+  .scope{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px}
+  .scope button{border:0;background:transparent;font-family:var(--font-m);font-size:10.5px;letter-spacing:.04em;color:var(--ink-soft);padding:6px 12px;border-radius:999px;cursor:pointer;text-transform:uppercase}
+  .scope button.on{background:var(--ink);color:#fff}
+  .fair-verdict{display:flex;align-items:center;gap:10px;padding:13px 15px;border-radius:12px;margin:4px 0 18px;font-size:14.5px;font-weight:600;background:var(--surface-2);border:1px solid var(--line-soft)}
+  .fair-verdict .vico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:15px;color:#fff;flex:0 0 auto}
+  .fair-verdict.even{background:#e9f4ee;border-color:#cfe8d9} .fair-verdict.even .vico{background:var(--good)}
+  .fair-verdict.off{background:var(--gold-tint);border-color:var(--gold-line)} .fair-verdict.off .vico{background:var(--gold)}
+  .fair-verdict small{display:block;font-weight:500;font-size:12px;color:var(--ink-soft);margin-top:1px}
+
+  .metric{margin-bottom:18px}
+  .metric:last-of-type{margin-bottom:6px}
+  .metric-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px}
+  .metric-top .mt-l{font-size:13.5px;font-weight:600}
+  .metric-top .mt-l span{font-weight:500;color:var(--ink-faint);font-size:12px}
+  .metric-tag{font-family:var(--font-m);font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px}
+  .metric-tag.even{color:var(--good);background:#e9f4ee} .metric-tag.off{color:var(--gold);background:var(--gold-tint)}
+  .gauge{display:grid;grid-template-columns:62px 1fr 62px;align-items:center;gap:14px}
+  .gauge .end{display:flex;flex-direction:column;align-items:center;gap:2px}
+  .gauge .end .num{font-family:var(--font-m);font-size:27px;font-weight:600;line-height:.95}
+  .gauge .end.a .num{color:var(--a)} .gauge .end.b .num{color:var(--b)}
+  .gauge .end .nm{font-size:11px;color:var(--ink-soft);max-width:62px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .gauge .beam{position:relative;height:14px;border-radius:999px;background:linear-gradient(90deg,var(--a-tint),var(--surface-2) 42% 58%,var(--b-tint));border:1px solid var(--line)}
+  .gauge .beam .ctr{position:absolute;left:50%;top:-5px;bottom:-5px;width:2px;background:var(--ink-faint);opacity:.4;transform:translateX(-1px)}
+  .gauge .beam .lean{position:absolute;top:1px;bottom:1px;border-radius:999px;transition:all .45s cubic-bezier(.2,.8,.2,1)}
+  .gauge .beam .lean.a{background:var(--a)} .gauge .beam .lean.b{background:var(--b)}
+  .gauge .beam .knob{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;transform:translate(-50%,-50%);background:#fff;border:3px solid var(--good);box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .45s cubic-bezier(.2,.8,.2,1),border-color .3s}
+  .gauge .beam .knob.a{border-color:var(--a)} .gauge .beam .knob.b{border-color:var(--b)}
+
+  .next-up{display:flex;align-items:flex-start;gap:9px;margin-top:16px;padding:11px 13px;background:var(--gold-tint);border:1px solid var(--gold-line);border-radius:11px;font-size:13px;line-height:1.4}
+  .next-up .tag{font-family:var(--font-m);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:600;flex:0 0 auto;margin-top:2px}
+  .mini-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:16px}
+  .mini{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:11px;padding:10px 12px}
+  .mini .h{font-family:var(--font-m);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+  .mini .nums{display:flex;gap:14px;margin-top:5px}
+  .mini .nums span{font-family:var(--font-m);font-size:16px;font-weight:600}
+  .mini .nums .a{color:var(--a)} .mini .nums .b{color:var(--b)}
+
+  /* pool */
+  .poolcard{padding:18px 20px 20px}
+  .pool-count{font-family:var(--font-m);font-size:11px;font-weight:600;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);padding:5px 12px;border-radius:999px;white-space:nowrap}
+  .pool-hint{font-size:13px;color:var(--ink-soft);margin:0 0 14px}
+  #poolInput{width:100%;min-height:64px;resize:vertical;border:1px solid var(--line);border-radius:11px;padding:11px 13px;font-family:var(--font-m);font-size:13px;background:var(--surface-2);color:var(--ink);line-height:1.5}
+  #poolInput:focus{outline:none;border-color:var(--a);background:var(--surface)}
+  .pool-actions{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+  .parse-feedback{font-family:var(--font-m);font-size:11.5px;color:var(--ink-soft)}
+  .parse-feedback.err{color:var(--warn)}
+  .pool-summary{margin-top:15px}
+  .pool-line{font-size:13px;color:var(--ink-soft)}
+  .pool-line b{color:var(--ink)}
+  .pool-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+  .pool-chip{font-family:var(--font-m);font-size:11.5px;padding:5px 9px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);display:flex;align-items:center;gap:8px}
+  .pool-chip.un{border-color:var(--gold-line);background:var(--gold-tint);color:#7a5d18}
+  .pool-chip .rm{cursor:pointer;color:var(--ink-faint);font-size:11px}
+  .pool-chip .rm:hover{color:var(--warn)}
+  .pool-divide{display:flex;gap:9px;margin-top:17px;flex-wrap:wrap}
+  .pool-divide .btn{flex:1;min-width:120px}
+  .paste-details{margin-top:11px}
+  .paste-details summary{font-size:12.5px;color:var(--a);cursor:pointer;font-weight:600;list-style:none;user-select:none}
+  .paste-details summary::-webkit-details-marker{display:none}
+  .paste-details summary::before{content:"+ ";font-family:var(--font-m)}
+  .paste-details[open] summary::before{content:"– "}
+  .paste-details[open] summary{margin-bottom:11px}
+  .empty-cta{text-align:center;padding:6px 0 2px}
+  .empty-cta .ec-ico{width:46px;height:46px;border-radius:13px;background:var(--a-tint);color:var(--a);display:grid;place-items:center;margin:0 auto 12px;font-size:22px}
+  .empty-cta .ec-t{font-family:var(--font-d);font-weight:600;font-size:17px;margin-bottom:4px}
+  .empty-cta .ec-s{font-size:13px;color:var(--ink-soft);max-width:340px;margin:0 auto 16px}
+
+  /* buttons */
+  .btn{border:0;border-radius:11px;padding:11px 17px;font-family:var(--font-b);font-weight:600;font-size:14px;cursor:pointer;background:var(--ink);color:#fff;transition:opacity .12s,transform .1s}
+  .btn:hover{opacity:.92} .btn:active{transform:translateY(1px)}
+  .btn.block{width:100%;padding:14px;font-size:15px}
+  .btn.ghost{background:var(--surface);color:var(--ink-soft);border:1px solid var(--line)}
+  .btn.ghost:hover{background:var(--surface-2)}
+  .btn.primary{background:var(--a)}
+  .btn.danger{background:var(--warn)}
+  .danger-ghost{color:var(--warn)!important}
+  .danger-ghost:hover{background:#fbeee8!important;border-color:#e6b79f!important}
+
+  /* calendar */
+  .calwrap{padding:18px 20px 20px;margin-bottom:16px}
+  .calnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+  .calnav .mlabel{font-family:var(--font-d);font-weight:600;font-size:21px;letter-spacing:-.01em}
+  .calnav .mlabel span{color:var(--ink-faint);font-weight:500}
+  .navbtns{display:flex;gap:7px;align-items:center}
+  .iconbtn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:17px;color:var(--ink-soft);display:grid;place-items:center}
+  .iconbtn:hover{background:var(--surface-2)}
+  .today-btn{height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+  .today-btn:hover{background:var(--surface-2)}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:7px}
+  .dow div{text-align:center;font-family:var(--font-m);font-size:10.5px;letter-spacing:.08em;color:var(--ink-faint);text-transform:uppercase}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+  .cell{position:relative;aspect-ratio:1/1.04;border:1px solid var(--line-soft);border-radius:12px;background:var(--surface);padding:7px;cursor:pointer;overflow:hidden;transition:transform .1s,box-shadow .1s;display:flex;flex-direction:column}
+  .cell:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--line)}
+  .cell.blank{visibility:hidden;cursor:default}
+  .cell .d{font-family:var(--font-m);font-size:13px;font-weight:600;color:var(--ink);line-height:1}
+  .cell.weekend{background:var(--gold-tint);border-color:var(--gold-line)}
+  .cell.bh{background:var(--gold-tint);border-color:var(--gold-line)}
+  .cell .bh-mark{position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--gold)}
+  .cell .bh-name{font-size:8.5px;line-height:1.1;color:var(--gold);font-weight:600;margin-top:auto;letter-spacing:-.01em}
+  .cell.today{box-shadow:inset 0 0 0 2px var(--ink)}
+  .cell.assigned-a{background:var(--a-tint);border-color:#bfe0e1}
+  .cell.assigned-b{background:var(--b-tint);border-color:#e7c8da}
+  .cell.assigned-pool{background:#eef1f3;border:1px dashed #a7b3ba}
+  .cell.nwd::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:repeating-linear-gradient(135deg,transparent 0,transparent 6px,rgba(32,40,48,.13) 6px,rgba(32,40,48,.13) 8px)}
+  .cell.nwd .d{position:relative;z-index:1}
+  .cell.assigned-a.weekend,.cell.assigned-a.bh{background:linear-gradient(135deg,var(--a-tint) 60%,var(--gold-tint))}
+  .cell.assigned-b.weekend,.cell.assigned-b.bh{background:linear-gradient(135deg,var(--b-tint) 60%,var(--gold-tint))}
+  .cell .who{margin-top:5px;display:flex;align-items:center;gap:4px}
+  .cell .who .ini{font-family:var(--font-m);font-size:11px;font-weight:600;color:#fff;padding:1px 6px;border-radius:6px}
+  .cell.assigned-a .who .ini{background:var(--a)} .cell.assigned-b .who .ini{background:var(--b)}
+  .cell .who .ini.pool{background:var(--ink-faint)}
+  .cell .stype{font-size:9px;color:var(--ink-soft);font-weight:600;margin-top:3px;text-transform:uppercase;letter-spacing:.03em}
+  .legend{display:flex;gap:15px;flex-wrap:wrap;margin-top:15px;padding-top:14px;border-top:1px solid var(--line-soft)}
+  .legend span{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-soft)}
+  .legend .k{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.06)}
+
+  /* notes / swaps */
+  .notes{padding:18px 20px 20px;margin-bottom:16px}
+  .swap-composer{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:13px;padding:14px;margin-bottom:15px}
+  .swap-row{display:flex;align-items:center;gap:9px;margin-bottom:10px;flex-wrap:wrap}
+  .swap-mid{font-size:12.5px;color:var(--ink-soft);white-space:nowrap}
+  .swap-sel{flex:1;min-width:128px;border:1px solid var(--line);border-radius:10px;padding:10px 11px;font-family:var(--font-b);font-size:13px;font-weight:500;color:var(--ink);background:var(--surface);cursor:pointer}
+  .swap-you{flex:0 0 auto;border:1px solid var(--a);background:var(--a-tint);color:var(--a-edge);font-family:var(--font-b);font-weight:600;font-size:13px;padding:10px 13px;border-radius:10px;cursor:pointer;white-space:nowrap}
+  .swap-you:hover{filter:brightness(.97)}
+  .swap-composer input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:var(--font-b);font-size:13.5px;color:var(--ink);background:var(--surface);margin-bottom:10px}
+  .swap-composer input:focus,.swap-sel:focus{outline:none;border-color:var(--a)}
+  .swap-composer .btn{width:100%}
+  .alert-item{border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px;background:var(--surface-2);text-align:left}
+  .alert-desc{font-size:13.5px;margin-bottom:3px}
+  .alert-note{font-size:12.5px;color:var(--ink-soft);font-style:italic;margin-bottom:9px}
+  .alert-actions{display:flex;gap:8px;margin-top:10px}
+  .alert-actions .btn{flex:1;padding:10px}
+  .note{display:flex;align-items:flex-start;gap:11px;padding:12px 0;border-top:1px solid var(--line-soft)}
+  .note:first-of-type{border-top:0}
+  .note .body{flex:1;min-width:0}
+  .note.done .txt{color:var(--ink-faint)}
+  .note .meta{font-family:var(--font-m);font-size:10.5px;color:var(--ink-faint);margin-top:4px}
+  .note .from-line{font-size:13px;font-weight:600;margin-bottom:2px}
+  .note .from-line.a{color:var(--a-edge)} .note .from-line.b{color:var(--b-edge)}
+  .req-actions{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;align-items:center}
+  .req-actions button{font-family:var(--font-b);font-size:11.5px;font-weight:600;border-radius:9px;padding:6px 12px;cursor:pointer;border:1px solid var(--line);background:var(--surface)}
+  .req-actions .accept{background:var(--good);color:#fff;border-color:var(--good)}
+  .req-actions .unavail{background:var(--surface);color:var(--ink-soft)}
+  .req-status{font-family:var(--font-m);font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .req-status.accepted{background:#e6f1ea;color:var(--good);border:1px solid #c4e3cf}
+  .req-status.rejected{background:#fbeae2;color:var(--warn);border:1px solid #e6b79f}
+  .note .del{background:none;border:0;color:var(--ink-faint);cursor:pointer;font-size:15px;padding:2px 4px;line-height:1}
+  .note .del:hover{color:var(--warn)}
+  .empty{color:var(--ink-faint);font-size:13px;font-style:italic;padding:8px 0}
+
+  /* sign-off */
+  .agree{padding:18px 20px 20px;margin-bottom:16px}
+  .agree-status{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+  .agree-chip{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft)}
+  .agree-chip.ok.a{background:var(--a-tint);border-color:#bfe0e1;color:var(--a-edge)}
+  .agree-chip.ok.b{background:var(--b-tint);border-color:#e7c8da;color:var(--b-edge)}
+  .agree-actions{display:flex;gap:9px;flex-wrap:wrap}
+  .agree-actions .btn{flex:1;min-width:160px}
+  #acceptRotaBtn.agreed{background:var(--good)}
+  #pdfBtn:disabled{opacity:.45;cursor:not-allowed}
+  .agree-hint{font-size:12.5px;color:var(--ink-faint);margin-top:11px}
+
+  /* tools */
+  .tools{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:6px 2px 0}
+  .tools .grow{flex:1}
+  .theme-switch{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow)}
+  .theme-switch button{border:0;background:transparent;cursor:pointer;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;padding:0;margin:0 1px}
+  .theme-switch button .dotc{width:15px;height:15px;border-radius:50%;border:2px solid transparent}
+  .theme-switch button.on .dotc{border-color:var(--ink)}
+  .syncline{font-family:var(--font-m);font-size:11px;color:var(--ink-faint);display:flex;align-items:center;gap:6px;cursor:pointer}
+  .syncline:hover{color:var(--ink-soft)}
+  .syncdot{width:7px;height:7px;border-radius:50%;background:var(--ink-faint)}
+  .syncdot.live{background:var(--good)} .syncdot.local{background:var(--gold)}
+
+  /* overlays / sheets */
+  .overlay{position:fixed;inset:0;background:rgba(20,28,34,.44);backdrop-filter:blur(2px);display:none;align-items:flex-end;justify-content:center;z-index:50;animation:fadein .15s ease}
+  .overlay.show{display:flex}
+  .overlay.center{align-items:center}
+  .sheet{background:var(--surface);width:100%;max-width:470px;border-radius:20px 20px 0 0;padding:20px 20px 24px;box-shadow:var(--shadow-lg);animation:rise .22s ease}
+  .sheet .sh-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px}
+  .sheet .sh-date{font-family:var(--font-d);font-weight:600;font-size:19px}
+  .sheet .sh-sub{font-family:var(--font-m);font-size:11px;color:var(--ink-faint);margin-bottom:18px;display:flex;align-items:center;gap:6px}
+  .sheet .sh-sub .badge{background:var(--gold-tint);color:var(--gold);padding:2px 9px;border-radius:999px;font-weight:600}
+  .sheet .x,.picker-modal .x,.mini-dialog .x{background:none;border:0;font-size:23px;color:var(--ink-faint);cursor:pointer;line-height:1}
+  .pick-label{font-family:var(--font-m);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:6px 0 9px}
+  .assign-opts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+  .opt{border:1.5px solid var(--line);border-radius:13px;padding:13px;cursor:pointer;display:flex;align-items:center;gap:10px;background:var(--surface);font-weight:600;font-size:14px}
+  .opt .sw{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:#fff;font-family:var(--font-m);font-size:10px;font-weight:600}
+  .opt.a .sw{background:var(--a)} .opt.b .sw{background:var(--b)}
+  .opt.a.sel{border-color:var(--a);background:var(--a-tint)} .opt.b.sel{border-color:var(--b);background:var(--b-tint)}
+  .opt.clear{grid-column:1/-1;justify-content:center;color:var(--ink-soft)}
+  .opt.clear .sw{background:var(--ink-faint)}
+  .opt.pool{grid-column:1/-1} .opt.pool .sw{background:var(--ink-faint)}
+  .opt.pool.sel{border-color:var(--ink-faint);background:#eef1f3}
+  .type-opts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .type-opt{border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:500;cursor:pointer;background:var(--surface-2);color:var(--ink-soft)}
+  .type-opt.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  .picker-modal{background:var(--surface);width:100%;max-width:470px;border-radius:20px;padding:20px;box-shadow:var(--shadow-lg);margin:auto;max-height:92vh;overflow:auto}
+  .picker-sub{font-size:12.5px;color:var(--ink-soft);margin:2px 0 16px}
+  .picker-modal .calnav{margin-bottom:11px}
+  .picker-modal .mlabel{font-family:var(--font-d);font-weight:600;font-size:18px}
+  .picker-modal .mlabel span{color:var(--ink-faint);font-weight:500}
+  .picker-modal .cell{cursor:pointer}
+  .picker-modal .cell.locked{cursor:default;opacity:.5}
+  .picker-modal .cell.sel{box-shadow:inset 0 0 0 2px var(--a);background:var(--a-tint);border-color:var(--a)}
+  .picker-modal .cell .check{position:absolute;bottom:5px;right:6px;font-size:13px;color:var(--a);font-weight:700;line-height:1}
+  .picker-foot{display:flex;align-items:center;justify-content:space-between;margin-top:17px;gap:10px;flex-wrap:wrap}
+  .picker-count{font-family:var(--font-m);font-size:12px;color:var(--ink-soft)}
+  .picker-count b{color:var(--ink)} .picker-count .un{color:var(--gold)}
+  .picker-actions{display:flex;gap:8px}
+
+  #prefsList{max-height:54vh;overflow:auto;margin:0 -4px}
+  .prefrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 4px;border-top:1px solid var(--line-soft)}
+  .prefrow:first-child{border-top:0}
+  .prefdate{font-size:13px;font-weight:600;min-width:92px}
+  .prefdate .un{display:inline-block;font-family:var(--font-m);font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);background:var(--gold-tint);border:1px solid var(--gold-line);padding:1px 5px;border-radius:999px;margin-left:5px;vertical-align:middle}
+  .prefppl{display:flex;gap:10px;flex-wrap:wrap}
+  .prefgrp{display:flex;align-items:center;gap:5px}
+  .prefgrp .plabel{font-family:var(--font-m);font-size:10px;font-weight:600;color:#fff;width:24px;height:22px;border-radius:6px;display:grid;place-items:center}
+  .prefgrp.a .plabel{background:var(--a)} .prefgrp.b .plabel{background:var(--b)}
+  .prefgrp button{border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);font-size:11px;font-weight:600;padding:6px 9px;border-radius:8px;cursor:pointer}
+  .prefgrp button.sel-off{background:var(--warn);color:#fff;border-color:var(--warn)}
+  .prefgrp button.sel-on{background:var(--good);color:#fff;border-color:var(--good)}
+
+  .mini-dialog{background:var(--surface);border-radius:18px;max-width:360px;width:100%;padding:22px;margin:auto;box-shadow:var(--shadow-lg)}
+  .mini-dialog h3{font-family:var(--font-d);margin:0 0 5px;font-size:19px}
+  .mini-dialog p{margin:0 0 15px;font-size:13px;color:var(--ink-soft)}
+  .fld-label{display:block;font-family:var(--font-m);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin:2px 0 6px}
+  .mini-dialog input{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px 14px;font-size:15px;font-family:var(--font-b);margin-bottom:13px}
+  .mini-dialog input:focus{outline:none;border-color:var(--a)}
+  .dialog-actions{display:flex;gap:9px;justify-content:flex-end}
+
+  @media (min-width:640px){.overlay{align-items:center}.sheet{border-radius:20px;margin:0 16px}.mini-stats{grid-template-columns:repeat(4,1fr)}}
+  @media (min-width:860px){.cols.split{grid-template-columns:1fr 1fr}}
+  @media (max-width:680px){.steps{grid-template-columns:repeat(2,1fr)}.step .st-s{display:none}}
+  @media (max-width:460px){.cell .stype,.cell .bh-name{display:none}.cell{padding:5px}.brand h1{font-size:24px}.wrap{padding:18px 14px 70px}.steps{gap:8px}}
+
+  /* my rota */
+  .head-right{display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end}
+  .myrota-btn{border:1px solid var(--a); background:var(--a-tint); color:var(--a-edge); font-family:var(--font-b); font-weight:600; font-size:13px; padding:9px 15px; border-radius:11px; cursor:pointer; white-space:nowrap}
+  .myrota-btn:hover{background:var(--surface)}
+  .rota-overlay{position:fixed; inset:0; background:var(--bg); z-index:60; display:none; overflow-y:auto}
+  .rota-overlay.show{display:block; animation:fadein .18s ease}
+  .rota-inner{max-width:780px; margin:0 auto; padding:18px 16px 90px}
+  .rota-top{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px; flex-wrap:wrap}
+  .rota-back{border:1px solid var(--line); background:var(--surface); border-radius:10px; padding:9px 15px; font-weight:600; font-size:13px; cursor:pointer; color:var(--ink-soft)}
+  .rota-back:hover{background:var(--surface-2)}
+  .rota-head{margin-bottom:14px}
+  .rota-title{font-family:var(--font-d); font-weight:700; font-size:24px; margin:2px 0 0; letter-spacing:-.01em}
+  .oc-badge{font-family:var(--font-m); font-size:8.5px; font-weight:600; letter-spacing:.03em; text-transform:uppercase; color:#fff; background:var(--ink); border-radius:5px; padding:1px 5px; margin-top:4px; display:inline-block; align-self:flex-start}
+  .cell .ms-chip{font-family:var(--font-m); font-size:8.5px; font-weight:600; color:#fff; border-radius:5px; padding:1px 5px; margin-top:3px; display:inline-block; align-self:flex-start; letter-spacing:.02em}
+  #myGrid .cell{cursor:pointer}
+  .my-legend{display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:16px; padding-top:14px; border-top:1px solid var(--line-soft)}
+  .my-legend span{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-soft)}
+  .my-legend .lk{width:12px; height:12px; border-radius:4px}
+  .my-oncall{display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:14px}
+  .my-oncall .oc-note{color:var(--ink-faint); font-size:12px}
+  .my-list{margin-bottom:16px}
+  .my-row{display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid var(--line-soft)}
+  .my-row:first-child{border-top:0}
+  .my-dot{width:11px; height:11px; border-radius:4px; flex:0 0 auto}
+  .my-name{font-size:13px; font-weight:600; flex:1; min-width:80px}
+  .my-t{border:1px solid var(--line); border-radius:7px; padding:5px 6px; font-family:var(--font-m); font-size:12px; color:var(--ink); background:var(--surface)}
+  .my-dash{color:var(--ink-faint)}
+  .my-x{background:none; border:0; color:var(--ink-faint); cursor:pointer; font-size:14px; padding:2px 4px}
+  .my-x:hover{color:var(--warn)}
+  .my-add-wrap{display:flex; flex-wrap:wrap; gap:7px}
+  .my-add{border:1.5px solid var(--line); background:var(--surface); font-family:var(--font-b); font-weight:600; font-size:12px; padding:7px 11px; border-radius:9px; cursor:pointer}
+  .my-add:hover{background:var(--surface-2)}
+  #myDayOverlay{z-index:70}
+</style>
+</head>
+<body>
+<div class="wrap" id="ss-root">
+
+  <header class="app">
+    <div class="brand">
+      <div class="kicker">LTFT On-call · Slot Share</div>
+      <h1>The Split<span class="dot">.</span></h1>
+    </div>
+    <div class="head-right">
+      <button class="myrota-btn" id="openMyRota">My rota</button>
+      <div class="people" id="people"></div>
+    </div>
+  </header>
+
+  <div class="steps" id="steps"></div>
+
+  <div class="cols split">
+    <section class="card poolcard" id="poolCard">
+      <div class="card-head">
+        <p class="section-label" style="margin:0">Step 1 · Dates to divide</p>
+        <div class="pool-count" id="poolCount">0 to split</div>
+      </div>
+      <div id="poolBody"></div>
+    </section>
+
+    <section class="card balance" id="balanceCard">
+      <div class="card-head">
+        <p class="section-label" style="margin:0">Fairness</p>
+        <div class="scope" id="scope">
+          <button data-scope="rota" class="on">This rota</button>
+          <button data-scope="all">All time</button>
+        </div>
+      </div>
+      <div id="fairBody"></div>
+    </section>
+  </div>
+
+  <section class="card calwrap">
+    <div class="calnav">
+      <div class="mlabel" id="monthLabel"></div>
+      <div class="navbtns">
+        <button class="today-btn" id="todayBtn">Today</button>
+        <button class="iconbtn" id="prevBtn" aria-label="Previous month">‹</button>
+        <button class="iconbtn" id="nextBtn" aria-label="Next month">›</button>
+      </div>
+    </div>
+    <div class="dow"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
+    <div class="grid" id="grid"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <section class="card notes">
+    <p class="section-label">Swaps &amp; requests</p>
+    <div class="swap-composer">
+      <div class="swap-row">
+        <button class="swap-you" id="swapYou">You</button>
+        <span class="swap-mid">give away</span>
+        <select id="giveDate" class="swap-sel"></select>
+      </div>
+      <div class="swap-row">
+        <span class="swap-mid">in exchange for</span>
+        <select id="takeDate" class="swap-sel"></select>
+      </div>
+      <input id="noteInput" type="text" placeholder="Optional note…" maxlength="240">
+      <button class="btn" id="addNote">Send request</button>
+    </div>
+    <div id="noteList"></div>
+  </section>
+
+  <section class="card agree">
+    <p class="section-label">Step 3 · Sign-off &amp; export</p>
+    <div class="agree-status" id="agreeStatus"></div>
+    <div class="agree-actions">
+      <button class="btn primary" id="acceptRotaBtn">Agree to this rota</button>
+      <button class="btn ghost" id="pdfBtn" disabled>Export agreed rota (PDF)</button>
+    </div>
+    <div class="agree-hint" id="agreeHint"></div>
+  </section>
+
+  <div class="tools">
+    <div class="theme-switch" id="themeSwitch">
+      <button data-theme="clinical" title="Teal &amp; plum"><span class="dotc" style="background:#0e6f78"></span></button>
+      <button data-theme="sage" title="Sage &amp; clay"><span class="dotc" style="background:#2f6f5e"></span></button>
+      <button data-theme="indigo" title="Indigo &amp; magenta"><span class="dotc" style="background:#3a57c7"></span></button>
+    </div>
+    <div class="syncline" id="syncStatus"><span class="syncdot local"></span> Saved on this device</div>
+    <div class="grow"></div>
+    <button class="btn ghost danger-ghost" id="refreshBtn">New rota</button>
+    <button class="btn ghost" id="exportBtn">Export</button>
+    <button class="btn ghost" id="importBtn">Import</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none">
+  </div>
+
+</div>
+
+<div class="overlay" id="editorOverlay">
+  <div class="sheet" id="editorSheet">
+    <div class="sh-top"><div><div class="sh-date" id="edDate">—</div></div><button class="x" id="edClose">×</button></div>
+    <div class="sh-sub" id="edSub"></div>
+    <div class="pick-label">Who's on call?</div>
+    <div class="assign-opts" id="assignOpts"></div>
+    <div class="pick-label">Shift type</div>
+    <div class="type-opts" id="typeOpts"></div>
+  </div>
+</div>
+
+<div class="overlay center" id="pickerOverlay">
+  <div class="picker-modal">
+    <div class="sh-top"><div class="sh-date">Select allocated dates</div><button class="x" id="pickerClose">×</button></div>
+    <div class="picker-sub">Tap each day your rota has assigned to your shared slot. Weekends and bank holidays are flagged as you go.</div>
+    <div class="calnav">
+      <div class="mlabel" id="pickerMonth"></div>
+      <div class="navbtns"><button class="iconbtn" id="pickerPrev">‹</button><button class="iconbtn" id="pickerNext">›</button></div>
+    </div>
+    <div class="dow"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
+    <div class="grid" id="pickerGrid"></div>
+    <div class="picker-foot">
+      <div class="picker-count" id="pickerCount">0 selected</div>
+      <div class="picker-actions"><button class="btn ghost" id="pickerCancel">Cancel</button><button class="btn" id="pickerAdd">Add to pool</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay center" id="prefsOverlay">
+  <div class="picker-modal">
+    <div class="sh-top"><div class="sh-date">Day requests</div><button class="x" id="prefsClose">×</button></div>
+    <div class="picker-sub">Mark any day each of you wants <b>off</b>, or <b>wants</b> to take. The split honours these, keeps weekends &amp; bank holidays even, and avoids back-to-back shifts unless one was asked for.</div>
+    <div id="prefsList"></div>
+    <div class="picker-foot"><div class="picker-count" id="prefsCount"></div><div class="picker-actions"><button class="btn" id="prefsDone">Done</button></div></div>
+  </div>
+</div>
+
+<div class="overlay center" id="confirmOverlay">
+  <div class="mini-dialog">
+    <h3 id="confirmTitle"></h3>
+    <p id="confirmMsg"></p>
+    <div class="dialog-actions"><button class="btn ghost" id="confirmCancel">Cancel</button><button class="btn danger" id="confirmOk">Confirm</button></div>
+  </div>
+</div>
+
+<div class="overlay center" id="meOverlay">
+  <div class="mini-dialog">
+    <h3>Who are you on this device?</h3>
+    <p>So a request from the other person pops up for you. This stays on this device only.</p>
+    <div class="assign-opts" id="meOpts"></div>
+  </div>
+</div>
+
+<div class="overlay center" id="alertOverlay">
+  <div class="mini-dialog">
+    <h3 id="alertTitle">You have a swap request</h3>
+    <div id="alertList"></div>
+    <div class="dialog-actions"><button class="btn ghost" id="alertLater">Later</button><button class="btn" id="alertView">View in rota</button></div>
+  </div>
+</div>
+
+<div class="overlay center" id="nameOverlay">
+  <div class="mini-dialog">
+    <h3 id="nameTitle">Edit person</h3>
+    <label class="fld-label">Name</label>
+    <input id="nameInput" type="text" maxlength="30" placeholder="Name">
+    <label class="fld-label">Initials — calendar mark</label>
+    <input id="iniInput" type="text" maxlength="3" placeholder="MM">
+    <label class="fld-label">Email — for swap-request alerts</label>
+    <input id="emailInput" type="email" placeholder="name@nhs.net">
+    <div class="dialog-actions"><button class="btn ghost" id="nameCancel">Cancel</button><button class="btn" id="nameSave">Save</button></div>
+  </div>
+</div>
+
+<!-- MY ROTA (personal view) -->
+<div class="rota-overlay" id="rotaOverlay">
+  <div class="rota-inner">
+    <div class="rota-top">
+      <button class="rota-back" id="myBack">‹ Back</button>
+      <button class="btn" id="exportIcs">Add to phone calendar (.ics)</button>
+    </div>
+    <div class="rota-head">
+      <div>
+        <div class="kicker">Personal sessions + your on-calls</div>
+        <h2 class="rota-title" id="myWho">My rota</h2>
+      </div>
+    </div>
+    <div class="calnav">
+      <div class="mlabel" id="myMonth"></div>
+      <div class="navbtns">
+        <button class="today-btn" id="myToday">Today</button>
+        <button class="iconbtn" id="myPrev" aria-label="Previous month">‹</button>
+        <button class="iconbtn" id="myNext" aria-label="Next month">›</button>
+      </div>
+    </div>
+    <div class="dow"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
+    <div class="grid" id="myGrid"></div>
+    <div class="my-legend" id="myLegend"></div>
+  </div>
+</div>
+
+<!-- MY ROTA — day editor -->
+<div class="overlay" id="myDayOverlay">
+  <div class="sheet">
+    <div class="sh-top">
+      <div class="sh-date" id="myDayDate">—</div>
+      <button class="x" id="myDayClose">×</button>
+    </div>
+    <div class="my-oncall" id="myDayOncall" style="display:none"></div>
+    <div class="pick-label">Your sessions</div>
+    <div class="my-list" id="myDayList"></div>
+    <div class="pick-label">Add a session</div>
+    <div class="my-add-wrap" id="myDayAdd"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* theme bootstrap (set before first render to avoid a flash) */
+  try{
+    let th=null; try{ th=localStorage.getItem("slotshare-theme"); }catch(e){}
+    const root=document.documentElement;
+    if(root) root.setAttribute("data-theme", th||"clinical");
+  }catch(e){}
+
+/* ===== config ===== */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB5RQUiw5PFG8BHEK-6vgT-w6Rj62PcYfI",
+  authDomain: "budget-bb9ed.firebaseapp.com",
+  databaseURL: "https://budget-bb9ed-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "budget-bb9ed",
+  storageBucket: "budget-bb9ed.firebasestorage.app",
+  messagingSenderId: "471078637472",
+  appId: "1:471078637472:web:39604ff65883fd39a6dec5"
+};
+const SYNC_CODE = "main";
+let syncPath = "slotShare/" + SYNC_CODE;
+
+const BH_FALLBACK = {
+  "2025-01-01":"New Year’s Day","2025-04-18":"Good Friday","2025-04-21":"Easter Monday",
+  "2025-05-05":"Early May","2025-05-26":"Spring","2025-08-25":"Summer","2025-12-25":"Christmas Day","2025-12-26":"Boxing Day",
+  "2026-01-01":"New Year’s Day","2026-04-03":"Good Friday","2026-04-06":"Easter Monday",
+  "2026-05-04":"Early May","2026-05-25":"Spring","2026-08-31":"Summer","2026-12-25":"Christmas Day","2026-12-28":"Boxing Day",
+  "2027-01-01":"New Year’s Day","2027-03-26":"Good Friday","2027-03-29":"Easter Monday",
+  "2027-05-03":"Early May","2027-05-31":"Spring","2027-08-30":"Summer","2027-12-27":"Christmas Day","2027-12-28":"Boxing Day",
+  "2028-01-03":"New Year’s Day","2028-04-14":"Good Friday","2028-04-17":"Easter Monday",
+  "2028-05-01":"Early May","2028-05-29":"Spring","2028-08-28":"Summer","2028-12-25":"Christmas Day","2028-12-26":"Boxing Day"
+};
+let BANK_HOLIDAYS = Object.assign({}, BH_FALLBACK);
+
+const SHIFT_TYPES = [
+  {id:"oncall", label:"On-call"},{id:"long", label:"Long day"},
+  {id:"night", label:"Night"},{id:"twilight", label:"Twilight"}
+];
+/* personal "My rota" session types (times are defaults, editable per entry) */
+const MY_SHIFT_TYPES = [
+  {id:"clinic_am",  label:"Clinic AM",         short:"AM",    start:"08:30", end:"12:00", color:"#0e7c86"},
+  {id:"clinic_pm",  label:"Clinic PM",         short:"PM",    start:"14:00", end:"17:00", color:"#1593a0"},
+  {id:"full_day",   label:"Clinic / Ward day", short:"Day",   start:"08:30", end:"17:00", color:"#2f6f5e"},
+  {id:"rue",        label:"RUE — ward cover",  short:"RUE",   start:"08:30", end:"17:00", color:"#6b4e9e"},
+  {id:"ruf",        label:"RUF — ward cover",  short:"RUF",   start:"08:30", end:"17:00", color:"#9a4fb0"},
+  {id:"procedures", label:"Procedures",        short:"Proc",  start:"08:30", end:"17:00", color:"#c2612f"},
+  {id:"transplant", label:"Transplant",        short:"Tx",    start:"08:30", end:"17:00", color:"#b23b6b"},
+  {id:"outliers",   label:"Outliers",          short:"Out",   start:"08:30", end:"17:00", color:"#3a57c7"},
+  {id:"day_cover",  label:"Day cover",         short:"Cover", start:"08:30", end:"17:00", color:"#2f7d4f"},
+  {id:"pdp",        label:"PDP",               short:"PDP",   start:"09:00", end:"17:00", color:"#6b7280"}
+];
+function myType(id){ return MY_SHIFT_TYPES.find(s=>s.id===id) || MY_SHIFT_TYPES[0]; }
+
+/* ===== state + persistence ===== */
+const STORE_KEY = "slotshare-v1";
+const THEME_KEY = "slotshare-theme";
+let mem = null;
+const defaultState = () => ({
+  people:{ A:{name:"Mark", initials:"MM", email:""}, B:{name:"Ed", initials:"EB", email:""} },
+  assignments:{}, notes:[], rotaId:1, accept:{}, myShifts:{}
+});
+let state = defaultState();
+let scope = "rota";
+let view = new Date(); view.setDate(1);
+let myView = new Date(); myView.setDate(1);
+let myEditDate = null;
+let editingDate = null, renamingKey = null;
+const ME_STORE = "slotshare-me";
+let meKey = null;
+let notified = new Set();
+
+function readLocal(){ try{ const r=localStorage.getItem(STORE_KEY); return r?JSON.parse(r):null; }catch(e){ return mem; } }
+function writeLocal(obj){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(obj)); }catch(e){ mem=obj; } }
+let applyingRemote = false, db = null;
+function persist(){ writeLocal(state); if(db && !applyingRemote){ try{ db.ref(syncPath).set(state); }catch(e){ console.warn("sync write failed", e); } } }
+
+/* ===== date helpers ===== */
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+function iso(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${day}`; }
+function isWeekend(ds){ const wd=new Date(ds+"T00:00:00").getDay(); return wd===0||wd===6; }
+function isBH(ds){ return !!BANK_HOLIDAYS[ds]; }
+function isUnsociable(ds){ return isWeekend(ds)||isBH(ds); }
+function prettyDate(ds){ const d=new Date(ds+"T00:00:00"); const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]; return `${days[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; }
+function inScope(a){ if(scope==="all") return true; return (a.rota||1)===(state.rotaId||1); }
+
+function tally(){
+  const t={ A:{total:0,weekend:0,bh:0,unsoc:0}, B:{total:0,weekend:0,bh:0,unsoc:0} };
+  for(const [date,a] of Object.entries(state.assignments)){
+    if(!a||(a.p!=="A"&&a.p!=="B")) continue;
+    if(!inScope(a)) continue;
+    const p=t[a.p]; p.total++;
+    const we=isWeekend(date), bh=isBH(date);
+    if(we) p.weekend++; if(bh) p.bh++; if(we||bh) p.unsoc++;
+  }
+  return t;
+}
+
+/* ===== render helpers ===== */
+function initials(name){ const p=(name||"").trim().split(/\s+/).filter(Boolean); if(!p.length) return "?"; if(p.length===1) return p[0].slice(0,2).toUpperCase(); return (p[0][0]+p[p.length-1][0]).toUpperCase(); }
+function personIni(key){ const p=state.people[key]; return (p.initials&&p.initials.trim())?p.initials.trim().toUpperCase():initials(p.name); }
+function shiftDate(ds,delta){ const d=new Date(ds+"T00:00:00"); d.setDate(d.getDate()+delta); return iso(d); }
+function isMonday(ds){ return new Date(ds+"T00:00:00").getDay()===1; }
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function renderPeople(){
+  const el=document.getElementById("people"); el.innerHTML="";
+  for(const key of ["A","B"]){
+    const p=state.people[key];
+    const chip=document.createElement("button");
+    chip.className=`person-chip ${key.toLowerCase()}`;
+    chip.innerHTML=`<span class="swatch">${personIni(key)}</span><span class="nm">${escapeHtml(p.name)}</span><span class="edit">edit</span>`;
+    chip.onclick=()=>openRename(key);
+    el.appendChild(chip);
+  }
+}
+
+/* ===== step guide ===== */
+function renderStepper(){
+  const el=document.getElementById("steps"); if(!el) return;
+  const pool=poolDates(), rota=currentRotaShifts(), both=bothAgreed();
+  const steps=[
+    {t:"Add dates", s:"from your rota", done:(pool.length>0||rota.length>0), go:openPicker},
+    {t:"Split fairly", s:pool.length?`${pool.length} waiting`:"divide the pool", done:(rota.length>0&&pool.length===0), go:()=>{ if(pool.length){ splitFairly(); } else document.getElementById("poolCard").scrollIntoView({behavior:"smooth",block:"center"}); }},
+    {t:"Agree", s:both?"both signed":"both sign off", done:both, go:()=>document.querySelector(".agree").scrollIntoView({behavior:"smooth",block:"center"})},
+    {t:"Export", s:"send the PDF", done:false, go:()=>{ if(both) exportPdf(); else document.querySelector(".agree").scrollIntoView({behavior:"smooth",block:"center"}); }}
+  ];
+  let activeIdx=steps.findIndex(s=>!s.done); if(activeIdx<0) activeIdx=steps.length-1;
+  el.innerHTML="";
+  steps.forEach((s,i)=>{
+    const d=document.createElement("button");
+    d.className="step"+(s.done?" done":"")+(i===activeIdx?" active":"");
+    d.innerHTML=`<span class="num">${s.done?"✓":(i+1)}</span><span class="stx"><span class="st-t">${s.t}</span><span class="st-s">${s.s}</span></span>`;
+    d.onclick=s.go;
+    el.appendChild(d);
+  });
+}
+
+/* ===== fairness (redesigned gauge) ===== */
+function metricHtml(title, sub, a, b){
+  const gap=Math.abs(a-b), total=a+b;
+  const frac=total?Math.min(gap/total,1):0, w=frac*50;
+  let leanStyle="display:none", knobLeft=50, cls="", tag=total?"Even ◆":"—", tagCls="even";
+  if(gap>0){
+    const aHeavier=a>b; cls=aHeavier?"a":"b";
+    if(aHeavier){ leanStyle=`left:${50-w}%;width:${w}%`; knobLeft=50-w; }
+    else{ leanStyle=`left:50%;width:${w}%`; knobLeft=50+w; }
+    const owed=aHeavier?state.people.B.name:state.people.A.name;
+    tag=`${escapeHtml(owed)} owed ${gap}`; tagCls="off";
+  }
+  return `<div class="metric">
+    <div class="metric-top"><div class="mt-l">${title} <span>${sub}</span></div><div class="metric-tag ${tagCls}">${tag}</div></div>
+    <div class="gauge">
+      <div class="end a"><div class="num">${a}</div><div class="nm">${escapeHtml(state.people.A.name)}</div></div>
+      <div class="beam"><span class="ctr"></span><span class="lean ${cls}" style="${leanStyle}"></span><span class="knob ${cls}" style="left:${knobLeft}%"></span></div>
+      <div class="end b"><div class="num">${b}</div><div class="nm">${escapeHtml(state.people.B.name)}</div></div>
+    </div></div>`;
+}
+function renderBalance(){
+  const t=tally(), body=document.getElementById("fairBody"); if(!body) return;
+  const nameA=state.people.A.name, nameB=state.people.B.name;
+  const any=t.A.total+t.B.total>0;
+  let vCls, vIco, vTxt, vSub;
+  if(!any){ vCls=""; vIco="◇"; vTxt="Nothing split yet"; vSub="Add your rota dates, then split them fairly."; }
+  else if(t.A.unsoc===t.B.unsoc && t.A.total===t.B.total){ vCls="even"; vIco="✓"; vTxt="Fairly balanced"; vSub="Weekends, bank holidays and totals are level."; }
+  else {
+    vCls="off"; vIco="!";
+    if(t.A.unsoc!==t.B.unsoc){ const owed=t.A.unsoc<t.B.unsoc?nameA:nameB; const g=Math.abs(t.A.unsoc-t.B.unsoc); vTxt=`${owed} is owed ${g} unsociable`; vSub="Weekends & bank holidays are the priority to even up."; }
+    else { const owed=t.A.total<t.B.total?nameA:nameB; const g=Math.abs(t.A.total-t.B.total); vTxt=`${owed} is owed ${g} shift${g>1?"s":""}`; vSub="Unsociable shifts are even — overall totals differ."; }
+  }
+  const nu=t.A.unsoc===t.B.unsoc
+    ? `<div class="next-up"><span class="tag">Next unsociable</span><div>Even right now — either of you can take the next weekend or bank holiday.</div></div>`
+    : `<div class="next-up"><span class="tag">Next unsociable</span><div>Goes to <b>${escapeHtml(t.A.unsoc<t.B.unsoc?nameA:nameB)}</b> to even up the weekends &amp; bank holidays.</div></div>`;
+  const cells=[
+    {h:"Total",a:t.A.total,b:t.B.total},{h:"Weekday",a:t.A.total-t.A.unsoc,b:t.B.total-t.B.unsoc},
+    {h:"Weekend",a:t.A.weekend,b:t.B.weekend},{h:"Bank hol",a:t.A.bh,b:t.B.bh}
+  ];
+  const mini=`<div class="mini-stats">`+cells.map(c=>`<div class="mini"><div class="h">${c.h}</div><div class="nums"><span class="a">${c.a}</span><span class="b">${c.b}</span></div></div>`).join("")+`</div>`;
+  body.innerHTML=
+    `<div class="fair-verdict ${vCls}"><span class="vico">${vIco}</span><div>${escapeHtml(vTxt)}<small>${vSub}</small></div></div>`+
+    metricHtml("Unsociable","weekends &amp; bank hols", t.A.unsoc, t.B.unsoc)+
+    metricHtml("All shifts","every on-call day", t.A.total, t.B.total)+
+    nu+mini;
+}
+
+/* ===== calendar ===== */
+function renderCalendar(){
+  document.getElementById("monthLabel").innerHTML=`${MONTHS[view.getMonth()]} <span>${view.getFullYear()}</span>`;
+  const grid=document.getElementById("grid"); grid.innerHTML="";
+  const first=new Date(view.getFullYear(), view.getMonth(), 1);
+  let startDow=(first.getDay()+6)%7;
+  const dim=new Date(view.getFullYear(), view.getMonth()+1, 0).getDate();
+  const todayStr=iso(new Date());
+  for(let i=0;i<startDow;i++){ const b=document.createElement("div"); b.className="cell blank"; grid.appendChild(b); }
+  for(let day=1; day<=dim; day++){
+    const d=new Date(view.getFullYear(), view.getMonth(), day), ds=iso(d);
+    const cell=document.createElement("div"); cell.className="cell";
+    const we=isWeekend(ds), bh=isBH(ds);
+    if(we) cell.classList.add("weekend");
+    if(bh) cell.classList.add("bh");
+    if(ds===todayStr) cell.classList.add("today");
+    if(isMonday(ds)) cell.classList.add("nwd");
+    const a=state.assignments[ds];
+    if(a&&a.p==="A") cell.classList.add("assigned-a");
+    else if(a&&a.p==="B") cell.classList.add("assigned-b");
+    else if(a&&a.p==="pool") cell.classList.add("assigned-pool");
+    let html=`<div class="d">${day}</div>`;
+    if(bh) html+=`<div class="bh-mark"></div>`;
+    if(a&&(a.p==="A"||a.p==="B")){
+      html+=`<div class="who"><span class="ini">${personIni(a.p)}</span></div>`;
+      const st=SHIFT_TYPES.find(s=>s.id===a.type);
+      if(st && st.id!=="oncall") html+=`<div class="stype">${st.label}</div>`;
+    } else if(a&&a.p==="pool"){
+      html+=`<div class="who"><span class="ini pool">◇</span></div><div class="stype">to split</div>`;
+    }
+    if(bh) html+=`<div class="bh-name">${BANK_HOLIDAYS[ds]}</div>`;
+    cell.innerHTML=html; cell.onclick=()=>openEditor(ds); grid.appendChild(cell);
+  }
+  document.getElementById("legend").innerHTML=`
+    <span><span class="k" style="background:var(--a-tint);border-color:#bfe0e1"></span>${escapeHtml(state.people.A.name)}</span>
+    <span><span class="k" style="background:var(--b-tint);border-color:#e7c8da"></span>${escapeHtml(state.people.B.name)}</span>
+    <span><span class="k" style="background:var(--gold-tint);border-color:var(--gold-line)"></span>Weekend / bank holiday</span>
+    <span><span class="k" style="background:repeating-linear-gradient(135deg,#fff 0,#fff 3px,#c2cace 3px,#c2cace 4px);border-color:var(--line)"></span>Mon · non-working day</span>
+    <span><span class="k" style="box-shadow:inset 0 0 0 2px var(--ink);background:#fff"></span>Today</span>`;
+}
+
+/* ===== composer + notes ===== */
+function shortDate(ds){ const dt=new Date(ds+"T00:00:00"); const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]; return `${days[dt.getDay()]} ${dt.getDate()} ${MONTHS[dt.getMonth()].slice(0,3)}`; }
+function personShifts(key){ return Object.keys(state.assignments).filter(d=>state.assignments[d].p===key).sort(); }
+function renderComposer(){
+  const give=document.getElementById("giveDate"), take=document.getElementById("takeDate");
+  if(!give||!take) return;
+  const me=meKey||"A", other=me==="A"?"B":"A";
+  const you=document.getElementById("swapYou");
+  if(you) you.textContent = meKey ? state.people[me].name : "Set who you are ▾";
+  const giveShifts=personShifts(me), takeShifts=personShifts(other);
+  const curGive=give.value, curTake=take.value;
+  give.innerHTML = giveShifts.length ? giveShifts.map(d=>`<option value="${d}">${shortDate(d)}${isUnsociable(d)?" · unsoc":""}</option>`).join("") : `<option value="">— no shifts yet —</option>`;
+  take.innerHTML = `<option value="">— nothing, just take it —</option>`+takeShifts.map(d=>`<option value="${d}">${shortDate(d)}${isUnsociable(d)?" · unsoc":""}</option>`).join("");
+  if(giveShifts.includes(curGive)) give.value=curGive;
+  if(curTake==="" || takeShifts.includes(curTake)) take.value=curTake;
+}
+function describeReq(n){
+  const from=n.from==="B"?"B":"A", other=from==="A"?"B":"A";
+  const fromName=escapeHtml(state.people[from].name), otherName=escapeHtml(state.people[other].name);
+  if(n.giveDate && n.takeDate) return `<b>${fromName}</b> ⇄ swap — gives <b>${shortDate(n.giveDate)}</b> for ${otherName}’s <b>${shortDate(n.takeDate)}</b>`;
+  if(n.giveDate) return `<b>${fromName}</b> → asks ${otherName} to take <b>${shortDate(n.giveDate)}</b>`;
+  return escapeHtml(n.text||"Request");
+}
+const STATUS_LABEL={pending:"pending", accepted:"accepted", rejected:"unavailable"};
+function renderNotes(){
+  const list=document.getElementById("noteList");
+  if(!state.notes.length){ list.innerHTML=`<div class="empty">No requests yet. Build a swap above; once the other person accepts, the rota updates itself.</div>`; return; }
+  list.innerHTML="";
+  state.notes.slice().sort((x,y)=>y.ts-x.ts).forEach(n=>{
+    const from=n.from==="B"?"B":"A", to=from==="A"?"B":"A";
+    const div=document.createElement("div"); div.className="note"+(n.status==="rejected"?" done":"");
+    const when=new Date(n.ts);
+    const wstr=`${String(when.getDate()).padStart(2,"0")} ${MONTHS[when.getMonth()].slice(0,3)} · ${String(when.getHours()).padStart(2,"0")}:${String(when.getMinutes()).padStart(2,"0")}`;
+    let actions;
+    if(n.status==="pending"){
+      actions=`<div class="req-actions"><button class="accept">${escapeHtml(state.people[to].name)} accepts</button><button class="unavail">Unavailable</button><button class="edit">Edit</button></div>`;
+    } else {
+      actions=`<div class="req-actions"><span class="req-status ${n.status}">${STATUS_LABEL[n.status]}</span><button class="reopen">Reopen</button><button class="edit">Edit</button></div>`;
+    }
+    const noteLine=(n.giveDate && n.text)?`<div class="meta">“${escapeHtml(n.text)}”</div>`:"";
+    div.innerHTML=`<div class="body"><div class="from-line ${from.toLowerCase()}">${describeReq(n)}</div>${noteLine}<div class="meta">${wstr}</div>${actions}</div><button class="del" aria-label="Delete">✕</button>`;
+    if(n.status==="pending"){
+      div.querySelector(".accept").onclick=()=>{ applyReq(n); n.status="accepted"; persist(); renderAll(); };
+      div.querySelector(".unavail").onclick=()=>{ n.status="rejected"; persist(); renderNotes(); };
+    } else {
+      div.querySelector(".reopen").onclick=()=>{ if(n.status==="accepted") revertReq(n); n.status="pending"; persist(); renderAll(); };
+    }
+    div.querySelector(".edit").onclick=()=>editReq(n);
+    div.querySelector(".del").onclick=()=>{ state.notes=state.notes.filter(x=>x.id!==n.id); persist(); renderNotes(); };
+    list.appendChild(div);
+  });
+}
+function applyReq(n){ const from=n.from==="B"?"B":"A", other=from==="A"?"B":"A"; if(n.giveDate && state.assignments[n.giveDate]) state.assignments[n.giveDate].p=other; if(n.takeDate && state.assignments[n.takeDate]) state.assignments[n.takeDate].p=from; }
+function revertReq(n){ const from=n.from==="B"?"B":"A", other=from==="A"?"B":"A"; if(n.giveDate && state.assignments[n.giveDate]) state.assignments[n.giveDate].p=from; if(n.takeDate && state.assignments[n.takeDate]) state.assignments[n.takeDate].p=other; }
+function editReq(n){
+  if(n.status==="accepted") revertReq(n);
+  if(n.from && meKey && n.from!==meKey){ meKey=n.from; saveMe(meKey); }
+  state.notes=state.notes.filter(x=>x.id!==n.id);
+  persist(); renderAll();
+  const give=document.getElementById("giveDate"), take=document.getElementById("takeDate");
+  if(n.giveDate) give.value=n.giveDate;
+  take.value=n.takeDate||"";
+  document.getElementById("noteInput").value=n.text||"";
+  document.querySelector(".swap-composer").scrollIntoView({behavior:"smooth", block:"center"});
+}
+function addNote(){
+  if(!meKey){ openMeChooser(); return; }
+  const from=meKey;
+  const giveDate=document.getElementById("giveDate").value;
+  const takeDate=document.getElementById("takeDate").value||null;
+  const text=document.getElementById("noteInput").value.trim();
+  if(!giveDate){ return; }
+  state.notes.push({ id:Date.now()+"-"+Math.random().toString(36).slice(2,7), ts:Date.now(), from, giveDate, takeDate, text, status:"pending" });
+  document.getElementById("noteInput").value="";
+  persist(); renderNotes();
+}
+
+/* ===== device identity + alerts ===== */
+function loadMe(){ try{ return localStorage.getItem(ME_STORE); }catch(e){ return null; } }
+function saveMe(k){ try{ localStorage.setItem(ME_STORE,k); }catch(e){} }
+function openMeChooser(){
+  const opts=document.getElementById("meOpts");
+  opts.innerHTML=["A","B"].map(k=>`<div class="opt ${k.toLowerCase()} ${meKey===k?"sel":""}" data-k="${k}"><span class="sw">${personIni(k)}</span>${escapeHtml(state.people[k].name)}</div>`).join("");
+  opts.querySelectorAll(".opt").forEach(o=>o.onclick=()=>chooseMe(o.dataset.k));
+  document.getElementById("meOverlay").classList.add("show");
+}
+function chooseMe(k){ meKey=k; saveMe(k); document.getElementById("meOverlay").classList.remove("show"); renderComposer(); maybeAlert(); }
+function pendingForMe(){ if(!meKey) return []; return state.notes.filter(n=>n.status==="pending" && (n.from==="A"?"B":"A")===meKey); }
+function maybeAlert(){ const fresh=pendingForMe().filter(n=>!notified.has(n.id)); if(!fresh.length) return; pendingForMe().forEach(n=>notified.add(n.id)); renderAlert(); document.getElementById("alertOverlay").classList.add("show"); }
+function renderAlert(){
+  const list=pendingForMe();
+  document.getElementById("alertTitle").textContent = list.length>1 ? `You have ${list.length} swap requests` : "You have a swap request";
+  const el=document.getElementById("alertList");
+  el.innerHTML=list.map(n=>`<div class="alert-item"><div class="alert-desc">${describeReq(n)}</div>${n.text?`<div class="alert-note">“${escapeHtml(n.text)}”</div>`:""}<div class="alert-actions"><button class="btn accept-a" data-id="${n.id}">Accept</button><button class="btn ghost unavail-a" data-id="${n.id}">Unavailable</button></div></div>`).join("");
+  el.querySelectorAll(".accept-a").forEach(b=>b.onclick=()=>{ const n=state.notes.find(x=>x.id===b.dataset.id); if(n){ applyReq(n); n.status="accepted"; persist(); renderAll(); } afterAlertAction(); });
+  el.querySelectorAll(".unavail-a").forEach(b=>b.onclick=()=>{ const n=state.notes.find(x=>x.id===b.dataset.id); if(n){ n.status="rejected"; persist(); renderAll(); } afterAlertAction(); });
+}
+function afterAlertAction(){ if(!pendingForMe().length) closeAlert(); else renderAlert(); }
+function closeAlert(){ document.getElementById("alertOverlay").classList.remove("show"); }
+
+/* ===== sign-off + PDF ===== */
+function currentRotaShifts(){
+  return Object.keys(state.assignments).filter(d=>{ const a=state.assignments[d]; return (a.p==="A"||a.p==="B") && (a.rota||1)===(state.rotaId||1); }).sort()
+    .map(d=>({ date:d, p:state.assignments[d].p, type:state.assignments[d].type||"oncall" }));
+}
+function currentSig(){ return currentRotaShifts().map(s=>`${s.date}:${s.p}:${s.type}`).join("|"); }
+function isAgreed(k){ const a=state.accept&&state.accept[k]; return !!(a && a.sig===currentSig()); }
+function bothAgreed(){ return currentRotaShifts().length>0 && isAgreed("A") && isAgreed("B"); }
+function toggleAgree(){
+  if(!meKey){ openMeChooser(); return; }
+  if(!state.accept) state.accept={};
+  state.accept[meKey] = isAgreed(meKey) ? null : { at:Date.now(), sig:currentSig() };
+  persist(); renderAgree(); renderStepper();
+}
+function renderAgree(){
+  const st=document.getElementById("agreeStatus"); if(!st) return;
+  st.innerHTML=["A","B"].map(k=>{ const ok=isAgreed(k); return `<span class="agree-chip ${k.toLowerCase()} ${ok?"ok":""}">${ok?"✓":"○"} ${escapeHtml(state.people[k].name)}${ok?" agreed":""}</span>`; }).join("");
+  const btn=document.getElementById("acceptRotaBtn");
+  const mine = meKey ? isAgreed(meKey) : false;
+  btn.textContent = mine ? "You’ve agreed ✓ — tap to withdraw" : "Agree to this rota";
+  btn.classList.toggle("agreed", mine);
+  document.getElementById("pdfBtn").disabled=!bothAgreed();
+  const hint=document.getElementById("agreeHint");
+  if(!currentRotaShifts().length) hint.textContent="No shifts in this rota yet — divide the pool first.";
+  else if(bothAgreed()) hint.textContent="Both agreed — export the rota to send to your coordinator.";
+  else hint.textContent="Both of you need to agree before the rota can be exported.";
+}
+function longDate(ds){ const dt=new Date(ds+"T00:00:00"); const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]; return { day:days[dt.getDay()], date:`${dt.getDate()} ${MONTHS[dt.getMonth()]} ${dt.getFullYear()}` }; }
+function shiftLabel(id){ const s=SHIFT_TYPES.find(x=>x.id===id); return s?s.label:"On-call"; }
+async function ensurePdfLib(){
+  if(window.jspdf && window.jspdf.jsPDF) return true;
+  try{
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js");
+    return !!(window.jspdf && window.jspdf.jsPDF);
+  }catch(e){ return false; }
+}
+async function exportPdf(){
+  if(!bothAgreed()) return;
+  const shifts=currentRotaShifts();
+  const nameA=state.people.A.name, nameB=state.people.B.name;
+  const first=longDate(shifts[0].date).date, last=longDate(shifts[shifts.length-1].date).date;
+  const rangeTxt = first===last ? first : `${first} – ${last}`;
+  const body=shifts.map(s=>{ const L=longDate(s.date); return [L.date, L.day, state.people[s.p].name, shiftLabel(s.type)]; });
+  const ok=await ensurePdfLib();
+  if(ok){
+    const { jsPDF }=window.jspdf; const doc=new jsPDF();
+    doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.setTextColor(30);
+    doc.text("On-call rota — agreed allocation", 14, 20);
+    doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(90);
+    doc.text(`${nameA} & ${nameB}`, 14, 27); doc.text(rangeTxt, 14, 32);
+    doc.autoTable({ startY:38, head:[["Date","Day","On-call","Shift"]], body, styles:{fontSize:9, cellPadding:3}, headStyles:{fillColor:[32,40,48], textColor:255}, alternateRowStyles:{fillColor:[244,246,247]}, margin:{left:14, right:14} });
+    const y=(doc.lastAutoTable?doc.lastAutoTable.finalY:40)+10;
+    doc.setFontSize(9); doc.setTextColor(110); doc.text(`Agreed by ${nameA} and ${nameB}.`, 14, y);
+    doc.save("on-call-rota-agreed.pdf");
+  } else { printRota(rangeTxt, body, nameA, nameB); }
+}
+function printRota(rangeTxt, body, nameA, nameB){
+  const rows=body.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${escapeHtml(r[2])}</td><td>${r[3]}</td></tr>`).join("");
+  const w=window.open("","_blank"); if(!w){ alert("Allow pop-ups to export the rota, or try again."); return; }
+  w.document.write(`<!doctype html><html><head><title>On-call rota — agreed</title><style>body{font-family:Arial,Helvetica,sans-serif;color:#202830;margin:32px}h1{font-size:18px;margin:0 0 4px}.sub{color:#5a666e;font-size:12px;margin:0 0 16px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #d7dee2;padding:7px 9px;text-align:left}th{background:#202830;color:#fff}tr:nth-child(even) td{background:#f4f6f7}.foot{margin-top:14px;color:#5a666e;font-size:11px}</style></head><body><h1>On-call rota — agreed allocation</h1><p class="sub">${escapeHtml(nameA)} &amp; ${escapeHtml(nameB)} · ${rangeTxt}</p><table><thead><tr><th>Date</th><th>Day</th><th>On-call</th><th>Shift</th></tr></thead><tbody>${rows}</tbody></table><p class="foot">Agreed by ${escapeHtml(nameA)} and ${escapeHtml(nameB)}.</p></body></html>`);
+  w.document.close(); w.focus(); setTimeout(()=>w.print(), 350);
+}
+
+function renderAll(){ renderPeople(); renderStepper(); renderComposer(); renderBalance(); renderPool(); renderCalendar(); renderNotes(); renderAgree(); if(document.getElementById("rotaOverlay").classList.contains("show")) renderMyCalendar(); }
+
+/* ===== My rota (personal sessions + on-calls → ICS) ===== */
+function getMyArr(ds){ if(!meKey) return []; const m=state.myShifts&&state.myShifts[meKey]; return (m&&m[ds])||[]; }
+function myOncall(ds){ const a=state.assignments[ds]; return (a&&a.p===meKey)?a:null; }
+function openMyRota(){
+  if(!meKey){ openMeChooser(); return; }     // need to know whose rota this is
+  myView=new Date(); myView.setDate(1);
+  renderMyCalendar();
+  document.getElementById("rotaOverlay").classList.add("show");
+}
+function closeMyRota(){ document.getElementById("rotaOverlay").classList.remove("show"); }
+function renderMyCalendar(){
+  const grid=document.getElementById("myGrid"); if(!grid) return;
+  document.getElementById("myMonth").innerHTML=`${MONTHS[myView.getMonth()]} <span>${myView.getFullYear()}</span>`;
+  document.getElementById("myWho").textContent = meKey ? `${state.people[meKey].name}’s rota` : "My rota";
+  grid.innerHTML="";
+  const first=new Date(myView.getFullYear(), myView.getMonth(), 1);
+  let startDow=(first.getDay()+6)%7;
+  const dim=new Date(myView.getFullYear(), myView.getMonth()+1, 0).getDate();
+  const todayStr=iso(new Date());
+  for(let i=0;i<startDow;i++){ const b=document.createElement("div"); b.className="cell blank"; grid.appendChild(b); }
+  for(let day=1; day<=dim; day++){
+    const ds=iso(new Date(myView.getFullYear(), myView.getMonth(), day));
+    const cell=document.createElement("div"); cell.className="cell";
+    if(isWeekend(ds)) cell.classList.add("weekend");
+    if(isBH(ds)) cell.classList.add("bh");
+    if(isMonday(ds)) cell.classList.add("nwd");
+    if(ds===todayStr) cell.classList.add("today");
+    let html=`<div class="d">${day}</div>`;
+    if(isBH(ds)) html+=`<div class="bh-mark"></div>`;
+    const oc=myOncall(ds);
+    if(oc){ const st=SHIFT_TYPES.find(s=>s.id===oc.type); html+=`<div class="oc-badge">On-call${st&&st.id!=="oncall"?" · "+st.label:""}</div>`; }
+    getMyArr(ds).forEach(s=>{ const t=myType(s.type); html+=`<div class="ms-chip" style="background:${t.color}">${t.short}</div>`; });
+    cell.innerHTML=html;
+    cell.onclick=()=>openMyDay(ds);
+    grid.appendChild(cell);
+  }
+  renderMyLegend();
+}
+function renderMyLegend(){
+  const el=document.getElementById("myLegend");
+  el.innerHTML=`<span><span class="lk" style="background:var(--ink)"></span>On-call (from shared rota)</span>`
+    + MY_SHIFT_TYPES.map(t=>`<span><span class="lk" style="background:${t.color}"></span>${escapeHtml(t.label)}</span>`).join("");
+}
+function openMyDay(ds){ myEditDate=ds; renderMyDay(ds); document.getElementById("myDayOverlay").classList.add("show"); }
+function closeMyDay(){ document.getElementById("myDayOverlay").classList.remove("show"); myEditDate=null; }
+function renderMyDay(ds){
+  document.getElementById("myDayDate").textContent=prettyDate(ds);
+  const ocEl=document.getElementById("myDayOncall");
+  const oc=myOncall(ds);
+  if(oc){ const st=SHIFT_TYPES.find(s=>s.id===oc.type);
+    ocEl.style.display=""; ocEl.innerHTML=`<span class="oc-badge">On-call</span> <span>${st?escapeHtml(st.label):"On-call"}</span> <span class="oc-note">· 08:30–08:30 (24h) · from the shared rota</span>`; }
+  else { ocEl.style.display="none"; ocEl.innerHTML=""; }
+  const list=document.getElementById("myDayList");
+  const arr=getMyArr(ds);
+  list.innerHTML = arr.length ? arr.map(s=>{ const t=myType(s.type);
+    return `<div class="my-row">
+      <span class="my-dot" style="background:${t.color}"></span>
+      <span class="my-name">${escapeHtml(t.label)}</span>
+      <input type="time" class="my-t" data-id="${s.id}" data-f="start" value="${s.start}">
+      <span class="my-dash">–</span>
+      <input type="time" class="my-t" data-id="${s.id}" data-f="end" value="${s.end}">
+      <button class="my-x" data-id="${s.id}" aria-label="Remove">✕</button>
+    </div>`; }).join("") : `<div class="empty">No sessions yet for this day.</div>`;
+  list.querySelectorAll(".my-x").forEach(b=>b.onclick=()=>removeMyShift(ds, b.dataset.id));
+  list.querySelectorAll(".my-t").forEach(inp=>inp.onchange=()=>setMyShiftTime(ds, inp.dataset.id, inp.dataset.f, inp.value));
+  const add=document.getElementById("myDayAdd");
+  add.innerHTML=MY_SHIFT_TYPES.map(t=>`<button class="my-add" style="border-color:${t.color};color:${t.color}" data-t="${t.id}">+ ${escapeHtml(t.label)}</button>`).join("");
+  add.querySelectorAll(".my-add").forEach(b=>b.onclick=()=>addMyShift(ds, b.dataset.t));
+}
+function addMyShift(ds, typeId){
+  if(!meKey) return;
+  if(!state.myShifts) state.myShifts={};
+  if(!state.myShifts[meKey]) state.myShifts[meKey]={};
+  if(!state.myShifts[meKey][ds]) state.myShifts[meKey][ds]=[];
+  const t=myType(typeId);
+  state.myShifts[meKey][ds].push({ id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:typeId, start:t.start, end:t.end });
+  persist(); renderMyDay(ds); renderMyCalendar();
+}
+function removeMyShift(ds, sid){
+  const m=state.myShifts&&state.myShifts[meKey]; if(!m||!m[ds]) return;
+  m[ds]=m[ds].filter(x=>x.id!==sid);
+  if(!m[ds].length) delete m[ds];
+  persist(); renderMyDay(ds); renderMyCalendar();
+}
+function setMyShiftTime(ds, sid, field, val){
+  const m=state.myShifts&&state.myShifts[meKey]; if(!m||!m[ds]) return;
+  const s=m[ds].find(x=>x.id===sid); if(!s) return;
+  s[field]=val; persist(); renderMyCalendar();
+}
+/* ICS export */
+function icsPad(n){ return String(n).padStart(2,"0"); }
+function icsStamp(){ const d=new Date(); return d.getUTCFullYear()+icsPad(d.getUTCMonth()+1)+icsPad(d.getUTCDate())+"T"+icsPad(d.getUTCHours())+icsPad(d.getUTCMinutes())+icsPad(d.getUTCSeconds())+"Z"; }
+function icsLocal(ds, hhmm){ const t=(hhmm||"00:00").split(":"); return ds.replace(/-/g,"")+"T"+icsPad(t[0])+icsPad(t[1])+"00"; }
+function icsEsc(s){ return String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\n/g,"\\n"); }
+function buildICS(){
+  if(!meKey) return null;
+  const stamp=icsStamp(); const ev=[];
+  Object.keys(state.assignments).forEach(ds=>{
+    const a=state.assignments[ds]; if(!a||a.p!==meKey) return;
+    const st=SHIFT_TYPES.find(s=>s.id===a.type);
+    const title="On-call"+(st&&st.id!=="oncall"?" · "+st.label:"");
+    ev.push(["BEGIN:VEVENT",`UID:oncall-${ds}@slotshare-myrota`,`DTSTAMP:${stamp}`,
+      `DTSTART:${icsLocal(ds,"08:30")}`,`DTEND:${icsLocal(shiftDate(ds,1),"08:30")}`,
+      `SUMMARY:${icsEsc(title)}`,"END:VEVENT"].join("\r\n"));
+  });
+  const m=(state.myShifts&&state.myShifts[meKey])||{};
+  Object.keys(m).forEach(ds=>{ m[ds].forEach(s=>{ const t=myType(s.type);
+    ev.push(["BEGIN:VEVENT",`UID:my-${ds}-${s.id}@slotshare-myrota`,`DTSTAMP:${stamp}`,
+      `DTSTART:${icsLocal(ds,s.start)}`,`DTEND:${icsLocal(ds,s.end)}`,
+      `SUMMARY:${icsEsc(t.label)}`,"END:VEVENT"].join("\r\n"));
+  }); });
+  if(!ev.length) return null;
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Slot Share//My Rota//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH",...ev,"END:VCALENDAR"].join("\r\n");
+}
+function exportICS(){
+  const ics=buildICS();
+  if(!ics){ alert("Nothing to export yet — add some sessions, or make sure you have on-calls assigned to you."); return; }
+  const blob=new Blob([ics],{type:"text/calendar;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  const nm=(meKey?state.people[meKey].name:"my").toLowerCase().replace(/[^a-z0-9]+/g,"-")||"my";
+  a.href=url; a.download=`rota-${nm}.ics`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ===== pool parsing ===== */
+const MONTH_NAMES={jan:0,january:0,feb:1,february:1,mar:2,march:2,apr:3,april:3,may:4,jun:5,june:5,jul:6,july:6,aug:7,august:7,sep:8,sept:8,september:8,oct:9,october:9,nov:10,november:10,dec:11,december:11};
+function mkDate(y,mo,d){ if(mo<0||mo>11||d<1||d>31) return null; const dt=new Date(y,mo,d); if(dt.getFullYear()!==y||dt.getMonth()!==mo||dt.getDate()!==d) return null; return iso(dt); }
+function defaultYear(mo){ const now=new Date(); let y=now.getFullYear(); const cand=new Date(y,mo,1); const cutoff=new Date(now.getFullYear(),now.getMonth()-2,1); if(cand<cutoff) y+=1; return y; }
+function parseOneDate(raw){
+  let s=raw.trim().toLowerCase(); if(!s) return null;
+  s=s.replace(/(\d+)(st|nd|rd|th)\b/g,"$1");
+  s=s.replace(/^(mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)[a-z]*\.?\s+/,"");
+  s=s.replace(/,/g," ").replace(/\s+/g," ").trim();
+  let m=s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/); if(m) return mkDate(+m[1],+m[2]-1,+m[3]);
+  m=s.match(/^(\d{1,2})[-/.](\d{1,2})(?:[-/.](\d{2,4}))?$/); if(m){ let d=+m[1], mo=+m[2]-1, y=m[3]?+m[3]:defaultYear(mo); if(y<100) y+=2000; return mkDate(y,mo,d); }
+  const parts=s.split(" "); let monVal=-1; parts.forEach(p=>{ if(MONTH_NAMES[p]!==undefined) monVal=MONTH_NAMES[p]; });
+  if(monVal>=0){ const nums=parts.filter(p=>/^\d+$/.test(p)).map(Number); const day=nums.find(n=>n>=1&&n<=31); const yr=nums.find(n=>n>=1000); if(day) return mkDate(yr||defaultYear(monVal), monVal, day); }
+  return null;
+}
+function parseDates(text){ const tokens=text.split(/[\n,;]+/).map(t=>t.trim()).filter(Boolean); const ok=[], bad=[]; tokens.forEach(t=>{ const r=parseOneDate(t); if(r) ok.push(r); else bad.push(t); }); return {ok:[...new Set(ok)], bad}; }
+function addPoolDates(){
+  const ta=document.getElementById("poolInput"); if(!ta) return;
+  const {ok,bad}=parseDates(ta.value); const fb=document.getElementById("parseFeedback");
+  let added=0, already=0;
+  ok.forEach(ds=>{ if(state.assignments[ds]) already++; else { state.assignments[ds]={p:"pool",type:"oncall"}; added++; } });
+  if(added){ ta.value=""; persist(); renderAll(); }
+  const msg=[]; if(added) msg.push(`${added} added`); if(already) msg.push(`${already} already on calendar`); if(bad.length) msg.push(`couldn’t read: ${bad.slice(0,3).join(", ")}${bad.length>3?"…":""}`);
+  const fb2=document.getElementById("parseFeedback"); if(fb2){ fb2.textContent=msg.join(" · ")||"Nothing to add"; fb2.className="parse-feedback"+(bad.length&&!added?" err":""); }
+}
+function poolDates(){ return Object.keys(state.assignments).filter(d=>state.assignments[d].p==="pool").sort(); }
+
+const PASTE_BLOCK=`<details class="paste-details"><summary>or paste a list of dates</summary><textarea id="poolInput" placeholder="12/07/2026, 13/07/2026&#10;26 Dec 2026&#10;2027-01-01"></textarea><div class="pool-actions"><button class="btn ghost" id="addPool">Add typed list</button><span class="parse-feedback" id="parseFeedback"></span></div></details>`;
+function renderPool(){
+  const pool=poolDates(), unsoc=pool.filter(isUnsociable);
+  document.getElementById("poolCount").textContent=`${pool.length} to split`;
+  const body=document.getElementById("poolBody"); if(!body) return;
+  let html="";
+  if(!pool.length){
+    html=`<div class="empty-cta"><div class="ec-ico">＋</div><div class="ec-t">Add your on-call dates</div><div class="ec-s">Tap the days your rota assigned to your shared slot. Weekends &amp; bank holidays are detected for you.</div></div>
+      <button class="btn block primary" id="pickDates">Select dates from your rota</button>${PASTE_BLOCK}`;
+  } else {
+    const chips=pool.map(d=>{ const dt=new Date(d+"T00:00:00"); const lab=`${String(dt.getDate()).padStart(2,"0")} ${MONTHS[dt.getMonth()].slice(0,3)}`; const un=isUnsociable(d); return `<span class="pool-chip ${un?"un":""}">${lab}${un?" ◆":""}<span class="rm" data-d="${d}">✕</span></span>`; }).join("");
+    const reqCount=pool.filter(d=>prefOf(d,"A")||prefOf(d,"B")).length;
+    html=`<p class="pool-hint">These dates are waiting to be divided. Split them fairly — or set day requests first.</p>
+      <div class="pool-summary"><div class="pool-line"><b>${pool.length}</b> date${pool.length>1?"s":""} to divide · <b>${unsoc.length}</b> unsociable${reqCount?` · <b>${reqCount}</b> with a request`:""}</div><div class="pool-chips">${chips}</div></div>
+      <div class="pool-divide"><button class="btn ghost" id="prefsBtn">Day requests</button><button class="btn primary" id="splitBtn">Split fairly</button><button class="btn ghost" id="clearPool">Clear</button></div>
+      <details class="paste-details"><summary>add more dates</summary><button class="btn block ghost" id="pickDates" style="margin-bottom:10px">Pick from calendar</button><textarea id="poolInput" placeholder="12/07/2026, 13/07/2026"></textarea><div class="pool-actions"><button class="btn ghost" id="addPool">Add typed list</button><span class="parse-feedback" id="parseFeedback"></span></div></details>`;
+  }
+  body.innerHTML=html;
+  const $=id=>document.getElementById(id);
+  if($("pickDates")) $("pickDates").onclick=openPicker;
+  if($("addPool")) $("addPool").onclick=addPoolDates;
+  if($("splitBtn")) $("splitBtn").onclick=splitFairly;
+  if($("prefsBtn")) $("prefsBtn").onclick=openPrefs;
+  if($("clearPool")) $("clearPool").onclick=clearPool;
+  body.querySelectorAll(".rm").forEach(x=>x.onclick=()=>{ delete state.assignments[x.dataset.d]; persist(); renderAll(); });
+}
+function standings(){
+  const t={A:{total:0,unsoc:0,soc:0},B:{total:0,unsoc:0,soc:0}};
+  for(const [d,a] of Object.entries(state.assignments)){
+    if(a.p!=="A"&&a.p!=="B") continue;
+    if((a.rota||1)!==(state.rotaId||1)) continue;
+    t[a.p].total++; if(isUnsociable(d)) t[a.p].unsoc++; else t[a.p].soc++;
+  }
+  return t;
+}
+function prefOf(d,key){ const a=state.assignments[d]; return (a&&a.prefs&&a.prefs[key])||null; }
+function splitFairly(){
+  const pool=poolDates(); if(!pool.length) return;
+  const base=standings(); const cnt={A:{...base.A}, B:{...base.B}}; const result={};
+  const order=pool.slice().sort(); const other=w=>w==="A"?"B":"A";
+  for(const d of order){
+    const metric=isUnsociable(d)?"unsoc":"soc"; const pa=prefOf(d,"A"), pb=prefOf(d,"B");
+    if(pa==="on" && pb!=="on"){ result[d]="A"; cnt.A[metric]++; cnt.A.total++; continue; }
+    if(pb==="on" && pa!=="on"){ result[d]="B"; cnt.B[metric]++; cnt.B.total++; continue; }
+    let cands=["A","B"].filter(w=>(w==="A"?pa:pb)!=="off"); if(!cands.length) cands=["A","B"];
+    let best=null, bestScore=Infinity;
+    shuffle(cands).forEach(w=>{
+      const wantsOn=(w==="A"?pa:pb)==="on"; let s=0;
+      s += cnt[w][metric]*12; s += cnt[w].total*3;
+      const prevSame=result[shiftDate(d,-1)]===w; if(prevSame && !wantsOn) s += 1000;
+      if(wantsOn) s -= 50; s += Math.random()*4;
+      if(s<bestScore){ bestScore=s; best=w; }
+    });
+    result[d]=best; cnt[best][metric]++; cnt[best].total++;
+  }
+  for(const d of pool){ const prev=state.assignments[d]; state.assignments[d]={p:result[d], type:(prev&&prev.type)?prev.type:"oncall", rota:state.rotaId}; }
+  persist(); renderAll();
+}
+function clearPool(){ poolDates().forEach(d=>delete state.assignments[d]); persist(); renderAll(); }
+
+/* ===== day requests ===== */
+function openPrefs(){ renderPrefs(); document.getElementById("prefsOverlay").classList.add("show"); }
+function closePrefs(){ document.getElementById("prefsOverlay").classList.remove("show"); }
+function setPref(d,key,val){ const a=state.assignments[d]; if(!a) return; if(!a.prefs) a.prefs={A:null,B:null}; a.prefs[key]= a.prefs[key]===val ? null : val; persist(); renderPrefs(); renderPool(); }
+function renderPrefs(){
+  const pool=poolDates(); const list=document.getElementById("prefsList");
+  if(!pool.length){ list.innerHTML=`<div class="empty">No pooled dates to set requests on.</div>`; document.getElementById("prefsCount").textContent=""; return; }
+  list.innerHTML="";
+  pool.forEach(d=>{
+    const dt=new Date(d+"T00:00:00"); const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const lab=`${days[dt.getDay()]} ${dt.getDate()} ${MONTHS[dt.getMonth()].slice(0,3)}`; const un=isUnsociable(d);
+    const row=document.createElement("div"); row.className="prefrow";
+    row.innerHTML=`<div class="prefdate">${lab}${un?'<span class="un">unsoc</span>':""}</div><div class="prefppl">${["A","B"].map(k=>{ const v=prefOf(d,k); return `<div class="prefgrp ${k.toLowerCase()}" data-d="${d}" data-k="${k}"><span class="plabel">${personIni(k)}</span><button data-v="off" class="${v==="off"?"sel-off":""}">Off</button><button data-v="on" class="${v==="on"?"sel-on":""}">Wants</button></div>`; }).join("")}</div>`;
+    row.querySelectorAll(".prefgrp").forEach(g=>{ g.querySelectorAll("button").forEach(b=>b.onclick=()=>setPref(g.dataset.d, g.dataset.k, b.dataset.v)); });
+    list.appendChild(row);
+  });
+  const set=pool.filter(d=>prefOf(d,"A")||prefOf(d,"B")).length;
+  document.getElementById("prefsCount").innerHTML=`<b>${set}</b> of ${pool.length} day${pool.length>1?"s":""} have a request`;
+}
+
+/* ===== date picker ===== */
+let pickerView=new Date(); pickerView.setDate(1);
+let pickerSel=new Set();
+function openPicker(){ pickerView=new Date(view.getFullYear(), view.getMonth(), 1); pickerSel=new Set(poolDates()); renderPicker(); document.getElementById("pickerOverlay").classList.add("show"); }
+function closePicker(){ document.getElementById("pickerOverlay").classList.remove("show"); }
+function renderPicker(){
+  document.getElementById("pickerMonth").innerHTML=`${MONTHS[pickerView.getMonth()]} <span>${pickerView.getFullYear()}</span>`;
+  const grid=document.getElementById("pickerGrid"); grid.innerHTML="";
+  const first=new Date(pickerView.getFullYear(), pickerView.getMonth(), 1);
+  let startDow=(first.getDay()+6)%7; const dim=new Date(pickerView.getFullYear(), pickerView.getMonth()+1, 0).getDate(); const todayStr=iso(new Date());
+  for(let i=0;i<startDow;i++){ const b=document.createElement("div"); b.className="cell blank"; grid.appendChild(b); }
+  for(let day=1; day<=dim; day++){
+    const ds=iso(new Date(pickerView.getFullYear(), pickerView.getMonth(), day));
+    const cell=document.createElement("div"); cell.className="cell";
+    if(isWeekend(ds)) cell.classList.add("weekend"); if(isBH(ds)) cell.classList.add("bh");
+    if(ds===todayStr) cell.classList.add("today"); if(isMonday(ds)) cell.classList.add("nwd");
+    const a=state.assignments[ds]; const lockedToPerson = a && (a.p==="A"||a.p==="B");
+    let html=`<div class="d">${day}</div>`; if(isBH(ds)) html+=`<div class="bh-mark"></div>`;
+    if(lockedToPerson){ cell.classList.add("locked"); html+=`<div class="who"><span class="ini" style="background:${a.p==="A"?"var(--a)":"var(--b)"}">${personIni(a.p)}</span></div>`; }
+    else { cell.dataset.d=ds; if(pickerSel.has(ds)){ cell.classList.add("sel"); html+=`<div class="check">✓</div>`; } cell.onclick=()=>togglePick(ds, cell); }
+    if(isBH(ds)) html+=`<div class="bh-name">${BANK_HOLIDAYS[ds]}</div>`;
+    cell.innerHTML=html; grid.appendChild(cell);
+  }
+  updatePickerCount();
+}
+function updatePickerCount(){ const unsoc=[...pickerSel].filter(isUnsociable).length; document.getElementById("pickerCount").innerHTML=`<b>${pickerSel.size}</b> selected${unsoc?` · <span class="un">${unsoc} unsociable</span>`:""}`; }
+function togglePick(ds, cell){
+  if(pickerSel.has(ds)){ pickerSel.delete(ds); cell.classList.remove("sel"); const c=cell.querySelector(".check"); if(c) c.remove(); }
+  else { pickerSel.add(ds); cell.classList.add("sel"); if(!cell.querySelector(".check")){ const c=document.createElement("div"); c.className="check"; c.textContent="✓"; cell.appendChild(c); } }
+  updatePickerCount();
+}
+function addPicked(){ poolDates().forEach(d=>{ if(!pickerSel.has(d)) delete state.assignments[d]; }); pickerSel.forEach(d=>{ if(!state.assignments[d]) state.assignments[d]={p:"pool",type:"oncall"}; }); persist(); renderAll(); closePicker(); }
+
+/* ===== confirm + new rota ===== */
+let confirmCb=null;
+function openConfirm(title,msg,okLabel,cb){ document.getElementById("confirmTitle").textContent=title; document.getElementById("confirmMsg").textContent=msg; document.getElementById("confirmOk").textContent=okLabel; confirmCb=cb; document.getElementById("confirmOverlay").classList.add("show"); }
+function closeConfirm(){ document.getElementById("confirmOverlay").classList.remove("show"); confirmCb=null; }
+function newRota(){
+  openConfirm("Start a new rota?","This starts a fresh per-rota fairness count and clears the pool so you can allocate the new dates. Shifts already on the calendar stay as history and still count under “All time”.","Start new rota",
+    ()=>{ poolDates().forEach(d=>delete state.assignments[d]); state.rotaId=(state.rotaId||1)+1; scope="rota"; document.querySelectorAll("#scope button").forEach(x=>x.classList.toggle("on", x.dataset.scope==="rota")); persist(); renderAll(); });
+}
+
+/* ===== editor ===== */
+function openEditor(ds){
+  editingDate=ds; document.getElementById("edDate").textContent=prettyDate(ds);
+  const sub=document.getElementById("edSub"); const tags=[];
+  if(isBH(ds)) tags.push(`<span class="badge">${BANK_HOLIDAYS[ds]}</span>`); else if(isWeekend(ds)) tags.push(`<span class="badge">Weekend</span>`);
+  sub.innerHTML = tags.length ? `Unsociable shift · ${tags.join(" ")}` : "Weekday shift";
+  const cur=state.assignments[ds]||{}; const ao=document.getElementById("assignOpts");
+  ao.innerHTML=`<div class="opt a ${cur.p==="A"?"sel":""}" data-p="A"><span class="sw">${personIni("A")}</span>${escapeHtml(state.people.A.name)}</div>
+    <div class="opt b ${cur.p==="B"?"sel":""}" data-p="B"><span class="sw">${personIni("B")}</span>${escapeHtml(state.people.B.name)}</div>
+    <div class="opt pool ${cur.p==="pool"?"sel":""}" data-p="pool"><span class="sw">◇</span>Add to shared pool — decide later</div>
+    <div class="opt clear" data-p="clear"><span class="sw">○</span>Clear this day</div>`;
+  ao.querySelectorAll(".opt").forEach(o=>o.onclick=()=>setAssign(o.dataset.p));
+  const to=document.getElementById("typeOpts"); const curType=cur.type||"oncall";
+  to.innerHTML=SHIFT_TYPES.map(s=>`<div class="type-opt ${s.id===curType?"sel":""}" data-t="${s.id}">${s.label}</div>`).join("");
+  to.querySelectorAll(".type-opt").forEach(o=>o.onclick=()=>setType(o.dataset.t));
+  document.getElementById("editorOverlay").classList.add("show");
+}
+function closeEditor(){ document.getElementById("editorOverlay").classList.remove("show"); editingDate=null; }
+function setAssign(p){
+  if(!editingDate) return;
+  if(p==="clear"){ delete state.assignments[editingDate]; }
+  else{ const prev=state.assignments[editingDate]||{}; const entry={ p, type:prev.type||"oncall" }; if(p==="A"||p==="B") entry.rota = prev.rota||state.rotaId; if(prev.prefs) entry.prefs=prev.prefs; state.assignments[editingDate]=entry; }
+  persist(); renderAll(); if(p==="clear") closeEditor(); else openEditor(editingDate);
+}
+function setType(t){ if(!editingDate) return; const prev=state.assignments[editingDate]; if(!prev||!prev.p){ return; } prev.type=t; persist(); renderAll(); openEditor(editingDate); }
+
+/* ===== rename ===== */
+function openRename(key){
+  renamingKey=key; document.getElementById("nameTitle").textContent=`Edit ${state.people[key].name}`;
+  document.getElementById("nameInput").value=state.people[key].name;
+  document.getElementById("iniInput").value=state.people[key].initials||"";
+  document.getElementById("emailInput").value=state.people[key].email||"";
+  document.getElementById("nameOverlay").classList.add("show");
+  setTimeout(()=>{ const inp=document.getElementById("nameInput"); inp.focus(); inp.select(); },50);
+}
+function saveRename(){
+  if(renamingKey){ const p=state.people[renamingKey]; const v=document.getElementById("nameInput").value.trim(); if(v) p.name=v; p.initials=document.getElementById("iniInput").value.trim().toUpperCase(); p.email=document.getElementById("emailInput").value.trim(); persist(); renderAll(); }
+  document.getElementById("nameOverlay").classList.remove("show"); renamingKey=null;
+}
+
+/* ===== export / import ===== */
+function doExport(){ const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`slotshare-${iso(new Date())}.json`; a.click(); URL.revokeObjectURL(url); }
+function doImport(file){ const r=new FileReader(); r.onload=()=>{ try{ const obj=JSON.parse(r.result); if(obj.people&&obj.assignments){ state=Object.assign(defaultState(),obj); persist(); renderAll(); } else alert("That file doesn't look like a Slot Share export."); }catch(e){ alert("Couldn't read that file."); } }; r.readAsText(file); }
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+
+/* ===== theme ===== */
+function applyTheme(name){ const root=document.documentElement; if(root) root.setAttribute("data-theme", name); try{ localStorage.setItem(THEME_KEY, name); }catch(e){} document.querySelectorAll("#themeSwitch button").forEach(b=>b.classList.toggle("on", b.dataset.theme===name)); }
+
+/* ===== live bank-holiday refresh ===== */
+async function refreshBankHolidays(){
+  try{
+    const res=await fetch("https://www.gov.uk/bank-holidays.json"); if(!res.ok) return;
+    const data=await res.json(); const ev=data["england-and-wales"]&&data["england-and-wales"].events; if(!ev) return;
+    const map={}; ev.forEach(e=>{ let t=e.title.replace(" bank holiday",""); map[e.date]=t; });
+    BANK_HOLIDAYS=Object.assign({}, BH_FALLBACK, map); renderCalendar(); renderBalance();
+  }catch(e){}
+}
+
+/* ===== live sync ===== */
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+function setSyncStatus(kind, text){ const el=document.getElementById("syncStatus"); if(!el) return; const cls = kind==="live"?"live" : kind==="connecting"?"" : "local"; el.innerHTML=`<span class="syncdot ${cls}"></span> ${text}`; }
+async function initSync(){
+  if(!FIREBASE_CONFIG.databaseURL){ setSyncStatus("local","Saved on this device"); return; }
+  setSyncStatus("connecting","Connecting…");
+  try{
+    if(!window.firebase){ await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"); await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"); }
+    if(!(firebase.apps && firebase.apps.length)) firebase.initializeApp(FIREBASE_CONFIG);
+    db=firebase.database();
+    db.ref(syncPath).on("value", snap=>{
+      const val=snap.val();
+      if(val && val.people && val.assignments){ applyingRemote=true; state=Object.assign(defaultState(), val); normalize(); writeLocal(state); renderAll(); applyingRemote=false; maybeAlert(); }
+      else { db.ref(syncPath).set(state); }
+    }, err=>{ console.warn(err); setSyncStatus("local","Sync error — saved on this device"); });
+    setSyncStatus("live","Live — shared with your call partner");
+  }catch(e){ console.warn("sync failed", e); setSyncStatus("local","Couldn’t connect — saved on this device"); }
+}
+
+/* ===== normalize + boot ===== */
+function normalize(){
+  if(!state.rotaId) state.rotaId=1; if(!state.accept) state.accept={}; if(!state.myShifts) state.myShifts={};
+  ["A","B"].forEach(k=>{ if(!state.people[k]) state.people[k]={name:k==="A"?"Mark":"Ed"}; if(state.people[k].initials===undefined) state.people[k].initials=""; if(state.people[k].email===undefined) state.people[k].email=""; });
+  Object.values(state.assignments||{}).forEach(a=>{ if((a.p==="A"||a.p==="B") && a.rota===undefined) a.rota=state.rotaId; });
+  const statusMap={requested:"pending", agreed:"accepted", done:"accepted"};
+  (state.notes||[]).forEach(n=>{ if(!n.from) n.from="A"; if(statusMap[n.status]) n.status=statusMap[n.status]; if(!["pending","accepted","rejected"].includes(n.status)) n.status="pending"; });
+}
+function boot(){
+  const loaded=readLocal(); if(loaded&&loaded.people&&loaded.assignments) state=Object.assign(defaultState(),loaded);
+  normalize();
+
+  document.getElementById("prevBtn").onclick=()=>{ view.setMonth(view.getMonth()-1); renderCalendar(); if(scope!=="all") renderBalance(); };
+  document.getElementById("nextBtn").onclick=()=>{ view.setMonth(view.getMonth()+1); renderCalendar(); if(scope!=="all") renderBalance(); };
+  document.getElementById("todayBtn").onclick=()=>{ view=new Date(); view.setDate(1); renderCalendar(); if(scope!=="all") renderBalance(); };
+  document.querySelectorAll("#scope button").forEach(b=>b.onclick=()=>{ scope=b.dataset.scope; document.querySelectorAll("#scope button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); renderBalance(); });
+
+  document.getElementById("edClose").onclick=closeEditor;
+  document.getElementById("editorOverlay").onclick=e=>{ if(e.target.id==="editorOverlay") closeEditor(); };
+  document.getElementById("nameSave").onclick=saveRename;
+  document.getElementById("nameCancel").onclick=()=>{ document.getElementById("nameOverlay").classList.remove("show"); };
+  document.getElementById("nameInput").addEventListener("keydown",e=>{ if(e.key==="Enter") saveRename(); });
+  document.getElementById("nameOverlay").onclick=e=>{ if(e.target.id==="nameOverlay") document.getElementById("nameOverlay").classList.remove("show"); };
+
+  document.getElementById("addNote").onclick=addNote;
+  document.getElementById("swapYou").onclick=openMeChooser;
+  document.getElementById("noteInput").addEventListener("keydown",e=>{ if(e.key==="Enter") addNote(); });
+  document.getElementById("alertLater").onclick=closeAlert;
+  document.getElementById("alertView").onclick=()=>{ closeAlert(); document.querySelector(".notes").scrollIntoView({behavior:"smooth"}); };
+  document.getElementById("meOverlay").onclick=e=>{ if(e.target.id==="meOverlay") document.getElementById("meOverlay").classList.remove("show"); };
+  document.getElementById("alertOverlay").onclick=e=>{ if(e.target.id==="alertOverlay") closeAlert(); };
+
+  document.getElementById("prefsClose").onclick=closePrefs;
+  document.getElementById("prefsDone").onclick=closePrefs;
+  document.getElementById("prefsOverlay").onclick=e=>{ if(e.target.id==="prefsOverlay") closePrefs(); };
+  document.getElementById("pickerClose").onclick=closePicker;
+  document.getElementById("pickerCancel").onclick=closePicker;
+  document.getElementById("pickerAdd").onclick=addPicked;
+  document.getElementById("pickerPrev").onclick=()=>{ pickerView.setMonth(pickerView.getMonth()-1); renderPicker(); };
+  document.getElementById("pickerNext").onclick=()=>{ pickerView.setMonth(pickerView.getMonth()+1); renderPicker(); };
+  document.getElementById("pickerOverlay").onclick=e=>{ if(e.target.id==="pickerOverlay") closePicker(); };
+
+  document.getElementById("refreshBtn").onclick=newRota;
+  document.getElementById("openMyRota").onclick=openMyRota;
+  document.getElementById("myBack").onclick=closeMyRota;
+  document.getElementById("myPrev").onclick=()=>{ myView.setMonth(myView.getMonth()-1); renderMyCalendar(); };
+  document.getElementById("myNext").onclick=()=>{ myView.setMonth(myView.getMonth()+1); renderMyCalendar(); };
+  document.getElementById("myToday").onclick=()=>{ myView=new Date(); myView.setDate(1); renderMyCalendar(); };
+  document.getElementById("myDayClose").onclick=closeMyDay;
+  document.getElementById("myDayOverlay").onclick=e=>{ if(e.target.id==="myDayOverlay") closeMyDay(); };
+  document.getElementById("exportIcs").onclick=exportICS;
+  document.getElementById("acceptRotaBtn").onclick=toggleAgree;
+  document.getElementById("pdfBtn").onclick=exportPdf;
+  document.getElementById("confirmCancel").onclick=closeConfirm;
+  document.getElementById("confirmOk").onclick=()=>{ if(confirmCb) confirmCb(); closeConfirm(); };
+  document.getElementById("confirmOverlay").onclick=e=>{ if(e.target.id==="confirmOverlay") closeConfirm(); };
+
+  document.getElementById("exportBtn").onclick=doExport;
+  document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
+  document.getElementById("importFile").onchange=e=>{ if(e.target.files[0]) doImport(e.target.files[0]); e.target.value=""; };
+
+  let curTheme="clinical"; try{ curTheme=localStorage.getItem(THEME_KEY)||"clinical"; }catch(e){}
+  document.querySelectorAll("#themeSwitch button").forEach(b=>{ b.classList.toggle("on", b.dataset.theme===curTheme); b.onclick=()=>applyTheme(b.dataset.theme); });
+
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); document.getElementById("nameOverlay").classList.remove("show"); } });
+
+  meKey=loadMe();
+  renderAll();
+  refreshBankHolidays();
+  initSync();
+  if(!meKey) openMeChooser(); else maybeAlert();
+}
+boot();
+})();
+</script>
+</body>
+</html>
