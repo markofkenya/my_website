@@ -382,6 +382,10 @@
   .sync-err{color:var(--warn);font-size:12.5px;min-height:14px;margin:4px 0 8px}
   .sync-help{font-size:12.5px;color:var(--ink-soft);line-height:1.55}
   .print-dialog{max-width:430px}
+  .email-dialog{max-width:420px}
+  .email-dialog h3{margin:0 0 4px}
+  .email-dialog input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:15px;font-family:var(--font-b);margin-bottom:6px;background:var(--surface)}
+  .email-dialog input:focus{outline:none;border-color:var(--a)}
   .print-dialog h3{margin:0 0 4px}
   .print-opts{display:flex;flex-direction:column;gap:10px;margin:14px 0 4px}
   .print-opt{display:flex;flex-direction:column;gap:3px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:13px 15px;cursor:pointer;transition:transform .05s,border-color .1s}
@@ -498,6 +502,7 @@
     <div class="agree-actions">
       <button class="btn primary" id="acceptRotaBtn">Agree to this rota</button>
       <button class="btn ghost" id="pdfBtn" disabled>Export agreed rota (PDF)</button>
+      <button class="btn ghost" id="emailBtn" disabled>Email rota</button>
     </div>
     <div class="agree-hint" id="agreeHint"></div>
   </section>
@@ -610,6 +615,22 @@
       <summary>What’s a rota code?</summary>
       <div class="sync-help">Any word or phrase you both agree on — it decides which shared rota you join. Keep it private: anyone who knows it (and has this app) can see the rota. To start a fresh shared rota later, both enter a new code.</div>
     </details>
+  </div>
+</div>
+
+<!-- EMAIL ROTA -->
+<div class="overlay center" id="emailOverlay">
+  <div class="mini-dialog email-dialog">
+    <h3>Email the rota</h3>
+    <p>Opens your email app with the rota written into the message. To include the printable PDF, tap Save PDF first, then attach it in your email app.</p>
+    <label class="fld-label">Send to</label>
+    <input id="emailTo" type="email" placeholder="name@nhs.net" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="sync-err" id="emailErr"></div>
+    <div class="dialog-actions">
+      <button class="btn ghost" id="emailSavePdf">Save PDF</button>
+      <button class="btn ghost" id="emailCancel">Cancel</button>
+      <button class="btn" id="emailOpen">Open email</button>
+    </div>
   </div>
 </div>
 
@@ -1074,6 +1095,7 @@ function renderAgree(){
   btn.textContent = mine ? "You’ve agreed ✓ — tap to withdraw" : "Agree to this rota";
   btn.classList.toggle("agreed", mine);
   document.getElementById("pdfBtn").disabled=!bothAgreed();
+  document.getElementById("emailBtn").disabled=!bothAgreed();
   const hint=document.getElementById("agreeHint");
   if(!currentRotaShifts().length) hint.textContent="No shifts in this rota yet — divide the pool first.";
   else if(bothAgreed()) hint.textContent="Both agreed — export the rota to send to your coordinator.";
@@ -1090,6 +1112,40 @@ async function ensurePdfLib(){
   }catch(e){ return false; }
 }
 function exportPdf(){ if(!bothAgreed()) return; runPrint("ledger"); }
+const EMAIL_TO_STORE="slotshare-emailto";
+function openEmail(){
+  if(!bothAgreed()) return;
+  document.getElementById("emailErr").textContent="";
+  let last=""; try{ last=localStorage.getItem(EMAIL_TO_STORE)||""; }catch(e){}
+  document.getElementById("emailTo").value=last;
+  document.getElementById("emailOverlay").classList.add("show");
+}
+function closeEmail(){ document.getElementById("emailOverlay").classList.remove("show"); }
+function rotaTextBody(){
+  const shifts=currentRotaShifts(); if(!shifts.length) return null;
+  const nameA=state.people.A.name, nameB=state.people.B.name;
+  const first=longDate(shifts[0].date).date, last=longDate(shifts[shifts.length-1].date).date;
+  const range=first===last?first:`${first} – ${last}`;
+  let listed;
+  if(shifts.length<=30){
+    listed=shifts.map(s=>{ const L=longDate(s.date); return `${L.date} (${L.day}) — ${state.people[s.p].name}`; }).join("\n");
+  } else {
+    const a=shifts.filter(s=>s.p==="A").length, b=shifts.filter(s=>s.p==="B").length;
+    listed=`${shifts.length} on-call shifts (${nameA}: ${a}, ${nameB}: ${b}).\nFull list is in the attached PDF.`;
+  }
+  const body=`Hi,\n\nHere's the agreed on-call rota for ${nameA} and ${nameB} (${range}).\n\n${listed}\n\n(Printable PDF attached.)\n`;
+  return { range, body };
+}
+function emailOpenDraft(){
+  const to=(document.getElementById("emailTo").value||"").trim();
+  const err=document.getElementById("emailErr");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){ err.textContent="Enter a valid email address."; return; }
+  const rt=rotaTextBody(); if(!rt){ err.textContent="Nothing to send yet."; return; }
+  try{ localStorage.setItem(EMAIL_TO_STORE, to); }catch(e){}
+  const href=`mailto:${to}?subject=${encodeURIComponent("On-call rota — "+rt.range)}&body=${encodeURIComponent(rt.body)}`;
+  closeEmail();
+  const a=document.createElement("a"); a.href=href; a.style.display="none"; document.body.appendChild(a); a.click(); a.remove();
+}
 function closePrint(){ document.getElementById("printOverlay").classList.remove("show"); }
 function runPrint(style){
   closePrint();
@@ -1698,6 +1754,11 @@ function boot(){
   document.getElementById("exportIcs").onclick=exportICS;
   document.getElementById("acceptRotaBtn").onclick=toggleAgree;
   document.getElementById("pdfBtn").onclick=exportPdf;
+  document.getElementById("emailBtn").onclick=openEmail;
+  document.getElementById("emailCancel").onclick=closeEmail;
+  document.getElementById("emailSavePdf").onclick=()=>runPrint("ledger");
+  document.getElementById("emailOpen").onclick=emailOpenDraft;
+  document.getElementById("emailTo").addEventListener("keydown",e=>{ if(e.key==="Enter") emailOpenDraft(); });
   document.getElementById("printCancel").onclick=closePrint;
   document.querySelectorAll(".print-opt").forEach(b=>b.onclick=()=>runPrint(b.dataset.style));
   document.getElementById("confirmCancel").onclick=closeConfirm;
@@ -1711,7 +1772,7 @@ function boot(){
   let curTheme="clinical"; try{ curTheme=localStorage.getItem(THEME_KEY)||"clinical"; }catch(e){}
   document.querySelectorAll("#themeSwitch button").forEach(b=>{ b.classList.toggle("on", b.dataset.theme===curTheme); b.onclick=()=>applyTheme(b.dataset.theme); });
 
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); closePrint(); document.getElementById("nameOverlay").classList.remove("show"); } });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); closePrint(); closeEmail(); document.getElementById("nameOverlay").classList.remove("show"); } });
 
   document.getElementById("syncStatus").onclick=openLogin;
   document.getElementById("accountBtn").onclick=openLogin;
