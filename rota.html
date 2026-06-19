@@ -1123,17 +1123,9 @@ function openEmail(){
 function closeEmail(){ document.getElementById("emailOverlay").classList.remove("show"); }
 function rotaTextBody(){
   const shifts=currentRotaShifts(); if(!shifts.length) return null;
-  const nameA=state.people.A.name, nameB=state.people.B.name;
   const first=longDate(shifts[0].date).date, last=longDate(shifts[shifts.length-1].date).date;
   const range=first===last?first:`${first} – ${last}`;
-  let listed;
-  if(shifts.length<=30){
-    listed=shifts.map(s=>{ const L=longDate(s.date); return `${L.date} (${L.day}) — ${state.people[s.p].name}`; }).join("\n");
-  } else {
-    const a=shifts.filter(s=>s.p==="A").length, b=shifts.filter(s=>s.p==="B").length;
-    listed=`${shifts.length} on-call shifts (${nameA}: ${a}, ${nameB}: ${b}).\nFull list is in the attached PDF.`;
-  }
-  const body=`Hi,\n\nHere's the agreed on-call rota for ${nameA} and ${nameB} (${range}).\n\n${listed}\n\n(Printable PDF attached.)\n`;
+  const body=`Hi,\n\nHere's the agreed on-call rota (${range}). The rota is attached as a PDF.\n`;
   return { range, body };
 }
 function emailOpenDraft(){
@@ -1147,6 +1139,13 @@ function emailOpenDraft(){
   const a=document.createElement("a"); a.href=href; a.style.display="none"; document.body.appendChild(a); a.click(); a.remove();
 }
 function closePrint(){ document.getElementById("printOverlay").classList.remove("show"); }
+function agreedLine(){
+  const a=state.accept&&state.accept.A, b=state.accept&&state.accept.B;
+  if(!a||!b) return "";
+  const t=Math.max(a.at||0, b.at||0); if(!t) return "";
+  const d=new Date(t); const ds=`${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)} ${d.getFullYear()}`;
+  return `Agreed by ${state.people.A.name} & ${state.people.B.name} on ${ds}`;
+}
 function runPrint(style){
   closePrint();
   const shifts=currentRotaShifts(); if(!shifts.length) return;
@@ -1154,7 +1153,7 @@ function runPrint(style){
   const first=longDate(shifts[0].date).date, last=longDate(shifts[shifts.length-1].date).date;
   const rangeTxt=first===last?first:`${first} – ${last}`;
   const data=shifts.map(s=>{ const L=longDate(s.date); return {date:L.date, day:L.day, name:state.people[s.p].name, pk:s.p, un:isUnsociable(s.date)}; });
-  const html=buildRotaHtml(style, data, {rangeTxt, nameA, nameB});
+  const html=buildRotaHtml(style, data, {rangeTxt, nameA, nameB, agreed:agreedLine()});
   const w=window.open("","_blank"); if(!w){ alert("Allow pop-ups to export the rota, or try again."); return; }
   w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>{ try{ w.print(); }catch(e){} }, 450);
 }
@@ -1173,8 +1172,8 @@ function buildRotaHtml(style, data, m){
     inner=`<div class="band"><h1>On-call rota</h1><p class="sub">${esc(m.nameA)} &amp; ${esc(m.nameB)} · ${m.rangeTxt}</p></div><div class="body"><table>${head}<tbody>${rows}</tbody></table>${sign}<p class="foot">Agreed allocation — weekends &amp; bank holidays shaded.</p></div>`;
   } else { // ledger
     const rows=data.map(r=>`<tr class="${r.un?'un':''}"><td class="date">${r.date}</td><td class="day">${r.day}</td><td class="who">${esc(r.name)}</td></tr>`).join("");
-    css=`*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#202830;margin:42px 46px}h1{font-size:19px;font-weight:700;margin:0 0 3px}.sub{color:#5a666e;font-size:12px;margin:0 0 24px;font-variant:small-caps;letter-spacing:.05em}table{border-collapse:collapse;width:100%;font-size:12.5px}thead th{text-align:left;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8c979e;font-weight:600;padding:0 10px 8px;border-bottom:1.5px solid #202830}tbody td{padding:9px 10px;border-bottom:1px solid #e3e8ea}td.date{font-family:'SFMono-Regular',Consolas,'Liberation Mono',monospace;white-space:nowrap}td.day{color:#5a666e}td.who{font-weight:600}tr.un td{background:#faf6ec}`;
-    inner=`<h1>On-call rota — agreed allocation</h1><p class="sub">${esc(m.nameA)} &amp; ${esc(m.nameB)} · ${m.rangeTxt}</p><table>${head}<tbody>${rows}</tbody></table>`;
+    css=`*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#202830;margin:42px 46px}h1{font-size:19px;font-weight:700;margin:0 0 3px}.sub{color:#5a666e;font-size:12px;margin:0 0 24px;font-variant:small-caps;letter-spacing:.05em}table{border-collapse:collapse;width:100%;font-size:12.5px}thead th{text-align:left;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8c979e;font-weight:600;padding:0 10px 8px;border-bottom:1.5px solid #202830}tbody td{padding:9px 10px;border-bottom:1px solid #e3e8ea}td.date{font-family:'SFMono-Regular',Consolas,'Liberation Mono',monospace;white-space:nowrap}td.day{color:#5a666e}td.who{font-weight:600}tr.un td{background:#faf6ec}.agreed{margin-top:22px;font-size:11.5px;color:#5a666e}`;
+    inner=`<h1>On-call rota — agreed allocation</h1><p class="sub">${esc(m.nameA)} &amp; ${esc(m.nameB)} · ${m.rangeTxt}</p><table>${head}<tbody>${rows}</tbody></table>${m.agreed?`<p class="agreed">${esc(m.agreed)}</p>`:""}`;
   }
   return `<!doctype html><html><head><meta charset="utf-8"><title>On-call rota — agreed</title><style>@page{margin:14mm}${css}</style></head><body>${inner}</body></html>`;
 }
