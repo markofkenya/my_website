@@ -389,6 +389,29 @@
   .print-opt:active{transform:scale(.99)}
   .po-n{font-family:var(--font-d);font-weight:600;font-size:14.5px;color:var(--ink)}
   .po-d{font-size:12px;color:var(--ink-soft);line-height:1.4}
+  /* My Rota — calendar + draggable palette */
+  .my-board{display:flex;gap:14px;align-items:flex-start}
+  .my-cal-col{flex:1;min-width:0}
+  .my-palette{flex:0 0 158px;display:flex;flex-direction:column;gap:7px;position:sticky;top:6px}
+  .pal-label{font-family:var(--font-m);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:1px}
+  .pal-chip{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:var(--surface);cursor:grab;font-size:12.5px;font-weight:600;color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:none;white-space:nowrap}
+  .pal-chip .pdot{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+  .pal-chip.armed{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink);color:var(--ink)}
+  .pal-chip:active{cursor:grabbing}
+  .cell.drop-hot{outline:2px solid var(--a);outline-offset:-2px;background:var(--a-tint)!important}
+  .drag-ghost{position:fixed;z-index:200;pointer-events:none;padding:7px 12px;border-radius:9px;font-size:12.5px;font-weight:700;color:#fff;box-shadow:0 10px 22px rgba(0,0,0,.28);transform:translate(-50%,-135%);white-space:nowrap}
+  .ms-chip{display:block;font-size:9.5px;font-weight:700;color:#fff;border-radius:4px;padding:1px 4px;margin-top:2px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .my-swap{margin-top:2px;border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);font-family:var(--font-b);font-weight:600;font-size:12.5px;padding:8px 12px;border-radius:9px;cursor:pointer;width:100%}
+  .my-swap:hover{background:var(--surface-2)}
+  .my-slot{font-family:var(--font-m);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);border:1px solid var(--line);border-radius:5px;padding:0 5px;margin-left:5px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:210;max-width:80%;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media(max-width:640px){
+    .my-board{flex-direction:column-reverse}
+    .my-palette{flex:0 0 auto;flex-direction:row;overflow-x:auto;position:static;padding-bottom:5px;-webkit-overflow-scrolling:touch}
+    .pal-label{display:none}
+    .pal-chip{flex:0 0 auto}
+  }
 </style>
 </head>
 <body>
@@ -625,9 +648,13 @@
         <button class="iconbtn" id="myNext" aria-label="Next month">›</button>
       </div>
     </div>
-    <div class="dow"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
-    <div class="grid" id="myGrid"></div>
-    <div class="my-legend" id="myLegend"></div>
+    <div class="my-board">
+      <div class="my-cal-col">
+        <div class="dow"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
+        <div class="grid" id="myGrid"></div>
+      </div>
+      <div class="my-palette" id="myPalette"></div>
+    </div>
   </div>
 </div>
 
@@ -645,6 +672,8 @@
     <div class="my-add-wrap" id="myDayAdd"></div>
   </div>
 </div>
+
+<div id="toast" class="toast"></div>
 
 <script>
 (function(){
@@ -1060,7 +1089,7 @@ async function ensurePdfLib(){
     return !!(window.jspdf && window.jspdf.jsPDF);
   }catch(e){ return false; }
 }
-function exportPdf(){ if(!bothAgreed()) return; document.getElementById("printOverlay").classList.add("show"); }
+function exportPdf(){ if(!bothAgreed()) return; runPrint("ledger"); }
 function closePrint(){ document.getElementById("printOverlay").classList.remove("show"); }
 function runPrint(style){
   closePrint();
@@ -1087,9 +1116,9 @@ function buildRotaHtml(style, data, m){
     css=`*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}body{font-family:Georgia,'Times New Roman',serif;color:#202830;margin:0}.band{background:#202830;color:#fff;padding:30px 48px}.band h1{font-size:22px;margin:0 0 5px;font-weight:600}.band .sub{color:#c2cace;font-size:13px;margin:0}.body{padding:30px 48px 48px}table{border-collapse:collapse;width:100%;font-size:13px}thead th{text-align:left;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#8c979e;font-weight:normal;padding:0 12px 10px;border-bottom:1px solid #c8d0d4}tbody td{padding:11px 12px;border-bottom:1px solid #eceff1}tr.un td{background:#faf6ec}td.date{white-space:nowrap}td.who{font-weight:bold}.sign{margin-top:46px;display:flex;gap:50px}.sign div{flex:1;border-top:1px solid #202830;padding-top:7px;font-size:11px;color:#5a666e;font-family:Arial,sans-serif}.foot{margin-top:18px;font-size:11px;color:#8c979e;font-family:Arial,sans-serif}`;
     inner=`<div class="band"><h1>On-call rota</h1><p class="sub">${esc(m.nameA)} &amp; ${esc(m.nameB)} · ${m.rangeTxt}</p></div><div class="body"><table>${head}<tbody>${rows}</tbody></table>${sign}<p class="foot">Agreed allocation — weekends &amp; bank holidays shaded.</p></div>`;
   } else { // ledger
-    const rows=data.map(r=>`<tr class="${r.un?'un':''}"><td class="date">${r.date}</td><td class="day">${r.day}${r.un?' ·':''}</td><td class="who">${esc(r.name)}</td></tr>`).join("");
-    css=`*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#202830;margin:42px 46px}h1{font-size:19px;font-weight:700;margin:0 0 3px}.sub{color:#5a666e;font-size:12px;margin:0 0 24px;font-variant:small-caps;letter-spacing:.05em}table{border-collapse:collapse;width:100%;font-size:12.5px}thead th{text-align:left;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8c979e;font-weight:600;padding:0 10px 8px;border-bottom:1.5px solid #202830}tbody td{padding:9px 10px;border-bottom:1px solid #e3e8ea}td.date{font-family:'SFMono-Regular',Consolas,'Liberation Mono',monospace;white-space:nowrap}td.day{color:#5a666e}td.who{font-weight:600}tr.un td{background:#faf6ec}.foot{margin-top:24px;font-size:11px;color:#5a666e}.sign{margin-top:34px;display:flex;gap:44px}.sign div{flex:1;border-top:1px solid #aab3b8;padding-top:6px;font-size:11px;color:#8c979e}`;
-    inner=`<h1>On-call rota — agreed allocation</h1><p class="sub">${esc(m.nameA)} &amp; ${esc(m.nameB)} · ${m.rangeTxt}</p><table>${head}<tbody>${rows}</tbody></table>${sign}<p class="foot">Agreed allocation. Rows marked “·” are weekends or bank holidays.</p>`;
+    const rows=data.map(r=>`<tr class="${r.un?'un':''}"><td class="date">${r.date}</td><td class="day">${r.day}</td><td class="who">${esc(r.name)}</td></tr>`).join("");
+    css=`*{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#202830;margin:42px 46px}h1{font-size:19px;font-weight:700;margin:0 0 3px}.sub{color:#5a666e;font-size:12px;margin:0 0 24px;font-variant:small-caps;letter-spacing:.05em}table{border-collapse:collapse;width:100%;font-size:12.5px}thead th{text-align:left;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8c979e;font-weight:600;padding:0 10px 8px;border-bottom:1.5px solid #202830}tbody td{padding:9px 10px;border-bottom:1px solid #e3e8ea}td.date{font-family:'SFMono-Regular',Consolas,'Liberation Mono',monospace;white-space:nowrap}td.day{color:#5a666e}td.who{font-weight:600}tr.un td{background:#faf6ec}`;
+    inner=`<h1>On-call rota — agreed allocation</h1><p class="sub">${esc(m.nameA)} &amp; ${esc(m.nameB)} · ${m.rangeTxt}</p><table>${head}<tbody>${rows}</tbody></table>`;
   }
   return `<!doctype html><html><head><meta charset="utf-8"><title>On-call rota — agreed</title><style>@page{margin:14mm}${css}</style></head><body>${inner}</body></html>`;
 }
@@ -1105,7 +1134,7 @@ function openMyRota(){
   renderMyCalendar();
   document.getElementById("rotaOverlay").classList.add("show");
 }
-function closeMyRota(){ document.getElementById("rotaOverlay").classList.remove("show"); }
+function closeMyRota(){ armedType=null; endGhost&&endGhost(); document.getElementById("rotaOverlay").classList.remove("show"); }
 function renderMyCalendar(){
   const grid=document.getElementById("myGrid"); if(!grid) return;
   document.getElementById("myMonth").innerHTML=`${MONTHS[myView.getMonth()]} <span>${myView.getFullYear()}</span>`;
@@ -1127,18 +1156,61 @@ function renderMyCalendar(){
     if(isBH(ds)) html+=`<div class="bh-mark"></div>`;
     const oc=myOncall(ds);
     if(oc){ const st=SHIFT_TYPES.find(s=>s.id===oc.type); html+=`<div class="oc-badge">On-call${st&&st.id!=="oncall"?" · "+st.label:""}</div>`; }
-    getMyArr(ds).forEach(s=>{ const t=myType(s.type); html+=`<div class="ms-chip" style="background:${t.color}">${t.short}</div>`; });
+    getMyArr(ds).forEach((s,i)=>{ const t=myType(s.type); html+=`<div class="ms-chip" style="background:${t.color}" title="${escapeHtml(t.label)} ${s.start}–${s.end}">${t.short} ${s.start}</div>`; });
     cell.innerHTML=html;
-    cell.onclick=()=>openMyDay(ds);
+    cell.dataset.ds=ds;
+    cell.onclick=()=>{ if(armedType){ placeSession(ds, armedType); } else openMyDay(ds); };
     grid.appendChild(cell);
   }
-  renderMyLegend();
+  renderPalette();
 }
-function renderMyLegend(){
-  const el=document.getElementById("myLegend");
-  el.innerHTML=`<span><span class="lk" style="background:var(--ink)"></span>On-call (from shared rota)</span>`
-    + MY_SHIFT_TYPES.map(t=>`<span><span class="lk" style="background:${t.color}"></span>${escapeHtml(t.label)}</span>`).join("");
+let armedType=null;
+function renderPalette(){
+  const p=document.getElementById("myPalette"); if(!p) return;
+  p.innerHTML=`<div class="pal-label">Drag onto a day</div>`
+    + MY_SHIFT_TYPES.map(t=>`<div class="pal-chip ${armedType===t.id?"armed":""}" data-type="${t.id}"><span class="pdot" style="background:${t.color}"></span>${escapeHtml(t.label)}</div>`).join("");
+  p.querySelectorAll(".pal-chip").forEach(attachPalChip);
 }
+let ghostEl=null;
+function beginGhost(typeId,e){ const t=myType(typeId); ghostEl=document.createElement("div"); ghostEl.className="drag-ghost"; ghostEl.style.background=t.color; ghostEl.textContent=t.label; document.body.appendChild(ghostEl); moveGhost(e); }
+function moveGhost(e){ if(ghostEl){ ghostEl.style.left=e.clientX+"px"; ghostEl.style.top=e.clientY+"px"; } }
+function endGhost(){ if(ghostEl){ ghostEl.remove(); ghostEl=null; } }
+function cellAt(e){ if(ghostEl) ghostEl.style.display="none"; const el=document.elementFromPoint(e.clientX,e.clientY); if(ghostEl) ghostEl.style.display=""; return el?el.closest(".cell[data-ds]"):null; }
+function clearHot(){ document.querySelectorAll(".cell.drop-hot").forEach(c=>c.classList.remove("drop-hot")); }
+function attachPalChip(ch){
+  ch.addEventListener("pointerdown",e=>{
+    e.preventDefault();
+    const typeId=ch.dataset.type, downX=e.clientX, downY=e.clientY; let dragging=false;
+    const move=ev=>{
+      if(!dragging && (Math.abs(ev.clientX-downX)>6 || Math.abs(ev.clientY-downY)>6)){ dragging=true; armedType=null; beginGhost(typeId,ev); }
+      if(dragging){ moveGhost(ev); clearHot(); const c=cellAt(ev); if(c) c.classList.add("drop-hot"); }
+    };
+    const up=ev=>{
+      document.removeEventListener("pointermove",move); document.removeEventListener("pointerup",up);
+      if(dragging){ const c=cellAt(ev); endGhost(); clearHot(); if(c) placeSession(c.dataset.ds, typeId); }
+      else { armedType = armedType===typeId ? null : typeId; renderPalette(); if(armedType) flashMsg("Tap days to place · tap the chip again to stop"); }
+    };
+    document.addEventListener("pointermove",move); document.addEventListener("pointerup",up);
+  });
+}
+function placeSession(ds, typeId){
+  if(!meKey) return;
+  if(!state.myShifts) state.myShifts={};
+  if(!state.myShifts[meKey]) state.myShifts[meKey]={};
+  if(!state.myShifts[meKey][ds]) state.myShifts[meKey][ds]=[];
+  const arr=state.myShifts[meKey][ds];
+  if(arr.length>=2){ flashMsg("Two sessions max per day — tap the day to edit"); return; }
+  arr.push({ id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:typeId, start:"08:30", end:"17:00" });
+  retimeDay(ds); persist(); renderMyCalendar();
+  if(document.getElementById("myDayOverlay").classList.contains("show") && myEditDate===ds) renderMyDay(ds);
+}
+function retimeDay(ds){
+  const m=state.myShifts&&state.myShifts[meKey]; const arr=m&&m[ds]; if(!arr) return;
+  if(arr.length===1){ arr[0].start="08:30"; arr[0].end="17:00"; }                                  // single session → full day
+  else if(arr.length>=2){ arr[0].start="08:30"; arr[0].end="12:00"; arr[1].start="14:00"; arr[1].end="17:00"; }  // first = AM, second = PM
+}
+function swapMyDay(ds){ const m=state.myShifts&&state.myShifts[meKey]; const arr=m&&m[ds]; if(!arr||arr.length<2) return; [arr[0],arr[1]]=[arr[1],arr[0]]; retimeDay(ds); persist(); renderMyDay(ds); renderMyCalendar(); }
+function flashMsg(t){ const el=document.getElementById("toast"); if(!el) return; el.textContent=t; el.classList.add("show"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),2000); }
 function openMyDay(ds){ myEditDate=ds; renderMyDay(ds); document.getElementById("myDayOverlay").classList.add("show"); }
 function closeMyDay(){ document.getElementById("myDayOverlay").classList.remove("show"); myEditDate=null; }
 function renderMyDay(ds){
@@ -1150,34 +1222,39 @@ function renderMyDay(ds){
   else { ocEl.style.display="none"; ocEl.innerHTML=""; }
   const list=document.getElementById("myDayList");
   const arr=getMyArr(ds);
-  list.innerHTML = arr.length ? arr.map(s=>{ const t=myType(s.type);
+  list.innerHTML = arr.length ? arr.map((s,i)=>{ const t=myType(s.type); const slot=arr.length>=2?(i===0?"AM":"PM"):"Day";
     return `<div class="my-row">
       <span class="my-dot" style="background:${t.color}"></span>
-      <span class="my-name">${escapeHtml(t.label)}</span>
+      <span class="my-name">${escapeHtml(t.label)} <span class="my-slot">${slot}</span></span>
       <input type="time" class="my-t" data-id="${s.id}" data-f="start" value="${s.start}">
       <span class="my-dash">–</span>
       <input type="time" class="my-t" data-id="${s.id}" data-f="end" value="${s.end}">
       <button class="my-x" data-id="${s.id}" aria-label="Remove">✕</button>
-    </div>`; }).join("") : `<div class="empty">No sessions yet for this day.</div>`;
+    </div>`; }).join("") : `<div class="empty">No sessions yet. Drag a shift onto this day, or add one below.</div>`;
+  if(arr.length>=2) list.innerHTML+=`<button class="my-swap" id="mySwap">⇅ Swap AM / PM</button>`;
   list.querySelectorAll(".my-x").forEach(b=>b.onclick=()=>removeMyShift(ds, b.dataset.id));
   list.querySelectorAll(".my-t").forEach(inp=>inp.onchange=()=>setMyShiftTime(ds, inp.dataset.id, inp.dataset.f, inp.value));
+  const sw=document.getElementById("mySwap"); if(sw) sw.onclick=()=>swapMyDay(ds);
   const add=document.getElementById("myDayAdd");
-  add.innerHTML=MY_SHIFT_TYPES.map(t=>`<button class="my-add" style="border-color:${t.color};color:${t.color}" data-t="${t.id}">+ ${escapeHtml(t.label)}</button>`).join("");
-  add.querySelectorAll(".my-add").forEach(b=>b.onclick=()=>addMyShift(ds, b.dataset.t));
+  if(arr.length>=2){ add.innerHTML=`<div class="empty">Two sessions set (AM + PM). Remove one to change it.</div>`; }
+  else {
+    add.innerHTML=MY_SHIFT_TYPES.map(t=>`<button class="my-add" style="border-color:${t.color};color:${t.color}" data-t="${t.id}">+ ${escapeHtml(t.label)}</button>`).join("");
+    add.querySelectorAll(".my-add").forEach(b=>b.onclick=()=>addMyShift(ds, b.dataset.t));
+  }
 }
 function addMyShift(ds, typeId){
   if(!meKey) return;
   if(!state.myShifts) state.myShifts={};
   if(!state.myShifts[meKey]) state.myShifts[meKey]={};
   if(!state.myShifts[meKey][ds]) state.myShifts[meKey][ds]=[];
-  const t=myType(typeId);
-  state.myShifts[meKey][ds].push({ id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:typeId, start:t.start, end:t.end });
-  persist(); renderMyDay(ds); renderMyCalendar();
+  if(state.myShifts[meKey][ds].length>=2){ flashMsg("Two sessions max per day"); return; }
+  state.myShifts[meKey][ds].push({ id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:typeId, start:"08:30", end:"17:00" });
+  retimeDay(ds); persist(); renderMyDay(ds); renderMyCalendar();
 }
 function removeMyShift(ds, sid){
   const m=state.myShifts&&state.myShifts[meKey]; if(!m||!m[ds]) return;
   m[ds]=m[ds].filter(x=>x.id!==sid);
-  if(!m[ds].length) delete m[ds];
+  if(!m[ds].length) delete m[ds]; else retimeDay(ds);
   persist(); renderMyDay(ds); renderMyCalendar();
 }
 function setMyShiftTime(ds, sid, field, val){
