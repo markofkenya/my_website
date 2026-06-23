@@ -183,6 +183,9 @@
     .ov-row strong { color:var(--yellow); }
     .ov-bar-bg { height:2px; background:var(--border2); margin-top:6px; overflow:hidden; }
     .ov-bar { height:100%; }
+    .conf-stack { display:flex; height:8px; margin-top:8px; border-radius:2px; overflow:hidden; background:var(--bg3); }
+    .conf-seg { height:100%; transition:width 0.4s; }
+    .conf-legend { display:flex; flex-wrap:wrap; gap:8px; font-size:8px; margin-top:5px; letter-spacing:0.04em; }
 
     /* ── STATUS BAR ── */
     #statusbar { position:fixed; bottom:0; left:0; right:0; background:var(--bg2); border-top:1px solid var(--border2); padding:5px 18px; display:flex; justify-content:space-between; align-items:center; font-size:9px; color:var(--grey2); z-index:100; }
@@ -1154,11 +1157,17 @@ function renderOverview() {
             <div class="ov-cat">${cat}</div>
             <div class="ov-row"><span>Rated</span><strong>${cf.rated} / ${cf.total}</strong></div>
             <div class="ov-row"><span>Avg confidence</span><strong style="color:${avgColor}">${cf.rated>0?cf.avg.toFixed(1)+" / 3":"—"}</strong></div>
-            <div class="ov-row" style="gap:4px;">
-              <span style="color:var(--red)">●${cf.c1}</span>
-              <span style="color:var(--yellow)">●${cf.c2}</span>
-              <span style="color:var(--green)">●${cf.c3}</span>
-              <span style="margin-left:auto;color:var(--grey2)">low·mid·high</span>
+            <div class="conf-stack" title="Low ${cf.c1} · Mid ${cf.c2} · High ${cf.c3} · Unrated ${cf.total-cf.rated}">
+              ${cf.c1>0?`<div class="conf-seg" style="width:${cf.c1/cf.total*100}%;background:var(--red);"></div>`:""}
+              ${cf.c2>0?`<div class="conf-seg" style="width:${cf.c2/cf.total*100}%;background:var(--yellow);"></div>`:""}
+              ${cf.c3>0?`<div class="conf-seg" style="width:${cf.c3/cf.total*100}%;background:var(--green);"></div>`:""}
+              ${(cf.total-cf.rated)>0?`<div class="conf-seg" style="width:${(cf.total-cf.rated)/cf.total*100}%;background:var(--grey2);opacity:0.4;"></div>`:""}
+            </div>
+            <div class="conf-legend">
+              <span style="color:var(--red)">■ ${cf.c1} low</span>
+              <span style="color:var(--yellow)">■ ${cf.c2} mid</span>
+              <span style="color:var(--green)">■ ${cf.c3} high</span>
+              <span style="color:var(--grey2)">■ ${cf.total-cf.rated} unrated</span>
             </div>
           </div>`;
       }).join("")}
@@ -1447,7 +1456,7 @@ function qRow(q, pass) {
       <button class="q-btn ${curIncorrect?'incorrect':''}" onclick="toggleQ('${q.code}','${incorrectField}','${correctField}',${curIncorrect||false})">✗</button>
       <button class="q-btn ${flagged?'flagged':''}" onclick="saveQ('${q.code}',{flagged:${!flagged}});renderKSAP();" title="Flag for review">⚑</button>
       <div class="conf-dots">
-        ${[1,2,3].map(n => `<div class="conf-dot ${conf>=n?'lit':''}" onclick="setQConf('${q.code}',${n})"></div>`).join("")}
+        ${[1,2,3].map(n => `<div class="conf-dot ${conf>=n?'lit':''}" style="${conf>=n?`background:${conf===1?'var(--red)':conf===2?'var(--yellow)':'var(--green)'};border-color:${conf===1?'var(--red)':conf===2?'var(--yellow)':'var(--green)'};`:''}" onclick="setQConf('${q.code}',${n})"></div>`).join("")}
       </div>
       <input class="note-inp" value="${escHtml(note)}" placeholder="why wrong..."
         onchange="saveQ('${q.code}',{note:this.value})" />
@@ -1711,7 +1720,7 @@ function makeErrRow(q, d) {
       <span class="err-cat">${ec}</span>
       <span style="font-size:8px;color:var(--grey2);">${q.module}</span>
       <div class="err-conf">
-        ${[1,2,3].map(n => `<div class="conf-dot ${conf>=n?'lit':''}" style="pointer-events:none;"></div>`).join("")}
+        ${[1,2,3].map(n => `<div class="conf-dot ${conf>=n?'lit':''}" style="pointer-events:none;${conf>=n?`background:${conf===1?'var(--red)':conf===2?'var(--yellow)':'var(--green)'};border-color:${conf===1?'var(--red)':conf===2?'var(--yellow)':'var(--green)'};`:''}"></div>`).join("")}
       </div>
       ${flagged ? '<span class="pass-badge flagged">⚑</span>' : ""}
       <button class="err-resolved ${resolved?'done':''}"
