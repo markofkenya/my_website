@@ -303,6 +303,7 @@
   <button class="tab active" onclick="setTab('overview')">OVERVIEW</button>
   <button class="tab" onclick="setTab('ksap')">KSAP BANK</button>
   <button class="tab" onclick="setTab('topics')">TOPIC COVERAGE</button>
+  <button class="tab" onclick="setTab('confidence')">CONFIDENCE</button>
   <button class="tab roadmap-tab" onclick="setTab('roadmap')">ROADMAP</button>
   <button class="tab" onclick="setTab('admin')">ADMIN</button>
   <button class="tab" onclick="setTab('errorlog')">ERROR LOG</button>
@@ -313,6 +314,7 @@
   <div id="tab-roadmap"  style="display:none"></div>
   <div id="tab-ksap"     style="display:none"></div>
   <div id="tab-topics"   style="display:none"></div>
+  <div id="tab-confidence" style="display:none"></div>
   <div id="tab-admin"    style="display:none"></div>
   <div id="tab-errorlog" style="display:none"></div>
 </div>
@@ -1058,7 +1060,7 @@ function setTab(tab) {
   currentTab = tab;
   document.querySelectorAll(".tab").forEach(b =>
     b.classList.toggle("active", b.getAttribute("onclick").includes(`'${tab}'`)));
-  ["overview","roadmap","ksap","topics","admin","errorlog"].forEach(t =>
+  ["overview","roadmap","ksap","topics","confidence","admin","errorlog"].forEach(t =>
     document.getElementById(`tab-${t}`).style.display = t === tab ? "block" : "none");
   renderTab(tab);
 }
@@ -1068,6 +1070,7 @@ function renderTab(tab) {
   if (tab === "roadmap")  renderRoadmap();
   if (tab === "ksap")     renderKSAP();
   if (tab === "topics")   renderTopics();
+  if (tab === "confidence") renderConfidence();
   if (tab === "admin")    renderAdmin();
   if (tab === "errorlog") renderErrorLog();
 }
@@ -1132,12 +1135,196 @@ function renderOverview() {
             <div class="ov-bar-bg"><div class="ov-bar" style="width:${Math.round(cs.p1done/cs.total*100)}%;background:${color}"></div></div>
           </div>`;
       }).join("")}
+    </div>
+
+    <div class="sec-head">
+      <span class="sec-title">CONFIDENCE BY CATEGORY</span>
+      <span class="sec-rule"></span>
+      <button class="filter-btn" onclick="setTab('confidence')" style="font-size:8px;padding:2px 8px;">OPEN CONFIDENCE</button>
+    </div>
+    <div class="overview-grid">
+      ${cats.map(cat => {
+        const cf = computeCatConfidence(cat);
+        const color = CAT_COLORS[cat] || "var(--cyan)";
+        const avgColor = cf.rated === 0 ? "var(--grey2)" :
+                         cf.avg >= 2.5 ? "var(--green)" :
+                         cf.avg >= 1.7 ? "var(--yellow)" : "var(--red)";
+        return `
+          <div class="ov-card" style="border-left-color:${color}">
+            <div class="ov-cat">${cat}</div>
+            <div class="ov-row"><span>Rated</span><strong>${cf.rated} / ${cf.total}</strong></div>
+            <div class="ov-row"><span>Avg confidence</span><strong style="color:${avgColor}">${cf.rated>0?cf.avg.toFixed(1)+" / 3":"—"}</strong></div>
+            <div class="ov-row" style="gap:4px;">
+              <span style="color:var(--red)">●${cf.c1}</span>
+              <span style="color:var(--yellow)">●${cf.c2}</span>
+              <span style="color:var(--green)">●${cf.c3}</span>
+              <span style="margin-left:auto;color:var(--grey2)">low·mid·high</span>
+            </div>
+          </div>`;
+      }).join("")}
     </div>`;
 
   el.innerHTML = html;
 }
 
-// ── KSAP ──────────────────────────────────────────────────────────────
+// ── CONFIDENCE STATS HELPER ──────────────────────────────────────────
+function computeCatConfidence(cat) {
+  const qs = KSAP.filter(q => effectiveCat(q) === cat);
+  let rated = 0, sum = 0, c1 = 0, c2 = 0, c3 = 0;
+  qs.forEach(q => {
+    const d = getQ(q.code);
+    const c = d.confidence || 0;
+    if (c >= 1) { rated++; sum += c; }
+    if (c === 1) c1++; else if (c === 2) c2++; else if (c === 3) c3++;
+  });
+  return { total: qs.length, rated, avg: rated > 0 ? sum / rated : 0, c1, c2, c3 };
+}
+
+// ── CONFIDENCE TAB ────────────────────────────────────────────────────
+let confFilter = "all";   // all | 1 | 2 | 3
+let confStatusFilter = "all"; // all | correct | incorrect | unattempted
+let confExpanded = new Set();
+
+function renderConfidence() {
+  const el = document.getElementById("tab-confidence");
+  el.innerHTML = "";
+
+  // Gather all rated questions
+  const rated = KSAP
+    .map(q => ({ q, d: getQ(q.code) }))
+    .filter(({ d }) => (d.confidence || 0) >= 1);
+
+  // Header + summary counts
+  const total = KSAP.length;
+  const ratedCount = rated.length;
+  const c1 = rated.filter(({d}) => d.confidence === 1).length;
+  const c2 = rated.filter(({d}) => d.confidence === 2).length;
+  const c3 = rated.filter(({d}) => d.confidence === 3).length;
+
+  const head = document.createElement("div");
+  head.className = "sec-head";
+  head.innerHTML = `<span class="sec-title">CONFIDENCE RATINGS</span><span class="sec-rule"></span><span class="sec-note">${ratedCount} of ${total} rated</span>`;
+  el.appendChild(head);
+
+  // Summary cards
+  const summary = document.createElement("div");
+  summary.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:18px;";
+  summary.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--red);padding:10px 14px;">
+      <div style="font-size:9px;color:var(--grey);letter-spacing:0.1em;">LOW (●)</div>
+      <div style="font-size:20px;font-weight:500;color:var(--red)">${c1}</div>
+      <div style="font-size:8px;color:var(--grey2);">shaky — priority</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--yellow);padding:10px 14px;">
+      <div style="font-size:9px;color:var(--grey);letter-spacing:0.1em;">MID (●●)</div>
+      <div style="font-size:20px;font-weight:500;color:var(--yellow)">${c2}</div>
+      <div style="font-size:8px;color:var(--grey2);">getting there</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--green);padding:10px 14px;">
+      <div style="font-size:9px;color:var(--grey);letter-spacing:0.1em;">HIGH (●●●)</div>
+      <div style="font-size:20px;font-weight:500;color:var(--green)">${c3}</div>
+      <div style="font-size:8px;color:var(--grey2);">solid</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--cyan);padding:10px 14px;">
+      <div style="font-size:9px;color:var(--grey);letter-spacing:0.1em;">UNRATED</div>
+      <div style="font-size:20px;font-weight:500;color:var(--grey)">${total - ratedCount}</div>
+      <div style="font-size:8px;color:var(--grey2);">no rating yet</div>
+    </div>`;
+  el.appendChild(summary);
+
+  if (ratedCount === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-msg";
+    empty.textContent = "no confidence ratings yet — set them via the dots in the KSAP Bank";
+    el.appendChild(empty);
+    return;
+  }
+
+  // Filter bar
+  const bar = document.createElement("div");
+  bar.className = "err-filter-bar";
+  bar.innerHTML = `
+    <span style="font-size:9px;color:var(--grey);letter-spacing:0.1em;">LEVEL:</span>
+    <button class="filter-btn ${confFilter==='all'?'active':''}" onclick="confFilter='all';renderConfidence()">ALL</button>
+    <button class="filter-btn ${confFilter==='1'?'active':''}" onclick="confFilter='1';renderConfidence()" style="${confFilter==='1'?'border-color:var(--red);color:var(--red);':''}">● LOW</button>
+    <button class="filter-btn ${confFilter==='2'?'active':''}" onclick="confFilter='2';renderConfidence()" style="${confFilter==='2'?'border-color:var(--yellow);color:var(--yellow);':''}">●● MID</button>
+    <button class="filter-btn ${confFilter==='3'?'active':''}" onclick="confFilter='3';renderConfidence()" style="${confFilter==='3'?'border-color:var(--green);color:var(--green);':''}">●●● HIGH</button>
+    <span style="font-size:9px;color:var(--grey);letter-spacing:0.1em;margin-left:8px;">STATUS:</span>
+    <button class="filter-btn ${confStatusFilter==='all'?'active':''}" onclick="confStatusFilter='all';renderConfidence()">ANY</button>
+    <button class="filter-btn ${confStatusFilter==='correct'?'active':''}" onclick="confStatusFilter='correct';renderConfidence()">✓ CORRECT</button>
+    <button class="filter-btn ${confStatusFilter==='incorrect'?'active':''}" onclick="confStatusFilter='incorrect';renderConfidence()">✗ INCORRECT</button>`;
+  el.appendChild(bar);
+
+  // Highlight callout for "correct but low confidence" — near-miss territory
+  const nearMiss = rated.filter(({d}) =>
+    d.confidence === 1 && (d.p1correct || d.p2correct)
+  ).length;
+  if (nearMiss > 0) {
+    const nm = document.createElement("div");
+    nm.style.cssText = "background:rgba(244,114,182,0.06);border:1px solid var(--pink);border-left:3px solid var(--pink);padding:9px 12px;margin-bottom:16px;font-size:10px;color:var(--white);";
+    nm.innerHTML = `&#9888; <strong style="color:var(--pink)">${nearMiss}</strong> question${nearMiss>1?'s':''} you got <strong>correct but rated low confidence</strong> — classic near-miss, worth revisiting before they slip.`;
+    el.appendChild(nm);
+  }
+
+  // Apply filters
+  let filtered = rated.filter(({ d }) => {
+    if (confFilter !== 'all' && d.confidence !== parseInt(confFilter)) return false;
+    if (confStatusFilter === 'correct') return d.p1correct || d.p2correct;
+    if (confStatusFilter === 'incorrect') return d.p1incorrect || d.p2incorrect;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-msg";
+    empty.textContent = "no questions match current filter";
+    el.appendChild(empty);
+    return;
+  }
+
+  // Group by category
+  const byCat = {};
+  filtered.forEach(({ q, d }) => {
+    const ec = effectiveCat(q);
+    if (!byCat[ec]) byCat[ec] = [];
+    byCat[ec].push({ q, d });
+  });
+
+  Object.entries(byCat).sort().forEach(([cat, items]) => {
+    const color = CAT_COLORS[cat] || "var(--cyan)";
+    // sort within category: lowest confidence first
+    items.sort((a,b) => (a.d.confidence||0) - (b.d.confidence||0));
+
+    const catHead = document.createElement("div");
+    catHead.style.cssText = `font-size:9px;color:${color};letter-spacing:0.12em;padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:6px;margin-top:10px;font-weight:500;`;
+    catHead.textContent = `${cat} · ${items.length}`;
+    el.appendChild(catHead);
+
+    items.forEach(({ q, d }) => {
+      const conf = d.confidence || 0;
+      const confColor = conf === 1 ? "var(--red)" : conf === 2 ? "var(--yellow)" : "var(--green)";
+      const isCorrect = d.p1correct || d.p2correct;
+      const isIncorrect = d.p1incorrect || d.p2incorrect;
+      const statusBadge = isCorrect ? `<span style="font-size:8px;padding:1px 6px;border:1px solid var(--green);color:var(--green);">✓</span>` :
+                          isIncorrect ? `<span style="font-size:8px;padding:1px 6px;border:1px solid var(--red);color:var(--red);">✗</span>` :
+                          `<span style="font-size:8px;padding:1px 6px;border:1px solid var(--border2);color:var(--grey2);">·</span>`;
+      const note = d.note ? `<span style="font-size:9px;color:var(--grey2);font-style:italic;margin-left:8px;">${escHtml(d.note)}</span>` : "";
+
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid var(--border);font-size:10px;";
+      row.innerHTML = `
+        <span style="display:flex;gap:3px;">
+          ${[1,2,3].map(n => `<div style="width:8px;height:8px;border-radius:50%;border:1px solid ${conf>=n?confColor:'var(--border2)'};background:${conf>=n?confColor:'transparent'};"></div>`).join("")}
+        </span>
+        <span style="color:${color};min-width:90px;">${q.code}</span>
+        ${statusBadge}
+        ${note}
+        <button class="filter-btn" style="font-size:8px;padding:1px 8px;margin-left:auto;"
+          onclick="setTab('ksap');setKsapMode('category');expandedCats.clear();expandedCats.add('${cat.replace(/'/g,"\\'")}');renderKSAP();">→ KSAP</button>`;
+      el.appendChild(row);
+    });
+  });
+}
 function renderKSAP() {
   const el = document.getElementById("tab-ksap");
   const isModule = ksapMode === "module";
