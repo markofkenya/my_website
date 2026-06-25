@@ -374,7 +374,7 @@ const SUBS={
 };
 const TOTAL_Q=200;
 const KDIGO={
-  gn:'Glomerular Diseases 2021 (living) · Lupus Nephritis 2024',
+  gn:'Glomerular Diseases 2021 · Lupus Nephritis 2024',
   aki:'AKI & AKD 2012 / ongoing update',
   ckd:'CKD 2024 · Diabetes in CKD 2023',
   oth:'BP in CKD 2021',
@@ -387,8 +387,8 @@ const KDIGO={
   pd:'ISPD Peritonitis Guidelines',
 };
 const SOURCES=[['ohb','OHB'],['online','Online'],['ccn','CCN']];
-const P1=[{key:'kd',kind:'rev',lbl:'KDIGO guideline(s)'},{key:'ks0',kind:'q',lbl:'KSAP'},{key:'oe1',kind:'q',lbl:'StudyPRN'},{key:'rev',kind:'rev',lbl:'Review sheet made'},{key:'fc',kind:'rev',lbl:'Flashcards made'}];
-const P2=[{key:'ks1',kind:'q',lbl:'KSAP mixed'},{key:'oe2',kind:'q',lbl:'StudyPRN mixed'},{key:'rel',kind:'rev',lbl:'Review Error Log (if unresolved)'}];
+const P1=[{key:'kd',kind:'rev',lbl:'KDIGO guideline(s)'},{key:'ks0',kind:'q',lbl:'KSAP'},{key:'oe1',kind:'q',lbl:'StudyPRN'},{key:'fc',kind:'rev',lbl:'Flashcards made'}];
+const P2=[{key:'ks1',kind:'q',lbl:'KSAP mixed'},{key:'oe2',kind:'q',lbl:'StudyPRN mixed'},{key:'rel',kind:'rev',lbl:'Review Error Log'}];
 const FINAL=[
   {key:'nephroshots',lbl:'Nephro Shots'},
   {key:'bof200',lbl:'200 Best of Five'},
@@ -429,12 +429,12 @@ function checkpoints(id){
   const s=state[id];
   const arr=[readDone(id)];
   if(hasKD(id))arr.push(s.kd);
-  arr.push(s.ks0,s.oe1,s.rev,s.fc,s.ks1,s.oe2,s.rel);
+  arr.push(s.ks0,s.oe1,s.fc,s.ks1,s.oe2,s.rel);
   return arr;
 }
 function topicCount(id){return checkpoints(id).filter(Boolean).length;}
-function topicMax(id){return hasKD(id)?9:8;}
-function topicFP(id){const s=state[id];return readDone(id)&&(!hasKD(id)||s.kd)&&s.ks0&&s.oe1&&s.rev&&s.fc;}
+function topicMax(id){return hasKD(id)?8:7;}
+function topicFP(id){const s=state[id];return readDone(id)&&(!hasKD(id)||s.kd)&&s.ks0&&s.oe1&&s.fc;}
 function topicDone(id){return checkpoints(id).every(Boolean);}
 
 /* ---------- render ---------- */
