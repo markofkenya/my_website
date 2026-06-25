@@ -1879,6 +1879,7 @@ function makeErrRow(e) {
     </div>
     <div class="err-note-wrap">
       <div class="err-note-print print-only">${escHtml(e.note)}</div>
+      <div class="err-note-text no-print">"${escHtml(e.note)}"</div>
       <input class="note-inp no-print" style="width:100%;margin-top:4px;" value="${escHtml(e.note)}" placeholder="edit note..."
         onchange="${noteEditHandler}renderErrorLog();" />
     </div>`;
