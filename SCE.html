@@ -231,6 +231,23 @@
     .err-resolved { font-size:8px; padding:2px 8px; border:1px solid var(--grey2); background:transparent; color:var(--grey2); font-family:var(--font); cursor:pointer; letter-spacing:0.06em; }
     .err-resolved.done { border-color:var(--green); color:var(--green); background:rgba(74,222,128,0.06); }
     .err-filter-bar { display:flex; gap:8px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+    .err-del { font-size:9px; padding:2px 8px; border:1px solid var(--grey2); background:transparent; color:var(--grey2); font-family:var(--font); cursor:pointer; letter-spacing:0.06em; }
+    .err-del:hover { border-color:var(--red); color:var(--red); background:rgba(248,113,113,0.08); }
+    .print-only { display:none; }
+    @media print {
+      @page { margin:14mm; }
+      html, body { background:#fff !important; color:#111 !important; font-size:11px; }
+      #header, #tabbar, #statusbar, .no-print { display:none !important; }
+      #main { padding:0 !important; }
+      #tab-errorlog { display:block !important; }
+      .print-only { display:block !important; }
+      .err-row { border:1px solid #ccc !important; border-left:3px solid #c33 !important; background:#fff !important; opacity:1 !important; margin-bottom:6px; page-break-inside:avoid; }
+      .err-header { padding:6px 10px; }
+      .err-code, .err-cat { color:#222 !important; }
+      .err-note-print { font-size:11px; color:#111 !important; padding:4px 10px 8px; line-height:1.5; }
+      .err-cat-head { color:#111 !important; border-bottom:1px solid #999 !important; }
+      .conf-dot { border:1px solid #888 !important; }
+    }
   
     /* ── ROADMAP ── */
     .tab.roadmap-tab { color:var(--yellow); }
@@ -978,6 +995,25 @@ function saveST(cat, topic, sub, updates) {
   update(ref(db, `sceData/topics/${stKey(cat,topic,sub)}`), updates);
 }
 
+// ── STUDYPRN ERROR ENTRIES (no question code) ────────────────────────
+function getStudyPRN() {
+  // returns object { id: {category, note, confidence, resolved, ts} }
+  return sceData.studyprn || {};
+}
+function saveStudyPRN(id, obj) {
+  if (!window._sce_fb) return;
+  const { db, ref, update } = window._sce_fb;
+  update(ref(db, `sceData/studyprn/${id}`), obj);
+}
+function deleteStudyPRN(id) {
+  if (!window._sce_fb) return;
+  const { db, ref, set } = window._sce_fb;
+  set(ref(db, `sceData/studyprn/${id}`), null);
+}
+function newStudyPRNId() {
+  return "sp_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,7);
+}
+
 // ══════════════════════════════════════════════════════════════════════
 // COMPUTED STATS
 // ══════════════════════════════════════════════════════════════════════
@@ -1027,15 +1063,17 @@ function computeCatStats(cat) {
     const d = getQ(q.code);
     return (d.reassignedCategory || q.category) === cat;
   });
-  let attempted = 0, correct = 0, p1done = 0, p2done = 0;
+  let attempted = 0, correct = 0, p1done = 0, p2done = 0, p2correct = 0;
   qs.forEach(q => {
     const d = getQ(q.code);
     if (d.p1correct || d.p1incorrect) { attempted++; p1done++; }
     if (d.p2correct || d.p2incorrect) p2done++;
     if (d.p1correct) correct++;
+    if (d.p2correct) p2correct++;
   });
-  return { total: qs.length, attempted, correct, p1done, p2done,
-    pct: attempted > 0 ? Math.round(correct/attempted*100) : 0 };
+  return { total: qs.length, attempted, correct, p1done, p2done, p2correct,
+    pct: attempted > 0 ? Math.round(correct/attempted*100) : 0,
+    p2pct: p2done > 0 ? Math.round(p2correct/p2done*100) : 0 };
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -1078,6 +1116,25 @@ function renderTab(tab) {
   if (tab === "errorlog") renderErrorLog();
 }
 
+// ── JUMP TO A KSAP CATEGORY (expand it in the bank) ──────────────────
+function jumpToKsapCat(cat) {
+  setTab('ksap');
+  setKsapMode('category');
+  expandedCats.clear();
+  expandedCats.add(cat);
+  renderKSAP();
+  // Scroll the expanded card into view
+  setTimeout(() => {
+    const cards = document.querySelectorAll('#tab-ksap .cat-card');
+    for (const c of cards) {
+      if (c.querySelector('.cat-name')?.textContent === cat) {
+        c.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
+    }
+  }, 60);
+}
+
 // ── OVERVIEW ──────────────────────────────────────────────────────────
 function renderOverview() {
   const el = document.getElementById("tab-overview");
@@ -1093,7 +1150,6 @@ function renderOverview() {
     <div class="sec-head">
       <span class="sec-title">SCE READINESS OVERVIEW</span>
       <span class="sec-rule"></span>
-      <button class="filter-btn active" onclick="setTab('roadmap')" style="font-size:8px;padding:2px 8px;">OPEN ROADMAP</button>
       <span class="sec-note">${new Date().toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long"})}</span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:20px;">
@@ -1129,12 +1185,17 @@ function renderOverview() {
         const cs = computeCatStats(cat);
         const color = CAT_COLORS[cat] || "var(--cyan)";
         const pct = cs.attempted > 0 ? cs.pct : null;
+        const p2pct = cs.p2done > 0 ? cs.p2pct : null;
         return `
-          <div class="ov-card" style="border-left-color:${color}">
+          <div class="ov-card" style="border-left-color:${color};cursor:pointer;" onclick="jumpToKsapCat('${cat.replace(/'/g,"\\'")}')">
             <div class="ov-cat">${cat}</div>
             <div class="ov-row"><span>P1 attempted</span><strong>${cs.p1done} / ${cs.total}</strong></div>
             <div class="ov-row"><span>P2 attempted</span><strong>${cs.p2done} / ${cs.total}</strong></div>
-            <div class="ov-row"><span>% correct</span><strong style="color:${pct !== null ? (pct>=70?"var(--green)":pct>=50?"var(--yellow)":"var(--red)") : "var(--grey2)"}">${pct !== null ? pct+"%" : "—"}</strong></div>
+            <div class="ov-row"><span>% correct</span><strong>
+              <span style="color:${pct !== null ? (pct>=70?"var(--green)":pct>=50?"var(--yellow)":"var(--red)") : "var(--grey2)"}">P1 ${pct !== null ? pct+"%" : "—"}</span>
+              <span style="color:var(--grey2)"> · </span>
+              <span style="color:${p2pct !== null ? (p2pct>=70?"var(--green)":p2pct>=50?"var(--yellow)":"var(--red)") : "var(--grey2)"}">P2 ${p2pct !== null ? p2pct+"%" : "—"}</span>
+            </strong></div>
             <div class="ov-bar-bg"><div class="ov-bar" style="width:${Math.round(cs.p1done/cs.total*100)}%;background:${color}"></div></div>
           </div>`;
       }).join("")}
@@ -1153,7 +1214,7 @@ function renderOverview() {
                          cf.avg >= 2.5 ? "var(--green)" :
                          cf.avg >= 1.7 ? "var(--yellow)" : "var(--red)";
         return `
-          <div class="ov-card" style="border-left-color:${color}">
+          <div class="ov-card" style="border-left-color:${color};cursor:pointer;" onclick="jumpToKsapCat('${cat.replace(/'/g,"\\'")}')">
             <div class="ov-cat">${cat}</div>
             <div class="ov-row"><span>Rated</span><strong>${cf.rated} / ${cf.total}</strong></div>
             <div class="ov-row"><span>Avg confidence</span><strong style="color:${avgColor}">${cf.rated>0?cf.avg.toFixed(1)+" / 3":"—"}</strong></div>
@@ -1305,8 +1366,9 @@ function renderConfidence() {
     items.sort((a,b) => (a.d.confidence||0) - (b.d.confidence||0));
 
     const catHead = document.createElement("div");
-    catHead.style.cssText = `font-size:9px;color:${color};letter-spacing:0.12em;padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:6px;margin-top:10px;font-weight:500;`;
-    catHead.textContent = `${cat} · ${items.length}`;
+    catHead.style.cssText = `font-size:9px;color:${color};letter-spacing:0.12em;padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:6px;margin-top:10px;font-weight:500;cursor:pointer;`;
+    catHead.innerHTML = `${cat} · ${items.length} <span style="color:var(--grey2);font-size:8px;">→ KSAP</span>`;
+    catHead.onclick = () => jumpToKsapCat(cat);
     el.appendChild(catHead);
 
     items.forEach(({ q, d }) => {
@@ -1616,126 +1678,209 @@ function saveTopicsToFirebase() {
 // ══════════════════════════════════════════════════════════════════════
 // ERROR LOG
 // ══════════════════════════════════════════════════════════════════════
-let errFilter = "all"; // "all" | "flagged" | "unresolved"
+let errFilter = "all"; // "all" | "flagged" | "unresolved" | "studyprn" | "ksap"
 let errSort   = "cat"; // "cat" | "conf"
 
 function renderErrorLog() {
   const el = document.getElementById("tab-errorlog");
   el.innerHTML = "";
 
-  // Collect all questions with notes
-  const entries = KSAP
-    .map(q => ({ q, d: getQ(q.code) }))
+  // KSAP-based entries (have a note)
+  const ksapEntries = KSAP
+    .map(q => ({ q, d: getQ(q.code), source: "ksap" }))
     .filter(({ d }) => d.note && d.note.trim().length > 0);
 
-  // Apply filter
-  const filtered = entries.filter(({ q, d }) => {
-    if (errFilter === "flagged")    return d.flagged;
-    if (errFilter === "unresolved") return !d.resolved;
-    return true;
-  });
+  // StudyPRN entries (free-form, no question code)
+  const spObj = getStudyPRN();
+  const spEntries = Object.entries(spObj)
+    .filter(([id, v]) => v && v.note && v.note.trim().length > 0)
+    .map(([id, v]) => ({ id, sp: v, source: "studyprn" }));
 
-  // Sort
-  const sorted = [...filtered].sort((a, b) => {
-    if (errSort === "conf") {
-      const ca = a.d.confidence || 0;
-      const cb = b.d.confidence || 0;
-      return ca - cb; // lowest confidence first
-    }
-    return a.q.category.localeCompare(b.q.category);
-  });
+  const allEntries = [...ksapEntries, ...spEntries];
+  const totalCount = allEntries.length;
+  const unresolvedCount = ksapEntries.filter(({d})=>!d.resolved).length
+    + spEntries.filter(({sp})=>!sp.resolved).length;
 
   // Header
   const headDiv = document.createElement("div");
-  headDiv.className = "sec-head";
-  headDiv.innerHTML = `<span class="sec-title" style="color:var(--red)">ERROR LOG</span><span class="sec-rule"></span><span class="sec-note">${filtered.length} entries with notes · ${entries.filter(({d})=>!d.resolved).length} unresolved</span>`;
+  headDiv.className = "sec-head no-print";
+  headDiv.innerHTML = `<span class="sec-title" style="color:var(--red)">ERROR LOG</span><span class="sec-rule"></span><span class="sec-note">${totalCount} entries · ${unresolvedCount} unresolved</span>`;
   el.appendChild(headDiv);
 
-  if (entries.length === 0) {
+  // ADD STUDYPRN ERROR FORM
+  const addForm = document.createElement("div");
+  addForm.className = "no-print";
+  addForm.style.cssText = "background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--yellow);padding:12px 14px;margin-bottom:16px;";
+  addForm.innerHTML = `
+    <div style="font-size:9px;color:var(--yellow);letter-spacing:0.1em;margin-bottom:8px;font-weight:500;">+ ADD STUDYPRN ERROR <span style="color:var(--grey2);font-weight:400;">(no question code needed)</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <select class="admin-sel" id="sp-cat" style="width:100%;max-width:380px;">
+        ${[...new Set(KSAP.map(q=>effectiveCat(q)))].sort().map(c=>`<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join("")}
+      </select>
+      <textarea id="sp-note" placeholder="What was the error / what did you learn? (mechanism, not just the fact)" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--white);font-family:var(--font);font-size:11px;padding:8px;outline:none;min-height:54px;resize:vertical;"></textarea>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:9px;color:var(--grey2);">Confidence:</span>
+        <div class="conf-dots" id="sp-conf-dots">
+          ${[1,2,3].map(n=>`<div class="conf-dot" data-n="${n}" onclick="spSetConf(${n})" style="width:11px;height:11px;"></div>`).join("")}
+        </div>
+        <button class="admin-btn" style="margin-left:auto;" onclick="addStudyPRNError()">ADD ENTRY ▸</button>
+      </div>
+    </div>`;
+  el.appendChild(addForm);
+
+  if (totalCount === 0) {
     const empty = document.createElement("div");
     empty.className = "empty-msg";
-    empty.textContent = "no notes logged yet — add 'why wrong' notes in the KSAP bank";
+    empty.textContent = "no errors logged yet — add 'why wrong' notes in the KSAP bank, or a StudyPRN error above";
     el.appendChild(empty);
     return;
   }
 
-  // Filter + sort bar
+  // FILTER + SORT + PRINT BAR
   const barDiv = document.createElement("div");
-  barDiv.className = "err-filter-bar";
+  barDiv.className = "err-filter-bar no-print";
   barDiv.innerHTML = `
     <span style="font-size:9px;color:var(--grey);letter-spacing:0.1em;">FILTER:</span>
-    <button class="filter-btn ${errFilter==='all'?'active':''}" onclick="errFilter='all';renderErrorLog()">ALL (${entries.length})</button>
-    <button class="filter-btn ${errFilter==='unresolved'?'active':''}" onclick="errFilter='unresolved';renderErrorLog()">UNRESOLVED (${entries.filter(({d})=>!d.resolved).length})</button>
-    <button class="filter-btn flag-filter ${errFilter==='flagged'?'active':''}" onclick="errFilter='flagged';renderErrorLog()">⚑ FLAGGED (${entries.filter(({d})=>d.flagged).length})</button>
+    <button class="filter-btn ${errFilter==='all'?'active':''}" onclick="errFilter='all';renderErrorLog()">ALL (${totalCount})</button>
+    <button class="filter-btn ${errFilter==='unresolved'?'active':''}" onclick="errFilter='unresolved';renderErrorLog()">UNRESOLVED (${unresolvedCount})</button>
+    <button class="filter-btn flag-filter ${errFilter==='flagged'?'active':''}" onclick="errFilter='flagged';renderErrorLog()">⚑ FLAGGED (${ksapEntries.filter(({d})=>d.flagged).length})</button>
+    <button class="filter-btn ${errFilter==='ksap'?'active':''}" onclick="errFilter='ksap';renderErrorLog()">KSAP (${ksapEntries.length})</button>
+    <button class="filter-btn ${errFilter==='studyprn'?'active':''}" onclick="errFilter='studyprn';renderErrorLog()">STUDYPRN (${spEntries.length})</button>
     <span style="font-size:9px;color:var(--grey);letter-spacing:0.1em;margin-left:8px;">SORT:</span>
     <button class="filter-btn ${errSort==='cat'?'active':''}" onclick="errSort='cat';renderErrorLog()">BY CATEGORY</button>
-    <button class="filter-btn ${errSort==='conf'?'active':''}" onclick="errSort='conf';renderErrorLog()">BY CONFIDENCE ↑</button>`;
+    <button class="filter-btn ${errSort==='conf'?'active':''}" onclick="errSort='conf';renderErrorLog()">BY CONFIDENCE ↑</button>
+    <button class="filter-btn" style="margin-left:auto;border-color:var(--cyan);color:var(--cyan);" onclick="window.print()">⎙ PRINT</button>`;
   el.appendChild(barDiv);
+
+  // Print-only title
+  const printTitle = document.createElement("div");
+  printTitle.className = "print-only";
+  printTitle.innerHTML = `<h1 style="font-size:16px;margin-bottom:2px;">SCE Nephrology — Error Log</h1><div style="font-size:10px;color:#555;margin-bottom:12px;">${totalCount} entries · ${unresolvedCount} unresolved · printed ${new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"long",year:"numeric"})}</div>`;
+  el.appendChild(printTitle);
+
+  // Normalize to common shape
+  const norm = allEntries.map(e => {
+    if (e.source === "ksap") {
+      return { source:"ksap", q:e.q, d:e.d, cat:effectiveCat(e.q),
+               note:e.d.note, conf:e.d.confidence||0, resolved:!!e.d.resolved, flagged:!!e.d.flagged };
+    }
+    return { source:"studyprn", id:e.id, sp:e.sp, cat:e.sp.category||"(uncategorised)",
+             note:e.sp.note, conf:e.sp.confidence||0, resolved:!!e.sp.resolved, flagged:false };
+  });
+
+  // Filter
+  let filtered = norm.filter(e => {
+    if (errFilter === "flagged")    return e.flagged;
+    if (errFilter === "unresolved") return !e.resolved;
+    if (errFilter === "ksap")       return e.source === "ksap";
+    if (errFilter === "studyprn")   return e.source === "studyprn";
+    return true;
+  });
 
   if (filtered.length === 0) {
     const empty = document.createElement("div");
-    empty.className = "empty-msg";
+    empty.className = "empty-msg no-print";
     empty.textContent = "no entries match current filter";
     el.appendChild(empty);
     return;
   }
 
-  // Group by category if sorting by cat
+  // Sort
+  filtered.sort((a,b) => errSort === "conf" ? (a.conf - b.conf) : a.cat.localeCompare(b.cat));
+
   if (errSort === "cat") {
     const byCat = {};
-    sorted.forEach(({ q, d }) => {
-      const ec = effectiveCat(q);
-      if (!byCat[ec]) byCat[ec] = [];
-      byCat[ec].push({ q, d });
-    });
-
+    filtered.forEach(e => { (byCat[e.cat] ||= []).push(e); });
     Object.entries(byCat).forEach(([cat, items]) => {
       const color = CAT_COLORS[cat] || "var(--cyan)";
       const catHead = document.createElement("div");
+      catHead.className = "err-cat-head";
       catHead.style.cssText = `font-size:9px;color:${color};letter-spacing:0.12em;padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:8px;font-weight:500;`;
       catHead.textContent = `${cat} · ${items.length} error${items.length>1?'s':''}`;
       el.appendChild(catHead);
-      items.forEach(({ q, d }) => el.appendChild(makeErrRow(q, d)));
+      items.forEach(e => el.appendChild(makeErrRow(e)));
     });
   } else {
-    sorted.forEach(({ q, d }) => el.appendChild(makeErrRow(q, d)));
+    filtered.forEach(e => el.appendChild(makeErrRow(e)));
   }
 }
 
-function makeErrRow(q, d) {
-  const ec       = effectiveCat(q);
-  const color    = CAT_COLORS[ec] || "var(--cyan)";
-  const conf     = d.confidence || 0;
-  const resolved = d.resolved || false;
-  const flagged  = d.flagged  || false;
+let _spConf = 0;
+function spSetConf(n) {
+  _spConf = (_spConf === n) ? 0 : n;
+  document.querySelectorAll('#sp-conf-dots .conf-dot').forEach(dot => {
+    const dn = parseInt(dot.dataset.n);
+    const lit = dn <= _spConf;
+    const col = _spConf===1?'var(--red)':_spConf===2?'var(--yellow)':'var(--green)';
+    dot.style.background = lit ? col : 'transparent';
+    dot.style.borderColor = lit ? col : 'var(--border2)';
+  });
+}
+function addStudyPRNError() {
+  const cat = document.getElementById("sp-cat")?.value;
+  const note = document.getElementById("sp-note")?.value.trim();
+  if (!note) { alert("Please write a note for the error."); return; }
+  const id = newStudyPRNId();
+  const entry = { category: cat, note, confidence: _spConf, resolved: false, ts: Date.now() };
+  saveStudyPRN(id, entry);
+  if (!sceData.studyprn) sceData.studyprn = {};
+  sceData.studyprn[id] = entry;
+  _spConf = 0;
+  renderErrorLog();
+}
+
+function makeErrRow(e) {
+  const color    = CAT_COLORS[e.cat] || "var(--cyan)";
+  const conf     = e.conf;
+  const resolved = e.resolved;
+  const flagged  = e.flagged;
+  const isSP     = e.source === "studyprn";
 
   const row = document.createElement("div");
   row.className = "err-row";
-  row.style.borderLeftColor = resolved ? "var(--green)" : flagged ? "var(--pink)" : "var(--red)";
+  row.style.borderLeftColor = resolved ? "var(--green)" : flagged ? "var(--pink)" : isSP ? "var(--yellow)" : "var(--red)";
   row.style.opacity = resolved ? "0.55" : "1";
+
+  const codeLabel = isSP
+    ? `<span class="err-code" style="color:var(--yellow)">STUDYPRN</span>`
+    : `<span class="err-code" style="color:${color}">${e.q.code}</span>`;
+  const moduleLabel = isSP ? "" : `<span style="font-size:8px;color:var(--grey2);">${e.q.module}</span>`;
+
+  const confDots = `<div class="err-conf">
+      ${[1,2,3].map(n => `<div class="conf-dot ${conf>=n?'lit':''}" style="pointer-events:none;${conf>=n?`background:${conf===1?'var(--red)':conf===2?'var(--yellow)':'var(--green)'};border-color:${conf===1?'var(--red)':conf===2?'var(--yellow)':'var(--green)'};`:''}"></div>`).join("")}
+    </div>`;
+
+  const resolveHandler = isSP
+    ? `saveStudyPRN('${e.id}',{resolved:${!resolved}});if(sceData.studyprn&&sceData.studyprn['${e.id}'])sceData.studyprn['${e.id}'].resolved=${!resolved};renderErrorLog();`
+    : `saveQ('${e.q.code}',{resolved:${!resolved}});renderErrorLog();`;
+
+  const deleteHandler = isSP
+    ? `if(confirm('Delete this StudyPRN error?')){deleteStudyPRN('${e.id}');if(sceData.studyprn)delete sceData.studyprn['${e.id}'];renderErrorLog();}`
+    : `if(confirm('Delete this error note? (the question and your answer stay; only the note is removed)')){saveQ('${e.q.code}',{note:null});renderErrorLog();}`;
+
+  const jumpBtn = isSP ? "" : `<button class="filter-btn no-print" style="font-size:8px;padding:1px 8px;" onclick="jumpToKsapCat('${e.cat.replace(/'/g,"\\'")}')">→ KSAP</button>`;
+
+  const noteEditHandler = isSP
+    ? `saveStudyPRN('${e.id}',{note:this.value});if(sceData.studyprn&&sceData.studyprn['${e.id}'])sceData.studyprn['${e.id}'].note=this.value;`
+    : `saveQ('${e.q.code}',{note:this.value});`;
 
   row.innerHTML = `
     <div class="err-header">
-      <span class="err-code" style="color:${color}">${q.code}</span>
-      <span class="err-cat">${ec}</span>
-      <span style="font-size:8px;color:var(--grey2);">${q.module}</span>
-      <div class="err-conf">
-        ${[1,2,3].map(n => `<div class="conf-dot ${conf>=n?'lit':''}" style="pointer-events:none;${conf>=n?`background:${conf===1?'var(--red)':conf===2?'var(--yellow)':'var(--green)'};border-color:${conf===1?'var(--red)':conf===2?'var(--yellow)':'var(--green)'};`:''}"></div>`).join("")}
-      </div>
+      ${codeLabel}
+      <span class="err-cat">${e.cat}</span>
+      ${moduleLabel}
+      ${confDots}
       ${flagged ? '<span class="pass-badge flagged">⚑</span>' : ""}
-      <button class="err-resolved ${resolved?'done':''}"
-        onclick="saveQ('${q.code}',{resolved:${!resolved}});renderErrorLog();">
+      <button class="err-resolved ${resolved?'done':''} no-print" onclick="${resolveHandler}">
         ${resolved ? "✓ RESOLVED" : "MARK RESOLVED"}
       </button>
-      <button class="filter-btn" style="font-size:8px;padding:1px 8px;"
-        onclick="setTab('ksap');setKsapMode('category');expandedCats.clear();expandedCats.add('${ec.replace(/'/g,"\'")}');renderKSAP();">
-        → KSAP
-      </button>
+      ${jumpBtn}
+      <button class="err-del no-print" title="Delete entry" onclick="${deleteHandler}">✕</button>
     </div>
     <div class="err-note-wrap">
-      <div class="err-note-text">"${escHtml(d.note)}"</div>
-      <input class="note-inp" style="width:100%;margin-top:4px;" value="${escHtml(d.note)}" placeholder="edit note..."
-        onchange="saveQ('${q.code}',{note:this.value});renderErrorLog();" />
+      <div class="err-note-print print-only">${escHtml(e.note)}</div>
+      <input class="note-inp no-print" style="width:100%;margin-top:4px;" value="${escHtml(e.note)}" placeholder="edit note..."
+        onchange="${noteEditHandler}renderErrorLog();" />
     </div>`;
   return row;
 }
@@ -1757,42 +1902,53 @@ function clearAllProgress() {
 // ROADMAP — EXPECTED VS ACTUAL STUDY PLAN
 // ══════════════════════════════════════════════════════════════════════
 const ROADMAP_DEFAULTS = [
-  { cat: "Acute Kidney Injury and ICU Nephrology", months: 2 },
-  { cat: "Chronic Kidney Disease", months: 3 },
-  { cat: "Glomerular and Vascular Disorders", months: 2 },
-  { cat: "Acid–Base and Potassium Disorders", months: 2 },
-  { cat: "Sodium and Water Abnormalities", months: 2 },
-  { cat: "Kidney Transplantation", months: 2 },
-  { cat: "Hypertension", months: 2 },
-  { cat: "Calcium, Phosphorus, and Magnesium Disorders and Stones", months: 1 },
-  { cat: "Tubular, Interstitial, and Cystic Disorders", months: 1 },
-  { cat: "Pharmacology", months: 1 },
+  { cat: "Acute Kidney Injury and ICU Nephrology", days: 28 },
+  { cat: "Chronic Kidney Disease", days: 42 },
+  { cat: "Glomerular and Vascular Disorders", days: 28 },
+  { cat: "Acid–Base and Potassium Disorders", days: 21 },
+  { cat: "Sodium and Water Abnormalities", days: 21 },
+  { cat: "Kidney Transplantation", days: 21 },
+  { cat: "Hypertension", days: 21 },
+  { cat: "Calcium, Phosphorus, and Magnesium Disorders and Stones", days: 14 },
+  { cat: "Tubular, Interstitial, and Cystic Disorders", days: 14 },
+  { cat: "Pharmacology", days: 14 },
 ];
+
+// Backward-compat: derive a block's duration in days whether it stores
+// `days` (new) or `months` (legacy saved roadmaps in Firebase).
+function blockDays(b) {
+  if (b.days != null) return b.days;
+  if (b.months != null) return Math.round(b.months * 30);
+  // fall back to computing from start/end
+  if (b.start && b.end) {
+    return Math.round((new Date(b.end) - new Date(b.start)) / 86400000) + 1;
+  }
+  return 14;
+}
 
 function buildDefaultRoadmap() {
   const start = new Date("2026-04-01");
   return ROADMAP_DEFAULTS.map(d => {
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + d.months);
+    const end = new Date(start.getTime() + (d.days - 1) * 86400000);
     const block = {
       cat: d.cat,
-      months: d.months,
+      days: d.days,
       start: start.toISOString().split("T")[0],
-      end: new Date(end.getTime() - 86400000).toISOString().split("T")[0],
+      end: end.toISOString().split("T")[0],
     };
-    start.setMonth(start.getMonth() + d.months);
+    start.setTime(start.getTime() + d.days * 86400000);
     return block;
   });
 }
 
 function cascadeRoadmap(blocks, fromIndex) {
   for (let i = fromIndex + 1; i < blocks.length; i++) {
-    const prev = new Date(blocks[i-1].end);
-    const next = new Date(prev.getTime() + 86400000);
+    const prevEnd = new Date(blocks[i-1].end);
+    const next = new Date(prevEnd.getTime() + 86400000);
     blocks[i].start = next.toISOString().split("T")[0];
-    const end = new Date(next);
-    end.setMonth(end.getMonth() + blocks[i].months);
-    blocks[i].end = new Date(end.getTime() - 86400000).toISOString().split("T")[0];
+    const d = blockDays(blocks[i]);
+    const end = new Date(next.getTime() + (d - 1) * 86400000);
+    blocks[i].end = end.toISOString().split("T")[0];
   }
   return blocks;
 }
@@ -1989,7 +2145,8 @@ function renderRoadmap() {
     const blockDaysLeft = Math.max(0, Math.round((blockEnd - today) / 86400000));
     const blockTotalDays = Math.max(1, Math.round((blockEnd - blockStart) / 86400000) + 1);
     const blockElapsedDays = Math.max(0, Math.min(blockTotalDays, blockTotalDays - blockDaysLeft));
-    const loadLabel = block.months <= 1 ? "INTENSE" : block.months === 2 ? "STANDARD" : "DEEP DIVE";
+    const blockDur = blockDays(block);
+    const loadLabel = blockDur <= 14 ? "INTENSE" : blockDur <= 28 ? "STANDARD" : "DEEP DIVE";
     const statusLabel = isDone ? "COMPLETED" : isActive ? status.label : "UPCOMING";
     const statusClass = isDone ? "completed" : isActive ? "active" : "upcoming";
 
@@ -2006,8 +2163,8 @@ function renderRoadmap() {
             Expected ${expected}% · Actual ${actual}% · ${status.delta >= 0 ? "+" : ""}${status.delta}%
           </div>
         </div>
-        <span style="font-size:9px;color:var(--grey);white-space:nowrap;">${block.months}mo · ${loadLabel}</span>
-        <div class="rm-dates">${blockStart.toLocaleDateString("en-GB",{month:"short",year:"numeric"})} → ${blockEnd.toLocaleDateString("en-GB",{month:"short",year:"numeric"})}</div>
+        <span style="font-size:9px;color:var(--grey);white-space:nowrap;">${blockDur}d · ${loadLabel}</span>
+        <div class="rm-dates">${blockStart.toLocaleDateString("en-GB",{day:"2-digit",month:"short"})} → ${blockEnd.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})}</div>
         <span class="rm-badge ${statusClass}" style="${isActive ? `color:${status.color};border-color:${status.color};background:${status.bg};` : ""}">${statusLabel}</span>
         <div style="font-size:10px;color:var(--grey2);">${expanded ? "▾" : "▸"}</div>
       </div>`;
@@ -2047,8 +2204,8 @@ function renderRoadmap() {
         <div class="rm-edit-row">
           <span style="font-size:9px;color:var(--grey2);">Start date:</span>
           <input class="rm-inp" type="date" id="rm-start-${idx}" value="${block.start}" />
-          <span style="font-size:9px;color:var(--grey2);">Duration:</span>
-          <input class="rm-inp" type="number" id="rm-months-${idx}" value="${block.months}" min="1" max="12" style="width:60px;" />
+          <span style="font-size:9px;color:var(--grey2);">Duration (days):</span>
+          <input class="rm-inp" type="number" id="rm-days-${idx}" value="${blockDur}" min="1" max="180" style="width:70px;" />
           <button class="rm-save-btn" onclick="saveRmBlock(${idx})">SAVE & CASCADE ▸</button>
         </div>`;
       div.appendChild(body);
@@ -2060,13 +2217,13 @@ function renderRoadmap() {
 function saveRmBlock(idx) {
   if (!roadmapData) return;
   const startVal = document.getElementById(`rm-start-${idx}`)?.value;
-  const monthsVal = parseInt(document.getElementById(`rm-months-${idx}`)?.value || "1");
-  if (!startVal || !monthsVal) return;
+  const daysVal = parseInt(document.getElementById(`rm-days-${idx}`)?.value || "0");
+  if (!startVal || !daysVal || daysVal < 1) return;
   roadmapData[idx].start = startVal;
-  roadmapData[idx].months = monthsVal;
-  const end = new Date(startVal);
-  end.setMonth(end.getMonth() + monthsVal);
-  roadmapData[idx].end = new Date(end.getTime() - 86400000).toISOString().split("T")[0];
+  roadmapData[idx].days = daysVal;
+  delete roadmapData[idx].months; // drop legacy field
+  const end = new Date(new Date(startVal).getTime() + (daysVal - 1) * 86400000);
+  roadmapData[idx].end = end.toISOString().split("T")[0];
   cascadeRoadmap(roadmapData, idx);
   saveRoadmap();
   renderRoadmap();
