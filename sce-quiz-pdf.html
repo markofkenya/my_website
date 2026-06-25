@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCE Quiz Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f172a;
+      --surface:   #1e293b;
+      --surface2:  #263347;
+      --border:    #334155;
+      --blue:      #3b82f6;
+      --blue-dark: #2563eb;
+      --green:     #22c55e;
+      --red:       #ef4444;
+      --amber:     #f59e0b;
+      --text:      #f1f5f9;
+      --muted:     #94a3b8;
+      --dim:       #64748b;
+      --radius:    12px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px 64px;
+    }
+
+    /* ── SCREENS ── */
+    .screen { display: none; width: 100%; max-width: 700px; }
+    .screen.active { display: block; }
+
+    /* ── APP HEADER ── */
+    .app-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .app-header h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .app-header p {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-top: 6px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      margin-bottom: 14px;
+    }
+
+    /* ── FORM LABELS ── */
+    .field-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 9px;
+    }
+
+    /* ── TEXT INPUT ── */
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.94rem;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="password"]:focus,
+    input[type="text"]:focus { border-color: var(--blue); }
+
+    /* ── HINT ── */
+    .hint {
+      font-size: 0.75rem;
+      color: var(--dim);
+      margin-top: 6px;
+    }
+
+    /* ── DROP ZONE ── */
+    .drop-zone {
+      position: relative;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: var(--blue);
+      background: rgba(59,130,246,0.05);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .dz-icon { font-size: 2.25rem; margin-bottom: 10px; opacity: 0.55; }
+    .dz-primary { font-weight: 600; font-size: 0.95rem; }
+    .dz-secondary { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+    .dz-file { margin-top: 10px; font-size: 0.85rem; font-weight: 600; color: var(--blue); }
+
+    /* ── SLIDER ── */
+    .slider-row { display: flex; align-items: center; gap: 14px; }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      height: 5px;
+      background: var(--surface2);
+      border-radius: 3px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--blue);
+      cursor: pointer;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 20px; height: 20px;
+      border: none; border-radius: 50%;
+      background: var(--blue); cursor: pointer;
+    }
+    .slider-tick-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 7px;
+    }
+    .slider-tick-row span { font-size: 0.78rem; color: var(--dim); }
+    .slider-val {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--blue);
+      min-width: 28px;
+      text-align: right;
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 13px 22px;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s, transform 0.1s;
+    }
+    .btn:active:not(:disabled) { transform: translateY(1px); }
+    .btn-primary {
+      background: var(--blue);
+      color: #fff;
+      width: 100%;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--blue-dark); }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--border); }
+
+    /* ── ERROR BOX ── */
+    .error-box {
+      display: none;
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 0.85rem;
+      color: #fca5a5;
+      margin-bottom: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .error-box.show { display: block; }
+
+    /* ── PROGRESS BAR ── */
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .progress-track {
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 22px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--blue);
+      border-radius: 3px;
+      transition: width 0.35s ease;
+    }
+
+    /* ── QUESTION ── */
+    .q-stem {
+      font-size: 1rem;
+      line-height: 1.8;
+      margin-bottom: 22px;
+    }
+
+    /* ── OPTIONS ── */
+    .options { display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+    .opt-btn {
+      display: flex;
+      align-items: flex-start;
+      gap: 13px;
+      text-align: left;
+      width: 100%;
+      background: var(--surface2);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 13px 15px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.93rem;
+      line-height: 1.55;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .opt-btn:hover:not(:disabled) {
+      border-color: var(--blue);
+      background: rgba(59,130,246,0.07);
+    }
+    .opt-btn:disabled { cursor: default; }
+    .opt-letter {
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--blue);
+      min-width: 20px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+    .opt-btn.opt-correct {
+      border-color: var(--green);
+      background: rgba(34,197,94,0.09);
+    }
+    .opt-btn.opt-correct .opt-letter { color: var(--green); }
+    .opt-btn.opt-wrong {
+      border-color: var(--red);
+      background: rgba(239,68,68,0.09);
+    }
+    .opt-btn.opt-wrong .opt-letter { color: var(--red); }
+
+    /* ── FEEDBACK ── */
+    .feedback {
+      display: none;
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      border-left: 4px solid;
+      animation: fadeSlide 0.2s ease;
+    }
+    .feedback.show { display: block; }
+    .feedback.fb-correct {
+      background: rgba(34,197,94,0.08);
+      border-color: var(--green);
+    }
+    .feedback.fb-wrong {
+      background: rgba(239,68,68,0.08);
+      border-color: var(--red);
+    }
+    .fb-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .fb-correct .fb-title { color: var(--green); }
+    .fb-wrong .fb-title { color: var(--red); }
+    .fb-body {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* ── LOADING ── */
+    .loading-wrap {
+      text-align: center;
+      padding: 96px 24px;
+    }
+    .spinner {
+      width: 46px; height: 46px;
+      border: 3px solid var(--surface2);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      margin: 0 auto 22px;
+    }
+    .loading-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 8px; }
+    .loading-sub { font-size: 0.85rem; color: var(--muted); }
+
+    /* ── RESULTS ── */
+    .score-block {
+      text-align: center;
+      padding: 30px 24px;
+    }
+    .score-pct {
+      font-size: 3.75rem;
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .score-frac {
+      font-size: 0.92rem;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 16px;
+      border-radius: 999px;
+    }
+    .badge-pass  { background: rgba(34,197,94,0.12);  color: var(--green); border: 1px solid var(--green); }
+    .badge-close { background: rgba(245,158,11,0.12); color: var(--amber); border: 1px solid var(--amber); }
+    .badge-fail  { background: rgba(239,68,68,0.12);  color: var(--red);   border: 1px solid var(--red);   }
+
+    .section-heading {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-heading::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .gap-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin-bottom: 10px;
+    }
+    .gap-stem {
+      font-size: 0.9rem;
+      line-height: 1.65;
+      margin-bottom: 11px;
+    }
+    .gap-row {
+      font-size: 0.82rem;
+      margin-bottom: 3px;
+    }
+    .gap-row.yours { color: var(--red); }
+    .gap-row.correct { color: var(--green); }
+    .gap-row strong { font-weight: 600; }
+    .gap-expl {
+      margin-top: 10px;
+      font-size: 0.84rem;
+      color: var(--muted);
+      background: var(--surface2);
+      border-radius: 6px;
+      padding: 10px 12px;
+      line-height: 1.65;
+    }
+
+    .all-correct {
+      text-align: center;
+      padding: 24px;
+      color: var(--green);
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .bottom-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .bottom-row .btn { flex: 1; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0);   }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     SCREEN 1 — SETUP
+════════════════════════════════════════ -->
+<div class="screen active" id="screen-setup">
+  <div class="app-header">
+    <h1>SCE Quiz Generator</h1>
+    <p>Upload a nephrology PDF and let Claude generate exam-style MCQs</p>
+  </div>
+
+  <div class="card">
+    <span class="field-label" for="api-key">Anthropic API Key</span>
+    <input type="password" id="api-key" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" />
+    <p class="hint">Stored in session memory only — never sent anywhere except the Anthropic API</p>
+  </div>
+
+  <div class="card">
+    <span class="field-label">Upload PDF</span>
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="pdf-input" accept=".pdf,application/pdf" />
+      <div class="dz-icon">📄</div>
+      <div class="dz-primary">Drop your PDF here</div>
+      <div class="dz-secondary">or click to browse &nbsp;·&nbsp; Max ~20 MB recommended</div>
+      <div class="dz-file" id="dz-file-name" style="display:none"></div>
+    </div>
+    <div class="error-box" id="file-error"></div>
+  </div>
+
+  <div class="card">
+    <span class="field-label">Number of Questions</span>
+    <div class="slider-row">
+      <input type="range" id="q-slider" min="0" max="3" step="1" value="1" />
+      <div class="slider-val" id="q-val">10</div>
+    </div>
+    <div class="slider-tick-row">
+      <span>5</span><span>10</span><span>15</span><span>20</span>
+    </div>
+  </div>
+
+  <div class="error-box" id="setup-error"></div>
+  <button class="btn btn-primary" id="generate-btn" disabled>Generate Quiz</button>
+</div>
+
+
+<!-- ════════════════════════════════════════
+     SCREEN 2 — LOADING
+════════════════════════════════════════ -->
+<div class="screen" id="screen-loading">
+  <div class="loading-wrap">
+    <div class="spinner"></div>
+    <div class="loading-title" id="loading-title">Sending PDF to Claude…</div>
+    <div class="loading-sub" id="loading-sub">This may take 30–60 seconds for large PDFs</div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════
+     SCREEN 3 — QUIZ
+════════════════════════════════════════ -->
+<div class="screen" id="screen-quiz">
+  <div class="progress-meta">
+    <span id="q-label">Question 1 of 10</span>
+    <span id="q-pct">0%</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+
+  <div class="card">
+    <div class="q-stem" id="q-stem"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback">
+      <div class="fb-title" id="fb-title"></div>
+      <div class="fb-body" id="fb-body"></div>
+    </div>
+    <button class="btn btn-primary" id="next-btn" style="display:none">Next Question →</button>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════
+     SCREEN 4 — RESULTS
+════════════════════════════════════════ -->
+<div class="screen" id="screen-results">
+  <div class="app-header">
+    <h1>Results</h1>
+  </div>
+
+  <div class="card">
+    <div class="score-block">
+      <div class="score-pct" id="score-pct"></div>
+      <div class="score-frac" id="score-frac"></div>
+      <div id="score-badge"></div>
+    </div>
+  </div>
+
+  <div id="gap-section">
+    <div class="section-heading" id="gap-heading"></div>
+    <div id="gap-list"></div>
+    <div class="all-correct" id="all-correct" style="display:none">
+      Perfect score — nothing to review!
+    </div>
+  </div>
+
+  <div class="bottom-row">
+    <button class="btn btn-secondary" id="retake-btn">← Start Over</button>
+  </div>
+</div>
+
+
+<script>
+  // ── STATE ─────────────────────────────────────────────
+  const COUNTS = [5, 10, 15, 20];
+
+  const state = {
+    apiKey:       '',
+    pdfBase64:    '',
+    numQuestions: 10,
+    questions:    [],
+    currentIndex: 0,
+    answers:      [],   // [{chosen, correct, isCorrect}]
+    answered:     false
+  };
+
+  // ── UTILS ─────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    $('screen-' + name).classList.add('active');
+  }
+
+  function showErr(el, msg) {
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+
+  function hideErr(el) { el.classList.remove('show'); }
+
+  // ── SETUP ─────────────────────────────────────────────
+  const apiKeyInput = $('api-key');
+  const qSlider     = $('q-slider');
+  const qVal        = $('q-val');
+  const dropZone    = $('drop-zone');
+  const pdfInput    = $('pdf-input');
+  const dzFileName  = $('dz-file-name');
+  const fileError   = $('file-error');
+  const setupError  = $('setup-error');
+  const generateBtn = $('generate-btn');
+
+  // Restore API key from session
+  apiKeyInput.value = sessionStorage.getItem('sce-api-key') || '';
+  state.apiKey = apiKeyInput.value;
+
+  apiKeyInput.addEventListener('input', () => {
+    state.apiKey = apiKeyInput.value.trim();
+    sessionStorage.setItem('sce-api-key', state.apiKey);
+    checkReady();
+  });
+
+  qSlider.addEventListener('input', () => {
+    state.numQuestions = COUNTS[parseInt(qSlider.value, 10)];
+    qVal.textContent = state.numQuestions;
+  });
+
+  // Drag & drop
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f) loadFile(f);
+  });
+  pdfInput.addEventListener('change', () => { if (pdfInput.files[0]) loadFile(pdfInput.files[0]); });
+
+  function loadFile(file) {
+    hideErr(fileError);
+    if (file.type !== 'application/pdf') {
+      showErr(fileError, 'Please select a PDF file.');
+      return;
+    }
+    if (file.size > 30 * 1024 * 1024) {
+      showErr(fileError, `File is ${(file.size/1024/1024).toFixed(1)} MB — the Anthropic API limit is ~32 MB. Try a smaller PDF.`);
+    }
+    dzFileName.textContent = `📎 ${file.name}  (${(file.size/1024/1024).toFixed(1)} MB)`;
+    dzFileName.style.display = 'block';
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      // Strip "data:application/pdf;base64," prefix
+      state.pdfBase64 = e.target.result.split(',')[1];
+      checkReady();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function checkReady() {
+    generateBtn.disabled = !(state.apiKey && state.pdfBase64);
+  }
+
+  generateBtn.addEventListener('click', generateQuiz);
+
+  // ── GENERATE QUIZ ─────────────────────────────────────
+  async function generateQuiz() {
+    hideErr(setupError);
+    showScreen('loading');
+
+    const prompt = `You are writing exam questions for a medical professional preparing for the UK Specialty Certificate Examination (SCE) in Nephrology.
+
+Generate exactly ${state.numQuestions} best-of-five multiple choice questions based on the clinical content in the attached PDF. Each question must follow SCE exam style:
+- A realistic clinical stem (2–4 sentences): patient demographics, presenting complaint, relevant history, examination and/or investigation findings
+- Exactly 5 answer options labelled A through E — all must be plausible; avoid obviously wrong distractors
+- Exactly one correct answer
+- A concise explanation (2–3 sentences) stating why the correct answer is right and addressing the main distractors
+
+Return ONLY a valid JSON object — no preamble, no markdown fencing, no trailing text:
+{"questions":[{"id":1,"stem":"...","options":{"A":"...","B":"...","C":"...","D":"...","E":"..."},"correct":"B","explanation":"..."}]}`;
+
+    try {
+      $('loading-title').textContent = 'Sending PDF to Claude…';
+      $('loading-sub').textContent = 'This may take 30–60 seconds for large PDFs';
+
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key':                       state.apiKey,
+          'anthropic-version':               '2023-06-01',
+          'content-type':                    'application/json',
+          'anthropic-dangerous-allow-browser': 'true'
+        },
+        body: JSON.stringify({
+          model:      'claude-opus-4-8',
+          max_tokens: 8192,
+          messages: [{
+            role: 'user',
+            content: [
+              {
+                type:   'document',
+                source: { type: 'base64', media_type: 'application/pdf', data: state.pdfBase64 }
+              },
+              { type: 'text', text: prompt }
+            ]
+          }]
+        })
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        const msg = errBody?.error?.message || res.statusText;
+        throw new Error(`API ${res.status}: ${msg}`);
+      }
+
+      $('loading-title').textContent = 'Parsing questions…';
+      $('loading-sub').textContent   = '';
+
+      const data    = await res.json();
+      const rawText = data.content?.[0]?.text ?? '';
+
+      // Parse JSON — Claude occasionally wraps it in a code fence
+      let parsed;
+      try {
+        parsed = JSON.parse(rawText);
+      } catch {
+        const match = rawText.match(/\{[\s\S]*\}/);
+        if (!match) throw new Error(
+          'Could not find JSON in Claude\'s response.\n\nFirst 600 chars:\n' + rawText.slice(0, 600)
+        );
+        parsed = JSON.parse(match[0]);
+      }
+
+      if (!Array.isArray(parsed?.questions) || parsed.questions.length === 0) {
+        throw new Error('Unexpected response structure — expected { questions: [...] }');
+      }
+
+      state.questions    = parsed.questions;
+      state.currentIndex = 0;
+      state.answers      = [];
+      startQuiz();
+
+    } catch (err) {
+      showScreen('setup');
+      showErr(setupError, err.message);
+    }
+  }
+
+  // ── QUIZ ─────────────────────────────────────────────
+  function startQuiz() {
+    showScreen('quiz');
+    renderQuestion(0);
+  }
+
+  function renderQuestion(i) {
+    state.answered = false;
+    const q     = state.questions[i];
+    const total = state.questions.length;
+
+    // Progress
+    const pct = Math.round((i / total) * 100);
+    $('progress-fill').style.width = pct + '%';
+    $('q-label').textContent       = `Question ${i + 1} of ${total}`;
+    $('q-pct').textContent         = pct + '%';
+
+    // Stem
+    $('q-stem').textContent = q.stem;
+
+    // Options
+    const optContainer = $('options');
+    optContainer.innerHTML = '';
+    ['A','B','C','D','E'].forEach(letter => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.innerHTML = `<span class="opt-letter">${letter}</span><span>${q.options[letter]}</span>`;
+      btn.addEventListener('click', () => handleAnswer(letter));
+      optContainer.appendChild(btn);
+    });
+
+    // Reset feedback & next button
+    const fb = $('feedback');
+    fb.className = 'feedback';
+    $('next-btn').style.display = 'none';
+  }
+
+  function handleAnswer(chosen) {
+    if (state.answered) return;
+    state.answered = true;
+
+    const q         = state.questions[state.currentIndex];
+    const isCorrect = chosen === q.correct;
+
+    state.answers.push({ chosen, correct: q.correct, isCorrect });
+
+    // Style buttons
+    const btns = $('options').querySelectorAll('.opt-btn');
+    btns.forEach((btn, idx) => {
+      btn.disabled = true;
+      const letter = ['A','B','C','D','E'][idx];
+      if (letter === q.correct)              btn.classList.add('opt-correct');
+      else if (letter === chosen)            btn.classList.add('opt-wrong');
+    });
+
+    // Feedback
+    const fb = $('feedback');
+    fb.className = 'feedback show ' + (isCorrect ? 'fb-correct' : 'fb-wrong');
+    $('fb-title').textContent = isCorrect
+      ? '✓  Correct'
+      : `✗  Incorrect — the correct answer is ${q.correct}`;
+    $('fb-body').textContent = q.explanation;
+
+    // Next / Finish button
+    const isLast       = state.currentIndex === state.questions.length - 1;
+    const nextBtn      = $('next-btn');
+    nextBtn.textContent = isLast ? 'View Results →' : 'Next Question →';
+    nextBtn.style.display = 'block';
+  }
+
+  $('next-btn').addEventListener('click', () => {
+    const isLast = state.currentIndex === state.questions.length - 1;
+    if (isLast) {
+      showResults();
+    } else {
+      state.currentIndex++;
+      renderQuestion(state.currentIndex);
+    }
+  });
+
+  // ── RESULTS ──────────────────────────────────────────
+  function showResults() {
+    showScreen('results');
+
+    const total   = state.questions.length;
+    const correct = state.answers.filter(a => a.isCorrect).length;
+    const pct     = Math.round((correct / total) * 100);
+
+    $('score-pct').textContent  = pct + '%';
+    $('score-frac').textContent = `${correct} correct out of ${total}`;
+
+    let badgeCls, badgeLabel;
+    if (pct >= 70) {
+      badgeCls   = 'badge-pass';
+      badgeLabel = 'PASS';
+      $('score-pct').style.color = 'var(--green)';
+    } else if (pct >= 60) {
+      badgeCls   = 'badge-close';
+      badgeLabel = 'BORDERLINE';
+      $('score-pct').style.color = 'var(--amber)';
+    } else {
+      badgeCls   = 'badge-fail';
+      badgeLabel = 'FAIL';
+      $('score-pct').style.color = 'var(--red)';
+    }
+    $('score-badge').innerHTML = `<span class="badge ${badgeCls}">${badgeLabel}</span>`;
+
+    // Gap summary
+    const wrong = state.answers
+      .map((a, i) => ({ ...a, q: state.questions[i] }))
+      .filter(a => !a.isCorrect);
+
+    if (wrong.length === 0) {
+      $('gap-heading').style.display   = 'none';
+      $('gap-list').style.display      = 'none';
+      $('all-correct').style.display   = 'block';
+    } else {
+      $('gap-heading').textContent      = `Questions to Review (${wrong.length})`;
+      $('gap-heading').style.display    = '';
+      $('all-correct').style.display    = 'none';
+      const list = $('gap-list');
+      list.innerHTML = '';
+      wrong.forEach(({ q, chosen, correct }) => {
+        const div = document.createElement('div');
+        div.className = 'gap-card';
+        div.innerHTML = `
+          <div class="gap-stem">${escHtml(q.stem)}</div>
+          <div class="gap-row yours"><strong>Your answer:</strong> ${escHtml(chosen)}. ${escHtml(q.options[chosen])}</div>
+          <div class="gap-row correct"><strong>Correct answer:</strong> ${escHtml(correct)}. ${escHtml(q.options[correct])}</div>
+          <div class="gap-expl">${escHtml(q.explanation)}</div>
+        `;
+        list.appendChild(div);
+      });
+    }
+  }
+
+  $('retake-btn').addEventListener('click', () => {
+    state.pdfBase64    = '';
+    state.questions    = [];
+    state.answers      = [];
+    state.currentIndex = 0;
+    dzFileName.style.display = 'none';
+    pdfInput.value = '';
+    hideErr(fileError);
+    hideErr(setupError);
+    checkReady();
+    showScreen('setup');
+  });
+
+  // ── HELPERS ───────────────────────────────────────────
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+</script>
+</body>
+</html>
