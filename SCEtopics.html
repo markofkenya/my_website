@@ -231,7 +231,7 @@
     <div class="brand">
       <div class="eyebrow">SCE / ESENeph · May 2027</div>
       <h1>Topic <em>Tracker</em></h1>
-      <p class="sub">Pass 1 — read your source(s), the relevant KDIGO guideline, StudyPRN, then build the review sheet + flashcards. Pass 2 — review the sheets, then KSAP. Subtopics track reading coverage; question steps stay at topic level.</p>
+      <p class="sub">Pass 1 — read your source and review topics, the relevant KDIGO guideline, then KSAP and StudyPRN, then build the review sheet + flashcards. Pass 2 — KSAP mixed, StudyPRN mixed, then review the Error Log for anything unresolved. Subtopics track reading coverage; question steps stay at topic level.</p>
     </div>
     <div class="overall">
       <div class="ring-wrap">
@@ -254,16 +254,20 @@
   <div class="view on" id="view-topics">
   <div class="flow">
     <h3>Pass 1</h3>
-    <div class="step"><span class="dot d-read"></span>Read (OHB / ERA / CCN)</div>
+    <div class="step"><span class="dot d-read"></span>Read (OHB / Online / CCN)</div>
     <span class="arrow">→</span>
     <div class="step"><span class="dot d-rev"></span>KDIGO</div>
+    <span class="arrow">→</span>
+    <div class="step"><span class="dot d-q"></span>KSAP</div>
     <span class="arrow">→</span>
     <div class="step"><span class="dot d-q"></span>StudyPRN</div>
     <span class="arrow">→</span>
     <div class="step"><span class="dot d-rev"></span>Sheet + flashcards</div>
-    <div class="step p2"><h3 style="margin:0 6px 0 0">Pass 2</h3><span class="dot d-rev"></span>Review sheets</div>
+    <div class="step p2"><h3 style="margin:0 6px 0 0">Pass 2</h3><span class="dot d-q"></span>KSAP mixed</div>
     <span class="arrow">→</span>
-    <div class="step"><span class="dot d-q"></span>KSAP</div>
+    <div class="step"><span class="dot d-q"></span>StudyPRN mixed</div>
+    <span class="arrow">→</span>
+    <div class="step"><span class="dot d-rev"></span>Review Error Log</div>
   </div>
 
   <div id="loading"><span class="pulse"></span>Connecting to your database…</div>
@@ -281,14 +285,9 @@
     <div class="bx-head">
       <div>
         <div class="bx-week" id="bxWeek"></div>
-        <div class="bx-meta"><b id="bxWeekN">0</b>/5 this week · <b id="bxTotal">0</b> total logged</div>
+        <div class="bx-meta"><b id="bxWeekN">0</b>/3 this week · <b id="bxTotal">0</b> total logged</div>
       </div>
       <a class="btn btn-ghost" id="bxOpen" href="https://www.kidneypathology.com/English_version/Archives_cases.html" target="_blank" rel="noopener">Open Kidney Pathology ↗</a>
-    </div>
-
-    <div class="warn">
-      <span>⚠</span>
-      <div><b>De-identified images only.</b> This database is currently readable by anyone with the link. Crop out names, hospital numbers and dates before saving. Teaching images from the case site are fine.</div>
     </div>
 
     <div class="bx-form">
@@ -387,9 +386,9 @@ const KDIGO={
   bone:'CKD-MBD 2017 · Anaemia in CKD 2012',
   pd:'ISPD Peritonitis Guidelines',
 };
-const SOURCES=[['ohb','OHB'],['era','ERA'],['ccn','CCN']];
-const P1=[{key:'kd',kind:'rev',lbl:'KDIGO guideline(s)'},{key:'oe1',kind:'q',lbl:'StudyPRN'},{key:'rev',kind:'rev',lbl:'Review sheet made'},{key:'fc',kind:'rev',lbl:'Flashcards made'}];
-const P2=[{key:'rr2',kind:'rev',lbl:'Review the review sheets'},{key:'ks1',kind:'q',lbl:'KSAP mixed'}];
+const SOURCES=[['ohb','OHB'],['online','Online'],['ccn','CCN']];
+const P1=[{key:'kd',kind:'rev',lbl:'KDIGO guideline(s)'},{key:'ks0',kind:'q',lbl:'KSAP'},{key:'oe1',kind:'q',lbl:'StudyPRN'},{key:'rev',kind:'rev',lbl:'Review sheet made'},{key:'fc',kind:'rev',lbl:'Flashcards made'}];
+const P2=[{key:'ks1',kind:'q',lbl:'KSAP mixed'},{key:'oe2',kind:'q',lbl:'StudyPRN mixed'},{key:'rel',kind:'rev',lbl:'Review Error Log (if unresolved)'}];
 const FINAL=[
   {key:'nephroshots',lbl:'Nephro Shots'},
   {key:'bof200',lbl:'200 Best of Five'},
@@ -401,7 +400,7 @@ const TICK='<svg viewBox="0 0 12 12" fill="none"><path d="M2 6.2l2.6 2.6L10 3" s
 let state={};
 let firstRender=true;
 const openSubs=new Set();
-function blankTopic(id){const subs={},subConf={};(SUBS[id]||[]).forEach((s,i)=>{subs[i]=false;subConf[i]=0;});return{sources:[],subs,subConf,conf:0,kd:false,oe1:false,ks1:false,rev:false,fc:false,rr2:false};}
+function blankTopic(id){const subs={},subConf={};(SUBS[id]||[]).forEach((s,i)=>{subs[i]=false;subConf[i]=0;});return{sources:[],subs,subConf,conf:0,kd:false,ks0:false,oe1:false,ks1:false,oe2:false,rev:false,fc:false,rel:false};}
 function blank(){const o={};TOPICS.forEach(t=>o[t.id]=blankTopic(t.id));return o;}
 function normalize(){
   if(!state||typeof state!=='object')state=blank();
@@ -417,7 +416,7 @@ function normalize(){
       if(typeof s.subs[i]!=='boolean')s.subs[i]=!!s.subs[i];
       if(typeof s.subConf[i]!=='number')s.subConf[i]=+s.subConf[i]||0;
     });
-    ['kd','oe1','ks1','rev','fc','rr2'].forEach(k=>{if(typeof s[k]!=='boolean')s[k]=!!s[k];});
+    ['kd','ks0','oe1','ks1','oe2','rev','fc','rel'].forEach(k=>{if(typeof s[k]!=='boolean')s[k]=!!s[k];});
   });
 }
 
@@ -430,12 +429,12 @@ function checkpoints(id){
   const s=state[id];
   const arr=[readDone(id)];
   if(hasKD(id))arr.push(s.kd);
-  arr.push(s.oe1,s.rev,s.fc,s.rr2,s.ks1);
+  arr.push(s.ks0,s.oe1,s.rev,s.fc,s.ks1,s.oe2,s.rel);
   return arr;
 }
 function topicCount(id){return checkpoints(id).filter(Boolean).length;}
-function topicMax(id){return hasKD(id)?7:6;}
-function topicFP(id){const s=state[id];return readDone(id)&&(!hasKD(id)||s.kd)&&s.oe1&&s.rev&&s.fc;}
+function topicMax(id){return hasKD(id)?9:8;}
+function topicFP(id){const s=state[id];return readDone(id)&&(!hasKD(id)||s.kd)&&s.ks0&&s.oe1&&s.rev&&s.fc;}
 function topicDone(id){return checkpoints(id).every(Boolean);}
 
 /* ---------- render ---------- */
@@ -474,7 +473,7 @@ function renderInner(){
       <div class="pass-label">First pass</div>`;
 
     const left=subs.length-subDoneN;
-    h+=`<div class="src-row${readDone(t.id)?' read':''}"><div class="mini-check">${TICK}</div><div class="lbl">Read source(s)</div>${(s.sources.length>0&&subs.length&&!subsDone(t.id))?`<span class="hint">${left} subtopic${left>1?'s':''} left</span>`:''}</div>
+    h+=`<div class="src-row${readDone(t.id)?' read':''}"><div class="mini-check">${TICK}</div><div class="lbl">Read source and review topics</div>${(s.sources.length>0&&subs.length&&!subsDone(t.id))?`<span class="hint">${left} subtopic${left>1?'s':''} left</span>`:''}</div>
         <div class="chips" data-tid="${t.id}">`;
     SOURCES.forEach(([v,lbl])=>{h+=`<button class="chip${s.sources.includes(v)?' sel':''}" data-src="${v}">${lbl}</button>`;});
     h+=`</div>`;
@@ -684,7 +683,7 @@ function renderBiopsy(){
   document.getElementById('bxWeekN').textContent=weekN;
   // week pips
   let pips='';
-  for(let i=0;i<5;i++)pips+=`<div class="pip${i<weekN?' full':''}">${i<weekN?TICK_S:''}</div>`;
+  for(let i=0;i<3;i++)pips+=`<div class="pip${i<weekN?' full':''}">${i<weekN?TICK_S:''}</div>`;
   document.getElementById('bxWeek').innerHTML=pips;
   // list
   const list=document.getElementById('bxList');
