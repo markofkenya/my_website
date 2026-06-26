@@ -984,7 +984,7 @@ const REQS = {
   gim_acute_patients:{ label:"Acute GIM Patients",   stream:"gim", type:"number", target:750, unit:"patients",deadline:"ST7", cumulative:true, note:"750 total, 100 in final year" },
   gim_ward_cover: { label:"IM Ward Cover", stream:"gim", type:"number", target:12, unit:"months", deadline:"ST7", cumulative:true, note:"12 months total IM ward cover" },
   gim_teaching_obs:  { label:"Teaching Observation", stream:"gim", type:"checkbox", deadline:"ST7", sharedWith:"renal_teaching_obs",   note:"Can be done in Renal — applies to GIM" },
-  gim_patient_survey:{ label:"Patient Survey",       stream:"gim", type:"checkbox", deadline:"ST7", sharedWith:"renal_patient_survey_st7", note:"Shared with Renal — only needed once" },
+  gim_patient_survey:{ label:"Patient Survey",       stream:"gim", type:"checkbox", deadline:"ST5", sharedWith:"renal_patient_survey_st5", note:"ST5 Renal survey counts as GIM — no separate GIM survey needed" },
   gim_qip:           { label:"GIM QIP + QIPAT",      stream:"gim", type:"checkbox", deadline:"ST7", note:"By end of ST7" },
   renal_mcrs:         { label:"Renal MCRs", stream:"renal", type:"number", target:4,  unit:"MCRs",   deadline:"annual", note:"Renal consultants, labelled renal" },
   renal_msf_raters:   { label:"Renal MSF Raters", stream:"renal", type:"number", target:8, unit:"raters", deadline:"annual", note:"8 renal raters + 4 GIM = 12 total (3 must be consultants)" },
@@ -994,10 +994,10 @@ const REQS = {
   renal_es_report:    { label:"Renal Educational Supervisor Report", stream:"renal", type:"checkbox", deadline:"annual", note:"1 per year" },
   renal_temp_lines:   { label:"Temporary Line Competency", stream:"renal", type:"checkbox", deadline:"ST4", note:"Competent by end of ST4" },
   renal_eseneph:      { label:"ESENeph Exam", stream:"renal", type:"eseneph", deadline:"ST6", note:"Held once a year — book early. Alert 1 year before due." },
-  renal_patient_survey_st5: { label:"Patient Survey (ST5)", stream:"renal", type:"checkbox", deadline:"ST5", note:"With patient survey summary tool by ES" },
+  renal_patient_survey_st5: { label:"Patient Survey (ST5)", stream:"renal", type:"checkbox", deadline:"ST5", sharesTo:"gim_patient_survey", note:"Counts as the GIM Patient Survey — ticking this ticks GIM too" },
   renal_qip:          { label:"Renal QIP + QIPAT", stream:"renal", type:"checkbox", deadline:"ST6", note:"By end of ST6" },
   renal_teaching_obs: { label:"Teaching Observation", stream:"renal", type:"checkbox", deadline:"ST6", sharesTo:"gim_teaching_obs", note:"Applies to GIM — ticking this ticks GIM too" },
-  renal_patient_survey_st7: { label:"Patient Survey (ST7)", stream:"renal", type:"checkbox", deadline:"ST7", sharesTo:"gim_patient_survey", note:"Applies to GIM — ticking this ticks GIM too" },
+  renal_patient_survey_st7: { label:"Patient Survey (ST7)", stream:"renal", type:"checkbox", deadline:"ST7", note:"Required again in ST7 for Renal curriculum (separate from ST5)" },
   renal_mgmt_course:  { label:"Management & Leadership Course", stream:"renal", type:"checkbox", deadline:"ST7", note:"By end of ST7" },
 };
 
@@ -2181,7 +2181,7 @@ function renderLogbook() {
   [
     { id:"clinics",    label:"CLINICS" },
     { id:"procedures", label:"PROCEDURES" },
-    { id:"cpd",        label:"CPD / STUDY LEAVE" },
+    { id:"cpd",        label:"TEACHING" },
     { id:"simulation", label:"SIMULATION" },
     { id:"teaching",   label:"TEACHING" },
     { id:"acute_take", label:"ACUTE TAKE" },
@@ -2241,6 +2241,11 @@ function renderLbClinics(el) {
   sumDiv.style.cssText = "display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;";
   const gimTarget = REQS["gim_clinics"].target;
   const gimPct    = Math.min(100, Math.round((gimEntries.length / gimTarget) * 100));
+  // SDEC cap: max 10 of 20 GIM clinics may be SDEC
+  const SDEC_CAP  = 10;
+  const sdecCount = gimEntries.filter(e => (e.type || "").toLowerCase().includes("sdec")).length;
+  const sdecOver  = sdecCount > SDEC_CAP;
+  const countedClinics = gimEntries.length - Math.max(0, sdecCount - SDEC_CAP);
   sumDiv.innerHTML = `
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--gim);padding:12px 16px;flex:1;min-width:140px;">
            <div style="font-size:20px;font-weight:700;color:var(--renal);">${renalEntries.length}</div>
@@ -2252,6 +2257,12 @@ function renderLbClinics(el) {
       <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">GIM CLINICS · CUMULATIVE</div>
       <div style="height:3px;background:var(--blue5);margin-top:6px;border-radius:2px;overflow:hidden;">
         <div style="height:100%;width:${gimPct}%;background:var(--gim);"></div>
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${sdecOver?'var(--red)':sdecCount>=SDEC_CAP?'var(--amber)':'var(--gim)'};padding:12px 16px;flex:1;min-width:140px;">
+      <div style="font-size:20px;font-weight:700;color:${sdecOver?'var(--red)':sdecCount>=SDEC_CAP?'var(--amber)':'var(--gim)'};">${sdecCount}<span style="font-size:11px;color:var(--dim);"> / ${SDEC_CAP} max</span></div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">SDEC CLINICS (MAX 10 OF 20)</div>
+      ${sdecOver?`<div style="font-size:8px;color:var(--red);margin-top:3px;">// ${sdecCount-SDEC_CAP} over cap — only ${SDEC_CAP} count toward target</div>`:''}
     </div>`;
   el.appendChild(sumDiv);
 
@@ -2351,25 +2362,25 @@ function renderLbCPD(el) {
   sumDiv.innerHTML = `
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${cpd.total>=totalTarget?'var(--green)':'var(--gim)'};padding:12px 16px;flex:1;min-width:130px;">
       <div style="font-size:20px;font-weight:700;color:${cpd.total>=totalTarget?'var(--green)':'var(--gim)'};">${cpd.total}<span style="font-size:10px;color:var(--dim);"> / ${totalTarget}h</span></div>
-        <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">TOTAL EXTERNAL GIM CPD HRS</div>
+        <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">TOTAL EXTERNAL GIM TEACHING HRS</div>
       <div style="height:3px;background:var(--blue5);margin-top:6px;border-radius:2px;overflow:hidden;">
         <div style="height:100%;width:${totalPct}%;background:${cpd.total>=totalTarget?'var(--green)':'var(--gim)'};"></div>
       </div>
     </div>
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${cpd.onlineHrs>=onlineLimit?'var(--green)':'var(--amber)'};padding:12px 16px;flex:1;min-width:130px;">
       <div style="font-size:20px;font-weight:700;color:${cpd.onlineHrs>=onlineLimit?'var(--green)':'var(--amber)'};">${cpd.onlineCapped}<span style="font-size:10px;color:var(--dim);"> / ${onlineLimit}h max</span></div>
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">ONLINE CPD (MAX 15h)</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">ONLINE TEACHING (MAX 15h)</div>
     </div>
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${currentYear==='ST7'?(cpd.st7Hrs>=finalYrTarget?'var(--green)':'var(--amber)'):'var(--dim)'};padding:12px 16px;flex:1;min-width:130px;">
       <div style="font-size:20px;font-weight:700;color:${currentYear==='ST7'?(cpd.st7Hrs>=finalYrTarget?'var(--green)':'var(--amber)'):'var(--blue)'};">${cpd.st7Hrs}<span style="font-size:10px;color:var(--dim);"> / 20h</span></div>
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">ST7 CPD (MIN 20h IN FINAL YEAR)</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">ST7 TEACHING (MIN 20h IN FINAL YEAR)</div>
       ${currentYear!=='ST7'?'<div style="font-size:8px;color:var(--dim);margin-top:3px;">// required in ST7 only</div>':''}
     </div>`;
   el.appendChild(sumDiv);
 
   // Renal CPD
 // Renal CPD
-  el.appendChild(makeLbForm("cpd_renal", "ADD RENAL CPD / STUDY LEAVE", "renal", [
+  el.appendChild(makeLbForm("cpd_renal", "ADD RENAL TEACHING", "renal", [
     { id:"date",    label:"Date",         type:"date" },
     { id:"type",    label:"CPD type",     type:"select", options: CPD_TYPES_RENAL },
     { id:"title",   label:"Title / event",type:"text", placeholder:"e.g. Renal association conference" },
@@ -2377,11 +2388,11 @@ function renderLbCPD(el) {
     { id:"year",    label:"Training year",type:"select", options:["ST4","ST5","ST6","ST7"] },
     { id:"notes",   label:"Notes",        type:"text", placeholder:"Optional" },
   ], currentYear));
-  el.appendChild(makeLbSection("RENAL CPD ENTRIES", "renal", renalEntries, "cpd_renal",
+  el.appendChild(makeLbSection("RENAL TEACHING ENTRIES", "renal", renalEntries, "cpd_renal",
     e => `${e.type || "CPD"} · ${e.title || "—"} · ${e.hours || 0}h · ${e.year || ""}`, false));
 
   // GIM CPD add form
-  el.appendChild(makeLbForm("cpd_gim", "ADD GIM CPD / STUDY LEAVE", "gim", [
+  el.appendChild(makeLbForm("cpd_gim", "ADD GIM TEACHING", "gim", [
     { id:"date",    label:"Date",         type:"date" },
     { id:"type",    label:"CPD type",     type:"select", options: CPD_TYPES_GIM },
     { id:"title",   label:"Title / event",type:"text", placeholder:"e.g. GIM training day — cardiology" },
@@ -2389,7 +2400,7 @@ function renderLbCPD(el) {
     { id:"year",    label:"Training year",type:"select", options:["ST4","ST5","ST6","ST7"] },
     { id:"notes",   label:"Notes",        type:"text", placeholder:"Optional" },
   ], currentYear));
-  el.appendChild(makeLbSection("GIM CPD ENTRIES", "gim", gimEntries, "cpd_gim",
+  el.appendChild(makeLbSection("GIM TEACHING ENTRIES", "gim", gimEntries, "cpd_gim",
     e => `${e.type || "CPD"} · ${e.title || "—"} · ${e.hours || 0}h · ${e.year || ""}`, true));
 }
 
@@ -2454,11 +2465,11 @@ function renderLbTeaching(el) {
   sumDiv.innerHTML = `
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--blue);padding:12px 16px;flex:1;min-width:140px;">
       <div style="font-size:20px;font-weight:700;color:var(--blue);">${entries.length}</div>
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">TEACHING SESSIONS LOGGED</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">TEACHING PARTICIPATION SESSIONS LOGGED</div>
     </div>`;
   el.appendChild(sumDiv);
 
-  el.appendChild(makeLbForm("teaching", "LOG TEACHING SESSION", "both", [
+  el.appendChild(makeLbForm("teaching", "LOG TEACHING PARTICIPATION", "both", [
     { id:"date",       label:"Date",         type:"date" },
     { id:"type",       label:"Type",         type:"select", options: TEACHING_TYPES },
     { id:"audience",   label:"Audience",     type:"text", placeholder:"e.g. FY1s, medical students" },
@@ -2469,7 +2480,7 @@ function renderLbTeaching(el) {
     { id:"notes",      label:"Notes",        type:"text", placeholder:"Reflection, feedback received" },
   ], currentYear));
 
-  el.appendChild(makeLbSection("TEACHING LOG", "both", entries, "teaching",
+  el.appendChild(makeLbSection("TEACHING PARTICIPATION LOG", "both", entries, "teaching",
     e => `${e.type || "Teaching"} · ${e.topic || "—"} · ${e.audience || ""}`, false));
 }
 // ════════════════════════════════════════════════════
@@ -3448,7 +3459,7 @@ function printLogbookReport() {
     gimProcs.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.supervisor,e.dops==="Yes"?'<span class="dops-yes">✓ Yes</span>':"No",e.notes]),
     "#005EB8")}
  
-  ${secHead("CPD / Study Leave","both")}
+  ${secHead("Teaching","both")}
   <div class="cpd-summary">
     <strong>GIM CPD Summary:</strong> &nbsp;
     Counted total: <strong style="color:#005EB8">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
@@ -3479,7 +3490,7 @@ function printLogbookReport() {
     simulation.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.course,e.title,e.hours?e.hours+"h":"—",e.hospital,e.year||"—",e.notes]),
     "#0e7490")}
  
-  ${secHead("Teaching","both")}
+  ${secHead("Teaching Participation","both")}
   ${subHead("", `${teaching.length} sessions · ${yr}`)}
   ${tbl(["Date","Type","Topic","Audience","Observed by","Sign-off","Notes"],
     teaching.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.topic,e.audience,e.supervisor||"—",e.signoff,e.notes]),
