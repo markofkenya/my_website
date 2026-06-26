@@ -45,10 +45,7 @@
           const localKey = "pft_lb_" + k + "_entries";
           const localTs  = parseInt(localStorage.getItem(`pft_lb_${k}_ts`) || "0");
           const remoteTs = parseInt(data[`${k}_ts`] || "0");
-          const localEntries = localStorage.getItem(localKey);
-          const localEmpty = !localEntries || localEntries === "[]";
-          const remoteHasData = val && val !== "[]";
-          if (remoteTs >= localTs || (localEmpty && remoteHasData)) {
+          if (remoteTs >= localTs) {
             const current = localStorage.getItem(localKey);
             if (current !== val) {
               localStorage.setItem(localKey, val);
@@ -3437,8 +3434,7 @@ function printLogbookReport() {
     <div class="sum-box" style="--c:#005EB8"><div class="num">${gimClinics.length}</div><div class="key">GIM Clinics (total)</div></div>
     <div class="sum-box" style="--c:#7c3aed"><div class="num">${renalClinics.length}</div><div class="key">Renal Clinics (${yr})</div></div>
     <div class="sum-box" style="--c:#166534"><div class="num">${renalProcs.length + gimProcs.length}</div><div class="key">Procedures (${yr})</div></div>
-    <div class="sum-box" style="--c:#92400e"><div class="num">${teaching.length}</div><div class="key">Teaching (${yr})</div></div>
-    <div class="sum-box" style="--c:#005EB8"><div class="num">${Math.round(gimAllHrs + renalCpdHrs)}h</div><div class="key">CPD — GIM + Renal</div></div>
+    <div class="sum-box" style="--c:#005EB8"><div class="num">${Math.round(gimAllHrs + renalCpdHrs)}h</div><div class="key">Teaching — GIM + Renal</div></div>
     <div class="sum-box" style="--c:#0e7490"><div class="num">${Math.round(totalSimHrs)}h</div><div class="key">Simulation (total)</div></div>
   </div>
  
@@ -3447,7 +3443,7 @@ function printLogbookReport() {
   ${tbl(["Date","Type","Hospital","Supervisor","Patients","Notes"],
     renalClinics.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.hospital,e.supervisor,e.patients?e.patients+" pts":"—",e.notes]),
     "#7c3aed")}
-  ${subHead(badge("GIM","badge-gim"), `${gimClinics.length} total entries · all years · cumulative target 20`)}
+  ${subHead(badge("GIM","badge-gim"), `${gimClinics.length} total entries · all years · cumulative target 20 · max 10 may be Medical SDEC (${gimClinics.filter(e=>(e.type||"").toLowerCase().includes("sdec")).length} SDEC logged)`)}
   ${tbl(["Date","Type","Hospital","Supervisor","Patients","Year","Notes"],
     gimClinics.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.hospital,e.supervisor,e.patients?e.patients+" pts":"—",e.year||"—",e.notes]),
     "#005EB8")}
