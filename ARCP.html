@@ -3461,7 +3461,7 @@ function printLogbookReport() {
  
   ${secHead("Teaching","both")}
   <div class="cpd-summary">
-    <strong>GIM CPD Summary:</strong> &nbsp;
+    <strong>GIM Teaching Summary:</strong> &nbsp;
     Counted total: <strong style="color:#005EB8">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
     Online: <strong>${onlineCapped.toFixed(1)}h</strong> / 15h max &nbsp;·&nbsp;
     External: <strong>${externalHrs.toFixed(1)}h</strong>
@@ -3471,7 +3471,7 @@ function printLogbookReport() {
     gimCpd.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.title,e.hours?e.hours+"h":"—",e.year||"—",e.notes]),
     "#005EB8")}
   <div class="cpd-summary renal">
-    <strong>Renal CPD:</strong> &nbsp;
+    <strong>Renal Teaching Summary:</strong> &nbsp;
     Total: <strong style="color:#7c3aed">${renalCpdHrs.toFixed(1)}h</strong> in ${yr}
   </div>
   ${subHead(badge("Renal","badge-renal"), `${renalCpd.length} entries · ${yr}`)}
