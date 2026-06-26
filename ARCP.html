@@ -45,7 +45,10 @@
           const localKey = "pft_lb_" + k + "_entries";
           const localTs  = parseInt(localStorage.getItem(`pft_lb_${k}_ts`) || "0");
           const remoteTs = parseInt(data[`${k}_ts`] || "0");
-          if (remoteTs >= localTs) {
+          const localEntries = localStorage.getItem(localKey);
+          const localEmpty = !localEntries || localEntries === "[]";
+          const remoteHasData = val && val !== "[]";
+          if (remoteTs >= localTs || (localEmpty && remoteHasData)) {
             const current = localStorage.getItem(localKey);
             if (current !== val) {
               localStorage.setItem(localKey, val);
