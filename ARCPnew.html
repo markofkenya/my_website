@@ -1329,6 +1329,7 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
     W._title = opts.title || "Your";
     cards = summary.cards;
     const monthLabel = `${summary.meta.monthName} ${summary.meta.year}`;
+    W._shareTag = `${(opts.brand||'Wrapped').replace(/\\s+/g,'-')}-${summary.meta.monthName}-${summary.meta.year}`;
 
     let ov = document.getElementById("wrapped-overlay");
     if (ov) ov.remove();
@@ -1379,8 +1380,52 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
     if (W._keyHandler) document.removeEventListener("keydown", W._keyHandler);
   }
 
-  function share() {
-    alert("Tip: use your device screenshot to capture and share this card.\n\n(A built-in image export can be added later.)");
+  function loadHtml2Canvas(){
+    return new Promise((resolve, reject)=>{
+      if(window.html2canvas) return resolve(window.html2canvas);
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      s.onload = ()=>resolve(window.html2canvas);
+      s.onerror = ()=>reject(new Error('Could not load image library'));
+      document.head.appendChild(s);
+    });
+  }
+  async function share() {
+    const ov = document.getElementById('wrapped-overlay');
+    if(!ov) return;
+    const card = ov.querySelectorAll('.wr-card')[idx];
+    if(!card) return;
+    const shareBtn = ov.querySelector('.wr-share');
+    const origLabel = shareBtn ? shareBtn.textContent : '';
+    if(shareBtn) shareBtn.textContent = 'Rendering…';
+    try {
+      const h2c = await loadHtml2Canvas();
+      // hide tap zones + segments during capture for a clean image
+      const hideEls = ov.querySelectorAll('.wr-tapzones,.wr-close,.wr-segments');
+      hideEls.forEach(e=>e.style.visibility='hidden');
+      const canvas = await h2c(card, { backgroundColor: null, scale: 2, useCORS: true, logging: false });
+      hideEls.forEach(e=>e.style.visibility='');
+      const monthTag = (W._shareTag || 'wrapped');
+      canvas.toBlob(async (blob)=>{
+        if(!blob){ if(shareBtn) shareBtn.textContent=origLabel; return; }
+        const file = new File([blob], monthTag+'.png', { type:'image/png' });
+        // Native share sheet on mobile if available
+        if(navigator.canShare && navigator.canShare({ files:[file] })){
+          try { await navigator.share({ files:[file], title:'My Wrapped' }); }
+          catch(e){ /* user cancelled */ }
+        } else {
+          // Desktop fallback: download
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href=url; a.download=monthTag+'.png'; a.click();
+          setTimeout(()=>URL.revokeObjectURL(url), 2000);
+        }
+        if(shareBtn) shareBtn.textContent = origLabel;
+      }, 'image/png');
+    } catch(err){
+      if(shareBtn) shareBtn.textContent = origLabel;
+      alert('Could not generate image: '+err.message+'\n\nYou can use your device screenshot instead.');
+    }
   }
 
   W.open = open;
@@ -1391,6 +1436,23 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
 
 
 /* ════════ WRAPPED INTEGRATION (Outcome1 beta) ════════ */
+function wrappedArchiveHTML(){
+  const arch = (state.profile && state.profile.wrappedArchive) || {};
+  const tags = Object.keys(arch).sort().reverse();
+  if(!tags.length) return '';
+  const items = tags.slice(0,12).map(tag=>{
+    const a = arch[tag];
+    return `<button onclick="openArchivedWrapped('${tag}')" style="text-align:left;background:var(--panel-2,#1c1f29);border:1px solid var(--line,#2a2e3a);border-radius:10px;padding:10px 12px;cursor:pointer;color:var(--text);min-width:130px;flex:1">
+      <div style="font-family:var(--mono,monospace);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:4px">${a.monthName} ${a.year}</div>
+      <div style="font-weight:700;font-size:13px;letter-spacing:-.01em">${a.personality||'Logged'}</div>
+      <div style="font-family:var(--mono,monospace);font-size:10px;color:var(--dim);margin-top:3px">${a.entries} entries</div>
+    </button>`;
+  }).join('');
+  return `<div style="margin:28px 0 8px;padding-top:20px;border-top:1px solid var(--line,#2a2e3a)">
+    <div style="font-family:var(--mono,monospace);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">↺ Past Wrapped</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${items}</div>
+  </div>`;
+}
 function wrappedButtonHTML(){
   const lc = lastCompletedMonth();
   const mName = ["January","February","March","April","May","June","July","August","September","October","November","December"][lc.month-1];
@@ -1421,7 +1483,33 @@ function openWrapped(year, month){
   const summary = buildMonthlySummary(year, month, wrappedAdapter(), { firstName });
   const name = (state.profile && state.profile.name) ? state.profile.name.trim().split(/\s+/)[0] : '';
   const specShort = (typeof specCfg==='function' ? specCfg().short : 'Renal');
+  archiveWrapped(year, month, summary);
   WrappedUI.open(summary, { brand: specShort+' Wrapped', title: name });
+}
+function archiveWrapped(year, month, summary){
+  if(!state.profile) return;
+  if(summary.meta.totalEntries < 1) return; // don't archive empty months
+  state.profile.wrappedArchive = state.profile.wrappedArchive || {};
+  const tag = year+'-'+String(month).padStart(2,'0');
+  // store a lightweight snapshot: headline counts + personality, not the full card markup
+  state.profile.wrappedArchive[tag] = {
+    year, month,
+    monthName: summary.meta.monthName,
+    entries: summary.meta.totalEntries,
+    clinics: summary.stats.counts.clinics,
+    procedures: summary.stats.counts.procedures,
+    teaching: summary.stats.hours.teaching,
+    cpd: summary.stats.hours.cpd,
+    personality: (WrappedEngine.derivePersonality(summary.stats)||{}).name || '',
+    savedAt: Date.now()
+  };
+  saveState();
+}
+function openArchivedWrapped(tag){
+  const a = state.profile && state.profile.wrappedArchive && state.profile.wrappedArchive[tag];
+  if(!a) return;
+  // rebuild live from current data for that month (data may have grown since)
+  openWrapped(a.year, a.month);
 }
 function lastCompletedMonth(){
   const now = new Date();
@@ -1574,7 +1662,7 @@ function hideHospital(h){ deleteHospital(h); }
 function restoreDeaneryHospitals(){ state.deletedHospitals=[]; state.hiddenHospitals=[]; saveState(); renderAdmin(); }
 
 function optionsHtml(list, selected=''){ return list.map(x=>`<option value="${safe(x)}" ${selected===x?'selected':''}>${safe(x)}</option>`).join(''); }
-function renderLogbook(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','Teaching/CPD'],['simulation','Simulation'],['teaching','Teaching Participation']]; document.getElementById('main').innerHTML=`<div class="subtabs">${subs.map(([id,l])=>`<button class="subtab ${logSubTab===id?'active':''}" onclick="logSubTab='${id}';renderLogbook()">${l}</button>`).join('')}</div><div class="row" style="justify-content:flex-end;margin-bottom:12px"><button class="btn small primary" onclick="showPrintStylePicker()">⎙ Print Logbook Report</button></div><div id="log-content"></div>`; if(logSubTab==='clinics') renderLogClinics(); if(logSubTab==='procedures') renderLogProcedures(); if(logSubTab==='cpd') renderLogCPD(); if(logSubTab==='simulation') renderSimpleLog('simulation','Simulation session', ['date','course','title','hours','hospital','year','notes'], ['Course','Title','Hours','Hospital','Year','Notes'], null); if(logSubTab==='teaching') renderSimpleLog('teaching','Teaching session', ['date','type','topic','audience','supervisor','signoff','year','notes'], ['Type','Topic','Audience','Observed by','Sign-off','Year','Notes'], ['Bedside teaching','Tutorial / seminar','Grand round presentation','Journal club','Simulation facilitation','Medical student supervision','Other']); }
+function renderLogbook(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','Teaching/CPD'],['simulation','Simulation'],['teaching','Teaching done']]; document.getElementById('main').innerHTML=`<div class="subtabs">${subs.map(([id,l])=>`<button class="subtab ${logSubTab===id?'active':''}" onclick="logSubTab='${id}';renderLogbook()">${l}</button>`).join('')}</div><div class="row" style="justify-content:flex-end;margin-bottom:12px"><button class="btn small primary" onclick="showPrintStylePicker()">⎙ Print Logbook Report</button></div><div id="log-content"></div>`; if(logSubTab==='clinics') renderLogClinics(); if(logSubTab==='procedures') renderLogProcedures(); if(logSubTab==='cpd') renderLogCPD(); if(logSubTab==='simulation') renderSimpleLog('simulation','Simulation session', ['date','course','title','hours','hospital','year','notes'], ['Course','Title','Hours','Hospital','Year','Notes'], null); if(logSubTab==='teaching') renderSimpleLog('teaching','Teaching session', ['date','type','topic','audience','supervisor','signoff','year','notes'], ['Type','Topic','Audience','Observed by','Sign-off','Year','Notes'], ['Bedside teaching','Tutorial / seminar','Grand round presentation','Journal club','Simulation facilitation','Medical student supervision','Other']); }
 function formPanel(title, html, onsubmit){ return `<div class="panel"><div class="sec-head"><span class="sec-title">${title}</span><span class="sec-rule"></span></div><div class="form-grid">${html}<div class="field full"><button class="btn primary" onclick="${onsubmit}">ADD ENTRY ▸</button></div></div></div>`; }
 function hospitalField(id='hospital'){ const list=hospitalOptions(); return `<div class="field"><label>Hospital</label><input class="input" id="${id}" list="${id}-list" placeholder="Start typing or add manually"><datalist id="${id}-list">${list.map(h=>`<option value="${safe(h)}">`).join('')}</datalist></div>`; }
 function table(k, cols, mapper){ const arr=entries(k).slice().sort((a,b)=>(b.date||b.start||'').localeCompare(a.date||a.start||'')); return tableFromArray(k, arr, cols, mapper); }
@@ -3409,6 +3497,7 @@ function renderOverview(){
         ${insightsHtml}
       </aside>
     </div>
+    ${wrappedArchiveHTML()}
   </div>`;
 
   // Tooltip behaviour
@@ -3549,7 +3638,10 @@ function renderRoadmap(){
     <div class="rm-eyebrow" style="font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:14px">${todayStr} \u00b7 ${safe(sp.label)} \u00b7 ${safe(currentYear)}</div>
     <div class="rm-headrow" style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap">
       <h1 class="rm-h1" style="font-size:44px;font-weight:500;letter-spacing:-.03em;line-height:1.05;margin:0;color:var(--text);max-width:720px">Hello, ${safe(firstName)}. <span style="color:var(--dim)">You're </span><span style="color:var(--primary)">${yearPct}%</span><span style="color:var(--dim)"> through ${safe(currentYear)}.</span></h1>
-      <button class="btn small rm-print" onclick="showPrintStylePicker()" style="flex-shrink:0">\u2398 Print Logbook Report</button>
+      <div style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap">
+        <button class="btn small rm-print" onclick="showPrintStylePicker()">\u2398 Print Logbook Report</button>
+        <button class="btn small" onclick="exportCpdDiary()">\u2398 Print CPD Diary</button>
+      </div>
     </div>
     <div class="rm-stats" style="display:flex;gap:32px;margin-top:22px;flex-wrap:wrap;padding-top:18px;border-top:1px solid var(--line)">
       <div class="rm-stat"><div class="rm-stat-key" style="font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)">Coverage</div><div class="rm-stat-val" style="font-size:22px;font-weight:600;color:var(--primary);margin-top:4px;font-feature-settings:'tnum'">${heroPct}%</div></div>
@@ -3659,7 +3751,7 @@ window.renderRoadmap=renderRoadmap;
 
 function renderLogbookV2(){
   if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
-  const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','Teaching/CPD'],['simulation','Simulation'],['teaching','Teaching Participation']];
+  const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','Teaching/CPD'],['simulation','Simulation'],['teaching','Teaching done']];
   const all=[]; subs.forEach(([k])=>{ (state.logbook?.[k]||[]).forEach(e=>all.push({...e,_kind:k})); });
   all.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const totalCount=all.length;
