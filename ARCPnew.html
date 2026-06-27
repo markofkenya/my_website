@@ -1041,7 +1041,7 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
   const POOL = [
 
     { id: "intro", fixed: true, order: 0,
-      build: s => ({ skin: "c-intro", kicker: "Your month in nephrology",
+      build: s => ({ skin: "c-intro", kicker: s._firstName ? `Hello, ${s._firstName}` : "Your month in nephrology",
         headline: `${s.monthName},\nwrapped.`,
         sub: "A look back at everything you logged — clinics, procedures, teaching and the take. Tap through →" }) },
 
@@ -1128,8 +1128,8 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
         cells: [
           { v: s.counts.clinics, l: "Clinics" },
           { v: s.counts.procedures, l: "Procedures", accent: true },
-          { v: s.hours.teaching + "h", l: "Teaching" },
-          { v: s.counts.simulation, l: "Simulation", accent: true },
+          { v: s.hours.teaching + "h", l: "Teaching done" },
+          { v: s.hours.cpd + "h", l: "CPD", accent: true },
         ],
         foot: s.procRank.length
           ? `Top procedure · ${s.procRank[0].name} ×${s.procRank[0].count}`
@@ -1142,6 +1142,7 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
     const minCards = opts.minCards || 6;
     const maxCards = opts.maxCards || 8;
     const s = gatherStats(state, year, month);
+    s._firstName = opts.firstName || "";
 
     const fixed = POOL.filter(c => c.fixed);
     const flexible = POOL.filter(c => !c.fixed);
@@ -1404,8 +1405,9 @@ function openWrapped(year, month){
     const d = new Date(now.getFullYear(), now.getMonth()-1, 1);
     year = d.getFullYear(); month = d.getMonth()+1;
   }
-  const summary = buildMonthlySummary(year, month, wrappedAdapter());
-  const name = (state.profile && state.profile.name) ? state.profile.name.split(' ').slice(-1)[0] : '';
+  const firstName = (state.profile && state.profile.name) ? state.profile.name.trim().split(/\s+/)[0] : '';
+  const summary = buildMonthlySummary(year, month, wrappedAdapter(), { firstName });
+  const name = (state.profile && state.profile.name) ? state.profile.name.trim().split(/\s+/)[0] : '';
   const specShort = (typeof specCfg==='function' ? specCfg().short : 'Renal');
   WrappedUI.open(summary, { brand: specShort+' Wrapped', title: name });
 }
@@ -1560,7 +1562,7 @@ function hideHospital(h){ deleteHospital(h); }
 function restoreDeaneryHospitals(){ state.deletedHospitals=[]; state.hiddenHospitals=[]; saveState(); renderAdmin(); }
 
 function optionsHtml(list, selected=''){ return list.map(x=>`<option value="${safe(x)}" ${selected===x?'selected':''}>${safe(x)}</option>`).join(''); }
-function renderLogbook(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','Teaching'],['simulation','Simulation'],['teaching','Teaching Participation']]; document.getElementById('main').innerHTML=`<div class="subtabs">${subs.map(([id,l])=>`<button class="subtab ${logSubTab===id?'active':''}" onclick="logSubTab='${id}';renderLogbook()">${l}</button>`).join('')}</div><div class="row" style="justify-content:flex-end;margin-bottom:12px"><button class="btn small primary" onclick="printReport()">⎙ Print Logbook Report</button></div><div id="log-content"></div>`; if(logSubTab==='clinics') renderLogClinics(); if(logSubTab==='procedures') renderLogProcedures(); if(logSubTab==='cpd') renderLogCPD(); if(logSubTab==='simulation') renderSimpleLog('simulation','Simulation session', ['date','course','title','hours','hospital','year','notes'], ['Course','Title','Hours','Hospital','Year','Notes'], null); if(logSubTab==='teaching') renderSimpleLog('teaching','Teaching session', ['date','type','topic','audience','supervisor','signoff','year','notes'], ['Type','Topic','Audience','Observed by','Sign-off','Year','Notes'], ['Bedside teaching','Tutorial / seminar','Grand round presentation','Journal club','Simulation facilitation','Medical student supervision','Other']); }
+function renderLogbook(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','Teaching'],['simulation','Simulation'],['teaching','Teaching Participation']]; document.getElementById('main').innerHTML=`<div class="subtabs">${subs.map(([id,l])=>`<button class="subtab ${logSubTab===id?'active':''}" onclick="logSubTab='${id}';renderLogbook()">${l}</button>`).join('')}</div><div class="row" style="justify-content:flex-end;margin-bottom:12px"><button class="btn small primary" onclick="showPrintStylePicker()">⎙ Print Logbook Report</button></div><div id="log-content"></div>`; if(logSubTab==='clinics') renderLogClinics(); if(logSubTab==='procedures') renderLogProcedures(); if(logSubTab==='cpd') renderLogCPD(); if(logSubTab==='simulation') renderSimpleLog('simulation','Simulation session', ['date','course','title','hours','hospital','year','notes'], ['Course','Title','Hours','Hospital','Year','Notes'], null); if(logSubTab==='teaching') renderSimpleLog('teaching','Teaching session', ['date','type','topic','audience','supervisor','signoff','year','notes'], ['Type','Topic','Audience','Observed by','Sign-off','Year','Notes'], ['Bedside teaching','Tutorial / seminar','Grand round presentation','Journal club','Simulation facilitation','Medical student supervision','Other']); }
 function formPanel(title, html, onsubmit){ return `<div class="panel"><div class="sec-head"><span class="sec-title">${title}</span><span class="sec-rule"></span></div><div class="form-grid">${html}<div class="field full"><button class="btn primary" onclick="${onsubmit}">ADD ENTRY ▸</button></div></div></div>`; }
 function hospitalField(id='hospital'){ const list=hospitalOptions(); return `<div class="field"><label>Hospital</label><input class="input" id="${id}" list="${id}-list" placeholder="Start typing or add manually"><datalist id="${id}-list">${list.map(h=>`<option value="${safe(h)}">`).join('')}</datalist></div>`; }
 function table(k, cols, mapper){ const arr=entries(k).slice().sort((a,b)=>(b.date||b.start||'').localeCompare(a.date||a.start||'')); return tableFromArray(k, arr, cols, mapper); }
@@ -1647,7 +1649,7 @@ function syncLogbookTargets(){ const clinics=entries('clinics').filter(e=>e.scop
 function renderAdmin(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const hosp=hospitalOptions(); document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Profile & deanery</span><span class="sec-rule"></span><span class="sec-note">Used in reports and hospital dropdowns</span></div><div class="panel"><div class="form-grid"><div class="field"><label>ALS expiry</label><input class="input" type="date" value="${state.als||''}" onchange="state.als=this.value;saveState();render()"></div><div class="field"><label>${currentYear} ARCP date</label><input class="input" type="date" value="${state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]}" onchange="state.arcpDates['${currentYear}']=this.value;saveState();render()"></div><div class="field full"><label>Add hospital</label><div class="row"><input class="input" id="new-hospital" placeholder="Add hospital not in deanery list"><button class="btn primary" onclick="addAdminHospital()">ADD</button></div></div></div></div></section><section class="section"><div class="sec-head"><span class="sec-title">Hospitals</span><span class="sec-rule"></span><span class="sec-note">${hosp.length} available · delete hospitals you are not rotating in</span></div><div class="grid">${hosp.map(h=>`<div class="card"><div class="card-title">${safe(h)}</div><button class="btn small danger" onclick="deleteHospital('${safe(h)}')">Delete from list</button></div>`).join('')}</div></section>`; }
 function addAdminHospital(){ const h=val('new-hospital'); if(!h)return; addHospitalIfNew(h); renderAdmin(); }
 function removeHospital(h){ state.hospitals=(state.hospitals||[]).filter(x=>x!==h); saveState(); renderAdmin(); }
-function renderOverview(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const spec=calcReqs(specReqs()), gim=calcReqs(GIM_REQS); const outstanding=[...Object.entries(specReqs()).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'spec')),...Object.entries(GIM_REQS).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'gim'))]; document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Overview — ${currentYear}</span><span class="sec-rule"></span></div>${wrappedButtonHTML()}<div class="summary-grid"><div class="summary"><div class="big green">${spec.met}</div><div class="hint">${specCfg().short} complete</div></div><div class="summary"><div class="big red">${spec.open}</div><div class="hint">${specCfg().short} outstanding</div></div><div class="summary"><div class="big green">${gim.met}</div><div class="hint">GIM complete</div></div><div class="summary"><div class="big red">${gim.open}</div><div class="hint">GIM outstanding</div></div><div class="summary"><div class="big primary">${entries('clinics').length+entries('procedures').length+entries('cpd').length+entries('simulation').length+entries('teaching').length}</div><div class="hint">logbook entries</div></div></div></section>${outstanding.length?section('Outstanding / in progress','Editable unless year locked',outstanding):'<div class="panel green">✓ All visible requirements met for this year.</div>'}`; }
+function renderOverview(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const spec=calcReqs(specReqs()), gim=calcReqs(GIM_REQS); const outstanding=[...Object.entries(specReqs()).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'spec')),...Object.entries(GIM_REQS).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'gim'))]; document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Overview — ${currentYear}</span><span class="sec-rule"></span></div><div class="summary-grid"><div class="summary"><div class="big green">${spec.met}</div><div class="hint">${specCfg().short} complete</div></div><div class="summary"><div class="big red">${spec.open}</div><div class="hint">${specCfg().short} outstanding</div></div><div class="summary"><div class="big green">${gim.met}</div><div class="hint">GIM complete</div></div><div class="summary"><div class="big red">${gim.open}</div><div class="hint">GIM outstanding</div></div><div class="summary"><div class="big primary">${entries('clinics').length+entries('procedures').length+entries('cpd').length+entries('simulation').length+entries('teaching').length}</div><div class="hint">logbook entries</div></div></div></section>${outstanding.length?section('Outstanding / in progress','Editable unless year locked',outstanding):'<div class="panel green">✓ All visible requirements met for this year.</div>'}`; }
 function calcReqs(reqs){ const arr=Object.entries(reqs).filter(([id,r])=>r.deadline==='annual'||yrIndex(r.deadline)<=yrIndex()); const met=arr.filter(([id,r])=>reqStatus(id,r)==='met').length; return {met,total:arr.length,open:arr.length-met,pct:arr.length?Math.round(met/arr.length*100):0}; }
 function updateReadiness(){ if(!state.profile)return; const spec=calcReqs(specReqs()), gim=calcReqs(GIM_REQS); document.getElementById('spec-pct').textContent=spec.pct+'%'; document.getElementById('spec-fill').style.width=spec.pct+'%'; document.getElementById('gim-pct').textContent=gim.pct+'%'; document.getElementById('gim-fill').style.width=gim.pct+'%'; document.getElementById('readiness-detail').textContent=`${specCfg().short} ${spec.met}/${spec.total} · GIM ${gim.met}/${gim.total}`; }
 function resetYearData(){ if(yearLocked()) return alert('This year is locked. Unlock it before resetting.'); if(!confirm(`Reset annual requirement data for ${currentYear}? Cumulative logbook data is preserved.`)) return; Object.keys(state.req).forEach(k=>{ if(k.startsWith(currentYear+'.')) delete state.req[k]; }); saveState(); render(); }
@@ -2761,7 +2763,7 @@ function renderOverview(){
   if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
   const spec=calcReqsWithExtra(specReqs(), specDopsStats()), gim=calcReqsWithExtra(GIM_REQS, gimDopsStats());
   const outstanding=[...Object.entries(specReqs()).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'spec')),...Object.entries(GIM_REQS).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'gim'))];
-  document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Overview — ${currentYear}</span><span class="sec-rule"></span></div>${wrappedButtonHTML()}<div class="summary-grid"><div class="summary"><div class="big green">${spec.met}</div><div class="hint">${specCfg().short} complete incl DOPS</div></div><div class="summary"><div class="big red">${spec.open}</div><div class="hint">${specCfg().short} outstanding incl DOPS</div></div><div class="summary"><div class="big green">${gim.met}</div><div class="hint">GIM complete incl DOPS</div></div><div class="summary"><div class="big red">${gim.open}</div><div class="hint">GIM outstanding incl DOPS</div></div><div class="summary"><div class="big primary">${entries('clinics').length+entries('procedures').length+entries('cpd').length+entries('simulation').length+entries('teaching').length}</div><div class="hint">logbook entries</div></div></div></section>${outstanding.length?section('Outstanding / in progress','Editable unless year locked',outstanding):'<div class="panel green">✓ All visible requirements met for this year.</div>'}`;
+  document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Overview — ${currentYear}</span><span class="sec-rule"></span></div><div class="summary-grid"><div class="summary"><div class="big green">${spec.met}</div><div class="hint">${specCfg().short} complete incl DOPS</div></div><div class="summary"><div class="big red">${spec.open}</div><div class="hint">${specCfg().short} outstanding incl DOPS</div></div><div class="summary"><div class="big green">${gim.met}</div><div class="hint">GIM complete incl DOPS</div></div><div class="summary"><div class="big red">${gim.open}</div><div class="hint">GIM outstanding incl DOPS</div></div><div class="summary"><div class="big primary">${entries('clinics').length+entries('procedures').length+entries('cpd').length+entries('simulation').length+entries('teaching').length}</div><div class="hint">logbook entries</div></div></div></section>${outstanding.length?section('Outstanding / in progress','Editable unless year locked',outstanding):'<div class="panel green">✓ All visible requirements met for this year.</div>'}`;
 }
 window.renderHeader=renderHeader; window.updateReadiness=updateReadiness; window.renderGIM=renderGIM; window.renderAdmin=renderAdmin; window.renderOverview=renderOverview;
 try{ render(); forceLiveStatus(); }catch(e){ console.warn('V12 refresh skipped',e); }
@@ -3151,6 +3153,8 @@ function renderOverview(){
       </div>
     </div>
 
+    ${wrappedButtonHTML()}
+
     <div class="act-kpis">${kpiHtml}</div>
 
     <div class="act-grid">
@@ -3293,7 +3297,7 @@ function renderToday(){
       <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px"><span style="color:var(--text2)">${safe(sp.short)}</span><span style="color:${specColor};font-family:var(--font-mono);font-weight:600">${spec.met}/${spec.total}</span></div>
       <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px"><span style="color:var(--text2)">GIM</span><span style="color:${gimColor};font-family:var(--font-mono);font-weight:600">${gim.met}/${gim.total}</span></div>
     </div>
-    <button class="btn primary" style="width:100%;border-radius:0;padding:14px;font-size:13px" onclick="printReport()">Generate ARCP report \u2192</button>
+    <button class="btn primary" style="width:100%;border-radius:0;padding:14px;font-size:13px" onclick="showPrintStylePicker()">Generate ARCP report \u2192</button>
   </div>`;
 
   const grid=`<div style="display:grid;grid-template-columns:1.6fr 1fr;gap:20px">
@@ -3349,7 +3353,7 @@ function renderRoadmap(){
     <div class="rm-eyebrow" style="font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:14px">${todayStr} \u00b7 ${safe(sp.label)} \u00b7 ${safe(currentYear)}</div>
     <div class="rm-headrow" style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap">
       <h1 class="rm-h1" style="font-size:44px;font-weight:500;letter-spacing:-.03em;line-height:1.05;margin:0;color:var(--text);max-width:720px">Hello, ${safe(firstName)}. <span style="color:var(--dim)">You're </span><span style="color:var(--primary)">${yearPct}%</span><span style="color:var(--dim)"> through ${safe(currentYear)}.</span></h1>
-      <button class="btn small rm-print" onclick="printReport()" style="flex-shrink:0">\u2398 Print Logbook Report</button>
+      <button class="btn small rm-print" onclick="showPrintStylePicker()" style="flex-shrink:0">\u2398 Print Logbook Report</button>
     </div>
     <div class="rm-stats" style="display:flex;gap:32px;margin-top:22px;flex-wrap:wrap;padding-top:18px;border-top:1px solid var(--line)">
       <div class="rm-stat"><div class="rm-stat-key" style="font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)">Coverage</div><div class="rm-stat-val" style="font-size:22px;font-weight:600;color:var(--primary);margin-top:4px;font-feature-settings:'tnum'">${heroPct}%</div></div>
@@ -3477,7 +3481,7 @@ function renderLogbookV2(){
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn small" onclick="exportLogbook()">\u21E9 Export CSV (.zip)</button>
-      <button class="btn small" onclick="printReport()">\u2398 Print Logbook Report</button>
+      <button class="btn small" onclick="showPrintStylePicker()">\u2398 Print Logbook Report</button>
       <button class="btn primary" onclick="openLogbookForm('${filterKey==='all'?'clinics':filterKey}')">+ New entry</button>
     </div>
   </div>`;
