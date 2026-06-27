@@ -617,12 +617,12 @@ const GIM_LOGBOOK = { clinics:["GIM outpatient clinic","Medical SDEC","Community
 
 const CPD_DIARY_TYPES = [
   "Course / workshop","Conference","E-learning / online module","Journal club",
-  "MDT meeting","M&M / clinical governance meeting","Grand round",
+  "Journal article","MDT meeting","M&M / clinical governance meeting","Grand round",
   "Departmental teaching (attended)","Regional training day","Webinar",
   "Audit / QI meeting","Simulation (attended)","Other"
 ];
 // Which types default to internal vs external (user can override per entry)
-const CPD_INTERNAL_DEFAULT = ["Journal club","MDT meeting","M&M / clinical governance meeting","Grand round","Departmental teaching (attended)","Audit / QI meeting","Simulation (attended)"];
+const CPD_INTERNAL_DEFAULT = ["Journal club","Journal article","MDT meeting","M&M / clinical governance meeting","Grand round","Departmental teaching (attended)","Audit / QI meeting","Simulation (attended)"];
 function cpdCategoryFor(type){ return CPD_INTERNAL_DEFAULT.includes(type) ? "Internal" : "External"; }
 
 const RESP_PROCEDURE_TARGETS = {
@@ -1715,6 +1715,8 @@ function exportCpdDiary(){
   const totalHours = Math.round(all.reduce((a,e)=>a+Number(e.hours||0),0)*10)/10;
   const internalHrs = Math.round(all.filter(e=>(e.category||cpdCategoryFor(e.type))==='Internal').reduce((a,e)=>a+Number(e.hours||0),0)*10)/10;
   const externalHrs = Math.round((totalHours-internalHrs)*10)/10;
+  // GIM External — entries on the GIM scope that count as external (matches the cumulative ARCP logic)
+  const gimExternalHrs = Math.round(all.filter(e=>e.scope==='gim' && (typeof cpdIsExternal==='function' ? cpdIsExternal(e) : (e.category||cpdCategoryFor(e.type))==='External')).reduce((a,e)=>a+Number(e.hours||0),0)*10)/10;
   const gen = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
 
   const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -1779,12 +1781,13 @@ function exportCpdDiary(){
     <div class="hd">
       <div class="ec">Continuing Professional Development · Reflective Record</div>
       <h1>CPD Diary</h1>
-      <div class="sub">${esc(name)} · ${esc(sp)}${deanery?' · '+esc(deanery):''}</div>
+      <div class="sub">${esc(name)} · ${esc(sp)} + GIM${deanery?' · '+esc(deanery):''}</div>
     </div>
     <div class="stats">
       <div><div class="k">Total hours</div><div class="v">${totalHours} h</div></div>
       <div><div class="k">External</div><div class="v">${externalHrs} h</div></div>
       <div><div class="k">Internal</div><div class="v">${internalHrs} h</div></div>
+      <div><div class="k">GIM external</div><div class="v">${gimExternalHrs} h</div></div>
       <div><div class="k">Entries</div><div class="v">${all.length}</div></div>
     </div>
     <div class="body">${all.length?yearsHtml:'<p style="padding:30px 0;color:#9a8f6a;font-style:italic">No CPD entries logged yet.</p>'}</div>
@@ -2100,6 +2103,7 @@ function showPrintStylePicker(){
 function pickPrintStyle(style){
   const m = document.getElementById('print-style-modal');
   if(m) m.remove();
+  console.log('[Print] style chosen:', style);
   printReport(style);
 }
 
