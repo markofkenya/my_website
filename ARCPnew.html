@@ -2696,12 +2696,6 @@ function renderSpecialty(){
   document.getElementById('main').innerHTML=htmlOut;
 }
 
-// Keep printed report branding consistent with beta name.
-const _printReportBase = printReport;
-printReport = function(){
-  _printReportBase();
-};
-
 window.renderBetaTrial=renderBetaTrial;
 window.renderSpecialty=renderSpecialty;
 window.renderRespProcedureProgression=renderRespProcedureProgression;
