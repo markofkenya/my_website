@@ -2193,9 +2193,9 @@ function renderLogbook() {
   [
     { id:"clinics",    label:"CLINICS" },
     { id:"procedures", label:"PROCEDURES" },
-    { id:"cpd",        label:"TEACHING" },
+    { id:"cpd",        label:"TEACHING/CPD" },
     { id:"simulation", label:"SIMULATION" },
-    { id:"teaching",   label:"TEACHING PARTICIPATION" },
+    { id:"teaching",   label:"TEACHING SESSIONS" },
     { id:"acute_take", label:"ACUTE TAKE" },
     { id:"ward_cover", label:"WARD COVER" },
   ].forEach(st => {
@@ -2230,6 +2230,12 @@ function renderLogbook() {
   sendBtn.textContent = "✉ SEND REPORT";
   sendBtn.onclick = () => sendLogbookReport(false);
   sendWrap.appendChild(sendBtn);
+  const xlsxBtn = document.createElement("button");
+  xlsxBtn.className = "btn-reset";
+  xlsxBtn.style.cssText = "border-color:var(--dim);color:var(--dim);font-size:9px;padding:4px 12px;";
+  xlsxBtn.textContent = "⇩ EXPORT EXCEL";
+  xlsxBtn.onclick = () => exportLogbookXlsx();
+  sendWrap.appendChild(xlsxBtn);
   el.appendChild(sendWrap);
 
   if (lbSubTab === "clinics")    renderLbClinics(el);
@@ -2530,7 +2536,7 @@ function renderLbTeaching(el) {
   sumDiv.innerHTML = `
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--blue);padding:12px 16px;flex:1;min-width:140px;">
       <div style="font-size:20px;font-weight:700;color:var(--blue);">${entries.length}</div>
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">TEACHING PARTICIPATION SESSIONS LOGGED</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">TEACHING SESSIONS LOGGED</div>
     </div>`;
   el.appendChild(sumDiv);
 
@@ -3467,6 +3473,62 @@ function exportCpdDiaryP(){
   const win = window.open("", "_blank_"+Date.now());
   if(!win){ alert("Please allow popups to view the CPD diary report."); return; }
   win.document.write(html); win.document.close();
+}
+function loadSheetJS(){
+  return new Promise((resolve,reject)=>{
+    if(window.XLSX) return resolve(window.XLSX);
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=()=>resolve(window.XLSX);
+    s.onerror=()=>reject(new Error('Could not load spreadsheet library'));
+    document.head.appendChild(s);
+  });
+}
+async function exportLogbookXlsx(){
+  // key → [sheetName, ordered columns]
+  const SHEETS = [
+    ["clinics_renal",    "Clinics Renal",    ["date","type","hospital","supervisor","patients","year","notes"]],
+    ["clinics_gim",      "Clinics GIM",      ["date","type","hospital","supervisor","patients","year","notes"]],
+    ["procedures_renal", "Procedures Renal", ["date","type","supervisor","dops","year","notes"]],
+    ["procedures_gim",   "Procedures GIM",   ["date","type","supervisor","dops","year","notes"]],
+    ["cpd_renal",        "Teaching CPD Renal",["date","type","category","title","provider","hours","year","learning","reflection","notes"]],
+    ["cpd_gim",          "Teaching CPD GIM", ["date","type","category","title","provider","hours","year","learning","reflection","notes"]],
+    ["teaching",         "Teaching Sessions",["date","type","topic","audience","supervisor","signoff","year","notes"]],
+    ["simulation",       "Simulation",       ["date","course","title","hours","hospital","year","notes"]],
+    ["acute_take",       "Acute Take",       ["hospital","start","end","months","takes","patients","estimated","year","supervisor"]],
+    ["ward_cover",       "Ward Cover",       ["hospital","start","end","months","year","supervisor"]],
+  ];
+
+  let total = 0;
+  SHEETS.forEach(([k]) => { total += getLbEntries(k).length; });
+  if(total === 0){ alert("No logbook entries to export yet — add some entries first."); return; }
+
+  let XLSX;
+  try { XLSX = await loadSheetJS(); }
+  catch(err){ alert("Could not load the spreadsheet library: "+err.message); return; }
+
+  const wb = XLSX.utils.book_new();
+
+  // Summary sheet first
+  const summaryRows = SHEETS.map(([k,name]) => ({
+    Section: name,
+    "Total entries": getLbEntries(k).length,
+    "This year only": getLbEntries(k).filter(e => e.year === currentYear).length
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), "Summary");
+
+  // One sheet per key
+  SHEETS.forEach(([k,name,headers]) => {
+    const arr = getLbEntries(k);
+    const rows = arr.length
+      ? arr.map(e => { const o={}; headers.forEach(h => o[h] = e[h]!==undefined ? e[h] : ""); return o; })
+      : [Object.fromEntries(headers.map(h => [h,""]))];
+    const ws = XLSX.utils.json_to_sheet(rows, { header: headers });
+    XLSX.utils.book_append_sheet(wb, ws, name);
+  });
+
+  const stamp = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `Logbook_Mark_Maugo_${stamp}.xlsx`);
 }
 function exportCpdDataP(){
   const data = { cpd_gim:getLbEntries("cpd_gim"), cpd_renal:getLbEntries("cpd_renal") };
