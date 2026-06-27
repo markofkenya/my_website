@@ -2160,7 +2160,7 @@ function printReport(style){
   ];
   const figuresHtml = figures.map(f=>`<div class="figure ${f.accent?'accent':''}"><span class="num">${safe(f.n)}</span><span class="lab">${f.lab}</span></div>`).join('');
 
-  const win=window.open('','_blank');
+  const win=window.open('','_blank_'+Date.now());
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Logbook Report \u2014 ${safe(yr)} \u2014 ${safe(traineeName)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3526,7 +3526,7 @@ function renderRoadmap(){
   const today=new Date(); today.setHours(0,0,0,0);
   const days=Math.max(0,Math.round((arcpDate-today)/86400000));
   const todayStr=today.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const firstName=(state.profile?.name||'').split(' ').filter(Boolean).pop()||'there';
+  const firstName=(state.profile?.name||'').trim().split(/\s+/).filter(Boolean)[0]||'there';
   // % through the CURRENT ST year only — not across all training years.
   // Start = previous year's ARCP date (if known) else arcpDate minus 12 months.
   let yearPct=0;
