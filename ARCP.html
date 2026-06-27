@@ -3397,7 +3397,8 @@ function printLogbookReport() {
     .dops-yes{color:#166534;font-weight:700;}
     .cpd-summary{background:#f0f4ff;border:1px solid #ccd6e8;border-left:3px solid #003087;padding:7px 11px;margin-bottom:9px;font-size:8.5pt;color:#333;}
     .cpd-summary.renal{border-left-color:#7c3aed;background:#f8f5ff;}
-    .doc-footer{margin-top:20px;padding-top:8px;border-top:1px solid #ccd6e8;display:flex;justify-content:space-between;font-size:7pt;color:#888;}
+    .ai-disclosure{margin-top:18px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:7.5pt;line-height:1.5;color:#94a3b8;font-style:italic;max-width:70ch;}
+    .doc-footer{margin-top:14px;padding-top:8px;border-top:1px solid #ccd6e8;display:flex;justify-content:space-between;font-size:7pt;color:#888;}
     @media print{
       body{background:#fff;padding:0;}
       .page{box-shadow:none;max-width:100%;}
@@ -3531,6 +3532,7 @@ function printLogbookReport() {
     ]),
     "#005EB8")}
  
+  <div class="ai-disclosure">This logbook was produced using a custom self-developed application with AI assistance. All clinical entries and reflections are my own record of activity undertaken.</div>
   <div class="doc-footer">
     <span>ARCP Portfolio Tracker · Auto-generated document</span>
     <span>Generated ${fullDate} · Confidential</span>
