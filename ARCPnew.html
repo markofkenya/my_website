@@ -2425,7 +2425,17 @@ function makeZip(files){
   return new Blob([...localChunks,...centralChunks,eocd],{type:'application/zip'});
 }
 
-function exportLogbook(){
+function loadSheetJS(){
+  return new Promise((resolve,reject)=>{
+    if(window.XLSX) return resolve(window.XLSX);
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=()=>resolve(window.XLSX);
+    s.onerror=()=>reject(new Error('Could not load spreadsheet library'));
+    document.head.appendChild(s);
+  });
+}
+async function exportLogbook(){
   const sp=specCfg();
   const profile=state.profile||{};
   const safeName=(profile.name||'logbook').replace(/[^a-zA-Z0-9]+/g,'_');
@@ -2436,39 +2446,41 @@ function exportLogbook(){
   const SCHEMAS={
     clinics:    ['date','scope','type','hospital','supervisor','patients','year','notes'],
     procedures: ['date','scope','type','hospital','supervisor','dops','year','notes'],
-    cpd:        ['date','scope','type','title','hours','year','notes'],
+    cpd:        ['date','scope','type','category','title','provider','hours','year','learning','reflection','notes'],
     simulation: ['date','course','title','hours','hospital','year','notes'],
     teaching:   ['date','type','topic','audience','supervisor','signoff','year','notes'],
     acute:      ['hospital','start','end','months','takes','patients','estimated','year','supervisor'],
     ward:       ['hospital','start','end','months','year','supervisor']
   };
-  const KIND_LABELS={clinics:'Clinics',procedures:'Procedures',cpd:'CPD',simulation:'Simulation',teaching:'Teaching',acute:'Acute_take',ward:'GIM_ward_cover'};
+  const KIND_LABELS={clinics:'Clinics',procedures:'Procedures',cpd:'Teaching CPD',simulation:'Simulation',teaching:'Teaching Done',acute:'Acute Take',ward:'Ward Cover'};
 
-  const files={};
-  // Profile / metadata file
-  files['profile.csv']=csvFromRows(['field','value'], Object.entries(meta).map(([field,value])=>({field,value})));
-
-  // Per-kind CSVs
   let total=0;
-  Object.entries(SCHEMAS).forEach(([k,headers])=>{
-    const arr=entries(k);
-    total+=arr.length;
-    files[`${KIND_LABELS[k]}.csv`]=csvFromRows(headers,arr);
-  });
-
-  // Summary file
-  const summaryRows=Object.entries(SCHEMAS).map(([k])=>({type:KIND_LABELS[k],total_entries:entries(k).length,this_year_only:entries(k).filter(e=>e.year===currentYear).length}));
-  files['_summary.csv']=csvFromRows(['type','total_entries','this_year_only'], summaryRows);
-
+  Object.keys(SCHEMAS).forEach(k=>{ total+=entries(k).length; });
   if(total===0){ alert('No logbook entries to export yet — add some entries first.'); return; }
 
-  const blob=makeZip(files);
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=`Logbook_${safeName}_${stamp}.zip`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  let XLSX;
+  try { XLSX = await loadSheetJS(); }
+  catch(err){ alert('Could not load the spreadsheet library: '+err.message); return; }
+
+  const wb = XLSX.utils.book_new();
+
+  // Summary tab first
+  const summaryRows=Object.entries(SCHEMAS).map(([k])=>({Type:KIND_LABELS[k],'Total entries':entries(k).length,'This year only':entries(k).filter(e=>e.year===currentYear).length}));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), 'Summary');
+
+  // One tab per logbook kind (with ordered columns; empty kinds get a header-only sheet)
+  Object.entries(SCHEMAS).forEach(([k,headers])=>{
+    const arr=entries(k);
+    const rows = arr.length ? arr.map(e=>{ const o={}; headers.forEach(h=>o[h]=e[h]!==undefined?e[h]:''); return o; }) : [Object.fromEntries(headers.map(h=>[h,'']))];
+    const ws = XLSX.utils.json_to_sheet(rows, { header: headers });
+    XLSX.utils.book_append_sheet(wb, ws, KIND_LABELS[k]);
+  });
+
+  // Profile tab last
+  const profileRows=Object.entries(meta).map(([field,value])=>({Field:field,Value:value}));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(profileRows), 'Profile');
+
+  XLSX.writeFile(wb, `Logbook_${safeName}_${stamp}.xlsx`);
 }
 window.exportLogbook=exportLogbook;
 function setSyncStatus(online,message){ const s=document.getElementById('sync'); if(!s)return; s.textContent='● Live'; s.style.color='var(--green)'; }
@@ -3768,7 +3780,7 @@ function renderLogbookV2(){
       <div style="font-size:13px;color:var(--dim);margin-top:6px">${subs.map(([k,l])=>`${counts[k]} ${l.toLowerCase()}`).join(' · ')}</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button class="btn small" onclick="exportLogbook()">\u21E9 Export CSV (.zip)</button>
+      <button class="btn small" onclick="exportLogbook()">\u21E9 Export Excel (.xlsx)</button>
       <button class="btn small" onclick="showPrintStylePicker()">\u2398 Print Logbook Report</button>
       <button class="btn primary" onclick="openLogbookForm('${filterKey==='all'?'clinics':filterKey}')">+ New entry</button>
     </div>
