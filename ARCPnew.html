@@ -1763,7 +1763,7 @@ function renderLogCPD(){
       {value:`${externalHrs} / ${internalHrs}`,label:'External / Internal hours',cls:'blue'},
       {value:gimHours,label:'GIM external CPD · cumulative target',cls:'green'}
     ])+
-    `<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap"><button class="btn small primary" onclick="exportCpdDiary()">⎙ CPD Diary report</button><button class="btn small" onclick="exportCpdData()">⬇ Export data (JSON)</button></div>`+
+    `<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap"><button class="btn small primary" onclick="exportCpdDiary()">⎙ CPD Diary report</button><button class="btn small" onclick="exportCpdData()">⬇ Export data (JSON)</button><button class="btn small" onclick="importCpdDiary()">⬆ Import CPD (JSON)</button></div>`+
     `<div class="hint" style="margin:0 0 14px;padding:9px 12px;background:var(--panel-2,#1c1f29);border-radius:8px;font-size:10px;">📓 This is your CPD diary — courses, conferences, e-learning, MDT, M&M and more. Add reflection to make entries appraisal-ready.</div>`+
     formPanel(`Add ${sp.short} CPD entry`,diaryForm('spec'),"saveCPD('spec')")+
     section(`${sp.short} CPD diary`,`${specEntries.length} entries · ${specHours}h`, [listFor(e=>e.scope!=='gim')])+
@@ -1887,6 +1887,71 @@ function exportCpdDiary(){
   const win = window.open('', '_blank');
   if(!win){ alert('Please allow popups to view the CPD diary report.'); return; }
   win.document.write(html); win.document.close();
+}
+function importCpdDiary(){
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json,application/json';
+  inp.onchange = function(){
+    const file = inp.files && inp.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(){
+      let data;
+      try { data = JSON.parse(reader.result); }
+      catch(e){ alert('That file is not valid JSON.'); return; }
+
+      // Accept either the personal-app shape {cpd_gim:[],cpd_renal:[]} or a flat array
+      let incoming = [];
+      if(Array.isArray(data)){
+        incoming = data.map(e => ({...e, scope: e.scope || (e.stream==='GIM'?'gim':'spec')}));
+      } else {
+        const gim = (data.cpd_gim||[]).map(e => ({...e, scope:'gim'}));
+        const renal = (data.cpd_renal||[]).map(e => ({...e, scope:'spec'}));
+        incoming = gim.concat(renal);
+      }
+      if(!incoming.length){ alert('No CPD entries found in that file.'); return; }
+
+      const existing = entries('cpd');
+      // Dedupe key: date + type + title + hours + scope
+      const keyOf = e => [e.date,e.type,e.title,e.hours,e.scope].join('|').toLowerCase();
+      const seen = new Set(existing.map(keyOf));
+      const now = Date.now();
+      let added = 0, skipped = 0;
+      const merged = existing.slice();
+      incoming.forEach((e,i) => {
+        const k = keyOf(e);
+        if(seen.has(k)){ skipped++; return; }
+        seen.add(k);
+        merged.push({
+          scope: e.scope || 'spec',
+          type: e.type || '',
+          category: e.category || '',
+          date: e.date || '',
+          title: e.title || '',
+          provider: e.provider || '',
+          hours: e.hours || '',
+          year: e.year || currentYear,
+          learning: e.learning || '',
+          reflection: e.reflection || '',
+          notes: e.notes || '',
+          cert: e.cert || null,
+          id: now + i,
+          createdAt: now,
+          updatedAt: now
+        });
+        added++;
+      });
+
+      if(!added){ alert('Nothing new to import — all '+incoming.length+' entries already exist.'); return; }
+      if(!confirm('Import '+added+' new CPD entr'+(added===1?'y':'ies')+'?'+(skipped?' ('+skipped+' duplicate'+(skipped===1?'':'s')+' skipped)':''))) return;
+      saveEntries('cpd', merged);
+      render();
+      alert('✓ Imported '+added+' CPD entr'+(added===1?'y':'ies')+'.'+(skipped?' Skipped '+skipped+' duplicate'+(skipped===1?'':'s')+'.':''));
+    };
+    reader.readAsText(file);
+  };
+  inp.click();
 }
 function exportCpdData(){
   const all = entries('cpd');
@@ -3780,8 +3845,9 @@ function renderLogbookV2(){
       <div style="font-size:13px;color:var(--dim);margin-top:6px">${subs.map(([k,l])=>`${counts[k]} ${l.toLowerCase()}`).join(' · ')}</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button class="btn small" onclick="exportLogbook()">\u21E9 Export Excel (.xlsx)</button>
       <button class="btn small" onclick="showPrintStylePicker()">\u2398 Print Logbook Report</button>
+      <button class="btn small" onclick="exportCpdDiary()">\u2398 Print CPD Diary</button>
+      <button class="btn small" onclick="exportLogbook()">\u21E9 Export Excel (.xlsx)</button>
       <button class="btn primary" onclick="openLogbookForm('${filterKey==='all'?'clinics':filterKey}')">+ New entry</button>
     </div>
   </div>`;
