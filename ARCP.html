@@ -2364,6 +2364,29 @@ function renderLbProcedures(el) {
 // ════════════════════════════════════════════════════
 //  CPD / STUDY LEAVE
 // ════════════════════════════════════════════════════
+function cpdUploadCertEditP(editId){
+  var fi = document.getElementById(editId+'-cert');
+  var file = fi && fi.files && fi.files[0];
+  if(!file) return;
+  var fb = window._arcp_fb;
+  if(!fb || !fb.storage){ alert('Storage not ready — try again in a moment.'); return; }
+  if(file.size > 10*1024*1024){ alert('File too large (max 10MB).'); return; }
+  var prog = document.getElementById(editId+'-uploadprog');
+  var uid = fb.uid || 'anon';
+  var safe = file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+  var path = 'cpdCerts/'+uid+'/'+Date.now()+'_'+safe;
+  var task = fb.uploadBytesResumable(fb.sRef(fb.storage, path), file);
+  if(prog){ prog.style.display='block'; prog.textContent='Uploading… 0%'; }
+  task.on('state_changed',
+    function(snap){ if(prog) prog.textContent='Uploading… '+Math.round((snap.bytesTransferred/snap.totalBytes)*100)+'%'; },
+    function(err){ if(prog) prog.textContent='Upload failed: '+err.message; },
+    function(){ fb.getDownloadURL(task.snapshot.ref).then(function(url){
+      window._cpdEditCertP = window._cpdEditCertP || {};
+      window._cpdEditCertP[editId] = { url:url, name:file.name, path:path };
+      if(prog) prog.textContent='✓ Attached: '+file.name;
+    }); }
+  );
+}
 function cpdUploadCertP(formId){
   var fi = document.getElementById(formId+'-file') || document.getElementById(formId+'-cert');
   var file = fi && fi.files && fi.files[0];
@@ -3148,6 +3171,11 @@ function openLbEditModal(type, entryId, opts) {
       input = `<input id="${editId}-${f.id}" class="req-input date-inp" type="date" value="${val}" style="${baseInputStyle}" />`;
     } else if (f.type === "number") {
       input = `<input id="${editId}-${f.id}" class="req-input" type="number" min="0" step="0.5" value="${val}" placeholder="${f.placeholder||''}" style="${baseInputStyle}" ${f.readonly ? "readonly" : ""} />`;
+    } else if (f.type === "textarea") {
+      input = `<textarea id="${editId}-${f.id}" class="req-input" rows="3" placeholder="${f.placeholder||''}" style="${baseInputStyle}resize:vertical;font-family:inherit;">${val.replace(/</g,'&lt;')}</textarea>`;
+    } else if (f.type === "file") {
+      const curr = entry.cert && entry.cert.url ? `<a href="${entry.cert.url}" target="_blank" style="color:var(--blue3);font-size:9px">📎 current: ${(entry.cert.name||'file')}</a>` : '<span style="opacity:.6;font-size:9px">none attached</span>';
+      input = `<div style="font-size:9px;margin-bottom:3px">${curr}</div><input id="${editId}-${f.id}" type="file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" style="font-size:10px;color:var(--dim)" onchange="cpdUploadCertEditP('${editId}')" /><div id="${editId}-uploadprog" style="display:none;font-size:9px;color:var(--blue3);margin-top:3px"></div>`;
     } else {
       input = `<input id="${editId}-${f.id}" class="req-input" type="text" value="${val.replace(/"/g,'&quot;')}" placeholder="${f.placeholder||''}" style="${baseInputStyle}" />`;
     }
@@ -3174,6 +3202,7 @@ function openLbEditModal(type, entryId, opts) {
     fields.forEach(f => {
       const el = document.getElementById(`${editId}-${f.id}`);
       if (!el) return;
+      if (f.type === "file") { return; } // handled separately via cert upload
       patch[f.id] = el.value.trim();
       // Handle select_other override
       const otherWrap = document.getElementById(`${editId}-${f.id}_other-wrap`);
@@ -3182,6 +3211,10 @@ function openLbEditModal(type, entryId, opts) {
         if (otherEl && otherEl.value.trim()) patch[f.id] = otherEl.value.trim();
       }
     });
+    if (window._cpdEditCertP && window._cpdEditCertP[editId]) {
+      patch.cert = window._cpdEditCertP[editId];
+      delete window._cpdEditCertP[editId];
+    }
     if (opts.beforeSave) {
       const ok = opts.beforeSave(patch, entry);
       if (ok === false) return;
