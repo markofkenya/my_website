@@ -818,7 +818,617 @@ function setOutcomeLocal(y,v){ state.years[y]=state.years[y]||{}; state.years[y]
 function openSettings(){ initOnboarding(); document.getElementById('gate').classList.add('show'); }
 function startFreshProfile(){ if(!confirm('Start a fresh test profile on this browser? This clears the local V2 profile and overwrites this anonymous Firebase test user with a blank profile.')) return; state=blankState(); currentYear='ST4'; localStorage.setItem('arcp_v2_current_year','ST4'); saveState(); initOnboarding(); document.getElementById('app').classList.remove('ready'); document.getElementById('gate').classList.add('show'); }
 
-function render(){ if(!state.profile){ initOnboarding(); return; } syncLogbookTargets(); setTheme(); document.getElementById('app').classList.add('ready'); document.getElementById('gate').classList.remove('show'); renderHeader(); renderTabs(); const trialExpired = renderBetaTrial(); if(trialExpired){ updateReadiness(); return; } if(currentTab==='today') renderToday(); if(currentTab==='roadmap') renderRoadmap(); if(currentTab==='specialty') renderSpecialty(); if(currentTab==='gim') renderGIM(); if(currentTab==='logbook') renderLogbookV2(); if(currentTab==='logbook-form') renderLogbookFormWrap(); if(currentTab==='admin') renderAdmin(); if(currentTab==='overview') renderOverview(); updateReadiness(); forceLiveStatus(); }
+/* ════════════════════════════════════════════════════════════════════
+   WRAPPED DATA ENGINE  ·  buildMonthlySummary(year, month, state)
+   ────────────────────────────────────────────────────────────────────
+   Pure logic. No UI, no network. Slices the app's existing logbook
+   entries by calendar month and returns an ordered array of card
+   objects ready to feed the Wrapped UI.
+
+   Data model (confirmed from ARCPnew.html):
+     state.logbook.clinics[]    {date,type,hospital,supervisor,patients,scope,year,createdAt}
+     state.logbook.procedures[] {date,type,hospital,supervisor,dops,scope,year,createdAt}
+     state.logbook.teaching[]   {date,type,topic,audience,signoff,year,createdAt}
+     state.logbook.cpd[]        {date,type,hours,scope,year,createdAt}
+     state.logbook.simulation[] {date,course,title,hours,year,createdAt}
+     state.logbook.acute[]      {start,end,months,takes,patients,estimated,...}  (range, not single date)
+   ════════════════════════════════════════════════════════════════════ */
+
+(function (root) {
+
+  // ── date helpers ──────────────────────────────────────────────────
+  function ym(dateStr) {
+    // returns {y, m} from an ISO-ish date string, or null
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d)) return null;
+    return { y: d.getFullYear(), m: d.getMonth() + 1, day: d.getDate(), date: d };
+  }
+  function inMonth(dateStr, year, month) {
+    const p = ym(dateStr);
+    return p && p.y === year && p.m === month;
+  }
+  function monthName(month) {
+    return ["January","February","March","April","May","June","July",
+            "August","September","October","November","December"][month - 1];
+  }
+  function prevMonth(year, month) {
+    return month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 };
+  }
+
+  // ── core stat gatherers ───────────────────────────────────────────
+  function entriesIn(state, key, year, month) {
+    const arr = (state.logbook && state.logbook[key]) || [];
+    return arr.filter(e => inMonth(e.date, year, month));
+  }
+
+  function countBy(arr, field) {
+    const map = {};
+    arr.forEach(e => {
+      const k = (e[field] || "").trim();
+      if (!k) return;
+      map[k] = (map[k] || 0) + 1;
+    });
+    return map; // {type: count}
+  }
+
+  function rankBy(arr, field) {
+    const map = countBy(arr, field);
+    return Object.entries(map)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  function longestStreak(dateStrs) {
+    // longest run of consecutive calendar days present in the set
+    const days = [...new Set(dateStrs.map(d => {
+      const p = ym(d); return p ? `${p.y}-${p.m}-${p.day}` : null;
+    }).filter(Boolean))]
+      .map(s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d).getTime(); })
+      .sort((a, b) => a - b);
+    if (!days.length) return { len: 0, startTs: null, endTs: null };
+    let best = 1, cur = 1, bestStart = days[0], curStart = days[0], bestEnd = days[0];
+    const DAY = 86400000;
+    for (let i = 1; i < days.length; i++) {
+      if (days[i] - days[i - 1] === DAY) {
+        cur++;
+      } else {
+        cur = 1; curStart = days[i];
+      }
+      if (cur > best) { best = cur; bestStart = curStart; bestEnd = days[i]; }
+    }
+    return { len: best, startTs: bestStart, endTs: bestEnd };
+  }
+
+  function busiestWeek(dateStrs) {
+    // returns the ISO-week start (Mon) with the most entries
+    const weeks = {};
+    dateStrs.forEach(d => {
+      const p = ym(d); if (!p) return;
+      const dt = p.date;
+      const day = (dt.getDay() + 6) % 7; // Mon=0
+      const monday = new Date(dt); monday.setDate(dt.getDate() - day);
+      const key = `${monday.getFullYear()}-${monday.getMonth()+1}-${monday.getDate()}`;
+      weeks[key] = (weeks[key] || 0) + 1;
+    });
+    let bestKey = null, bestN = 0;
+    Object.entries(weeks).forEach(([k, n]) => { if (n > bestN) { bestN = n; bestKey = k; } });
+    return bestKey ? { weekStart: bestKey, count: bestN } : null;
+  }
+
+  function firstTimeProcedures(state, year, month) {
+    // procedure types appearing this month that never appeared in any earlier-dated entry
+    const all = (state.logbook && state.logbook.procedures) || [];
+    const thisMonth = all.filter(e => inMonth(e.date, year, month));
+    const firstOfMonthTs = new Date(year, month - 1, 1).getTime();
+    const firsts = [];
+    thisMonth.forEach(e => {
+      const type = (e.type || "").trim();
+      if (!type) return;
+      const earlier = all.some(o => {
+        const op = ym(o.date);
+        return (o.type || "").trim() === type && op && op.date.getTime() < firstOfMonthTs;
+      });
+      if (!earlier && !firsts.includes(type)) firsts.push(type);
+    });
+    // order firsts by how many times logged this month (most significant first)
+    const monthCounts = {};
+    thisMonth.forEach(e => { const t=(e.type||"").trim(); if(t) monthCounts[t]=(monthCounts[t]||0)+1; });
+    firsts.sort((a,b) => (monthCounts[b]||0) - (monthCounts[a]||0));
+    return firsts;
+  }
+
+  function sumHours(arr) {
+    return Math.round(arr.reduce((a, e) => a + (parseFloat(e.hours) || 0), 0) * 10) / 10;
+  }
+
+  // ── build the raw stats bundle for a month ────────────────────────
+  function gatherStats(state, year, month) {
+    const clinics    = entriesIn(state, "clinics", year, month);
+    const procedures = entriesIn(state, "procedures", year, month);
+    const teaching   = entriesIn(state, "teaching", year, month);
+    const cpd        = entriesIn(state, "cpd", year, month);
+    const simulation = entriesIn(state, "simulation", year, month);
+
+    const pm = prevMonth(year, month);
+    const prev = {
+      clinics:    entriesIn(state, "clinics", pm.year, pm.month).length,
+      procedures: entriesIn(state, "procedures", pm.year, pm.month).length,
+      teaching:   sumHours(entriesIn(state, "teaching", pm.year, pm.month)),
+    };
+
+    const allDates = [
+      ...clinics, ...procedures, ...teaching, ...cpd, ...simulation
+    ].map(e => e.date).filter(Boolean);
+
+    const teachHours = sumHours(teaching);
+    const teachGim   = sumHours(teaching.filter(e => (e.stream || e.scope || "").toLowerCase().includes("gim")));
+    const teachSpec  = Math.round((teachHours - teachGim) * 10) / 10;
+    const cpdHours   = sumHours(cpd);
+    const cpdRank    = rankBy(cpd, "title").filter(r => r.name);  // top courses/events attended
+
+    return {
+      year, month, monthName: monthName(month),
+      counts: {
+        clinics: clinics.length,
+        procedures: procedures.length,
+        teaching: teaching.length,
+        cpd: cpd.length,
+        simulation: simulation.length,
+      },
+      hours: { teaching: teachHours, teachGim, teachSpec, simulation: sumHours(simulation), cpd: cpdHours },
+      cpdRank,
+      deltas: {
+        clinics: clinics.length - prev.clinics,
+        procedures: procedures.length - prev.procedures,
+        teaching: teachHours - prev.teaching,
+      },
+      procRank: rankBy(procedures, "type"),
+      clinicRank: rankBy(clinics, "type"),
+      hospitals: Object.keys(countBy(clinics.concat(procedures), "hospital")),
+      streak: longestStreak(allDates),
+      busiestWeek: busiestWeek(allDates),
+      firstProcedures: firstTimeProcedures(state, year, month),
+      totalEntries: clinics.length + procedures.length + teaching.length + cpd.length + simulation.length,
+      _raw: { clinics, procedures, teaching, cpd, simulation },
+    };
+  }
+
+  // ── personality engine ────────────────────────────────────────────
+  function derivePersonality(s) {
+    const mix = {
+      procedures: s.counts.procedures,
+      clinics: s.counts.clinics,
+      teaching: s.counts.teaching,
+      cpd: s.counts.cpd,
+    };
+    const total = mix.procedures + mix.clinics + mix.teaching + mix.cpd;
+    const ARCHETYPES = {
+      proceduralist: { name: "The Proceduralist", em: "Proceduralist", gradient: "person",
+        desc: "Procedures made up the biggest share of your log. You were gloved up, in the room, more than anywhere else.",
+        traits: ["Hands-on", "Line-confident", "DOPS-ready"] },
+      educator: { name: "The Educator", em: "Educator", gradient: "teach",
+        desc: "Teaching dominated your month. You spent your time passing it on — bedside, tutorial and beyond.",
+        traits: ["Generous", "Clear", "Sought-after"] },
+      clinician: { name: "The Clinic Workhorse", em: "Workhorse", gradient: "totals",
+        desc: "Clinic after clinic. You carried the outpatient load and kept the lists moving.",
+        traits: ["Steady", "High-volume", "Reliable"] },
+      allrounder: { name: "The All-Rounder", em: "All-Rounder", gradient: "arcp",
+        desc: "No single thing dominated — you spread evenly across clinics, procedures and teaching. Balanced training.",
+        traits: ["Balanced", "Versatile", "Well-rounded"] },
+      builder: { name: "The Quiet Builder", em: "Quiet Builder", gradient: "streak",
+        desc: "A lighter month on paper — but every entry counts, and consistency compounds. Foundations matter.",
+        traits: ["Consistent", "Deliberate", "Building"] },
+      student: { name: "The Student", em: "Student", gradient: "first",
+        desc: "You spent this month filling your own cup — courses, conferences and CPD. Learning before teaching.",
+        traits: ["Curious", "Invested", "Sharpening"] },
+    };
+    if (total < 4) return ARCHETYPES.builder;
+    const top = Object.entries(mix).sort((a, b) => b[1] - a[1]);
+    const [topName, topVal] = top[0];
+    const [, secondVal] = top[1] || ["", 0];
+    const share = topVal / total;
+    // All-rounder only when genuinely even: leader under 40% AND close to 2nd place
+    if (share < 0.40 && (topVal - secondVal) <= 1) return ARCHETYPES.allrounder;
+    if (topName === "procedures") return ARCHETYPES.proceduralist;
+    if (topName === "teaching")   return ARCHETYPES.educator;
+    if (topName === "cpd")        return ARCHETYPES.student;
+    return ARCHETYPES.clinician;
+  }
+
+  // ── the CARD POOL ─────────────────────────────────────────────────
+  // each: {id, fixed?, qualify(s), score(s), build(s) → cardObj}
+  const POOL = [
+
+    { id: "intro", fixed: true, order: 0,
+      build: s => ({ skin: "c-intro", kicker: "Your month in nephrology",
+        headline: `${s.monthName},\nwrapped.`,
+        sub: "A look back at everything you logged — clinics, procedures, teaching and the take. Tap through →" }) },
+
+    { id: "totals", fixed: true, order: 1,
+      build: s => {
+        const rows = [
+          { lab: "Clinics", val: s.counts.clinics, delta: s.deltas.clinics },
+          { lab: "Procedures", val: s.counts.procedures, delta: s.deltas.procedures },
+          { lab: "Teaching delivered", val: s.hours.teaching + "h", delta: s.deltas.teaching },
+        ];
+        if (s.hours.cpd >= 1) rows.push({ lab: "CPD attended", val: s.hours.cpd + "h", delta: 0, noDelta: true });
+        return { skin: "c-totals", kicker: "The headline numbers", type: "rows", rows,
+          sub: s.totalEntries ? `${s.totalEntries} entries logged this month.` : "A quiet month." };
+      } },
+
+    { id: "topProc", qualify: s => s.procRank.length >= 2 && s.procRank[0].count >= 2,
+      score: s => 60 + s.procRank[0].count * 4,
+      build: s => ({ skin: "c-top", kicker: "Your most-logged procedure", type: "rank",
+        ranks: s.procRank.slice(0, 4),
+        sub: s.procRank[0].count >= 4
+          ? `That's a procedure every ${Math.round(30 / s.procRank[0].count)} days. Safe hands.`
+          : "Your hands-on highlight this month." }) },
+
+    { id: "firstProc", qualify: s => s.firstProcedures.length >= 1,
+      score: s => 90,
+      build: s => ({ skin: "c-first", kicker: "A first this month",
+        headline: `You logged your first\n${s.firstProcedures[0].toLowerCase()}.`,
+        sub: s.firstProcedures.length > 1
+          ? `Plus ${s.firstProcedures.length - 1} other new procedure${s.firstProcedures.length>2?"s":""} this month. Chase the DOPS sign-offs.`
+          : "New territory on the curriculum — chase a DOPS sign-off for it." }) },
+
+    { id: "streak", qualify: s => s.streak.len >= 4,
+      score: s => 40 + s.streak.len * 5,
+      build: s => {
+        const a = new Date(s.streak.startTs), b = new Date(s.streak.endTs);
+        const fmt = d => `${d.getDate()} ${monthName(d.getMonth()+1).slice(0,3)}`;
+        return { skin: "c-streak", kicker: "Your longest streak",
+          stat: s.streak.len, statUnit: "consecutive days with a logged entry",
+          sub: `${fmt(a)} – ${fmt(b)}. Momentum.` };
+      } },
+
+    { id: "teaching", qualify: s => s.hours.teaching >= 1,
+      score: s => 35 + s.hours.teaching,
+      build: s => ({ skin: "c-teach", kicker: "Hours you gave back",
+        stat: s.hours.teaching, statUnit: "hours of teaching delivered",
+        sub: (s.hours.teachGim || s.hours.teachSpec)
+          ? `${s.hours.teachGim} GIM · ${s.hours.teachSpec} specialty.`
+          : "Time spent passing it on." }) },
+
+    { id: "cpd", qualify: s => s.hours.cpd >= 2 || s.counts.cpd >= 2,
+      score: s => 32 + s.hours.cpd,
+      build: s => ({ skin: "c-first", kicker: "Hours you banked",
+        stat: s.hours.cpd, statUnit: "hours of CPD & learning attended",
+        sub: s.cpdRank.length
+          ? `Including ${s.cpdRank[0].name}${s.cpdRank.length>1?` +${s.cpdRank.length-1} more`:""}.`
+          : `${s.counts.cpd} session${s.counts.cpd>1?"s":""} of study leave and courses.` }) },
+
+    { id: "busiestWeek", qualify: s => s.busiestWeek && s.busiestWeek.count >= 4,
+      score: s => 30 + s.busiestWeek.count * 3,
+      build: s => {
+        const [y,m,d] = s.busiestWeek.weekStart.split("-").map(Number);
+        const dt = new Date(y, m-1, d);
+        return { skin: "c-arcp", kicker: "Your busiest week",
+          headline: `${s.busiestWeek.count} entries\nin one week.`,
+          sub: `Week of ${dt.getDate()} ${monthName(dt.getMonth()+1)}. Full throttle.` };
+      } },
+
+    { id: "hospitals", qualify: s => s.hospitals.length >= 3,
+      score: s => 25 + s.hospitals.length * 2,
+      build: s => ({ skin: "c-totals", kicker: "On the move",
+        headline: `${s.hospitals.length} sites,\none trainee.`,
+        sub: `You logged across ${s.hospitals.slice(0,3).join(", ")}${s.hospitals.length>3?" and more":""}.` }) },
+
+    { id: "personality", fixed: true, order: 90,
+      build: s => {
+        const p = derivePersonality(s);
+        return { skin: "c-person", type: "person",
+          badge: "This month, you were", name: p.name, em: p.em,
+          desc: p.desc, traits: p.traits };
+      } },
+
+    { id: "summary", fixed: true, order: 99,
+      build: s => ({ skin: "c-summary", type: "summary",
+        cells: [
+          { v: s.counts.clinics, l: "Clinics" },
+          { v: s.counts.procedures, l: "Procedures", accent: true },
+          { v: s.hours.teaching + "h", l: "Teaching" },
+          { v: s.counts.simulation, l: "Simulation", accent: true },
+        ],
+        foot: s.procRank.length
+          ? `Top procedure · ${s.procRank[0].name} ×${s.procRank[0].count}`
+          : "Keep logging — next month's story starts now." }) },
+  ];
+
+  // ── assemble the deck ─────────────────────────────────────────────
+  function buildMonthlySummary(year, month, state, opts) {
+    opts = opts || {};
+    const minCards = opts.minCards || 6;
+    const maxCards = opts.maxCards || 8;
+    const s = gatherStats(state, year, month);
+
+    const fixed = POOL.filter(c => c.fixed);
+    const flexible = POOL.filter(c => !c.fixed);
+
+    // qualify + score flexible cards
+    const scored = flexible
+      .filter(c => !c.qualify || c.qualify(s))
+      .map(c => ({ card: c, score: c.score ? c.score(s) : 50 }))
+      .sort((a, b) => b.score - a.score);
+
+    // how many flexible slots? fixed cards = intro, totals, personality, summary (4)
+    const flexSlots = Math.max(minCards, Math.min(maxCards, 4 + scored.length)) - 4;
+    const chosenFlex = scored.slice(0, flexSlots).map(x => x.card);
+
+    // order: intro, totals → flexible (by score) → personality → summary
+    const intro      = fixed.find(c => c.id === "intro");
+    const totals     = fixed.find(c => c.id === "totals");
+    const personality= fixed.find(c => c.id === "personality");
+    const summary    = fixed.find(c => c.id === "summary");
+
+    const ordered = [intro, totals, ...chosenFlex, personality, summary];
+
+    return {
+      meta: { year, month, monthName: s.monthName, totalEntries: s.totalEntries, cardCount: ordered.length },
+      stats: s,
+      cards: ordered.map(c => Object.assign({ id: c.id }, c.build(s))),
+    };
+  }
+
+  root.buildMonthlySummary = buildMonthlySummary;
+  root.WrappedEngine = { gatherStats, derivePersonality, POOL };
+
+})(window);
+
+/* ════════════════════════════════════════════════════════════════════
+   WRAPPED UI  ·  full-screen swipeable deck overlay
+   Renders the card objects returned by buildMonthlySummary().
+   Self-contained: injects its own styles on first open.
+   ════════════════════════════════════════════════════════════════════ */
+(function (W) {
+
+  // ── one-time style injection ──────────────────────────────────────
+  function ensureStyles() {
+    if (document.getElementById("wrapped-styles")) return;
+    const css = `
+    #wrapped-overlay{position:fixed;inset:0;z-index:10000;background:#0b0c10;display:none;}
+    #wrapped-overlay.show{display:block;}
+    #wrapped-overlay *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    .wr-fonts{font-family:'Bricolage Grotesque',system-ui,sans-serif;}
+    #wrapped-overlay .wr-screen{position:relative;width:100%;height:100%;overflow:hidden;color:#fff;font-family:'Bricolage Grotesque',system-ui,sans-serif;}
+    #wrapped-overlay .wr-mono{font-family:'Spline Sans Mono',ui-monospace,monospace;}
+    #wrapped-overlay .wr-segments{position:absolute;top:0;left:0;right:0;z-index:30;display:flex;gap:4px;padding:14px 14px 0;}
+    #wrapped-overlay .wr-seg{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.28);overflow:hidden;}
+    #wrapped-overlay .wr-seg .f{display:block;height:100%;width:0;background:#fff;border-radius:3px;}
+    #wrapped-overlay .wr-seg.done .f{width:100%;}
+    #wrapped-overlay .wr-seg.active .f{width:100%;transition:width .35s ease;}
+    #wrapped-overlay .wr-brand{position:absolute;top:26px;left:16px;right:16px;z-index:30;display:flex;align-items:center;justify-content:space-between;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);}
+    #wrapped-overlay .wr-brand .g{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;letter-spacing:-.02em;font-size:13px;text-transform:none;}
+    #wrapped-overlay .wr-close{position:absolute;top:22px;right:14px;z-index:40;background:rgba(0,0,0,.25);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;line-height:1;}
+    #wrapped-overlay .wr-deck{position:absolute;inset:0;}
+    #wrapped-overlay .wr-card{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:64px 30px 84px;opacity:0;visibility:hidden;transition:opacity .4s ease;}
+    #wrapped-overlay .wr-card.show{opacity:1;visibility:visible;}
+    #wrapped-overlay .wr-kicker{font-family:'Spline Sans Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;opacity:.8;margin-bottom:18px;}
+    #wrapped-overlay .wr-head{font-weight:800;letter-spacing:-.03em;line-height:.95;font-size:46px;white-space:pre-line;}
+    #wrapped-overlay .wr-num{font-size:108px;font-weight:800;letter-spacing:-.05em;line-height:.85;}
+    #wrapped-overlay .wr-unit{font-size:20px;font-weight:600;opacity:.85;margin-top:14px;letter-spacing:-.01em;}
+    #wrapped-overlay .wr-sub{font-size:15px;font-weight:500;opacity:.85;margin-top:16px;line-height:1.5;max-width:30ch;font-family:'Spline Sans Mono',monospace;letter-spacing:-.01em;}
+    #wrapped-overlay .wr-rows{display:flex;flex-direction:column;gap:2px;margin-top:6px;}
+    #wrapped-overlay .wr-row{display:flex;align-items:baseline;justify-content:space-between;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.18);}
+    #wrapped-overlay .wr-row .lab{font-family:'Spline Sans Mono',monospace;font-size:13px;letter-spacing:.02em;opacity:.85;}
+    #wrapped-overlay .wr-row .val{font-weight:800;font-size:30px;letter-spacing:-.03em;}
+    #wrapped-overlay .wr-row .delta{font-family:'Spline Sans Mono',monospace;font-size:11px;margin-left:8px;opacity:.9;}
+    #wrapped-overlay .wr-ranklist{margin-top:24px;display:flex;flex-direction:column;gap:14px;}
+    #wrapped-overlay .wr-rank{display:flex;align-items:center;gap:14px;}
+    #wrapped-overlay .wr-rank .n{font-family:'Spline Sans Mono',monospace;font-size:13px;font-weight:600;width:22px;opacity:.7;}
+    #wrapped-overlay .wr-rank .nm{font-weight:700;font-size:18px;letter-spacing:-.01em;flex:1;}
+    #wrapped-overlay .wr-rank .ct{font-family:'Spline Sans Mono',monospace;font-size:13px;font-weight:600;opacity:.9;}
+    #wrapped-overlay .wr-rank.lead .nm{font-size:24px;}
+    #wrapped-overlay .wr-pbadge{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;opacity:.75;margin-bottom:20px;}
+    #wrapped-overlay .wr-pname{font-size:52px;font-weight:800;letter-spacing:-.04em;line-height:.95;margin-bottom:8px;}
+    #wrapped-overlay .wr-pname em{font-style:normal;display:block;background:linear-gradient(90deg,#ffd54f,#ff8a3d);-webkit-background-clip:text;background-clip:text;color:transparent;}
+    #wrapped-overlay .wr-pdesc{font-family:'Spline Sans Mono',monospace;font-size:14px;line-height:1.6;opacity:.85;max-width:32ch;margin-top:18px;}
+    #wrapped-overlay .wr-traits{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px;}
+    #wrapped-overlay .wr-trait{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.04em;padding:7px 12px;border:1px solid rgba(255,255,255,.3);border-radius:30px;}
+    #wrapped-overlay .wr-sum-head{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;margin-bottom:6px;}
+    #wrapped-overlay .wr-sum-title{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1;margin-bottom:24px;}
+    #wrapped-overlay .wr-sum-title em{font-style:normal;color:#a78bfa;}
+    #wrapped-overlay .wr-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.1);border-radius:16px;overflow:hidden;}
+    #wrapped-overlay .wr-cell{background:#0c0d14;padding:18px 16px;}
+    #wrapped-overlay .wr-cell .v{font-weight:800;font-size:30px;letter-spacing:-.03em;}
+    #wrapped-overlay .wr-cell .v.accent{color:#a78bfa;}
+    #wrapped-overlay .wr-cell .l{font-family:'Spline Sans Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-top:5px;line-height:1.4;}
+    #wrapped-overlay .wr-foot{font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.06em;opacity:.55;text-align:center;margin-top:22px;line-height:1.6;}
+    #wrapped-overlay .wr-share{margin-top:18px;width:100%;padding:15px;border:none;border-radius:30px;background:#fff;color:#0c0d14;font-weight:700;font-size:15px;letter-spacing:-.01em;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;}
+    #wrapped-overlay .wr-tapzones{position:absolute;inset:0;z-index:25;display:flex;}
+    #wrapped-overlay .wr-tapzones .z{flex:1;}
+    #wrapped-overlay .wr-tapzones .z.left{flex:.38;}
+    /* skins */
+    #wrapped-overlay .c-intro{background:linear-gradient(160deg,#7c5cff,#b94fff 55%,#ff4f9a);}
+    #wrapped-overlay .c-totals{background:linear-gradient(160deg,#0066ff,#00c2ff);}
+    #wrapped-overlay .c-top{background:linear-gradient(160deg,#ff3d54,#ff8a3d);}
+    #wrapped-overlay .c-first{background:linear-gradient(160deg,#00b37e,#00d9b2 60%,#7af0d0);color:#04231b;}
+    #wrapped-overlay .c-streak{background:linear-gradient(160deg,#1b1f3b,#3a2d7a);}
+    #wrapped-overlay .c-teach{background:linear-gradient(160deg,#ffb02e,#ff5e8a);color:#2a0e14;}
+    #wrapped-overlay .c-person{background:linear-gradient(155deg,#120a2e,#3d1d8a 50%,#7c2dd6);}
+    #wrapped-overlay .c-arcp{background:linear-gradient(160deg,#00897b,#26c6da);}
+    #wrapped-overlay .c-summary{background:#0c0d14;}
+    #wrapped-overlay .wr-anim{animation:wrRise .55s cubic-bezier(.2,.8,.2,1) both;}
+    #wrapped-overlay .wr-anim.d1{animation-delay:.06s;}#wrapped-overlay .wr-anim.d2{animation-delay:.14s;}
+    #wrapped-overlay .wr-anim.d3{animation-delay:.22s;}#wrapped-overlay .wr-anim.d4{animation-delay:.30s;}
+    #wrapped-overlay .wr-anim.d5{animation-delay:.38s;}
+    @keyframes wrRise{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+    @media (prefers-reduced-motion:reduce){#wrapped-overlay .wr-anim{animation:none;}}
+    `;
+    const style = document.createElement("style");
+    style.id = "wrapped-styles";
+    style.textContent = css;
+    document.head.appendChild(style);
+
+    // fonts (only if not already loaded)
+    if (!document.getElementById("wrapped-fonts")) {
+      const l = document.createElement("link");
+      l.id = "wrapped-fonts"; l.rel = "stylesheet";
+      l.href = "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Spline+Sans+Mono:wght@400;500;600&display=swap";
+      document.head.appendChild(l);
+    }
+  }
+
+  // ── render a single card's inner HTML ─────────────────────────────
+  function cardHTML(c) {
+    const k = c.kicker ? `<div class="wr-kicker wr-anim d1">${c.kicker}</div>` : "";
+    if (c.type === "rows") {
+      const rows = c.rows.map((r, i) => `
+        <div class="wr-row wr-anim d${i + 2}"><span class="lab">${r.lab}</span>
+          <span class="val">${r.val}${r.noDelta ? "" : ` <span class="delta">${r.delta >= 0 ? "▲ " + r.delta : "▼ " + Math.abs(r.delta)}</span>`}</span></div>`).join("");
+      return `${k}<div class="wr-rows">${rows}</div>${c.sub ? `<div class="wr-sub wr-anim d5">${c.sub}</div>` : ""}`;
+    }
+    if (c.type === "rank") {
+      const ranks = c.ranks.map((r, i) => `
+        <div class="wr-rank ${i === 0 ? "lead" : ""} wr-anim d${i + 2}">
+          <span class="n">${String(i + 1).padStart(2, "0")}</span>
+          <span class="nm">${r.name}</span><span class="ct">×${r.count}</span></div>`).join("");
+      return `${k}<div class="wr-ranklist">${ranks}</div>${c.sub ? `<div class="wr-sub wr-anim d5">${c.sub}</div>` : ""}`;
+    }
+    if (c.type === "person") {
+      return `<div class="wr-pbadge wr-anim d1">${c.badge}</div>
+        <div class="wr-pname wr-anim d2">${c.name.replace(c.em, `<em>${c.em}</em>`)}</div>
+        <div class="wr-pdesc wr-anim d3">${c.desc}</div>
+        <div class="wr-traits">${c.traits.map((t, i) => `<span class="wr-trait wr-anim d${i + 4}">${t}</span>`).join("")}</div>`;
+    }
+    if (c.type === "summary") {
+      const cells = c.cells.map(x => `<div class="wr-cell"><div class="v ${x.accent ? "accent" : ""}">${x.v}</div><div class="l">${x.l}</div></div>`).join("");
+      return `<div class="wr-sum-head wr-anim d1">${W._title || "Your"} Wrapped</div>
+        <div class="wr-sum-title wr-anim d1">Your <em>Wrapped</em></div>
+        <div class="wr-grid wr-anim d2">${cells}</div>
+        <div class="wr-foot wr-anim d3">${c.foot || ""}</div>
+        <button class="wr-share wr-anim d4" onclick="WrappedUI.share()">Save &amp; share ↗</button>`;
+    }
+    // default: headline + stat + sub
+    let html = k;
+    if (c.headline) html += `<div class="wr-head wr-anim d2">${c.headline}</div>`;
+    if (c.stat !== undefined) html += `<div class="wr-num wr-anim d2">${c.stat}</div><div class="wr-unit wr-anim d3">${c.statUnit || ""}</div>`;
+    if (c.sub) html += `<div class="wr-sub wr-anim d${c.stat !== undefined ? 4 : 3}">${c.sub}</div>`;
+    return html;
+  }
+
+  // ── open the deck ─────────────────────────────────────────────────
+  let idx = 0, cards = [];
+  function open(summary, opts) {
+    ensureStyles();
+    opts = opts || {};
+    W._title = opts.title || "Your";
+    cards = summary.cards;
+    const monthLabel = `${summary.meta.monthName} ${summary.meta.year}`;
+
+    let ov = document.getElementById("wrapped-overlay");
+    if (ov) ov.remove();
+    ov = document.createElement("div");
+    ov.id = "wrapped-overlay";
+    ov.innerHTML = `
+      <div class="wr-screen">
+        <div class="wr-segments">${cards.map(() => `<div class="wr-seg"><span class="f"></span></div>`).join("")}</div>
+        <div class="wr-brand"><span class="g">${opts.brand || "Wrapped"}</span><span>${monthLabel}</span></div>
+        <button class="wr-close" onclick="WrappedUI.close()">✕</button>
+        <div class="wr-deck">${cards.map(c => `<section class="wr-card ${c.skin}">${cardHTML(c)}</section>`).join("")}</div>
+        <div class="wr-tapzones"><div class="z left" id="wr-prev"></div><div class="z" id="wr-next"></div></div>
+      </div>`;
+    document.body.appendChild(ov);
+    ov.classList.add("show");
+
+    const cardEls = Array.from(ov.querySelectorAll(".wr-card"));
+    const segEls = Array.from(ov.querySelectorAll(".wr-seg"));
+    idx = 0;
+    function show(n) {
+      idx = Math.max(0, Math.min(cardEls.length - 1, n));
+      cardEls.forEach((c, i) => c.classList.toggle("show", i === idx));
+      segEls.forEach((s, i) => { s.classList.toggle("done", i < idx); s.classList.toggle("active", i === idx); });
+    }
+    W._show = show;
+    document.getElementById("wr-next").onclick = () => show(idx + 1);
+    document.getElementById("wr-prev").onclick = () => show(idx - 1);
+    // touch
+    let tx = 0;
+    ov.addEventListener("touchstart", e => { tx = e.touches[0].clientX; }, { passive: true });
+    ov.addEventListener("touchend", e => {
+      const dx = e.changedTouches[0].clientX - tx;
+      if (dx < -40) show(idx + 1); else if (dx > 40) show(idx - 1);
+    }, { passive: true });
+    // keys
+    W._keyHandler = e => {
+      if (e.key === "ArrowRight" || e.key === " ") show(idx + 1);
+      if (e.key === "ArrowLeft") show(idx - 1);
+      if (e.key === "Escape") close();
+    };
+    document.addEventListener("keydown", W._keyHandler);
+    show(0);
+  }
+
+  function close() {
+    const ov = document.getElementById("wrapped-overlay");
+    if (ov) ov.classList.remove("show");
+    if (W._keyHandler) document.removeEventListener("keydown", W._keyHandler);
+  }
+
+  function share() {
+    alert("Tip: use your device screenshot to capture and share this card.\n\n(A built-in image export can be added later.)");
+  }
+
+  W.open = open;
+  W.close = close;
+  W.share = share;
+
+})(window.WrappedUI = window.WrappedUI || {});
+
+
+/* ════════ WRAPPED INTEGRATION (Outcome1 beta) ════════ */
+function wrappedButtonHTML(){
+  const lc = lastCompletedMonth();
+  const mName = ["January","February","March","April","May","June","July","August","September","October","November","December"][lc.month-1];
+  const s = WrappedEngine.gatherStats(wrappedAdapter(), lc.year, lc.month);
+  const has = s.totalEntries > 0;
+  return `<div onclick="${has?`openWrapped(${lc.year},${lc.month})`:''}" style="cursor:${has?'pointer':'default'};margin-bottom:18px;border-radius:14px;padding:18px 20px;background:linear-gradient(135deg,#7c5cff,#b94fff 55%,#ff4f9a);display:flex;align-items:center;justify-content:space-between;gap:14px;${has?'':'opacity:.55;'}">
+    <div>
+      <div style="font-family:var(--mono,monospace);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);margin-bottom:5px;">✨ New</div>
+      <div style="font-weight:800;font-size:19px;letter-spacing:-.02em;color:#fff;">Your ${mName} Wrapped</div>
+      <div style="font-family:var(--mono,monospace);font-size:11px;color:rgba(255,255,255,.85);margin-top:3px;">${has?`${s.totalEntries} entries · tap to relive your month →`:'Log some entries this month to unlock'}</div>
+    </div>
+    <div style="font-size:30px;">${has?'→':'🔒'}</div>
+  </div>`;
+}
+function wrappedAdapter(){
+  // Beta app already stores state.logbook.{clinics,procedures,teaching,cpd,simulation,acute}
+  // Engine expects exactly this shape, so pass state through directly.
+  return state;
+}
+function openWrapped(year, month){
+  const now = new Date();
+  if(year===undefined){
+    // default to last completed month
+    const d = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    year = d.getFullYear(); month = d.getMonth()+1;
+  }
+  const summary = buildMonthlySummary(year, month, wrappedAdapter());
+  const name = (state.profile && state.profile.name) ? state.profile.name.split(' ').slice(-1)[0] : '';
+  const specShort = (typeof specCfg==='function' ? specCfg().short : 'Renal');
+  WrappedUI.open(summary, { brand: specShort+' Wrapped', title: name });
+}
+function lastCompletedMonth(){
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  return { year:d.getFullYear(), month:d.getMonth()+1 };
+}
+function maybeAutoRevealWrapped(){
+  if(!state.profile) return;
+  const lc = lastCompletedMonth();
+  const tag = lc.year+'-'+lc.month;
+  const seen = (state.profile.wrappedSeen)||[];
+  // only auto-reveal if there's data that month and not seen before
+  if(seen.includes(tag)) return;
+  const s = WrappedEngine.gatherStats(wrappedAdapter(), lc.year, lc.month);
+  if(s.totalEntries < 3) return; // don't auto-pop a near-empty month
+  state.profile.wrappedSeen = seen.concat([tag]);
+  saveState();
+  setTimeout(()=>openWrapped(lc.year, lc.month), 800);
+}
+
+function render(){ if(!state.profile){ initOnboarding(); return; } syncLogbookTargets(); setTheme(); document.getElementById('app').classList.add('ready'); document.getElementById('gate').classList.remove('show'); renderHeader(); renderTabs(); const trialExpired = renderBetaTrial(); if(trialExpired){ updateReadiness(); return; } if(currentTab==='today') renderToday(); if(currentTab==='roadmap') renderRoadmap(); if(currentTab==='specialty') renderSpecialty(); if(currentTab==='gim') renderGIM(); if(currentTab==='logbook') renderLogbookV2(); if(currentTab==='logbook-form') renderLogbookFormWrap(); if(currentTab==='admin') renderAdmin(); if(currentTab==='overview') renderOverview(); updateReadiness(); forceLiveStatus(); maybeAutoRevealWrapped(); }
 
 function betaTrialInfo(){
   if(!state.profile) return {expired:false, daysLeft:BETA_TRIAL_DAYS, start:Date.now(), end:Date.now()+BETA_TRIAL_DAYS*86400000};
@@ -1037,7 +1647,7 @@ function syncLogbookTargets(){ const clinics=entries('clinics').filter(e=>e.scop
 function renderAdmin(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const hosp=hospitalOptions(); document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Profile & deanery</span><span class="sec-rule"></span><span class="sec-note">Used in reports and hospital dropdowns</span></div><div class="panel"><div class="form-grid"><div class="field"><label>ALS expiry</label><input class="input" type="date" value="${state.als||''}" onchange="state.als=this.value;saveState();render()"></div><div class="field"><label>${currentYear} ARCP date</label><input class="input" type="date" value="${state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]}" onchange="state.arcpDates['${currentYear}']=this.value;saveState();render()"></div><div class="field full"><label>Add hospital</label><div class="row"><input class="input" id="new-hospital" placeholder="Add hospital not in deanery list"><button class="btn primary" onclick="addAdminHospital()">ADD</button></div></div></div></div></section><section class="section"><div class="sec-head"><span class="sec-title">Hospitals</span><span class="sec-rule"></span><span class="sec-note">${hosp.length} available · delete hospitals you are not rotating in</span></div><div class="grid">${hosp.map(h=>`<div class="card"><div class="card-title">${safe(h)}</div><button class="btn small danger" onclick="deleteHospital('${safe(h)}')">Delete from list</button></div>`).join('')}</div></section>`; }
 function addAdminHospital(){ const h=val('new-hospital'); if(!h)return; addHospitalIfNew(h); renderAdmin(); }
 function removeHospital(h){ state.hospitals=(state.hospitals||[]).filter(x=>x!==h); saveState(); renderAdmin(); }
-function renderOverview(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const spec=calcReqs(specReqs()), gim=calcReqs(GIM_REQS); const outstanding=[...Object.entries(specReqs()).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'spec')),...Object.entries(GIM_REQS).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'gim'))]; document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Overview — ${currentYear}</span><span class="sec-rule"></span></div><div class="summary-grid"><div class="summary"><div class="big green">${spec.met}</div><div class="hint">${specCfg().short} complete</div></div><div class="summary"><div class="big red">${spec.open}</div><div class="hint">${specCfg().short} outstanding</div></div><div class="summary"><div class="big green">${gim.met}</div><div class="hint">GIM complete</div></div><div class="summary"><div class="big red">${gim.open}</div><div class="hint">GIM outstanding</div></div><div class="summary"><div class="big primary">${entries('clinics').length+entries('procedures').length+entries('cpd').length+entries('simulation').length+entries('teaching').length}</div><div class="hint">logbook entries</div></div></div></section>${outstanding.length?section('Outstanding / in progress','Editable unless year locked',outstanding):'<div class="panel green">✓ All visible requirements met for this year.</div>'}`; }
+function renderOverview(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const spec=calcReqs(specReqs()), gim=calcReqs(GIM_REQS); const outstanding=[...Object.entries(specReqs()).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'spec')),...Object.entries(GIM_REQS).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'gim'))]; document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Overview — ${currentYear}</span><span class="sec-rule"></span></div>${wrappedButtonHTML()}<div class="summary-grid"><div class="summary"><div class="big green">${spec.met}</div><div class="hint">${specCfg().short} complete</div></div><div class="summary"><div class="big red">${spec.open}</div><div class="hint">${specCfg().short} outstanding</div></div><div class="summary"><div class="big green">${gim.met}</div><div class="hint">GIM complete</div></div><div class="summary"><div class="big red">${gim.open}</div><div class="hint">GIM outstanding</div></div><div class="summary"><div class="big primary">${entries('clinics').length+entries('procedures').length+entries('cpd').length+entries('simulation').length+entries('teaching').length}</div><div class="hint">logbook entries</div></div></div></section>${outstanding.length?section('Outstanding / in progress','Editable unless year locked',outstanding):'<div class="panel green">✓ All visible requirements met for this year.</div>'}`; }
 function calcReqs(reqs){ const arr=Object.entries(reqs).filter(([id,r])=>r.deadline==='annual'||yrIndex(r.deadline)<=yrIndex()); const met=arr.filter(([id,r])=>reqStatus(id,r)==='met').length; return {met,total:arr.length,open:arr.length-met,pct:arr.length?Math.round(met/arr.length*100):0}; }
 function updateReadiness(){ if(!state.profile)return; const spec=calcReqs(specReqs()), gim=calcReqs(GIM_REQS); document.getElementById('spec-pct').textContent=spec.pct+'%'; document.getElementById('spec-fill').style.width=spec.pct+'%'; document.getElementById('gim-pct').textContent=gim.pct+'%'; document.getElementById('gim-fill').style.width=gim.pct+'%'; document.getElementById('readiness-detail').textContent=`${specCfg().short} ${spec.met}/${spec.total} · GIM ${gim.met}/${gim.total}`; }
 function resetYearData(){ if(yearLocked()) return alert('This year is locked. Unlock it before resetting.'); if(!confirm(`Reset annual requirement data for ${currentYear}? Cumulative logbook data is preserved.`)) return; Object.keys(state.req).forEach(k=>{ if(k.startsWith(currentYear+'.')) delete state.req[k]; }); saveState(); render(); }
@@ -2151,7 +2761,7 @@ function renderOverview(){
   if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
   const spec=calcReqsWithExtra(specReqs(), specDopsStats()), gim=calcReqsWithExtra(GIM_REQS, gimDopsStats());
   const outstanding=[...Object.entries(specReqs()).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'spec')),...Object.entries(GIM_REQS).filter(([id,r])=>['unmet','partial'].includes(reqStatus(id,r))).map(([id,r])=>makeReqCard(id,r,'gim'))];
-  document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Overview — ${currentYear}</span><span class="sec-rule"></span></div><div class="summary-grid"><div class="summary"><div class="big green">${spec.met}</div><div class="hint">${specCfg().short} complete incl DOPS</div></div><div class="summary"><div class="big red">${spec.open}</div><div class="hint">${specCfg().short} outstanding incl DOPS</div></div><div class="summary"><div class="big green">${gim.met}</div><div class="hint">GIM complete incl DOPS</div></div><div class="summary"><div class="big red">${gim.open}</div><div class="hint">GIM outstanding incl DOPS</div></div><div class="summary"><div class="big primary">${entries('clinics').length+entries('procedures').length+entries('cpd').length+entries('simulation').length+entries('teaching').length}</div><div class="hint">logbook entries</div></div></div></section>${outstanding.length?section('Outstanding / in progress','Editable unless year locked',outstanding):'<div class="panel green">✓ All visible requirements met for this year.</div>'}`;
+  document.getElementById('main').innerHTML=`<section class="section"><div class="sec-head"><span class="sec-title">Overview — ${currentYear}</span><span class="sec-rule"></span></div>${wrappedButtonHTML()}<div class="summary-grid"><div class="summary"><div class="big green">${spec.met}</div><div class="hint">${specCfg().short} complete incl DOPS</div></div><div class="summary"><div class="big red">${spec.open}</div><div class="hint">${specCfg().short} outstanding incl DOPS</div></div><div class="summary"><div class="big green">${gim.met}</div><div class="hint">GIM complete incl DOPS</div></div><div class="summary"><div class="big red">${gim.open}</div><div class="hint">GIM outstanding incl DOPS</div></div><div class="summary"><div class="big primary">${entries('clinics').length+entries('procedures').length+entries('cpd').length+entries('simulation').length+entries('teaching').length}</div><div class="hint">logbook entries</div></div></div></section>${outstanding.length?section('Outstanding / in progress','Editable unless year locked',outstanding):'<div class="panel green">✓ All visible requirements met for this year.</div>'}`;
 }
 window.renderHeader=renderHeader; window.updateReadiness=updateReadiness; window.renderGIM=renderGIM; window.renderAdmin=renderAdmin; window.renderOverview=renderOverview;
 try{ render(); forceLiveStatus(); }catch(e){ console.warn('V12 refresh skipped',e); }
