@@ -3320,6 +3320,11 @@ function printLogbookReport() {
   const teaching     = filterByYear(getLbEntries("teaching"));
   const simulation   = getLbEntries("simulation");
   const totalSimHrs  = simulation.reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
+  const acuteTakeEntries = getLbEntries("acute_take");
+  const totalAcutePts = acuteTakeEntries.reduce((a,e) => a+(parseFloat(e.estimated)||0), 0);
+  const totalAcuteMonths = acuteTakeEntries.reduce((a,e) => a+(parseFloat(e.months)||0), 0);
+  const wardCoverEntries = getLbEntries("ward_cover");
+  const totalWardMonths = wardCoverEntries.reduce((a,e) => a+(parseFloat(e.months)||0), 0);
   const st7SimHrs    = simulation.filter(e => e.year==="ST7").reduce((a,e) => a+(parseFloat(e.hours)||0), 0);
  
   const GIM_COUNTED_TYPES = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
@@ -3436,6 +3441,8 @@ function printLogbookReport() {
     <div class="sum-box" style="--c:#166534"><div class="num">${renalProcs.length + gimProcs.length}</div><div class="key">Procedures (${yr})</div></div>
     <div class="sum-box" style="--c:#005EB8"><div class="num">${Math.round(gimAllHrs + renalCpdHrs)}h</div><div class="key">Teaching — GIM + Renal</div></div>
     <div class="sum-box" style="--c:#0e7490"><div class="num">${Math.round(totalSimHrs)}h</div><div class="key">Simulation (total)</div></div>
+    <div class="sum-box" style="--c:#b45309"><div class="num">${Math.round(totalAcutePts)}</div><div class="key">Acute Take patients (est.)</div></div>
+    <div class="sum-box" style="--c:#7c3aed"><div class="num">${Math.round(totalWardMonths*10)/10}</div><div class="key">Ward Cover (months)</div></div>
   </div>
  
   ${secHead("Clinics","both")}
