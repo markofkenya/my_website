@@ -1746,7 +1746,10 @@ function renderLogCPD(){
           ${refl?`<div style="font-size:11px;margin-top:5px;color:var(--text);font-style:italic;opacity:.9"><span style="opacity:.6;font-style:normal">Reflection:</span> ${refl}</div>`:''}
           ${e.cert&&e.cert.url?`<a href="${e.cert.url}" target="_blank" rel="noopener" style="font-size:10px;margin-top:7px;display:inline-block;color:var(--gim);text-decoration:none">📎 ${e.cert.name||'Certificate'}</a>`:''}
         </div>
-        <button class="btn tiny danger" onclick="deleteEntry('cpd',${e.id})">✕</button>
+        <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
+          <button class="btn tiny" onclick="editCpdEntry(${e.id})">Edit</button>
+          <button class="btn tiny danger" onclick="deleteEntry('cpd',${e.id})">✕</button>
+        </div>
       </div>
     </div>`;
   };
@@ -1965,6 +1968,70 @@ function cpdAutoCategory(scope){
   const t = document.getElementById('cpd-'+scope+'-type').value;
   const catEl = document.getElementById('cpd-'+scope+'-category');
   if(catEl) catEl.value = cpdCategoryFor(t);
+}
+function editCpdEntry(id){
+  if(typeof yearLocked==='function' && yearLocked()) return alert('This year is locked. Unlock it before editing.');
+  const arr = entries('cpd');
+  const e = arr.find(x=>x.id===id);
+  if(!e) return;
+  if(typeof canEditEntry==='function' && !canEditEntry(e)) return alert('Editing window for this entry has passed.');
+
+  const typeOpts = CPD_DIARY_TYPES.map(t=>`<option ${t===e.type?'selected':''}>${t}</option>`).join('');
+  const catOpts = ['External','Internal'].map(c=>`<option ${c===(e.category||cpdCategoryFor(e.type))?'selected':''}>${c}</option>`).join('');
+  const yrOpts = YEARS.map(y=>`<option ${y===e.year?'selected':''}>${y}</option>`).join('');
+  const scopeOpts = [['spec', (typeof specCfg==='function'?specCfg().short:'Renal')],['gim','GIM']].map(([v,l])=>`<option value="${v}" ${v===(e.scope||'spec')?'selected':''}>${l}</option>`).join('');
+  const esc = s => String(s||'').replace(/"/g,'&quot;');
+
+  const existing = document.getElementById('cpd-edit-modal');
+  if(existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'cpd-edit-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(8,10,16,.72);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;';
+  modal.innerHTML = `
+    <div style="background:var(--panel,#15171f);border:1px solid var(--border,#2a2e3a);border-radius:14px;padding:22px;max-width:520px;width:100%;max-height:90vh;overflow:auto;">
+      <div style="font-weight:800;font-size:16px;letter-spacing:-.01em;margin-bottom:14px;color:var(--text)">Edit CPD entry</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Stream</label><select class="input" id="ce-scope">${scopeOpts}</select></div>
+        <div class="field"><label>CPD type</label><select class="input" id="ce-type">${typeOpts}</select></div>
+        <div class="field"><label>Category</label><select class="input" id="ce-category">${catOpts}</select></div>
+        <div class="field"><label>Date</label><input class="input" id="ce-date" type="date" value="${esc(e.date)}"></div>
+        <div class="field"><label>Hours</label><input class="input" id="ce-hours" type="number" min="0" step="0.5" value="${esc(e.hours)}"></div>
+        <div class="field"><label>Training year</label><select class="input" id="ce-year">${yrOpts}</select></div>
+        <div class="field" style="grid-column:1/-1"><label>Activity / title</label><input class="input" id="ce-title" value="${esc(e.title)}"></div>
+        <div class="field" style="grid-column:1/-1"><label>Provider / location</label><input class="input" id="ce-provider" value="${esc(e.provider)}"></div>
+        <div class="field" style="grid-column:1/-1"><label>Key learning points</label><input class="input" id="ce-learning" value="${esc(e.learning)}"></div>
+        <div class="field" style="grid-column:1/-1"><label>Reflection</label><textarea class="input" id="ce-reflection" rows="4">${(e.reflection||'').replace(/</g,'&lt;')}</textarea></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button class="btn small" onclick="document.getElementById('cpd-edit-modal').remove()">Cancel</button>
+        <button class="btn small primary" onclick="saveCpdEdit(${id})">Save changes</button>
+      </div>
+    </div>`;
+  modal.addEventListener('click', ev=>{ if(ev.target===modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+function saveCpdEdit(id){
+  const arr = entries('cpd');
+  const idx = arr.findIndex(x=>x.id===id);
+  if(idx<0) return;
+  const g = fid => { const el = document.getElementById(fid); return el ? el.value.trim() : ''; };
+  const e = arr[idx];
+  e.scope = g('ce-scope');
+  e.type = g('ce-type');
+  e.category = g('ce-category');
+  e.date = g('ce-date');
+  e.hours = g('ce-hours');
+  e.year = g('ce-year');
+  e.title = g('ce-title');
+  e.provider = g('ce-provider');
+  e.learning = g('ce-learning');
+  e.reflection = g('ce-reflection');
+  e.updatedAt = Date.now();
+  arr[idx] = e;
+  saveEntries('cpd', arr);
+  const m = document.getElementById('cpd-edit-modal');
+  if(m) m.remove();
+  render();
 }
 function saveCPD(scope='spec'){ const prefix=`cpd-${scope}`; const cert=(window._cpdPendingCert&&window._cpdPendingCert[scope])||null; addEntry('cpd',{scope,type:val(`${prefix}-type`),category:val(`${prefix}-category`),date:val(`${prefix}-date`),title:val(`${prefix}-title`),provider:val(`${prefix}-provider`),hours:val(`${prefix}-hours`),year:val(`${prefix}-year`),learning:val(`${prefix}-learning`),reflection:val(`${prefix}-reflection`),cert}); if(window._cpdPendingCert) delete window._cpdPendingCert[scope]; }
 function renderSimpleLog(k,title,fields,cols,types){ const html=fields.map(f=>{ if(f==='date')return `<div class="field"><label>Date</label><input class="input" id="sl-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>`; if(f==='hospital')return hospitalField('sl-hospital'); if(f==='year')return `<div class="field"><label>Year</label><select class="input" id="sl-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div>`; if((f==='type'||f==='course') && Array.isArray(types))return `<div class="field"><label>${f}</label><select class="input" id="sl-${f}">${optionsHtml(types)}</select></div>`; return `<div class="field"><label>${f}</label><input class="input" id="sl-${f}" ${f==='hours'?'type="number" step="0.5" min="0"':''}></div>`; }).join(''); const arr=entries(k); document.getElementById('log-content').innerHTML=formPanel(`Add ${title}`,html,`saveSimple('${k}','${fields.join('|')}')`)+section(`${title} log`,`${arr.length} entries`,[`<div class="card" style="grid-column:1/-1">${table(k, cols, e=>fields.slice(1).map(f=>f==='date'?fmtDate(e[f]):e[f]))}</div>`]); }
