@@ -1994,6 +1994,7 @@ function editCpdEntry(id){
   const scopeOpts = [['spec', (typeof specCfg==='function'?specCfg().short:'Renal')],['gim','GIM']].map(([v,l])=>`<option value="${v}" ${v===(e.scope||'spec')?'selected':''}>${l}</option>`).join('');
   const esc = s => String(s||'').replace(/"/g,'&quot;');
 
+  window._cpdEditCert = null;
   const existing = document.getElementById('cpd-edit-modal');
   if(existing) existing.remove();
   const modal = document.createElement('div');
@@ -2013,6 +2014,7 @@ function editCpdEntry(id){
         <div class="field" style="grid-column:1/-1"><label>Provider / location</label><input class="input" id="ce-provider" value="${esc(e.provider)}"></div>
         <div class="field" style="grid-column:1/-1"><label>Key learning points</label><input class="input" id="ce-learning" value="${esc(e.learning)}"></div>
         <div class="field" style="grid-column:1/-1"><label>Reflection</label><textarea class="input" id="ce-reflection" rows="4">${(e.reflection||'').replace(/</g,'&lt;')}</textarea></div>
+        <div class="field" style="grid-column:1/-1"><label>Certificate / evidence ${e.cert&&e.cert.url?`<a href="${e.cert.url}" target="_blank" style="color:var(--gim);font-weight:400;font-size:11px">· 📎 current: ${esc(e.cert.name||'file')}</a>`:'<span style="opacity:.6;font-weight:400">· none attached</span>'}</label><input type="file" id="ce-file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" style="font-size:11px;color:var(--dim)" onchange="cpdUploadCertEdit()"><div class="hint" id="ce-uploadprog" style="display:none;margin-top:5px;font-size:10px"></div></div>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
         <button class="btn small" onclick="document.getElementById('cpd-edit-modal').remove()">Cancel</button>
@@ -2021,6 +2023,28 @@ function editCpdEntry(id){
     </div>`;
   modal.addEventListener('click', ev=>{ if(ev.target===modal) modal.remove(); });
   document.body.appendChild(modal);
+}
+function cpdUploadCertEdit(){
+  const fi = document.getElementById('ce-file');
+  const file = fi && fi.files && fi.files[0];
+  if(!file) return;
+  if(!window.ARCP_FB || !window.ARCP_FB.storage){ alert('Storage not ready — try again in a moment.'); return; }
+  if(file.size > 10*1024*1024){ alert('File too large (max 10MB).'); return; }
+  const prog = document.getElementById('ce-uploadprog');
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+  const uid = (window.ARCP_FB.user && window.ARCP_FB.user.uid) || 'anon';
+  const path = `cpdCerts/${uid}/${Date.now()}_${safeName}`;
+  const { storage, sRef, uploadBytesResumable, getDownloadURL } = window.ARCP_FB;
+  const task = uploadBytesResumable(sRef(storage, path), file);
+  if(prog){ prog.style.display='block'; prog.textContent='Uploading… 0%'; }
+  task.on('state_changed',
+    snap => { if(prog) prog.textContent='Uploading… '+Math.round((snap.bytesTransferred/snap.totalBytes)*100)+'%'; },
+    err => { if(prog) prog.textContent='Upload failed: '+err.message; },
+    async () => { const url = await getDownloadURL(task.snapshot.ref);
+      window._cpdEditCert = { url, name:file.name, path, size:file.size };
+      if(prog) prog.textContent='✓ Attached: '+file.name;
+    }
+  );
 }
 function saveCpdEdit(id){
   const arr = entries('cpd');
@@ -2038,6 +2062,7 @@ function saveCpdEdit(id){
   e.provider = g('ce-provider');
   e.learning = g('ce-learning');
   e.reflection = g('ce-reflection');
+  if(window._cpdEditCert){ e.cert = window._cpdEditCert; window._cpdEditCert = null; }
   e.updatedAt = Date.now();
   arr[idx] = e;
   saveEntries('cpd', arr);
