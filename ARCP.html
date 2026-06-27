@@ -16,6 +16,7 @@
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey:            "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
@@ -28,12 +29,13 @@
     };
 
     const app          = initializeApp(firebaseConfig);
-    signInAnonymously(getAuth(app)).then(c => console.log("UID:", c.user.uid));
+    signInAnonymously(getAuth(app)).then(c => { console.log("UID:", c.user.uid); window._arcp_fb.uid = c.user.uid; });
     const db           = getDatabase(app);
     const dataRef      = ref(db, "arcpData");
     const logbookRef   = ref(db, "logbookData");
 
-    window._arcp_fb = { update, dataRef, logbookRef, db, ref };
+    const storage = getStorage(app);
+    window._arcp_fb = { update, dataRef, logbookRef, db, ref, storage, sRef, uploadBytesResumable, getDownloadURL, uid:null };
 
     // ── Logbook sync — separate path, raw JSON per type ──────────────────────
         onValue(logbookRef, snap => {
@@ -2062,6 +2064,16 @@ const LOGBOOK_PROCEDURES_GIM = [
 
 const CPD_TYPES_GIM = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Grand round(attended)", "Departmental teaching", "Journal club", "Other GIM CPD", "Other external CPD"];
 const CPD_TYPES_RENAL = ["Renal study day","Renal conference","Northern Postgraduate Nephrology Course","Grand round (attended)","M&M / mortality meeting","Departmental teaching / journal club","Other renal CPD"];
+
+// ── CPD Diary types + category (personal app port) ──
+const CPD_DIARY_TYPES = ["Course / workshop","Conference","E-learning / online module","Journal club","Journal article","MDT meeting","M&M / clinical governance meeting","Grand round","Departmental teaching (attended)","Regional training day","Webinar","Audit / QI meeting","Simulation (attended)","Other"];
+const CPD_INTERNAL_DEFAULT = ["Journal club","Journal article","MDT meeting","M&M / clinical governance meeting","Grand round","Departmental teaching (attended)","Audit / QI meeting","Simulation (attended)"];
+function cpdCategoryFor(type){ return CPD_INTERNAL_DEFAULT.includes(type) ? "Internal" : "External"; }
+// Online detection for the 15h cap — new e-learning type + legacy "Online CPD"
+function cpdIsOnline(e){ return e.type === "E-learning / online module" || e.type === "Online CPD"; }
+// External (counts toward GIM target) — category if present, else legacy type-set
+const LEGACY_GIM_COUNTED = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
+function cpdIsExternalP(e){ if(e.category) return e.category === "External"; if(LEGACY_GIM_COUNTED.includes(e.type)) return true; return cpdCategoryFor(e.type) === "External"; }
 const SIM_COURSE_TYPES = ["GIMME","NOTES","Other simulation course"];
 const TEACHING_TYPES = ["Bedside teaching","Tutorial / seminar","Grand round presentation","Journal club","Simulation facilitation","Medical student supervision","Foundation doctor supervision","Audit / QIP presentation","Other"];
 const CLINIC_TYPES_GIM   = ["GIM outpatient clinic","Medical SDEC","Community clinic","Other GIM clinic"];
@@ -2138,22 +2150,22 @@ function registerLbFields(type, fields) { LB_FIELD_DEFS[type] = fields; }
 function cpdSummary() {
   const gimEntries   = getLbEntries("cpd_gim");
   const ONLINE_LIMIT = 15;
-  const GIM_COUNTED_TYPES = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
-  const onlineHrs    = gimEntries.filter(e => e.type === "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+  // External = counts toward GIM target (category-based, legacy fallback). Online = e-learning, capped at 15h.
+  const onlineHrs    = gimEntries.filter(e => cpdIsOnline(e)).reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
   const onlineCapped = Math.min(onlineHrs, ONLINE_LIMIT);
-  const externalHrs  = gimEntries.filter(e => GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+  const externalHrs  = gimEntries.filter(e => cpdIsExternalP(e) && !cpdIsOnline(e)).reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
   const total        = externalHrs + onlineCapped;
-    const currentYrHrs = gimEntries.filter(e => e.year === currentYear && GIM_COUNTED_TYPES.includes(e.type)).reduce((acc,e) => {
+    const currentYrHrs = gimEntries.filter(e => e.year === currentYear && cpdIsExternalP(e)).reduce((acc,e) => {
     const h = parseFloat(e.hours) || 0;
-    if (e.type === "Online CPD") {
-      const allOnlineYr = gimEntries.filter(x => x.type === "Online CPD" && x.year === currentYear).reduce((a,x) => a+(parseFloat(x.hours)||0),0);
+    if (cpdIsOnline(e)) {
+      const allOnlineYr = gimEntries.filter(x => cpdIsOnline(x) && x.year === currentYear).reduce((a,x) => a+(parseFloat(x.hours)||0),0);
       return acc + (allOnlineYr > ONLINE_LIMIT ? h * (ONLINE_LIMIT / allOnlineYr) : h);
     }
     return acc + h;
   }, 0);
 
-  const st7OnlineHrs = gimEntries.filter(e => e.year === "ST7" && e.type === "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
-  const st7ExternalHrs = gimEntries.filter(e => e.year === "ST7" && GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+  const st7OnlineHrs = gimEntries.filter(e => e.year === "ST7" && cpdIsOnline(e)).reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+  const st7ExternalHrs = gimEntries.filter(e => e.year === "ST7" && cpdIsExternalP(e) && !cpdIsOnline(e)).reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
   const st7Hrs = st7ExternalHrs + Math.min(st7OnlineHrs, ONLINE_LIMIT);
 
   return {
@@ -2346,6 +2358,45 @@ function renderLbProcedures(el) {
 // ════════════════════════════════════════════════════
 //  CPD / STUDY LEAVE
 // ════════════════════════════════════════════════════
+function cpdUploadCertP(formId){
+  var fi = document.getElementById(formId+'-file') || document.getElementById(formId+'-cert');
+  var file = fi && fi.files && fi.files[0];
+  if(!file) return;
+  var fb = window._arcp_fb;
+  if(!fb || !fb.storage){ alert('Storage not ready — try again in a moment.'); return; }
+  if(file.size > 10*1024*1024){ alert('File too large (max 10MB).'); return; }
+  var prog = document.getElementById(formId+'-uploadprog');
+  var uid = fb.uid || 'anon';
+  var safe = file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+  var path = 'cpdCerts/'+uid+'/'+Date.now()+'_'+safe;
+  var task = fb.uploadBytesResumable(fb.sRef(fb.storage, path), file);
+  if(prog){ prog.style.display='block'; prog.textContent='Uploading… 0%'; }
+  task.on('state_changed',
+    function(snap){ if(prog) prog.textContent='Uploading… '+Math.round((snap.bytesTransferred/snap.totalBytes)*100)+'%'; },
+    function(err){ if(prog) prog.textContent='Upload failed: '+err.message; },
+    function(){ fb.getDownloadURL(task.snapshot.ref).then(function(url){
+      window._cpdPendingCertP = window._cpdPendingCertP || {};
+      window._cpdPendingCertP[formId] = { url:url, name:file.name, path:path };
+      if(prog) prog.textContent='✓ Attached: '+file.name;
+    }); }
+  );
+}
+function cpdAutoCatP(formId){
+  var t = document.getElementById(formId+'-type');
+  var c = document.getElementById(formId+'-category');
+  if(t && c) c.value = cpdCategoryFor(t.value);
+}
+function cpdDiaryRow(e){
+  const cat = e.category || cpdCategoryFor(e.type);
+  const bits = [e.type || "CPD"];
+  if(e.title) bits.push(e.title);
+  bits.push(cat);
+  if(e.provider) bits.push(e.provider);
+  bits.push((e.hours||0)+"h");
+  bits.push(e.year||"");
+  if(e.cert && e.cert.url) bits.push("📎");
+  return bits.filter(Boolean).join(" · ");
+}
 function renderLbCPD(el) {
   const gimEntries   = getLbEntries("cpd_gim");
   const renalEntries = getLbEntries("cpd_renal");
@@ -2378,30 +2429,44 @@ function renderLbCPD(el) {
     </div>`;
   el.appendChild(sumDiv);
 
+  // CPD diary export buttons
+  const expDiv = document.createElement("div");
+  expDiv.style.cssText = "display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;";
+  expDiv.innerHTML = `
+    <button class="btn-reset" style="border-color:var(--blue);color:var(--blue);" onclick="exportCpdDiaryP()">⎙ CPD Diary report</button>
+    <button class="btn-reset" style="border-color:var(--dim);color:var(--dim);" onclick="exportCpdDataP()">⬇ Export data (JSON)</button>`;
+  el.appendChild(expDiv);
+
   // Renal CPD
 // Renal CPD
-  el.appendChild(makeLbForm("cpd_renal", "ADD RENAL TEACHING", "renal", [
-    { id:"date",    label:"Date",         type:"date" },
-    { id:"type",    label:"CPD type",     type:"select", options: CPD_TYPES_RENAL },
-    { id:"title",   label:"Title / event",type:"text", placeholder:"e.g. Renal association conference" },
-    { id:"hours",   label:"Hours",        type:"number", placeholder:"e.g. 6" },
-    { id:"year",    label:"Training year",type:"select", options:["ST4","ST5","ST6","ST7"] },
-    { id:"notes",   label:"Notes",        type:"text", placeholder:"Optional" },
+  el.appendChild(makeLbForm("cpd_renal", "ADD RENAL CPD / TEACHING", "renal", [
+    { id:"date",      label:"Date",            type:"date" },
+    { id:"type",      label:"CPD type",        type:"select", options: CPD_DIARY_TYPES, onChange:"cpdAutoCatP('FORMID')" },
+    { id:"category",  label:"Category",        type:"select", options:["External","Internal"] },
+    { id:"title",     label:"Activity / title",type:"text", placeholder:"e.g. UK Kidney Week" },
+    { id:"provider",  label:"Provider / location", type:"text", placeholder:"e.g. UKKA, Leeds" },
+    { id:"hours",     label:"Hours",           type:"number", placeholder:"e.g. 6" },
+    { id:"year",      label:"Training year",   type:"select", options:["ST4","ST5","ST6","ST7"] },
+    { id:"learning",  label:"Key learning points", type:"text", placeholder:"Main takeaways" },
+    { id:"reflection",label:"Reflection — what will you do differently?", type:"textarea", placeholder:"Impact on practice / patients" },
+    { id:"cert",      label:"Certificate / evidence (optional, max 10MB)", type:"file" },
   ], currentYear));
-  el.appendChild(makeLbSection("RENAL TEACHING ENTRIES", "renal", renalEntries, "cpd_renal",
-    e => `${e.type || "CPD"} · ${e.title || "—"} · ${e.hours || 0}h · ${e.year || ""}`, false));
+  el.appendChild(makeLbSection("RENAL CPD / TEACHING ENTRIES", "renal", renalEntries, "cpd_renal", cpdDiaryRow, false));
 
   // GIM CPD add form
-  el.appendChild(makeLbForm("cpd_gim", "ADD GIM TEACHING", "gim", [
-    { id:"date",    label:"Date",         type:"date" },
-    { id:"type",    label:"CPD type",     type:"select", options: CPD_TYPES_GIM },
-    { id:"title",   label:"Title / event",type:"text", placeholder:"e.g. GIM training day — cardiology" },
-    { id:"hours",   label:"Hours",        type:"number", placeholder:"e.g. 6" },
-    { id:"year",    label:"Training year",type:"select", options:["ST4","ST5","ST6","ST7"] },
-    { id:"notes",   label:"Notes",        type:"text", placeholder:"Optional" },
+  el.appendChild(makeLbForm("cpd_gim", "ADD GIM CPD / TEACHING", "gim", [
+    { id:"date",      label:"Date",            type:"date" },
+    { id:"type",      label:"CPD type",        type:"select", options: CPD_DIARY_TYPES, onChange:"cpdAutoCatP('FORMID')" },
+    { id:"category",  label:"Category",        type:"select", options:["External","Internal"] },
+    { id:"title",     label:"Activity / title",type:"text", placeholder:"e.g. Regional GIM training day" },
+    { id:"provider",  label:"Provider / location", type:"text", placeholder:"e.g. RCP, Leeds" },
+    { id:"hours",     label:"Hours",           type:"number", placeholder:"e.g. 6" },
+    { id:"year",      label:"Training year",   type:"select", options:["ST4","ST5","ST6","ST7"] },
+    { id:"learning",  label:"Key learning points", type:"text", placeholder:"Main takeaways" },
+    { id:"reflection",label:"Reflection — what will you do differently?", type:"textarea", placeholder:"Impact on practice / patients" },
+    { id:"cert",      label:"Certificate / evidence (optional, max 10MB)", type:"file" },
   ], currentYear));
-  el.appendChild(makeLbSection("GIM TEACHING ENTRIES", "gim", gimEntries, "cpd_gim",
-    e => `${e.type || "CPD"} · ${e.title || "—"} · ${e.hours || 0}h · ${e.year || ""}`, true));
+  el.appendChild(makeLbSection("GIM CPD / TEACHING ENTRIES", "gim", gimEntries, "cpd_gim", cpdDiaryRow, true));
 }
 
 
@@ -2942,7 +3007,7 @@ function makeLbForm(type, title, stream, fields, defaultYear) {
       const otherLabel = f.otherLabel || "Please specify";
       const isSelectOther = f.type === "select_other";
       input = `<select id="${formId}-${f.id}" class="req-input" style="width:100%;padding:5px 8px;"
-          ${isSelectOther ? `onchange="var ow=document.getElementById('${formId}-${otherId}-wrap');if(ow)ow.style.display=this.value.startsWith('Other')?'flex':'none';"` : ""}>
+          ${f.onChange ? `onchange="${f.onChange.replace(/FORMID/g, formId)}"` : (isSelectOther ? `onchange="var ow=document.getElementById('${formId}-${otherId}-wrap');if(ow)ow.style.display=this.value.startsWith('Other')?'flex':'none';"` : "")}>
         ${(f.options || []).map(o => `<option value="${o}" ${defaultYear && o === defaultYear ? "selected" : ""}>${o}</option>`).join("")}
       </select>
       ${isSelectOther ? `<div id="${formId}-${otherId}-wrap" style="display:none;flex-direction:column;gap:4px;margin-top:4px;"><label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── ${otherLabel}</label><input id="${formId}-${otherId}" class="req-input" type="text" placeholder="${otherLabel}" style="width:100%;" /></div>` : ""}`;
@@ -2950,6 +3015,10 @@ function makeLbForm(type, title, stream, fields, defaultYear) {
       input = `<input id="${formId}-${f.id}" class="req-input date-inp" type="date" value="${new Date().toISOString().split('T')[0]}" style="width:100%;" />`;
     } else if (f.type === "number") {
       input = `<input id="${formId}-${f.id}" class="req-input" type="number" min="0" step="0.5" placeholder="${f.placeholder||''}" style="width:100%;" />`;
+    } else if (f.type === "textarea") {
+      input = `<textarea id="${formId}-${f.id}" class="req-input" rows="3" placeholder="${f.placeholder||''}" style="width:100%;resize:vertical;font-family:inherit;"></textarea>`;
+    } else if (f.type === "file") {
+      input = `<input id="${formId}-${f.id}" type="file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" style="width:100%;font-size:10px;color:var(--dim);" onchange="cpdUploadCertP('${formId}')" /><div id="${formId}-uploadprog" style="display:none;font-size:9px;color:var(--blue3);margin-top:3px;"></div>`;
     } else {
       input = `<input id="${formId}-${f.id}" class="req-input" type="text" value="${f.default||''}" placeholder="${f.placeholder||''}" style="width:100%;" />`;
     }
@@ -2990,12 +3059,19 @@ function submitLbForm(type, formId, fieldIds) {
     }
   });
   if (!entry.date) { alert("Please add a date"); return; }
+  // Attach uploaded certificate if present for this form
+  if (window._cpdPendingCertP && window._cpdPendingCertP[formId]) {
+    entry.cert = window._cpdPendingCertP[formId];
+    delete window._cpdPendingCertP[formId];
+  }
   addLbEntry(type, entry);
   // Reset text/number inputs
   fieldIds.forEach(fid => {
     const el = document.getElementById(`${formId}-${fid}`);
-    if (el && (el.type === "text" || el.type === "number")) el.value = "";
+    if (el && (el.type === "text" || el.type === "number" || el.tagName === "TEXTAREA")) el.value = "";
   });
+  const prog = document.getElementById(`${formId}-uploadprog`);
+  if (prog) { prog.style.display = "none"; prog.textContent = ""; }
   renderLogbook();
   updateReadiness();
 }
@@ -3297,6 +3373,108 @@ setTimeout(() => sendLogbookReport(true), 5000);
 // ══════════════════════════════════════════════════════
 //  PRINT REPORT
 // ══════════════════════════════════════════════════════
+function exportCpdDiaryP(){
+  const gim = getLbEntries("cpd_gim").map(e => Object.assign({stream:"GIM"}, e));
+  const renal = getLbEntries("cpd_renal").map(e => Object.assign({stream:"Renal"}, e));
+  const all = gim.concat(renal).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const fmt = d => { if(!d) return "—"; const p=String(d).split("-"); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d; };
+  const esc = s => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const hrs = arr => Math.round(arr.reduce((a,e)=>a+(parseFloat(e.hours)||0),0)*10)/10;
+
+  const totalHours = hrs(all);
+  const externalHrs = hrs(all.filter(e => (e.category||cpdCategoryFor(e.type))==="External"));
+  const internalHrs = Math.round((totalHours - externalHrs)*10)/10;
+  const gimExternalHrs = hrs(gim.filter(e => cpdIsExternalP(e)));
+  const gen = new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"long",year:"numeric"});
+
+  const byYear = {};
+  all.forEach(e => { const y=e.year||"Unassigned"; (byYear[y]=byYear[y]||[]).push(e); });
+
+  const entryBlock = e => {
+    const cat = e.category || cpdCategoryFor(e.type);
+    return `<div class="entry">
+      <div class="entry-head">
+        <div class="entry-title">${esc(e.title)||esc(e.type)||"CPD activity"}</div>
+        <div class="badges"><span class="badge str ${e.stream==="GIM"?"gim":"ren"}">${e.stream}</span><span class="badge ${cat==="Internal"?"int":"ext"}">${cat}</span></div>
+      </div>
+      <div class="entry-meta">${esc(fmt(e.date))} · ${esc(e.type)}${e.provider?" · "+esc(e.provider):""} · <strong>${esc(e.hours)||0} h</strong></div>
+      ${e.learning?`<div class="entry-field"><span class="lbl">Key learning</span>${esc(e.learning)}</div>`:""}
+      ${e.reflection?`<div class="entry-field"><span class="lbl">Reflection</span>${esc(e.reflection)}</div>`:""}
+      ${e.notes?`<div class="entry-field"><span class="lbl">Notes</span>${esc(e.notes)}</div>`:""}
+      ${e.cert&&e.cert.url?`<div class="entry-field"><span class="lbl">Evidence</span><a href="${e.cert.url}">${esc(e.cert.name)||"Certificate attached"}</a></div>`:""}
+    </div>`;
+  };
+
+  const yearsHtml = Object.keys(byYear).sort().map(y=>`
+    <h2 class="yr">${esc(y)} <span class="yr-n">${byYear[y].length} entr${byYear[y].length===1?"y":"ies"} · ${hrs(byYear[y])} h</span></h2>
+    ${byYear[y].map(entryBlock).join("")}`).join("");
+
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>CPD Diary — Mark Maugo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Newsreader',Georgia,serif;color:#1a1a1a;background:#f5f3ee;font-size:11pt;line-height:1.55;padding:24px}
+    .page{max-width:780px;margin:0 auto;background:#fff;padding:0 0 40px;box-shadow:0 2px 20px rgba(0,0,0,.08)}
+    .toolbar{padding:16px 36px 0;text-align:right}
+    .toolbar button{font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;background:#1a1a1a;color:#fff;border:none;padding:9px 16px;border-radius:4px;cursor:pointer}
+    .hd{padding:26px 36px 18px;border-bottom:2px solid #1a1a1a}
+    .hd .ec{font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#9a8f6a;margin-bottom:12px}
+    .hd h1{font-size:30px;font-weight:600;letter-spacing:-.01em}
+    .hd .sub{font-size:12px;color:#6b6657;margin-top:4px}
+    .stats{display:flex;border-bottom:1px solid #e2ddd0;padding:14px 36px}
+    .stats div{flex:1}
+    .stats .k{font-family:'Spline Sans Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:#9a8f6a;margin-bottom:3px}
+    .stats .v{font-size:18px;font-weight:600}
+    .body{padding:8px 36px}
+    h2.yr{font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin:24px 0 12px;padding-bottom:5px;border-bottom:1px solid #c9bfa6;display:flex;justify-content:space-between;align-items:baseline}
+    h2.yr .yr-n{font-family:'Newsreader',serif;font-size:10pt;color:#9a8f6a;text-transform:none;letter-spacing:0}
+    .entry{padding:12px 0;border-bottom:1px solid #eee7d8;break-inside:avoid}
+    .entry-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+    .entry-title{font-size:13pt;font-weight:600}
+    .badges{display:flex;gap:5px;flex-shrink:0}
+    .badge{font-family:'Spline Sans Mono',monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:20px;white-space:nowrap}
+    .badge.int{background:#eef6ee;color:#2e7d32}.badge.ext{background:#eef2fb;color:#1d4ed8}
+    .badge.str.gim{background:#eef2fb;color:#3730a3}.badge.str.ren{background:#fdeef4;color:#9d174d}
+    .entry-meta{font-family:'Spline Sans Mono',monospace;font-size:9.5px;color:#6b6657;margin-top:3px}
+    .entry-field{font-size:11pt;margin-top:7px;padding-left:12px;border-left:2px solid #e2ddd0}
+    .entry-field .lbl{display:block;font-family:'Spline Sans Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#9a8f6a;margin-bottom:2px}
+    .entry-field a{color:#1d4ed8}
+    .ai{margin:18px 36px 0;padding-top:10px;border-top:1px solid #e2ddd0;font-size:8.5pt;line-height:1.5;color:#9a8f6a;font-style:italic;max-width:70ch}
+    .ft{padding:10px 36px 0;font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#9a8f6a;display:flex;justify-content:space-between}
+    @media print{.toolbar{display:none}body{background:#fff;padding:0}.page{box-shadow:none}.badge{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style></head><body>
+  <div class="page">
+    <div class="toolbar"><button onclick="window.print()">⎙ Print / Save as PDF</button></div>
+    <div class="hd">
+      <div class="ec">Continuing Professional Development · Reflective Record</div>
+      <h1>CPD Diary</h1>
+      <div class="sub">Mark Maugo · Renal Medicine · GIM · Yorkshire &amp; Humber</div>
+    </div>
+    <div class="stats">
+      <div><div class="k">Total hours</div><div class="v">${totalHours} h</div></div>
+      <div><div class="k">External</div><div class="v">${externalHrs} h</div></div>
+      <div><div class="k">Internal</div><div class="v">${internalHrs} h</div></div>
+      <div><div class="k">GIM external</div><div class="v">${gimExternalHrs} h</div></div>
+      <div><div class="k">Entries</div><div class="v">${all.length}</div></div>
+    </div>
+    <div class="body">${all.length?yearsHtml:'<p style="padding:30px 0;color:#9a8f6a;font-style:italic">No CPD entries logged yet.</p>'}</div>
+    <div class="ai">This CPD diary was produced using a custom self-developed application with AI assistance. All clinical entries and reflections are my own record of activity undertaken.</div>
+    <div class="ft"><span>CPD Diary · Reflective record for appraisal</span><span>Generated ${gen}</span></div>
+  </div>
+  </body></html>`;
+
+  const win = window.open("", "_blank_"+Date.now());
+  if(!win){ alert("Please allow popups to view the CPD diary report."); return; }
+  win.document.write(html); win.document.close();
+}
+function exportCpdDataP(){
+  const data = { cpd_gim:getLbEntries("cpd_gim"), cpd_renal:getLbEntries("cpd_renal") };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href=url; a.download="cpd-diary-export.json"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
 function printLogbookReport() {
   const yr = currentYear;
   const yearMap = { ST4:2026, ST5:2027, ST6:2028, ST7:2029 };
