@@ -3630,7 +3630,7 @@ function printLogbookReport() {
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>ARCP Logbook Report — ${yr}</title>
+  <title>Logbook Report — ${yr}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111;background:#e0e4ee;padding:20px;}
@@ -3641,7 +3641,7 @@ function printLogbookReport() {
     .doc-meta{text-align:right;font-size:8.5pt;color:rgba(255,255,255,0.8);line-height:1.7;}
     .doc-meta strong{color:#fff;}
     .page-inner{padding:16px 20px;}
-    .info-box{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #ccd6e8;margin-bottom:16px;}
+    .info-box{display:grid;grid-template-columns:1.4fr 1.6fr 1fr 1fr;border:1px solid #ccd6e8;margin-bottom:16px;}
     .info-cell{padding:7px 11px;border-right:1px solid #ccd6e8;}
     .info-cell:last-child{border-right:none;}
     .info-cell .lbl{font-size:7pt;text-transform:uppercase;letter-spacing:0.1em;color:#666;margin-bottom:2px;}
@@ -3691,7 +3691,7 @@ function printLogbookReport() {
  
   <div class="doc-header">
     <div>
-      <h1>ARCP Logbook Report</h1>
+      <h1>Logbook Report</h1>
       <div class="subtitle">Renal Medicine &amp; General Internal Medicine · Dual CCT Training</div>
     </div>
     <div class="doc-meta">
@@ -3705,6 +3705,7 @@ function printLogbookReport() {
  
   <div class="info-box">
     <div class="info-cell"><div class="lbl">Programme</div><div class="val">Renal Medicine + GIM</div></div>
+    <div class="info-cell"><div class="lbl">Training No.</div><div class="val">YHD/015-001/7968369/C</div></div>
     <div class="info-cell"><div class="lbl">Current Year</div><div class="val">${yr}</div></div>
     <div class="info-cell"><div class="lbl">CCT Date</div><div class="val">Dec 2030</div></div>
   </div>
