@@ -1277,7 +1277,7 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
     #wrapped-overlay .c-person{background:linear-gradient(155deg,#120a2e,#3d1d8a 50%,#7c2dd6);}
     #wrapped-overlay .c-arcp{background:linear-gradient(160deg,#00897b,#26c6da);}
     #wrapped-overlay .c-summary{background:#0c0d14;}
-    #wrapped-overlay .wr-anim{animation:wrRise .55s cubic-bezier(.2,.8,.2,1) both;}
+    #wrapped-overlay .wr-anim{opacity:1;transform:none;} #wrapped-overlay .wr-card.show .wr-anim.is-in{animation:wrRise .55s cubic-bezier(.2,.8,.2,1) both;}
     #wrapped-overlay .wr-anim.d1{animation-delay:.06s;}#wrapped-overlay .wr-anim.d2{animation-delay:.14s;}
     #wrapped-overlay .wr-anim.d3{animation-delay:.22s;}#wrapped-overlay .wr-anim.d4{animation-delay:.30s;}
     #wrapped-overlay .wr-anim.d5{animation-delay:.38s;}
@@ -1369,15 +1369,18 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
       idx = Math.max(0, Math.min(cardEls.length - 1, n));
       cardEls.forEach((c, i) => c.classList.toggle("show", i === idx));
       segEls.forEach((s, i) => { s.classList.toggle("done", i < idx); s.classList.toggle("active", i === idx); });
-      // Re-trigger the entrance animation on the newly-shown card so each view animates in
+      // Re-trigger the entrance animation on the newly-shown card so each view animates in.
+      // Resting state is visible; .is-in plays the rise. Remove it elsewhere, re-add here after a reflow.
+      cardEls.forEach((c, i) => {
+        if (i !== idx) c.querySelectorAll(".wr-anim.is-in").forEach(el => el.classList.remove("is-in"));
+      });
       const active = cardEls[idx];
       if (active) {
-        active.querySelectorAll(".wr-anim").forEach(el => {
-          el.style.animation = "none";
-          // force reflow so the animation can restart
-          void el.offsetWidth;
-          el.style.animation = "";
-        });
+        const anims = active.querySelectorAll(".wr-anim");
+        anims.forEach(el => el.classList.remove("is-in"));
+        // force reflow so re-adding the class restarts the animation
+        void active.offsetWidth;
+        anims.forEach(el => el.classList.add("is-in"));
       }
       // On the final (summary) card, disable the nav tap-zones so the Save/share button is clickable
       const tz = ov.querySelector(".wr-tapzones");
@@ -1450,8 +1453,8 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
         });
         // Hide the share button itself in the capture so its label (e.g. "Rendering…") never bakes into the image
         doc.querySelectorAll('.wr-share').forEach(el=>{ el.style.display='none'; });
-        // Freeze entrance animations to their settled state so the capture isn't caught mid-animation
-        doc.querySelectorAll('.wr-anim').forEach(el=>{ el.style.animation='none'; el.style.opacity='1'; el.style.transform='none'; });
+        // Settle entrance animations for capture: remove .is-in so elements sit in their visible resting state
+        doc.querySelectorAll('.wr-anim').forEach(el=>{ el.classList.remove('is-in'); el.style.animation='none'; el.style.opacity='1'; el.style.transform='none'; });
         // Remove stylesheet rules that use color-mix() (unsupported by html2canvas)
         try {
           Array.from(doc.styleSheets).forEach(ss=>{
