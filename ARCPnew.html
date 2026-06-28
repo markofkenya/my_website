@@ -1061,7 +1061,7 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
     { id: "intro", fixed: true, order: 0,
       build: s => ({ skin: "c-intro", kicker: s._firstName ? `Hello, ${s._firstName}` : "Your month in nephrology",
         headline: `${s.monthName},\nwrapped.`,
-        sub: "A look back at everything you logged — clinics, procedures, teaching and the take. Tap through →" }) },
+        sub: "A look back at everything you logged this month — clinics, procedures and teaching. Tap through →" }) },
 
     { id: "totals", fixed: true, order: 1,
       build: s => {
@@ -1142,16 +1142,21 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
       } },
 
     { id: "summary", fixed: true, order: 99,
-      build: s => ({ skin: "c-summary", type: "summary",
-        cells: [
-          { v: s.counts.clinics, l: "Clinics" },
-          { v: s.counts.procedures, l: "Procedures", accent: true },
-          { v: s.hours.teaching + "h", l: "Teaching done" },
-          { v: s.hours.cpd + "h", l: "CPD", accent: true },
-        ],
-        foot: s.procRank.length
-          ? `Top procedure · ${s.procRank[0].name} ×${s.procRank[0].count}`
-          : "Keep logging — next month's story starts now." }) },
+      build: s => {
+        const persona = derivePersonality(s);
+        const topProc = s.procRank.length ? `Top procedure · ${s.procRank[0].name} ×${s.procRank[0].count}` : "";
+        const personaLine = persona && persona.name ? `Personality · ${persona.name}` : "";
+        return { skin: "c-summary", type: "summary",
+          eyebrow: `${s.monthName} ${s.year} · Dr ${s._lastName || s._firstName || "Trainee"}`,
+          cells: [
+            { v: s.counts.clinics, l: "Clinics" },
+            { v: s.counts.procedures, l: "Procedures", accent: true },
+            { v: s.hours.teaching + "h", l: "Teaching done" },
+            { v: s.hours.cpd + "h", l: "CPD", accent: true },
+          ],
+          foot: topProc,
+          foot2: personaLine || "Keep logging — next month's story starts now." };
+      } },
   ];
 
   // ── assemble the deck ─────────────────────────────────────────────
@@ -1161,6 +1166,7 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
     const maxCards = opts.maxCards || 8;
     const s = gatherStats(state, year, month);
     s._firstName = opts.firstName || "";
+    s._lastName = opts.lastName || "";
 
     const fixed = POOL.filter(c => c.fixed);
     const flexible = POOL.filter(c => !c.fixed);
@@ -1247,6 +1253,7 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
     #wrapped-overlay .wr-traits{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px;}
     #wrapped-overlay .wr-trait{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.04em;padding:7px 12px;border:1px solid rgba(255,255,255,.3);border-radius:30px;}
     #wrapped-overlay .wr-sum-head{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;margin-bottom:6px;}
+    #wrapped-overlay .wr-sum-eye{font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim,#8a8a82);margin-bottom:6px;}
     #wrapped-overlay .wr-sum-title{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1;margin-bottom:24px;}
     #wrapped-overlay .wr-sum-title em{font-style:normal;color:#a78bfa;}
     #wrapped-overlay .wr-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.1);border-radius:16px;overflow:hidden;}
@@ -1255,6 +1262,7 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
     #wrapped-overlay .wr-cell .v.accent{color:#a78bfa;}
     #wrapped-overlay .wr-cell .l{font-family:'Spline Sans Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-top:5px;line-height:1.4;}
     #wrapped-overlay .wr-foot{font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.06em;opacity:.55;text-align:center;margin-top:22px;line-height:1.6;}
+    #wrapped-overlay .wr-foot2{margin-top:6px;color:var(--dim,#8a8a82);}
     #wrapped-overlay .wr-share{position:relative;z-index:35;margin-top:18px;width:100%;padding:15px;border:none;border-radius:30px;background:#fff;color:#0c0d14;font-weight:700;font-size:15px;letter-spacing:-.01em;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;}
     #wrapped-overlay .wr-tapzones{position:absolute;inset:0;z-index:25;display:flex;}
     #wrapped-overlay .wr-tapzones .z{flex:1;}
@@ -1314,10 +1322,11 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
     }
     if (c.type === "summary") {
       const cells = c.cells.map(x => `<div class="wr-cell"><div class="v ${x.accent ? "accent" : ""}">${x.v}</div><div class="l">${x.l}</div></div>`).join("");
-      return `<div class="wr-sum-head wr-anim d1">${W._title || "Your"} Wrapped</div>
+      return `<div class="wr-sum-eye wr-anim d1">${c.eyebrow || ""}</div>
         <div class="wr-sum-title wr-anim d1">Your <em>Wrapped</em></div>
         <div class="wr-grid wr-anim d2">${cells}</div>
         <div class="wr-foot wr-anim d3">${c.foot || ""}</div>
+        ${c.foot2 ? `<div class="wr-foot wr-foot2 wr-anim d3">${c.foot2}</div>` : ""}
         <button class="wr-share wr-anim d4" onclick="WrappedUI.share()">Save &amp; share ↗</button>`;
     }
     // default: headline + stat + sub
@@ -1360,6 +1369,16 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
       idx = Math.max(0, Math.min(cardEls.length - 1, n));
       cardEls.forEach((c, i) => c.classList.toggle("show", i === idx));
       segEls.forEach((s, i) => { s.classList.toggle("done", i < idx); s.classList.toggle("active", i === idx); });
+      // Re-trigger the entrance animation on the newly-shown card so each view animates in
+      const active = cardEls[idx];
+      if (active) {
+        active.querySelectorAll(".wr-anim").forEach(el => {
+          el.style.animation = "none";
+          // force reflow so the animation can restart
+          void el.offsetWidth;
+          el.style.animation = "";
+        });
+      }
       // On the final (summary) card, disable the nav tap-zones so the Save/share button is clickable
       const tz = ov.querySelector(".wr-tapzones");
       const isLast = idx === cardEls.length - 1;
@@ -1431,6 +1450,8 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
         });
         // Hide the share button itself in the capture so its label (e.g. "Rendering…") never bakes into the image
         doc.querySelectorAll('.wr-share').forEach(el=>{ el.style.display='none'; });
+        // Freeze entrance animations to their settled state so the capture isn't caught mid-animation
+        doc.querySelectorAll('.wr-anim').forEach(el=>{ el.style.animation='none'; el.style.opacity='1'; el.style.transform='none'; });
         // Remove stylesheet rules that use color-mix() (unsupported by html2canvas)
         try {
           Array.from(doc.styleSheets).forEach(ss=>{
@@ -1520,8 +1541,10 @@ function openWrapped(year, month){
     const d = new Date(now.getFullYear(), now.getMonth()-1, 1);
     year = d.getFullYear(); month = d.getMonth()+1;
   }
-  const firstName = (state.profile && state.profile.name) ? state.profile.name.trim().split(/\s+/)[0] : '';
-  const summary = buildMonthlySummary(year, month, wrappedAdapter(), { firstName });
+  const _nameParts = (state.profile && state.profile.name) ? state.profile.name.trim().split(/\s+/) : [];
+  const firstName = _nameParts[0] || '';
+  const lastName = _nameParts.length > 1 ? _nameParts[_nameParts.length - 1] : '';
+  const summary = buildMonthlySummary(year, month, wrappedAdapter(), { firstName, lastName });
   const name = (state.profile && state.profile.name) ? state.profile.name.trim().split(/\s+/)[0] : '';
   const specShort = (typeof specCfg==='function' ? specCfg().short : 'Renal');
   archiveWrapped(year, month, summary);
