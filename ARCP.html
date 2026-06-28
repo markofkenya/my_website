@@ -1126,6 +1126,24 @@ function updateALSDisplay() {
   el.className = "als-val" + (expired ? " alert" : daysTo < 183 ? " warn" : "");
 }
 
+function reqFraction(reqId) {
+  // Fractional completion of a requirement (0..1). Count-based reqs give partial credit
+  // (e.g. 4/15 SLEs = 0.27); checkboxes & special types stay binary.
+  const req = REQS[reqId];
+  if (!req) return 0;
+  const status = getStatus(reqId);
+  if (status === "met") return 1;
+  if (status === "na")  return 0;
+  if (req.type === "checkbox" || req.type === "eseneph") {
+    return status === "met" ? 1 : 0; // no half-states for these
+  }
+  // count-type: actual progress toward target, capped at 1
+  if (typeof req.target === "number" && req.target > 0) {
+    const val = getVal(reqId);
+    return Math.max(0, Math.min(val / req.target, 1));
+  }
+  return status === "partial" ? 0.5 : 0; // fallback
+}
 function updateReadiness() {
   const relevant = Object.keys(REQS).filter(id => {
     const req = REQS[id];
@@ -1133,17 +1151,20 @@ function updateReadiness() {
     return YEARS.indexOf(req.deadline) <= YEARS.indexOf(currentYear);
   });
   const gimIds    = relevant.filter(id => REQS[id].stream === "gim");
-  const gimMet    = gimIds.filter(id => getStatus(id) === "met").length;
+  const gimFrac   = gimIds.reduce((sum, id) => sum + reqFraction(id), 0); // fractional credit
+  const gimMetCount = gimIds.filter(id => getStatus(id) === "met").length; // whole-met, for the detail line
   const dopsDone  = DOPS_PROCEDURES.filter(p => getDops(p)).length;
   const dopsTotal = DOPS_PROCEDURES.length;
   const gimTotal  = gimIds.length + dopsTotal;
-  const gimMetAll = gimMet + dopsDone;
+  const gimMetAll = gimFrac + dopsDone;            // fractional total for the bar
+  const gimMetWhole = gimMetCount + dopsDone;      // whole count for the "x/y" label
   const gimPct    = gimTotal > 0 ? Math.round((gimMetAll / gimTotal) * 100) : 0;
 
   const renalIds   = relevant.filter(id => REQS[id].stream === "renal");
-  const renalMet   = renalIds.filter(id => getStatus(id) === "met").length;
+  const renalFrac  = renalIds.reduce((sum, id) => sum + reqFraction(id), 0); // fractional credit
+  const renalMet   = renalIds.filter(id => getStatus(id) === "met").length;  // whole-met, for the detail line
   const renalTotal = renalIds.length;
-  const renalPct   = renalTotal > 0 ? Math.round((renalMet / renalTotal) * 100) : 0;
+  const renalPct   = renalTotal > 0 ? Math.round((renalFrac / renalTotal) * 100) : 0;
 
   const adminDone  = ADMIN_DOCS.filter(doc => getAdmin(doc.id)).length;
   const adminTotal = ADMIN_DOCS.length;
@@ -1164,7 +1185,7 @@ function updateReadiness() {
     : "linear-gradient(90deg,#7c2d12,#ff4444)";
 
   document.getElementById("readiness-detail").textContent =
-    `GIM ${gimMetAll}/${gimTotal} · Renal ${renalMet}/${renalTotal} · Admin ${adminDone + alsOk}/${adminTotal + 1}`;
+    `GIM ${gimMetWhole}/${gimTotal} · Renal ${renalMet}/${renalTotal} · Admin ${adminDone + alsOk}/${adminTotal + 1}`;
 }
 
 function updateDopsCount() {
