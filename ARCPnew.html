@@ -125,6 +125,12 @@ body.focus .check{color:#fff}body.focus .btn.primary{color:#fff}body.focus .chec
      Bumping to 16px on mobile only stops the auto-zoom while keeping desktop typography intact. */
   .input, select.input, textarea.input{ font-size:16px; }
 
+  /* Roadmap header: stack greeting above the print buttons so neither gets cramped */
+  .rm-headrow{ flex-direction:column; align-items:stretch !important; gap:16px !important; }
+  .rm-h1{ font-size:30px !important; max-width:none !important; }
+  .rm-headrow > div{ width:100%; }
+  .rm-headrow .rm-print, .rm-headrow button{ flex:1; justify-content:center; }
+
   /* Logbook V2 list: stack each row vertically on phones — desktop table layout (5 fixed columns ~700px)
      doesn't fit a ~390px viewport. Each entry becomes a 3-line card: meta row (date + pills), item, details. */
   .lb-row.lb-row-head{ display:none !important; }
@@ -3821,7 +3827,7 @@ function renderRoadmap(){
     <div class="rm-eyebrow" style="font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:14px">${todayStr} \u00b7 ${safe(sp.label)} \u00b7 ${safe(currentYear)}</div>
     <div class="rm-headrow" style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap">
       <h1 class="rm-h1" style="font-size:44px;font-weight:500;letter-spacing:-.03em;line-height:1.05;margin:0;color:var(--text);max-width:720px">Hello, ${safe(firstName)}. <span style="color:var(--dim)">You're </span><span style="color:var(--primary)">${yearPct}%</span><span style="color:var(--dim)"> through ${safe(currentYear)}.</span></h1>
-      <div style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap">
+      <div class="rm-headbtns" style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap">
         <button class="btn small rm-print" onclick="showPrintStylePicker()">\u2398 Print Logbook Report</button>
         <button class="btn small" onclick="exportCpdDiary()">\u2398 Print CPD Diary</button>
       </div>
