@@ -1059,7 +1059,7 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
   const POOL = [
 
     { id: "intro", fixed: true, order: 0,
-      build: s => ({ skin: "c-intro", kicker: s._firstName ? `Hello, ${s._firstName}` : "Your month in nephrology",
+      build: s => ({ skin: "c-intro", kicker: "Your month in training",
         headline: `${s.monthName},\nwrapped.`,
         sub: "A look back at everything you logged this month — clinics, procedures and teaching. Tap through →" }) },
 
@@ -1147,7 +1147,7 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
         const topProc = s.procRank.length ? `Top procedure · ${s.procRank[0].name} ×${s.procRank[0].count}` : "";
         const personaLine = persona && persona.name ? `Personality · ${persona.name}` : "";
         return { skin: "c-summary", type: "summary",
-          eyebrow: `${s.monthName} ${s.year} · Dr ${s._lastName || s._firstName || "Trainee"}`,
+          eyebrow: `${s.monthName} ${s.year} · Dr ${s._lastName ? (s._firstName ? s._firstName.charAt(0) + ". " : "") + s._lastName : (s._firstName || "Trainee")}`,
           cells: [
             { v: s.counts.clinics, l: "Clinics" },
             { v: s.counts.procedures, l: "Procedures", accent: true },
