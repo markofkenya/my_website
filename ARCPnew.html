@@ -3827,10 +3827,7 @@ function renderRoadmap(){
     <div class="rm-eyebrow" style="font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:14px">${todayStr} \u00b7 ${safe(sp.label)} \u00b7 ${safe(currentYear)}</div>
     <div class="rm-headrow" style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap">
       <h1 class="rm-h1" style="font-size:44px;font-weight:500;letter-spacing:-.03em;line-height:1.05;margin:0;color:var(--text);max-width:720px">Hello, ${safe(firstName)}. <span style="color:var(--dim)">You're </span><span style="color:var(--primary)">${yearPct}%</span><span style="color:var(--dim)"> through ${safe(currentYear)}.</span></h1>
-      <div class="rm-headbtns" style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap">
-        <button class="btn small rm-print" onclick="showPrintStylePicker()">\u2398 Print Logbook Report</button>
-        <button class="btn small" onclick="exportCpdDiary()">\u2398 Print CPD Diary</button>
-      </div>
+      
     </div>
     <div class="rm-stats" style="display:flex;gap:32px;margin-top:22px;flex-wrap:wrap;padding-top:18px;border-top:1px solid var(--line)">
       <div class="rm-stat"><div class="rm-stat-key" style="font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)">Coverage</div><div class="rm-stat-val" style="font-size:22px;font-weight:600;color:var(--primary);margin-top:4px;font-feature-settings:'tnum'">${heroPct}%</div></div>
@@ -3954,11 +3951,10 @@ function renderLogbookV2(){
     <div>
       <div class="sec-title" style="margin-bottom:10px">Logbook · ${monthName}</div>
       <h1 style="font-size:38px;font-weight:500;letter-spacing:-.025em;margin:0;color:var(--text)"><span style="color:var(--primary)">${totalCount}</span> entries this year</h1>
-      <div style="font-size:13px;color:var(--dim);margin-top:6px">${subs.map(([k,l])=>`${counts[k]} ${l.toLowerCase()}`).join(' · ')}</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button class="btn small" onclick="showPrintStylePicker()">\u2398 Print Logbook Report</button>
-      <button class="btn small" onclick="exportCpdDiary()">\u2398 Print CPD Diary</button>
+      <button class="btn" onclick="showPrintStylePicker()">\u2398 Print Logbook Report</button>
+      <button class="btn" onclick="exportCpdDiary()">\u2398 Print CPD Diary</button>
       <button class="btn small" onclick="exportLogbook()">\u21E9 Export Excel (.xlsx)</button>
       <button class="btn primary" onclick="openLogbookForm('${filterKey==='all'?'clinics':filterKey}')">+ New entry</button>
     </div>
