@@ -1219,6 +1219,7 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
     #wrapped-overlay .wr-seg.active .f{width:100%;transition:width .35s ease;}
     #wrapped-overlay .wr-brand{position:absolute;top:26px;left:16px;right:16px;z-index:30;display:flex;align-items:center;justify-content:space-between;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);}
     #wrapped-overlay .wr-brand .g{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;letter-spacing:-.02em;font-size:13px;text-transform:none;}
+    #wrapped-overlay .wr-brand .o1chip{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:12px;letter-spacing:-.01em;text-transform:none;color:#0e1110;background:#d8ff5e;padding:2px 8px;border-radius:5px;line-height:1.4;}
     #wrapped-overlay .wr-close{position:absolute;top:22px;right:14px;z-index:40;background:rgba(0,0,0,.25);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;line-height:1;}
     #wrapped-overlay .wr-deck{position:absolute;inset:0;}
     #wrapped-overlay .wr-card{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:64px 30px 84px;opacity:0;visibility:hidden;transition:opacity .4s ease;}
@@ -1344,7 +1345,7 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
     ov.innerHTML = `
       <div class="wr-screen">
         <div class="wr-segments">${cards.map(() => `<div class="wr-seg"><span class="f"></span></div>`).join("")}</div>
-        <div class="wr-brand"><span class="g">${opts.brand || "Wrapped"}</span><span>${monthLabel}</span></div>
+        <div class="wr-brand"><span class="o1chip">Outcome1</span><span>${monthLabel}</span></div>
         <button class="wr-close" onclick="WrappedUI.close()">✕</button>
         <div class="wr-deck">${cards.map(c => `<section class="wr-card ${c.skin}">${cardHTML(c)}</section>`).join("")}</div>
         <div class="wr-tapzones"><div class="z left" id="wr-prev"></div><div class="z" id="wr-next"></div></div>
@@ -1415,17 +1416,35 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
     };
     let bg = '#0c0d14';
     Object.keys(skinBg).forEach(k=>{ if(card.classList.contains(k)) bg = skinBg[k]; });
-    const hideEls = ov.querySelectorAll('.wr-tapzones,.wr-close,.wr-segments,.wr-brand');
+    const hideEls = ov.querySelectorAll('.wr-tapzones,.wr-close,.wr-segments');
     try {
       const h2c = await loadHtml2Canvas();
       hideEls.forEach(e=>e.style.visibility='hidden');
-      const canvas = await h2c(card, { backgroundColor: bg, scale: 2, useCORS: true, logging: false, allowTaint:true, onclone:(doc)=>{
-        // Neutralise gradient-clipped text so it renders as solid white
+      // html2canvas 1.4.1 cannot parse color-mix()/modern CSS and will hang silently.
+      // Race the capture against a timeout, and in the clone strip any stylesheet rules
+      // containing color-mix so the parser never chokes.
+      const capture = h2c(card, { backgroundColor: bg, scale: 2, useCORS: true, logging: false, allowTaint:true, onclone:(doc)=>{
+        // Neutralise gradient-clipped text so it renders as solid gold
         doc.querySelectorAll('.wr-pname em, .wr-sum-title em').forEach(el=>{
           el.style.background='none'; el.style.webkitBackgroundClip='border-box'; el.style.backgroundClip='border-box';
           el.style.color='#ffd54f'; el.style.webkitTextFillColor='#ffd54f';
         });
+        // Hide the share button itself in the capture so its label (e.g. "Rendering…") never bakes into the image
+        doc.querySelectorAll('.wr-share').forEach(el=>{ el.style.display='none'; });
+        // Remove stylesheet rules that use color-mix() (unsupported by html2canvas)
+        try {
+          Array.from(doc.styleSheets).forEach(ss=>{
+            let rules; try { rules = ss.cssRules; } catch(e){ return; }
+            if(!rules) return;
+            for(let i=rules.length-1;i>=0;i--){
+              const t = rules[i].cssText || '';
+              if(t.indexOf('color-mix')>=0 || t.indexOf('oklch')>=0){ try{ ss.deleteRule(i); }catch(e){} }
+            }
+          });
+        } catch(e){}
       }});
+      const timeout = new Promise((_,rej)=>setTimeout(()=>rej(new Error('Render timed out — your browser may not support this capture. Use a screenshot instead.')), 12000));
+      const canvas = await Promise.race([capture, timeout]);
       hideEls.forEach(e=>e.style.visibility='');
       const monthTag = (W._shareTag || 'wrapped');
       if(shareBtn) shareBtn.textContent = origLabel;
