@@ -1151,8 +1151,8 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
           cells: [
             { v: s.counts.clinics, l: "Clinics" },
             { v: s.counts.procedures, l: "Procedures", accent: true },
-            { v: s.hours.teaching + "h", l: "Teaching done" },
             { v: s.hours.cpd + "h", l: "CPD", accent: true },
+            { v: s.hours.teaching + "h", l: "Teaching done" },
           ],
           foot: topProc,
           foot2: personaLine || "Keep logging — next month's story starts now." };
@@ -1370,17 +1370,16 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
       cardEls.forEach((c, i) => c.classList.toggle("show", i === idx));
       segEls.forEach((s, i) => { s.classList.toggle("done", i < idx); s.classList.toggle("active", i === idx); });
       // Re-trigger the entrance animation on the newly-shown card so each view animates in.
-      // Resting state is visible; .is-in plays the rise. Remove it elsewhere, re-add here after a reflow.
-      cardEls.forEach((c, i) => {
-        if (i !== idx) c.querySelectorAll(".wr-anim.is-in").forEach(el => el.classList.remove("is-in"));
-      });
+      // Resting state is visible; .is-in plays the rise. Clear it everywhere, then apply on the
+      // NEXT frame (after the card has painted) so the animation reliably restarts on every card.
+      cardEls.forEach(c => c.querySelectorAll(".wr-anim.is-in").forEach(el => el.classList.remove("is-in")));
       const active = cardEls[idx];
       if (active) {
-        const anims = active.querySelectorAll(".wr-anim");
-        anims.forEach(el => el.classList.remove("is-in"));
-        // force reflow so re-adding the class restarts the animation
-        void active.offsetWidth;
-        anims.forEach(el => el.classList.add("is-in"));
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            active.querySelectorAll(".wr-anim").forEach(el => el.classList.add("is-in"));
+          });
+        });
       }
       // On the final (summary) card, disable the nav tap-zones so the Save/share button is clickable
       const tz = ov.querySelector(".wr-tapzones");
