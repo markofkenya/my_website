@@ -1369,15 +1369,22 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
       idx = Math.max(0, Math.min(cardEls.length - 1, n));
       cardEls.forEach((c, i) => c.classList.toggle("show", i === idx));
       segEls.forEach((s, i) => { s.classList.toggle("done", i < idx); s.classList.toggle("active", i === idx); });
-      // Re-trigger the entrance animation on the newly-shown card so each view animates in.
-      // Resting state is visible; .is-in plays the rise. Clear it everywhere, then apply on the
-      // NEXT frame (after the card has painted) so the animation reliably restarts on every card.
-      cardEls.forEach(c => c.querySelectorAll(".wr-anim.is-in").forEach(el => el.classList.remove("is-in")));
+      // Re-trigger the entrance animation on the newly-shown card using the Web Animations API.
+      // This is the most reliable way to restart per-card — no CSS reflow/specificity quirks.
       const active = cardEls[idx];
-      if (active) {
+      if (active && !W._reduceMotion) {
+        const anims = active.querySelectorAll(".wr-anim");
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            active.querySelectorAll(".wr-anim").forEach(el => el.classList.add("is-in"));
+          anims.forEach((el, i) => {
+            try {
+              el.animate(
+                [
+                  { opacity: 0, transform: "translateY(22px)" },
+                  { opacity: 1, transform: "translateY(0)" }
+                ],
+                { duration: 550, delay: 60 + i * 70, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" }
+              );
+            } catch (e) { /* WAAPI unsupported — element stays visible (safe) */ }
           });
         });
       }
@@ -1403,6 +1410,7 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
       if (e.key === "Escape") close();
     };
     document.addEventListener("keydown", W._keyHandler);
+    try { W._reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e){ W._reduceMotion = false; }
     show(0);
   }
 
