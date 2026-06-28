@@ -1248,7 +1248,7 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
     #wrapped-overlay .wr-cell .v.accent{color:#a78bfa;}
     #wrapped-overlay .wr-cell .l{font-family:'Spline Sans Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-top:5px;line-height:1.4;}
     #wrapped-overlay .wr-foot{font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.06em;opacity:.55;text-align:center;margin-top:22px;line-height:1.6;}
-    #wrapped-overlay .wr-share{margin-top:18px;width:100%;padding:15px;border:none;border-radius:30px;background:#fff;color:#0c0d14;font-weight:700;font-size:15px;letter-spacing:-.01em;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;}
+    #wrapped-overlay .wr-share{position:relative;z-index:35;margin-top:18px;width:100%;padding:15px;border:none;border-radius:30px;background:#fff;color:#0c0d14;font-weight:700;font-size:15px;letter-spacing:-.01em;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;}
     #wrapped-overlay .wr-tapzones{position:absolute;inset:0;z-index:25;display:flex;}
     #wrapped-overlay .wr-tapzones .z{flex:1;}
     #wrapped-overlay .wr-tapzones .z.left{flex:.38;}
@@ -1353,6 +1353,10 @@ function startFreshProfile(){ if(!confirm('Start a fresh test profile on this br
       idx = Math.max(0, Math.min(cardEls.length - 1, n));
       cardEls.forEach((c, i) => c.classList.toggle("show", i === idx));
       segEls.forEach((s, i) => { s.classList.toggle("done", i < idx); s.classList.toggle("active", i === idx); });
+      // On the final (summary) card, disable the nav tap-zones so the Save/share button is clickable
+      const tz = ov.querySelector(".wr-tapzones");
+      const isLast = idx === cardEls.length - 1;
+      if (tz) tz.style.pointerEvents = isLast ? "none" : "";
     }
     W._show = show;
     document.getElementById("wr-next").onclick = () => show(idx + 1);
