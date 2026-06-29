@@ -382,10 +382,10 @@
   .sync-err{color:var(--warn);font-size:12.5px;min-height:14px;margin:4px 0 8px}
   .sync-help{font-size:12.5px;color:var(--ink-soft);line-height:1.55}
   .print-dialog{max-width:430px}
-  .email-dialog{max-width:420px}
-  .email-dialog h3{margin:0 0 4px}
-  .email-dialog input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:15px;font-family:var(--font-b);margin-bottom:6px;background:var(--surface)}
-  .email-dialog input:focus{outline:none;border-color:var(--a)}
+  .ics-dialog{max-width:380px}
+  .ics-dialog h3{margin:0 0 4px}
+  .ics-select{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:15px;font-family:var(--font-b);background:var(--surface);margin-bottom:4px}
+  .ics-select:focus{outline:none;border-color:var(--a)}
   .print-dialog h3{margin:0 0 4px}
   .print-opts{display:flex;flex-direction:column;gap:10px;margin:14px 0 4px}
   .print-opt{display:flex;flex-direction:column;gap:3px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:13px 15px;cursor:pointer;transition:transform .05s,border-color .1s}
@@ -502,7 +502,6 @@
     <div class="agree-actions">
       <button class="btn primary" id="acceptRotaBtn">Agree to this rota</button>
       <button class="btn ghost" id="pdfBtn" disabled>Export agreed rota (PDF)</button>
-      <button class="btn ghost" id="emailBtn" disabled>Email rota</button>
     </div>
     <div class="agree-hint" id="agreeHint"></div>
   </section>
@@ -618,19 +617,14 @@
   </div>
 </div>
 
-<!-- EMAIL ROTA -->
-<div class="overlay center" id="emailOverlay">
-  <div class="mini-dialog email-dialog">
-    <h3>Email the rota</h3>
-    <p>Opens your email app with the rota written into the message. To include the printable PDF, tap Save PDF first, then attach it in your email app.</p>
-    <label class="fld-label">Send to</label>
-    <input id="emailTo" type="email" placeholder="name@nhs.net" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <div class="sync-err" id="emailErr"></div>
-    <div class="dialog-actions">
-      <button class="btn ghost" id="emailSavePdf">Save PDF</button>
-      <button class="btn ghost" id="emailCancel">Cancel</button>
-      <button class="btn" id="emailOpen">Open email</button>
-    </div>
+<!-- ICS MONTH CHOOSER -->
+<div class="overlay center" id="icsOverlay">
+  <div class="mini-dialog ics-dialog">
+    <h3>Add to calendar</h3>
+    <p>Export your on-calls and sessions as a calendar file. Pick a month, or all of them.</p>
+    <label class="fld-label">Month</label>
+    <select id="icsMonth" class="ics-select"></select>
+    <div class="dialog-actions"><button class="btn ghost" id="icsCancel">Cancel</button><button class="btn" id="icsExport">Export .ics</button></div>
   </div>
 </div>
 
@@ -742,15 +736,17 @@ const SHIFT_TYPES = [
 const MY_SHIFT_TYPES = [
   {id:"clinic_am",  label:"Clinic AM",         short:"AM",    start:"08:30", end:"12:00", color:"#0e7c86"},
   {id:"clinic_pm",  label:"Clinic PM",         short:"PM",    start:"14:00", end:"17:00", color:"#1593a0"},
-  {id:"full_day",   label:"Clinic / Ward day", short:"Day",   start:"08:30", end:"17:00", color:"#2f6f5e"},
   {id:"rue",        label:"RUE — ward cover",  short:"RUE",   start:"08:30", end:"17:00", color:"#6b4e9e"},
   {id:"ruf",        label:"RUF — ward cover",  short:"RUF",   start:"08:30", end:"17:00", color:"#9a4fb0"},
   {id:"procedures", label:"Procedures",        short:"Proc",  start:"08:30", end:"17:00", color:"#c2612f"},
   {id:"transplant", label:"Transplant",        short:"Tx",    start:"08:30", end:"17:00", color:"#b23b6b"},
   {id:"outliers",   label:"Outliers",          short:"Out",   start:"08:30", end:"17:00", color:"#3a57c7"},
   {id:"day_cover",  label:"Day cover",         short:"Cover", start:"08:30", end:"17:00", color:"#2f7d4f"},
-  {id:"pdp",        label:"PDP",               short:"PDP",   start:"09:00", end:"17:00", color:"#6b7280"}
+  {id:"pdp",        label:"PDP",               short:"PDP",   start:"09:00", end:"17:00", color:"#6b7280"},
+  {id:"oncall",     label:"On call",           short:"Call",  start:"08:30", end:"08:30", color:"#b45309", allday:true},
+  {id:"leave",      label:"Leave",             short:"Leave", start:"08:30", end:"17:00", color:"#64748b", allday:true}
 ];
+const ALLDAY_TYPES = new Set(["oncall","leave"]);
 function myType(id){ return MY_SHIFT_TYPES.find(s=>s.id===id) || MY_SHIFT_TYPES[0]; }
 
 /* ===== state + persistence ===== */
@@ -1095,7 +1091,6 @@ function renderAgree(){
   btn.textContent = mine ? "You’ve agreed ✓ — tap to withdraw" : "Agree to this rota";
   btn.classList.toggle("agreed", mine);
   document.getElementById("pdfBtn").disabled=!bothAgreed();
-  document.getElementById("emailBtn").disabled=!bothAgreed();
   const hint=document.getElementById("agreeHint");
   if(!currentRotaShifts().length) hint.textContent="No shifts in this rota yet — divide the pool first.";
   else if(bothAgreed()) hint.textContent="Both agreed — export the rota to send to your coordinator.";
@@ -1112,32 +1107,6 @@ async function ensurePdfLib(){
   }catch(e){ return false; }
 }
 function exportPdf(){ if(!bothAgreed()) return; runPrint("ledger"); }
-const EMAIL_TO_STORE="slotshare-emailto";
-function openEmail(){
-  if(!bothAgreed()) return;
-  document.getElementById("emailErr").textContent="";
-  let last=""; try{ last=localStorage.getItem(EMAIL_TO_STORE)||""; }catch(e){}
-  document.getElementById("emailTo").value=last;
-  document.getElementById("emailOverlay").classList.add("show");
-}
-function closeEmail(){ document.getElementById("emailOverlay").classList.remove("show"); }
-function rotaTextBody(){
-  const shifts=currentRotaShifts(); if(!shifts.length) return null;
-  const first=longDate(shifts[0].date).date, last=longDate(shifts[shifts.length-1].date).date;
-  const range=first===last?first:`${first} – ${last}`;
-  const body=`Hi,\n\nHere's the agreed on-call rota (${range}). The rota is attached as a PDF.\n`;
-  return { range, body };
-}
-function emailOpenDraft(){
-  const to=(document.getElementById("emailTo").value||"").trim();
-  const err=document.getElementById("emailErr");
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){ err.textContent="Enter a valid email address."; return; }
-  const rt=rotaTextBody(); if(!rt){ err.textContent="Nothing to send yet."; return; }
-  try{ localStorage.setItem(EMAIL_TO_STORE, to); }catch(e){}
-  const href=`mailto:${to}?subject=${encodeURIComponent("On-call rota — "+rt.range)}&body=${encodeURIComponent(rt.body)}`;
-  closeEmail();
-  const a=document.createElement("a"); a.href=href; a.style.display="none"; document.body.appendChild(a); a.click(); a.remove();
-}
 function closePrint(){ document.getElementById("printOverlay").classList.remove("show"); }
 function agreedLine(){
   const a=state.accept&&state.accept.A, b=state.accept&&state.accept.B;
@@ -1211,7 +1180,7 @@ function renderMyCalendar(){
     if(isBH(ds)) html+=`<div class="bh-mark"></div>`;
     const oc=myOncall(ds);
     if(oc){ const st=SHIFT_TYPES.find(s=>s.id===oc.type); html+=`<div class="oc-badge">On-call${st&&st.id!=="oncall"?" · "+st.label:""}</div>`; }
-    getMyArr(ds).forEach((s,i)=>{ const t=myType(s.type); html+=`<div class="ms-chip" style="background:${t.color}" title="${escapeHtml(t.label)} ${s.start}–${s.end}">${t.short} ${s.start}</div>`; });
+    getMyArr(ds).forEach((s,i)=>{ const t=myType(s.type); const ad=ALLDAY_TYPES.has(s.type); const tip=ad?(s.type==="oncall"?"24h on-call":"All day"):`${s.start}–${s.end}`; html+=`<div class="ms-chip" style="background:${t.color}" title="${escapeHtml(t.label)} ${tip}">${t.short}${ad?"":" "+s.start}</div>`; });
     cell.innerHTML=html;
     cell.dataset.ds=ds;
     cell.onclick=()=>{ if(armedType){ placeSession(ds, armedType); } else openMyDay(ds); };
@@ -1253,15 +1222,23 @@ function placeSession(ds, typeId){
   if(!state.myShifts) state.myShifts={};
   if(!state.myShifts[meKey]) state.myShifts[meKey]={};
   if(!state.myShifts[meKey][ds]) state.myShifts[meKey][ds]=[];
-  const arr=state.myShifts[meKey][ds];
-  if(arr.length>=2){ flashMsg("Two sessions max per day — tap the day to edit"); return; }
-  arr.push({ id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:typeId, start:"08:30", end:"17:00" });
-  retimeDay(ds); persist(); renderMyCalendar();
+  let arr=state.myShifts[meKey][ds];
+  const newId=()=>Date.now()+"-"+Math.random().toString(36).slice(2,6);
+  const t=myType(typeId);
+  if(ALLDAY_TYPES.has(typeId)){                                  // On call / Leave take the whole day → single entry
+    state.myShifts[meKey][ds]=[{ id:newId(), type:typeId, start:t.start, end:t.end }];
+  } else {
+    if(arr.length===1 && ALLDAY_TYPES.has(arr[0].type)) arr=state.myShifts[meKey][ds]=[];  // replace a whole-day entry with clinic sessions
+    if(arr.length>=2){ flashMsg("Two sessions max per day — tap the day to edit"); return; }
+    arr.push({ id:newId(), type:typeId, start:"08:30", end:"17:00" });
+    retimeDay(ds);
+  }
+  persist(); renderMyCalendar();
   if(document.getElementById("myDayOverlay").classList.contains("show") && myEditDate===ds) renderMyDay(ds);
 }
 function retimeDay(ds){
   const m=state.myShifts&&state.myShifts[meKey]; const arr=m&&m[ds]; if(!arr) return;
-  if(arr.length===1){ arr[0].start="08:30"; arr[0].end="17:00"; }                                  // single session → full day
+  if(arr.length===1){ if(!ALLDAY_TYPES.has(arr[0].type)){ arr[0].start="08:30"; arr[0].end="17:00"; } }   // single clinic → full day (whole-day types keep their own)
   else if(arr.length>=2){ arr[0].start="08:30"; arr[0].end="12:00"; arr[1].start="14:00"; arr[1].end="17:00"; }  // first = AM, second = PM
 }
 function swapMyDay(ds){ const m=state.myShifts&&state.myShifts[meKey]; const arr=m&&m[ds]; if(!arr||arr.length<2) return; [arr[0],arr[1]]=[arr[1],arr[0]]; retimeDay(ds); persist(); renderMyDay(ds); renderMyCalendar(); }
@@ -1277,7 +1254,17 @@ function renderMyDay(ds){
   else { ocEl.style.display="none"; ocEl.innerHTML=""; }
   const list=document.getElementById("myDayList");
   const arr=getMyArr(ds);
-  list.innerHTML = arr.length ? arr.map((s,i)=>{ const t=myType(s.type); const slot=arr.length>=2?(i===0?"AM":"PM"):"Day";
+  const isAllday = arr.length===1 && ALLDAY_TYPES.has(arr[0].type);
+  list.innerHTML = arr.length ? arr.map((s,i)=>{ const t=myType(s.type);
+    if(ALLDAY_TYPES.has(s.type)){
+      const tag = s.type==="oncall" ? "24h on-call" : "All day";
+      return `<div class="my-row">
+        <span class="my-dot" style="background:${t.color}"></span>
+        <span class="my-name">${escapeHtml(t.label)} <span class="my-slot">${tag}</span></span>
+        <button class="my-x" data-id="${s.id}" aria-label="Remove">✕</button>
+      </div>`;
+    }
+    const slot=arr.length>=2?(i===0?"AM":"PM"):"Day";
     return `<div class="my-row">
       <span class="my-dot" style="background:${t.color}"></span>
       <span class="my-name">${escapeHtml(t.label)} <span class="my-slot">${slot}</span></span>
@@ -1291,21 +1278,14 @@ function renderMyDay(ds){
   list.querySelectorAll(".my-t").forEach(inp=>inp.onchange=()=>setMyShiftTime(ds, inp.dataset.id, inp.dataset.f, inp.value));
   const sw=document.getElementById("mySwap"); if(sw) sw.onclick=()=>swapMyDay(ds);
   const add=document.getElementById("myDayAdd");
-  if(arr.length>=2){ add.innerHTML=`<div class="empty">Two sessions set (AM + PM). Remove one to change it.</div>`; }
+  if(isAllday){ add.innerHTML=`<div class="empty">${arr[0].type==="oncall"?"On-call":"Leave"} takes the whole day. Remove it to add clinic sessions.</div>`; }
+  else if(arr.length>=2){ add.innerHTML=`<div class="empty">Two sessions set (AM + PM). Remove one to change it.</div>`; }
   else {
     add.innerHTML=MY_SHIFT_TYPES.map(t=>`<button class="my-add" style="border-color:${t.color};color:${t.color}" data-t="${t.id}">+ ${escapeHtml(t.label)}</button>`).join("");
     add.querySelectorAll(".my-add").forEach(b=>b.onclick=()=>addMyShift(ds, b.dataset.t));
   }
 }
-function addMyShift(ds, typeId){
-  if(!meKey) return;
-  if(!state.myShifts) state.myShifts={};
-  if(!state.myShifts[meKey]) state.myShifts[meKey]={};
-  if(!state.myShifts[meKey][ds]) state.myShifts[meKey][ds]=[];
-  if(state.myShifts[meKey][ds].length>=2){ flashMsg("Two sessions max per day"); return; }
-  state.myShifts[meKey][ds].push({ id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:typeId, start:"08:30", end:"17:00" });
-  retimeDay(ds); persist(); renderMyDay(ds); renderMyCalendar();
-}
+function addMyShift(ds, typeId){ placeSession(ds, typeId); }
 function removeMyShift(ds, sid){
   const m=state.myShifts&&state.myShifts[meKey]; if(!m||!m[ds]) return;
   m[ds]=m[ds].filter(x=>x.id!==sid);
@@ -1322,10 +1302,12 @@ function icsPad(n){ return String(n).padStart(2,"0"); }
 function icsStamp(){ const d=new Date(); return d.getUTCFullYear()+icsPad(d.getUTCMonth()+1)+icsPad(d.getUTCDate())+"T"+icsPad(d.getUTCHours())+icsPad(d.getUTCMinutes())+icsPad(d.getUTCSeconds())+"Z"; }
 function icsLocal(ds, hhmm){ const t=(hhmm||"00:00").split(":"); return ds.replace(/-/g,"")+"T"+icsPad(t[0])+icsPad(t[1])+"00"; }
 function icsEsc(s){ return String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\n/g,"\\n"); }
-function buildICS(){
+function buildICS(monthKey){
   if(!meKey) return null;
+  const inMonth = ds => !monthKey || ds.slice(0,7)===monthKey;
   const stamp=icsStamp(); const ev=[];
   Object.keys(state.assignments).forEach(ds=>{
+    if(!inMonth(ds)) return;
     const a=state.assignments[ds]; if(!a||a.p!==meKey) return;
     const st=SHIFT_TYPES.find(s=>s.id===a.type);
     const title="On-call"+(st&&st.id!=="oncall"?" · "+st.label:"");
@@ -1334,23 +1316,47 @@ function buildICS(){
       `SUMMARY:${icsEsc(title)}`,"END:VEVENT"].join("\r\n"));
   });
   const m=(state.myShifts&&state.myShifts[meKey])||{};
-  Object.keys(m).forEach(ds=>{ m[ds].forEach(s=>{ const t=myType(s.type);
-    ev.push(["BEGIN:VEVENT",`UID:my-${ds}-${s.id}@slotshare-myrota`,`DTSTAMP:${stamp}`,
-      `DTSTART:${icsLocal(ds,s.start)}`,`DTEND:${icsLocal(ds,s.end)}`,
+  Object.keys(m).forEach(ds=>{ if(!inMonth(ds)) return; m[ds].forEach(s=>{ const t=myType(s.type);
+    let se;
+    if(s.type==="leave"){                                            // all-day event
+      se=[`DTSTART;VALUE=DATE:${ds.replace(/-/g,"")}`,`DTEND;VALUE=DATE:${shiftDate(ds,1).replace(/-/g,"")}`];
+    } else if(s.type==="oncall"){                                    // 24h on-call
+      se=[`DTSTART:${icsLocal(ds,"08:30")}`,`DTEND:${icsLocal(shiftDate(ds,1),"08:30")}`];
+    } else {
+      se=[`DTSTART:${icsLocal(ds,s.start)}`,`DTEND:${icsLocal(ds,s.end)}`];
+    }
+    ev.push(["BEGIN:VEVENT",`UID:my-${ds}-${s.id}@slotshare-myrota`,`DTSTAMP:${stamp}`,...se,
       `SUMMARY:${icsEsc(t.label)}`,"END:VEVENT"].join("\r\n"));
   }); });
   if(!ev.length) return null;
   return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Slot Share//My Rota//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH",...ev,"END:VCALENDAR"].join("\r\n");
 }
+function myContentMonths(){
+  const set=new Set();
+  Object.keys(state.assignments).forEach(ds=>{ const a=state.assignments[ds]; if(a&&a.p===meKey) set.add(ds.slice(0,7)); });
+  const m=(state.myShifts&&state.myShifts[meKey])||{}; Object.keys(m).forEach(ds=> set.add(ds.slice(0,7)));
+  return [...set].sort();
+}
 function exportICS(){
-  const ics=buildICS();
-  if(!ics){ alert("Nothing to export yet — add some sessions, or make sure you have on-calls assigned to you."); return; }
+  const months=myContentMonths();
+  if(!months.length){ alert("Nothing to export yet — add some sessions, or make sure you have on-calls assigned to you."); return; }
+  const cur=`${myView.getFullYear()}-${icsPad(myView.getMonth()+1)}`;
+  const sel=document.getElementById("icsMonth");
+  sel.innerHTML=`<option value="">All months</option>`+months.map(mk=>{ const p=mk.split("-"); return `<option value="${mk}" ${mk===cur?"selected":""}>${MONTHS[(+p[1])-1]} ${p[0]}</option>`; }).join("");
+  document.getElementById("icsOverlay").classList.add("show");
+}
+function closeIcs(){ document.getElementById("icsOverlay").classList.remove("show"); }
+function doExportICS(){
+  const monthKey=document.getElementById("icsMonth").value;
+  const ics=buildICS(monthKey);
+  if(!ics){ alert("Nothing to export for that month."); return; }
   const blob=new Blob([ics],{type:"text/calendar;charset=utf-8"});
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
-  const nm=(meKey?state.people[meKey].name:"my").toLowerCase().replace(/[^a-z0-9]+/g,"-")||"my";
-  a.href=url; a.download=`rota-${nm}.ics`; a.click();
+  const who=(meKey?state.people[meKey].name:"my").toLowerCase().replace(/[^a-z0-9]+/g,"-")||"my";
+  a.href=url; a.download=`rota-${who}-${monthKey||"all"}.ics`; a.click();
   URL.revokeObjectURL(url);
+  closeIcs();
 }
 
 /* ===== pool parsing ===== */
@@ -1751,13 +1757,10 @@ function boot(){
   document.getElementById("myDayClose").onclick=closeMyDay;
   document.getElementById("myDayOverlay").onclick=e=>{ if(e.target.id==="myDayOverlay") closeMyDay(); };
   document.getElementById("exportIcs").onclick=exportICS;
+  document.getElementById("icsCancel").onclick=closeIcs;
+  document.getElementById("icsExport").onclick=doExportICS;
   document.getElementById("acceptRotaBtn").onclick=toggleAgree;
   document.getElementById("pdfBtn").onclick=exportPdf;
-  document.getElementById("emailBtn").onclick=openEmail;
-  document.getElementById("emailCancel").onclick=closeEmail;
-  document.getElementById("emailSavePdf").onclick=()=>runPrint("ledger");
-  document.getElementById("emailOpen").onclick=emailOpenDraft;
-  document.getElementById("emailTo").addEventListener("keydown",e=>{ if(e.key==="Enter") emailOpenDraft(); });
   document.getElementById("printCancel").onclick=closePrint;
   document.querySelectorAll(".print-opt").forEach(b=>b.onclick=()=>runPrint(b.dataset.style));
   document.getElementById("confirmCancel").onclick=closeConfirm;
@@ -1771,7 +1774,7 @@ function boot(){
   let curTheme="clinical"; try{ curTheme=localStorage.getItem(THEME_KEY)||"clinical"; }catch(e){}
   document.querySelectorAll("#themeSwitch button").forEach(b=>{ b.classList.toggle("on", b.dataset.theme===curTheme); b.onclick=()=>applyTheme(b.dataset.theme); });
 
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); closePrint(); closeEmail(); document.getElementById("nameOverlay").classList.remove("show"); } });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); closePrint(); closeIcs(); document.getElementById("nameOverlay").classList.remove("show"); } });
 
   document.getElementById("syncStatus").onclick=openLogin;
   document.getElementById("accountBtn").onclick=openLogin;
