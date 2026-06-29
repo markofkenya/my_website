@@ -380,7 +380,7 @@
   .leave-overlay.show{display:block}
   .leave-inner{max-width:660px;margin:0 auto;padding:14px 16px 64px}
   .rota-top-actions{display:flex;gap:8px;align-items:center}
-  .key-al{padding:11px 18px;font-size:14.5px;font-weight:600}
+  .btn.key-al{background:#2f7d4f;color:#fff;padding:11px 18px;font-size:14.5px;font-weight:600;box-shadow:0 1px 0 #256a42,0 7px 16px -9px #2f7d4f}
   .leave-hero{display:flex;gap:22px;align-items:center;background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-radius:20px;padding:20px 22px;margin:10px 0 18px;box-shadow:0 1px 2px rgba(20,28,34,.03)}
   .leave-ringwrap{position:relative;width:120px;height:120px;flex:0 0 auto}
   .leave-ring{width:120px;height:120px;transform:rotate(-90deg)}
@@ -470,6 +470,37 @@
   .li-type{font-size:11px;color:var(--ink-faint);font-family:var(--font-m)}
   .li-x{border:0;background:none;color:var(--ink-faint);cursor:pointer;font-size:13px;padding:3px 6px;border-radius:6px}
   .li-x:hover{background:var(--surface-2);color:var(--warn)}
+  .req-cta{width:100%;margin:2px 0 16px;font-size:15px;padding:13px}
+  .req-form{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+  .req-field{display:flex;flex-direction:column;gap:6px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .req-field select,.req-field textarea{border:1px solid var(--line);border-radius:10px;padding:10px 11px;font-size:14px;font-family:var(--font-b);background:var(--surface);color:var(--ink);text-transform:none;letter-spacing:normal;font-weight:400}
+  .req-field textarea{resize:vertical}
+  .req-summary{background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:12px 14px;font-size:13.5px;color:var(--ink);line-height:1.5}
+  .req-summary .rs-sub{display:block;color:var(--ink-faint);font-size:12px;margin-top:3px}
+  .req-actions{display:flex;gap:10px}
+  .req-actions .btn{flex:1}
+  .req-done{background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0 6px}
+  .rd-badge{display:inline-block;background:#2f7d4f;color:#fff;font-size:12px;font-weight:600;border-radius:99px;padding:4px 12px;margin-bottom:10px}
+  .rd-line{font-size:15px;color:var(--ink);margin-bottom:6px}
+  .rd-note{font-size:12.5px;color:var(--ink-faint);line-height:1.5}
+  .rd-warn{font-size:12.5px;color:#8a5a00;background:#fff6e6;border:1px solid #f0d9a8;border-radius:9px;padding:9px 11px;margin-bottom:10px;line-height:1.5}
+  .email-text{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px;font-size:13px;font-family:var(--font-b);line-height:1.55;color:var(--ink);background:var(--surface);resize:vertical}
+  .rq-list{display:flex;flex-direction:column;gap:10px}
+  .rq-item{border:1px solid var(--line);border-radius:13px;padding:13px 14px;background:var(--surface)}
+  .rq-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .rq-when{font-weight:600;font-size:13.5px;color:var(--ink)}
+  .rq-badge{font-size:10.5px;font-weight:600;border-radius:99px;padding:2px 9px;text-transform:uppercase;letter-spacing:.04em}
+  .rq-badge.pend{background:#fff1d6;color:#8a5a00}
+  .rq-badge.ok{background:#dff0e4;color:#1f6b3a}
+  .rq-badge.no{background:#f3dada;color:#a13127}
+  .rq-sub{font-size:12px;color:var(--ink-soft);margin:6px 0 10px}
+  .rq-acts{display:flex;flex-wrap:wrap;gap:7px}
+  .rq-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);border-radius:8px;padding:6px 11px;font-size:12px;font-family:var(--font-b);font-weight:600;cursor:pointer}
+  .rq-btn:hover{background:var(--surface-2);color:var(--ink)}
+  .rq-btn.danger:hover{color:var(--warn);border-color:var(--warn)}
+  .ls-subhead{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin:16px 0 8px}
+  .leave-settings label{display:flex;flex-direction:column;gap:4px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
+  .leave-settings input,.leave-settings select{border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:14px;font-family:var(--font-b);background:var(--surface);color:var(--ink);text-transform:none;letter-spacing:normal}
   .login-dialog{max-width:400px}
   .login-dialog h3{margin:0 0 4px}
   .login-dialog input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:15px;font-family:var(--font-b);margin-bottom:6px;background:var(--surface)}
@@ -724,6 +755,17 @@
   </div>
 </div>
 
+<!-- REQUEST LEAVE -->
+<div class="leave-overlay" id="requestOverlay">
+  <div class="leave-inner">
+    <div class="rota-top">
+      <button class="rota-back" id="reqBack">‹ Back</button>
+      <div class="kicker" style="align-self:center">Request leave</div>
+    </div>
+    <div id="requestBody"></div>
+  </div>
+</div>
+
 <!-- ICS MONTH CHOOSER -->
 <div class="overlay center" id="icsOverlay">
   <div class="mini-dialog ics-dialog">
@@ -755,7 +797,7 @@
     <div class="rota-top">
       <button class="rota-back" id="myBack">‹ Back</button>
       <div class="rota-top-actions">
-        <button class="btn ghost key-al" id="leaveBtn">Annual Leave</button>
+        <button class="btn key-al" id="leaveBtn">Annual Leave</button>
         <button class="btn" id="exportIcs">Add to phone calendar (.ics)</button>
       </div>
     </div>
@@ -1470,6 +1512,13 @@ function getLeave(){
   if(typeof L.nwd!=="number") L.nwd=1;                 // Monday (0=Sun..6=Sat)
   if(typeof L.slEntitlement!=="number") L.slEntitlement=30;
   if(!L.rosters || typeof L.rosters!=="object") L.rosters={};
+  if(typeof L.coordEmail!=="string") L.coordEmail="";
+  if(!Array.isArray(L.requests)) L.requests=[];
+  if(!L.profile || typeof L.profile!=="object"){
+    L.profile = (key==="A")
+      ? {name:"Mark Maugo", grade:"ST4", specialty:"Renal", ward:"Renal", hospital:"NGH", gmc:"7968369"}
+      : {name:(state.people[key]&&state.people[key].name)||"", grade:"", specialty:"", ward:"", hospital:"", gmc:""};
+  }
   return L;
 }
 function annualFT(year){ return year>=2029?32:27; }
@@ -1528,10 +1577,10 @@ function renderLeave(){
   const today=new Date(), todayISO=leaveISO(today), day=86400000, rem=[];
   const curHalf = (todayISO>=r1.start && todayISO<=r1.end) ? "H1" : ((todayISO>=r2.start && todayISO<=r2.end) ? "H2" : null);
   [r1,r2].forEach(r=>{ if(r.left<=0) return; const dEnd=Math.ceil((new Date(r.end+"T00:00:00")-today)/day);
-    if(dEnd>=0 && dEnd<=60) rem.push(`${r.left} day${r.left===1?"":"s"} to take before ${r.label} ends on ${fmtNice(r.end)} (${dEnd} day${dEnd===1?"":"s"} away).`);
-    else if(dEnd<0 && leaveViewYear==null) rem.push(`${r.left} unused day${r.left===1?"":"s"} in ${r.label} — carry over what you can.`);
+    if(dEnd>=0 && dEnd<=60) rem.push(`You have <b>${r.left}</b> annual leave day${r.left===1?"":"s"} still to book in the ${r.label} roster. It closes on ${fmtNice(r.end)} — ${dEnd} day${dEnd===1?"":"s"} from now.`);
+    else if(dEnd<0 && leaveViewYear==null) rem.push(`<b>${r.left}</b> annual leave day${r.left===1?"":"s"} went unused in ${r.label} — carry over what you can to the next roster.`);
   });
-  const dSL=Math.ceil((yEnd-today)/day); if(slRemain>0 && dSL>=0 && dSL<=90) rem.push(`${slRemain} study leave day${slRemain===1?"":"s"} left before the year ends.`);
+  const dSL=Math.ceil((yEnd-today)/day); if(slRemain>0 && dSL>=0 && dSL<=90) rem.push(`<b>${slRemain}</b> study leave day${slRemain===1?"":"s"} left before the leave year ends.`);
   const card=(r)=>{ const pct=r.total>0?Math.min(100,Math.round(r.taken/r.total*100)):0; const bc=r.left<0?"#c2412f":"#2f7d4f"; const cur=curHalf===r.half && leaveViewYear==null;
     return `<div class="rot-card ${cur?'cur':''}">
       <div class="rot-row1"><div class="rc-title">${r.label}${cur?'<span class="cur-tag">now</span>':''}</div><div class="rc-left"><b>${r.left}</b> left</div></div>
@@ -1547,14 +1596,21 @@ function renderLeave(){
   Object.keys(m).sort().forEach(ds=>{ if(ds>=yStart && ds<=yEndIncl && Array.isArray(m[ds])) m[ds].forEach(s=>{ if(s.type==="annual_leave"||s.type==="study_leave") logged.push({ds,type:s.type}); }); });
   const loggedHTML = logged.length ? logged.map(x=>`<div class="logged-item"><span class="li-dot" style="background:${x.type==='annual_leave'?'#2f7d4f':'#6366f1'}"></span><span class="li-date">${fmtNice(x.ds)}</span><span class="li-type">${x.type==='annual_leave'?'Annual':'Study'}</span><button class="li-x" data-ds="${x.ds}" aria-label="Remove">✕</button></div>`).join("") : `<div class="empty">No leave logged this year yet.</div>`;
   const WD=[["1","Monday"],["2","Tuesday"],["3","Wednesday"],["4","Thursday"],["5","Friday"],["6","Saturday"],["0","Sunday"]];
+  const p=L.profile;
+  const reqs=(L.requests||[]).slice().sort((a,b)=>b.createdAt-a.createdAt);
+  const reqHTML = reqs.map(r=>{ const range=r.from===r.to?fmtNice(r.from):`${fmtNice(r.from)} – ${fmtNice(r.to)}`; const badge=r.status==='approved'?'<span class="rq-badge ok">Approved</span>':r.status==='declined'?'<span class="rq-badge no">Declined</span>':'<span class="rq-badge pend">Pending</span>';
+    return `<div class="rq-item"><div class="rq-top"><div class="rq-when">${reqTypeLabel(r.type)} · ${range}</div>${badge}</div><div class="rq-sub">${r.days.length} working day${r.days.length===1?'':'s'}${r.note?` · ${escapeHtml(r.note)}`:''}</div><div class="rq-acts"><button class="rq-btn" data-act="email" data-id="${r.id}">Email</button><button class="rq-btn" data-act="form" data-id="${r.id}">Form</button>${r.status!=='approved'?`<button class="rq-btn" data-act="approve" data-id="${r.id}">Mark approved</button>`:''}${r.status!=='declined'?`<button class="rq-btn" data-act="decline" data-id="${r.id}">Decline</button>`:''}<button class="rq-btn danger" data-act="undo" data-id="${r.id}">Undo</button></div></div>`;
+  }).join("");
   host.innerHTML=`
     <div class="leave-yearnav"><button class="iconbtn" id="lvPrev">‹</button><div class="lyn-label">Feb ${Y} – Feb ${Y+1}</div><button class="iconbtn" id="lvNext">›</button></div>
     <div class="leave-hero">
       <div class="leave-ringwrap"><svg viewBox="0 0 120 120" class="leave-ring"><circle class="lr-bg" cx="60" cy="60" r="${R}"></circle><circle class="lr-fg" cx="60" cy="60" r="${R}" style="stroke:${col};stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${off.toFixed(1)}"></circle></svg><div class="lr-center"><div class="lr-num">${yrLeft}</div><div class="lr-lbl">days left</div></div></div>
       <div class="leave-hero-meta"><div class="lh-year">Annual leave this year</div><div class="lh-stat"><b>${yrTaken}</b> taken of <b>${yrTotal}</b></div></div>
     </div>
+    <button class="btn key-al req-cta" id="requestLeaveBtn">＋ Request leave</button>
     ${rem.length?`<div class="leave-reminders">${rem.map(x=>`<div class="lr-item">${x}</div>`).join("")}</div>`:""}
     <div class="rot-list">${card(r1)}${card(r2)}</div>
+    ${reqs.length?`<div class="leave-section"><div class="ls-title">Leave requests</div><div class="rq-list">${reqHTML}</div></div>`:""}
     <div class="leave-section"><div class="ls-title">Study leave</div><div class="sl-card"><div class="rot-bar"><div class="rot-bar-fill" style="width:${L.slEntitlement>0?Math.min(100,Math.round(slTaken/L.slEntitlement*100)):0}%;background:#6366f1"></div></div><div class="rot-meta"><span><b>${slTaken}</b> of ${L.slEntitlement} taken · ${slRemain} left</span></div></div></div>
     <div class="leave-section"><div class="ls-title">Log leave taken</div>
       <div class="log-form">
@@ -1567,6 +1623,12 @@ function renderLeave(){
     </div>
     <details class="set-d"><summary>Settings &amp; how it works</summary>
       <div class="leave-settings"><div class="ls-2"><label>Default WTE<input type="number" id="lvWte" value="${L.wte}" min="0.1" max="1" step="0.05"></label><label>Non-working day<select id="lvNwd">${WD.map(w=>`<option value="${w[0]}" ${(+w[0])===L.nwd?"selected":""}>${w[1]}</option>`).join("")}</select></label></div><label>Study leave allowance (days)<input type="number" id="lvSl" value="${L.slEntitlement}" min="0" step="0.5"></label></div>
+      <div class="ls-subhead">For leave requests &amp; the form</div>
+      <div class="leave-settings"><label>Rota coordinator email<input type="email" id="lvCoord" value="${escapeHtml(L.coordEmail)}" placeholder="name@nhs.net"></label>
+        <div class="ls-2"><label>Name<input id="pfName" value="${escapeHtml(p.name)}"></label><label>Grade<input id="pfGrade" value="${escapeHtml(p.grade)}"></label></div>
+        <div class="ls-2"><label>Specialty<input id="pfSpec" value="${escapeHtml(p.specialty)}"></label><label>Ward<input id="pfWard" value="${escapeHtml(p.ward)}"></label></div>
+        <div class="ls-2"><label>Hospital<input id="pfHosp" value="${escapeHtml(p.hospital)}"></label><label>GMC<input id="pfGmc" value="${escapeHtml(p.gmc)}"></label></div>
+      </div>
       <div class="leave-note">Annual leave splits automatically into two six-month rosters (${annualFT(Y)} days a year ${annualFT(Y)===27?'→ 14 / 13':'→ 16 / 16'}; rises to 32 from Feb 2029). Each roster: half × WTE + bank holidays × WTE − bank holidays on a working day. Set a roster's own WTE under “Adjust” if it differs (e.g. full-time before LTFT). Days “taken” count the leave you log or mark on the calendar.</div>
     </details>`;
   document.getElementById("lvPrev").onclick=()=>shiftLeaveYear(-1);
@@ -1577,6 +1639,146 @@ function renderLeave(){
   document.getElementById("lvSl").onchange=e=>setLeaveField("slEntitlement",e.target.value,true);
   host.querySelectorAll(".rc-fields input").forEach(inp=>inp.onchange=()=>setRosterField(inp.dataset.key, inp.dataset.f, inp.value));
   host.querySelectorAll(".li-x").forEach(b=>b.onclick=()=>removeLeaveDay(b.dataset.ds));
+  document.getElementById("requestLeaveBtn").onclick=openRequest;
+  const cor=document.getElementById("lvCoord"); if(cor) cor.onchange=e=>setLeaveText("coordEmail",e.target.value);
+  [["pfName","name"],["pfGrade","grade"],["pfSpec","specialty"],["pfWard","ward"],["pfHosp","hospital"],["pfGmc","gmc"]].forEach(([id,f])=>{ const el=document.getElementById(id); if(el) el.onchange=ev=>setLeaveText(f,ev.target.value); });
+  host.querySelectorAll(".rq-btn").forEach(b=>b.onclick=()=>{ const id=b.dataset.id, act=b.dataset.act; const r=getLeave().requests.find(x=>x.id===id); if(!r) return; if(act==="email"){ reqCreated=r; renderRequest(); document.getElementById("requestOverlay").classList.add("show"); } else if(act==="form"){ printLeaveForm(r); } else if(act==="approve"){ setRequestStatus(id,"approved"); } else if(act==="decline"){ setRequestStatus(id,"declined"); } else if(act==="undo"){ if(confirm("Remove this request and its booked days?")) undoRequest(id); } });
+}
+
+/* ===== Request leave flow ===== */
+const NWD_NAME=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+let reqCreated=null;
+function rangeWorkingDays(fromISO,toISO){ const L=getLeave(); const out=[]; if(!fromISO) return out; if(!toISO) toISO=fromISO; if(toISO<fromISO){ const t=fromISO; fromISO=toISO; toISO=t; } let d=new Date(fromISO+"T00:00:00"); const end=new Date(toISO+"T00:00:00"); while(d<=end){ const wd=d.getDay(); if(wd!==0&&wd!==6&&wd!==L.nwd) out.push(leaveISO(d)); d.setDate(d.getDate()+1); } return out; }
+function openRequest(){ reqCreated=null; renderRequest(); document.getElementById("requestOverlay").classList.add("show"); }
+function closeRequest(){ document.getElementById("requestOverlay").classList.remove("show"); renderLeave(); }
+function applyRequestDays(req){ if(!state.myShifts) state.myShifts={}; if(!state.myShifts[meKey]) state.myShifts[meKey]={}; req.days.forEach(ds=>{ state.myShifts[meKey][ds]=[{id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:req.type, start:"08:30", end:"17:00"}]; }); }
+function removeRequestDays(req){ const m=state.myShifts&&state.myShifts[meKey]; if(!m) return; req.days.forEach(ds=>{ if(m[ds] && Array.isArray(m[ds]) && m[ds].length===1 && m[ds][0].type===req.type) delete m[ds]; }); }
+function createRequest(){
+  const type=document.getElementById("reqType").value;
+  const from=document.getElementById("reqFrom").value, to=document.getElementById("reqTo").value;
+  const note=(document.getElementById("reqNote").value||"").trim();
+  const days=rangeWorkingDays(from,to);
+  if(!from){ flashMsg("Pick a start date"); return; }
+  if(!days.length){ flashMsg("No working days in that range"); return; }
+  const req={ id:"r"+Date.now(), type, from, to:to||from, note, days, status:"pending", createdAt:Date.now() };
+  applyRequestDays(req); getLeave().requests.push(req); persist(); renderMyCalendar();
+  reqCreated=req; renderRequest();
+  flashMsg(`${days.length} day${days.length===1?"":"s"} booked (pending)`);
+}
+function undoRequest(id){ const L=getLeave(); const i=L.requests.findIndex(r=>r.id===id); if(i<0) return; removeRequestDays(L.requests[i]); L.requests.splice(i,1); persist(); renderMyCalendar(); renderLeave(); }
+function setRequestStatus(id,status){ const L=getLeave(); const r=L.requests.find(x=>x.id===id); if(!r) return; if(status==="declined"){ removeRequestDays(r); } else if(status==="approved" && r.status==="declined"){ applyRequestDays(r); } r.status=status; persist(); renderMyCalendar(); renderLeave(); }
+function reqTypeLabel(t){ return t==="study_leave"?"Study leave":"Annual leave"; }
+function setLeaveText(field,val){ const L=getLeave(); if(field==="coordEmail"){ L.coordEmail=(val||"").trim(); } else { L.profile[field]=(val||"").trim(); } persist(); }
+function emailDraft(req){
+  const L=getLeave(), p=L.profile;
+  const subj=`${reqTypeLabel(req.type)} request — ${p.name||"Dr"} (${p.grade||""} ${p.specialty||""})`.replace(/\s+/g," ").trim();
+  const range = req.from===req.to ? fmtNice(req.from) : `${fmtNice(req.from)} to ${fmtNice(req.to)}`;
+  const body=`Dear Rota Coordinator,\n\nI'd like to request ${reqTypeLabel(req.type).toLowerCase()} as follows:\n\nDates: ${range}\nWorking days: ${req.days.length}${req.note?`\nNote: ${req.note}`:""}\n\nMy details: ${p.name}, ${p.grade} (${p.specialty}), GMC ${p.gmc}, ${p.ward}, ${p.hospital}.\n\nI've completed the leave application form (attached) and will arrange cover for the dates above. Please let me know if you need anything further.\n\nWith thanks,\n${p.name}`;
+  return {subj, body};
+}
+function renderRequest(){
+  const host=document.getElementById("requestBody"); if(!host) return; const L=getLeave();
+  if(reqCreated){
+    const req=reqCreated, d=emailDraft(req);
+    const range = req.from===req.to ? fmtNice(req.from) : `${fmtNice(req.from)} – ${fmtNice(req.to)}`;
+    const mailto=`mailto:${encodeURIComponent(L.coordEmail||"")}?subject=${encodeURIComponent(d.subj)}&body=${encodeURIComponent(d.body)}`;
+    host.innerHTML=`
+      <div class="req-done">
+        <div class="rd-badge">✓ Request created · pending</div>
+        <div class="rd-line"><b>${reqTypeLabel(req.type)}</b> · ${range} · ${req.days.length} working day${req.days.length===1?"":"s"}</div>
+        <div class="rd-note">These days are now on your rota and deducted from your tracker. Undo any time from the list.</div>
+      </div>
+      <div class="leave-section"><div class="ls-title">1 · Email the coordinator</div>
+        ${L.coordEmail?"":`<div class="rd-warn">No coordinator email saved yet — add one in the tracker’s Settings, or just copy the text below and send from NHSmail.</div>`}
+        <textarea id="emailText" class="email-text" rows="12">${d.body}</textarea>
+        <div class="req-actions"><button class="btn ghost" id="copyEmail">Copy email text</button><a class="btn" id="openMail" href="${mailto}">Open mail app</a></div>
+      </div>
+      <div class="leave-section"><div class="ls-title">2 · Leave application form</div>
+        <div class="rd-note">A filled, printable copy of the Trust annual-leave form (page 1) — save as PDF and attach to the email.</div>
+        <button class="btn key-al" id="openForm">Open / print the form</button>
+      </div>
+      <div class="req-actions" style="margin-top:18px"><button class="btn ghost" id="reqDone">Done</button></div>`;
+    document.getElementById("copyEmail").onclick=()=>{ const t=document.getElementById("emailText"); t.select(); try{ document.execCommand("copy"); }catch(e){} if(navigator.clipboard) navigator.clipboard.writeText(t.value).catch(()=>{}); flashMsg("Email text copied"); };
+    document.getElementById("openForm").onclick=()=>printLeaveForm(req);
+    document.getElementById("reqDone").onclick=()=>{ closeRequest(); };
+    return;
+  }
+  const tISO=leaveISO(new Date()), nm=NWD_NAME[L.nwd]||"day off";
+  host.innerHTML=`
+    <div class="req-form">
+      <label class="req-field">Type<select id="reqType"><option value="annual_leave">Annual leave</option><option value="study_leave">Study leave</option></select></label>
+      <label class="req-field">Dates<div class="log-dates"><input type="date" id="reqFrom" value="${tISO}"><span>→</span><input type="date" id="reqTo"></div></label>
+      <label class="req-field">Note for the coordinator (optional)<textarea id="reqNote" rows="2" placeholder="e.g. cover arranged with Ed"></textarea></label>
+      <div class="req-summary" id="reqSummary"></div>
+      <div class="req-actions"><button class="btn ghost" id="reqCancel">Cancel</button><button class="btn key-al" id="reqCreate">Create request</button></div>
+    </div>`;
+  const upd=()=>{ const days=rangeWorkingDays(document.getElementById("reqFrom").value, document.getElementById("reqTo").value); const s=document.getElementById("reqSummary"); s.innerHTML = days.length? `<b>${days.length}</b> working day${days.length===1?"":"s"} will be booked — ${fmtNice(days[0])}${days.length>1?` to ${fmtNice(days[days.length-1])}`:""}. <span class="rs-sub">Weekends and your ${nm} are skipped.</span>` : `Pick dates to see how many days will be booked. <span class="rs-sub">Weekends and your ${nm} are skipped.</span>`; };
+  document.getElementById("reqFrom").oninput=upd; document.getElementById("reqTo").oninput=upd; upd();
+  document.getElementById("reqCancel").onclick=closeRequest;
+  document.getElementById("reqCreate").onclick=createRequest;
+}
+function printLeaveForm(req){
+  const html=buildLeaveFormHtml(req);
+  const w=window.open("","_blank"); if(!w){ alert("Allow pop-ups to open the form, or try again."); return; }
+  w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>{ try{ w.print(); }catch(e){} }, 450);
+}
+function buildLeaveFormHtml(req){
+  const esc=escapeHtml, L=getLeave(), p=L.profile;
+  const F=v=>`<span class="fv">${esc(v||"")}</span>`;
+  const U=`<span class="bl"></span>`;
+  const today=fmtNice(leaveISO(new Date()));
+  const range1From=fmtNice(req.from), range1To=fmtNice(req.to);
+  const title = req.type==="study_leave" ? "APPLICATION FOR STUDY LEAVE" : "APPLICATION FOR ANNUAL LEAVE";
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — ${esc(p.name)}</title>
+  <style>
+    @page{size:A4;margin:18mm 16mm}
+    *{box-sizing:border-box}
+    body{font-family:"Helvetica Neue",Arial,sans-serif;color:#111;font-size:12px;line-height:1.5;margin:0}
+    .doc{max-width:720px;margin:0 auto}
+    .hd{text-align:center;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:16px}
+    .hd .trust{font-size:13px;font-weight:700;letter-spacing:.02em}
+    .hd .ttl{font-size:15px;font-weight:700;margin-top:4px}
+    .hd .sub{font-size:10.5px;color:#555;margin-top:5px}
+    .row{display:flex;gap:18px;margin:7px 0}
+    .cell{flex:1;display:flex;gap:6px;align-items:baseline}
+    .lbl{font-weight:600;white-space:nowrap}
+    .fv{font-weight:600;border-bottom:1px solid #111;padding:0 4px;min-width:60px;display:inline-block;flex:1}
+    .bl{border-bottom:1px solid #999;flex:1;display:inline-block;min-height:14px;min-width:80px}
+    .sec{margin-top:16px}
+    .sec-h{font-weight:700;font-size:12px;margin-bottom:6px;border-bottom:1px solid #ccc;padding-bottom:3px}
+    .daterow{display:flex;gap:18px;margin:8px 0}
+    .daterow .cell .fv{min-width:120px}
+    .note-line{display:flex;gap:6px;align-items:baseline;margin:8px 0}
+    .cover{display:flex;gap:30px;margin-top:6px}
+    .cover .col{flex:1}
+    .sigline{margin:14px 0 4px}
+    .sigrow{display:flex;gap:18px;margin-top:18px}
+    .foot{margin-top:22px;font-size:10px;color:#666;border-top:1px solid #ccc;padding-top:8px}
+    @media print{button{display:none}}
+  </style></head><body><div class="doc">
+    <div class="hd"><div class="trust">SHEFFIELD TEACHING HOSPITALS NHS FOUNDATION TRUST</div><div class="ttl">${esc(title)}</div><div class="sub">Please submit at least 6 weeks in advance to your authorised signatory, then to Medical Administration for processing.</div></div>
+    <div class="row"><div class="cell"><span class="lbl">Name:</span>${F(p.name)}</div><div class="cell"><span class="lbl">Grade:</span>${F(p.grade)}</div></div>
+    <div class="row"><div class="cell"><span class="lbl">Specialty:</span>${F(p.specialty)}</div><div class="cell"><span class="lbl">Floor/Ward:</span>${F(p.ward)}</div><div class="cell"><span class="lbl">Hospital:</span>${F(p.hospital)}</div></div>
+    <div class="row"><div class="cell"><span class="lbl">GMC:</span>${F(p.gmc)}</div></div>
+    <div class="sec"><div class="sec-h">1. Leave required (inclusive dates)</div>
+      <div class="daterow"><div class="cell"><span class="lbl">From:</span>${F(range1From)}</div><div class="cell"><span class="lbl">To:</span>${F(range1To)}</div></div>
+      <div class="daterow"><div class="cell"><span class="lbl">From:</span>${U}</div><div class="cell"><span class="lbl">To:</span>${U}</div></div>
+      <div class="note-line"><span class="lbl">Bank Holidays worked and wish to claim:</span>${U}</div>
+      <div class="note-line"><span class="lbl">Working days requested:</span>${F(String(req.days.length))}</div>
+    </div>
+    <div class="sec"><div class="sec-h">2. Colleagues to cover (all grades)</div>
+      <div class="cover"><div class="col"><div class="lbl">Daytime duties</div><div class="sigline">Name ${U}</div><div class="sigline">Signature ${U}</div></div>
+      <div class="col"><div class="lbl">On-call duties</div><div class="sigline">Name ${U}</div><div class="sigline">Signature ${U}</div></div></div>
+    </div>
+    <div class="sec"><div class="sec-h">3. Signature of applicant</div>
+      <div class="sigrow"><div class="cell"><span class="lbl">Signature:</span>${U}</div><div class="cell"><span class="lbl">Date:</span>${F(today)}</div></div>
+    </div>
+    <div class="sec"><div class="sec-h">4. Approval</div>
+      <div class="sigrow"><div class="cell"><span class="lbl">Consultant:</span>${U}</div><div class="cell"><span class="lbl">Print name:</span>${U}</div><div class="cell"><span class="lbl">Date:</span>${U}</div></div>
+      <div class="sigrow"><div class="cell"><span class="lbl">Rota organiser:</span>${U}</div><div class="cell"><span class="lbl">Print name:</span>${U}</div><div class="cell"><span class="lbl">Date:</span>${U}</div></div>
+    </div>
+    <div class="foot">Remaining annual leave / to be taken by / processed by — for completion by Medical Administration.</div>
+  </div></body></html>`;
 }
 function doExportICS(){
   const monthKey=document.getElementById("icsMonth").value;
@@ -1993,6 +2195,7 @@ function boot(){
   document.getElementById("exportIcs").onclick=exportICS;
   document.getElementById("leaveBtn").onclick=openLeave;
   document.getElementById("leaveBack").onclick=closeLeave;
+  document.getElementById("reqBack").onclick=closeRequest;
   document.getElementById("icsCancel").onclick=closeIcs;
   document.getElementById("icsExport").onclick=doExportICS;
   document.getElementById("acceptRotaBtn").onclick=toggleAgree;
