@@ -375,6 +375,100 @@
   .my-add:hover{background:var(--surface-2)}
   #myDayOverlay{z-index:70}
   #icsOverlay{z-index:80}
+  /* Leave tracker */
+  .leave-overlay{position:fixed;inset:0;background:var(--bg);z-index:74;display:none;overflow-y:auto}
+  .leave-overlay.show{display:block}
+  .leave-inner{max-width:660px;margin:0 auto;padding:14px 16px 64px}
+  .rota-top-actions{display:flex;gap:8px;align-items:center}
+  .leave-hero{display:flex;gap:22px;align-items:center;background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-radius:20px;padding:20px 22px;margin:10px 0 18px;box-shadow:0 1px 2px rgba(20,28,34,.03)}
+  .leave-ringwrap{position:relative;width:120px;height:120px;flex:0 0 auto}
+  .leave-ring{width:120px;height:120px;transform:rotate(-90deg)}
+  .leave-ring .lr-bg{fill:none;stroke:var(--line);stroke-width:11}
+  .leave-ring .lr-fg{fill:none;stroke-width:11;stroke-linecap:round;transition:stroke-dashoffset .5s ease}
+  .lr-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .lr-num{font-family:var(--font-d);font-size:30px;font-weight:700;color:var(--ink);line-height:1}
+  .lr-lbl{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);margin-top:3px}
+  .leave-hero-meta{flex:1;min-width:0}
+  .lh-year{font-family:var(--font-m);font-size:11px;letter-spacing:.04em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:7px}
+  .lh-stat{font-size:15px;color:var(--ink);margin-bottom:8px}
+  .lh-stat b{font-weight:700}
+  .lh-sl{font-size:13px;color:var(--ink-soft);display:flex;align-items:center;gap:7px}
+  .sl-dot{width:11px;height:11px;border-radius:3px;background:#6366f1;display:inline-block}
+  .leave-reminders{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .lr-item{background:#fdf6e9;border:1px solid #ecd9ad;border-left:4px solid #b3842a;border-radius:10px;padding:11px 13px;font-size:13px;color:#6b531a;line-height:1.45}
+  .leave-section{margin-bottom:20px}
+  .ls-title{font-family:var(--font-d);font-size:14px;font-weight:600;color:var(--ink);margin:0 0 10px}
+  .rot-list{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+  .rot-card{border:1px solid var(--line);border-radius:15px;padding:15px 16px;background:var(--surface);box-shadow:0 1px 2px rgba(20,28,34,.03)}
+  .rc-sub{font-size:12.5px;color:var(--ink-soft);margin-top:8px}
+  .rc-more{margin-top:10px}
+  .rc-more>summary{list-style:none;cursor:pointer;font-size:12px;font-weight:600;color:var(--a);display:inline-flex;align-items:center;gap:5px;user-select:none}
+  .rc-more>summary::-webkit-details-marker{display:none}
+  .rc-more>summary::before{content:"+";font-weight:700;font-size:13px}
+  .rc-more[open]>summary::before{content:"−"}
+  .rc-more[open]>summary{margin-bottom:11px}
+  .rc-more .rc-calc{margin:0 0 11px}
+  .set-d{border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:0;overflow:hidden;margin-top:4px}
+  .set-d>summary{list-style:none;cursor:pointer;padding:14px 16px;font-family:var(--font-d);font-weight:600;font-size:14px;color:var(--ink);user-select:none;display:flex;align-items:center;justify-content:space-between}
+  .set-d>summary::-webkit-details-marker{display:none}
+  .set-d>summary::after{content:"⌄";color:var(--ink-faint);font-size:15px}
+  .set-d[open]>summary::after{content:"⌃"}
+  .set-d[open]>summary{border-bottom:1px solid var(--line)}
+  .set-d .leave-settings{padding:14px 16px 4px}
+  .set-d .leave-note{padding:0 16px 16px;margin-top:0}
+  .rot-row1{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .rot-name{flex:1;border:1px solid transparent;border-radius:8px;padding:5px 7px;font-size:14.5px;font-weight:600;font-family:var(--font-b);color:var(--ink);background:transparent}
+  .rot-name:focus{outline:none;border-color:var(--line);background:var(--surface-2)}
+  .rot-del{border:0;background:none;color:var(--ink-faint);font-size:16px;cursor:pointer;padding:2px 6px;border-radius:6px}
+  .rot-del:hover{background:var(--surface-2);color:var(--warn)}
+  .rot-dates{display:flex;align-items:center;gap:8px;margin-bottom:11px;font-size:12.5px;color:var(--ink-soft)}
+  .rot-dates input{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12.5px;font-family:var(--font-b);background:var(--surface);color:var(--ink)}
+  .rot-bar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-bottom:8px}
+  .rot-bar-fill{height:100%;border-radius:99px;transition:width .4s ease}
+  .rot-meta{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--ink-soft)}
+  .rot-meta label{display:flex;align-items:center;gap:6px}
+  .rot-alloc{width:54px;border:1px solid var(--line);border-radius:7px;padding:5px 7px;font-size:13px;font-family:var(--font-b);background:var(--surface);color:var(--ink)}
+  .btn.block{width:100%}
+  .leave-settings{display:flex;flex-direction:column;gap:11px}
+  .leave-settings label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--ink-soft)}
+  .leave-settings input,.leave-settings select{border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:14.5px;font-family:var(--font-b);background:var(--surface);color:var(--ink)}
+  .leave-settings input:focus,.leave-settings select:focus{outline:none;border-color:var(--a)}
+  .leave-note{font-size:12px;color:var(--ink-faint);line-height:1.5;margin-top:11px}
+  .leave-calc{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .lc-row{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;font-size:13px;color:var(--ink-soft);border-bottom:1px solid var(--line-soft,var(--line))}
+  .lc-row:last-child{border-bottom:0}
+  .lc-row b{color:var(--ink);font-family:var(--font-m);font-weight:600}
+  .lc-row.total{background:var(--surface-2)}
+  .lc-row.total span{color:var(--ink);font-weight:600}
+  .sl-card{border:1px solid var(--line);border-radius:13px;padding:14px}
+  .sl-card .rot-bar{margin-bottom:9px}
+  .ls-2{display:flex;gap:11px}
+  .ls-2>label{flex:1}
+  .leave-yearnav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 4px}
+  .lyn-label{font-family:var(--font-d);font-weight:600;font-size:14.5px;color:var(--ink)}
+  .rot-card.cur{border-color:var(--a);box-shadow:0 0 0 2px var(--a-tint)}
+  .rc-title{font-family:var(--font-d);font-weight:600;font-size:14px;color:var(--ink);display:flex;align-items:center;gap:8px}
+  .cur-tag{font-family:var(--font-m);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--a);border-radius:99px;padding:1px 7px}
+  .rc-left{font-size:13px;color:var(--ink-soft)}.rc-left b{color:var(--ink);font-size:15px}
+  .rc-calc{font-size:11.5px;color:var(--ink-faint);font-family:var(--font-m);margin:8px 0 10px;line-height:1.5}
+  .rc-calc b{color:var(--ink-soft)}
+  .rc-fields{display:flex;gap:8px}
+  .rc-fields label{flex:1;display:flex;flex-direction:column;gap:3px;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint)}
+  .rc-fields input{border:1px solid var(--line);border-radius:8px;padding:7px 8px;font-size:13.5px;font-family:var(--font-b);background:var(--surface);color:var(--ink)}
+  .rc-fields input:focus{outline:none;border-color:var(--a)}
+  .log-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .log-form select{border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:13.5px;font-family:var(--font-b);background:var(--surface);color:var(--ink)}
+  .log-dates{display:flex;align-items:center;gap:6px;flex:1;min-width:170px}
+  .log-dates input{flex:1;border:1px solid var(--line);border-radius:9px;padding:8px 9px;font-size:13px;font-family:var(--font-b);background:var(--surface);color:var(--ink);min-width:0}
+  .log-form .btn{flex:0 0 auto;width:auto;padding:9px 18px}
+  .log-hint{font-size:11.5px;color:var(--ink-faint);margin:8px 0 12px;line-height:1.5}
+  .logged-list{display:flex;flex-direction:column;gap:2px}
+  .logged-item{display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid var(--line-soft,var(--line));font-size:13px}
+  .li-dot{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
+  .li-date{flex:1;color:var(--ink)}
+  .li-type{font-size:11px;color:var(--ink-faint);font-family:var(--font-m)}
+  .li-x{border:0;background:none;color:var(--ink-faint);cursor:pointer;font-size:13px;padding:3px 6px;border-radius:6px}
+  .li-x:hover{background:var(--surface-2);color:var(--warn)}
   .login-dialog{max-width:400px}
   .login-dialog h3{margin:0 0 4px}
   .login-dialog input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:15px;font-family:var(--font-b);margin-bottom:6px;background:var(--surface)}
@@ -618,6 +712,17 @@
   </div>
 </div>
 
+<!-- LEAVE TRACKER -->
+<div class="leave-overlay" id="leaveOverlay">
+  <div class="leave-inner">
+    <div class="rota-top">
+      <button class="rota-back" id="leaveBack">‹ Back</button>
+      <div class="kicker" style="align-self:center">Leave tracker</div>
+    </div>
+    <div id="leaveBody"></div>
+  </div>
+</div>
+
 <!-- ICS MONTH CHOOSER -->
 <div class="overlay center" id="icsOverlay">
   <div class="mini-dialog ics-dialog">
@@ -648,7 +753,10 @@
   <div class="rota-inner">
     <div class="rota-top">
       <button class="rota-back" id="myBack">‹ Back</button>
-      <button class="btn" id="exportIcs">Add to phone calendar (.ics)</button>
+      <div class="rota-top-actions">
+        <button class="btn ghost" id="leaveBtn">Leave</button>
+        <button class="btn" id="exportIcs">Add to phone calendar (.ics)</button>
+      </div>
     </div>
     <div class="rota-head">
       <div>
@@ -744,10 +852,11 @@ const MY_SHIFT_TYPES = [
   {id:"outliers",   label:"Outliers",          short:"Out",   start:"08:30", end:"17:00", color:"#3a57c7"},
   {id:"day_cover",  label:"Day cover",         short:"Cover", start:"08:30", end:"17:00", color:"#2f7d4f"},
   {id:"pdp",        label:"PDP",               short:"PDP",   start:"09:00", end:"17:00", color:"#6b7280"},
-  {id:"oncall",     label:"On call",           short:"Call",  start:"08:30", end:"08:30", color:"#b45309", allday:true},
-  {id:"leave",      label:"Leave",             short:"Leave", start:"08:30", end:"17:00", color:"#64748b", allday:true}
+  {id:"oncall",       label:"On call",      short:"Call",  start:"08:30", end:"08:30", color:"#b45309", allday:true},
+  {id:"annual_leave", label:"Annual leave", short:"AL",    start:"08:30", end:"17:00", color:"#2f7d4f", allday:true},
+  {id:"study_leave",  label:"Study leave",  short:"SL",    start:"08:30", end:"17:00", color:"#6366f1", allday:true}
 ];
-const ALLDAY_TYPES = new Set(["oncall","leave"]);
+const ALLDAY_TYPES = new Set(["oncall","annual_leave","study_leave"]);
 function myType(id){ return MY_SHIFT_TYPES.find(s=>s.id===id) || MY_SHIFT_TYPES[0]; }
 
 /* ===== state + persistence ===== */
@@ -1279,7 +1388,7 @@ function renderMyDay(ds){
   list.querySelectorAll(".my-t").forEach(inp=>inp.onchange=()=>setMyShiftTime(ds, inp.dataset.id, inp.dataset.f, inp.value));
   const sw=document.getElementById("mySwap"); if(sw) sw.onclick=()=>swapMyDay(ds);
   const add=document.getElementById("myDayAdd");
-  if(isAllday){ add.innerHTML=`<div class="empty">${arr[0].type==="oncall"?"On-call":"Leave"} takes the whole day. Remove it to add clinic sessions.</div>`; }
+  if(isAllday){ add.innerHTML=`<div class="empty">${escapeHtml(myType(arr[0].type).label)} takes the whole day. Remove it to add clinic sessions.</div>`; }
   else if(arr.length>=2){ add.innerHTML=`<div class="empty">Two sessions set (AM + PM). Remove one to change it.</div>`; }
   else {
     add.innerHTML=MY_SHIFT_TYPES.map(t=>`<button class="my-add" style="border-color:${t.color};color:${t.color}" data-t="${t.id}">+ ${escapeHtml(t.label)}</button>`).join("");
@@ -1319,7 +1428,7 @@ function buildICS(monthKey){
   const m=(state.myShifts&&state.myShifts[meKey])||{};
   Object.keys(m).forEach(ds=>{ if(!inMonth(ds)) return; m[ds].forEach(s=>{ const t=myType(s.type);
     let se;
-    if(s.type==="leave"){                                            // all-day event
+    if(s.type==="annual_leave"||s.type==="study_leave"){          // all-day event
       se=[`DTSTART;VALUE=DATE:${ds.replace(/-/g,"")}`,`DTEND;VALUE=DATE:${shiftDate(ds,1).replace(/-/g,"")}`];
     } else if(s.type==="oncall"){                                    // 24h on-call
       se=[`DTSTART:${icsLocal(ds,"08:30")}`,`DTEND:${icsLocal(shiftDate(ds,1),"08:30")}`];
@@ -1347,6 +1456,127 @@ function exportICS(){
   document.getElementById("icsOverlay").classList.add("show");
 }
 function closeIcs(){ document.getElementById("icsOverlay").classList.remove("show"); }
+
+/* ===== Leave tracker (annual → two automatic 6-month rosters) ===== */
+let leaveViewYear=null;
+function leaveISO(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function getLeave(){
+  if(!state.leave) state.leave={};
+  const key=meKey||"A";
+  if(!state.leave[key]) state.leave[key]={};
+  const L=state.leave[key];
+  if(typeof L.wte!=="number") L.wte=0.8;
+  if(typeof L.nwd!=="number") L.nwd=1;                 // Monday (0=Sun..6=Sat)
+  if(typeof L.slEntitlement!=="number") L.slEntitlement=30;
+  if(!L.rosters || typeof L.rosters!=="object") L.rosters={};
+  return L;
+}
+function annualFT(year){ return year>=2029?32:27; }
+function activeLeaveYear(){ if(leaveViewYear!=null) return leaveViewYear; const r=new Date(); let y=r.getFullYear(); if(r.getMonth()<1) y-=1; return y; }
+function bhInRange(fromISO,toISO){ return Object.keys(BANK_HOLIDAYS).filter(ds=>ds>=fromISO && ds<=toISO); }
+function countLeaveDays(typeId, fromISO, toExclusiveISO, toInclusiveISO){
+  const m=(state.myShifts&&state.myShifts[meKey])||{}; let n=0;
+  Object.keys(m).forEach(ds=>{ const ok = toInclusiveISO!=null ? (ds>=fromISO && ds<=toInclusiveISO) : (ds>=fromISO && ds<toExclusiveISO); if(ok && Array.isArray(m[ds])) m[ds].forEach(s=>{ if(s.type===typeId) n++; }); });
+  return n;
+}
+function rosterCfg(Y, half){ const L=getLeave(); const key=`${Y}-${half}`; if(!L.rosters[key]) L.rosters[key]={carryover:0, wte:null, override:null}; return L.rosters[key]; }
+function rosterInfo(Y, half){
+  const L=getLeave(); const annual=annualFT(Y);
+  const start = half==="H1"?`${Y}-02-01`:`${Y}-08-01`;
+  const end   = half==="H1"?`${Y}-07-31`:`${Y+1}-01-31`;
+  const halfDays = half==="H1"?Math.ceil(annual/2):Math.floor(annual/2);
+  const cfg=rosterCfg(Y,half);
+  const wte=(cfg.wte!=null)?cfg.wte:L.wte;
+  const bhs=bhInRange(start,end);
+  const bhCount=bhs.length, bhWorked=bhs.filter(ds=>new Date(ds+"T00:00:00").getDay()!==L.nwd).length;
+  const auto=Math.round(((halfDays*wte)+(bhCount*wte)-bhWorked)*10)/10;
+  const entitlement=(cfg.override!=null)?cfg.override:auto;
+  const total=Math.round((entitlement+cfg.carryover)*10)/10;
+  const taken=countLeaveDays("annual_leave", start, null, end);
+  const left=Math.round((total-taken)*10)/10;
+  const label = half==="H1"?`Feb – Aug ${Y}`:`Aug ${Y} – Feb ${Y+1}`;
+  return {start,end,half,halfDays,wte,bhCount,bhWorked,auto,entitlement,total,taken,left,label,cfg,key:`${Y}-${half}`};
+}
+function fmtNice(iso){ try{ return longDate(iso).date; }catch(e){ return iso; } }
+function openLeave(){ leaveViewYear=null; renderLeave(); document.getElementById("leaveOverlay").classList.add("show"); }
+function closeLeave(){ document.getElementById("leaveOverlay").classList.remove("show"); }
+function shiftLeaveYear(delta){ leaveViewYear=activeLeaveYear()+delta; renderLeave(); }
+function setLeaveField(field,val,isNum){ const L=getLeave(); if(isNum){ const n=parseFloat(val); L[field]=isNaN(n)?0:n; } else { L[field]=val; } persist(); renderLeave(); }
+function setRosterField(key,field,val){ const L=getLeave(); if(!L.rosters[key]) L.rosters[key]={carryover:0,wte:null,override:null}; const r=L.rosters[key]; if(field==="carryover"){ r.carryover=parseFloat(val)||0; } else { const t=(val||"").trim(); r[field]= t===""?null:(parseFloat(t)||0); } persist(); renderLeave(); }
+function logLeave(){
+  const typeId=document.getElementById("logType").value;
+  let from=document.getElementById("logFrom").value, to=document.getElementById("logTo").value;
+  if(!from){ flashMsg("Pick a date first"); return; }
+  if(!to) to=from; if(to<from){ const t=from; from=to; to=t; }
+  if(!meKey) return; const L=getLeave();
+  if(!state.myShifts) state.myShifts={}; if(!state.myShifts[meKey]) state.myShifts[meKey]={};
+  let added=0; let d=new Date(from+"T00:00:00"); const end=new Date(to+"T00:00:00");
+  while(d<=end){ const wd=d.getDay(); if(wd!==0 && wd!==6 && wd!==L.nwd){ const ds=leaveISO(d); state.myShifts[meKey][ds]=[{id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:typeId, start:"08:30", end:"17:00"}]; added++; } d.setDate(d.getDate()+1); }
+  persist(); renderLeave(); renderMyCalendar();
+  flashMsg(`${added} ${typeId==="annual_leave"?"annual":"study"} leave day${added===1?"":"s"} logged${added?"":" (range was all weekends / your day off)"}`);
+}
+function removeLeaveDay(ds){ const m=state.myShifts&&state.myShifts[meKey]; if(m&&m[ds]){ delete m[ds]; persist(); renderLeave(); renderMyCalendar(); } }
+function renderLeave(){
+  const host=document.getElementById("leaveBody"); if(!host) return;
+  const L=getLeave(); const Y=activeLeaveYear();
+  const r1=rosterInfo(Y,"H1"), r2=rosterInfo(Y,"H2");
+  const yrTotal=Math.round((r1.total+r2.total)*10)/10, yrTaken=r1.taken+r2.taken, yrLeft=Math.round((yrTotal-yrTaken)*10)/10;
+  const yStart=`${Y}-02-01`, yEndIncl=`${Y+1}-01-31`, yEnd=new Date(Y+1,1,1);
+  const slTaken=countLeaveDays("study_leave", yStart, null, yEndIncl), slRemain=Math.round((L.slEntitlement-slTaken)*10)/10;
+  const R=52,C=2*Math.PI*R, frac=yrTotal>0?Math.min(1,yrTaken/yrTotal):0, off=C*(1-frac), over=yrTaken>yrTotal, col=over?"#c2412f":"#2f7d4f";
+  const today=new Date(), todayISO=leaveISO(today), day=86400000, rem=[];
+  const curHalf = (todayISO>=r1.start && todayISO<=r1.end) ? "H1" : ((todayISO>=r2.start && todayISO<=r2.end) ? "H2" : null);
+  [r1,r2].forEach(r=>{ if(r.left<=0) return; const dEnd=Math.ceil((new Date(r.end+"T00:00:00")-today)/day);
+    if(dEnd>=0 && dEnd<=60) rem.push(`${r.left} day${r.left===1?"":"s"} to take before ${r.label} ends on ${fmtNice(r.end)} (${dEnd} day${dEnd===1?"":"s"} away).`);
+    else if(dEnd<0 && leaveViewYear==null) rem.push(`${r.left} unused day${r.left===1?"":"s"} in ${r.label} — carry over what you can.`);
+  });
+  const dSL=Math.ceil((yEnd-today)/day); if(slRemain>0 && dSL>=0 && dSL<=90) rem.push(`${slRemain} study leave day${slRemain===1?"":"s"} left before the year ends.`);
+  const card=(r)=>{ const pct=r.total>0?Math.min(100,Math.round(r.taken/r.total*100)):0; const bc=r.left<0?"#c2412f":"#2f7d4f"; const cur=curHalf===r.half && leaveViewYear==null;
+    return `<div class="rot-card ${cur?'cur':''}">
+      <div class="rot-row1"><div class="rc-title">${r.label}${cur?'<span class="cur-tag">now</span>':''}</div><div class="rc-left"><b>${r.left}</b> left</div></div>
+      <div class="rot-bar"><div class="rot-bar-fill" style="width:${pct}%;background:${bc}"></div></div>
+      <div class="rc-sub">${r.taken} taken · ${r.total} total${r.cfg.carryover?` (incl. ${r.cfg.carryover} carried over)`:''}</div>
+      <details class="rc-more"><summary>Adjust &amp; breakdown</summary>
+        <div class="rc-calc">${r.halfDays} × ${r.wte} WTE + ${r.bhCount} BH × ${r.wte} − ${r.bhWorked} worked = <b>${r.auto}</b> days</div>
+        <div class="rc-fields"><label>Carryover<input type="number" value="${r.cfg.carryover}" data-key="${r.key}" data-f="carryover" min="0" step="0.5"></label><label>WTE<input type="number" value="${r.cfg.wte!=null?r.cfg.wte:''}" placeholder="${L.wte}" data-key="${r.key}" data-f="wte" min="0.1" max="1" step="0.05"></label><label>Override<input type="number" value="${r.cfg.override!=null?r.cfg.override:''}" placeholder="auto" data-key="${r.key}" data-f="override" min="0" step="0.5"></label></div>
+      </details>
+    </div>`; };
+  // logged leave list for the year
+  const m=(state.myShifts&&state.myShifts[meKey])||{}; const logged=[];
+  Object.keys(m).sort().forEach(ds=>{ if(ds>=yStart && ds<=yEndIncl && Array.isArray(m[ds])) m[ds].forEach(s=>{ if(s.type==="annual_leave"||s.type==="study_leave") logged.push({ds,type:s.type}); }); });
+  const loggedHTML = logged.length ? logged.map(x=>`<div class="logged-item"><span class="li-dot" style="background:${x.type==='annual_leave'?'#2f7d4f':'#6366f1'}"></span><span class="li-date">${fmtNice(x.ds)}</span><span class="li-type">${x.type==='annual_leave'?'Annual':'Study'}</span><button class="li-x" data-ds="${x.ds}" aria-label="Remove">✕</button></div>`).join("") : `<div class="empty">No leave logged this year yet.</div>`;
+  const WD=[["1","Monday"],["2","Tuesday"],["3","Wednesday"],["4","Thursday"],["5","Friday"],["6","Saturday"],["0","Sunday"]];
+  host.innerHTML=`
+    <div class="leave-yearnav"><button class="iconbtn" id="lvPrev">‹</button><div class="lyn-label">Feb ${Y} – Feb ${Y+1}</div><button class="iconbtn" id="lvNext">›</button></div>
+    <div class="leave-hero">
+      <div class="leave-ringwrap"><svg viewBox="0 0 120 120" class="leave-ring"><circle class="lr-bg" cx="60" cy="60" r="${R}"></circle><circle class="lr-fg" cx="60" cy="60" r="${R}" style="stroke:${col};stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${off.toFixed(1)}"></circle></svg><div class="lr-center"><div class="lr-num">${yrLeft}</div><div class="lr-lbl">days left</div></div></div>
+      <div class="leave-hero-meta"><div class="lh-year">Annual leave this year</div><div class="lh-stat"><b>${yrTaken}</b> taken of <b>${yrTotal}</b></div></div>
+    </div>
+    ${rem.length?`<div class="leave-reminders">${rem.map(x=>`<div class="lr-item">${x}</div>`).join("")}</div>`:""}
+    <div class="rot-list">${card(r1)}${card(r2)}</div>
+    <div class="leave-section"><div class="ls-title">Study leave</div><div class="sl-card"><div class="rot-bar"><div class="rot-bar-fill" style="width:${L.slEntitlement>0?Math.min(100,Math.round(slTaken/L.slEntitlement*100)):0}%;background:#6366f1"></div></div><div class="rot-meta"><span><b>${slTaken}</b> of ${L.slEntitlement} taken · ${slRemain} left</span></div></div></div>
+    <div class="leave-section"><div class="ls-title">Log leave taken</div>
+      <div class="log-form">
+        <select id="logType"><option value="annual_leave">Annual leave</option><option value="study_leave">Study leave</option></select>
+        <div class="log-dates"><input type="date" id="logFrom" value="${todayISO}"><span>→</span><input type="date" id="logTo"></div>
+        <button class="btn" id="logAdd">Add</button>
+      </div>
+      <div class="log-hint">Adds each working day in the range (skips weekends and your non-working day). Single day? Leave the second date blank.</div>
+      ${logged.length?`<div class="logged-list">${loggedHTML}</div>`:""}
+    </div>
+    <details class="set-d"><summary>Settings &amp; how it works</summary>
+      <div class="leave-settings"><div class="ls-2"><label>Default WTE<input type="number" id="lvWte" value="${L.wte}" min="0.1" max="1" step="0.05"></label><label>Non-working day<select id="lvNwd">${WD.map(w=>`<option value="${w[0]}" ${(+w[0])===L.nwd?"selected":""}>${w[1]}</option>`).join("")}</select></label></div><label>Study leave allowance (days)<input type="number" id="lvSl" value="${L.slEntitlement}" min="0" step="0.5"></label></div>
+      <div class="leave-note">Annual leave splits automatically into two six-month rosters (${annualFT(Y)} days a year ${annualFT(Y)===27?'→ 14 / 13':'→ 16 / 16'}; rises to 32 from Feb 2029). Each roster: half × WTE + bank holidays × WTE − bank holidays on a working day. Set a roster's own WTE under “Adjust” if it differs (e.g. full-time before LTFT). Days “taken” count the leave you log or mark on the calendar.</div>
+    </details>`;
+  document.getElementById("lvPrev").onclick=()=>shiftLeaveYear(-1);
+  document.getElementById("lvNext").onclick=()=>shiftLeaveYear(1);
+  document.getElementById("logAdd").onclick=logLeave;
+  document.getElementById("lvWte").onchange=e=>setLeaveField("wte",e.target.value,true);
+  document.getElementById("lvNwd").onchange=e=>setLeaveField("nwd",e.target.value,true);
+  document.getElementById("lvSl").onchange=e=>setLeaveField("slEntitlement",e.target.value,true);
+  host.querySelectorAll(".rc-fields input").forEach(inp=>inp.onchange=()=>setRosterField(inp.dataset.key, inp.dataset.f, inp.value));
+  host.querySelectorAll(".li-x").forEach(b=>b.onclick=()=>removeLeaveDay(b.dataset.ds));
+}
 function doExportICS(){
   const monthKey=document.getElementById("icsMonth").value;
   const ics=buildICS(monthKey);
@@ -1708,6 +1938,8 @@ function normalize(){
   if(!state.rotaId) state.rotaId=1; if(!state.accept) state.accept={}; if(!state.myShifts) state.myShifts={};
   if(!state.ready || typeof state.ready!=="object") state.ready={A:false,B:false};
   if(!Array.isArray(state.comments)) state.comments=[];
+  if(!state.leave || typeof state.leave!=="object") state.leave={};
+  Object.values(state.myShifts||{}).forEach(days=>Object.values(days||{}).forEach(arr=>{ if(Array.isArray(arr)) arr.forEach(s=>{ if(s && s.type==="leave") s.type="annual_leave"; }); }));
   ["A","B"].forEach(k=>{ if(!state.people[k]) state.people[k]={name:k==="A"?"Mark":"Ed"}; if(state.people[k].initials===undefined) state.people[k].initials=""; });
   Object.values(state.assignments||{}).forEach(a=>{ if((a.p==="A"||a.p==="B") && a.rota===undefined) a.rota=state.rotaId; });
   const statusMap={requested:"pending", agreed:"accepted", done:"accepted"};
@@ -1758,6 +1990,8 @@ function boot(){
   document.getElementById("myDayClose").onclick=closeMyDay;
   document.getElementById("myDayOverlay").onclick=e=>{ if(e.target.id==="myDayOverlay") closeMyDay(); };
   document.getElementById("exportIcs").onclick=exportICS;
+  document.getElementById("leaveBtn").onclick=openLeave;
+  document.getElementById("leaveBack").onclick=closeLeave;
   document.getElementById("icsCancel").onclick=closeIcs;
   document.getElementById("icsExport").onclick=doExportICS;
   document.getElementById("acceptRotaBtn").onclick=toggleAgree;
@@ -1775,7 +2009,7 @@ function boot(){
   let curTheme="clinical"; try{ curTheme=localStorage.getItem(THEME_KEY)||"clinical"; }catch(e){}
   document.querySelectorAll("#themeSwitch button").forEach(b=>{ b.classList.toggle("on", b.dataset.theme===curTheme); b.onclick=()=>applyTheme(b.dataset.theme); });
 
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); closePrint(); closeIcs(); document.getElementById("nameOverlay").classList.remove("show"); } });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("leaveOverlay").classList.contains("show")){ closeLeave(); return; } if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); closePrint(); closeIcs(); document.getElementById("nameOverlay").classList.remove("show"); } });
 
   document.getElementById("syncStatus").onclick=openLogin;
   document.getElementById("accountBtn").onclick=openLogin;
