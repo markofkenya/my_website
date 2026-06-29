@@ -498,6 +498,7 @@
   .rq-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);border-radius:8px;padding:6px 11px;font-size:12px;font-family:var(--font-b);font-weight:600;cursor:pointer}
   .rq-btn:hover{background:var(--surface-2);color:var(--ink)}
   .rq-btn.danger:hover{color:var(--warn);border-color:var(--warn)}
+  .rq-past-list{padding:12px 14px 14px}
   .ls-subhead{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin:16px 0 8px}
   .leave-settings label{display:flex;flex-direction:column;gap:4px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
   .leave-settings input,.leave-settings select{border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:14px;font-family:var(--font-b);background:var(--surface);color:var(--ink);text-transform:none;letter-spacing:normal}
@@ -1577,7 +1578,7 @@ function renderLeave(){
   const today=new Date(), todayISO=leaveISO(today), day=86400000, rem=[];
   const curHalf = (todayISO>=r1.start && todayISO<=r1.end) ? "H1" : ((todayISO>=r2.start && todayISO<=r2.end) ? "H2" : null);
   [r1,r2].forEach(r=>{ if(r.left<=0) return; const dEnd=Math.ceil((new Date(r.end+"T00:00:00")-today)/day);
-    if(dEnd>=0 && dEnd<=60) rem.push(`You have <b>${r.left}</b> annual leave day${r.left===1?"":"s"} still to book in the ${r.label} roster. It closes on ${fmtNice(r.end)} — ${dEnd} day${dEnd===1?"":"s"} from now.`);
+    if(dEnd>=0 && dEnd<=60) rem.push(`You have <b>${r.left}</b> annual leave day${r.left===1?"":"s"} still to book in the ${r.label} roster. It closes on ${fmtNice(r.end)} (${dEnd} day${dEnd===1?"":"s"} from now).`);
     else if(dEnd<0 && leaveViewYear==null) rem.push(`<b>${r.left}</b> annual leave day${r.left===1?"":"s"} went unused in ${r.label} — carry over what you can to the next roster.`);
   });
   const dSL=Math.ceil((yEnd-today)/day); if(slRemain>0 && dSL>=0 && dSL<=90) rem.push(`<b>${slRemain}</b> study leave day${slRemain===1?"":"s"} left before the leave year ends.`);
@@ -1597,10 +1598,12 @@ function renderLeave(){
   const loggedHTML = logged.length ? logged.map(x=>`<div class="logged-item"><span class="li-dot" style="background:${x.type==='annual_leave'?'#2f7d4f':'#6366f1'}"></span><span class="li-date">${fmtNice(x.ds)}</span><span class="li-type">${x.type==='annual_leave'?'Annual':'Study'}</span><button class="li-x" data-ds="${x.ds}" aria-label="Remove">✕</button></div>`).join("") : `<div class="empty">No leave logged this year yet.</div>`;
   const WD=[["1","Monday"],["2","Tuesday"],["3","Wednesday"],["4","Thursday"],["5","Friday"],["6","Saturday"],["0","Sunday"]];
   const p=L.profile;
-  const reqs=(L.requests||[]).slice().sort((a,b)=>b.createdAt-a.createdAt);
-  const reqHTML = reqs.map(r=>{ const range=r.from===r.to?fmtNice(r.from):`${fmtNice(r.from)} – ${fmtNice(r.to)}`; const badge=r.status==='approved'?'<span class="rq-badge ok">Approved</span>':r.status==='declined'?'<span class="rq-badge no">Declined</span>':'<span class="rq-badge pend">Pending</span>';
+  const reqsAll=(L.requests||[]).slice().sort((a,b)=>b.createdAt-a.createdAt);
+  const reqItem=(r)=>{ const range=r.from===r.to?fmtNice(r.from):`${fmtNice(r.from)} – ${fmtNice(r.to)}`; const badge=r.status==='approved'?'<span class="rq-badge ok">Approved</span>':r.status==='declined'?'<span class="rq-badge no">Declined</span>':'<span class="rq-badge pend">Pending</span>';
     return `<div class="rq-item"><div class="rq-top"><div class="rq-when">${reqTypeLabel(r.type)} · ${range}</div>${badge}</div><div class="rq-sub">${r.days.length} working day${r.days.length===1?'':'s'}${r.note?` · ${escapeHtml(r.note)}`:''}</div><div class="rq-acts"><button class="rq-btn" data-act="email" data-id="${r.id}">Email</button><button class="rq-btn" data-act="form" data-id="${r.id}">Form</button>${r.status!=='approved'?`<button class="rq-btn" data-act="approve" data-id="${r.id}">Mark approved</button>`:''}${r.status!=='declined'?`<button class="rq-btn" data-act="decline" data-id="${r.id}">Decline</button>`:''}<button class="rq-btn danger" data-act="undo" data-id="${r.id}">Undo</button></div></div>`;
-  }).join("");
+  };
+  const reqsCur=reqsAll.filter(r=>r.to>=todayISO), reqsPast=reqsAll.filter(r=>r.to<todayISO);
+  const reqHTML=reqsCur.map(reqItem).join(""), reqPastHTML=reqsPast.map(reqItem).join("");
   host.innerHTML=`
     <div class="leave-yearnav"><button class="iconbtn" id="lvPrev">‹</button><div class="lyn-label">Feb ${Y} – Feb ${Y+1}</div><button class="iconbtn" id="lvNext">›</button></div>
     <div class="leave-hero">
@@ -1610,7 +1613,8 @@ function renderLeave(){
     <button class="btn key-al req-cta" id="requestLeaveBtn">＋ Request leave</button>
     ${rem.length?`<div class="leave-reminders">${rem.map(x=>`<div class="lr-item">${x}</div>`).join("")}</div>`:""}
     <div class="rot-list">${card(r1)}${card(r2)}</div>
-    ${reqs.length?`<div class="leave-section"><div class="ls-title">Leave requests</div><div class="rq-list">${reqHTML}</div></div>`:""}
+    ${reqsCur.length?`<div class="leave-section"><div class="ls-title">Leave requests</div><div class="rq-list">${reqHTML}</div></div>`:""}
+    ${reqsPast.length?`<div class="leave-section"><details class="set-d rq-past"><summary>Past requests (${reqsPast.length})</summary><div class="rq-list rq-past-list">${reqPastHTML}</div></details></div>`:""}
     <div class="leave-section"><div class="ls-title">Study leave</div><div class="sl-card"><div class="rot-bar"><div class="rot-bar-fill" style="width:${L.slEntitlement>0?Math.min(100,Math.round(slTaken/L.slEntitlement*100)):0}%;background:#6366f1"></div></div><div class="rot-meta"><span><b>${slTaken}</b> of ${L.slEntitlement} taken · ${slRemain} left</span></div></div></div>
     <div class="leave-section"><div class="ls-title">Log leave taken</div>
       <div class="log-form">
