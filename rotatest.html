@@ -187,7 +187,7 @@
   .cell.assigned-a{background:var(--a-tint);border-color:#bfe0e1}
   .cell.assigned-b{background:var(--b-tint);border-color:#e7c8da}
   .cell.assigned-pool{background:#eef1f3;border:1px dashed #a7b3ba}
-  .cell.nwd::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:repeating-linear-gradient(135deg,transparent 0,transparent 6px,rgba(32,40,48,.13) 6px,rgba(32,40,48,.13) 8px)}
+  .cell.nwd::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:repeating-linear-gradient(135deg,transparent 0,transparent 5px,rgba(126,224,179,.16) 5px,rgba(126,224,179,.16) 7px)}
   .cell.nwd .d{position:relative;z-index:1}
   .cell.assigned-a.weekend,.cell.assigned-a.bh{background:linear-gradient(135deg,var(--a-tint) 60%,var(--gold-tint))}
   .cell.assigned-b.weekend,.cell.assigned-b.bh{background:linear-gradient(135deg,var(--b-tint) 60%,var(--gold-tint))}
@@ -500,6 +500,23 @@
   .rq-btn:hover{background:var(--surface-2);color:var(--ink)}
   .rq-btn.danger:hover{color:var(--warn);border-color:var(--warn)}
   .rq-past-list{padding:12px 14px 14px}
+  .bk-sec{margin-top:6px}
+  .bk-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .bk-req{padding:8px 14px;font-size:13px;color:var(--mint,#7ee0b3);border-color:var(--mint,#7ee0b3)}
+  .bk-list{display:flex;flex-direction:column}
+  .bk-item{border-top:1px solid var(--line)}
+  .bk-item:last-child{border-bottom:1px solid var(--line)}
+  .bk-row{display:flex;align-items:center;gap:13px;padding:14px 2px;cursor:pointer}
+  .bk-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+  .bk-main{flex:1;min-width:0}
+  .bk-title{font-family:var(--font-d);font-weight:600;font-size:16px;color:var(--ink);line-height:1.2}
+  .bk-sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
+  .bk-acts{display:none;flex-wrap:wrap;gap:7px;padding:0 2px 14px 36px}
+  .bk-item.open .bk-acts{display:flex}
+  .bk-empty{font-size:13px;color:var(--ink-faint);padding:18px 2px;line-height:1.5}
+  .rq-badge.log{background:var(--surface-2);color:var(--ink-faint)}
+  .pdf-btns{display:flex;flex-wrap:wrap;gap:8px}
+  .pdf-btns .btn{flex:1;min-width:120px;font-size:12.5px;padding:10px 8px}
   .ls-subhead{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin:16px 0 8px}
   .leave-settings label{display:flex;flex-direction:column;gap:4px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
   .leave-settings input,.leave-settings select{border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:14px;font-family:var(--font-b);background:var(--surface);color:var(--ink);text-transform:none;letter-spacing:normal}
@@ -701,7 +718,7 @@
   /* toast — frosted, lit */
   .toast{
     transition:opacity .3s var(--ease), transform .4s var(--ease-spring) !important;
-    background:rgba(26,30,34,.86); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    background:rgba(26,30,34,.92); color:var(--ink) !important; font-weight:500; backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
     border:1px solid var(--line); box-shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 16px 40px -12px rgba(0,0,0,.7);
   }
 
@@ -1253,7 +1270,7 @@ function renderCalendar(){
     <span><span class="k" style="background:var(--a-tint);border-color:#bfe0e1"></span>${escapeHtml(state.people.A.name)}</span>
     <span><span class="k" style="background:var(--b-tint);border-color:#e7c8da"></span>${escapeHtml(state.people.B.name)}</span>
     <span><span class="k" style="background:var(--gold-tint);border-color:var(--gold-line)"></span>Weekend / bank holiday</span>
-    <span><span class="k" style="background:repeating-linear-gradient(135deg,#fff 0,#fff 3px,#c2cace 3px,#c2cace 4px);border-color:var(--line)"></span>Mon · non-working day</span>
+    <span><span class="k" style="background:repeating-linear-gradient(135deg,var(--surface-2) 0,var(--surface-2) 3px,rgba(126,224,179,.55) 3px,rgba(126,224,179,.55) 4px);border-color:var(--line)"></span>Mon · non-working day</span>
     <span><span class="k" style="box-shadow:inset 0 0 0 2px var(--ink);background:#fff"></span>Today</span>`;
 }
 
@@ -1854,38 +1871,43 @@ function renderLeave(){
         <div class="rc-fields"><label>Carryover<input type="number" value="${r.cfg.carryover}" data-key="${r.key}" data-f="carryover" min="0" step="0.5"></label><label>WTE<input type="number" value="${r.cfg.wte!=null?r.cfg.wte:''}" placeholder="${L.wte}" data-key="${r.key}" data-f="wte" min="0.1" max="1" step="0.05"></label><label>Override<input type="number" value="${r.cfg.override!=null?r.cfg.override:''}" placeholder="auto" data-key="${r.key}" data-f="override" min="0" step="0.5"></label></div>
       </details>
     </div>`; };
-  // logged leave list for the year
-  const m=(state.myShifts&&state.myShifts[meKey])||{}; const logged=[];
-  Object.keys(m).sort().forEach(ds=>{ if(ds>=yStart && ds<=yEndIncl && Array.isArray(m[ds])) m[ds].forEach(s=>{ if(s.type==="annual_leave"||s.type==="study_leave") logged.push({ds,type:s.type}); }); });
-  const loggedHTML = logged.length ? logged.map(x=>`<div class="logged-item"><span class="li-dot" style="background:${x.type==='annual_leave'?'#2f7d4f':'#6366f1'}"></span><span class="li-date">${fmtNice(x.ds)}</span><span class="li-type">${x.type==='annual_leave'?'Annual':'Study'}</span><button class="li-x" data-ds="${x.ds}" aria-label="Remove">✕</button></div>`).join("") : `<div class="empty">No leave logged this year yet.</div>`;
+  // ---- unified bookings: requests + any loose logged leave ----
   const WD=[["1","Monday"],["2","Tuesday"],["3","Wednesday"],["4","Thursday"],["5","Friday"],["6","Saturday"],["0","Sunday"]];
   const p=L.profile;
-  const reqsAll=(L.requests||[]).slice().sort((a,b)=>b.createdAt-a.createdAt);
-  const reqItem=(r)=>{ const range=r.from===r.to?fmtNice(r.from):`${fmtNice(r.from)} – ${fmtNice(r.to)}`; const badge=r.status==='approved'?'<span class="rq-badge ok">Approved</span>':r.status==='declined'?'<span class="rq-badge no">Declined</span>':'<span class="rq-badge pend">Pending</span>';
-    return `<div class="rq-item"><div class="rq-top"><div class="rq-when">${reqTypeLabel(r.type)} · ${range}</div>${badge}</div><div class="rq-sub">${r.days.length} working day${r.days.length===1?'':'s'}${r.note?` · ${escapeHtml(r.note)}`:''}</div><div class="rq-acts"><button class="rq-btn" data-act="email" data-id="${r.id}">Email</button><button class="rq-btn" data-act="form" data-id="${r.id}">Form</button>${r.status!=='approved'?`<button class="rq-btn" data-act="approve" data-id="${r.id}">Mark approved</button>`:''}${r.status!=='declined'?`<button class="rq-btn" data-act="decline" data-id="${r.id}">Decline</button>`:''}<button class="rq-btn danger" data-act="undo" data-id="${r.id}">Undo</button></div></div>`;
+  const m=(state.myShifts&&state.myShifts[meKey])||{};
+  const reqsAll=(L.requests||[]).slice();
+  const reqDates=new Set(); reqsAll.forEach(r=>(r.days||[]).forEach(d=>reqDates.add(d)));
+  const bridged=(prevDs,nextDs)=>{ let d=new Date(prevDs+"T00:00:00"); d.setDate(d.getDate()+1); const end=new Date(nextDs+"T00:00:00"); while(d<end){ const wd=d.getDay(); if(wd!==0&&wd!==6&&wd!==L.nwd) return false; d.setDate(d.getDate()+1);} return true; };
+  const looseDays=[]; Object.keys(m).sort().forEach(ds=>{ if(ds>=yStart && ds<=yEndIncl && Array.isArray(m[ds])) m[ds].forEach(s=>{ if((s.type==="annual_leave"||s.type==="study_leave") && !reqDates.has(ds)) looseDays.push({ds,type:s.type}); }); });
+  const loggedGroups=[]; let cg=null; looseDays.forEach(x=>{ if(cg && cg.type===x.type && bridged(cg.to,x.ds)){ cg.to=x.ds; cg.count++; } else { if(cg) loggedGroups.push(cg); cg={type:x.type,from:x.ds,to:x.ds,count:1}; } }); if(cg) loggedGroups.push(cg);
+  const items=[];
+  reqsAll.forEach(r=>items.push({kind:"request", id:r.id, type:r.type, from:r.from, to:r.to, count:(r.days||[]).length, status:r.status, note:r.note}));
+  loggedGroups.forEach((g,i)=>items.push({kind:"logged", id:"L"+i, type:g.type, from:g.from, to:g.to, count:g.count, status:"logged"}));
+  items.sort((a,b)=> (b.from||"").localeCompare(a.from||""));
+  const pillCls={pending:"pend",approved:"ok",declined:"no",logged:"log"}, pillTxt={pending:"Pending",approved:"Approved",declined:"Declined",logged:"Logged"};
+  const dotCol=t=> t==="study_leave"?"#6366f1":"#3fbb83";
+  const bkItem=(it)=>{ const range=it.from===it.to?fmtNice(it.from):`${fmtNice(it.from)} – ${fmtNice(it.to)}`;
+    const acts = it.kind==="request"
+      ? `<button class="rq-btn" data-act="email" data-id="${it.id}">Email</button><button class="rq-btn" data-act="form" data-id="${it.id}">Form</button>${it.status!=="approved"?`<button class="rq-btn" data-act="approve" data-id="${it.id}">Mark approved</button>`:""}${it.status!=="declined"?`<button class="rq-btn" data-act="decline" data-id="${it.id}">Decline</button>`:""}<button class="rq-btn danger" data-act="undo" data-id="${it.id}">Undo</button>`
+      : `<button class="rq-btn" data-act="makereq" data-type="${it.type}" data-from="${it.from}" data-to="${it.to}">Make a request</button><button class="rq-btn danger" data-act="rmlog" data-type="${it.type}" data-from="${it.from}" data-to="${it.to}">Remove</button>`;
+    return `<div class="bk-item" data-id="${it.id}"><div class="bk-row"><span class="bk-dot" style="background:${dotCol(it.type)}"></span><div class="bk-main"><div class="bk-title">${range}</div><div class="bk-sub">${reqTypeLabel(it.type)} · ${it.count} day${it.count===1?"":"s"}</div></div><span class="rq-badge ${pillCls[it.status]}">${pillTxt[it.status]}</span></div><div class="bk-acts">${acts}</div></div>`;
   };
-  const reqsCur=reqsAll.filter(r=>r.to>=todayISO), reqsPast=reqsAll.filter(r=>r.to<todayISO);
-  const reqHTML=reqsCur.map(reqItem).join(""), reqPastHTML=reqsPast.map(reqItem).join("");
+  const bkHTML = items.length ? items.map(bkItem).join("") : `<div class="bk-empty">No leave booked yet. Tap <b>＋ Request</b> to book annual or study leave.</div>`;
   host.innerHTML=`
     <div class="leave-yearnav"><button class="iconbtn" id="lvPrev">‹</button><div class="lyn-label">Feb ${Y} – Feb ${Y+1}</div><button class="iconbtn" id="lvNext">›</button></div>
     <div class="leave-hero">
       <div class="leave-ringwrap"><svg viewBox="0 0 120 120" class="leave-ring"><circle class="lr-bg" cx="60" cy="60" r="${R}"></circle><circle class="lr-fg" cx="60" cy="60" r="${R}" style="stroke:${col};stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${off.toFixed(1)}"></circle></svg><div class="lr-center"><div class="lr-num">${yrLeft}</div><div class="lr-lbl">days left</div></div></div>
       <div class="leave-hero-meta"><div class="lh-year">Annual leave this year</div><div class="lh-stat"><b>${yrTaken}</b> taken of <b>${yrTotal}</b></div></div>
     </div>
-    <button class="btn key-al req-cta" id="requestLeaveBtn">＋ Request leave</button>
     ${rem.length?`<div class="leave-reminders">${rem.map(x=>`<div class="lr-item">${x}</div>`).join("")}</div>`:""}
     <div class="rot-list">${card(r1)}${card(r2)}</div>
-    ${reqsCur.length?`<div class="leave-section"><div class="ls-title">Leave requests</div><div class="rq-list">${reqHTML}</div></div>`:""}
-    ${reqsPast.length?`<div class="leave-section"><details class="set-d rq-past"><summary>Past requests (${reqsPast.length})</summary><div class="rq-list rq-past-list">${reqPastHTML}</div></details></div>`:""}
+    <div class="leave-section bk-sec">
+      <div class="bk-head"><div class="section-label">Bookings &amp; requests</div><button class="btn ghost bk-req" id="requestLeaveBtn">＋ Request</button></div>
+      <div class="bk-list">${bkHTML}</div>
+    </div>
     <div class="leave-section"><div class="ls-title">Study leave</div><div class="sl-card"><div class="rot-bar"><div class="rot-bar-fill" style="width:${L.slEntitlement>0?Math.min(100,Math.round(slTaken/L.slEntitlement*100)):0}%;background:#6366f1"></div></div><div class="rot-meta"><span><b>${slTaken}</b> of ${L.slEntitlement} taken · ${slRemain} left</span></div></div></div>
-    <div class="leave-section"><div class="ls-title">Log leave taken</div>
-      <div class="log-form">
-        <select id="logType"><option value="annual_leave">Annual leave</option><option value="study_leave">Study leave</option></select>
-        <div class="log-dates"><input type="date" id="logFrom" value="${todayISO}"><span>→</span><input type="date" id="logTo"></div>
-        <button class="btn" id="logAdd">Add</button>
-      </div>
-      <div class="log-hint">Adds each working day in the range (skips weekends and your non-working day). Single day? Leave the second date blank.</div>
-      ${logged.length?`<div class="logged-list">${loggedHTML}</div>`:""}
+    <div class="leave-section"><div class="ls-title">Export leave taken (PDF)</div>
+      <div class="pdf-btns"><button class="btn ghost" id="pdfYear">This year (Feb–Feb)</button><button class="btn ghost" id="pdfH1">Feb–Aug roster</button><button class="btn ghost" id="pdfH2">Aug–Feb roster</button></div>
     </div>
     <details class="set-d"><summary>Settings &amp; how it works</summary>
       <div class="leave-settings"><div class="ls-2"><label>Default WTE<input type="number" id="lvWte" value="${L.wte}" min="0.1" max="1" step="0.05"></label><label>Non-working day<select id="lvNwd">${WD.map(w=>`<option value="${w[0]}" ${(+w[0])===L.nwd?"selected":""}>${w[1]}</option>`).join("")}</select></label></div><label>Study leave allowance (days)<input type="number" id="lvSl" value="${L.slEntitlement}" min="0" step="0.5"></label></div>
@@ -1895,20 +1917,31 @@ function renderLeave(){
         <div class="ls-2"><label>Specialty<input id="pfSpec" value="${escapeHtml(p.specialty)}"></label><label>Ward<input id="pfWard" value="${escapeHtml(p.ward)}"></label></div>
         <div class="ls-2"><label>Hospital<input id="pfHosp" value="${escapeHtml(p.hospital)}"></label><label>GMC<input id="pfGmc" value="${escapeHtml(p.gmc)}"></label></div>
       </div>
-      <div class="leave-note">Annual leave splits automatically into two six-month rosters (${annualFT(Y)} days a year ${annualFT(Y)===27?'→ 14 / 13':'→ 16 / 16'}; rises to 32 from Feb 2029). Each roster: half × WTE + bank holidays × WTE − bank holidays on a working day. Set a roster's own WTE under “Adjust” if it differs (e.g. full-time before LTFT). Days “taken” count the leave you log or mark on the calendar.</div>
+      <div class="leave-note">Annual leave splits into two six-month rosters (${annualFT(Y)} days a year ${annualFT(Y)===27?'→ 14 / 13':'→ 16 / 16'}; rises to 32 from Feb 2029). Each roster: half × WTE + bank holidays × WTE − bank holidays on a working day. All leave is booked through Request → approval; tap any row to see its actions.</div>
     </details>`;
   document.getElementById("lvPrev").onclick=()=>shiftLeaveYear(-1);
   document.getElementById("lvNext").onclick=()=>shiftLeaveYear(1);
-  document.getElementById("logAdd").onclick=logLeave;
   document.getElementById("lvWte").onchange=e=>setLeaveField("wte",e.target.value,true);
   document.getElementById("lvNwd").onchange=e=>setLeaveField("nwd",e.target.value,true);
   document.getElementById("lvSl").onchange=e=>setLeaveField("slEntitlement",e.target.value,true);
   host.querySelectorAll(".rc-fields input").forEach(inp=>inp.onchange=()=>setRosterField(inp.dataset.key, inp.dataset.f, inp.value));
-  host.querySelectorAll(".li-x").forEach(b=>b.onclick=()=>removeLeaveDay(b.dataset.ds));
   document.getElementById("requestLeaveBtn").onclick=openRequest;
   const cor=document.getElementById("lvCoord"); if(cor) cor.onchange=e=>setLeaveText("coordEmail",e.target.value);
   [["pfName","name"],["pfGrade","grade"],["pfSpec","specialty"],["pfWard","ward"],["pfHosp","hospital"],["pfGmc","gmc"]].forEach(([id,f])=>{ const el=document.getElementById(id); if(el) el.onchange=ev=>setLeaveText(f,ev.target.value); });
-  host.querySelectorAll(".rq-btn").forEach(b=>b.onclick=()=>{ const id=b.dataset.id, act=b.dataset.act; const r=getLeave().requests.find(x=>x.id===id); if(!r) return; if(act==="email"){ reqCreated=r; renderRequest(); document.getElementById("requestOverlay").classList.add("show"); } else if(act==="form"){ printLeaveForm(r); } else if(act==="approve"){ setRequestStatus(id,"approved"); } else if(act==="decline"){ setRequestStatus(id,"declined"); } else if(act==="undo"){ if(confirm("Remove this request and its booked days?")) undoRequest(id); } });
+  host.querySelectorAll(".bk-row").forEach(row=>row.onclick=()=>row.parentElement.classList.toggle("open"));
+  document.getElementById("pdfYear").onclick=()=>printLeaveTaken("year");
+  document.getElementById("pdfH1").onclick=()=>printLeaveTaken("H1");
+  document.getElementById("pdfH2").onclick=()=>printLeaveTaken("H2");
+  host.querySelectorAll(".rq-btn").forEach(b=>b.onclick=(ev)=>{ ev.stopPropagation(); const act=b.dataset.act;
+    if(act==="makereq"){ makeRequestFromLogged(b.dataset.type,b.dataset.from,b.dataset.to); return; }
+    if(act==="rmlog"){ if(confirm("Remove this logged leave from your rota?")) removeLoggedRange(b.dataset.type,b.dataset.from,b.dataset.to); return; }
+    const id=b.dataset.id, r=getLeave().requests.find(x=>x.id===id); if(!r) return;
+    if(act==="email"){ reqCreated=r; renderRequest(); document.getElementById("requestOverlay").classList.add("show"); }
+    else if(act==="form"){ printLeaveForm(r); }
+    else if(act==="approve"){ setRequestStatus(id,"approved"); }
+    else if(act==="decline"){ setRequestStatus(id,"declined"); }
+    else if(act==="undo"){ if(confirm("Remove this request and its booked days?")) undoRequest(id); }
+  });
 }
 
 /* ===== Request leave flow ===== */
@@ -2044,6 +2077,44 @@ function buildLeaveFormHtml(req){
       <div class="sigrow"><div class="cell"><span class="lbl">Rota organiser:</span>${U}</div><div class="cell"><span class="lbl">Print name:</span>${U}</div><div class="cell"><span class="lbl">Date:</span>${U}</div></div>
     </div>
     <div class="foot">Remaining annual leave / to be taken by / processed by — for completion by Medical Administration.</div>
+  </div></body></html>`;
+}
+function makeRequestFromLogged(type, fromDs, toDs){ const m=(state.myShifts&&state.myShifts[meKey])||{}; const days=[]; Object.keys(m).sort().forEach(ds=>{ if(ds>=fromDs&&ds<=toDs&&Array.isArray(m[ds])) m[ds].forEach(s=>{ if(s.type===type) days.push(ds); }); }); if(!days.length) return; const req={id:"r"+Date.now(), type, from:fromDs, to:toDs, note:"", days, status:"pending", createdAt:Date.now()}; getLeave().requests.push(req); persist(); reqCreated=req; renderRequest(); document.getElementById("requestOverlay").classList.add("show"); }
+function removeLoggedRange(type, fromDs, toDs){ const m=state.myShifts&&state.myShifts[meKey]; if(!m) return; Object.keys(m).forEach(ds=>{ if(ds>=fromDs&&ds<=toDs&&Array.isArray(m[ds])){ m[ds]=m[ds].filter(s=>s.type!==type); if(!m[ds].length) delete m[ds]; } }); persist(); if(typeof renderMyCalendar==="function") renderMyCalendar(); renderLeave(); }
+function printLeaveTaken(scope){
+  const Y=activeLeaveYear(); let fromISO,toIncl,title;
+  if(scope==="H1"){ fromISO=`${Y}-02-01`; toIncl=`${Y}-07-31`; title=`Feb – Aug ${Y}`; }
+  else if(scope==="H2"){ fromISO=`${Y}-08-01`; toIncl=`${Y+1}-01-31`; title=`Aug ${Y} – Feb ${Y+1}`; }
+  else { fromISO=`${Y}-02-01`; toIncl=`${Y+1}-01-31`; title=`Feb ${Y} – Feb ${Y+1}`; }
+  const html=buildLeaveTakenHtml(title, fromISO, toIncl, scope, Y);
+  const w=window.open("","_blank"); if(!w){ alert("Allow pop-ups to export, or try again."); return; }
+  w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>{ try{ w.print(); }catch(e){} }, 450);
+}
+function buildLeaveTakenHtml(title, fromISO, toIncl, scope, Y){
+  const esc=escapeHtml, L=getLeave(), p=L.profile, m=(state.myShifts&&state.myShifts[meKey])||{};
+  const collect=(type)=>{ const out=[]; Object.keys(m).sort().forEach(d=>{ if(d>=fromISO&&d<=toIncl&&Array.isArray(m[d])) m[d].forEach(s=>{ if(s.type===type) out.push(d); }); }); return out; };
+  const bridged=(a,b)=>{ let d=new Date(a+"T00:00:00"); d.setDate(d.getDate()+1); const e=new Date(b+"T00:00:00"); while(d<e){ const wd=d.getDay(); if(wd!==0&&wd!==6&&wd!==L.nwd) return false; d.setDate(d.getDate()+1);} return true; };
+  const group=(days)=>{ const out=[]; let c=null; days.forEach(d=>{ if(c && bridged(c.to,d)){ c.to=d; c.count++; } else { if(c) out.push(c); c={from:d,to:d,count:1}; } }); if(c) out.push(c); return out; };
+  const al=collect("annual_leave"), sl=collect("study_leave");
+  const rowsFor=(g)=> g.length? g.map(x=>`<tr><td>${esc(x.from===x.to?fmtNice(x.from):fmtNice(x.from)+" – "+fmtNice(x.to))}</td><td class="num">${x.count}</td></tr>`).join("") : `<tr><td colspan="2" class="muted">None recorded</td></tr>`;
+  let entTotal;
+  if(scope==="H1"||scope==="H2"){ entTotal=rosterInfo(Y,scope).total; } else { entTotal=Math.round((rosterInfo(Y,"H1").total+rosterInfo(Y,"H2").total)*10)/10; }
+  const remaining=Math.round((entTotal-al.length)*10)/10;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Annual leave taken — ${esc(p.name)}</title>
+  <style>@page{size:A4;margin:18mm 16mm}*{box-sizing:border-box}body{font-family:"Helvetica Neue",Arial,sans-serif;color:#111;font-size:12px;line-height:1.5;margin:0}.doc{max-width:720px;margin:0 auto}
+  .hd{border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:14px}.hd .t{font-size:16px;font-weight:700}.hd .s{font-size:11px;color:#555;margin-top:3px}
+  .meta{display:flex;flex-wrap:wrap;gap:6px 22px;margin:10px 0 4px;font-size:12px}.meta b{font-weight:600}
+  .sum{display:flex;gap:22px;margin:14px 0;padding:12px 14px;border:1px solid #ccc;border-radius:8px;background:#fafafa}
+  .sum .b{font-size:20px;font-weight:700}.sum .l{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#666}
+  h3{font-size:12.5px;margin:18px 0 6px;border-bottom:1px solid #ccc;padding-bottom:3px}
+  table{width:100%;border-collapse:collapse}td{padding:6px 4px;border-bottom:1px solid #eee;font-size:12px}td.num{text-align:right;width:70px;font-weight:600}td.muted{color:#888}
+  .foot{margin-top:24px;font-size:10px;color:#666;border-top:1px solid #ccc;padding-top:8px}</style></head><body><div class="doc">
+  <div class="hd"><div class="t">Annual leave taken — ${esc(title)}</div><div class="s">Generated ${esc(fmtNice(leaveISO(new Date())))} · for reconciliation with the rota office master record.</div></div>
+  <div class="meta"><span><b>Name:</b> ${esc(p.name)}</span><span><b>Grade:</b> ${esc(p.grade)}</span><span><b>Specialty:</b> ${esc(p.specialty)}</span><span><b>GMC:</b> ${esc(p.gmc)}</span><span><b>Hospital:</b> ${esc(p.hospital)}</span></div>
+  <div class="sum"><div><div class="b">${entTotal}</div><div class="l">Entitlement</div></div><div><div class="b">${al.length}</div><div class="l">Taken</div></div><div><div class="b">${remaining}</div><div class="l">Remaining</div></div></div>
+  <h3>Annual leave dates</h3><table>${rowsFor(group(al))}</table>
+  ${sl.length?`<h3>Study leave dates</h3><table>${rowsFor(group(sl))}</table>`:""}
+  <div class="foot">Entitlement is pro-rata (WTE ${L.wte}); bank-holiday adjustment applied per Trust LTFT policy. Dates above reflect leave booked in this app.</div>
   </div></body></html>`;
 }
 function doExportICS(){
