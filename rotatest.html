@@ -539,11 +539,54 @@
   .my-slot{font-family:var(--font-m);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);border:1px solid var(--line);border-radius:5px;padding:0 5px;margin-left:5px}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:210;max-width:80%;text-align:center}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* ===== My-rota drum calendar (mobile) ===== */
+  #myDrumWrap{display:none}
+  .drum-row{position:absolute;left:0;right:0;transform-style:preserve-3d;backface-visibility:hidden;transform-origin:center center}
+  .drum-month{display:flex;align-items:center;gap:10px;padding:0 4px}
+  .drum-month b{font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:-.01em;white-space:nowrap;color:var(--ink)}
+  .drum-month .ln{flex:1;height:1px;background:var(--line)}
+  .drum-week{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;padding:2px 1px}
+  .drum-day{height:100%;border:1px solid var(--line-soft);border-radius:9px;padding:5px;display:flex;flex-direction:column;background:var(--surface);overflow:hidden}
+  .drum-day.wknd{background:var(--surface-2)}
+  .drum-day.today{border-color:var(--a)}
+  .drum-day.empty-cell{visibility:hidden}
+  .drum-day .dn{font-family:var(--font-d);font-weight:600;font-size:12.5px;line-height:1;color:var(--ink)}
+  .drum-day.today .dn{color:var(--a-edge)}
+  .drum-dots{display:flex;gap:3px;margin-top:auto;flex-wrap:wrap;align-items:center}
+  .drum-dots i{width:6px;height:6px;border-radius:2px;display:block}
+  .drum-dots .oc{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--gold);box-sizing:border-box}
+  .drum-row.foc .drum-day:not(.empty-cell){cursor:pointer;border-color:var(--line)}
+  .drum-row.foc .drum-day .dn{font-size:14px}
+
   @media(max-width:640px){
-    .my-board{flex-direction:column-reverse}
-    .my-palette{flex:0 0 auto;flex-direction:row;overflow-x:auto;position:static;padding-bottom:5px;-webkit-overflow-scrolling:touch}
+    /* swap the flat grid + drag palette for the drum scroller */
+    #myGrid{display:none}
+    .my-palette{display:none}
+    #myDrumWrap{display:block;position:relative;height:min(60vh,460px);margin-top:2px}
+    #myDrumWrap .drum-fade{position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(180deg,var(--bg) 1%,rgba(16,19,22,0) 26%,rgba(16,19,22,0) 74%,var(--bg) 99%)}
+    #myDrumWrap .drum-band{position:absolute;left:0;right:0;top:50%;height:46px;transform:translateY(-50%);z-index:0;pointer-events:none;border-top:1px solid rgba(43,179,163,.30);border-bottom:1px solid rgba(43,179,163,.30);background:rgba(43,179,163,.05)}
+    #myDrum{position:absolute;inset:0;overflow-y:scroll;overflow-x:hidden;perspective:680px;perspective-origin:50% 50%;-webkit-overflow-scrolling:touch;z-index:1;scrollbar-width:none}
+    #myDrum::-webkit-scrollbar{display:none}
+    /* My rota — taller, legible cells */
+    .my-board{flex-direction:column;gap:10px}
+    .my-cal-col{order:1}
+    #myGrid{gap:5px}
+    #myGrid .cell{aspect-ratio:auto;min-height:66px;padding:7px;border-radius:13px}
+    #myGrid .cell .d{font-size:15px}
+    #myGrid .cell .ms-chip{font-size:11px;padding:2px 7px;border-radius:7px;margin-top:4px;line-height:1.5}
+    #myGrid .cell .oc-badge{font-size:9.5px;padding:2px 7px;margin-top:4px}
+    #myGrid .cell.drop-hot{outline-width:3px}
+    /* palette → thumb-bar that sticks to the bottom of the My-rota view.
+       Uses position:sticky (not fixed) so a transformed ancestor can't trap it
+       and collapse the calendar. */
+    .rota-inner{padding-bottom:20px}
+    .my-palette{order:2;position:sticky;bottom:0;left:0;right:0;z-index:5;flex:0 0 auto;flex-direction:row;gap:9px;align-items:center;overflow-x:auto;overflow-y:hidden;margin:6px -16px 0;padding:31px 16px calc(13px + env(safe-area-inset-bottom));background:rgba(16,19,22,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);box-shadow:0 -10px 30px rgba(0,0,0,.45);-webkit-overflow-scrolling:touch}
+    .my-palette::before{content:"Tap a shift, then tap days — or drag onto a day";position:absolute;top:9px;left:17px;font-family:var(--font-m);font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap}
     .pal-label{display:none}
-    .pal-chip{flex:0 0 auto}
+    .pal-chip{flex:0 0 auto;min-height:44px;padding:11px 15px;border-radius:12px;font-size:13.5px;background:var(--surface-2)}
+    .pal-chip .pdot{width:13px;height:13px;border-radius:4px}
+    .pal-chip.armed{background:var(--a);border-color:var(--a);color:#06201d;box-shadow:0 0 0 2px var(--a),0 8px 18px -7px var(--a)}
+    .pal-chip.armed .pdot{box-shadow:0 0 0 2px rgba(6,32,29,.3)}
   }
 
   /* ===== dark duotone reskin patches ===== */
@@ -591,6 +634,92 @@
   /* inputs / selects that had no explicit colours */
   .mini-dialog input,.mini-dialog select{background:var(--surface-2);color:var(--ink);border-color:var(--line)}
   select{color:var(--ink)}
+
+  /* ============================================================
+     PREMIUM POLISH LAYER  (additive — motion, depth, tactility)
+     ============================================================ */
+  :root{ --ease:cubic-bezier(.22,.61,.36,1); --ease-spring:cubic-bezier(.34,1.3,.5,1); }
+
+  /* lit hairline + quieter, layered depth on cards */
+  .card{
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.045),
+      0 1px 2px rgba(0,0,0,.30),
+      0 14px 34px -14px rgba(0,0,0,.55);
+    transition:transform .35s var(--ease), box-shadow .35s var(--ease), border-color .25s var(--ease);
+  }
+
+  /* refined easing on the interactive bits */
+  .person-chip,.step,.pal-chip,.ready-chip,.print-opt,.my-swap,.type-opt,.scope button,.agree-chip{
+    transition:transform .22s var(--ease-spring), box-shadow .25s var(--ease), background-color .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease) !important;
+  }
+  .person-chip:hover{ transform:translateY(-2px); box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 20px -10px rgba(0,0,0,.6); }
+  .step:hover{ transform:translateY(-1px); }
+
+  /* buttons — sheen, lit edge, tactile press */
+  .btn{
+    transition:transform .16s var(--ease-spring), filter .2s var(--ease), box-shadow .25s var(--ease), opacity .15s var(--ease) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 1px 2px rgba(0,0,0,.3);
+  }
+  .btn:hover{ filter:brightness(1.06); }
+  .btn:active{ transform:translateY(1px) scale(.985); }
+  .btn.primary,.btn.key{
+    background-image:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,0));
+  }
+  .btn.key:hover{ box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 10px 26px -10px var(--a); transform:translateY(-1px); }
+
+  /* real focus rings everywhere (keyboard only) */
+  .btn:focus-visible,.person-chip:focus-visible,.cell:focus-visible,.pal-chip:focus-visible,
+  .scope button:focus-visible,.type-opt:focus-visible,.ready-chip:focus-visible,.print-opt:focus-visible,
+  input:focus-visible,select:focus-visible{
+    outline:2px solid var(--a-edge); outline-offset:2px; border-radius:11px;
+  }
+
+  /* inputs — softer focus glow instead of a hard border */
+  input:focus,select:focus,.swap-composer input:focus,.swap-sel:focus,.comment-compose input:focus{
+    outline:none; border-color:var(--a) !important;
+    box-shadow:0 0 0 3px rgba(43,179,163,.16);
+    transition:box-shadow .2s var(--ease), border-color .2s var(--ease);
+  }
+
+  /* calendar cells — smoother lift + soft inner glow on assigned days */
+  .cell{ transition:transform .18s var(--ease-spring), box-shadow .25s var(--ease), border-color .2s var(--ease), background-color .25s var(--ease); }
+  .cell:hover{ transform:translateY(-2px); }
+  .cell.assigned-a{ box-shadow:inset 0 0 0 1px rgba(43,179,163,.22), inset 0 8px 18px -12px rgba(43,179,163,.7); }
+  .cell.assigned-b{ box-shadow:inset 0 0 0 1px rgba(224,88,143,.22), inset 0 8px 18px -12px rgba(224,88,143,.7); }
+
+  /* fairness knob — gentle halo */
+  .gauge .beam .knob{ box-shadow:0 0 0 4px rgba(63,187,131,.14), 0 2px 6px rgba(0,0,0,.4); }
+  .gauge .beam .lean.a{ box-shadow:0 0 22px -6px var(--a); }
+  .gauge .beam .lean.b{ box-shadow:0 0 22px -6px var(--b); }
+
+  /* drag palette chips press */
+  .pal-chip{ transition:transform .16s var(--ease-spring), box-shadow .22s var(--ease), background-color .18s var(--ease), border-color .18s var(--ease), color .18s var(--ease); }
+  .pal-chip:active{ transform:scale(.96); }
+
+  /* toast — frosted, lit */
+  .toast{
+    transition:opacity .3s var(--ease), transform .4s var(--ease-spring) !important;
+    background:rgba(26,30,34,.86); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border:1px solid var(--line); box-shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 16px 40px -12px rgba(0,0,0,.7);
+  }
+
+  /* entrance: cards settle in with a soft spring (respects reduced-motion via global guard) */
+  @keyframes premIn{ from{ opacity:0; transform:translateY(10px) } to{ opacity:1; transform:translateY(0) } }
+  .wrap .card{ animation:premIn .5s var(--ease) backwards; }
+  .wrap .card:nth-of-type(2){ animation-delay:.05s }
+  .wrap .card:nth-of-type(3){ animation-delay:.1s }
+
+  /* refined dark scrollbars */
+  *{ scrollbar-width:thin; scrollbar-color:#343b42 transparent; }
+  *::-webkit-scrollbar{ width:10px; height:10px; }
+  *::-webkit-scrollbar-thumb{ background:#343b42; border-radius:99px; border:3px solid var(--bg); }
+  *::-webkit-scrollbar-thumb:hover{ background:#404852; }
+  *::-webkit-scrollbar-track{ background:transparent; }
+
+  /* crisper display type */
+  .brand h1,.rota-title,.lr-num,.metric-num{ letter-spacing:-.015em; }
+  body{ text-rendering:optimizeLegibility; }
 </style>
 </head>
 <body>
@@ -867,6 +996,11 @@
       <div class="my-cal-col">
         <div class="dow"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
         <div class="grid" id="myGrid"></div>
+        <div id="myDrumWrap">
+          <div class="drum-fade"></div>
+          <div class="drum-band"></div>
+          <div id="myDrum"></div>
+        </div>
       </div>
       <div class="my-palette" id="myPalette"></div>
     </div>
@@ -1358,6 +1492,7 @@ function openMyRota(){
   myView=new Date(); myView.setDate(1);
   renderMyCalendar();
   document.getElementById("rotaOverlay").classList.add("show");
+  renderMyDrum();
 }
 function closeMyRota(){ armedType=null; endGhost&&endGhost(); document.getElementById("rotaOverlay").classList.remove("show"); }
 function renderMyCalendar(){
@@ -1388,6 +1523,85 @@ function renderMyCalendar(){
     grid.appendChild(cell);
   }
   renderPalette();
+  if(MYDRUM.inited) renderMyDrumWindow();
+}
+
+/* ===== My-rota drum calendar (mobile) — virtualized curved scroller ===== */
+const MYDRUM={ROW:46, WINDOW:8, rows:null, inited:false, raf:null, snapT:null};
+function buildMyDrumRows(){
+  const rows=[]; const today=new Date();
+  const ay=today.getFullYear(), am=today.getMonth();
+  for(let off=-6; off<=12; off++){
+    const d=new Date(ay, am+off, 1); const y=d.getFullYear(), m=d.getMonth();
+    rows.push({type:"month", y, m, label:`${MONTHS[m]} ${y}`});
+    const lead=(new Date(y,m,1).getDay()+6)%7;
+    const dim=new Date(y,m+1,0).getDate();
+    const cells=[];
+    for(let i=0;i<lead;i++) cells.push(0);
+    for(let dd=1; dd<=dim; dd++) cells.push(dd);
+    while(cells.length%7) cells.push(0);
+    for(let i=0;i<cells.length;i+=7) rows.push({type:"week", y, m, cells:cells.slice(i,i+7), isNow: off===0 && i===0});
+  }
+  return rows;
+}
+function drumDayHtml(y,m,day,foc){
+  if(!day) return `<div class="drum-day empty-cell"></div>`;
+  const ds=iso(new Date(y,m,day));
+  const wknd=isWeekend(ds), today=ds===iso(new Date());
+  const oc=myOncall(ds); const arr=getMyArr(ds);
+  let dots="";
+  arr.slice(0,3).forEach(s=>{ const t=myType(s.type); dots+=`<i style="background:${t.color}"></i>`; });
+  if(oc) dots+=`<span class="oc"></span>`;
+  const cls=`drum-day${wknd?" wknd":""}${today?" today":""}`;
+  const dsAttr = foc ? ` data-ds="${ds}"` : "";
+  return `<div class="${cls}"${dsAttr}><span class="dn">${day}</span>${dots?`<span class="drum-dots">${dots}</span>`:""}</div>`;
+}
+function drumRowHtml(row, idx, centerIdx, PAD){
+  const dist=idx-centerIdx;
+  const c=Math.max(-3.4, Math.min(3.4, dist));
+  const rot=c*21, z=-Math.abs(c)*42;
+  const opacity=Math.max(0.16, 1-Math.abs(c)*0.33);
+  const scale=Math.max(0.72, 1-Math.abs(c)*0.05);
+  const foc=Math.abs(dist)<0.5;
+  const top=PAD+idx*MYDRUM.ROW;
+  const st=`top:${top}px;height:${MYDRUM.ROW}px;opacity:${opacity};transform:translateZ(${z}px) rotateX(${rot}deg) scale(${scale})`;
+  if(row.type==="month") return `<div class="drum-row${foc?" foc":""}" style="${st};display:flex;align-items:center;gap:10px;padding:0 4px"><b>${row.label}</b><span class="ln"></span></div>`;
+  let cells=""; for(const d of row.cells) cells+=drumDayHtml(row.y,row.m,d,foc);
+  return `<div class="drum-row drum-week${foc?" foc":""}" style="${st}">${cells}</div>`;
+}
+function renderMyDrumWindow(){
+  const el=document.getElementById("myDrum"); if(!el||!MYDRUM.rows) return;
+  const rows=MYDRUM.rows, ROW=MYDRUM.ROW;
+  const VIEW=el.clientHeight||440, PAD=VIEW/2-ROW/2;
+  const totalH=rows.length*ROW+PAD*2;
+  const centerIdx=el.scrollTop/ROW;
+  const lo=Math.max(0, Math.floor(centerIdx)-MYDRUM.WINDOW);
+  const hi=Math.min(rows.length-1, Math.ceil(centerIdx)+MYDRUM.WINDOW);
+  let html=`<div style="height:${totalH}px;width:1px;pointer-events:none"></div>`;
+  for(let i=lo;i<=hi;i++) html+=drumRowHtml(rows[i], i, centerIdx, PAD);
+  el.innerHTML=html;
+  if(el.clientHeight>0){ const n=Math.max(0,Math.min(rows.length-1,Math.round(centerIdx))); const cur=rows[n]; if(cur) document.getElementById("myMonth").innerHTML=`${MONTHS[cur.m]} <span>${cur.y}</span>`; }
+  el.querySelectorAll(".drum-day[data-ds]").forEach(cell=>{ cell.onclick=()=>{ const ds=cell.dataset.ds; if(armedType){ placeSession(ds, armedType); } else openMyDay(ds); }; });
+}
+function centerMyDrum(predicate){
+  const el=document.getElementById("myDrum"); if(!el||!MYDRUM.rows) return;
+  const i=MYDRUM.rows.findIndex(predicate);
+  if(i>=0){ el.scrollTop=i*MYDRUM.ROW; renderMyDrumWindow(); }
+}
+function renderMyDrum(){
+  const el=document.getElementById("myDrum"); if(!el) return;
+  MYDRUM.rows=buildMyDrumRows();
+  if(!MYDRUM.inited){
+    MYDRUM.inited=true;
+    el.addEventListener("scroll", ()=>{
+      if(MYDRUM.raf) cancelAnimationFrame(MYDRUM.raf);
+      MYDRUM.raf=requestAnimationFrame(renderMyDrumWindow);
+      if(MYDRUM.snapT) clearTimeout(MYDRUM.snapT);
+      MYDRUM.snapT=setTimeout(()=>{ const t=Math.round(el.scrollTop/MYDRUM.ROW)*MYDRUM.ROW; if(Math.abs(t-el.scrollTop)>0.5) el.scrollTo({top:t, behavior:"smooth"}); }, 150);
+    }, {passive:true});
+  }
+  renderMyDrumWindow();
+  requestAnimationFrame(()=>{ centerMyDrum(r=>r.type==="week" && r.isNow); });
 }
 let armedType=null;
 function renderPalette(){
@@ -2238,9 +2452,9 @@ function boot(){
   document.getElementById("refreshBtn").onclick=newRota;
   document.getElementById("openMyRota").onclick=openMyRota;
   document.getElementById("myBack").onclick=closeMyRota;
-  document.getElementById("myPrev").onclick=()=>{ myView.setMonth(myView.getMonth()-1); renderMyCalendar(); };
-  document.getElementById("myNext").onclick=()=>{ myView.setMonth(myView.getMonth()+1); renderMyCalendar(); };
-  document.getElementById("myToday").onclick=()=>{ myView=new Date(); myView.setDate(1); renderMyCalendar(); };
+  document.getElementById("myPrev").onclick=()=>{ myView.setMonth(myView.getMonth()-1); renderMyCalendar(); centerMyDrum(r=>r.type==="week" && r.y===myView.getFullYear() && r.m===myView.getMonth()); };
+  document.getElementById("myNext").onclick=()=>{ myView.setMonth(myView.getMonth()+1); renderMyCalendar(); centerMyDrum(r=>r.type==="week" && r.y===myView.getFullYear() && r.m===myView.getMonth()); };
+  document.getElementById("myToday").onclick=()=>{ myView=new Date(); myView.setDate(1); renderMyCalendar(); centerMyDrum(r=>r.type==="week" && r.isNow); };
   document.getElementById("myDayClose").onclick=closeMyDay;
   document.getElementById("myDayOverlay").onclick=e=>{ if(e.target.id==="myDayOverlay") closeMyDay(); };
   document.getElementById("exportIcs").onclick=exportICS;
