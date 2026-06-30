@@ -31,6 +31,8 @@
     --font-b:"IBM Plex Sans",system-ui,sans-serif;
     --font-m:"IBM Plex Mono",ui-monospace,monospace;
     font-family:var(--font-b);
+    --ico-mail:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2.5'/%3E%3Cpath d='m3.5 7 8.5 6 8.5-6'/%3E%3C/svg%3E");
+    --ico-user:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='3.5'/%3E%3Cpath d='M5 20a7 7 0 0 1 14 0'/%3E%3C/svg%3E");
   }
   :root[data-theme="sage"]{--a:#46c08a;--a-tint:#15302a;--a-edge:#82dcb4;--b:#e0905a;--b-tint:#33241a;--b-edge:#f2b488;--gold:#e9b04b;--gold-tint:#322914;--gold-line:#574627}
   :root[data-theme="indigo"]{--a:#7d8cf2;--a-tint:#1d2240;--a-edge:#abb4f9;--b:#e0588f;--b-tint:#341c26;--b-edge:#f29bbb;--gold:#e9b04b;--gold-tint:#322914;--gold-line:#574627}
@@ -172,9 +174,9 @@
   .iconbtn:hover{background:var(--surface-2)}
   .today-btn{height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
   .today-btn:hover{background:var(--surface-2)}
-  .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:7px}
+  .dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;margin-bottom:7px}
   .dow div{text-align:center;font-family:var(--font-m);font-size:10.5px;letter-spacing:.08em;color:var(--ink-faint);text-transform:uppercase}
-  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+  .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
   .cell{position:relative;aspect-ratio:1/1.04;border:1px solid var(--line-soft);border-radius:12px;background:var(--surface);padding:7px;cursor:pointer;overflow:hidden;transition:transform .1s,box-shadow .1s;display:flex;flex-direction:column}
   .cell:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--line)}
   .cell.blank{visibility:hidden;cursor:default}
@@ -584,34 +586,7 @@
   .my-slot{font-family:var(--font-m);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);border:1px solid var(--line);border-radius:5px;padding:0 5px;margin-left:5px}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:210;max-width:80%;text-align:center}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  /* ===== My-rota drum calendar (mobile) ===== */
-  #myDrumWrap{display:none}
-  .drum-row{position:absolute;left:0;right:0;transform-style:preserve-3d;backface-visibility:hidden;transform-origin:center center}
-  .drum-month{display:flex;align-items:center;gap:10px;padding:0 4px}
-  .drum-month b{font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:-.01em;white-space:nowrap;color:var(--ink)}
-  .drum-month .ln{flex:1;height:1px;background:var(--line)}
-  .drum-week{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;padding:2px 1px}
-  .drum-day{height:100%;border:1px solid var(--line-soft);border-radius:9px;padding:5px;display:flex;flex-direction:column;background:var(--surface);overflow:hidden}
-  .drum-day.wknd{background:var(--surface-2)}
-  .drum-day.today{border-color:var(--a)}
-  .drum-day.empty-cell{visibility:hidden}
-  .drum-day .dn{font-family:var(--font-d);font-weight:600;font-size:12.5px;line-height:1;color:var(--ink)}
-  .drum-day.today .dn{color:var(--a-edge)}
-  .drum-dots{display:flex;gap:3px;margin-top:auto;flex-wrap:wrap;align-items:center}
-  .drum-dots i{width:6px;height:6px;border-radius:2px;display:block}
-  .drum-dots .oc{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--gold);box-sizing:border-box}
-  .drum-row.foc .drum-day:not(.empty-cell){cursor:pointer;border-color:var(--line)}
-  .drum-row.foc .drum-day .dn{font-size:14px}
-
   @media(max-width:640px){
-    /* swap the flat grid + drag palette for the drum scroller */
-    #myGrid{display:none}
-    .my-palette{display:none}
-    #myDrumWrap{display:block;position:relative;height:min(60vh,460px);margin-top:2px}
-    #myDrumWrap .drum-fade{position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(180deg,var(--bg) 1%,rgba(16,19,22,0) 26%,rgba(16,19,22,0) 74%,var(--bg) 99%)}
-    #myDrumWrap .drum-band{position:absolute;left:0;right:0;top:50%;height:46px;transform:translateY(-50%);z-index:0;pointer-events:none;border-top:1px solid rgba(43,179,163,.30);border-bottom:1px solid rgba(43,179,163,.30);background:rgba(43,179,163,.05)}
-    #myDrum{position:absolute;inset:0;overflow-y:scroll;overflow-x:hidden;perspective:680px;perspective-origin:50% 50%;-webkit-overflow-scrolling:touch;z-index:1;scrollbar-width:none}
-    #myDrum::-webkit-scrollbar{display:none}
     /* My rota — taller, legible cells */
     .my-board{flex-direction:column;gap:10px;align-items:stretch}
     .my-cal-col{order:1;width:100%}
@@ -645,7 +620,7 @@
   /* active pills + badges that used --ink as background */
   .scope button.on{background:var(--a);color:#06201d}
   .type-opt.sel{background:var(--a);color:#06201d;border-color:var(--a)}
-  .oc-badge{background:#2f363d;color:var(--ink-soft)}
+  .oc-badge{background:#cf3a3a;color:#fff}
   /* fairness verdict (was light tints) */
   .fair-verdict.even{background:rgba(63,187,131,.12);border-color:rgba(63,187,131,.32)}
   /* calendar assigned cells: replace hardcoded light borders */
@@ -766,6 +741,42 @@
   /* crisper display type */
   .brand h1,.rota-title,.lr-num,.metric-num{ letter-spacing:-.015em; }
   body{ text-rendering:optimizeLegibility; }
+
+  /* ===== premium top-right control cluster (messages · account · profiles) ===== */
+  .head-right{gap:9px;align-items:center}
+  /* shared premium pill material */
+  .msg-tab,.acct-btn,.person-chip{
+    height:38px; border-radius:999px;
+    background:
+      linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,0) 60%),
+      var(--surface);
+    border:1px solid rgba(255,255,255,.07);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 4px 14px -8px rgba(0,0,0,.65);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  }
+  /* messages — envelope glyph + refined badge */
+  .msg-tab{display:inline-flex;align-items:center;gap:8px;padding:0 16px;color:var(--ink-soft);font-size:13px;letter-spacing:.005em}
+  .msg-tab::before{content:"";width:16px;height:16px;flex:0 0 auto;background:currentColor;-webkit-mask:var(--ico-mail) center/contain no-repeat;mask:var(--ico-mail) center/contain no-repeat}
+  .msg-tab:hover{color:var(--ink);border-color:rgba(255,255,255,.14);transform:translateY(-1px)}
+  .msg-badge{top:-4px;right:-4px;min-width:18px;height:18px;border-radius:999px;background:linear-gradient(180deg,#f0a06f,var(--warn,#e8835a));border:2px solid var(--bg);box-shadow:0 2px 8px -2px rgba(232,131,90,.7);font-size:10px;font-weight:700}
+  /* account — frosted pill with leading user glyph + status dot */
+  .acct-btn{display:inline-flex;align-items:center;gap:8px;padding:0 16px;color:var(--ink);font-size:13px;letter-spacing:.005em}
+  .acct-btn::before{content:"";width:16px;height:16px;flex:0 0 auto;background:var(--ink-soft);-webkit-mask:var(--ico-user) center/contain no-repeat;mask:var(--ico-user) center/contain no-repeat}
+  .acct-btn:hover{border-color:rgba(255,255,255,.14);transform:translateY(-1px)}
+  /* profile chips — circular gradient avatars with rings */
+  .head-right .person-chip{padding:5px 14px 5px 5px;gap:9px}
+  .head-right .swatch{width:28px;height:28px;border-radius:50%;font-size:11px;letter-spacing:.02em;color:#06201d;
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.4), 0 0 0 1px rgba(0,0,0,.25), 0 2px 6px -2px rgba(0,0,0,.6);
+    text-shadow:0 1px 1px rgba(0,0,0,.18)}
+  .head-right .person-chip.a .swatch{background:linear-gradient(140deg,var(--a-edge),var(--a))}
+  .head-right .person-chip.b .swatch{background:linear-gradient(140deg,var(--b-edge),var(--b));color:#2a0e18}
+  .head-right .person-chip .nm{font-size:13px;font-weight:600;letter-spacing:.005em}
+  .head-right .person-chip .edit{font-family:var(--font-m);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);opacity:0;max-width:0;overflow:hidden;transition:opacity .2s var(--ease),max-width .2s var(--ease)}
+  .head-right .person-chip:hover .edit{opacity:1;max-width:36px}
+  @media (max-width:520px){
+    .head-right .person-chip .edit{display:none}
+    .msg-tab,.acct-btn{padding:0 13px}
+  }
 </style>
 </head>
 <body>
@@ -1060,11 +1071,6 @@
       <div class="my-cal-col">
         <div class="dow"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
         <div class="grid" id="myGrid"></div>
-        <div id="myDrumWrap">
-          <div class="drum-fade"></div>
-          <div class="drum-band"></div>
-          <div id="myDrum"></div>
-        </div>
       </div>
       <div class="my-palette" id="myPalette"></div>
     </div>
@@ -1141,7 +1147,7 @@ const MY_SHIFT_TYPES = [
   {id:"outliers",   label:"Outliers",          short:"Out",   start:"08:30", end:"17:00", color:"#3a57c7"},
   {id:"day_cover",  label:"Day cover",         short:"Cover", start:"08:30", end:"17:00", color:"#2f7d4f"},
   {id:"pdp",        label:"PDP",               short:"PDP",   start:"09:00", end:"17:00", color:"#6b7280"},
-  {id:"oncall",       label:"On call",      short:"Call",  start:"08:30", end:"08:30", color:"#b45309", allday:true},
+  {id:"oncall",       label:"On-call",      short:"Call",  start:"08:30", end:"08:30", color:"#cf3a3a", allday:true},
   {id:"annual_leave", label:"Annual leave", short:"AL",    start:"08:30", end:"17:00", color:"#2f7d4f", allday:true},
   {id:"study_leave",  label:"Study leave",  short:"SL",    start:"08:30", end:"17:00", color:"#6366f1", allday:true}
 ];
@@ -1561,7 +1567,6 @@ function openMyRota(){
   myView=new Date(); myView.setDate(1);
   renderMyCalendar();
   document.getElementById("rotaOverlay").classList.add("show");
-  renderMyDrum();
 }
 function closeMyRota(){ armedType=null; endGhost&&endGhost(); document.getElementById("rotaOverlay").classList.remove("show"); }
 function renderMyCalendar(){
@@ -1592,86 +1597,8 @@ function renderMyCalendar(){
     grid.appendChild(cell);
   }
   renderPalette();
-  if(MYDRUM.inited) renderMyDrumWindow();
 }
 
-/* ===== My-rota drum calendar (mobile) — virtualized curved scroller ===== */
-const MYDRUM={ROW:46, WINDOW:8, rows:null, inited:false, raf:null, snapT:null};
-function buildMyDrumRows(){
-  const rows=[]; const today=new Date();
-  const ay=today.getFullYear(), am=today.getMonth();
-  for(let off=-6; off<=12; off++){
-    const d=new Date(ay, am+off, 1); const y=d.getFullYear(), m=d.getMonth();
-    rows.push({type:"month", y, m, label:`${MONTHS[m]} ${y}`});
-    const lead=(new Date(y,m,1).getDay()+6)%7;
-    const dim=new Date(y,m+1,0).getDate();
-    const cells=[];
-    for(let i=0;i<lead;i++) cells.push(0);
-    for(let dd=1; dd<=dim; dd++) cells.push(dd);
-    while(cells.length%7) cells.push(0);
-    for(let i=0;i<cells.length;i+=7) rows.push({type:"week", y, m, cells:cells.slice(i,i+7), isNow: off===0 && i===0});
-  }
-  return rows;
-}
-function drumDayHtml(y,m,day,foc){
-  if(!day) return `<div class="drum-day empty-cell"></div>`;
-  const ds=iso(new Date(y,m,day));
-  const wknd=isWeekend(ds), today=ds===iso(new Date());
-  const oc=myOncall(ds); const arr=getMyArr(ds);
-  let dots="";
-  arr.slice(0,3).forEach(s=>{ const t=myType(s.type); dots+=`<i style="background:${t.color}"></i>`; });
-  if(oc) dots+=`<span class="oc"></span>`;
-  const cls=`drum-day${wknd?" wknd":""}${today?" today":""}`;
-  const dsAttr = foc ? ` data-ds="${ds}"` : "";
-  return `<div class="${cls}"${dsAttr}><span class="dn">${day}</span>${dots?`<span class="drum-dots">${dots}</span>`:""}</div>`;
-}
-function drumRowHtml(row, idx, centerIdx, PAD){
-  const dist=idx-centerIdx;
-  const c=Math.max(-3.4, Math.min(3.4, dist));
-  const rot=c*21, z=-Math.abs(c)*42;
-  const opacity=Math.max(0.16, 1-Math.abs(c)*0.33);
-  const scale=Math.max(0.72, 1-Math.abs(c)*0.05);
-  const foc=Math.abs(dist)<0.5;
-  const top=PAD+idx*MYDRUM.ROW;
-  const st=`top:${top}px;height:${MYDRUM.ROW}px;opacity:${opacity};transform:translateZ(${z}px) rotateX(${rot}deg) scale(${scale})`;
-  if(row.type==="month") return `<div class="drum-row${foc?" foc":""}" style="${st};display:flex;align-items:center;gap:10px;padding:0 4px"><b>${row.label}</b><span class="ln"></span></div>`;
-  let cells=""; for(const d of row.cells) cells+=drumDayHtml(row.y,row.m,d,foc);
-  return `<div class="drum-row drum-week${foc?" foc":""}" style="${st}">${cells}</div>`;
-}
-function renderMyDrumWindow(){
-  const el=document.getElementById("myDrum"); if(!el||!MYDRUM.rows) return;
-  const rows=MYDRUM.rows, ROW=MYDRUM.ROW;
-  const VIEW=el.clientHeight||440, PAD=VIEW/2-ROW/2;
-  const totalH=rows.length*ROW+PAD*2;
-  const centerIdx=el.scrollTop/ROW;
-  const lo=Math.max(0, Math.floor(centerIdx)-MYDRUM.WINDOW);
-  const hi=Math.min(rows.length-1, Math.ceil(centerIdx)+MYDRUM.WINDOW);
-  let html=`<div style="height:${totalH}px;width:1px;pointer-events:none"></div>`;
-  for(let i=lo;i<=hi;i++) html+=drumRowHtml(rows[i], i, centerIdx, PAD);
-  el.innerHTML=html;
-  if(el.clientHeight>0){ const n=Math.max(0,Math.min(rows.length-1,Math.round(centerIdx))); const cur=rows[n]; if(cur) document.getElementById("myMonth").innerHTML=`${MONTHS[cur.m]} <span>${cur.y}</span>`; }
-  el.querySelectorAll(".drum-day[data-ds]").forEach(cell=>{ cell.onclick=()=>{ const ds=cell.dataset.ds; if(armedType){ placeSession(ds, armedType); } else openMyDay(ds); }; });
-}
-function centerMyDrum(predicate){
-  const el=document.getElementById("myDrum"); if(!el||!MYDRUM.rows) return;
-  const i=MYDRUM.rows.findIndex(predicate);
-  if(i>=0){ el.scrollTop=i*MYDRUM.ROW; renderMyDrumWindow(); }
-}
-function renderMyDrum(){
-  const el=document.getElementById("myDrum"); if(!el) return;
-  MYDRUM.rows=buildMyDrumRows();
-  if(!MYDRUM.inited){
-    MYDRUM.inited=true;
-    el.addEventListener("scroll", ()=>{
-      if(MYDRUM.raf) cancelAnimationFrame(MYDRUM.raf);
-      MYDRUM.raf=requestAnimationFrame(renderMyDrumWindow);
-      if(MYDRUM.snapT) clearTimeout(MYDRUM.snapT);
-      MYDRUM.snapT=setTimeout(()=>{ const t=Math.round(el.scrollTop/MYDRUM.ROW)*MYDRUM.ROW; if(Math.abs(t-el.scrollTop)>0.5) el.scrollTo({top:t, behavior:"smooth"}); }, 150);
-    }, {passive:true});
-  }
-  renderMyDrumWindow();
-  requestAnimationFrame(()=>{ centerMyDrum(r=>r.type==="week" && r.isNow); });
-}
 let armedType=null;
 function renderPalette(){
   const p=document.getElementById("myPalette"); if(!p) return;
@@ -2582,9 +2509,9 @@ function boot(){
   document.getElementById("msgClose").onclick=closeMessages;
   document.getElementById("messagesOverlay").onclick=e=>{ if(e.target.id==="messagesOverlay") closeMessages(); };
   document.getElementById("myBack").onclick=closeMyRota;
-  document.getElementById("myPrev").onclick=()=>{ myView.setMonth(myView.getMonth()-1); renderMyCalendar(); centerMyDrum(r=>r.type==="week" && r.y===myView.getFullYear() && r.m===myView.getMonth()); };
-  document.getElementById("myNext").onclick=()=>{ myView.setMonth(myView.getMonth()+1); renderMyCalendar(); centerMyDrum(r=>r.type==="week" && r.y===myView.getFullYear() && r.m===myView.getMonth()); };
-  document.getElementById("myToday").onclick=()=>{ myView=new Date(); myView.setDate(1); renderMyCalendar(); centerMyDrum(r=>r.type==="week" && r.isNow); };
+  document.getElementById("myPrev").onclick=()=>{ myView.setMonth(myView.getMonth()-1); renderMyCalendar(); };
+  document.getElementById("myNext").onclick=()=>{ myView.setMonth(myView.getMonth()+1); renderMyCalendar(); };
+  document.getElementById("myToday").onclick=()=>{ myView=new Date(); myView.setDate(1); renderMyCalendar(); };
   document.getElementById("myDayClose").onclick=closeMyDay;
   document.getElementById("myDayOverlay").onclick=e=>{ if(e.target.id==="myDayOverlay") closeMyDay(); };
   document.getElementById("exportIcs").onclick=exportICS;
