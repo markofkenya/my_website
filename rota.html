@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Slot Share — On-call tracker</title>
+<title>InstaRota — On-call tracker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%231ad1b0'/%3E%3Cstop offset='.6' stop-color='%2310907c'/%3E%3Cstop offset='1' stop-color='%230c5f54'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Cg transform='translate(10,10) scale(2)' fill='none' stroke='%23fff' stroke-width='4.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M33 20a13 13 0 1 1-5.2-10.4'/%3E%3Cpath d='M33 6.5V15h-8.5'/%3E%3Ccircle cx='20' cy='20' r='3.5' fill='%23fff' stroke='none'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -521,6 +522,46 @@
   .hc-t{font-family:var(--font-d);font-weight:700;font-size:21px;color:var(--ink);line-height:1.1}
   .hc-d{font-size:13.5px;color:var(--ink-soft);margin-top:5px;line-height:1.45}
   .hub-sync{justify-content:flex-start}
+  /* InstaRota brand */
+  .logo-mark{display:inline-block;color:#34d6bb;flex:0 0 auto}
+  .logo-lockup{display:inline-flex;align-items:center;gap:11px}
+  .logo-lockup .logo-mark{width:30px;height:30px}
+  .wordmark{font-family:var(--font-d);font-weight:700;font-size:23px;letter-spacing:-.02em;color:var(--ink);line-height:1}
+  .wm-accent{color:#34d6bb}
+  .ir-arc{transform-origin:50% 50%;animation:ir-spin-in .9s cubic-bezier(.2,.7,.2,1) both}
+  .logo-lockup:hover .ir-arc{animation:ir-spin-in .9s cubic-bezier(.2,.7,.2,1)}
+  @keyframes ir-spin-in{from{transform:rotate(-150deg);opacity:0}to{transform:rotate(0);opacity:1}}
+  @media (prefers-reduced-motion:reduce){ .ir-arc{animation:none} }
+  .hub-brand{flex-direction:column;align-items:flex-start;gap:0}
+  .logo-lg{flex-direction:column;gap:16px;align-items:flex-start}
+  .logo-lg .logo-mark{width:52px;height:52px}
+  .logo-lg .wordmark{font-size:36px}
+  #splash{position:fixed;inset:0;z-index:300;background:var(--bg,#0c0f12);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;transition:opacity .55s ease}
+  #splash.gone{opacity:0;pointer-events:none}
+  #splash .logo-mark{width:92px;height:92px;animation:splashPop .7s cubic-bezier(.2,.8,.2,1) both}
+  #splash .wordmark{font-size:40px;animation:splashPop .7s .08s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes splashPop{from{opacity:0;transform:translateY(12px) scale(.92)}to{opacity:1;transform:none}}
+  /* PIN lock */
+  .pin-sheet{max-width:300px;text-align:center}
+  .pin-title{font-family:var(--font-d);font-weight:700;font-size:18px;color:var(--ink)}
+  .pin-sub{font-size:12.5px;color:var(--ink-faint);margin-top:4px;min-height:15px}
+  .pin-dots{display:flex;justify-content:center;gap:15px;margin:20px 0 4px}
+  .pdot{width:13px;height:13px;border-radius:50%;border:2px solid var(--ink-faint);transition:background-color .15s,border-color .15s}
+  .pdot.on{background:#7ee0b3;border-color:#7ee0b3}
+  .pin-err{min-height:16px;font-size:12px;color:var(--warn,#e8835a);margin-bottom:8px}
+  .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .pkey{height:54px;border-radius:14px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-family:var(--font-d);font-size:21px;font-weight:600;cursor:pointer;transition:transform .08s,background-color .15s}
+  .pkey:active{background:var(--surface);transform:scale(.95)}
+  .pkey-blank{visibility:hidden}
+  .pin-cancel{width:100%;margin-top:14px}
+  .shake{animation:shk .4s}
+  @keyframes shk{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+  .login-pin{margin:6px 0 2px}
+  .lp-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:10px 12px}
+  .lp-acts{display:flex;gap:7px}
+  .lp-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:600;font-family:var(--font-b);cursor:pointer}
+  .lp-btn:hover{color:var(--ink)}
+  .lp-btn.danger:hover{color:var(--warn);border-color:var(--warn)}
   .split-back{align-self:flex-start;background:none;border:0;color:var(--ink-soft);font-family:var(--font-m);font-size:12px;letter-spacing:.04em;cursor:pointer;padding:4px 0;margin-bottom:6px}
   .split-back:hover{color:var(--ink)}
   /* messages tab + badge */
@@ -780,11 +821,11 @@
 </style>
 </head>
 <body>
+<div id="splash"><svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><g class="ir-arc"><path d="M33 20a13 13 0 1 1-5.2-10.4" stroke="currentColor" stroke-width="4.2" stroke-linecap="round"/><path d="M33 6.5V15h-8.5" stroke="currentColor" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/></g><circle cx="20" cy="20" r="3.4" fill="#5ff0d6"/></svg><div class="wordmark">Insta<span class="wm-accent">Rota</span></div></div>
 <div class="wrap hub-screen" id="hubScreen">
   <header class="app hub-app">
-    <div class="brand">
-      <div class="kicker">LTFT On-call · Slot Share</div>
-      <h1>Slot Share<span class="dot">.</span></h1>
+    <div class="brand hub-brand">
+      <span class="logo-lockup logo-lg"><svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><g class="ir-arc"><path d="M33 20a13 13 0 1 1-5.2-10.4" stroke="currentColor" stroke-width="4.2" stroke-linecap="round"/><path d="M33 6.5V15h-8.5" stroke="currentColor" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/></g><circle cx="20" cy="20" r="3.4" fill="#5ff0d6"/></svg><span class="wordmark">Insta<span class="wm-accent">Rota</span></span></span>
     </div>
     <div class="head-right">
       <button class="msg-tab" id="hubMsgTab" aria-label="Messages">Messages<span class="msg-badge" id="hubMsgBadge" hidden></span></button>
@@ -804,8 +845,7 @@
   <button class="split-back" id="splitBack">‹ Menu</button>
   <header class="app">
     <div class="brand">
-      <div class="kicker">LTFT On-call · Slot Share</div>
-      <h1>The Split<span class="dot">.</span></h1>
+      <span class="logo-lockup"><svg class="logo-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><g class="ir-arc"><path d="M33 20a13 13 0 1 1-5.2-10.4" stroke="currentColor" stroke-width="4.2" stroke-linecap="round"/><path d="M33 6.5V15h-8.5" stroke="currentColor" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/></g><circle cx="20" cy="20" r="3.4" fill="#5ff0d6"/></svg><span class="wordmark">Insta<span class="wm-accent">Rota</span></span></span>
     </div>
     <div class="head-right">
       <button class="msg-tab" id="msgTab" aria-label="Messages">Messages<span class="msg-badge" id="msgBadge" hidden></span></button>
@@ -891,6 +931,17 @@
     <input type="file" id="importFile" accept="application/json" style="display:none">
   </div>
 
+</div>
+
+<div class="overlay center" id="pinOverlay">
+  <div class="sheet pin-sheet">
+    <div class="pin-title" id="pinTitle">Enter your PIN</div>
+    <div class="pin-sub" id="pinSub"></div>
+    <div class="pin-dots" id="pinDots"></div>
+    <div class="pin-err" id="pinErr"></div>
+    <div class="pin-pad" id="pinPad"></div>
+    <button class="btn ghost pin-cancel" id="pinCancel">Cancel</button>
+  </div>
 </div>
 
 <div class="overlay center" id="messagesOverlay">
@@ -979,11 +1030,12 @@
 <!-- LOGIN (rota code + identity) -->
 <div class="overlay center" id="loginOverlay">
   <div class="mini-dialog login-dialog">
-    <div class="kicker" style="margin-bottom:2px">LTFT On-call · Slot Share</div>
+    <div class="kicker" style="margin-bottom:2px">InstaRota</div>
     <h3>Connect your rota</h3>
     <p>You and your call partner type the <b>same rota code</b> to share one live rota. First, pick who you are on this device.</p>
     <label class="fld-label">Who are you on this device?</label>
     <div class="assign-opts" id="loginWho"></div>
+    <div class="login-pin" id="loginPin"></div>
     <label class="fld-label">Rota code</label>
     <input id="loginCode" type="text" placeholder="e.g. ngh-renal-2026" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false">
     <div class="sync-err" id="loginErr"></div>
@@ -1451,7 +1503,11 @@ function openMeChooser(){
   opts.querySelectorAll(".opt").forEach(o=>o.onclick=()=>chooseMe(o.dataset.k));
   document.getElementById("meOverlay").classList.add("show");
 }
-function chooseMe(k){ meKey=k; saveMe(k); document.getElementById("meOverlay").classList.remove("show"); renderComposer(); maybeAlert(); }
+function chooseMe(k){
+  const finish=()=>{ meKey=k; saveMe(k); pinUnlocked=true; document.getElementById("meOverlay").classList.remove("show"); renderComposer(); maybeAlert(); };
+  if(k===meKey){ document.getElementById("meOverlay").classList.remove("show"); return; }
+  if(hasPin(k)){ openPin("verify",k,finish); } else { finish(); offerPinSetup(k); }
+}
 function pendingForMe(){ if(!meKey) return []; return state.notes.filter(n=>n.status==="pending" && (n.from==="A"?"B":"A")===meKey); }
 function maybeAlert(){
   const freshReq=pendingForMe().filter(n=>!notified.has(n.id));
@@ -1490,11 +1546,42 @@ function currentRotaShifts(){
 function currentSig(){ return currentRotaShifts().map(s=>`${s.date}:${s.p}:${s.type}`).join("|"); }
 function isAgreed(k){ const a=state.accept&&state.accept[k]; return !!(a && a.sig===currentSig()); }
 function bothAgreed(){ return currentRotaShifts().length>0 && isAgreed("A") && isAgreed("B"); }
+/* ===== Cooperative PIN lock (client-side deterrence) ===== */
+let pinUnlocked=false, pinState=null;
+const PIN_SKIP="instarota-pinskip";
+async function sha256Hex(s){ const b=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
+async function hashPin(pin,salt){ return sha256Hex((salt||"")+":"+pin); }
+function genSalt(){ const a=new Uint8Array(8); if(window.crypto&&crypto.getRandomValues) crypto.getRandomValues(a); else for(let i=0;i<8;i++) a[i]=Math.floor(Math.random()*256); return [...a].map(x=>x.toString(16).padStart(2,"0")).join(""); }
+function hasPin(k){ return !!(state.people[k]&&state.people[k].pinHash); }
+async function verifyPin(k,pin){ const p=state.people[k]||{}; if(!p.pinHash) return true; try{ return (await hashPin(pin,p.pinSalt||""))===p.pinHash; }catch(e){ return false; } }
+function openPin(mode,k,onOk,opts){ if(!(window.crypto&&window.crypto.subtle)){ flashMsg("PIN needs a secure (https) connection"); if(mode==="verify"&&onOk) onOk(); return; } pinState={mode,k,onOk,opts:opts||{},entry:"",first:"",step: mode==="set"?"new": mode==="change"?"current": mode==="remove"?"current":"enter"}; renderPin(); document.getElementById("pinOverlay").classList.add("show"); }
+function closePin(){ document.getElementById("pinOverlay").classList.remove("show"); pinState=null; }
+function pinTitleFor(step,mode){ return ({new:"Set a 4-digit PIN",confirm:"Confirm your PIN",enter:"Enter your PIN",current:mode==="remove"?"Enter PIN to remove":"Enter current PIN",new2:"Choose a new PIN",confirm2:"Confirm new PIN"})[step]||"Enter PIN"; }
+function renderPin(){ const ps=pinState; if(!ps) return; document.getElementById("pinTitle").textContent=pinTitleFor(ps.step,ps.mode); const who=state.people[ps.k]?state.people[ps.k].name:""; document.getElementById("pinSub").textContent= ps.opts.sub || (who?`Profile: ${who}`:""); document.getElementById("pinErr").textContent=""; renderPinDots(); renderPinPad(); }
+function renderPinDots(){ const ps=pinState; const el=document.getElementById("pinDots"); if(!el||!ps) return; el.innerHTML=[0,1,2,3].map(i=>`<span class="pdot ${i<ps.entry.length?'on':''}"></span>`).join(""); }
+function renderPinPad(){ const el=document.getElementById("pinPad"); if(!el || el.dataset.built) return; el.dataset.built="1"; const keys=["1","2","3","4","5","6","7","8","9","","0","del"]; el.innerHTML=keys.map(k=>k===""?`<span class="pkey-blank"></span>`:`<button class="pkey" data-k="${k}">${k==="del"?"⌫":k}</button>`).join(""); el.querySelectorAll(".pkey").forEach(b=>b.onclick=()=>pinPress(b.dataset.k)); }
+function pinErr(t){ const e=document.getElementById("pinErr"); if(e) e.textContent=t; const s=document.querySelector(".pin-sheet"); if(s){ s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake"); } }
+function pinPress(d){ const ps=pinState; if(!ps) return; if(d==="del"){ ps.entry=ps.entry.slice(0,-1); renderPinDots(); return; } if(ps.entry.length>=4) return; ps.entry+=d; renderPinDots(); if(ps.entry.length===4) setTimeout(pinComplete,130); }
+async function pinComplete(){
+  const ps=pinState; if(!ps) return; const pin=ps.entry;
+  if(ps.step==="new"){ ps.first=pin; ps.entry=""; ps.step="confirm"; renderPin(); return; }
+  if(ps.step==="confirm"){ if(pin!==ps.first){ ps.first=""; ps.entry=""; ps.step="new"; renderPin(); pinErr("PINs didn't match — try again"); return; } await savePin(ps.k,pin); const cb=ps.onOk; closePin(); flashMsg("PIN set"); if(cb) cb(); return; }
+  if(ps.step==="enter"){ if(await verifyPin(ps.k,pin)){ const cb=ps.onOk; closePin(); if(cb) cb(); } else { ps.entry=""; renderPinDots(); pinErr("Wrong PIN"); } return; }
+  if(ps.step==="current"){ if(!(await verifyPin(ps.k,pin))){ ps.entry=""; renderPinDots(); pinErr("Wrong PIN"); return; } if(ps.mode==="remove"){ removePin(ps.k); closePin(); flashMsg("PIN removed"); if(ps.onOk) ps.onOk(); return; } ps.entry=""; ps.step="new2"; renderPin(); return; }
+  if(ps.step==="new2"){ ps.first=pin; ps.entry=""; ps.step="confirm2"; renderPin(); return; }
+  if(ps.step==="confirm2"){ if(pin!==ps.first){ ps.first=""; ps.entry=""; ps.step="new2"; renderPin(); pinErr("PINs didn't match"); return; } await savePin(ps.k,pin); closePin(); flashMsg("PIN updated"); if(ps.onOk) ps.onOk(); return; }
+}
+async function savePin(k,pin){ const salt=genSalt(); const hash=await hashPin(pin,salt); if(!state.people[k]) state.people[k]={}; state.people[k].pinHash=hash; state.people[k].pinSalt=salt; persist(); renderLoginPin(); }
+function removePin(k){ if(state.people[k]){ delete state.people[k].pinHash; delete state.people[k].pinSalt; persist(); renderLoginPin(); } }
+function offerPinSetup(k){ if(hasPin(k)) return; let skip={}; try{ skip=JSON.parse(localStorage.getItem(PIN_SKIP)||"{}"); }catch(e){} if(skip[k]) return; skip[k]=1; try{ localStorage.setItem(PIN_SKIP,JSON.stringify(skip)); }catch(e){} const nm=state.people[k]?state.people[k].name:"your profile"; openConfirm("Protect your profile?", `Set a 4-digit PIN so only you can sign off or switch into ${nm}. You can also do this anytime from Account.`, "Set a PIN", ()=>openPin("set",k,()=>{ pinUnlocked=true; })); }
+function renderLoginPin(){ const el=document.getElementById("loginPin"); if(!el) return; if(!meKey){ el.innerHTML=""; return; } const nm=state.people[meKey]?state.people[meKey].name:"you";
+  if(hasPin(meKey)){ el.innerHTML=`<div class="lp-row"><span>🔒 PIN set for ${escapeHtml(nm)}</span><span class="lp-acts"><button class="lp-btn" id="lpChange">Change</button><button class="lp-btn danger" id="lpRemove">Remove</button></span></div>`; document.getElementById("lpChange").onclick=()=>openPin("change",meKey); document.getElementById("lpRemove").onclick=()=>openPin("remove",meKey); }
+  else { el.innerHTML=`<div class="lp-row"><span>No PIN on ${escapeHtml(nm)}</span><button class="lp-btn" id="lpSet">Set a PIN</button></div>`; document.getElementById("lpSet").onclick=()=>openPin("set",meKey,()=>{ pinUnlocked=true; }); } }
+
 function toggleAgree(){
   if(!meKey){ openMeChooser(); return; }
-  if(!state.accept) state.accept={};
-  state.accept[meKey] = isAgreed(meKey) ? null : { at:Date.now(), sig:currentSig() };
-  persist(); renderAgree(); renderStepper();
+  const doToggle=()=>{ if(!state.accept) state.accept={}; state.accept[meKey] = isAgreed(meKey) ? null : { at:Date.now(), sig:currentSig() }; persist(); renderAgree(); renderStepper(); };
+  if(hasPin(meKey) && !isAgreed(meKey)){ openPin("verify",meKey,doToggle,{sub:"Confirm it's you to sign off"}); } else { doToggle(); }
 }
 function renderAgree(){
   const st=document.getElementById("agreeStatus"); if(!st) return;
@@ -1748,7 +1835,7 @@ function buildICS(monthKey){
       `SUMMARY:${icsEsc(t.label)}`,"END:VEVENT"].join("\r\n"));
   }); });
   if(!ev.length) return null;
-  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Slot Share//My Rota//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH",...ev,"END:VCALENDAR"].join("\r\n");
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//InstaRota//My Rota//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH",...ev,"END:VCALENDAR"].join("\r\n");
 }
 function myContentMonths(){
   const set=new Set();
@@ -2361,7 +2448,7 @@ function saveRename(){
 
 /* ===== export / import ===== */
 function doExport(){ const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`slotshare-${iso(new Date())}.json`; a.click(); URL.revokeObjectURL(url); }
-function doImport(file){ const r=new FileReader(); r.onload=()=>{ try{ const obj=JSON.parse(r.result); if(obj.people&&obj.assignments){ state=Object.assign(defaultState(),obj); persist(); renderAll(); } else alert("That file doesn't look like a Slot Share export."); }catch(e){ alert("Couldn't read that file."); } }; r.readAsText(file); }
+function doImport(file){ const r=new FileReader(); r.onload=()=>{ try{ const obj=JSON.parse(r.result); if(obj.people&&obj.assignments){ state=Object.assign(defaultState(),obj); persist(); renderAll(); } else alert("That file doesn't look like an InstaRota export."); }catch(e){ alert("Couldn't read that file."); } }; r.readAsText(file); }
 
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
 
@@ -2436,13 +2523,14 @@ function goOffline(){
 function renderLoginWho(){
   const opts=document.getElementById("loginWho");
   opts.innerHTML=["A","B"].map(k=>`<div class="opt ${k.toLowerCase()} ${meKey===k?"sel":""}" data-k="${k}"><span class="sw">${personIni(k)}</span>${escapeHtml(state.people[k].name)}</div>`).join("");
-  opts.querySelectorAll(".opt").forEach(o=>o.onclick=()=>{ meKey=o.dataset.k; saveMe(meKey); renderLoginWho(); });
+  opts.querySelectorAll(".opt").forEach(o=>o.onclick=()=>{ meKey=o.dataset.k; saveMe(meKey); renderLoginWho(); renderLoginPin(); });
 }
 function openLogin(){
   document.getElementById("loginErr").textContent="";
   document.getElementById("loginCode").value=rotaCode||"";
   document.getElementById("loginDisconnect").style.display = syncRef ? "" : "none";
   renderLoginWho();
+  renderLoginPin();
   document.getElementById("loginOverlay").classList.add("show");
 }
 function closeLogin(){ document.getElementById("loginOverlay").classList.remove("show"); }
@@ -2451,8 +2539,8 @@ function submitLogin(){
   if(!meKey){ err.textContent="First, tap who you are on this device."; return; }
   const code=(document.getElementById("loginCode").value||"").trim().replace(/[^A-Za-z0-9_-]/g,"");
   if(!code){ err.textContent="Enter a rota code — you and your call partner type the same one."; return; }
-  closeLogin(); renderComposer(); renderAll();
-  connectWithCode(code);
+  const proceed=()=>{ pinUnlocked=true; closeLogin(); renderComposer(); renderAll(); connectWithCode(code); setTimeout(()=>offerPinSetup(meKey), 1700); };
+  if(hasPin(meKey)){ openPin("verify",meKey,proceed); } else { proceed(); }
 }
 function loginOffline(){
   if(!meKey){ document.getElementById("loginErr").textContent="Tap who you are first."; return; }
@@ -2534,6 +2622,8 @@ function boot(){
   document.getElementById("printCancel").onclick=closePrint;
   document.querySelectorAll(".print-opt").forEach(b=>b.onclick=()=>runPrint(b.dataset.style));
   document.getElementById("confirmCancel").onclick=closeConfirm;
+  document.getElementById("pinCancel").onclick=closePin;
+  document.getElementById("pinOverlay").onclick=e=>{ if(e.target.id==="pinOverlay") closePin(); };
   document.getElementById("confirmOk").onclick=()=>{ if(confirmCb) confirmCb(); closeConfirm(); };
   document.getElementById("confirmOverlay").onclick=e=>{ if(e.target.id==="confirmOverlay") closeConfirm(); };
 
@@ -2562,6 +2652,7 @@ function boot(){
   if(!meKey){ openLogin(); }
   else if(rotaCode){ connectWithCode(rotaCode); maybeAlert(); }
   else { setSyncStatus("local","Saved on this device · tap to sync"); maybeAlert(); }
+  setTimeout(()=>{ const s=document.getElementById("splash"); if(s){ s.classList.add("gone"); setTimeout(()=>{ try{ s.remove(); }catch(e){} }, 600); } }, 1150);
 }
 boot();
 })();
