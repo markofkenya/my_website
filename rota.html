@@ -16,23 +16,24 @@
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
   :root{
-    --ink:#202830;--ink-soft:#5a666e;--ink-faint:#8c979e;
-    --bg:#eceff1;--surface:#ffffff;--surface-2:#f4f6f7;
-    --line:#dde3e6;--line-soft:#e9edec;
-    --a:#0e6f78;--a-tint:#e2f1f1;--a-edge:#0a565d;
-    --b:#8a3b6b;--b-tint:#f5e8ef;--b-edge:#6f2e55;
-    --gold:#b3842a;--gold-tint:#f7eed6;--gold-line:#e7d3a0;
-    --good:#2f8f5b;--warn:#c2683a;
-    --shadow:0 1px 2px rgba(32,40,48,.05),0 8px 24px rgba(32,40,48,.05);
-    --shadow-lg:0 24px 60px rgba(20,28,34,.22);
-    --r:16px;
+    color-scheme:dark;
+    --ink:#e9edf0;--ink-soft:#a3abb3;--ink-faint:#6b727a;
+    --bg:#101316;--surface:#1a1e22;--surface-2:#22272c;
+    --line:#2d343a;--line-soft:#23282d;
+    --a:#2bb3a3;--a-tint:#163029;--a-edge:#62d8c8;
+    --b:#e0588f;--b-tint:#341c26;--b-edge:#f29bbb;
+    --gold:#e9b04b;--gold-tint:#322914;--gold-line:#574627;
+    --good:#3fbb83;--warn:#e8835a;
+    --shadow:0 1px 2px rgba(0,0,0,.34),0 12px 30px rgba(0,0,0,.30);
+    --shadow-lg:0 28px 64px rgba(0,0,0,.55);
+    --r:18px;
     --font-d:"Space Grotesk",system-ui,sans-serif;
     --font-b:"IBM Plex Sans",system-ui,sans-serif;
     --font-m:"IBM Plex Mono",ui-monospace,monospace;
     font-family:var(--font-b);
   }
-  :root[data-theme="sage"]{--a:#2f6f5e;--a-tint:#e3efe9;--a-edge:#245446;--b:#bf764a;--b-tint:#f6e9df;--b-edge:#9a5b35;--gold:#a98a2f;--gold-tint:#f5eed9;--gold-line:#e2d0a2}
-  :root[data-theme="indigo"]{--a:#3a57c7;--a-tint:#e7eafb;--a-edge:#2b40a0;--b:#c0468a;--b-tint:#f7e6f0;--b-edge:#9c3570;--gold:#b3842a;--gold-tint:#f7eed6;--gold-line:#e7d3a0}
+  :root[data-theme="sage"]{--a:#46c08a;--a-tint:#15302a;--a-edge:#82dcb4;--b:#e0905a;--b-tint:#33241a;--b-edge:#f2b488;--gold:#e9b04b;--gold-tint:#322914;--gold-line:#574627}
+  :root[data-theme="indigo"]{--a:#7d8cf2;--a-tint:#1d2240;--a-edge:#abb4f9;--b:#e0588f;--b-tint:#341c26;--b-edge:#f29bbb;--gold:#e9b04b;--gold-tint:#322914;--gold-line:#574627}
 
   .wrap{max-width:1080px;margin:0 auto;padding:22px 18px 80px}
 
@@ -186,7 +187,7 @@
   .cell.assigned-a{background:var(--a-tint);border-color:#bfe0e1}
   .cell.assigned-b{background:var(--b-tint);border-color:#e7c8da}
   .cell.assigned-pool{background:#eef1f3;border:1px dashed #a7b3ba}
-  .cell.nwd::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:repeating-linear-gradient(135deg,transparent 0,transparent 6px,rgba(32,40,48,.13) 6px,rgba(32,40,48,.13) 8px)}
+  .cell.nwd::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:repeating-linear-gradient(135deg,transparent 0,transparent 5px,rgba(126,224,179,.16) 5px,rgba(126,224,179,.16) 7px)}
   .cell.nwd .d{position:relative;z-index:1}
   .cell.assigned-a.weekend,.cell.assigned-a.bh{background:linear-gradient(135deg,var(--a-tint) 60%,var(--gold-tint))}
   .cell.assigned-b.weekend,.cell.assigned-b.bh{background:linear-gradient(135deg,var(--b-tint) 60%,var(--gold-tint))}
@@ -499,6 +500,51 @@
   .rq-btn:hover{background:var(--surface-2);color:var(--ink)}
   .rq-btn.danger:hover{color:var(--warn);border-color:var(--warn)}
   .rq-past-list{padding:12px 14px 14px}
+  .bk-sec{margin-top:6px}
+  .bk-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .btn.bk-req{padding:8px 15px;font-size:13px;font-weight:600;background:#2f9e63;color:#fff;box-shadow:0 1px 0 #25794d,0 7px 16px -9px #2f9e63}
+  .btn.bk-req:hover{background:#37ab6d}
+  /* ===== navigation hub ===== */
+  #ss-root{display:none}
+  .hub-screen{min-height:100vh}
+  .hub-app{margin-bottom:26px}
+  .hub-cards{display:flex;flex-direction:column;gap:14px;margin-bottom:26px}
+  .hub-card{display:block;text-align:left;width:100%;border:1px solid var(--line);background:var(--surface);border-radius:18px;padding:20px 20px;cursor:pointer;transition:transform .12s var(--ease-spring,ease),border-color .2s,background-color .2s}
+  .hub-card:hover{transform:translateY(-2px);border-color:var(--ink-faint);background:var(--surface-2)}
+  .hub-card:active{transform:translateY(0)}
+  .hc-ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:var(--surface-2);border:1px solid var(--line);margin-bottom:12px}
+  .hub-card:nth-child(1) .hc-ic{color:#7ee0b3}
+  .hub-card:nth-child(2) .hc-ic{color:#9aa6ff}
+  .hub-card:nth-child(3) .hc-ic{color:var(--a,#3fbb83)}
+  .hc-t{font-family:var(--font-d);font-weight:700;font-size:21px;color:var(--ink);line-height:1.1}
+  .hc-d{font-size:13.5px;color:var(--ink-soft);margin-top:5px;line-height:1.45}
+  .hub-sync{justify-content:flex-start}
+  .split-back{align-self:flex-start;background:none;border:0;color:var(--ink-soft);font-family:var(--font-m);font-size:12px;letter-spacing:.04em;cursor:pointer;padding:4px 0;margin-bottom:6px}
+  .split-back:hover{color:var(--ink)}
+  /* messages tab + badge */
+  .msg-tab{position:relative;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-soft);font-family:var(--font-b);font-weight:600;font-size:12.5px;border-radius:999px;padding:7px 13px;cursor:pointer}
+  .msg-tab:hover{color:var(--ink);border-color:var(--ink-faint)}
+  .msg-badge{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:var(--warn,#e8835a);color:#fff;font-size:10.5px;font-weight:700;display:grid;place-items:center;line-height:1}
+  .msg-badge[hidden]{display:none}
+  /* messages popup reuses .sheet */
+  .msg-sheet .comment-list{max-height:48vh;overflow:auto;margin-bottom:12px}
+  /* smaller split calendar — a touch larger than My Rota's compact cells */
+  #grid .cell{aspect-ratio:auto;min-height:78px}
+  @media (max-width:460px){#grid .cell{min-height:64px}}
+  .bk-list{display:flex;flex-direction:column}
+  .bk-item{border-top:1px solid var(--line)}
+  .bk-item:last-child{border-bottom:1px solid var(--line)}
+  .bk-row{display:flex;align-items:center;gap:13px;padding:14px 2px;cursor:pointer}
+  .bk-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+  .bk-main{flex:1;min-width:0}
+  .bk-title{font-family:var(--font-d);font-weight:600;font-size:16px;color:var(--ink);line-height:1.2}
+  .bk-sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
+  .bk-acts{display:none;flex-wrap:wrap;gap:7px;padding:0 2px 14px 36px}
+  .bk-item.open .bk-acts{display:flex}
+  .bk-empty{font-size:13px;color:var(--ink-faint);padding:18px 2px;line-height:1.5}
+  .rq-badge.log{background:var(--surface-2);color:var(--ink-faint)}
+  .pdf-btns{display:flex;flex-wrap:wrap;gap:8px}
+  .pdf-btns .btn{flex:1;min-width:120px;font-size:12.5px;padding:10px 8px}
   .ls-subhead{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin:16px 0 8px}
   .leave-settings label{display:flex;flex-direction:column;gap:4px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
   .leave-settings input,.leave-settings select{border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:14px;font-family:var(--font-b);background:var(--surface);color:var(--ink);text-transform:none;letter-spacing:normal}
@@ -538,51 +584,223 @@
   .my-slot{font-family:var(--font-m);font-size:10px;letter-spacing:.06em;color:var(--ink-faint);border:1px solid var(--line);border-radius:5px;padding:0 5px;margin-left:5px}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:210;max-width:80%;text-align:center}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* ===== My-rota drum calendar (mobile) ===== */
+  #myDrumWrap{display:none}
+  .drum-row{position:absolute;left:0;right:0;transform-style:preserve-3d;backface-visibility:hidden;transform-origin:center center}
+  .drum-month{display:flex;align-items:center;gap:10px;padding:0 4px}
+  .drum-month b{font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:-.01em;white-space:nowrap;color:var(--ink)}
+  .drum-month .ln{flex:1;height:1px;background:var(--line)}
+  .drum-week{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;padding:2px 1px}
+  .drum-day{height:100%;border:1px solid var(--line-soft);border-radius:9px;padding:5px;display:flex;flex-direction:column;background:var(--surface);overflow:hidden}
+  .drum-day.wknd{background:var(--surface-2)}
+  .drum-day.today{border-color:var(--a)}
+  .drum-day.empty-cell{visibility:hidden}
+  .drum-day .dn{font-family:var(--font-d);font-weight:600;font-size:12.5px;line-height:1;color:var(--ink)}
+  .drum-day.today .dn{color:var(--a-edge)}
+  .drum-dots{display:flex;gap:3px;margin-top:auto;flex-wrap:wrap;align-items:center}
+  .drum-dots i{width:6px;height:6px;border-radius:2px;display:block}
+  .drum-dots .oc{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--gold);box-sizing:border-box}
+  .drum-row.foc .drum-day:not(.empty-cell){cursor:pointer;border-color:var(--line)}
+  .drum-row.foc .drum-day .dn{font-size:14px}
+
   @media(max-width:640px){
-    .my-board{flex-direction:column-reverse}
-    .my-palette{flex:0 0 auto;flex-direction:row;overflow-x:auto;position:static;padding-bottom:5px;-webkit-overflow-scrolling:touch}
+    /* swap the flat grid + drag palette for the drum scroller */
+    #myGrid{display:none}
+    .my-palette{display:none}
+    #myDrumWrap{display:block;position:relative;height:min(60vh,460px);margin-top:2px}
+    #myDrumWrap .drum-fade{position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(180deg,var(--bg) 1%,rgba(16,19,22,0) 26%,rgba(16,19,22,0) 74%,var(--bg) 99%)}
+    #myDrumWrap .drum-band{position:absolute;left:0;right:0;top:50%;height:46px;transform:translateY(-50%);z-index:0;pointer-events:none;border-top:1px solid rgba(43,179,163,.30);border-bottom:1px solid rgba(43,179,163,.30);background:rgba(43,179,163,.05)}
+    #myDrum{position:absolute;inset:0;overflow-y:scroll;overflow-x:hidden;perspective:680px;perspective-origin:50% 50%;-webkit-overflow-scrolling:touch;z-index:1;scrollbar-width:none}
+    #myDrum::-webkit-scrollbar{display:none}
+    /* My rota — taller, legible cells */
+    .my-board{flex-direction:column;gap:10px;align-items:stretch}
+    .my-cal-col{order:1;width:100%}
+    .dow{width:100%}
+    #myGrid{gap:5px}
+    #myGrid .cell{aspect-ratio:auto;min-height:66px;padding:7px;border-radius:13px}
+    #myGrid .cell .d{font-size:15px}
+    #myGrid .cell .ms-chip{font-size:11px;padding:2px 7px;border-radius:7px;margin-top:4px;line-height:1.5}
+    #myGrid .cell .oc-badge{font-size:9.5px;padding:2px 7px;margin-top:4px}
+    #myGrid .cell.drop-hot{outline-width:3px}
+    /* palette → thumb-bar that sticks to the bottom of the My-rota view.
+       Uses position:sticky (not fixed) so a transformed ancestor can't trap it
+       and collapse the calendar. */
+    .rota-inner{padding-bottom:20px}
+    .my-palette{order:2;position:sticky;bottom:0;left:0;right:0;z-index:5;flex:0 0 auto;flex-direction:row;gap:9px;align-items:center;overflow-x:auto;overflow-y:hidden;margin:6px -16px 0;padding:31px 16px calc(13px + env(safe-area-inset-bottom));background:rgba(16,19,22,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);box-shadow:0 -10px 30px rgba(0,0,0,.45);-webkit-overflow-scrolling:touch}
+    .my-palette::before{content:"Tap a shift, then tap days — or drag onto a day";position:absolute;top:9px;left:17px;font-family:var(--font-m);font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap}
     .pal-label{display:none}
-    .pal-chip{flex:0 0 auto}
+    .pal-chip{flex:0 0 auto;min-height:44px;padding:11px 15px;border-radius:12px;font-size:13.5px;background:var(--surface-2)}
+    .pal-chip .pdot{width:13px;height:13px;border-radius:4px}
+    .pal-chip.armed{background:var(--a);border-color:var(--a);color:#06201d;box-shadow:0 0 0 2px var(--a),0 8px 18px -7px var(--a)}
+    .pal-chip.armed .pdot{box-shadow:0 0 0 2px rgba(6,32,29,.3)}
   }
+
+  /* ===== dark duotone reskin patches ===== */
+  /* neutral buttons + accent actions */
+  .btn{background:#2b3239;color:var(--ink)}
+  .btn.primary,.btn.key{color:#06201d}
+  .btn.key{box-shadow:0 1px 0 rgba(0,0,0,.3),0 7px 18px -9px var(--a)}
+  .req-badge{background:rgba(0,0,0,.28)}
+  .toast{background:var(--ink);color:var(--bg)}
+  /* active pills + badges that used --ink as background */
+  .scope button.on{background:var(--a);color:#06201d}
+  .type-opt.sel{background:var(--a);color:#06201d;border-color:var(--a)}
+  .oc-badge{background:#2f363d;color:var(--ink-soft)}
+  /* fairness verdict (was light tints) */
+  .fair-verdict.even{background:rgba(63,187,131,.12);border-color:rgba(63,187,131,.32)}
+  /* calendar assigned cells: replace hardcoded light borders */
+  .cell.assigned-a{border-color:rgba(43,179,163,.42)}
+  .cell.assigned-b{border-color:rgba(224,88,143,.42)}
+  .cell.assigned-pool{background:#262b30;border:1px dashed #3b434b}
+  .cell.assigned-a .who .ini,.cell.assigned-b .who .ini{color:#06201d}
+  /* request status chips */
+  .req-status.accepted{background:rgba(63,187,131,.16);border-color:rgba(63,187,131,.36)}
+  .req-status.rejected{background:rgba(232,131,90,.16);border-color:rgba(232,131,90,.36)}
+  .req-actions .accept{color:#06201d}
+  /* agree chips */
+  .agree-chip.ok.a{border-color:rgba(43,179,163,.4)}
+  .agree-chip.ok.b{border-color:rgba(224,88,143,.4)}
+  /* assign sheet pool option */
+  .opt.pool.sel{background:#262b30}
+  /* preference buttons keep colored bg; danger ghost hover */
+  .danger-ghost:hover{background:rgba(232,131,90,.16)!important;border-color:rgba(232,131,90,.4)!important}
+  .prefgrp button.sel-off,.prefgrp button.sel-on{color:#06201d}
+  /* pool chip unsociable text */
+  .pool-chip.un{color:var(--gold)}
+  /* leave-page accents */
+  .btn.key-al{background:#3fbb83;color:#06201d;box-shadow:0 1px 0 rgba(0,0,0,.3),0 7px 16px -9px #3fbb83}
+  .rd-badge{background:#3fbb83;color:#06201d}
+  .rd-warn{color:var(--gold);background:rgba(233,176,75,.1);border-color:rgba(233,176,75,.32)}
+  .rq-badge.pend{background:rgba(233,176,75,.16);color:var(--gold)}
+  .rq-badge.ok{background:rgba(63,187,131,.16);color:#74d6a4}
+  .rq-badge.no{background:rgba(232,131,90,.16);color:#f0a081}
+  .cur-tag{color:#06201d}
+  .metric-tag.even{background:rgba(63,187,131,.16)}
+  .lr-item{background:rgba(233,176,75,.09);border-color:rgba(233,176,75,.28);border-left-color:var(--gold);color:#e7c98c}
+  /* inputs / selects that had no explicit colours */
+  .mini-dialog input,.mini-dialog select{background:var(--surface-2);color:var(--ink);border-color:var(--line)}
+  select{color:var(--ink)}
+
+  /* ============================================================
+     PREMIUM POLISH LAYER  (additive — motion, depth, tactility)
+     ============================================================ */
+  :root{ --ease:cubic-bezier(.22,.61,.36,1); --ease-spring:cubic-bezier(.34,1.3,.5,1); }
+
+  /* lit hairline + quieter, layered depth on cards */
+  .card{
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.045),
+      0 1px 2px rgba(0,0,0,.30),
+      0 14px 34px -14px rgba(0,0,0,.55);
+    transition:transform .35s var(--ease), box-shadow .35s var(--ease), border-color .25s var(--ease);
+  }
+
+  /* refined easing on the interactive bits */
+  .person-chip,.step,.pal-chip,.ready-chip,.print-opt,.my-swap,.type-opt,.scope button,.agree-chip{
+    transition:transform .22s var(--ease-spring), box-shadow .25s var(--ease), background-color .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease) !important;
+  }
+  .person-chip:hover{ transform:translateY(-2px); box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 20px -10px rgba(0,0,0,.6); }
+  .step:hover{ transform:translateY(-1px); }
+
+  /* buttons — sheen, lit edge, tactile press */
+  .btn{
+    transition:transform .16s var(--ease-spring), filter .2s var(--ease), box-shadow .25s var(--ease), opacity .15s var(--ease) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 1px 2px rgba(0,0,0,.3);
+  }
+  .btn:hover{ filter:brightness(1.06); }
+  .btn:active{ transform:translateY(1px) scale(.985); }
+  .btn.primary,.btn.key{
+    background-image:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,0));
+  }
+  .btn.key:hover{ box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 10px 26px -10px var(--a); transform:translateY(-1px); }
+
+  /* real focus rings everywhere (keyboard only) */
+  .btn:focus-visible,.person-chip:focus-visible,.cell:focus-visible,.pal-chip:focus-visible,
+  .scope button:focus-visible,.type-opt:focus-visible,.ready-chip:focus-visible,.print-opt:focus-visible,
+  input:focus-visible,select:focus-visible{
+    outline:2px solid var(--a-edge); outline-offset:2px; border-radius:11px;
+  }
+
+  /* inputs — softer focus glow instead of a hard border */
+  input:focus,select:focus,.swap-composer input:focus,.swap-sel:focus,.comment-compose input:focus{
+    outline:none; border-color:var(--a) !important;
+    box-shadow:0 0 0 3px rgba(43,179,163,.16);
+    transition:box-shadow .2s var(--ease), border-color .2s var(--ease);
+  }
+
+  /* calendar cells — smoother lift + soft inner glow on assigned days */
+  .cell{ transition:transform .18s var(--ease-spring), box-shadow .25s var(--ease), border-color .2s var(--ease), background-color .25s var(--ease); }
+  .cell:hover{ transform:translateY(-2px); }
+  .cell.assigned-a{ box-shadow:inset 0 0 0 1px rgba(43,179,163,.22), inset 0 8px 18px -12px rgba(43,179,163,.7); }
+  .cell.assigned-b{ box-shadow:inset 0 0 0 1px rgba(224,88,143,.22), inset 0 8px 18px -12px rgba(224,88,143,.7); }
+
+  /* fairness knob — gentle halo */
+  .gauge .beam .knob{ box-shadow:0 0 0 4px rgba(63,187,131,.14), 0 2px 6px rgba(0,0,0,.4); }
+  .gauge .beam .lean.a{ box-shadow:0 0 22px -6px var(--a); }
+  .gauge .beam .lean.b{ box-shadow:0 0 22px -6px var(--b); }
+
+  /* drag palette chips press */
+  .pal-chip{ transition:transform .16s var(--ease-spring), box-shadow .22s var(--ease), background-color .18s var(--ease), border-color .18s var(--ease), color .18s var(--ease); }
+  .pal-chip:active{ transform:scale(.96); }
+
+  /* toast — frosted, lit */
+  .toast{
+    transition:opacity .3s var(--ease), transform .4s var(--ease-spring) !important;
+    background:rgba(26,30,34,.92); color:var(--ink) !important; font-weight:500; backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border:1px solid var(--line); box-shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 16px 40px -12px rgba(0,0,0,.7);
+  }
+
+  /* entrance: cards settle in with a soft spring (respects reduced-motion via global guard) */
+  @keyframes premIn{ from{ opacity:0; transform:translateY(10px) } to{ opacity:1; transform:translateY(0) } }
+  .wrap .card{ animation:premIn .5s var(--ease) backwards; }
+  .wrap .card:nth-of-type(2){ animation-delay:.05s }
+  .wrap .card:nth-of-type(3){ animation-delay:.1s }
+
+  /* refined dark scrollbars */
+  *{ scrollbar-width:thin; scrollbar-color:#343b42 transparent; }
+  *::-webkit-scrollbar{ width:10px; height:10px; }
+  *::-webkit-scrollbar-thumb{ background:#343b42; border-radius:99px; border:3px solid var(--bg); }
+  *::-webkit-scrollbar-thumb:hover{ background:#404852; }
+  *::-webkit-scrollbar-track{ background:transparent; }
+
+  /* crisper display type */
+  .brand h1,.rota-title,.lr-num,.metric-num{ letter-spacing:-.015em; }
+  body{ text-rendering:optimizeLegibility; }
 </style>
 </head>
 <body>
+<div class="wrap hub-screen" id="hubScreen">
+  <header class="app hub-app">
+    <div class="brand">
+      <div class="kicker">LTFT On-call · Slot Share</div>
+      <h1>Slot Share<span class="dot">.</span></h1>
+    </div>
+    <button class="acct-btn" id="hubAccountBtn">Sign in</button>
+  </header>
+  <div class="hub-cards">
+    <button class="hub-card" id="hubMyRota"><div class="hc-ic">▦</div><div class="hc-t">My Rota</div><div class="hc-d">Your clinics, on-calls and leave together in one calendar.</div></button>
+    <button class="hub-card" id="hubAnnual"><div class="hc-ic">✦</div><div class="hc-t">Annual Leave</div><div class="hc-d">Book leave and keep track of what you have left.</div></button>
+    <button class="hub-card" id="hubSplit"><div class="hc-ic">⇄</div><div class="hc-t">Split</div><div class="hc-d">Share the on-call rota fairly with your call partner.</div></button>
+  </div>
+  <div class="hub-sync syncline" id="hubSync"><span class="syncdot local"></span> Saved on this device</div>
+</div>
+
 <div class="wrap" id="ss-root">
 
+  <button class="split-back" id="splitBack">‹ Menu</button>
   <header class="app">
     <div class="brand">
       <div class="kicker">LTFT On-call · Slot Share</div>
       <h1>The Split<span class="dot">.</span></h1>
     </div>
     <div class="head-right">
+      <button class="msg-tab" id="msgTab" aria-label="Messages">Messages<span class="msg-badge" id="msgBadge" hidden></span></button>
       <button class="acct-btn" id="accountBtn">Sign in</button>
-      <button class="myrota-btn" id="openMyRota">My rota</button>
       <div class="people" id="people"></div>
     </div>
   </header>
 
   <div class="steps" id="steps"></div>
-
-  <div class="cols split">
-    <section class="card poolcard" id="poolCard">
-      <div class="card-head">
-        <p class="section-label" style="margin:0">Step 1 · Dates to divide</p>
-        <div class="pool-count" id="poolCount">0 to split</div>
-      </div>
-      <div id="poolBody"></div>
-    </section>
-
-    <section class="card balance" id="balanceCard">
-      <div class="card-head">
-        <p class="section-label" style="margin:0">Fairness</p>
-        <div class="scope" id="scope">
-          <button data-scope="rota" class="on">This rota</button>
-          <button data-scope="all">All time</button>
-        </div>
-      </div>
-      <div id="fairBody"></div>
-    </section>
-  </div>
 
   <section class="card calwrap">
     <div class="calnav">
@@ -596,6 +814,25 @@
     <div class="dow"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
     <div class="grid" id="grid"></div>
     <div class="legend" id="legend"></div>
+  </section>
+
+  <section class="card poolcard" id="poolCard">
+    <div class="card-head">
+      <p class="section-label" style="margin:0">Dates to divide</p>
+      <div class="pool-count" id="poolCount">0 to split</div>
+    </div>
+    <div id="poolBody"></div>
+  </section>
+
+  <section class="card balance" id="balanceCard">
+    <div class="card-head">
+      <p class="section-label" style="margin:0">Fairness</p>
+      <div class="scope" id="scope">
+        <button data-scope="rota" class="on">This rota</button>
+        <button data-scope="all">All time</button>
+      </div>
+    </div>
+    <div id="fairBody"></div>
   </section>
 
   <section class="card notes">
@@ -614,14 +851,6 @@
       <button class="btn" id="addNote">Send request</button>
     </div>
     <div id="noteList"></div>
-    <div class="comments">
-      <p class="comments-label">Messages</p>
-      <div id="commentList" class="comment-list"></div>
-      <div class="comment-compose">
-        <input id="commentInput" type="text" placeholder="Message" maxlength="400">
-        <button class="btn" id="postComment">Post</button>
-      </div>
-    </div>
   </section>
 
   <section class="card agree">
@@ -636,9 +865,9 @@
 
   <div class="tools">
     <div class="theme-switch" id="themeSwitch">
-      <button data-theme="clinical" title="Teal &amp; plum"><span class="dotc" style="background:#0e6f78"></span></button>
-      <button data-theme="sage" title="Sage &amp; clay"><span class="dotc" style="background:#2f6f5e"></span></button>
-      <button data-theme="indigo" title="Indigo &amp; magenta"><span class="dotc" style="background:#3a57c7"></span></button>
+      <button data-theme="clinical" title="Teal &amp; magenta"><span class="dotc" style="background:#2bb3a3"></span></button>
+      <button data-theme="sage" title="Mint &amp; clay"><span class="dotc" style="background:#46c08a"></span></button>
+      <button data-theme="indigo" title="Indigo &amp; magenta"><span class="dotc" style="background:#7d8cf2"></span></button>
     </div>
     <div class="syncline" id="syncStatus"><span class="syncdot local"></span> Saved on this device</div>
     <div class="grow"></div>
@@ -648,6 +877,17 @@
     <input type="file" id="importFile" accept="application/json" style="display:none">
   </div>
 
+</div>
+
+<div class="overlay center" id="messagesOverlay">
+  <div class="sheet msg-sheet">
+    <div class="sh-top"><div><div class="sh-date">Messages</div><div class="sh-sub">Notes between you and your call partner</div></div><button class="x" id="msgClose">×</button></div>
+    <div id="commentList" class="comment-list"></div>
+    <div class="comment-compose">
+      <input id="commentInput" type="text" placeholder="Message" maxlength="400">
+      <button class="btn" id="postComment">Post</button>
+    </div>
+  </div>
 </div>
 
 <div class="overlay" id="editorOverlay">
@@ -820,6 +1060,11 @@
       <div class="my-cal-col">
         <div class="dow"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
         <div class="grid" id="myGrid"></div>
+        <div id="myDrumWrap">
+          <div class="drum-fade"></div>
+          <div class="drum-band"></div>
+          <div id="myDrum"></div>
+        </div>
       </div>
       <div class="my-palette" id="myPalette"></div>
     </div>
@@ -1071,7 +1316,7 @@ function renderCalendar(){
     <span><span class="k" style="background:var(--a-tint);border-color:#bfe0e1"></span>${escapeHtml(state.people.A.name)}</span>
     <span><span class="k" style="background:var(--b-tint);border-color:#e7c8da"></span>${escapeHtml(state.people.B.name)}</span>
     <span><span class="k" style="background:var(--gold-tint);border-color:var(--gold-line)"></span>Weekend / bank holiday</span>
-    <span><span class="k" style="background:repeating-linear-gradient(135deg,#fff 0,#fff 3px,#c2cace 3px,#c2cace 4px);border-color:var(--line)"></span>Mon · non-working day</span>
+    <span><span class="k" style="background:repeating-linear-gradient(135deg,var(--surface-2) 0,var(--surface-2) 3px,rgba(126,224,179,.55) 3px,rgba(126,224,179,.55) 4px);border-color:var(--line)"></span>Mon · non-working day</span>
     <span><span class="k" style="box-shadow:inset 0 0 0 2px var(--ink);background:#fff"></span>Today</span>`;
 }
 
@@ -1301,7 +1546,12 @@ function buildRotaHtml(style, data, m){
   return `<!doctype html><html><head><meta charset="utf-8"><title>On-call rota — agreed</title><style>@page{margin:14mm}${css}</style></head><body>${inner}</body></html>`;
 }
 
-function renderAll(){ renderPeople(); renderStepper(); renderComposer(); renderBalance(); renderPool(); renderCalendar(); renderNotes(); renderComments(); renderAgree(); if(document.getElementById("rotaOverlay").classList.contains("show")) renderMyCalendar(); }
+function renderAll(){ renderPeople(); renderStepper(); renderComposer(); renderBalance(); renderPool(); renderCalendar(); renderNotes(); renderComments(); renderAgree(); renderMsgBadge(); if(document.getElementById("rotaOverlay").classList.contains("show")) renderMyCalendar(); }
+function showBase(name){ const hub=document.getElementById("hubScreen"), split=document.getElementById("ss-root"); const onSplit=name==="split"; hub.style.display=onSplit?"none":"block"; split.style.display=onSplit?"block":"none"; if(onSplit) renderAll(); else renderHub(); window.scrollTo(0,0); }
+function renderHub(){ renderMsgBadge(); }
+function renderMsgBadge(){ const b=document.getElementById("msgBadge"); if(!b) return; const n=newCommentsForMe().length; if(n>0){ b.textContent=n>9?"9+":String(n); b.hidden=false; } else { b.hidden=true; } }
+function openMessages(){ document.getElementById("messagesOverlay").classList.add("show"); renderComments(); markCommentsSeen(); renderMsgBadge(); }
+function closeMessages(){ document.getElementById("messagesOverlay").classList.remove("show"); renderMsgBadge(); }
 
 /* ===== My rota (personal sessions + on-calls → ICS) ===== */
 function getMyArr(ds){ if(!meKey) return []; const m=state.myShifts&&state.myShifts[meKey]; return (m&&m[ds])||[]; }
@@ -1311,6 +1561,7 @@ function openMyRota(){
   myView=new Date(); myView.setDate(1);
   renderMyCalendar();
   document.getElementById("rotaOverlay").classList.add("show");
+  renderMyDrum();
 }
 function closeMyRota(){ armedType=null; endGhost&&endGhost(); document.getElementById("rotaOverlay").classList.remove("show"); }
 function renderMyCalendar(){
@@ -1341,6 +1592,85 @@ function renderMyCalendar(){
     grid.appendChild(cell);
   }
   renderPalette();
+  if(MYDRUM.inited) renderMyDrumWindow();
+}
+
+/* ===== My-rota drum calendar (mobile) — virtualized curved scroller ===== */
+const MYDRUM={ROW:46, WINDOW:8, rows:null, inited:false, raf:null, snapT:null};
+function buildMyDrumRows(){
+  const rows=[]; const today=new Date();
+  const ay=today.getFullYear(), am=today.getMonth();
+  for(let off=-6; off<=12; off++){
+    const d=new Date(ay, am+off, 1); const y=d.getFullYear(), m=d.getMonth();
+    rows.push({type:"month", y, m, label:`${MONTHS[m]} ${y}`});
+    const lead=(new Date(y,m,1).getDay()+6)%7;
+    const dim=new Date(y,m+1,0).getDate();
+    const cells=[];
+    for(let i=0;i<lead;i++) cells.push(0);
+    for(let dd=1; dd<=dim; dd++) cells.push(dd);
+    while(cells.length%7) cells.push(0);
+    for(let i=0;i<cells.length;i+=7) rows.push({type:"week", y, m, cells:cells.slice(i,i+7), isNow: off===0 && i===0});
+  }
+  return rows;
+}
+function drumDayHtml(y,m,day,foc){
+  if(!day) return `<div class="drum-day empty-cell"></div>`;
+  const ds=iso(new Date(y,m,day));
+  const wknd=isWeekend(ds), today=ds===iso(new Date());
+  const oc=myOncall(ds); const arr=getMyArr(ds);
+  let dots="";
+  arr.slice(0,3).forEach(s=>{ const t=myType(s.type); dots+=`<i style="background:${t.color}"></i>`; });
+  if(oc) dots+=`<span class="oc"></span>`;
+  const cls=`drum-day${wknd?" wknd":""}${today?" today":""}`;
+  const dsAttr = foc ? ` data-ds="${ds}"` : "";
+  return `<div class="${cls}"${dsAttr}><span class="dn">${day}</span>${dots?`<span class="drum-dots">${dots}</span>`:""}</div>`;
+}
+function drumRowHtml(row, idx, centerIdx, PAD){
+  const dist=idx-centerIdx;
+  const c=Math.max(-3.4, Math.min(3.4, dist));
+  const rot=c*21, z=-Math.abs(c)*42;
+  const opacity=Math.max(0.16, 1-Math.abs(c)*0.33);
+  const scale=Math.max(0.72, 1-Math.abs(c)*0.05);
+  const foc=Math.abs(dist)<0.5;
+  const top=PAD+idx*MYDRUM.ROW;
+  const st=`top:${top}px;height:${MYDRUM.ROW}px;opacity:${opacity};transform:translateZ(${z}px) rotateX(${rot}deg) scale(${scale})`;
+  if(row.type==="month") return `<div class="drum-row${foc?" foc":""}" style="${st};display:flex;align-items:center;gap:10px;padding:0 4px"><b>${row.label}</b><span class="ln"></span></div>`;
+  let cells=""; for(const d of row.cells) cells+=drumDayHtml(row.y,row.m,d,foc);
+  return `<div class="drum-row drum-week${foc?" foc":""}" style="${st}">${cells}</div>`;
+}
+function renderMyDrumWindow(){
+  const el=document.getElementById("myDrum"); if(!el||!MYDRUM.rows) return;
+  const rows=MYDRUM.rows, ROW=MYDRUM.ROW;
+  const VIEW=el.clientHeight||440, PAD=VIEW/2-ROW/2;
+  const totalH=rows.length*ROW+PAD*2;
+  const centerIdx=el.scrollTop/ROW;
+  const lo=Math.max(0, Math.floor(centerIdx)-MYDRUM.WINDOW);
+  const hi=Math.min(rows.length-1, Math.ceil(centerIdx)+MYDRUM.WINDOW);
+  let html=`<div style="height:${totalH}px;width:1px;pointer-events:none"></div>`;
+  for(let i=lo;i<=hi;i++) html+=drumRowHtml(rows[i], i, centerIdx, PAD);
+  el.innerHTML=html;
+  if(el.clientHeight>0){ const n=Math.max(0,Math.min(rows.length-1,Math.round(centerIdx))); const cur=rows[n]; if(cur) document.getElementById("myMonth").innerHTML=`${MONTHS[cur.m]} <span>${cur.y}</span>`; }
+  el.querySelectorAll(".drum-day[data-ds]").forEach(cell=>{ cell.onclick=()=>{ const ds=cell.dataset.ds; if(armedType){ placeSession(ds, armedType); } else openMyDay(ds); }; });
+}
+function centerMyDrum(predicate){
+  const el=document.getElementById("myDrum"); if(!el||!MYDRUM.rows) return;
+  const i=MYDRUM.rows.findIndex(predicate);
+  if(i>=0){ el.scrollTop=i*MYDRUM.ROW; renderMyDrumWindow(); }
+}
+function renderMyDrum(){
+  const el=document.getElementById("myDrum"); if(!el) return;
+  MYDRUM.rows=buildMyDrumRows();
+  if(!MYDRUM.inited){
+    MYDRUM.inited=true;
+    el.addEventListener("scroll", ()=>{
+      if(MYDRUM.raf) cancelAnimationFrame(MYDRUM.raf);
+      MYDRUM.raf=requestAnimationFrame(renderMyDrumWindow);
+      if(MYDRUM.snapT) clearTimeout(MYDRUM.snapT);
+      MYDRUM.snapT=setTimeout(()=>{ const t=Math.round(el.scrollTop/MYDRUM.ROW)*MYDRUM.ROW; if(Math.abs(t-el.scrollTop)>0.5) el.scrollTo({top:t, behavior:"smooth"}); }, 150);
+    }, {passive:true});
+  }
+  renderMyDrumWindow();
+  requestAnimationFrame(()=>{ centerMyDrum(r=>r.type==="week" && r.isNow); });
 }
 let armedType=null;
 function renderPalette(){
@@ -1592,38 +1922,43 @@ function renderLeave(){
         <div class="rc-fields"><label>Carryover<input type="number" value="${r.cfg.carryover}" data-key="${r.key}" data-f="carryover" min="0" step="0.5"></label><label>WTE<input type="number" value="${r.cfg.wte!=null?r.cfg.wte:''}" placeholder="${L.wte}" data-key="${r.key}" data-f="wte" min="0.1" max="1" step="0.05"></label><label>Override<input type="number" value="${r.cfg.override!=null?r.cfg.override:''}" placeholder="auto" data-key="${r.key}" data-f="override" min="0" step="0.5"></label></div>
       </details>
     </div>`; };
-  // logged leave list for the year
-  const m=(state.myShifts&&state.myShifts[meKey])||{}; const logged=[];
-  Object.keys(m).sort().forEach(ds=>{ if(ds>=yStart && ds<=yEndIncl && Array.isArray(m[ds])) m[ds].forEach(s=>{ if(s.type==="annual_leave"||s.type==="study_leave") logged.push({ds,type:s.type}); }); });
-  const loggedHTML = logged.length ? logged.map(x=>`<div class="logged-item"><span class="li-dot" style="background:${x.type==='annual_leave'?'#2f7d4f':'#6366f1'}"></span><span class="li-date">${fmtNice(x.ds)}</span><span class="li-type">${x.type==='annual_leave'?'Annual':'Study'}</span><button class="li-x" data-ds="${x.ds}" aria-label="Remove">✕</button></div>`).join("") : `<div class="empty">No leave logged this year yet.</div>`;
+  // ---- unified bookings: requests + any loose logged leave ----
   const WD=[["1","Monday"],["2","Tuesday"],["3","Wednesday"],["4","Thursday"],["5","Friday"],["6","Saturday"],["0","Sunday"]];
   const p=L.profile;
-  const reqsAll=(L.requests||[]).slice().sort((a,b)=>b.createdAt-a.createdAt);
-  const reqItem=(r)=>{ const range=r.from===r.to?fmtNice(r.from):`${fmtNice(r.from)} – ${fmtNice(r.to)}`; const badge=r.status==='approved'?'<span class="rq-badge ok">Approved</span>':r.status==='declined'?'<span class="rq-badge no">Declined</span>':'<span class="rq-badge pend">Pending</span>';
-    return `<div class="rq-item"><div class="rq-top"><div class="rq-when">${reqTypeLabel(r.type)} · ${range}</div>${badge}</div><div class="rq-sub">${r.days.length} working day${r.days.length===1?'':'s'}${r.note?` · ${escapeHtml(r.note)}`:''}</div><div class="rq-acts"><button class="rq-btn" data-act="email" data-id="${r.id}">Email</button><button class="rq-btn" data-act="form" data-id="${r.id}">Form</button>${r.status!=='approved'?`<button class="rq-btn" data-act="approve" data-id="${r.id}">Mark approved</button>`:''}${r.status!=='declined'?`<button class="rq-btn" data-act="decline" data-id="${r.id}">Decline</button>`:''}<button class="rq-btn danger" data-act="undo" data-id="${r.id}">Undo</button></div></div>`;
+  const m=(state.myShifts&&state.myShifts[meKey])||{};
+  const reqsAll=(L.requests||[]).slice();
+  const reqDates=new Set(); reqsAll.forEach(r=>(r.days||[]).forEach(d=>reqDates.add(d)));
+  const bridged=(prevDs,nextDs)=>{ let d=new Date(prevDs+"T00:00:00"); d.setDate(d.getDate()+1); const end=new Date(nextDs+"T00:00:00"); while(d<end){ const wd=d.getDay(); if(wd!==0&&wd!==6&&wd!==L.nwd) return false; d.setDate(d.getDate()+1);} return true; };
+  const looseDays=[]; Object.keys(m).sort().forEach(ds=>{ if(ds>=yStart && ds<=yEndIncl && Array.isArray(m[ds])) m[ds].forEach(s=>{ if((s.type==="annual_leave"||s.type==="study_leave") && !reqDates.has(ds)) looseDays.push({ds,type:s.type}); }); });
+  const loggedGroups=[]; let cg=null; looseDays.forEach(x=>{ if(cg && cg.type===x.type && bridged(cg.to,x.ds)){ cg.to=x.ds; cg.count++; } else { if(cg) loggedGroups.push(cg); cg={type:x.type,from:x.ds,to:x.ds,count:1}; } }); if(cg) loggedGroups.push(cg);
+  const items=[];
+  reqsAll.forEach(r=>items.push({kind:"request", id:r.id, type:r.type, from:r.from, to:r.to, count:(r.days||[]).length, status:r.status, note:r.note}));
+  loggedGroups.forEach((g,i)=>items.push({kind:"logged", id:"L"+i, type:g.type, from:g.from, to:g.to, count:g.count, status:"logged"}));
+  items.sort((a,b)=> (b.from||"").localeCompare(a.from||""));
+  const pillCls={pending:"pend",approved:"ok",declined:"no",logged:"log"}, pillTxt={pending:"Pending",approved:"Approved",declined:"Declined",logged:"Logged"};
+  const dotCol=t=> t==="study_leave"?"#6366f1":"#3fbb83";
+  const bkItem=(it)=>{ const range=it.from===it.to?fmtNice(it.from):`${fmtNice(it.from)} – ${fmtNice(it.to)}`;
+    const acts = it.kind==="request"
+      ? `<button class="rq-btn" data-act="email" data-id="${it.id}">Email</button><button class="rq-btn" data-act="form" data-id="${it.id}">Form</button>${it.status!=="approved"?`<button class="rq-btn" data-act="approve" data-id="${it.id}">Mark approved</button>`:""}${it.status!=="declined"?`<button class="rq-btn" data-act="decline" data-id="${it.id}">Decline</button>`:""}<button class="rq-btn danger" data-act="undo" data-id="${it.id}">Undo</button>`
+      : `<button class="rq-btn" data-act="makereq" data-type="${it.type}" data-from="${it.from}" data-to="${it.to}">Make a request</button><button class="rq-btn danger" data-act="rmlog" data-type="${it.type}" data-from="${it.from}" data-to="${it.to}">Remove</button>`;
+    return `<div class="bk-item" data-id="${it.id}"><div class="bk-row"><span class="bk-dot" style="background:${dotCol(it.type)}"></span><div class="bk-main"><div class="bk-title">${range}</div><div class="bk-sub">${reqTypeLabel(it.type)} · ${it.count} day${it.count===1?"":"s"}</div></div><span class="rq-badge ${pillCls[it.status]}">${pillTxt[it.status]}</span></div><div class="bk-acts">${acts}</div></div>`;
   };
-  const reqsCur=reqsAll.filter(r=>r.to>=todayISO), reqsPast=reqsAll.filter(r=>r.to<todayISO);
-  const reqHTML=reqsCur.map(reqItem).join(""), reqPastHTML=reqsPast.map(reqItem).join("");
+  const bkHTML = items.length ? items.map(bkItem).join("") : `<div class="bk-empty">No leave booked yet. Tap <b>＋ Request</b> to book annual or study leave.</div>`;
   host.innerHTML=`
     <div class="leave-yearnav"><button class="iconbtn" id="lvPrev">‹</button><div class="lyn-label">Feb ${Y} – Feb ${Y+1}</div><button class="iconbtn" id="lvNext">›</button></div>
     <div class="leave-hero">
       <div class="leave-ringwrap"><svg viewBox="0 0 120 120" class="leave-ring"><circle class="lr-bg" cx="60" cy="60" r="${R}"></circle><circle class="lr-fg" cx="60" cy="60" r="${R}" style="stroke:${col};stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${off.toFixed(1)}"></circle></svg><div class="lr-center"><div class="lr-num">${yrLeft}</div><div class="lr-lbl">days left</div></div></div>
       <div class="leave-hero-meta"><div class="lh-year">Annual leave this year</div><div class="lh-stat"><b>${yrTaken}</b> taken of <b>${yrTotal}</b></div></div>
     </div>
-    <button class="btn key-al req-cta" id="requestLeaveBtn">＋ Request leave</button>
     ${rem.length?`<div class="leave-reminders">${rem.map(x=>`<div class="lr-item">${x}</div>`).join("")}</div>`:""}
     <div class="rot-list">${card(r1)}${card(r2)}</div>
-    ${reqsCur.length?`<div class="leave-section"><div class="ls-title">Leave requests</div><div class="rq-list">${reqHTML}</div></div>`:""}
-    ${reqsPast.length?`<div class="leave-section"><details class="set-d rq-past"><summary>Past requests (${reqsPast.length})</summary><div class="rq-list rq-past-list">${reqPastHTML}</div></details></div>`:""}
+    <div class="leave-section bk-sec">
+      <div class="bk-head"><div class="section-label">Bookings &amp; requests</div><button class="btn bk-req" id="requestLeaveBtn">＋ Request</button></div>
+      <div class="bk-list">${bkHTML}</div>
+    </div>
     <div class="leave-section"><div class="ls-title">Study leave</div><div class="sl-card"><div class="rot-bar"><div class="rot-bar-fill" style="width:${L.slEntitlement>0?Math.min(100,Math.round(slTaken/L.slEntitlement*100)):0}%;background:#6366f1"></div></div><div class="rot-meta"><span><b>${slTaken}</b> of ${L.slEntitlement} taken · ${slRemain} left</span></div></div></div>
-    <div class="leave-section"><div class="ls-title">Log leave taken</div>
-      <div class="log-form">
-        <select id="logType"><option value="annual_leave">Annual leave</option><option value="study_leave">Study leave</option></select>
-        <div class="log-dates"><input type="date" id="logFrom" value="${todayISO}"><span>→</span><input type="date" id="logTo"></div>
-        <button class="btn" id="logAdd">Add</button>
-      </div>
-      <div class="log-hint">Adds each working day in the range (skips weekends and your non-working day). Single day? Leave the second date blank.</div>
-      ${logged.length?`<div class="logged-list">${loggedHTML}</div>`:""}
+    <div class="leave-section"><div class="ls-title">Export leave taken (PDF)</div>
+      <div class="pdf-btns"><button class="btn ghost" id="pdfYear">This year (Feb–Feb)</button><button class="btn ghost" id="pdfH1">Feb–Aug roster</button><button class="btn ghost" id="pdfH2">Aug–Feb roster</button></div>
     </div>
     <details class="set-d"><summary>Settings &amp; how it works</summary>
       <div class="leave-settings"><div class="ls-2"><label>Default WTE<input type="number" id="lvWte" value="${L.wte}" min="0.1" max="1" step="0.05"></label><label>Non-working day<select id="lvNwd">${WD.map(w=>`<option value="${w[0]}" ${(+w[0])===L.nwd?"selected":""}>${w[1]}</option>`).join("")}</select></label></div><label>Study leave allowance (days)<input type="number" id="lvSl" value="${L.slEntitlement}" min="0" step="0.5"></label></div>
@@ -1633,20 +1968,31 @@ function renderLeave(){
         <div class="ls-2"><label>Specialty<input id="pfSpec" value="${escapeHtml(p.specialty)}"></label><label>Ward<input id="pfWard" value="${escapeHtml(p.ward)}"></label></div>
         <div class="ls-2"><label>Hospital<input id="pfHosp" value="${escapeHtml(p.hospital)}"></label><label>GMC<input id="pfGmc" value="${escapeHtml(p.gmc)}"></label></div>
       </div>
-      <div class="leave-note">Annual leave splits automatically into two six-month rosters (${annualFT(Y)} days a year ${annualFT(Y)===27?'→ 14 / 13':'→ 16 / 16'}; rises to 32 from Feb 2029). Each roster: half × WTE + bank holidays × WTE − bank holidays on a working day. Set a roster's own WTE under “Adjust” if it differs (e.g. full-time before LTFT). Days “taken” count the leave you log or mark on the calendar.</div>
+      <div class="leave-note">Annual leave splits into two six-month rosters (${annualFT(Y)} days a year ${annualFT(Y)===27?'→ 14 / 13':'→ 16 / 16'}; rises to 32 from Feb 2029). Each roster: half × WTE + bank holidays × WTE − bank holidays on a working day. All leave is booked through Request → approval; tap any row to see its actions.</div>
     </details>`;
   document.getElementById("lvPrev").onclick=()=>shiftLeaveYear(-1);
   document.getElementById("lvNext").onclick=()=>shiftLeaveYear(1);
-  document.getElementById("logAdd").onclick=logLeave;
   document.getElementById("lvWte").onchange=e=>setLeaveField("wte",e.target.value,true);
   document.getElementById("lvNwd").onchange=e=>setLeaveField("nwd",e.target.value,true);
   document.getElementById("lvSl").onchange=e=>setLeaveField("slEntitlement",e.target.value,true);
   host.querySelectorAll(".rc-fields input").forEach(inp=>inp.onchange=()=>setRosterField(inp.dataset.key, inp.dataset.f, inp.value));
-  host.querySelectorAll(".li-x").forEach(b=>b.onclick=()=>removeLeaveDay(b.dataset.ds));
   document.getElementById("requestLeaveBtn").onclick=openRequest;
   const cor=document.getElementById("lvCoord"); if(cor) cor.onchange=e=>setLeaveText("coordEmail",e.target.value);
   [["pfName","name"],["pfGrade","grade"],["pfSpec","specialty"],["pfWard","ward"],["pfHosp","hospital"],["pfGmc","gmc"]].forEach(([id,f])=>{ const el=document.getElementById(id); if(el) el.onchange=ev=>setLeaveText(f,ev.target.value); });
-  host.querySelectorAll(".rq-btn").forEach(b=>b.onclick=()=>{ const id=b.dataset.id, act=b.dataset.act; const r=getLeave().requests.find(x=>x.id===id); if(!r) return; if(act==="email"){ reqCreated=r; renderRequest(); document.getElementById("requestOverlay").classList.add("show"); } else if(act==="form"){ printLeaveForm(r); } else if(act==="approve"){ setRequestStatus(id,"approved"); } else if(act==="decline"){ setRequestStatus(id,"declined"); } else if(act==="undo"){ if(confirm("Remove this request and its booked days?")) undoRequest(id); } });
+  host.querySelectorAll(".bk-row").forEach(row=>row.onclick=()=>row.parentElement.classList.toggle("open"));
+  document.getElementById("pdfYear").onclick=()=>printLeaveTaken("year");
+  document.getElementById("pdfH1").onclick=()=>printLeaveTaken("H1");
+  document.getElementById("pdfH2").onclick=()=>printLeaveTaken("H2");
+  host.querySelectorAll(".rq-btn").forEach(b=>b.onclick=(ev)=>{ ev.stopPropagation(); const act=b.dataset.act;
+    if(act==="makereq"){ makeRequestFromLogged(b.dataset.type,b.dataset.from,b.dataset.to); return; }
+    if(act==="rmlog"){ if(confirm("Remove this logged leave from your rota?")) removeLoggedRange(b.dataset.type,b.dataset.from,b.dataset.to); return; }
+    const id=b.dataset.id, r=getLeave().requests.find(x=>x.id===id); if(!r) return;
+    if(act==="email"){ reqCreated=r; renderRequest(); document.getElementById("requestOverlay").classList.add("show"); }
+    else if(act==="form"){ printLeaveForm(r); }
+    else if(act==="approve"){ setRequestStatus(id,"approved"); }
+    else if(act==="decline"){ setRequestStatus(id,"declined"); }
+    else if(act==="undo"){ if(confirm("Remove this request and its booked days?")) undoRequest(id); }
+  });
 }
 
 /* ===== Request leave flow ===== */
@@ -1782,6 +2128,44 @@ function buildLeaveFormHtml(req){
       <div class="sigrow"><div class="cell"><span class="lbl">Rota organiser:</span>${U}</div><div class="cell"><span class="lbl">Print name:</span>${U}</div><div class="cell"><span class="lbl">Date:</span>${U}</div></div>
     </div>
     <div class="foot">Remaining annual leave / to be taken by / processed by — for completion by Medical Administration.</div>
+  </div></body></html>`;
+}
+function makeRequestFromLogged(type, fromDs, toDs){ const m=(state.myShifts&&state.myShifts[meKey])||{}; const days=[]; Object.keys(m).sort().forEach(ds=>{ if(ds>=fromDs&&ds<=toDs&&Array.isArray(m[ds])) m[ds].forEach(s=>{ if(s.type===type) days.push(ds); }); }); if(!days.length) return; const req={id:"r"+Date.now(), type, from:fromDs, to:toDs, note:"", days, status:"pending", createdAt:Date.now()}; getLeave().requests.push(req); persist(); reqCreated=req; renderRequest(); document.getElementById("requestOverlay").classList.add("show"); }
+function removeLoggedRange(type, fromDs, toDs){ const m=state.myShifts&&state.myShifts[meKey]; if(!m) return; Object.keys(m).forEach(ds=>{ if(ds>=fromDs&&ds<=toDs&&Array.isArray(m[ds])){ m[ds]=m[ds].filter(s=>s.type!==type); if(!m[ds].length) delete m[ds]; } }); persist(); if(typeof renderMyCalendar==="function") renderMyCalendar(); renderLeave(); }
+function printLeaveTaken(scope){
+  const Y=activeLeaveYear(); let fromISO,toIncl,title;
+  if(scope==="H1"){ fromISO=`${Y}-02-01`; toIncl=`${Y}-07-31`; title=`Feb – Aug ${Y}`; }
+  else if(scope==="H2"){ fromISO=`${Y}-08-01`; toIncl=`${Y+1}-01-31`; title=`Aug ${Y} – Feb ${Y+1}`; }
+  else { fromISO=`${Y}-02-01`; toIncl=`${Y+1}-01-31`; title=`Feb ${Y} – Feb ${Y+1}`; }
+  const html=buildLeaveTakenHtml(title, fromISO, toIncl, scope, Y);
+  const w=window.open("","_blank"); if(!w){ alert("Allow pop-ups to export, or try again."); return; }
+  w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>{ try{ w.print(); }catch(e){} }, 450);
+}
+function buildLeaveTakenHtml(title, fromISO, toIncl, scope, Y){
+  const esc=escapeHtml, L=getLeave(), p=L.profile, m=(state.myShifts&&state.myShifts[meKey])||{};
+  const collect=(type)=>{ const out=[]; Object.keys(m).sort().forEach(d=>{ if(d>=fromISO&&d<=toIncl&&Array.isArray(m[d])) m[d].forEach(s=>{ if(s.type===type) out.push(d); }); }); return out; };
+  const bridged=(a,b)=>{ let d=new Date(a+"T00:00:00"); d.setDate(d.getDate()+1); const e=new Date(b+"T00:00:00"); while(d<e){ const wd=d.getDay(); if(wd!==0&&wd!==6&&wd!==L.nwd) return false; d.setDate(d.getDate()+1);} return true; };
+  const group=(days)=>{ const out=[]; let c=null; days.forEach(d=>{ if(c && bridged(c.to,d)){ c.to=d; c.count++; } else { if(c) out.push(c); c={from:d,to:d,count:1}; } }); if(c) out.push(c); return out; };
+  const al=collect("annual_leave"), sl=collect("study_leave");
+  const rowsFor=(g)=> g.length? g.map(x=>`<tr><td>${esc(x.from===x.to?fmtNice(x.from):fmtNice(x.from)+" – "+fmtNice(x.to))}</td><td class="num">${x.count}</td></tr>`).join("") : `<tr><td colspan="2" class="muted">None recorded</td></tr>`;
+  let entTotal;
+  if(scope==="H1"||scope==="H2"){ entTotal=rosterInfo(Y,scope).total; } else { entTotal=Math.round((rosterInfo(Y,"H1").total+rosterInfo(Y,"H2").total)*10)/10; }
+  const remaining=Math.round((entTotal-al.length)*10)/10;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Annual leave taken — ${esc(p.name)}</title>
+  <style>@page{size:A4;margin:18mm 16mm}*{box-sizing:border-box}body{font-family:"Helvetica Neue",Arial,sans-serif;color:#111;font-size:12px;line-height:1.5;margin:0}.doc{max-width:720px;margin:0 auto}
+  .hd{border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:14px}.hd .t{font-size:16px;font-weight:700}.hd .s{font-size:11px;color:#555;margin-top:3px}
+  .meta{display:flex;flex-wrap:wrap;gap:6px 22px;margin:10px 0 4px;font-size:12px}.meta b{font-weight:600}
+  .sum{display:flex;gap:22px;margin:14px 0;padding:12px 14px;border:1px solid #ccc;border-radius:8px;background:#fafafa}
+  .sum .b{font-size:20px;font-weight:700}.sum .l{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#666}
+  h3{font-size:12.5px;margin:18px 0 6px;border-bottom:1px solid #ccc;padding-bottom:3px}
+  table{width:100%;border-collapse:collapse}td{padding:6px 4px;border-bottom:1px solid #eee;font-size:12px}td.num{text-align:right;width:70px;font-weight:600}td.muted{color:#888}
+  .foot{margin-top:24px;font-size:10px;color:#666;border-top:1px solid #ccc;padding-top:8px}</style></head><body><div class="doc">
+  <div class="hd"><div class="t">Annual leave taken — ${esc(title)}</div><div class="s">Generated ${esc(fmtNice(leaveISO(new Date())))} · for reconciliation with the rota office master record.</div></div>
+  <div class="meta"><span><b>Name:</b> ${esc(p.name)}</span><span><b>Grade:</b> ${esc(p.grade)}</span><span><b>Specialty:</b> ${esc(p.specialty)}</span><span><b>GMC:</b> ${esc(p.gmc)}</span><span><b>Hospital:</b> ${esc(p.hospital)}</span></div>
+  <div class="sum"><div><div class="b">${entTotal}</div><div class="l">Entitlement</div></div><div><div class="b">${al.length}</div><div class="l">Taken</div></div><div><div class="b">${remaining}</div><div class="l">Remaining</div></div></div>
+  <h3>Annual leave dates</h3><table>${rowsFor(group(al))}</table>
+  ${sl.length?`<h3>Study leave dates</h3><table>${rowsFor(group(sl))}</table>`:""}
+  <div class="foot">Entitlement is pro-rata (WTE ${L.wte}); bank-holiday adjustment applied per Trust LTFT policy. Dates above reflect leave booked in this app.</div>
   </div></body></html>`;
 }
 function doExportICS(){
@@ -2061,7 +2445,7 @@ async function refreshBankHolidays(){
 
 /* ===== live sync ===== */
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
-function setSyncStatus(kind, text){ const el=document.getElementById("syncStatus"); const btn=document.getElementById("accountBtn"); if(btn) btn.textContent = kind==="live" ? "Account" : "Sign in"; if(!el) return; const cls = kind==="live"?"live" : kind==="connecting"?"" : "local"; el.innerHTML=`<span class="syncdot ${cls}"></span> ${text}`; }
+function setSyncStatus(kind, text){ const el=document.getElementById("syncStatus"); const lbl = kind==="live" ? "Account" : "Sign in"; const btn=document.getElementById("accountBtn"); if(btn) btn.textContent=lbl; const hbtn=document.getElementById("hubAccountBtn"); if(hbtn) hbtn.textContent=lbl; const cls = kind==="live"?"live" : kind==="connecting"?"" : "local"; const html=`<span class="syncdot ${cls}"></span> ${text}`; if(el) el.innerHTML=html; const hs=document.getElementById("hubSync"); if(hs) hs.innerHTML=html; }
 function loadCode(){ try{ return localStorage.getItem(CODE_STORE)||""; }catch(e){ return ""; } }
 function saveCode(c){ try{ localStorage.setItem(CODE_STORE, c); }catch(e){} }
 async function ensureFirebase(){
@@ -2189,11 +2573,18 @@ function boot(){
   document.getElementById("pickerOverlay").onclick=e=>{ if(e.target.id==="pickerOverlay") closePicker(); };
 
   document.getElementById("refreshBtn").onclick=newRota;
-  document.getElementById("openMyRota").onclick=openMyRota;
+  document.getElementById("hubMyRota").onclick=()=>openMyRota();
+  document.getElementById("hubAnnual").onclick=()=>openLeave();
+  document.getElementById("hubSplit").onclick=()=>showBase("split");
+  document.getElementById("hubAccountBtn").onclick=openLogin;
+  document.getElementById("splitBack").onclick=()=>showBase("hub");
+  document.getElementById("msgTab").onclick=openMessages;
+  document.getElementById("msgClose").onclick=closeMessages;
+  document.getElementById("messagesOverlay").onclick=e=>{ if(e.target.id==="messagesOverlay") closeMessages(); };
   document.getElementById("myBack").onclick=closeMyRota;
-  document.getElementById("myPrev").onclick=()=>{ myView.setMonth(myView.getMonth()-1); renderMyCalendar(); };
-  document.getElementById("myNext").onclick=()=>{ myView.setMonth(myView.getMonth()+1); renderMyCalendar(); };
-  document.getElementById("myToday").onclick=()=>{ myView=new Date(); myView.setDate(1); renderMyCalendar(); };
+  document.getElementById("myPrev").onclick=()=>{ myView.setMonth(myView.getMonth()-1); renderMyCalendar(); centerMyDrum(r=>r.type==="week" && r.y===myView.getFullYear() && r.m===myView.getMonth()); };
+  document.getElementById("myNext").onclick=()=>{ myView.setMonth(myView.getMonth()+1); renderMyCalendar(); centerMyDrum(r=>r.type==="week" && r.y===myView.getFullYear() && r.m===myView.getMonth()); };
+  document.getElementById("myToday").onclick=()=>{ myView=new Date(); myView.setDate(1); renderMyCalendar(); centerMyDrum(r=>r.type==="week" && r.isNow); };
   document.getElementById("myDayClose").onclick=closeMyDay;
   document.getElementById("myDayOverlay").onclick=e=>{ if(e.target.id==="myDayOverlay") closeMyDay(); };
   document.getElementById("exportIcs").onclick=exportICS;
@@ -2217,7 +2608,7 @@ function boot(){
   let curTheme="clinical"; try{ curTheme=localStorage.getItem(THEME_KEY)||"clinical"; }catch(e){}
   document.querySelectorAll("#themeSwitch button").forEach(b=>{ b.classList.toggle("on", b.dataset.theme===curTheme); b.onclick=()=>applyTheme(b.dataset.theme); });
 
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("leaveOverlay").classList.contains("show")){ closeLeave(); return; } if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); closePrint(); closeIcs(); document.getElementById("nameOverlay").classList.remove("show"); } });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("messagesOverlay").classList.contains("show")){ closeMessages(); return; } if(document.getElementById("leaveOverlay").classList.contains("show")){ closeLeave(); return; } if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); closePrint(); closeIcs(); document.getElementById("nameOverlay").classList.remove("show"); } });
 
   document.getElementById("syncStatus").onclick=openLogin;
   document.getElementById("accountBtn").onclick=openLogin;
