@@ -786,7 +786,10 @@
       <div class="kicker">LTFT On-call · Slot Share</div>
       <h1>Slot Share<span class="dot">.</span></h1>
     </div>
-    <button class="acct-btn" id="hubAccountBtn">Sign in</button>
+    <div class="head-right">
+      <button class="msg-tab" id="hubMsgTab" aria-label="Messages">Messages<span class="msg-badge" id="hubMsgBadge" hidden></span></button>
+      <button class="acct-btn" id="hubAccountBtn">Sign in</button>
+    </div>
   </header>
   <div class="hub-cards">
     <button class="hub-card" id="hubMyRota"><div class="hc-ic">▦</div><div class="hc-t">My Rota</div><div class="hc-d">Your clinics, on-calls and leave together in one calendar.</div></button>
@@ -1409,6 +1412,11 @@ function loadSeenComment(){ try{ return +localStorage.getItem(SEEN_COMMENT)||0; 
 function saveSeenComment(ts){ try{ localStorage.setItem(SEEN_COMMENT, String(ts)); }catch(e){} }
 function newCommentsForMe(){ if(!meKey) return []; const seen=loadSeenComment(); return (state.comments||[]).filter(c=>c.by!==meKey && c.ts>seen); }
 function markCommentsSeen(){ const cs=state.comments||[]; if(cs.length) saveSeenComment(Math.max(...cs.map(c=>c.ts))); }
+const MSG_READ="slotshare-msgread";
+function loadMsgRead(){ try{ return +localStorage.getItem(MSG_READ)||0; }catch(e){ return 0; } }
+function saveMsgRead(ts){ try{ localStorage.setItem(MSG_READ,String(ts)); }catch(e){} }
+function unreadMessages(){ if(!meKey) return []; const r=loadMsgRead(); return (state.comments||[]).filter(c=>c.by!==meKey && c.ts>r); }
+function markMessagesRead(){ const cs=state.comments||[]; if(cs.length) saveMsgRead(Math.max(...cs.map(c=>c.ts))); }
 function renderComments(){
   const list=document.getElementById("commentList"); if(!list) return;
   const cs=(state.comments||[]).slice().sort((a,b)=>a.ts-b.ts);
@@ -1555,8 +1563,8 @@ function buildRotaHtml(style, data, m){
 function renderAll(){ renderPeople(); renderStepper(); renderComposer(); renderBalance(); renderPool(); renderCalendar(); renderNotes(); renderComments(); renderAgree(); renderMsgBadge(); if(document.getElementById("rotaOverlay").classList.contains("show")) renderMyCalendar(); }
 function showBase(name){ const hub=document.getElementById("hubScreen"), split=document.getElementById("ss-root"); const onSplit=name==="split"; hub.style.display=onSplit?"none":"block"; split.style.display=onSplit?"block":"none"; if(onSplit) renderAll(); else renderHub(); window.scrollTo(0,0); }
 function renderHub(){ renderMsgBadge(); }
-function renderMsgBadge(){ const b=document.getElementById("msgBadge"); if(!b) return; const n=newCommentsForMe().length; if(n>0){ b.textContent=n>9?"9+":String(n); b.hidden=false; } else { b.hidden=true; } }
-function openMessages(){ document.getElementById("messagesOverlay").classList.add("show"); renderComments(); markCommentsSeen(); renderMsgBadge(); }
+function renderMsgBadge(){ const n=unreadMessages().length; ["msgBadge","hubMsgBadge"].forEach(id=>{ const b=document.getElementById(id); if(!b) return; if(n>0){ b.textContent=n>9?"9+":String(n); b.hidden=false; } else { b.hidden=true; } }); }
+function openMessages(){ document.getElementById("messagesOverlay").classList.add("show"); renderComments(); markMessagesRead(); markCommentsSeen(); renderMsgBadge(); }
 function closeMessages(){ document.getElementById("messagesOverlay").classList.remove("show"); renderMsgBadge(); }
 
 /* ===== My rota (personal sessions + on-calls → ICS) ===== */
@@ -2504,6 +2512,7 @@ function boot(){
   document.getElementById("hubAnnual").onclick=()=>openLeave();
   document.getElementById("hubSplit").onclick=()=>showBase("split");
   document.getElementById("hubAccountBtn").onclick=openLogin;
+  document.getElementById("hubMsgTab").onclick=openMessages;
   document.getElementById("splitBack").onclick=()=>showBase("hub");
   document.getElementById("msgTab").onclick=openMessages;
   document.getElementById("msgClose").onclick=closeMessages;
