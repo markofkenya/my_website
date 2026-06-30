@@ -568,8 +568,9 @@
     #myDrum{position:absolute;inset:0;overflow-y:scroll;overflow-x:hidden;perspective:680px;perspective-origin:50% 50%;-webkit-overflow-scrolling:touch;z-index:1;scrollbar-width:none}
     #myDrum::-webkit-scrollbar{display:none}
     /* My rota — taller, legible cells */
-    .my-board{flex-direction:column;gap:10px}
-    .my-cal-col{order:1}
+    .my-board{flex-direction:column;gap:10px;align-items:stretch}
+    .my-cal-col{order:1;width:100%}
+    .dow{width:100%}
     #myGrid{gap:5px}
     #myGrid .cell{aspect-ratio:auto;min-height:66px;padding:7px;border-radius:13px}
     #myGrid .cell .d{font-size:15px}
