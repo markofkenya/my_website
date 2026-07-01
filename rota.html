@@ -408,6 +408,8 @@
   .sl-dot{width:11px;height:11px;border-radius:3px;background:#6366f1;display:inline-block}
   .leave-reminders{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
   .lr-item{background:#fdf6e9;border:1px solid #ecd9ad;border-left:4px solid #b3842a;border-radius:10px;padding:11px 13px;font-size:13px;color:#6b531a;line-height:1.45}
+  .lr-item.danger{background:#fdecea;border-color:#f0b8ae;border-left-color:#c2412f;color:#7c2317;font-weight:600}
+  .rc-carry{color:#2f7d4f;font-weight:600}
   .leave-section{margin-bottom:20px}
   .ls-title{font-family:var(--font-d);font-size:14px;font-weight:600;color:var(--ink);margin:0 0 10px}
   .rot-list{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
@@ -1557,6 +1559,15 @@ function bothAgreed(){ return currentRotaShifts().length>0 && isAgreed("A") && i
 /* ===== Cooperative PIN lock (client-side deterrence) ===== */
 let pinUnlocked=false, pinState=null;
 const PIN_SKIP="instarota-pinskip";
+const PIN_OK="instarota-pinok";
+function devicePinOk(k){ try{ return !!(JSON.parse(localStorage.getItem(PIN_OK)||"{}")[k]); }catch(e){ return false; } }
+function markPinOk(k){ try{ const o=JSON.parse(localStorage.getItem(PIN_OK)||"{}"); o[k]=1; localStorage.setItem(PIN_OK,JSON.stringify(o)); }catch(e){} }
+function clearPinOk(k){ try{ const o=JSON.parse(localStorage.getItem(PIN_OK)||"{}"); delete o[k]; localStorage.setItem(PIN_OK,JSON.stringify(o)); }catch(e){} }
+function enforcePinAfterSync(){
+  if(!meKey || pinUnlocked || !hasPin(meKey) || devicePinOk(meKey)) return;
+  if(document.getElementById("pinOverlay").classList.contains("show")) return;
+  openPin("verify",meKey,()=>{ pinUnlocked=true; },{sub:"Confirm it’s you on this device",onCancel:()=>{ meKey=null; saveMe(""); renderComposer(); openLogin(); }});
+}
 function sha256js(ascii){
   function rr(v,a){ return (v>>>a)|(v<<(32-a)); }
   var mp=Math.pow, maxWord=mp(2,32), result="", words=[], i,j;
@@ -1597,13 +1608,13 @@ async function pinComplete(){
   const ps=pinState; if(!ps) return; const pin=ps.entry;
   if(ps.step==="new"){ ps.first=pin; ps.entry=""; ps.step="confirm"; renderPin(); return; }
   if(ps.step==="confirm"){ if(pin!==ps.first){ ps.first=""; ps.entry=""; ps.step="new"; renderPin(); pinErr("PINs didn't match — try again"); return; } await savePin(ps.k,pin); const cb=ps.onOk; closePin(); flashMsg("PIN set"); if(cb) cb(); return; }
-  if(ps.step==="enter"){ if(await verifyPin(ps.k,pin)){ const cb=ps.onOk; closePin(); if(cb) cb(); } else { ps.entry=""; renderPinDots(); pinErr("Wrong PIN"); } return; }
+  if(ps.step==="enter"){ if(await verifyPin(ps.k,pin)){ pinUnlocked=true; markPinOk(ps.k); const cb=ps.onOk; closePin(); if(cb) cb(); } else { ps.entry=""; renderPinDots(); pinErr("Wrong PIN"); } return; }
   if(ps.step==="current"){ if(!(await verifyPin(ps.k,pin))){ ps.entry=""; renderPinDots(); pinErr("Wrong PIN"); return; } if(ps.mode==="remove"){ removePin(ps.k); closePin(); flashMsg("PIN removed"); if(ps.onOk) ps.onOk(); return; } ps.entry=""; ps.step="new2"; renderPin(); return; }
   if(ps.step==="new2"){ ps.first=pin; ps.entry=""; ps.step="confirm2"; renderPin(); return; }
   if(ps.step==="confirm2"){ if(pin!==ps.first){ ps.first=""; ps.entry=""; ps.step="new2"; renderPin(); pinErr("PINs didn't match"); return; } await savePin(ps.k,pin); closePin(); flashMsg("PIN updated"); if(ps.onOk) ps.onOk(); return; }
 }
-async function savePin(k,pin){ const salt=genSalt(); const hash=await hashPin(pin,salt); if(!state.people[k]) state.people[k]={}; state.people[k].pinHash=hash; state.people[k].pinSalt=salt; persist(); renderLoginPin(); }
-function removePin(k){ if(state.people[k]){ delete state.people[k].pinHash; delete state.people[k].pinSalt; persist(); renderLoginPin(); } }
+async function savePin(k,pin){ const salt=genSalt(); const hash=await hashPin(pin,salt); if(!state.people[k]) state.people[k]={}; state.people[k].pinHash=hash; state.people[k].pinSalt=salt; markPinOk(k); persist(); renderLoginPin(); }
+function removePin(k){ if(state.people[k]){ delete state.people[k].pinHash; delete state.people[k].pinSalt; clearPinOk(k); persist(); renderLoginPin(); } }
 function offerPinSetup(k){ if(hasPin(k)) return; let skip={}; try{ skip=JSON.parse(localStorage.getItem(PIN_SKIP)||"{}"); }catch(e){} if(skip[k]) return; skip[k]=1; try{ localStorage.setItem(PIN_SKIP,JSON.stringify(skip)); }catch(e){} const nm=state.people[k]?state.people[k].name:"your profile"; openConfirm("Protect your profile?", `Set a 4-digit PIN so only you can sign off or switch into ${nm}. You can also do this anytime from Account.`, "Set a PIN", ()=>openPin("set",k,()=>{ pinUnlocked=true; })); }
 function renderLoginPin(){ const el=document.getElementById("loginPin"); if(!el) return; if(!meKey){ el.innerHTML=""; return; } const nm=state.people[meKey]?state.people[meKey].name:"you";
   if(hasPin(meKey)){ el.innerHTML=`<div class="lp-row"><span>🔒 PIN set for ${escapeHtml(nm)}</span><span class="lp-acts"><button class="lp-btn" id="lpChange">Change</button><button class="lp-btn danger" id="lpRemove">Remove</button></span></div>`; document.getElementById("lpChange").onclick=()=>openPin("change",meKey); document.getElementById("lpRemove").onclick=()=>openPin("remove",meKey); }
@@ -1915,7 +1926,7 @@ function countLeaveDays(typeId, fromISO, toExclusiveISO, toInclusiveISO){
   return n;
 }
 function rosterCfg(Y, half){ const L=getLeave(); const key=`${Y}-${half}`; if(!L.rosters[key]) L.rosters[key]={carryover:0, wte:null, override:null}; return L.rosters[key]; }
-function rosterInfo(Y, half){
+function rosterCore(Y, half){
   const L=getLeave(); const annual=annualFT(Y);
   const start = half==="H1"?`${Y}-02-01`:`${Y}-08-01`;
   const end   = half==="H1"?`${Y}-07-31`:`${Y+1}-01-31`;
@@ -1926,11 +1937,25 @@ function rosterInfo(Y, half){
   const bhCount=bhs.length, bhWorked=bhs.filter(ds=>{ const wd=new Date(ds+"T00:00:00").getDay(); if(wd===0||wd===6) return false; /* weekend BHs never on a working day */ if(wte<1 && wd===L.nwd) return false; /* LTFT: the non-working day is free */ return true; }).length;
   const auto=Math.round(((halfDays*wte)+(bhCount*wte)-bhWorked)*10)/10;
   const entitlement=(cfg.override!=null)?cfg.override:auto;
-  const total=Math.round((entitlement+cfg.carryover)*10)/10;
+  const baseTotal=Math.round((entitlement+cfg.carryover)*10)/10;
   const taken=countLeaveDays("annual_leave", start, null, end);
-  const left=Math.round((total-taken)*10)/10;
   const label = half==="H1"?`Feb – Aug ${Y}`:`Aug ${Y} – Feb ${Y+1}`;
-  return {start,end,half,halfDays,wte,bhCount,bhWorked,auto,entitlement,total,taken,left,label,cfg,key:`${Y}-${half}`};
+  return {start,end,half,halfDays,wte,bhCount,bhWorked,auto,entitlement,baseTotal,taken,label,cfg,key:`${Y}-${half}`};
+}
+function rosterInfo(Y, half){
+  const rnd=x=>Math.round(x*10)/10;
+  const a=rosterCore(Y,"H1"), b=rosterCore(Y,"H2");
+  const nowISO=leaveISO(new Date());
+  const h1LeftRaw=rnd(a.baseTotal-a.taken);
+  const autoCarry=(nowISO>a.end && h1LeftRaw>0)? h1LeftRaw : 0;   // after Feb–Aug closes, leftovers flow forward
+  const h1AfterCarry=autoCarry? 0 : h1LeftRaw;
+  const h2Total=rnd(b.baseTotal+autoCarry);
+  const h2Overflow=Math.max(0, rnd(b.taken-h2Total));             // Aug–Feb booked beyond its own allowance…
+  const borrowed=rnd(Math.min(Math.max(h1AfterCarry,0), h2Overflow)); // …draws down Feb–Aug's remaining days
+  if(half==="H1"){
+    return Object.assign({}, a, {autoCarry:0, carriedOut:autoCarry, borrowed:0, lent:borrowed, total:a.baseTotal, left:rnd(h1AfterCarry-borrowed)});
+  }
+  return Object.assign({}, b, {autoCarry, carriedOut:0, lent:0, borrowed, total:rnd(h2Total+borrowed), left:rnd(h2Total+borrowed-b.taken)});
 }
 function fmtNice(iso){ try{ return longDate(iso).date; }catch(e){ return iso; } }
 function openLeave(){ leaveViewYear=null; renderLeave(); document.getElementById("leaveOverlay").classList.add("show"); }
@@ -1955,24 +1980,31 @@ function renderLeave(){
   const host=document.getElementById("leaveBody"); if(!host) return;
   const L=getLeave(); const Y=activeLeaveYear();
   const r1=rosterInfo(Y,"H1"), r2=rosterInfo(Y,"H2");
-  const yrTotal=Math.round((r1.total+r2.total)*10)/10, yrTaken=r1.taken+r2.taken, yrLeft=Math.round((yrTotal-yrTaken)*10)/10;
+  const yrTotal=Math.round((r1.total+r2.total-(r2.autoCarry||0)-(r2.borrowed||0))*10)/10, yrTaken=r1.taken+r2.taken, yrLeft=Math.round((yrTotal-yrTaken)*10)/10;
   const yStart=`${Y}-02-01`, yEndIncl=`${Y+1}-01-31`, yEnd=new Date(Y+1,1,1);
   const slTaken=countLeaveDays("study_leave", yStart, null, yEndIncl), slRemain=Math.round((L.slEntitlement-slTaken)*10)/10;
   const R=52,C=2*Math.PI*R, frac=yrTotal>0?Math.min(1,yrTaken/yrTotal):0, off=C*(1-frac), over=yrTaken>yrTotal, col=over?"#c2412f":"#2f7d4f";
   const today=new Date(), todayISO=leaveISO(today), day=86400000, rem=[];
   const curHalf = (todayISO>=r1.start && todayISO<=r1.end) ? "H1" : ((todayISO>=r2.start && todayISO<=r2.end) ? "H2" : null);
-  [r1,r2].forEach(r=>{ if(r.left<=0) return; const dEnd=Math.ceil((new Date(r.end+"T00:00:00")-today)/day);
-    if(dEnd>=0 && dEnd<=60) rem.push(`You have <b>${r.left}</b> annual leave day${r.left===1?"":"s"} still to book in the ${r.label} roster. It closes on ${fmtNice(r.end)} (${dEnd} day${dEnd===1?"":"s"} from now).`);
-    else if(dEnd<0 && leaveViewYear==null) rem.push(`<b>${r.left}</b> annual leave day${r.left===1?"":"s"} went unused in ${r.label} — carry over what you can to the next roster.`);
+  [r1,r2].forEach(r=>{ const dEnd=Math.ceil((new Date(r.end+"T00:00:00")-today)/day);
+    if(r.half==="H1" && r.carriedOut>0 && dEnd<0 && leaveViewYear==null) rem.push({cls:"", t:`<b>${r.carriedOut}</b> unused day${r.carriedOut===1?"":"s"} from ${r.label} ${r.carriedOut===1?"has":"have"} been carried into the Aug – Feb roster automatically.`});
+    if(r.left<=0) return;
+    if(dEnd>=0){
+      if(r.half==="H2" && dEnd<=62){ const ab=new Date(r.end+"T00:00:00"); ab.setDate(ab.getDate()-42);
+        rem.push({cls:"danger", t:`<b>${r.left}</b> annual leave day${r.left===1?"":"s"} still to book in the ${r.label} roster. It closes on ${fmtNice(r.end)} and applications need at least 6 weeks’ notice — apply by <b>${fmtNice(leaveISO(ab))}</b>. Days not used by the close are <b>lost</b>; leave does not carry past February.`});
+      }
+      else if(r.half==="H1" && dEnd<=60) rem.push({cls:"", t:`You have <b>${r.left}</b> annual leave day${r.left===1?"":"s"} still to book in the ${r.label} roster. It closes on ${fmtNice(r.end)} (${dEnd} day${dEnd===1?"":"s"} from now).`});
+    }
+    else if(r.half==="H2" && leaveViewYear==null) rem.push({cls:"danger", t:`<b>${r.left}</b> annual leave day${r.left===1?"":"s"} went unused in ${r.label} and ${r.left===1?"was":"were"} lost — leave does not carry past February.`});
   });
-  const dSL=Math.ceil((yEnd-today)/day); if(slRemain>0 && dSL>=0 && dSL<=90) rem.push(`<b>${slRemain}</b> study leave day${slRemain===1?"":"s"} left before the leave year ends.`);
+  const dSL=Math.ceil((yEnd-today)/day); if(slRemain>0 && dSL>=0 && dSL<=90) rem.push({cls:"", t:`<b>${slRemain}</b> study leave day${slRemain===1?"":"s"} left before the leave year ends.`});
   const card=(r)=>{ const pct=r.total>0?Math.min(100,Math.round(r.taken/r.total*100)):0; const bc=r.left<0?"#c2412f":"#2f7d4f"; const cur=curHalf===r.half && leaveViewYear==null;
     return `<div class="rot-card ${cur?'cur':''}">
       <div class="rot-row1"><div class="rc-title">${r.label}${cur?'<span class="cur-tag">now</span>':''}</div><div class="rc-left"><b>${r.left}</b> left</div></div>
       <div class="rot-bar"><div class="rot-bar-fill" style="width:${pct}%;background:${bc}"></div></div>
-      <div class="rc-sub">${r.taken} taken · ${r.total} total${r.cfg.carryover?` (incl. ${r.cfg.carryover} carried over)`:''}</div>
+      <div class="rc-sub">${r.taken} taken · ${r.total} total${r.autoCarry?` (incl. ${r.autoCarry} carried from Feb – Aug)`:''}${r.borrowed?` (incl. ${r.borrowed} drawn from Feb – Aug)`:''}${r.carriedOut?` (${r.carriedOut} carried to Aug – Feb)`:''}${r.lent?` (${r.lent} used by Aug – Feb bookings)`:''}${r.cfg.carryover?` (incl. ${r.cfg.carryover} manual carryover)`:''}</div>
       <details class="rc-more"><summary>Adjust &amp; breakdown</summary>
-        <div class="rc-calc">${r.halfDays} × ${r.wte} WTE + ${r.bhCount} BH × ${r.wte} − ${r.bhWorked} worked = <b>${r.auto}</b> days</div>
+        <div class="rc-calc">${r.halfDays} × ${r.wte} WTE + ${r.bhCount} BH × ${r.wte} − ${r.bhWorked} worked = <b>${r.auto}</b> days${r.autoCarry?` <span class="rc-carry">+ ${r.autoCarry} auto-carried from Feb – Aug</span>`:''}${r.borrowed?` <span class="rc-carry">+ ${r.borrowed} drawn from Feb – Aug</span>`:''}</div>
         <div class="rc-fields"><label>Carryover<input type="number" value="${r.cfg.carryover}" data-key="${r.key}" data-f="carryover" min="0" step="0.5"></label><label>WTE<input type="number" value="${r.cfg.wte!=null?r.cfg.wte:''}" placeholder="${L.wte}" data-key="${r.key}" data-f="wte" min="0.1" max="1" step="0.05"></label><label>Override<input type="number" value="${r.cfg.override!=null?r.cfg.override:''}" placeholder="auto" data-key="${r.key}" data-f="override" min="0" step="0.5"></label></div>
       </details>
     </div>`; };
@@ -2004,7 +2036,7 @@ function renderLeave(){
       <div class="leave-ringwrap"><svg viewBox="0 0 120 120" class="leave-ring"><circle class="lr-bg" cx="60" cy="60" r="${R}"></circle><circle class="lr-fg" cx="60" cy="60" r="${R}" style="stroke:${col};stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${off.toFixed(1)}"></circle></svg><div class="lr-center"><div class="lr-num">${yrLeft}</div><div class="lr-lbl">days left</div></div></div>
       <div class="leave-hero-meta"><div class="lh-year">Annual leave this year</div><div class="lh-stat"><b>${yrTaken}</b> taken of <b>${yrTotal}</b></div></div>
     </div>
-    ${rem.length?`<div class="leave-reminders">${rem.map(x=>`<div class="lr-item">${x}</div>`).join("")}</div>`:""}
+    ${rem.length?`<div class="leave-reminders">${rem.map(x=>`<div class="lr-item ${x.cls||""}">${x.t}</div>`).join("")}</div>`:""}
     <div class="rot-list">${card(r1)}${card(r2)}</div>
     <div class="leave-section bk-sec">
       <div class="bk-head"><div class="section-label">Bookings &amp; requests</div><button class="btn bk-req" id="requestLeaveBtn">＋ Request</button></div>
@@ -2138,18 +2170,20 @@ const LEAVE_FORM_BG="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABNgAAAbbAQAAA
 function buildLeaveFormHtml(req){
   const esc=escapeHtml, L=getLeave(), p=L.profile||{};
   const F={
-    name:[14.0,19.3,p.name], grade:[58.0,19.3,p.grade],
-    specialty:[16.0,21.2,p.specialty], ward:[50.0,21.2,p.ward], hospital:[80.0,21.2,p.hospital],
-    from1:[17.0,25.55,fmtNice(req.from)], to1:[55.5,25.55,fmtNice(req.to)]
+    name:[13.5,50.5,19.15,p.name], grade:[57.5,95.0,19.15,p.grade],
+    specialty:[15.5,41.0,21.0,p.specialty], ward:[49.8,60.5,21.0,p.ward], hospital:[67.0,95.0,21.0,p.hospital],
+    from1:[16.5,48.5,25.35,fmtNice(req.from)], to1:[55.0,95.0,25.35,fmtNice(req.to)],
+    appdate:[66.0,89.5,67.5,fmtNice(iso(new Date()))]
   };
-  const spans=Object.keys(F).map(k=>{ const a=F[k]; return a[2]?`<span class="ov" style="left:${a[0]}%;top:${a[1]}%">${esc(a[2])}</span>`:""; }).join("");
+  const spans=Object.keys(F).map(k=>{ const a=F[k]; return a[3]?`<span class="ov" style="left:${a[0]}%;width:${(a[1]-a[0]).toFixed(1)}%;top:${a[2]}%"><i>${esc(a[3])}</i></span>`:""; }).join("");
   const ttl=req.type==="study_leave"?"Study leave":"Annual leave";
   return `<!doctype html><html><head><meta charset="utf-8"><title>Application for ${ttl} — ${esc(p.name||"")}</title>
   <style>
     @page{size:A4;margin:0} *{margin:0;box-sizing:border-box} html,body{margin:0;padding:0}
     .page{position:relative;width:210mm;height:297mm;overflow:hidden}
     .bg{position:absolute;inset:0;width:100%;height:100%}
-    .ov{position:absolute;transform:translateY(-100%);font-family:Arial,Helvetica,sans-serif;font-weight:600;font-size:2.6mm;color:#111;white-space:nowrap}
+    .ov{position:absolute;transform:translateY(-100%);font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:3.4mm;color:#000;white-space:nowrap;text-align:center;line-height:1.15}
+    .ov i{font-style:normal;background:#fff;padding:0 1.2mm}
   </style></head><body><div class="page"><img class="bg" src="${LEAVE_FORM_BG}">${spans}</div></body></html>`;
 }
 function makeRequestFromLogged(type, fromDs, toDs){ const m=(state.myShifts&&state.myShifts[meKey])||{}; const days=[]; Object.keys(m).sort().forEach(ds=>{ if(ds>=fromDs&&ds<=toDs&&Array.isArray(m[ds])) m[ds].forEach(s=>{ if(s.type===type) days.push(ds); }); }); if(!days.length) return; const req={id:"r"+Date.now(), type, from:fromDs, to:toDs, note:"", days, status:"pending", createdAt:Date.now()}; getLeave().requests.push(req); persist(); reqCreated=req; renderRequest(); document.getElementById("requestOverlay").classList.add("show"); }
@@ -2492,7 +2526,7 @@ function attachSync(){
       (val.myShifts && Object.keys(val.myShifts).length)
     );
     if(remoteHasContent){
-      applyingRemote=true; state=Object.assign(defaultState(), val); normalize(); writeLocal(state); saveCacheCode(rotaCode); renderAll(); applyingRemote=false; maybeAlert();
+      applyingRemote=true; state=Object.assign(defaultState(), val); normalize(); writeLocal(state); saveCacheCode(rotaCode); renderAll(); applyingRemote=false; maybeAlert(); enforcePinAfterSync();
     } else if(!seeded){
       seeded=true; saveCacheCode(rotaCode); syncRef.set(state);   // empty room → seed with whatever's on screen now (already correct: see connectWithCode)
     }
@@ -2651,7 +2685,7 @@ function boot(){
 
   if(!meKey){ openLogin(); }
   else if(rotaCode){ connectWithCode(rotaCode); maybeAlert(); }
-  else { setSyncStatus("local","Saved on this device · tap to sync"); maybeAlert(); }
+  else { setSyncStatus("local","Saved on this device · tap to sync"); maybeAlert(); enforcePinAfterSync(); }
   setTimeout(()=>{ const s=document.getElementById("splash"); if(s){ s.classList.add("gone"); setTimeout(()=>{ try{ s.remove(); }catch(e){} }, 600); } }, 1150);
 }
 boot();
