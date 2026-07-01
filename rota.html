@@ -46,11 +46,6 @@
   :root[data-theme="indigo"]{--a:#7d8cf2;--a-tint:#1d2240;--a-edge:#abb4f9;--b:#e0588f;--b-tint:#341c26;--b-edge:#f29bbb;--gold:#e9b04b;--gold-tint:#322914;--gold-line:#574627}
 
   .wrap{max-width:1080px;margin:0 auto;padding:22px 18px 80px}
-  @supports (padding:max(0px)){
-    .wrap{padding-top:max(22px,calc(env(safe-area-inset-top) + 12px));padding-left:max(18px,calc(env(safe-area-inset-left) + 6px));padding-right:max(18px,calc(env(safe-area-inset-right) + 6px))}
-    .rota-inner{padding-top:max(18px,calc(env(safe-area-inset-top) + 10px));padding-left:max(16px,calc(env(safe-area-inset-left) + 6px));padding-right:max(16px,calc(env(safe-area-inset-right) + 6px))}
-    .leave-inner{padding-top:max(14px,calc(env(safe-area-inset-top) + 10px));padding-left:max(16px,calc(env(safe-area-inset-left) + 6px));padding-right:max(16px,calc(env(safe-area-inset-right) + 6px))}
-  }
 
   /* header */
   header.app{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
@@ -546,6 +541,7 @@
   .wordmark{font-family:var(--font-d);font-weight:700;font-size:23px;letter-spacing:-.02em;color:var(--ink);line-height:1}
   .wm-accent{color:#34d6bb}
   .ir-arc{transform-origin:50% 50%;animation:ir-spin-in .9s cubic-bezier(.2,.7,.2,1) both}
+  #hubScreen .ir-arc{animation-delay:1.2s}
   .logo-lockup:hover .ir-arc{animation:ir-spin-in .9s cubic-bezier(.2,.7,.2,1)}
   @keyframes ir-spin-in{from{transform:rotate(-150deg);opacity:0}to{transform:rotate(0);opacity:1}}
   @media (prefers-reduced-motion:reduce){ .ir-arc{animation:none} }
@@ -835,6 +831,12 @@
   @media (max-width:520px){
     .head-right .person-chip .edit{display:none}
     .msg-tab,.acct-btn{padding:0 13px}
+  }
+  /* Safe-area (PWA/standalone) — keep LAST so no media query overrides it */
+  @supports (padding:max(0px)){
+    .wrap{padding-top:max(22px,calc(env(safe-area-inset-top) + 12px));padding-left:max(18px,calc(env(safe-area-inset-left) + 6px));padding-right:max(18px,calc(env(safe-area-inset-right) + 6px))}
+    .rota-inner{padding-top:max(18px,calc(env(safe-area-inset-top) + 10px));padding-left:max(16px,calc(env(safe-area-inset-left) + 6px));padding-right:max(16px,calc(env(safe-area-inset-right) + 6px))}
+    .leave-inner{padding-top:max(14px,calc(env(safe-area-inset-top) + 10px));padding-left:max(16px,calc(env(safe-area-inset-left) + 6px));padding-right:max(16px,calc(env(safe-area-inset-right) + 6px))}
   }
 </style>
 </head>
@@ -1698,7 +1700,8 @@ function buildRotaHtml(style, data, m){
 }
 
 function renderAll(){ renderPeople(); renderStepper(); renderComposer(); renderBalance(); renderPool(); renderCalendar(); renderNotes(); renderComments(); renderAgree(); renderMsgBadge(); if(document.getElementById("rotaOverlay").classList.contains("show")) renderMyCalendar(); }
-function replayHubSpin(){ document.querySelectorAll("#hubScreen .ir-arc").forEach(el=>{ el.style.animation="none"; void el.offsetWidth; el.style.animation=""; }); }
+function restartSpin(el){ if(!el) return; el.style.animation="none"; el.getBoundingClientRect(); requestAnimationFrame(()=>{ el.style.animation="ir-spin-in .9s cubic-bezier(.2,.7,.2,1) both"; }); }
+function replayHubSpin(){ document.querySelectorAll("#hubScreen .ir-arc").forEach(restartSpin); }
 function showBase(name){ const hub=document.getElementById("hubScreen"), split=document.getElementById("ss-root"); const onSplit=name==="split"; hub.style.display=onSplit?"none":"block"; split.style.display=onSplit?"block":"none"; if(onSplit) renderAll(); else renderHub(); window.scrollTo(0,0); }
 function renderHub(){ renderMsgBadge(); }
 function renderMsgBadge(){ const n=unreadMessages().length; ["msgBadge","hubMsgBadge"].forEach(id=>{ const b=document.getElementById(id); if(!b) return; if(n>0){ b.textContent=n>9?"9+":String(n); b.hidden=false; } else { b.hidden=true; } }); }
@@ -2666,6 +2669,7 @@ function boot(){
   document.getElementById("confirmCancel").onclick=closeConfirm;
   document.getElementById("pinCancel").onclick=()=>closePin(true);
   document.getElementById("pinOverlay").onclick=e=>{ if(e.target.id==="pinOverlay") closePin(true); };
+  document.querySelectorAll(".logo-lockup").forEach(l=>l.addEventListener("click",()=>restartSpin(l.querySelector(".ir-arc"))));
   document.getElementById("confirmOk").onclick=()=>{ if(confirmCb) confirmCb(); closeConfirm(); };
   document.getElementById("confirmOverlay").onclick=e=>{ if(e.target.id==="confirmOverlay") closeConfirm(); };
 
@@ -2694,7 +2698,7 @@ function boot(){
   if(!meKey){ openLogin(); }
   else if(rotaCode){ connectWithCode(rotaCode); maybeAlert(); }
   else { setSyncStatus("local","Saved on this device · tap to sync"); maybeAlert(); enforcePinAfterSync(); }
-  setTimeout(()=>{ const s=document.getElementById("splash"); if(s){ s.classList.add("gone"); setTimeout(()=>{ try{ s.remove(); }catch(e){} }, 600); } if(!document.getElementById("loginOverlay").classList.contains("show")) replayHubSpin(); }, 1150);
+  setTimeout(()=>{ const s=document.getElementById("splash"); if(s){ s.classList.add("gone"); setTimeout(()=>{ try{ s.remove(); }catch(e){} }, 560); } }, 1150);
 }
 boot();
 })();
