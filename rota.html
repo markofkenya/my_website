@@ -46,6 +46,11 @@
   :root[data-theme="indigo"]{--a:#7d8cf2;--a-tint:#1d2240;--a-edge:#abb4f9;--b:#e0588f;--b-tint:#341c26;--b-edge:#f29bbb;--gold:#e9b04b;--gold-tint:#322914;--gold-line:#574627}
 
   .wrap{max-width:1080px;margin:0 auto;padding:22px 18px 80px}
+  @supports (padding:max(0px)){
+    .wrap{padding-top:max(22px,calc(env(safe-area-inset-top) + 12px));padding-left:max(18px,calc(env(safe-area-inset-left) + 6px));padding-right:max(18px,calc(env(safe-area-inset-right) + 6px))}
+    .rota-inner{padding-top:max(18px,calc(env(safe-area-inset-top) + 10px));padding-left:max(16px,calc(env(safe-area-inset-left) + 6px));padding-right:max(16px,calc(env(safe-area-inset-right) + 6px))}
+    .leave-inner{padding-top:max(14px,calc(env(safe-area-inset-top) + 10px));padding-left:max(16px,calc(env(safe-area-inset-left) + 6px));padding-right:max(16px,calc(env(safe-area-inset-right) + 6px))}
+  }
 
   /* header */
   header.app{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
@@ -461,6 +466,9 @@
   .leave-yearnav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 4px}
   .lyn-label{font-family:var(--font-d);font-weight:600;font-size:14.5px;color:var(--ink)}
   .rot-card.cur{border-color:var(--a);box-shadow:0 0 0 2px var(--a-tint)}
+  .rot-card.future{opacity:.55;border-style:dashed;box-shadow:none}
+  .rot-card.future .rot-bar-fill{filter:saturate(.6)}
+  .soon-tag{display:inline-block;margin-left:8px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:20px;padding:2px 8px;vertical-align:middle;font-weight:600}
   .rc-title{font-family:var(--font-d);font-weight:600;font-size:14px;color:var(--ink);display:flex;align-items:center;gap:8px}
   .cur-tag{font-family:var(--font-m);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--a);border-radius:99px;padding:1px 7px}
   .rc-left{font-size:13px;color:var(--ink-soft)}.rc-left b{color:var(--ink);font-size:15px}
@@ -1566,7 +1574,7 @@ function clearPinOk(k){ try{ const o=JSON.parse(localStorage.getItem(PIN_OK)||"{
 function enforcePinAfterSync(){
   if(!meKey || pinUnlocked || !hasPin(meKey) || devicePinOk(meKey)) return;
   if(document.getElementById("pinOverlay").classList.contains("show")) return;
-  openPin("verify",meKey,()=>{ pinUnlocked=true; },{sub:"Confirm it’s you on this device",onCancel:()=>{ meKey=null; saveMe(""); renderComposer(); openLogin(); }});
+  openPin("verify",meKey,()=>{ pinUnlocked=true; requestAnimationFrame(replayHubSpin); },{sub:"Confirm it’s you on this device",onCancel:()=>{ meKey=null; saveMe(""); renderComposer(); openLogin(); }});
 }
 function sha256js(ascii){
   function rr(v,a){ return (v>>>a)|(v<<(32-a)); }
@@ -1998,9 +2006,9 @@ function renderLeave(){
     else if(r.half==="H2" && leaveViewYear==null) rem.push({cls:"danger", t:`<b>${r.left}</b> annual leave day${r.left===1?"":"s"} went unused in ${r.label} and ${r.left===1?"was":"were"} lost — leave does not carry past February.`});
   });
   const dSL=Math.ceil((yEnd-today)/day); if(slRemain>0 && dSL>=0 && dSL<=90) rem.push({cls:"", t:`<b>${slRemain}</b> study leave day${slRemain===1?"":"s"} left before the leave year ends.`});
-  const card=(r)=>{ const pct=r.total>0?Math.min(100,Math.round(r.taken/r.total*100)):0; const bc=r.left<0?"#c2412f":"#2f7d4f"; const cur=curHalf===r.half && leaveViewYear==null;
-    return `<div class="rot-card ${cur?'cur':''}">
-      <div class="rot-row1"><div class="rc-title">${r.label}${cur?'<span class="cur-tag">now</span>':''}</div><div class="rc-left"><b>${r.left}</b> left</div></div>
+  const card=(r)=>{ const consumed=r.total-r.left; const pct=r.total>0?Math.max(0,Math.min(100,Math.round(consumed/r.total*100))):(r.left<0?100:0); const bc=r.left<0?"#c2412f":"#2f7d4f"; const cur=curHalf===r.half && leaveViewYear==null; const future=!cur && leaveViewYear==null && new Date(r.start+"T00:00:00")>new Date();
+    return `<div class="rot-card ${cur?'cur':''}${future?' future':''}">
+      <div class="rot-row1"><div class="rc-title">${r.label}${cur?'<span class="cur-tag">now</span>':future?'<span class="soon-tag">upcoming</span>':''}</div><div class="rc-left"><b>${r.left}</b> left</div></div>
       <div class="rot-bar"><div class="rot-bar-fill" style="width:${pct}%;background:${bc}"></div></div>
       <div class="rc-sub">${r.taken} taken · ${r.total} total${r.autoCarry?` (incl. ${r.autoCarry} carried from Feb – Aug)`:''}${r.borrowed?` (incl. ${r.borrowed} drawn from Feb – Aug)`:''}${r.carriedOut?` (${r.carriedOut} carried to Aug – Feb)`:''}${r.lent?` (${r.lent} used by Aug – Feb bookings)`:''}${r.cfg.carryover?` (incl. ${r.cfg.carryover} manual carryover)`:''}</div>
       <details class="rc-more"><summary>Adjust &amp; breakdown</summary>
@@ -2567,7 +2575,7 @@ function openLogin(){
   renderLoginPin();
   document.getElementById("loginOverlay").classList.add("show");
 }
-function closeLogin(){ document.getElementById("loginOverlay").classList.remove("show"); }
+function closeLogin(){ document.getElementById("loginOverlay").classList.remove("show"); requestAnimationFrame(replayHubSpin); }
 function submitLogin(){
   const err=document.getElementById("loginErr");
   if(!meKey){ err.textContent="First, tap who you are on this device."; return; }
@@ -2686,7 +2694,7 @@ function boot(){
   if(!meKey){ openLogin(); }
   else if(rotaCode){ connectWithCode(rotaCode); maybeAlert(); }
   else { setSyncStatus("local","Saved on this device · tap to sync"); maybeAlert(); enforcePinAfterSync(); }
-  setTimeout(()=>{ const s=document.getElementById("splash"); if(s){ s.classList.add("gone"); setTimeout(()=>{ try{ s.remove(); }catch(e){} }, 600); } }, 1150);
+  setTimeout(()=>{ const s=document.getElementById("splash"); if(s){ s.classList.add("gone"); setTimeout(()=>{ try{ s.remove(); }catch(e){} }, 600); } if(!document.getElementById("loginOverlay").classList.contains("show")) replayHubSpin(); }, 1150);
 }
 boot();
 })();
