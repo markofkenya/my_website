@@ -1250,7 +1250,7 @@ let notified = new Set();
 function readLocal(){ try{ const r=localStorage.getItem(STORE_KEY); return r?JSON.parse(r):null; }catch(e){ return mem; } }
 function writeLocal(obj){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(obj)); }catch(e){ mem=obj; } }
 let applyingRemote = false, db = null;
-function persist(){ writeLocal(state); if(db && !applyingRemote){ try{ db.ref(syncPath).set(state); }catch(e){ console.warn("sync write failed", e); } } }
+function persist(){ state.updatedAt=Date.now(); writeLocal(state); if(db && !applyingRemote){ try{ db.ref(syncPath).set(state).catch(e=>{ console.warn("sync write rejected", e); setSyncStatus("local","Sync error — changes saved on this device only. Tap to retry."); }); }catch(e){ console.warn("sync write failed", e); } } }
 
 /* ===== date helpers ===== */
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -2534,12 +2534,20 @@ function attachSync(){
     const remoteHasContent = val && val.people && (
       (val.assignments && Object.keys(val.assignments).length) ||
       (val.notes && val.notes.length) ||
-      (val.myShifts && Object.keys(val.myShifts).length)
+      (val.myShifts && Object.keys(val.myShifts).length) ||
+      (val.leave && Object.keys(val.leave).length)
     );
     if(remoteHasContent){
-      applyingRemote=true; state=Object.assign(defaultState(), val); normalize(); writeLocal(state); saveCacheCode(rotaCode); renderAll(); applyingRemote=false; maybeAlert(); enforcePinAfterSync();
+      const remoteTs=val.updatedAt||0, localTs=state.updatedAt||0;
+      if(remoteTs>=localTs){
+        applyingRemote=true; state=Object.assign(defaultState(), val); normalize(); writeLocal(state); saveCacheCode(rotaCode); renderAll(); applyingRemote=false; maybeAlert(); enforcePinAfterSync();
+      } else {
+        // local is newer than the room (e.g. edits made while a write failed) — push, don't lose them
+        try{ syncRef.set(state).catch(e=>{ console.warn("sync push rejected", e); setSyncStatus("local","Sync error — changes saved on this device only. Tap to retry."); }); }catch(e){ console.warn("sync push failed", e); }
+      }
     } else if(!seeded){
-      seeded=true; saveCacheCode(rotaCode); syncRef.set(state);   // empty room → seed with whatever's on screen now (already correct: see connectWithCode)
+      seeded=true; saveCacheCode(rotaCode); state.updatedAt=state.updatedAt||Date.now();
+      try{ syncRef.set(state).catch(e=>{ console.warn("seed rejected", e); setSyncStatus("local","Sync error — check the rota code / connection. Saved on this device."); }); }catch(e){ console.warn("seed failed", e); }
     }
   }, err=>{ console.warn(err); setSyncStatus("local","Sync error — saved on this device. Tap to retry."); });
   setSyncStatus("live", `Live · rota code “${rotaCode}”. Tap to change.`);
