@@ -395,6 +395,53 @@
 
   .hidden{display:none!important}
 
+  /* ---------- BANK ACCOUNTS ---------- */
+  .acct-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 14px}
+  .acct-kpis{display:flex;gap:16px;flex-wrap:wrap;flex:1}
+  .acct-kpi{font-size:12.5px;font-weight:700;color:var(--ink-soft)}
+  .acct-kpi b{font-family:var(--display);font-weight:600;font-size:17px;color:var(--ink);letter-spacing:-.3px;margin-right:3px}
+  .pool-card{margin-bottom:16px;transition:background .15s,border-color .15s}
+  .chip-pool{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;min-height:44px;border-radius:12px;padding:6px;transition:background .15s}
+  .chip-pool:empty::after{content:"Everything's assigned — nice. 🎯";font-size:13px;color:var(--muted);font-style:italic;padding:8px 6px}
+  .acct-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+  .acct-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;overflow:hidden;transition:border-color .15s,box-shadow .15s,transform .15s}
+  .acct-card.drag-over{border-color:var(--fund);box-shadow:0 0 0 3px var(--fund-bg),var(--shadow-md);transform:scale(1.01)}
+  .pool-card.drag-over{border-color:var(--gold);background:rgba(217,154,28,.06)}
+  .acct-head{padding:13px 15px 11px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--line)}
+  .acct-swatch{width:12px;height:12px;border-radius:4px;flex:none;transform:rotate(-6deg)}
+  .acct-head .nm{border:none;background:transparent;font-family:var(--display);font-weight:600;font-size:16.5px;color:var(--ink);flex:1;min-width:0;letter-spacing:-.2px}
+  .acct-head .nm:focus{outline:none;background:var(--paper-2);border-radius:7px}
+  .acct-body{padding:10px 12px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;flex:1;min-height:72px}
+  .acct-body:empty{position:relative}
+  .acct-body:empty::after{content:"Drop items here";position:absolute;inset:10px;border:1.5px dashed var(--line-strong);border-radius:11px;display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--muted)}
+  .acct-foot{padding:11px 15px;border-top:2px solid var(--ink);display:flex;align-items:baseline;justify-content:space-between;gap:8px;background:linear-gradient(180deg,transparent,rgba(54,40,20,.025))}
+  .acct-foot .lab{font-size:10.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--ink-soft)}
+  .acct-foot .tot{font-family:var(--display);font-weight:600;font-size:21px;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+  /* item chips */
+  .ichip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:9px;padding:5px 8px 5px 7px;font-size:12px;font-weight:700;color:var(--ink);cursor:grab;user-select:none;-webkit-user-select:none;transition:box-shadow .12s,transform .12s,opacity .12s;max-width:100%}
+  .ichip:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+  .ichip:active{cursor:grabbing}
+  .ichip.dragging{opacity:.35}
+  .ichip .ic-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+  .ichip .ic-amt{color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .ichip .ic-x{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;padding:0 1px;border-radius:5px;line-height:1;display:none}
+  .acct-body .ichip .ic-x{display:inline}
+  .ichip .ic-x:hover{color:var(--bad)}
+  .ichip[data-bk="fundamental"]{border-left-color:var(--fund)}
+  .ichip[data-bk="fun"]{border-left-color:var(--fun)}
+  .ichip[data-bk="future"]{border-left-color:var(--future)}
+  .ichip[data-bk="oneoff"]{border-left-color:var(--gold)}
+  .ichip.paid-chip .ic-name{text-decoration:line-through;text-decoration-color:rgba(46,125,84,.5);color:var(--good)}
+  /* assign popover (tap-to-assign, mobile friendly) */
+  #acctPopover{position:absolute;z-index:220;background:var(--card);border:1px solid var(--line-strong);border-radius:13px;box-shadow:var(--shadow-md);padding:6px;min-width:180px;display:none}
+  #acctPopover.show{display:block}
+  #acctPopover button{display:flex;align-items:center;gap:8px;width:100%;border:none;background:transparent;text-align:left;font-family:var(--body);font-weight:700;font-size:13px;color:var(--ink);padding:9px 10px;border-radius:9px;cursor:pointer}
+  #acctPopover button:hover{background:var(--paper-2)}
+  #acctPopover .pop-swatch{width:10px;height:10px;border-radius:3px;flex:none}
+  #acctPopover .pop-unassign{color:var(--ink-soft);border-top:1px dashed var(--line);border-radius:0 0 9px 9px;margin-top:2px}
+  .acct-del{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;width:26px;height:26px;border-radius:8px;transition:.12s;flex:none}
+  .acct-del:hover{background:#FBE1DC;color:var(--bad)}
+
   /* toast */
   #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:30px;font-weight:600;font-size:13.5px;z-index:210;box-shadow:var(--shadow-md);transition:transform .35s cubic-bezier(.22,1,.36,1);max-width:90vw;text-align:center}
   #toast.show{transform:translateX(-50%) translateY(0)}
@@ -490,6 +537,7 @@
         <button class="tab" data-tab="debt">Debt Tracker</button>
         <button class="tab" data-tab="goals">Goals &amp; Savings</button>
         <button class="tab" data-tab="trends">Trends</button>
+        <button class="tab" data-tab="accounts">Bank Accounts</button>
       </div>
       <div class="mini-actions">
         <button class="mini-btn" id="miniSync" title="Sync status"><span class="mini-led"></span>⟳</button>
@@ -633,6 +681,38 @@
       <div class="legend" id="splitLegend"></div>
     </div>
   </section>
+
+  <!-- ============ BANK ACCOUNTS ============ -->
+  <section id="tab-accounts" class="hidden">
+    <div class="row-head" style="margin-bottom:6px">
+      <h2>🏦 Bank accounts</h2>
+      <p>Group this month's outgoings by the account they're paid from — then you know exactly how much to move from the joint account into each. Drag items into an account, or tap an item to assign it. Assignments carry forward each month.</p>
+    </div>
+
+    <div class="acct-toolbar">
+      <div class="acct-kpis" id="acctKpis"></div>
+      <button class="icon-btn" id="copyAcctSummary" title="Copy the per-account totals">⧉ Copy summary</button>
+    </div>
+
+    <div class="card pool-card" id="poolCard">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div>
+          <div class="eyebrow">📥 Unassigned — <span id="poolMonthLabel"></span></div>
+          <div class="hint" style="color:var(--muted);font-size:12.5px;margin-top:3px">Drag these into an account below, or tap one to choose.</div>
+        </div>
+        <div class="legend" style="margin:0;padding:0;border:none">
+          <span class="lg"><i style="background:var(--fund)"></i>Fundamental</span>
+          <span class="lg"><i style="background:var(--fun)"></i>Fun</span>
+          <span class="lg"><i style="background:var(--future)"></i>Future You</span>
+          <span class="lg"><i style="background:var(--gold)"></i>One-off</span>
+        </div>
+      </div>
+      <div class="chip-pool" id="chipPool" data-dropacct=""></div>
+    </div>
+
+    <div class="acct-grid" id="acctGrid"></div>
+    <button class="add-block" id="addAcct" style="margin-top:16px">+ Add an account</button>
+  </section>
 </div>
 
 <!-- floating split / transfer bar -->
@@ -650,6 +730,7 @@
   </div>
 </div>
 
+<div id="acctPopover"></div>
 <div id="toast"></div>
 
 <!-- sync -->
@@ -765,6 +846,7 @@ function applyRemote(incoming){
   if(!state.months||!state.months.length)state=seedState();
   if(!state.current||!state.months.find(m=>m.id===state.current))state.current=state.months[0].id;
   if(!state.travel)state.travel=[];if(!state.investments)state.investments=[];
+  if(!state.accounts)state.accounts=[];
   state.months.forEach(m=>{if(!m.oneoffs)m.oneoffs=[];});
   activeTab=keepTab;
   Sync.lastBlob=JSON.stringify(state);
@@ -844,12 +926,16 @@ function seedState(){
     ].map(([n,c,t])=>({id:uid(),name:n,current:c,target:t})),
     investments:[
       ["Trading212 S&S ISA",0],["InvestEngine",0],["Money Market Fund",0]
-    ].map(([n,v])=>({id:uid(),name:n,value:v}))
+    ].map(([n,v])=>({id:uid(),name:n,value:v})),
+    accounts:[
+      ["Joint Account"],["Credit Card"]
+    ].map(([n])=>({id:uid(),name:n}))
   };
 }
 
 let state=loadLocal()||seedState();
 state.months.forEach(m=>{if(!m.oneoffs)m.oneoffs=[];});
+if(!state.accounts)state.accounts=[];
 let activeTab="month";
 
 /* ---------------- helpers ---------------- */
@@ -904,6 +990,7 @@ function render(){
   if(activeTab==="debt")renderDebt();
   if(activeTab==="goals")renderGoals();
   if(activeTab==="trends")renderTrends();
+  if(activeTab==="accounts")renderAccounts();
   save();
 }
 
@@ -1323,6 +1410,192 @@ function buildSplitChart(data){
     `<span class="lg"><i style="background:var(--paper-2);border:1px dashed var(--line-strong)"></i>Unallocated</span>`;
 }
 
+/* ---- BANK ACCOUNTS ---- */
+const ACCT_COLORS=["--fund","--fun","--future","--gold","--good","--warn"];
+function acctColor(i){return `var(${ACCT_COLORS[i%ACCT_COLORS.length]})`;}
+
+/* every assignable item of the current month, as {ref,bk,name,amount,paid,acct} */
+function acctItems(){
+  const m=cm(), out=[];
+  ["fundamental","fun","future"].forEach(bk=>{
+    (m[bk]||[]).forEach(it=>{
+      const amt=splitItemAmount(it);
+      if(amt<=0 && !(it.name||"").trim())return;   // skip fully empty rows
+      out.push({ref:bk+":"+it.id,bk,name:it.name||"(unnamed)",amount:amt,paid:!!it.paid,acct:it.acct||null});
+    });
+  });
+  (m.oneoffs||[]).forEach(o=>{
+    const amt=num(o.amount);
+    if(amt<=0 && !(o.name||"").trim())return;
+    out.push({ref:"oneoff:"+o.id,bk:"oneoff",name:o.name||"(unnamed)",amount:amt,paid:false,acct:o.acct||null});
+  });
+  return out;
+}
+function findItemByRef(ref){
+  const m=cm();
+  const [kind,id]=ref.split(":");
+  if(kind==="oneoff")return (m.oneoffs||[]).find(x=>x.id===id)||null;
+  return (m[kind]||[]).find(x=>x.id===id)||null;
+}
+function assignItem(ref,acctId){
+  const it=findItemByRef(ref);if(!it)return;
+  if(acctId)it.acct=acctId; else delete it.acct;
+  renderAccounts();save();
+}
+
+function chipHTML(x){
+  return `<div class="ichip${x.paid?' paid-chip':''}" draggable="true" data-ref="${x.ref}" data-bk="${x.bk}" tabindex="0" role="button" aria-label="Assign ${escapeHtml(x.name)}">
+    <span class="ic-name">${escapeHtml(x.name)}</span>
+    <span class="ic-amt">${fmt(x.amount)}</span>
+    <button class="ic-x" data-unassign="${x.ref}" title="Unassign">×</button>
+  </div>`;
+}
+
+function renderAccounts(){
+  // guard: valid acct ids only (deleted accounts → back to pool)
+  const ids=new Set(state.accounts.map(a=>a.id));
+  const items=acctItems().map(x=>({...x,acct:x.acct&&ids.has(x.acct)?x.acct:null}));
+
+  document.getElementById("poolMonthLabel").textContent=cm().label;
+  const pool=items.filter(x=>!x.acct);
+  document.getElementById("chipPool").innerHTML=pool.map(chipHTML).join("");
+
+  const grid=document.getElementById("acctGrid");
+  grid.innerHTML=state.accounts.map((a,i)=>{
+    const mine=items.filter(x=>x.acct===a.id);
+    const tot=mine.reduce((s,x)=>s+x.amount,0);
+    return `<div class="acct-card" data-dropacct="${a.id}">
+      <div class="acct-head">
+        <span class="acct-swatch" style="background:${acctColor(i)}"></span>
+        <input class="nm" data-acctname="${a.id}" value="${escapeHtml(a.name)}" placeholder="Account name">
+        <button class="acct-del" data-delacct="${a.id}" title="Remove account">×</button>
+      </div>
+      <div class="acct-body" data-dropacct="${a.id}">${mine.map(chipHTML).join("")}</div>
+      <div class="acct-foot">
+        <span class="lab">Transfer</span>
+        <span class="tot" style="color:${acctColor(i)}">${fmt(tot)}</span>
+      </div>
+    </div>`;
+  }).join("");
+
+  // KPIs
+  const assigned=items.filter(x=>x.acct), totAssigned=assigned.reduce((s,x)=>s+x.amount,0);
+  const totPool=pool.reduce((s,x)=>s+x.amount,0);
+  document.getElementById("acctKpis").innerHTML=
+    `<span class="acct-kpi"><b>${fmt(totAssigned)}</b> across ${state.accounts.length} account${state.accounts.length===1?"":"s"}</span>`+
+    `<span class="acct-kpi" style="${pool.length?'color:var(--warn)':''}"><b>${pool.length}</b> unassigned · ${fmt(totPool)}</span>`;
+}
+
+/* --- drag & drop (desktop) --- */
+let dragRef=null;
+document.addEventListener("dragstart",e=>{
+  const chip=e.target.closest&&e.target.closest(".ichip");if(!chip)return;
+  dragRef=chip.dataset.ref;
+  chip.classList.add("dragging");
+  if(e.dataTransfer){e.dataTransfer.setData("text/plain",dragRef);e.dataTransfer.effectAllowed="move";}
+});
+document.addEventListener("dragend",e=>{
+  const chip=e.target.closest&&e.target.closest(".ichip");if(chip)chip.classList.remove("dragging");
+  document.querySelectorAll(".drag-over").forEach(z=>z.classList.remove("drag-over"));
+  dragRef=null;
+});
+document.addEventListener("dragover",e=>{
+  const zone=e.target.closest&&e.target.closest("[data-dropacct]");
+  if(!zone)return;
+  e.preventDefault();                                  // allow drop
+  if(e.dataTransfer)e.dataTransfer.dropEffect="move";
+  const card=zone.closest(".acct-card")||zone.closest(".pool-card")||zone;
+  document.querySelectorAll(".drag-over").forEach(z=>{if(z!==card)z.classList.remove("drag-over");});
+  card.classList.add("drag-over");
+});
+document.addEventListener("dragleave",e=>{
+  const zone=e.target.closest&&e.target.closest("[data-dropacct]");
+  if(zone){const card=zone.closest(".acct-card")||zone.closest(".pool-card")||zone;
+    if(!card.contains(e.relatedTarget))card.classList.remove("drag-over");}
+});
+document.addEventListener("drop",e=>{
+  const zone=e.target.closest&&e.target.closest("[data-dropacct]");
+  if(!zone)return;
+  e.preventDefault();
+  const ref=(e.dataTransfer&&e.dataTransfer.getData("text/plain"))||dragRef;
+  document.querySelectorAll(".drag-over").forEach(z=>z.classList.remove("drag-over"));
+  if(!ref)return;
+  assignItem(ref, zone.dataset.dropacct||null);        // empty string → pool → unassign
+});
+
+/* --- tap to assign (mobile & desktop alike) --- */
+const pop=document.getElementById("acctPopover");
+let popRef=null;
+function openAcctPopover(chip){
+  popRef=chip.dataset.ref;
+  const cur=findItemByRef(popRef);
+  pop.innerHTML=state.accounts.map((a,i)=>
+    `<button data-pick="${a.id}"><span class="pop-swatch" style="background:${acctColor(i)}"></span>${escapeHtml(a.name)}${cur&&cur.acct===a.id?" ✓":""}</button>`).join("")+
+    (cur&&cur.acct?`<button class="pop-unassign" data-pick="">↩ Unassign</button>`:"")+
+    (!state.accounts.length?`<button disabled style="color:var(--muted)">Add an account first</button>`:"");
+  const r=chip.getBoundingClientRect();
+  pop.style.left=Math.max(8,Math.min(window.innerWidth-196,r.left+window.scrollX))+"px";
+  pop.style.top=(r.bottom+window.scrollY+6)+"px";
+  pop.classList.add("show");
+}
+function closeAcctPopover(){pop.classList.remove("show");popRef=null;}
+pop.addEventListener("click",e=>{
+  const b=e.target.closest("[data-pick]");if(!b||b.disabled)return;
+  if(popRef)assignItem(popRef,b.dataset.pick||null);
+  closeAcctPopover();
+});
+document.addEventListener("click",e=>{
+  // close popover on outside click
+  if(pop.classList.contains("show") && !e.target.closest("#acctPopover") && !e.target.closest(".ichip"))closeAcctPopover();
+});
+
+/* --- accounts tab events (delegated) --- */
+document.getElementById("tab-accounts").addEventListener("click",e=>{
+  // unassign via chip ×
+  const un=e.target.closest("[data-unassign]");
+  if(un){assignItem(un.dataset.unassign,null);return;}
+  // delete account
+  const del=e.target.closest("[data-delacct]");
+  if(del){
+    const a=state.accounts.find(x=>x.id===del.dataset.delacct);
+    if(!confirm(`Remove "${(a&&a.name)||"this account"}"? Its items go back to Unassigned (in every month).`))return;
+    // clear assignment on items in ALL months so nothing dangles
+    state.months.forEach(m=>{
+      ["fundamental","fun","future"].forEach(k=>(m[k]||[]).forEach(it=>{if(it.acct===del.dataset.delacct)delete it.acct;}));
+      (m.oneoffs||[]).forEach(o=>{if(o.acct===del.dataset.delacct)delete o.acct;});
+    });
+    state.accounts=state.accounts.filter(x=>x.id!==del.dataset.delacct);
+    renderAccounts();save();return;
+  }
+  // tap a chip → popover (ignore if the tap was the × button)
+  const chip=e.target.closest(".ichip");
+  if(chip && !e.target.closest("[data-unassign]")){openAcctPopover(chip);return;}
+});
+document.getElementById("tab-accounts").addEventListener("input",e=>{
+  const nm=e.target.closest("[data-acctname]");if(!nm)return;
+  const a=state.accounts.find(x=>x.id===nm.dataset.acctname);if(!a)return;
+  a.name=nm.value;save();
+  // update KPI text without a full re-render (keeps typing focus)
+});
+document.getElementById("addAcct").onclick=()=>{
+  state.accounts.push({id:uid(),name:""});
+  renderAccounts();save();
+  const last=document.querySelector("#acctGrid .acct-card:last-child .nm");if(last)last.focus();
+};
+document.getElementById("copyAcctSummary").onclick=()=>{
+  const items=acctItems();
+  const lines=state.accounts.map(a=>{
+    const tot=items.filter(x=>x.acct===a.id).reduce((s,x)=>s+x.amount,0);
+    return `${a.name||"(unnamed)"}: ${fmt(tot)}`;
+  });
+  const pool=items.filter(x=>!x.acct||!state.accounts.some(a=>a.id===x.acct));
+  if(pool.length)lines.push(`Unassigned: ${fmt(pool.reduce((s,x)=>s+x.amount,0))}`);
+  const text=`Transfers — ${cm().label}\n`+lines.join("\n");
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>toast("Summary copied 📋"),()=>toast("Couldn't copy — select and copy manually"));
+  }else toast("Copy not supported in this browser");
+};
+
 // tabs
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
@@ -1331,6 +1604,7 @@ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
   document.getElementById("tab-debt").classList.toggle("hidden",activeTab!=="debt");
   document.getElementById("tab-goals").classList.toggle("hidden",activeTab!=="goals");
   document.getElementById("tab-trends").classList.toggle("hidden",activeTab!=="trends");
+  document.getElementById("tab-accounts").classList.toggle("hidden",activeTab!=="accounts");
   render();
   refreshSplitBar();
 });
