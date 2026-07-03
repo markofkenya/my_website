@@ -387,6 +387,8 @@
   #myDayOverlay{z-index:70}
   #icsOverlay{z-index:80}
   /* Leave tracker */
+  .btn.leave-myrota{align-self:center;padding:8px 15px;font-size:13px;font-weight:600;background:#34d6bb;color:#0c1512;border:none;box-shadow:0 1px 0 #23a68f,0 7px 16px -9px #34d6bb}
+  .btn.leave-myrota:hover{background:#4be0c7}
   .leave-overlay{position:fixed;inset:0;background:var(--bg);z-index:74;display:none;overflow-y:auto}
   .leave-overlay.show{display:block}
   .leave-inner{max-width:660px;margin:0 auto;padding:14px 16px 64px}
@@ -1056,7 +1058,6 @@
     <label class="fld-label">Who are you on this device?</label>
     <div class="assign-opts" id="loginWho"></div>
     <div class="login-pin" id="loginPin"></div>
-    <div class="login-pin" id="loginRescue"></div>
     <label class="fld-label">Rota code</label>
     <input id="loginCode" type="text" placeholder="e.g. ngh-renal-2026" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false">
     <div class="sync-err" id="loginErr"></div>
@@ -1077,7 +1078,7 @@
   <div class="leave-inner">
     <div class="rota-top">
       <button class="rota-back" id="leaveBack">‹ Back</button>
-      <div class="kicker" style="align-self:center">Leave tracker</div>
+      <button class="btn leave-myrota" id="leaveMyRota">My Rota</button>
     </div>
     <div id="leaveBody"></div>
   </div>
@@ -1568,37 +1569,6 @@ function currentRotaShifts(){
 function currentSig(){ return currentRotaShifts().map(s=>`${s.date}:${s.p}:${s.type}`).join("|"); }
 function isAgreed(k){ const a=state.accept&&state.accept[k]; return !!(a && a.sig===currentSig()); }
 function bothAgreed(){ return currentRotaShifts().length>0 && isAgreed("A") && isAgreed("B"); }
-/* ===== Device backup (rescue) — snapshot local before a remote overwrite ===== */
-const RESCUE_KEY="slotshare-rescue";
-function rescueCounts(s){ let req=0, days=0, asn=0; try{ ["A","B"].forEach(k=>{ if(s.leave&&s.leave[k]&&Array.isArray(s.leave[k].requests)) req+=s.leave[k].requests.length; if(s.myShifts&&s.myShifts[k]) days+=Object.keys(s.myShifts[k]).length; }); asn=s.assignments?Object.keys(s.assignments).length:0; }catch(e){} return {req,days,asn}; }
-function rescueSnapshot(local, remote){
-  try{
-    const c=rescueCounts(local); if(c.req+c.days+c.asn===0) return;
-    const l=JSON.stringify({a:local.assignments||{},m:local.myShifts||{},v:local.leave||{}});
-    const r=JSON.stringify({a:(remote&&remote.assignments)||{},m:(remote&&remote.myShifts)||{},v:(remote&&remote.leave)||{}});
-    if(l===r) return;
-    let arr=[]; try{ arr=JSON.parse(localStorage.getItem(RESCUE_KEY)||"[]"); }catch(e){}
-    arr.unshift({at:Date.now(), state:local}); arr=arr.slice(0,3);
-    localStorage.setItem(RESCUE_KEY, JSON.stringify(arr));
-  }catch(e){}
-}
-function renderRescue(){
-  const el=document.getElementById("loginRescue"); if(!el) return;
-  let arr=[]; try{ arr=JSON.parse(localStorage.getItem(RESCUE_KEY)||"[]"); }catch(e){}
-  if(!arr.length){ el.innerHTML=""; return; }
-  el.innerHTML=`<div class="lp-row" style="flex-direction:column;align-items:stretch;gap:8px"><span style="font-weight:600">Device backups (saved before syncs)</span>${arr.map((b,i)=>{ const c=rescueCounts(b.state); const d=new Date(b.at); return `<span class="lp-acts" style="justify-content:space-between"><span style="font-size:12px">${d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})} · ${c.req} request${c.req===1?"":"s"}, ${c.days} rota day${c.days===1?"":"s"}</span><button class="lp-btn" data-ri="${i}">Restore</button></span>`; }).join("")}</div>`;
-  el.querySelectorAll("[data-ri]").forEach(b=>b.onclick=()=>{
-    openConfirm("Restore this backup?","This replaces the current data on every synced device with this device backup. The current data will itself be backed up first.","Restore",()=>{
-      let arr2=[]; try{ arr2=JSON.parse(localStorage.getItem(RESCUE_KEY)||"[]"); }catch(e){}
-      const entry=arr2[Number(b.dataset.ri)]; if(!entry) return;
-      rescueSnapshot(state, entry.state);
-      lastRemoteTs=Math.max(lastRemoteTs, state.updatedAt||0);
-      state=Object.assign(defaultState(), entry.state); normalize(); persist(); renderAll(); renderRescue();
-      flashMsg(db?"Backup restored — syncing to all devices":"Restored on this device — connect a rota code to sync it");
-    });
-  });
-}
-
 /* ===== Cooperative PIN lock (client-side deterrence) ===== */
 let pinUnlocked=false, pinState=null;
 const PIN_SKIP="instarota-pinskip";
@@ -2574,7 +2544,6 @@ function attachSync(){
       const remoteTs=val.updatedAt||0, localTs=state.updatedAt||0;
       lastRemoteTs=Math.max(lastRemoteTs, remoteTs);
       if(remoteTs>=localTs){
-        rescueSnapshot(state, val);
         applyingRemote=true; state=Object.assign(defaultState(), val); normalize(); writeLocal(state); saveCacheCode(rotaCode); renderAll(); applyingRemote=false; maybeAlert(); enforcePinAfterSync();
       } else {
         // local is newer than the room (e.g. edits made while a write failed) — push, don't lose them
@@ -2620,7 +2589,6 @@ function openLogin(){
   document.getElementById("loginDisconnect").style.display = syncRef ? "" : "none";
   renderLoginWho();
   renderLoginPin();
-  renderRescue();
   document.getElementById("loginOverlay").classList.add("show");
 }
 function closeLogin(){ document.getElementById("loginOverlay").classList.remove("show"); requestAnimationFrame(replayHubSpin); }
@@ -2704,6 +2672,7 @@ function boot(){
   document.getElementById("exportIcs").onclick=exportICS;
   document.getElementById("leaveBtn").onclick=openLeave;
   document.getElementById("leaveBack").onclick=closeLeave;
+  document.getElementById("leaveMyRota").onclick=()=>{ document.getElementById("leaveOverlay").classList.remove("show"); openMyRota(); };
   document.getElementById("reqBack").onclick=closeRequest;
   document.getElementById("icsCancel").onclick=closeIcs;
   document.getElementById("icsExport").onclick=doExportICS;
