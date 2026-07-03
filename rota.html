@@ -367,6 +367,13 @@
   .oc-badge{font-family:var(--font-m); font-size:8.5px; font-weight:600; letter-spacing:.03em; text-transform:uppercase; color:#fff; background:var(--ink); border-radius:5px; padding:1px 5px; margin-top:4px; display:inline-block; align-self:flex-start}
   .cell .ms-chip{font-family:var(--font-m); font-size:8.5px; font-weight:600; color:#fff; border-radius:5px; padding:1px 5px; margin-top:3px; display:inline-block; align-self:flex-start; letter-spacing:.02em}
   #myGrid .cell{cursor:pointer}
+  /* Leave days stand out: tinted cell + solid border + full-width band */
+  #myGrid .cell.leave-al{background:rgba(63,187,131,.13);border:1.5px solid #2f9e63}
+  #myGrid .cell.leave-sl{background:rgba(99,102,241,.14);border:1.5px solid #6366f1}
+  #myGrid .cell.leave-day .d{font-weight:700}
+  .leave-band{display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:3px 6px;border-radius:7px;font-size:10.5px;font-weight:700;letter-spacing:.02em;color:#fff;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .leave-band.al{background:#2f9e63}
+  .leave-band.sl{background:#6366f1}
   .my-legend{display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:16px; padding-top:14px; border-top:1px solid var(--line-soft)}
   .my-legend span{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-soft)}
   .my-legend .lk{width:12px; height:12px; border-radius:4px}
@@ -1058,6 +1065,7 @@
     <label class="fld-label">Who are you on this device?</label>
     <div class="assign-opts" id="loginWho"></div>
     <div class="login-pin" id="loginPin"></div>
+    <div class="login-pin" id="loginRescue"></div>
     <label class="fld-label">Rota code</label>
     <input id="loginCode" type="text" placeholder="e.g. ngh-renal-2026" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false">
     <div class="sync-err" id="loginErr"></div>
@@ -1252,8 +1260,10 @@ let notified = new Set();
 function readLocal(){ try{ const r=localStorage.getItem(STORE_KEY); return r?JSON.parse(r):null; }catch(e){ return mem; } }
 function writeLocal(obj){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(obj)); }catch(e){ mem=obj; } }
 let applyingRemote = false, db = null;
-let lastRemoteTs=0;
-function persist(){ state.updatedAt=Math.max(Date.now(), lastRemoteTs+1, (state.updatedAt||0)+1); lastRemoteTs=Math.max(lastRemoteTs, state.updatedAt); writeLocal(state); if(db && !applyingRemote){ try{ db.ref(syncPath).set(state).catch(e=>{ console.warn("sync write rejected", e); setSyncStatus("local","Sync error — changes saved on this device only. Tap to retry."); }); }catch(e){ console.warn("sync write failed", e); } } }
+let lastRemoteTs=0, firstSyncDone=false, stampCounter=0;
+function stamp(){ const s=Math.max(Date.now(), lastRemoteTs+1, stampCounter+1); stampCounter=s; return s; }
+function touchDay(k, ds){ if(!k) return; if(!state.myShiftsTs) state.myShiftsTs={}; if(!state.myShiftsTs[k]) state.myShiftsTs[k]={}; state.myShiftsTs[k][ds]=stamp(); }
+function persist(){ state.updatedAt=Math.max(Date.now(), lastRemoteTs+1, (state.updatedAt||0)+1); lastRemoteTs=Math.max(lastRemoteTs, state.updatedAt); writeLocal(state); if(db && !applyingRemote && firstSyncDone){ try{ db.ref(syncPath).set(state).catch(e=>{ console.warn("sync write rejected", e); setSyncStatus("local","Sync error — changes saved on this device only. Tap to retry."); }); }catch(e){ console.warn("sync write failed", e); } } }
 
 /* ===== date helpers ===== */
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -1527,7 +1537,7 @@ function openMeChooser(){
   document.getElementById("meOverlay").classList.add("show");
 }
 function chooseMe(k){
-  const finish=()=>{ meKey=k; saveMe(k); pinUnlocked=true; document.getElementById("meOverlay").classList.remove("show"); renderComposer(); maybeAlert(); };
+  const finish=()=>{ meKey=k; saveMe(k); document.getElementById("meOverlay").classList.remove("show"); renderComposer(); maybeAlert(); };
   if(k===meKey){ document.getElementById("meOverlay").classList.remove("show"); return; }
   if(hasPin(k)){ document.getElementById("meOverlay").classList.remove("show"); openPin("verify",k,finish,{onCancel:openMeChooser}); } else { finish(); offerPinSetup(k); }
 }
@@ -1569,6 +1579,73 @@ function currentRotaShifts(){
 function currentSig(){ return currentRotaShifts().map(s=>`${s.date}:${s.p}:${s.type}`).join("|"); }
 function isAgreed(k){ const a=state.accept&&state.accept[k]; return !!(a && a.sig===currentSig()); }
 function bothAgreed(){ return currentRotaShifts().length>0 && isAgreed("A") && isAgreed("B"); }
+/* ===== Field-level sync merge — one device's edit can no longer erase another's days ===== */
+function mergeShifts(a, b){
+  const map={}, ts={};
+  ["A","B"].forEach(k=>{
+    const am=(a.myShifts&&a.myShifts[k])||{}, bm=(b.myShifts&&b.myShifts[k])||{};
+    const at=(a.myShiftsTs&&a.myShiftsTs[k])||{}, bt=(b.myShiftsTs&&b.myShiftsTs[k])||{};
+    const days=new Set([...Object.keys(am),...Object.keys(bm),...Object.keys(at),...Object.keys(bt)]);
+    map[k]={}; ts[k]={};
+    days.forEach(ds=>{
+      const lt=at[ds]||0, rt=bt[ds]||0;
+      let v;
+      if(rt>lt) v=bm[ds];
+      else if(lt>rt) v=am[ds];
+      else v=(am[ds]&&am[ds].length)?am[ds]:bm[ds];      // tie (legacy, no stamps): presence wins
+      if(v&&v.length) map[k][ds]=v;
+      const t=Math.max(lt,rt); if(t) ts[k][ds]=t;         // stamps persist as tombstones for deletions
+    });
+    if(!Object.keys(map[k]).length) delete map[k];
+    if(!Object.keys(ts[k]).length) delete ts[k];
+  });
+  return {map, ts};
+}
+function mergeRequestsInto(base, a, b){
+  ["A","B"].forEach(k=>{
+    const al=a.leave&&a.leave[k], bl=b.leave&&b.leave[k];
+    if(!al&&!bl) return;
+    if(!base.leave) base.leave={};
+    if(!base.leave[k]) base.leave[k]=JSON.parse(JSON.stringify(al||bl));
+    const tomb={};
+    [...(al&&al.deletedReq||[]),...(bl&&bl.deletedReq||[])].forEach(t=>{ if(t&&t.id) tomb[t.id]=Math.max(tomb[t.id]||0, t.ts||0); });
+    const byId={};
+    [...(al&&al.requests||[]),...(bl&&bl.requests||[])].forEach(r=>{ if(!r||!r.id) return; const ex=byId[r.id]; if(!ex || (r.ts||0)>(ex.ts||0)) byId[r.id]=r; });
+    base.leave[k].requests=Object.values(byId).filter(r=>!(tomb[r.id]&&tomb[r.id]>=(r.ts||0))).sort((x,y)=>(x.createdAt||0)-(y.createdAt||0));
+    base.leave[k].deletedReq=Object.keys(tomb).map(id=>({id, ts:tomb[id]})).slice(-50);
+  });
+}
+const RESCUE_KEY="slotshare-rescue";
+function rescueSnapshot(local, incoming){
+  try{
+    let n=0; ["A","B"].forEach(k=>{ if(local.myShifts&&local.myShifts[k]) n+=Object.keys(local.myShifts[k]).length; if(local.leave&&local.leave[k]&&Array.isArray(local.leave[k].requests)) n+=local.leave[k].requests.length; });
+    if(!n) return;
+    if(JSON.stringify(local.myShifts||{})===JSON.stringify(incoming.myShifts||{})) return;
+    let arr=[]; try{ arr=JSON.parse(localStorage.getItem(RESCUE_KEY)||"[]"); }catch(e){}
+    arr.unshift({at:Date.now(), state:local}); arr=arr.slice(0,3);
+    localStorage.setItem(RESCUE_KEY, JSON.stringify(arr));
+  }catch(e){}
+}
+
+function rescueCounts(s){ let req=0, days=0; try{ ["A","B"].forEach(k=>{ if(s.leave&&s.leave[k]&&Array.isArray(s.leave[k].requests)) req+=s.leave[k].requests.length; if(s.myShifts&&s.myShifts[k]) days+=Object.keys(s.myShifts[k]).length; }); }catch(e){} return {req,days}; }
+function renderRescue(){
+  const el=document.getElementById("loginRescue"); if(!el) return;
+  let arr=[]; try{ arr=JSON.parse(localStorage.getItem(RESCUE_KEY)||"[]"); }catch(e){}
+  if(!arr.length){ el.innerHTML=""; return; }
+  el.innerHTML=`<div class="lp-row" style="flex-direction:column;align-items:stretch;gap:8px"><span style="font-weight:600">Device backups (saved before syncs)</span>${arr.map((b,i)=>{ const c=rescueCounts(b.state); const d=new Date(b.at); return `<span class="lp-acts" style="justify-content:space-between"><span style="font-size:12px">${d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})} · ${c.req} request${c.req===1?"":"s"}, ${c.days} rota day${c.days===1?"":"s"}</span><button class="lp-btn" data-ri="${i}">Restore</button></span>`; }).join("")}</div>`;
+  el.querySelectorAll("[data-ri]").forEach(b=>b.onclick=()=>{
+    openConfirm("Restore this backup?","Days and requests from this backup are merged back in and synced to every device.","Restore",()=>{
+      let arr2=[]; try{ arr2=JSON.parse(localStorage.getItem(RESCUE_KEY)||"[]"); }catch(e){}
+      const entry=arr2[Number(b.dataset.ri)]; if(!entry) return;
+      const merged=mergeShifts(entry.state, state);
+      state.myShifts=merged.map; state.myShiftsTs=merged.ts;
+      mergeRequestsInto(state, entry.state, state);
+      normalize(); persist(); renderAll(); renderRescue();
+      flashMsg(db?"Backup merged back in — syncing":"Backup merged on this device");
+    });
+  });
+}
+
 /* ===== Cooperative PIN lock (client-side deterrence) ===== */
 let pinUnlocked=false, pinState=null;
 const PIN_SKIP="instarota-pinskip";
@@ -1620,7 +1697,7 @@ function pinPress(d){ const ps=pinState; if(!ps) return; if(d==="del"){ ps.entry
 async function pinComplete(){
   const ps=pinState; if(!ps) return; const pin=ps.entry;
   if(ps.step==="new"){ ps.first=pin; ps.entry=""; ps.step="confirm"; renderPin(); return; }
-  if(ps.step==="confirm"){ if(pin!==ps.first){ ps.first=""; ps.entry=""; ps.step="new"; renderPin(); pinErr("PINs didn't match — try again"); return; } await savePin(ps.k,pin); const cb=ps.onOk; closePin(); flashMsg("PIN set"); if(cb) cb(); return; }
+  if(ps.step==="confirm"){ if(pin!==ps.first){ ps.first=""; ps.entry=""; ps.step="new"; renderPin(); pinErr("PINs didn't match — try again"); return; } if(hasPin(ps.k)){ closePin(); flashMsg("This profile already has a PIN — verify it first"); return; } await savePin(ps.k,pin); pinUnlocked=true; const cb=ps.onOk; closePin(); flashMsg("PIN set"); if(cb) cb(); return; }
   if(ps.step==="enter"){ if(await verifyPin(ps.k,pin)){ pinUnlocked=true; markPinOk(ps.k); const cb=ps.onOk; closePin(); if(cb) cb(); } else { ps.entry=""; renderPinDots(); pinErr("Wrong PIN"); } return; }
   if(ps.step==="current"){ if(!(await verifyPin(ps.k,pin))){ ps.entry=""; renderPinDots(); pinErr("Wrong PIN"); return; } if(ps.mode==="remove"){ removePin(ps.k); closePin(); flashMsg("PIN removed"); if(ps.onOk) ps.onOk(); return; } ps.entry=""; ps.step="new2"; renderPin(); return; }
   if(ps.step==="new2"){ ps.first=pin; ps.entry=""; ps.step="confirm2"; renderPin(); return; }
@@ -1742,7 +1819,16 @@ function renderMyCalendar(){
     if(isBH(ds)) html+=`<div class="bh-mark"></div>`;
     const oc=myOncall(ds);
     if(oc){ const st=SHIFT_TYPES.find(s=>s.id===oc.type); html+=`<div class="oc-badge">On-call${st&&st.id!=="oncall"?" · "+st.label:""}</div>`; }
-    getMyArr(ds).forEach((s,i)=>{ const t=myType(s.type); const ad=ALLDAY_TYPES.has(s.type); const tip=ad?(s.type==="oncall"?"24h on-call":"All day"):`${s.start}–${s.end}`; html+=`<div class="ms-chip" style="background:${t.color}" title="${escapeHtml(t.label)} ${tip}">${t.short}${ad?"":" "+s.start}</div>`; });
+    const arr=getMyArr(ds);
+    const leaveType=arr.find(s=>s.type==="annual_leave")?"al":(arr.find(s=>s.type==="study_leave")?"sl":null);
+    if(leaveType) cell.classList.add("leave-day", leaveType==="al"?"leave-al":"leave-sl");
+    arr.forEach((s,i)=>{
+      if(s.type==="annual_leave"||s.type==="study_leave"){
+        html+=`<div class="leave-band ${s.type==="annual_leave"?"al":"sl"}">${s.type==="annual_leave"?"Annual leave":"Study leave"}</div>`;
+        return;
+      }
+      const t=myType(s.type); const ad=ALLDAY_TYPES.has(s.type); const tip=ad?(s.type==="oncall"?"24h on-call":"All day"):`${s.start}–${s.end}`; html+=`<div class="ms-chip" style="background:${t.color}" title="${escapeHtml(t.label)} ${tip}">${t.short}${ad?"":" "+s.start}</div>`;
+    });
     cell.innerHTML=html;
     cell.dataset.ds=ds;
     cell.onclick=()=>{ if(armedType){ placeSession(ds, armedType); } else openMyDay(ds); };
@@ -1796,6 +1882,7 @@ function placeSession(ds, typeId){
     arr.push({ id:newId(), type:typeId, start:"08:30", end:"17:00" });
     retimeDay(ds);
   }
+  touchDay(meKey, ds);
   persist(); renderMyCalendar();
   if(document.getElementById("myDayOverlay").classList.contains("show") && myEditDate===ds) renderMyDay(ds);
 }
@@ -1853,12 +1940,13 @@ function removeMyShift(ds, sid){
   const m=state.myShifts&&state.myShifts[meKey]; if(!m||!m[ds]) return;
   m[ds]=m[ds].filter(x=>x.id!==sid);
   if(!m[ds].length) delete m[ds]; else retimeDay(ds);
+  touchDay(meKey, ds);
   persist(); renderMyDay(ds); renderMyCalendar();
 }
 function setMyShiftTime(ds, sid, field, val){
   const m=state.myShifts&&state.myShifts[meKey]; if(!m||!m[ds]) return;
   const s=m[ds].find(x=>x.id===sid); if(!s) return;
-  s[field]=val; persist(); renderMyCalendar();
+  s[field]=val; touchDay(meKey, ds); persist(); renderMyCalendar();
 }
 /* ICS export */
 function icsPad(n){ return String(n).padStart(2,"0"); }
@@ -1963,13 +2051,15 @@ function rosterInfo(Y, half){
   const h1LeftRaw=rnd(a.baseTotal-a.taken);
   const autoCarry=(nowISO>a.end && h1LeftRaw>0)? h1LeftRaw : 0;   // after Feb–Aug closes, leftovers flow forward
   const h1AfterCarry=autoCarry? 0 : h1LeftRaw;
-  const h2Total=rnd(b.baseTotal+autoCarry);
-  const h2Overflow=Math.max(0, rnd(b.taken-h2Total));             // Aug–Feb booked beyond its own allowance…
-  const borrowed=rnd(Math.min(Math.max(h1AfterCarry,0), h2Overflow)); // …draws down Feb–Aug's remaining days
+  const h2Base=rnd(b.baseTotal+autoCarry);
+  const h2Overflow=Math.max(0, rnd(b.taken-h2Base));               // Aug–Feb booked beyond its allowance…
+  const h2Borrow=rnd(Math.min(Math.max(h1AfterCarry,0), h2Overflow)); // …draws down Feb–Aug's remaining days
+  const h1Overflow=Math.max(0, rnd(-h1AfterCarry));                // Feb–Aug booked beyond its allowance…
+  const h1Borrow=rnd(Math.min(Math.max(rnd(h2Base-b.taken),0), h1Overflow)); // …draws down Aug–Feb's remaining days
   if(half==="H1"){
-    return Object.assign({}, a, {autoCarry:0, carriedOut:autoCarry, borrowed:0, lent:borrowed, total:a.baseTotal, left:rnd(h1AfterCarry-borrowed)});
+    return Object.assign({}, a, {autoCarry:0, carriedOut:autoCarry, borrowed:h1Borrow, lent:h2Borrow, total:rnd(a.baseTotal+h1Borrow), left:rnd(h1AfterCarry+h1Borrow-h2Borrow)});
   }
-  return Object.assign({}, b, {autoCarry, carriedOut:0, lent:0, borrowed, total:rnd(h2Total+borrowed), left:rnd(h2Total+borrowed-b.taken)});
+  return Object.assign({}, b, {autoCarry, carriedOut:0, lent:h1Borrow, borrowed:h2Borrow, total:rnd(h2Base+h2Borrow), left:rnd(h2Base+h2Borrow-b.taken-h1Borrow)});
 }
 function fmtNice(iso){ try{ return longDate(iso).date; }catch(e){ return iso; } }
 function openLeave(){ leaveViewYear=null; renderLeave(); document.getElementById("leaveOverlay").classList.add("show"); }
@@ -1985,16 +2075,16 @@ function logLeave(){
   if(!meKey) return; const L=getLeave();
   if(!state.myShifts) state.myShifts={}; if(!state.myShifts[meKey]) state.myShifts[meKey]={};
   let added=0; let d=new Date(from+"T00:00:00"); const end=new Date(to+"T00:00:00");
-  while(d<=end){ const wd=d.getDay(); if(wd!==0 && wd!==6 && wd!==L.nwd){ const ds=leaveISO(d); state.myShifts[meKey][ds]=[{id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:typeId, start:"08:30", end:"17:00"}]; added++; } d.setDate(d.getDate()+1); }
+  while(d<=end){ const wd=d.getDay(); if(wd!==0 && wd!==6 && wd!==L.nwd){ const ds=leaveISO(d); state.myShifts[meKey][ds]=[{id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:typeId, start:"08:30", end:"17:00"}]; touchDay(meKey, ds); added++; } d.setDate(d.getDate()+1); }
   persist(); renderLeave(); renderMyCalendar();
   flashMsg(`${added} ${typeId==="annual_leave"?"annual":"study"} leave day${added===1?"":"s"} logged${added?"":" (range was all weekends / your day off)"}`);
 }
-function removeLeaveDay(ds){ const m=state.myShifts&&state.myShifts[meKey]; if(m&&m[ds]){ delete m[ds]; persist(); renderLeave(); renderMyCalendar(); } }
+function removeLeaveDay(ds){ const m=state.myShifts&&state.myShifts[meKey]; if(m&&m[ds]){ delete m[ds]; touchDay(meKey, ds); persist(); renderLeave(); renderMyCalendar(); } }
 function renderLeave(){
   const host=document.getElementById("leaveBody"); if(!host) return;
   const L=getLeave(); const Y=activeLeaveYear();
   const r1=rosterInfo(Y,"H1"), r2=rosterInfo(Y,"H2");
-  const yrTotal=Math.round((r1.total+r2.total-(r2.autoCarry||0)-(r2.borrowed||0))*10)/10, yrTaken=r1.taken+r2.taken, yrLeft=Math.round((yrTotal-yrTaken)*10)/10;
+  const yrTotal=Math.round((r1.total+r2.total-(r2.autoCarry||0)-(r2.borrowed||0)-(r1.borrowed||0))*10)/10, yrTaken=r1.taken+r2.taken, yrLeft=Math.round((yrTotal-yrTaken)*10)/10;
   const yStart=`${Y}-02-01`, yEndIncl=`${Y+1}-01-31`, yEnd=new Date(Y+1,1,1);
   const slTaken=countLeaveDays("study_leave", yStart, null, yEndIncl), slRemain=Math.round((L.slEntitlement-slTaken)*10)/10;
   const R=52,C=2*Math.PI*R, frac=yrTotal>0?Math.min(1,yrTaken/yrTotal):0, off=C*(1-frac), over=yrTaken>yrTotal, col=over?"#c2412f":"#2f7d4f";
@@ -2016,9 +2106,9 @@ function renderLeave(){
     return `<div class="rot-card ${cur?'cur':''}${future?' future':''}">
       <div class="rot-row1"><div class="rc-title">${r.label}${cur?'<span class="cur-tag">now</span>':future?'<span class="soon-tag">upcoming</span>':''}</div><div class="rc-left"><b>${r.left}</b> left</div></div>
       <div class="rot-bar"><div class="rot-bar-fill" style="width:${pct}%;background:${bc}"></div></div>
-      <div class="rc-sub">${r.taken} taken · ${r.total} total${r.autoCarry?` (incl. ${r.autoCarry} carried from Feb – Aug)`:''}${r.borrowed?` (incl. ${r.borrowed} drawn from Feb – Aug)`:''}${r.carriedOut?` (${r.carriedOut} carried to Aug – Feb)`:''}${r.lent?` (${r.lent} used by Aug – Feb bookings)`:''}${r.cfg.carryover?` (incl. ${r.cfg.carryover} manual carryover)`:''}</div>
+      <div class="rc-sub">${r.taken} taken · ${r.total} total${r.autoCarry?` (incl. ${r.autoCarry} carried from Feb – Aug)`:''}${r.borrowed?` (incl. ${r.borrowed} drawn from ${r.half==="H1"?"Aug – Feb":"Feb – Aug"})`:''}${r.carriedOut?` (${r.carriedOut} carried to Aug – Feb)`:''}${r.lent?` (${r.lent} used by ${r.half==="H1"?"Aug – Feb":"Feb – Aug"} bookings)`:''}${r.cfg.carryover?` (incl. ${r.cfg.carryover} manual carryover)`:''}</div>
       <details class="rc-more"><summary>Adjust &amp; breakdown</summary>
-        <div class="rc-calc">${r.halfDays} × ${r.wte} WTE + ${r.bhCount} BH × ${r.wte} − ${r.bhWorked} worked = <b>${r.auto}</b> days${r.autoCarry?` <span class="rc-carry">+ ${r.autoCarry} auto-carried from Feb – Aug</span>`:''}${r.borrowed?` <span class="rc-carry">+ ${r.borrowed} drawn from Feb – Aug</span>`:''}</div>
+        <div class="rc-calc">${r.halfDays} × ${r.wte} WTE + ${r.bhCount} BH × ${r.wte} − ${r.bhWorked} worked = <b>${r.auto}</b> days${r.autoCarry?` <span class="rc-carry">+ ${r.autoCarry} auto-carried from Feb – Aug</span>`:''}${r.borrowed?` <span class="rc-carry">+ ${r.borrowed} drawn from ${r.half==="H1"?"Aug – Feb":"Feb – Aug"}</span>`:''}</div>
         <div class="rc-fields"><label>Carryover<input type="number" value="${r.cfg.carryover}" data-key="${r.key}" data-f="carryover" min="0" step="0.5"></label><label>WTE<input type="number" value="${r.cfg.wte!=null?r.cfg.wte:''}" placeholder="${L.wte}" data-key="${r.key}" data-f="wte" min="0.1" max="1" step="0.05"></label><label>Override<input type="number" value="${r.cfg.override!=null?r.cfg.override:''}" placeholder="auto" data-key="${r.key}" data-f="override" min="0" step="0.5"></label></div>
       </details>
     </div>`; };
@@ -2102,8 +2192,8 @@ let reqCreated=null;
 function rangeWorkingDays(fromISO,toISO){ const L=getLeave(); const out=[]; if(!fromISO) return out; if(!toISO) toISO=fromISO; if(toISO<fromISO){ const t=fromISO; fromISO=toISO; toISO=t; } let d=new Date(fromISO+"T00:00:00"); const end=new Date(toISO+"T00:00:00"); while(d<=end){ const wd=d.getDay(); if(wd!==0&&wd!==6&&wd!==L.nwd) out.push(leaveISO(d)); d.setDate(d.getDate()+1); } return out; }
 function openRequest(){ reqCreated=null; renderRequest(); document.getElementById("requestOverlay").classList.add("show"); }
 function closeRequest(){ document.getElementById("requestOverlay").classList.remove("show"); renderLeave(); }
-function applyRequestDays(req){ if(!state.myShifts) state.myShifts={}; if(!state.myShifts[meKey]) state.myShifts[meKey]={}; req.days.forEach(ds=>{ state.myShifts[meKey][ds]=[{id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:req.type, start:"08:30", end:"17:00"}]; }); }
-function removeRequestDays(req){ const m=state.myShifts&&state.myShifts[meKey]; if(!m) return; req.days.forEach(ds=>{ if(m[ds] && Array.isArray(m[ds]) && m[ds].length===1 && m[ds][0].type===req.type) delete m[ds]; }); }
+function applyRequestDays(req){ if(!state.myShifts) state.myShifts={}; if(!state.myShifts[meKey]) state.myShifts[meKey]={}; req.days.forEach(ds=>{ state.myShifts[meKey][ds]=[{id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:req.type, start:"08:30", end:"17:00"}]; touchDay(meKey, ds); }); }
+function removeRequestDays(req){ const m=state.myShifts&&state.myShifts[meKey]; if(!m) return; req.days.forEach(ds=>{ if(m[ds] && Array.isArray(m[ds]) && m[ds].length===1 && m[ds][0].type===req.type){ delete m[ds]; touchDay(meKey, ds); } }); }
 function createRequest(){
   const type=document.getElementById("reqType").value;
   const from=document.getElementById("reqFrom").value, to=document.getElementById("reqTo").value;
@@ -2111,13 +2201,13 @@ function createRequest(){
   const days=rangeWorkingDays(from,to);
   if(!from){ flashMsg("Pick a start date"); return; }
   if(!days.length){ flashMsg("No working days in that range"); return; }
-  const req={ id:"r"+Date.now(), type, from, to:to||from, note, days, status:"pending", createdAt:Date.now() };
+  const req={ id:"r"+Date.now(), type, from, to:to||from, note, days, status:"pending", createdAt:Date.now(), ts:stamp() };
   applyRequestDays(req); getLeave().requests.push(req); persist(); renderMyCalendar();
   reqCreated=req; renderRequest();
   flashMsg(`${days.length} day${days.length===1?"":"s"} booked (pending)`);
 }
-function undoRequest(id){ const L=getLeave(); const i=L.requests.findIndex(r=>r.id===id); if(i<0) return; removeRequestDays(L.requests[i]); L.requests.splice(i,1); persist(); renderMyCalendar(); renderLeave(); }
-function setRequestStatus(id,status){ const L=getLeave(); const r=L.requests.find(x=>x.id===id); if(!r) return; if(status==="declined"){ removeRequestDays(r); } else if(status==="approved" && r.status==="declined"){ applyRequestDays(r); } r.status=status; persist(); renderMyCalendar(); renderLeave(); }
+function undoRequest(id){ const L=getLeave(); const i=L.requests.findIndex(r=>r.id===id); if(i<0) return; removeRequestDays(L.requests[i]); L.requests.splice(i,1); if(!Array.isArray(L.deletedReq)) L.deletedReq=[]; L.deletedReq.push({id, ts:stamp()}); if(L.deletedReq.length>50) L.deletedReq=L.deletedReq.slice(-50); persist(); renderMyCalendar(); renderLeave(); }
+function setRequestStatus(id,status){ const L=getLeave(); const r=L.requests.find(x=>x.id===id); if(!r) return; if(status==="declined"){ removeRequestDays(r); } else if(status==="approved" && r.status==="declined"){ applyRequestDays(r); } r.status=status; r.ts=stamp(); persist(); renderMyCalendar(); renderLeave(); }
 function reqTypeLabel(t){ return t==="study_leave"?"Study leave":"Annual leave"; }
 function setLeaveText(field,val){ const L=getLeave(); if(field==="coordEmail"){ L.coordEmail=(val||"").trim(); } else { L.profile[field]=(val||"").trim(); } persist(); }
 function emailDraft(req){
@@ -2201,7 +2291,7 @@ function buildLeaveFormHtml(req){
   </style></head><body><div class="page"><img class="bg" src="${LEAVE_FORM_BG}">${spans}</div></body></html>`;
 }
 function makeRequestFromLogged(type, fromDs, toDs){ const m=(state.myShifts&&state.myShifts[meKey])||{}; const days=[]; Object.keys(m).sort().forEach(ds=>{ if(ds>=fromDs&&ds<=toDs&&Array.isArray(m[ds])) m[ds].forEach(s=>{ if(s.type===type) days.push(ds); }); }); if(!days.length) return; const req={id:"r"+Date.now(), type, from:fromDs, to:toDs, note:"", days, status:"pending", createdAt:Date.now()}; getLeave().requests.push(req); persist(); reqCreated=req; renderRequest(); document.getElementById("requestOverlay").classList.add("show"); }
-function removeLoggedRange(type, fromDs, toDs){ const m=state.myShifts&&state.myShifts[meKey]; if(!m) return; Object.keys(m).forEach(ds=>{ if(ds>=fromDs&&ds<=toDs&&Array.isArray(m[ds])){ m[ds]=m[ds].filter(s=>s.type!==type); if(!m[ds].length) delete m[ds]; } }); persist(); if(typeof renderMyCalendar==="function") renderMyCalendar(); renderLeave(); }
+function removeLoggedRange(type, fromDs, toDs){ const m=state.myShifts&&state.myShifts[meKey]; if(!m) return; Object.keys(m).forEach(ds=>{ if(ds>=fromDs&&ds<=toDs&&Array.isArray(m[ds])){ const n=m[ds].length; m[ds]=m[ds].filter(s=>s.type!==type); if(m[ds].length!==n) touchDay(meKey, ds); if(!m[ds].length) delete m[ds]; } }); persist(); if(typeof renderMyCalendar==="function") renderMyCalendar(); renderLeave(); }
 function printLeaveTaken(scope){
   const Y=activeLeaveYear(); let fromISO,toIncl,title;
   if(scope==="H1"){ fromISO=`${Y}-02-01`; toIncl=`${Y}-07-31`; title=`Feb – Aug ${Y}`; }
@@ -2534,6 +2624,7 @@ function attachSync(){
   let seeded=false;
   syncRef.on("value", snap=>{
     const val=snap.val();
+    const firstEvent=!firstSyncDone; firstSyncDone=true;
     const remoteHasContent = val && val.people && (
       (val.assignments && Object.keys(val.assignments).length) ||
       (val.notes && val.notes.length) ||
@@ -2543,16 +2634,23 @@ function attachSync(){
     if(remoteHasContent){
       const remoteTs=val.updatedAt||0, localTs=state.updatedAt||0;
       lastRemoteTs=Math.max(lastRemoteTs, remoteTs);
-      if(remoteTs>=localTs){
-        applyingRemote=true; state=Object.assign(defaultState(), val); normalize(); writeLocal(state); saveCacheCode(rotaCode); renderAll(); applyingRemote=false; maybeAlert(); enforcePinAfterSync();
-      } else {
-        // local is newer than the room (e.g. edits made while a write failed) — push, don't lose them
-        state.updatedAt=Math.max(Date.now(), remoteTs+1, localTs); lastRemoteTs=Math.max(lastRemoteTs, state.updatedAt); writeLocal(state);
+      rescueSnapshot(state, val);
+      // choose the newer blob for settings/split, then field-merge calendars + requests so neither side loses days
+      const merged=mergeShifts(state, val);
+      const base=Object.assign(defaultState(), remoteTs>=localTs ? val : state);
+      base.myShifts=merged.map; base.myShiftsTs=merged.ts;
+      mergeRequestsInto(base, state, val);
+      const changed = JSON.stringify({m:base.myShifts||{}, q:base.leave||{}}) !== JSON.stringify({m:val.myShifts||{}, q:val.leave||{}});
+      applyingRemote=true; state=base; normalize(); writeLocal(state); saveCacheCode(rotaCode); renderAll(); applyingRemote=false; maybeAlert(); enforcePinAfterSync();
+      if(firstEvent && meKey && !hasPin(meKey)) offerPinSetup(meKey);   // offer only once the room is known
+      if(changed || remoteTs<localTs){
+        state.updatedAt=stamp(); lastRemoteTs=Math.max(lastRemoteTs, state.updatedAt); writeLocal(state);
         try{ syncRef.set(state).catch(e=>{ console.warn("sync push rejected", e); setSyncStatus("local","Sync error — changes saved on this device only. Tap to retry."); }); }catch(e){ console.warn("sync push failed", e); }
       }
     } else if(!seeded){
       seeded=true; saveCacheCode(rotaCode); state.updatedAt=state.updatedAt||Date.now();
       try{ syncRef.set(state).catch(e=>{ console.warn("seed rejected", e); setSyncStatus("local","Sync error — check the rota code / connection. Saved on this device."); }); }catch(e){ console.warn("seed failed", e); }
+      if(meKey && !hasPin(meKey)) offerPinSetup(meKey);
     }
   }, err=>{ console.warn(err); setSyncStatus("local","Sync error — saved on this device. Tap to retry."); });
   setSyncStatus("live", `Live · rota code “${rotaCode}”. Tap to change.`);
@@ -2560,6 +2658,7 @@ function attachSync(){
 async function connectWithCode(code){
   // if the cached rota belongs to a different code, don't let it leak into this room
   const movingRooms = (cacheCode!=="" && cacheCode!==code);
+  firstSyncDone=false;
   rotaCode=code; saveCode(code); syncPath="slotShare/"+code;
   if(movingRooms){
     const fresh=defaultState(); fresh.people=state.people; state=fresh; normalize(); writeLocal(state); renderAll();
@@ -2572,6 +2671,7 @@ async function connectWithCode(code){
   }catch(e){ console.warn("sync failed", e); setSyncStatus("local","Couldn’t connect — saved on this device. Tap to retry."); }
 }
 function goOffline(){
+  firstSyncDone=false;
   if(syncRef){ try{ syncRef.off(); }catch(e){} syncRef=null; }
   rotaCode=""; saveCode(""); saveCacheCode(""); syncPath="";
   setSyncStatus("local","Saved on this device · tap to sync");
@@ -2589,6 +2689,7 @@ function openLogin(){
   document.getElementById("loginDisconnect").style.display = syncRef ? "" : "none";
   renderLoginWho();
   renderLoginPin();
+  renderRescue();
   document.getElementById("loginOverlay").classList.add("show");
 }
 function closeLogin(){ document.getElementById("loginOverlay").classList.remove("show"); requestAnimationFrame(replayHubSpin); }
@@ -2597,7 +2698,7 @@ function submitLogin(){
   if(!meKey){ err.textContent="First, tap who you are on this device."; return; }
   const code=(document.getElementById("loginCode").value||"").trim().replace(/[^A-Za-z0-9_-]/g,"");
   if(!code){ err.textContent="Enter a rota code — you and your call partner type the same one."; return; }
-  const proceed=()=>{ pinUnlocked=true; closeLogin(); renderComposer(); renderAll(); connectWithCode(code); setTimeout(()=>offerPinSetup(meKey), 1700); };
+  const proceed=()=>{ closeLogin(); renderComposer(); renderAll(); connectWithCode(code); };
   if(hasPin(meKey)){ closeLogin(); openPin("verify",meKey,proceed,{onCancel:openLogin}); } else { proceed(); }
 }
 function loginOffline(){
@@ -2608,6 +2709,8 @@ function loginOffline(){
 /* ===== normalize + boot ===== */
 function normalize(){
   if(!state.rotaId) state.rotaId=1; if(!state.accept) state.accept={}; if(!state.myShifts) state.myShifts={};
+  if(!state.myShiftsTs) state.myShiftsTs={};
+  try{ const cutoff=Date.now()-60*86400000; ["A","B"].forEach(k=>{ const t=state.myShiftsTs[k]; if(!t) return; const m=(state.myShifts&&state.myShifts[k])||{}; Object.keys(t).forEach(ds=>{ if(!m[ds] && t[ds]<cutoff) delete t[ds]; }); }); }catch(e){}
   if(!state.ready || typeof state.ready!=="object") state.ready={A:false,B:false};
   if(!Array.isArray(state.comments)) state.comments=[];
   if(!state.leave || typeof state.leave!=="object") state.leave={};
