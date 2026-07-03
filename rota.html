@@ -1251,7 +1251,8 @@ let notified = new Set();
 function readLocal(){ try{ const r=localStorage.getItem(STORE_KEY); return r?JSON.parse(r):null; }catch(e){ return mem; } }
 function writeLocal(obj){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(obj)); }catch(e){ mem=obj; } }
 let applyingRemote = false, db = null;
-function persist(){ state.updatedAt=Date.now(); writeLocal(state); if(db && !applyingRemote){ try{ db.ref(syncPath).set(state).catch(e=>{ console.warn("sync write rejected", e); setSyncStatus("local","Sync error — changes saved on this device only. Tap to retry."); }); }catch(e){ console.warn("sync write failed", e); } } }
+let lastRemoteTs=0;
+function persist(){ state.updatedAt=Math.max(Date.now(), lastRemoteTs+1, (state.updatedAt||0)+1); lastRemoteTs=Math.max(lastRemoteTs, state.updatedAt); writeLocal(state); if(db && !applyingRemote){ try{ db.ref(syncPath).set(state).catch(e=>{ console.warn("sync write rejected", e); setSyncStatus("local","Sync error — changes saved on this device only. Tap to retry."); }); }catch(e){ console.warn("sync write failed", e); } } }
 
 /* ===== date helpers ===== */
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -1591,8 +1592,9 @@ function renderRescue(){
       let arr2=[]; try{ arr2=JSON.parse(localStorage.getItem(RESCUE_KEY)||"[]"); }catch(e){}
       const entry=arr2[Number(b.dataset.ri)]; if(!entry) return;
       rescueSnapshot(state, entry.state);
+      lastRemoteTs=Math.max(lastRemoteTs, state.updatedAt||0);
       state=Object.assign(defaultState(), entry.state); normalize(); persist(); renderAll(); renderRescue();
-      flashMsg("Backup restored — syncing to all devices");
+      flashMsg(db?"Backup restored — syncing to all devices":"Restored on this device — connect a rota code to sync it");
     });
   });
 }
@@ -2570,11 +2572,13 @@ function attachSync(){
     );
     if(remoteHasContent){
       const remoteTs=val.updatedAt||0, localTs=state.updatedAt||0;
+      lastRemoteTs=Math.max(lastRemoteTs, remoteTs);
       if(remoteTs>=localTs){
         rescueSnapshot(state, val);
         applyingRemote=true; state=Object.assign(defaultState(), val); normalize(); writeLocal(state); saveCacheCode(rotaCode); renderAll(); applyingRemote=false; maybeAlert(); enforcePinAfterSync();
       } else {
         // local is newer than the room (e.g. edits made while a write failed) — push, don't lose them
+        state.updatedAt=Math.max(Date.now(), remoteTs+1, localTs); lastRemoteTs=Math.max(lastRemoteTs, state.updatedAt); writeLocal(state);
         try{ syncRef.set(state).catch(e=>{ console.warn("sync push rejected", e); setSyncStatus("local","Sync error — changes saved on this device only. Tap to retry."); }); }catch(e){ console.warn("sync push failed", e); }
       }
     } else if(!seeded){
