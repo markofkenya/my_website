@@ -2672,7 +2672,7 @@ function boot(){
   document.getElementById("exportIcs").onclick=exportICS;
   document.getElementById("leaveBtn").onclick=openLeave;
   document.getElementById("leaveBack").onclick=closeLeave;
-  document.getElementById("leaveMyRota").onclick=()=>{ document.getElementById("leaveOverlay").classList.remove("show"); openMyRota(); };
+  document.getElementById("leaveMyRota").onclick=()=>{ openMyRota(); requestAnimationFrame(()=>document.getElementById("leaveOverlay").classList.remove("show")); };
   document.getElementById("reqBack").onclick=closeRequest;
   document.getElementById("icsCancel").onclick=closeIcs;
   document.getElementById("icsExport").onclick=doExportICS;
