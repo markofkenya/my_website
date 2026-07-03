@@ -1515,9 +1515,8 @@ function wrappedArchiveHTML(){
   const items = tags.slice(0,12).map(tag=>{
     const a = arch[tag];
     return `<button onclick="openArchivedWrapped('${tag}')" style="text-align:left;background:var(--panel-2,#1c1f29);border:1px solid var(--line,#2a2e3a);border-radius:10px;padding:10px 12px;cursor:pointer;color:var(--text);min-width:130px;flex:1">
-      <div style="font-family:var(--mono,monospace);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:4px">${a.monthName} ${a.year}</div>
-      <div style="font-weight:700;font-size:13px;letter-spacing:-.01em">${a.personality||'Logged'}</div>
-      <div style="font-family:var(--mono,monospace);font-size:10px;color:var(--dim);margin-top:3px">${a.entries} entries</div>
+      <div style="font-weight:700;font-size:13px;letter-spacing:-.01em">${a.monthName} ${a.year} Wrapped</div>
+      <div style="font-family:var(--mono,monospace);font-size:10px;color:var(--dim);margin-top:4px">${a.personality||'Logged'}</div>
     </button>`;
   }).join('');
   return `<div style="margin:28px 0 8px;padding-top:20px;border-top:1px solid var(--line,#2a2e3a)">
@@ -1956,7 +1955,7 @@ function exportCpdDiary(){
       <div><div class="k">Entries</div><div class="v">${all.length}</div></div>
     </div>
     <div class="body">${all.length?yearsHtml:'<p style="padding:30px 0;color:#9a8f6a;font-style:italic">No CPD entries logged yet.</p>'}</div>
-    <div style="margin:18px 36px 0;padding-top:10px;border-top:1px solid #e2ddd0;font-size:8.5pt;line-height:1.5;color:#9a8f6a;font-style:italic;max-width:70ch">This CPD diary was produced using a custom self-developed application with AI assistance. All clinical entries and reflections are my own record of activity undertaken.</div>
+    <div style="margin:18px 36px 0;padding-top:10px;border-top:1px solid #e2ddd0;font-size:8.5pt;line-height:1.5;color:#9a8f6a;font-style:italic;max-width:70ch">This CPD diary was designed using a custom self-developed application with AI assistance. All clinical entries and reflections are my own record of activity undertaken.</div>
     <div class="ft"><span>CPD Diary · Reflective record for appraisal</span><span>Generated ${gen}</span></div>
   </div>
   </body></html>`;
@@ -2387,6 +2386,11 @@ footer.colophon-foot em{font-style:normal;text-transform:none;color:var(--ink-2)
 }
 
 function showPrintStylePicker(){
+  // Editorial Refined is the sole report style — skip the picker and print directly.
+  printReport('editorial');
+  return;
+}
+function _showPrintStylePickerModal_unused(){
   const last = (state.profile && state.profile.reportStyle) || 'editorial';
   const opts = [
     {id:'nhs',       name:'NHS Clinical',     desc:'Blue & purple, gradient header, stream colour-coding'},
@@ -2538,7 +2542,7 @@ function printReport(style){
   <div class="summary-line">Recorded ward cover: <strong>${wardMonths} months</strong> against the 12-month minimum.</div>
   ${formalScopedTable('Ward cover', wardAll, ['hospital','start','end','months','year','supervisor'], 'gim')}
 
-  <div class="ai-disclosure">This logbook was produced using a custom self-developed application with AI assistance. All clinical entries and reflections are my own record of activity undertaken.</div>
+  <div class="ai-disclosure">This logbook was designed using a custom self-developed application with AI assistance. All clinical entries and reflections are my own record of activity undertaken.</div>
   <footer class="colophon-foot">
     <span>Outcome 1 \u00b7 ARCP Logbook \u00b7 ${safe(traineeName)} \u00b7 ${safe(trainingNumber)}</span>
     <em>Generated ${safe(generatedDate)} \u2014 confidential record</em>
