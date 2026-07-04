@@ -401,11 +401,7 @@
   .leave-inner{max-width:660px;margin:0 auto;padding:14px 16px 64px}
   .rota-top-actions{display:flex;gap:8px;align-items:center}
   .btn.key-al{background:#2f7d4f;color:#fff;padding:11px 18px;font-size:14.5px;font-weight:600;box-shadow:0 1px 0 #256a42,0 7px 16px -9px #2f7d4f}
-  .leave-hero{position:relative;display:flex;gap:22px;align-items:center;background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-radius:20px;padding:20px 22px;margin:10px 0 18px;box-shadow:0 1px 2px rgba(20,28,34,.03)}
-  .book-leave-link{position:absolute;top:13px;right:16px;background:none;border:none;color:#3fbb83;font-family:var(--font-b);font-size:13px;font-weight:600;cursor:pointer;padding:4px 6px;border-radius:8px}
-  .book-leave-link:hover{background:rgba(63,187,131,.12)}
-  .next-leave-chip{display:inline-flex;align-items:center;gap:7px;margin-top:9px;padding:5px 11px;border-radius:20px;border:1px solid var(--line);background:var(--surface-2);font-size:12px;font-weight:600;color:var(--ink-soft);white-space:nowrap}
-  .nl-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+  .leave-hero{display:flex;gap:22px;align-items:center;background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-radius:20px;padding:20px 22px;margin:10px 0 18px;box-shadow:0 1px 2px rgba(20,28,34,.03)}
   .leave-ringwrap{position:relative;width:120px;height:120px;flex:0 0 auto}
   .leave-ring{width:120px;height:120px;transform:rotate(-90deg)}
   .leave-ring .lr-bg{fill:none;stroke:var(--line);stroke-width:11}
@@ -2119,30 +2115,11 @@ function renderLeave(){
     return `<div class="bk-item" data-id="${it.id}"><div class="bk-row"><span class="bk-dot" style="background:${dotCol(it.type)}"></span><div class="bk-main"><div class="bk-title">${range}</div><div class="bk-sub">${reqTypeLabel(it.type)} · ${it.count} day${it.count===1?"":"s"}</div></div><span class="rq-badge ${pillCls[it.status]}">${pillTxt[it.status]}</span></div><div class="bk-acts">${acts}</div></div>`;
   };
   const bkHTML = items.length ? items.map(bkItem).join("") : `<div class="bk-empty">No leave booked yet. Tap <b>＋ Request</b> to book annual or study leave.</div>`;
-  // next upcoming leave block (grouped run of booked leave days)
-  let nextChip="";
-  try{
-    const m=(state.myShifts&&state.myShifts[meKey])||{};
-    const tISO=leaveISO(new Date());
-    const days=Object.keys(m).filter(ds=>ds>=tISO && (m[ds]||[]).some(s=>s.type==="annual_leave"||s.type==="study_leave")).sort();
-    if(days.length){
-      const typ=(m[days[0]]||[]).some(s=>s.type==="annual_leave")?"annual_leave":"study_leave";
-      let len=1;
-      for(let i=1;i<days.length;i++){
-        const gap=(new Date(days[i]+"T00:00:00")-new Date(days[i-1]+"T00:00:00"))/86400000;
-        const sameType=(m[days[i]]||[]).some(s=>s.type===typ);
-        if(gap<=4 && sameType) len++; else break;
-      }
-      const d0=new Date(days[0]+"T00:00:00");
-      nextChip=`<div class="next-leave-chip"><span class="nl-dot" style="background:${typ==="annual_leave"?"#3fbb83":"#6366f1"}"></span>Next leave · ${d0.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})} · ${len} day${len===1?"":"s"}</div>`;
-    }
-  }catch(e){}
   host.innerHTML=`
     <div class="leave-yearnav"><button class="iconbtn" id="lvPrev">‹</button><div class="lyn-label">Feb ${Y} – Feb ${Y+1}</div><button class="iconbtn" id="lvNext">›</button></div>
     <div class="leave-hero">
-      <button class="book-leave-link" id="lvBook">＋ Book leave</button>
       <div class="leave-ringwrap"><svg viewBox="0 0 120 120" class="leave-ring"><circle class="lr-bg" cx="60" cy="60" r="${R}"></circle><circle class="lr-fg" cx="60" cy="60" r="${R}" style="stroke:${col};stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${off.toFixed(1)}"></circle></svg><div class="lr-center"><div class="lr-num">${yrLeft}</div><div class="lr-lbl">days left</div></div></div>
-      <div class="leave-hero-meta"><div class="lh-year">Annual leave this year</div><div class="lh-stat"><b>${yrTaken}</b> taken of <b>${yrTotal}</b></div>${nextChip}</div>
+      <div class="leave-hero-meta"><div class="lh-year">Annual leave this year</div><div class="lh-stat"><b>${yrTaken}</b> taken of <b>${yrTotal}</b></div></div>
     </div>
     ${rem.length?`<div class="leave-reminders">${rem.map(x=>`<div class="lr-item ${x.cls||""}">${x.t}</div>`).join("")}</div>`:""}
     <div class="rot-list">${card(r1)}${card(r2)}</div>
@@ -2171,7 +2148,6 @@ function renderLeave(){
   document.getElementById("lvSl").onchange=e=>setLeaveField("slEntitlement",e.target.value,true);
   host.querySelectorAll(".rc-fields input").forEach(inp=>inp.onchange=()=>setRosterField(inp.dataset.key, inp.dataset.f, inp.value));
   document.getElementById("requestLeaveBtn").onclick=openRequest;
-  { const b=document.getElementById("lvBook"); if(b) b.onclick=openRequest; }
   const cor=document.getElementById("lvCoord"); if(cor) cor.onchange=e=>setLeaveText("coordEmail",e.target.value);
   [["pfName","name"],["pfGrade","grade"],["pfSpec","specialty"],["pfWard","ward"],["pfHosp","hospital"],["pfGmc","gmc"]].forEach(([id,f])=>{ const el=document.getElementById(id); if(el) el.onchange=ev=>setLeaveText(f,ev.target.value); });
   host.querySelectorAll(".bk-row").forEach(row=>row.onclick=()=>row.parentElement.classList.toggle("open"));
