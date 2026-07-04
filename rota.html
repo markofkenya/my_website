@@ -371,7 +371,7 @@
   #myGrid .cell.leave-al{background:rgba(63,187,131,.13);border:1.5px solid #2f9e63}
   #myGrid .cell.leave-sl{background:rgba(99,102,241,.14);border:1.5px solid #6366f1}
   #myGrid .cell.leave-day .d{font-weight:700}
-  .leave-band{display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:3px 6px;border-radius:7px;font-size:10.5px;font-weight:700;letter-spacing:.02em;color:#fff;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .leave-band{display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:3px 6px;border-radius:7px;font-size:11px;font-weight:800;letter-spacing:.08em;color:#fff;text-align:center;white-space:nowrap}
   .leave-band.al{background:#2f9e63}
   .leave-band.sl{background:#6366f1}
   .my-legend{display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:16px; padding-top:14px; border-top:1px solid var(--line-soft)}
@@ -1805,7 +1805,7 @@ function renderMyCalendar(){
     if(leaveType) cell.classList.add("leave-day", leaveType==="al"?"leave-al":"leave-sl");
     arr.forEach((s,i)=>{
       if(s.type==="annual_leave"||s.type==="study_leave"){
-        html+=`<div class="leave-band ${s.type==="annual_leave"?"al":"sl"}">${s.type==="annual_leave"?"Annual leave":"Study leave"}</div>`;
+        html+=`<div class="leave-band ${s.type==="annual_leave"?"al":"sl"}" title="${s.type==="annual_leave"?"Annual leave":"Study leave"}">${s.type==="annual_leave"?"AL":"SL"}</div>`;
         return;
       }
       const t=myType(s.type); const ad=ALLDAY_TYPES.has(s.type); const tip=ad?(s.type==="oncall"?"24h on-call":"All day"):`${s.start}–${s.end}`; html+=`<div class="ms-chip" style="background:${t.color}" title="${escapeHtml(t.label)} ${tip}">${t.short}${ad?"":" "+s.start}</div>`;
