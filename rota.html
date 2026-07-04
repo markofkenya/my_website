@@ -413,7 +413,6 @@
   .lh-year{font-family:var(--font-m);font-size:11px;letter-spacing:.04em;color:var(--ink-faint);text-transform:uppercase;margin-bottom:7px}
   .lh-stat{font-size:15px;color:var(--ink);margin-bottom:8px}
   .lh-stat b{font-weight:700}
-  .lh-build{margin-top:6px;font-size:10px;letter-spacing:.04em;color:var(--ink-faint);opacity:.65}
   .lh-sl{font-size:13px;color:var(--ink-soft);display:flex;align-items:center;gap:7px}
   .sl-dot{width:11px;height:11px;border-radius:3px;background:#6366f1;display:inline-block}
   .leave-reminders{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
@@ -2120,7 +2119,7 @@ function renderLeave(){
     <div class="leave-yearnav"><button class="iconbtn" id="lvPrev">‹</button><div class="lyn-label">Feb ${Y} – Feb ${Y+1}</div><button class="iconbtn" id="lvNext">›</button></div>
     <div class="leave-hero">
       <div class="leave-ringwrap"><svg viewBox="0 0 120 120" class="leave-ring"><circle class="lr-bg" cx="60" cy="60" r="${R}"></circle><circle class="lr-fg" cx="60" cy="60" r="${R}" style="stroke:${col};stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${off.toFixed(1)}"></circle></svg><div class="lr-center"><div class="lr-num">${yrLeft}</div><div class="lr-lbl">days left</div></div></div>
-      <div class="leave-hero-meta"><div class="lh-year">Annual leave this year</div><div class="lh-stat"><b>${yrTaken}</b> taken of <b>${yrTotal}</b></div><div class="lh-build">build 2026-07-b · clean hero</div></div>
+      <div class="leave-hero-meta"><div class="lh-year">Annual leave this year</div><div class="lh-stat"><b>${yrTaken}</b> taken of <b>${yrTotal}</b></div></div>
     </div>
     ${rem.length?`<div class="leave-reminders">${rem.map(x=>`<div class="lr-item ${x.cls||""}">${x.t}</div>`).join("")}</div>`:""}
     <div class="rot-list">${card(r1)}${card(r2)}</div>
