@@ -1065,7 +1065,6 @@
     <label class="fld-label">Who are you on this device?</label>
     <div class="assign-opts" id="loginWho"></div>
     <div class="login-pin" id="loginPin"></div>
-    <div class="login-pin" id="loginRescue"></div>
     <label class="fld-label">Rota code</label>
     <input id="loginCode" type="text" placeholder="e.g. ngh-renal-2026" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false">
     <div class="sync-err" id="loginErr"></div>
@@ -1623,36 +1622,10 @@ function mergeRequestsInto(base, a, b){
     base.leave[k].deletedReq=Object.keys(tomb).map(id=>({id, ts:tomb[id]})).slice(-50);
   });
 }
-const RESCUE_KEY="slotshare-rescue";
-function rescueSnapshot(local, incoming){
-  try{
-    let n=0; ["A","B"].forEach(k=>{ if(local.myShifts&&local.myShifts[k]) n+=Object.keys(local.myShifts[k]).length; if(local.leave&&local.leave[k]&&Array.isArray(local.leave[k].requests)) n+=local.leave[k].requests.length; });
-    if(!n) return;
-    if(JSON.stringify(local.myShifts||{})===JSON.stringify(incoming.myShifts||{})) return;
-    let arr=[]; try{ arr=JSON.parse(localStorage.getItem(RESCUE_KEY)||"[]"); }catch(e){}
-    arr.unshift({at:Date.now(), state:local}); arr=arr.slice(0,3);
-    localStorage.setItem(RESCUE_KEY, JSON.stringify(arr));
-  }catch(e){}
-}
 
-function rescueCounts(s){ let req=0, days=0; try{ ["A","B"].forEach(k=>{ if(s.leave&&s.leave[k]&&Array.isArray(s.leave[k].requests)) req+=s.leave[k].requests.length; if(s.myShifts&&s.myShifts[k]) days+=Object.keys(s.myShifts[k]).length; }); }catch(e){} return {req,days}; }
-function renderRescue(){
-  const el=document.getElementById("loginRescue"); if(!el) return;
-  let arr=[]; try{ arr=JSON.parse(localStorage.getItem(RESCUE_KEY)||"[]"); }catch(e){}
-  if(!arr.length){ el.innerHTML=""; return; }
-  el.innerHTML=`<div class="lp-row" style="flex-direction:column;align-items:stretch;gap:8px"><span style="font-weight:600">Device backups (saved before syncs)</span>${arr.map((b,i)=>{ const c=rescueCounts(b.state); const d=new Date(b.at); return `<span class="lp-acts" style="justify-content:space-between"><span style="font-size:12px">${d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})} · ${c.req} request${c.req===1?"":"s"}, ${c.days} rota day${c.days===1?"":"s"}</span><button class="lp-btn" data-ri="${i}">Restore</button></span>`; }).join("")}</div>`;
-  el.querySelectorAll("[data-ri]").forEach(b=>b.onclick=()=>{
-    openConfirm("Restore this backup?","Days and requests from this backup are merged back in and synced to every device.","Restore",()=>{
-      let arr2=[]; try{ arr2=JSON.parse(localStorage.getItem(RESCUE_KEY)||"[]"); }catch(e){}
-      const entry=arr2[Number(b.dataset.ri)]; if(!entry) return;
-      const merged=mergeShifts(entry.state, state);
-      state.myShifts=merged.map; state.myShiftsTs=merged.ts;
-      mergeRequestsInto(state, entry.state, state);
-      normalize(); persist(); renderAll(); renderRescue();
-      flashMsg(db?"Backup merged back in — syncing":"Backup merged on this device");
-    });
-  });
-}
+
+
+
 
 /* ===== Cooperative PIN lock (client-side deterrence) ===== */
 let pinUnlocked=false, pinState=null;
@@ -2642,7 +2615,6 @@ function attachSync(){
     if(remoteHasContent){
       const remoteTs=val.updatedAt||0, localTs=state.updatedAt||0;
       lastRemoteTs=Math.max(lastRemoteTs, remoteTs);
-      rescueSnapshot(state, val);
       // choose the newer blob for settings/split, then field-merge calendars + requests so neither side loses days
       const merged=mergeShifts(state, val);
       const base=Object.assign(defaultState(), remoteTs>=localTs ? val : state);
@@ -2698,7 +2670,6 @@ function openLogin(){
   document.getElementById("loginDisconnect").style.display = syncRef ? "" : "none";
   renderLoginWho();
   renderLoginPin();
-  renderRescue();
   document.getElementById("loginOverlay").classList.add("show");
 }
 function closeLogin(){ document.getElementById("loginOverlay").classList.remove("show"); requestAnimationFrame(replayHubSpin); }
