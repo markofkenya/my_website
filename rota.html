@@ -2003,9 +2003,18 @@ function getLeave(){
 function annualFT(year){ return year>=2029?32:27; }
 function activeLeaveYear(){ if(leaveViewYear!=null) return leaveViewYear; const r=new Date(); let y=r.getFullYear(); if(r.getMonth()<1) y-=1; return y; }
 function bhInRange(fromISO,toISO){ return Object.keys(BANK_HOLIDAYS).filter(ds=>ds>=fromISO && ds<=toISO); }
-function countLeaveDays(typeId, fromISO, toExclusiveISO, toInclusiveISO){
-  const m=(state.myShifts&&state.myShifts[meKey])||{}; let n=0;
-  Object.keys(m).forEach(ds=>{ const ok = toInclusiveISO!=null ? (ds>=fromISO && ds<=toInclusiveISO) : (ds>=fromISO && ds<toExclusiveISO); if(ok && Array.isArray(m[ds])) m[ds].forEach(s=>{ if(s.type===typeId) n++; }); });
+function countLeaveDays(typeId, fromISO, toExclusiveISO, toInclusiveISO, wteForPeriod){
+  const L=getLeave();
+  const m=(state.myShifts&&state.myShifts[meKey])||{};
+  const inWin=ds=> toInclusiveISO!=null ? (ds>=fromISO && ds<=toInclusiveISO) : (ds>=fromISO && ds<toExclusiveISO);
+  const set=new Set();
+  // 1) days written on the calendar
+  Object.keys(m).forEach(ds=>{ if(inWin(ds) && Array.isArray(m[ds]) && m[ds].some(s=>s.type===typeId)) set.add(ds); });
+  // 2) request days not (yet) on the calendar — e.g. pending — so the tally matches the bookings list
+  const reqs=(L.requests||[]);
+  reqs.forEach(r=>{ if(r.type===typeId && r.status!=="declined" && Array.isArray(r.days)) r.days.forEach(ds=>{ if(inWin(ds)) set.add(ds); }); });
+  // 3) LTFT: a leave day on the non-working weekday costs nothing when that period is <1.0 WTE
+  let n=0; set.forEach(ds=>{ const wd=new Date(ds+"T00:00:00").getDay(); if(wteForPeriod!=null && wteForPeriod<1 && wd===L.nwd) return; n++; });
   return n;
 }
 function rosterCfg(Y, half){ const L=getLeave(); const key=`${Y}-${half}`; if(!L.rosters[key]) L.rosters[key]={carryover:0, wte:null, override:null}; return L.rosters[key]; }
@@ -2021,7 +2030,7 @@ function rosterCore(Y, half){
   const auto=Math.round(((halfDays*wte)+(bhCount*wte)-bhWorked)*10)/10;
   const entitlement=(cfg.override!=null)?cfg.override:auto;
   const baseTotal=Math.round((entitlement+cfg.carryover)*10)/10;
-  const taken=countLeaveDays("annual_leave", start, null, end);
+  const taken=countLeaveDays("annual_leave", start, null, end, wte);
   const label = half==="H1"?`Feb – Aug ${Y}`:`Aug ${Y} – Feb ${Y+1}`;
   return {start,end,half,halfDays,wte,bhCount,bhWorked,auto,entitlement,baseTotal,taken,label,cfg,key:`${Y}-${half}`};
 }
