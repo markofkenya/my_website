@@ -526,6 +526,8 @@ let currentYear = localStorage.getItem("arcp_v2_current_year") || "ST4";
 let currentTab = localStorage.getItem("arcp_v2_tab") || "roadmap"; if(currentTab==='today') currentTab='roadmap';
 let logSubTab = "clinics";
 let suppressRemote = false;
+let remoteReady = false;   // true once the first Firebase snapshot has been reconciled this session
+let pendingPush = false;   // a save happened before remoteReady — push after reconcile
 const BETA_TRIAL_DAYS = 90;
 const BETA_FEEDBACK_EMAIL = "markmaugo@gmail.com";
 
@@ -704,7 +706,9 @@ function saveState(push=true){
   if(push){ localStorage.setItem('arcp_v2_remote_ts', String(Date.now())); fbSave(); }
 }
 function fbSave(){
-  if(!window.ARCP_FB?.online || !window.ARCP_FB.userRoot || suppressRemote) return;
+  if(suppressRemote) return;
+  if(!remoteReady){ pendingPush = true; return; }  // never clobber the cloud before first sync
+  if(!window.ARCP_FB?.online || !window.ARCP_FB.userRoot) return;
   const payload={ state: encodeStateForFirebase(state), updatedAt:Date.now(), version:"2.2-modular-logbook" };
   window.ARCP_FB.update(window.ARCP_FB.userRoot, payload).catch(err=>{
     console.error('[Outcome1] Firebase save failed:', err?.message || err);
@@ -1743,7 +1747,7 @@ function tableFiltered(k, filterFn, cols, mapper){ const arr=entries(k).filter(f
 function canEditEntry(e){ return Date.now() - Number(e.createdAt || e.id || 0) <= 7776000000; }
 function tableFromArray(k, arr, cols, mapper){ if(!arr.length) return `<div class="hint">// no entries yet</div>`; return `<div class="table-wrap"><table class="table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}<th></th></tr></thead><tbody>${arr.map(e=>`<tr>${mapper(e).map(x=>`<td>${safe(x)}</td>`).join('')}<td><div class="row" style="gap:4px;justify-content:flex-end">${canEditEntry(e)?`<button class="btn tiny" title="Edit available for 24h after adding" onclick="editEntry('${k}',${e.id})">Edit</button>`:`<span class="hint" title="Editing window has passed">locked</span>`}<button class="btn tiny danger" onclick="deleteEntry('${k}',${e.id})">✕</button></div></td></tr>`).join('')}</tbody></table></div>`; }
 function addEntry(k, data){ if(yearLocked()) return alert('This year is locked. Unlock it before editing.'); const now=Date.now(); const arr=entries(k); arr.push({...data,id:now,createdAt:now,updatedAt:now,year:data.year||currentYear}); saveEntries(k,arr); render(); }
-function deleteEntry(k,id){ if(yearLocked()) return alert('This year is locked. Unlock it before editing.'); if(!confirm('Delete this entry?')) return; saveEntries(k, entries(k).filter(e=>e.id!==id)); render(); }
+function deleteEntry(k,id){ if(yearLocked()) return alert('This year is locked. Unlock it before editing.'); if(!confirm('Delete this entry?')) return; state.tombstones=state.tombstones||{}; state.tombstones[k]=state.tombstones[k]||{}; state.tombstones[k][String(id)]=Date.now(); saveEntries(k, entries(k).filter(e=>e.id!==id)); render(); }
 function editEntry(k,id){ if(yearLocked()) return alert('This year is locked. Unlock it before editing.'); const arr=entries(k); const idx=arr.findIndex(e=>e.id===id); if(idx<0) return; const e=arr[idx]; if(!canEditEntry(e)) return alert('Editing is only available for 24 hours after adding an item.'); const editable=Object.keys(e).filter(x=>!['id','createdAt','updatedAt'].includes(x)); for(const field of editable){ const current=e[field]??''; const next=prompt(`Edit ${field}`, current); if(next===null) return; e[field]=next; } e.updatedAt=Date.now(); arr[idx]=e; saveEntries(k,arr); render(); }
 function logSummaryCards(items){ return `<div class="summary-grid" style="margin-bottom:16px;">${items.map(it=>`<div class="summary"><div class="big ${it.cls||'primary'}">${it.value}</div><div class="hint">${it.label}</div></div>`).join('')}</div>`; }
 function otherClinicControl(id, list){ return `<select class="input" id="${id}" onchange="document.getElementById('${id}-other-wrap').style.display=this.value==='Other'?'flex':'none'">${optionsHtml(list)}</select><div class="field" id="${id}-other-wrap" style="display:none;margin-top:6px"><label>Specify clinic type</label><input class="input" id="${id}-other" placeholder="Type clinic name"></div>`; }
@@ -2720,7 +2724,60 @@ window.exportLogbook=exportLogbook;
 function setSyncStatus(online,message){ const s=document.getElementById('sync'); if(!s)return; s.textContent='● Live'; s.style.color='var(--green)'; }
 window.addEventListener('firebase-status', e=>{ setSyncStatus(e.detail.online, e.detail.message); });
 setTimeout(()=>{ if(window.ARCP_FB?.online) setSyncStatus(true,'Live'); }, 800);
-window.addEventListener('firebase-load', e=>{ if(!e.detail?.state) return; const remoteTs=e.detail.updatedAt||0; const local=JSON.parse(localStorage.getItem('arcp_v2_remote_ts')||'0'); if(remoteTs>local){ suppressRemote=true; state=Object.assign(blankState(), decodeStateFromFirebase(e.detail.state)); localStorage.setItem(STATE_KEY,JSON.stringify(state)); localStorage.setItem('arcp_v2_remote_ts',String(remoteTs)); suppressRemote=false; render(); } });
+// ─── MULTI-DEVICE SAFE SYNC ──────────────────────────────────────────
+// Logbook entries merge by id (newest updatedAt wins); deletions use tombstones so
+// merging can't resurrect them; nothing is pushed to Firebase until the first remote
+// snapshot has been reconciled — a stale device can never clobber the cloud on boot.
+const TOMBSTONE_TTL = 90*24*3600*1000;
+function entryTs(e){ return Number(e?.updatedAt || e?.createdAt || e?.id || 0); }
+function mergeTombstones(a,b){
+  const out={}; const now=Date.now();
+  [a||{},b||{}].forEach(src=>{ Object.keys(src||{}).forEach(kind=>{
+    Object.entries(src[kind]||{}).forEach(([id,ts])=>{
+      ts=Number(ts)||0; if(!ts || now-ts>TOMBSTONE_TTL) return;
+      out[kind]=out[kind]||{}; out[kind][id]=Math.max(out[kind][id]||0, ts);
+    });
+  });});
+  return out;
+}
+function mergeLogbooks(localLb, remoteLb, tombs){
+  const kinds=new Set([...Object.keys(localLb||{}), ...Object.keys(remoteLb||{})]);
+  const out={};
+  kinds.forEach(k=>{
+    const byId=new Map();
+    [(remoteLb||{})[k]||[], (localLb||{})[k]||[]].forEach(arr=>{
+      (Array.isArray(arr)?arr:[]).forEach(e=>{ if(!e || e.id===undefined) return;
+        const id=String(e.id); const prev=byId.get(id);
+        if(!prev || entryTs(e)>=entryTs(prev)) byId.set(id,e);
+      });
+    });
+    const dead=(tombs||{})[k]||{};
+    out[k]=[...byId.values()].filter(e=>{ const d=dead[String(e.id)]; return !(d && d>=entryTs(e)); });
+  });
+  return out;
+}
+function reconcileRemote(remoteRaw, remoteTs){
+  const remote = decodeStateFromFirebase(remoteRaw) || {};
+  const localTs = JSON.parse(localStorage.getItem('arcp_v2_remote_ts')||'0');
+  const tombs   = mergeTombstones(state?.tombstones, remote?.tombstones);
+  const logbook = mergeLogbooks(state?.logbook, remote?.logbook, tombs);
+  const base    = (remoteTs>localTs) ? remote : state;   // non-logbook fields: newest wins, as before
+  const before  = JSON.stringify(state);
+  suppressRemote=true;
+  state = Object.assign(blankState(), base, { logbook, tombstones: tombs });
+  localStorage.setItem(STATE_KEY, JSON.stringify(state));
+  localStorage.setItem('arcp_v2_remote_ts', String(Math.max(remoteTs||0, localTs)));
+  suppressRemote=false;
+  const changed = JSON.stringify(state)!==before;
+  const firstReconcile = !remoteReady;
+  remoteReady = true;
+  // Push back up if local contributed entries the cloud lacks, or a save was queued pre-sync
+  const remoteNorm = JSON.stringify(mergeLogbooks(remote?.logbook, remote?.logbook, tombs));
+  if(pendingPush || (firstReconcile && JSON.stringify(logbook)!==remoteNorm)){ pendingPush=false; saveState(); }
+  if(changed) render();
+}
+window.addEventListener('firebase-load', e=>{ if(!e.detail?.state) return; try{ reconcileRemote(e.detail.state, e.detail.updatedAt||0); }catch(err){ console.error('[Outcome1] reconcile failed:', err); } });
+window.addEventListener('firebase-no-data', ()=>{ remoteReady=true; const has=(state?.logbook && Object.values(state.logbook).some(a=>Array.isArray(a)&&a.length)); if(pendingPush || has){ pendingPush=false; saveState(); } });
 
 // ─── AUTH GATE ────────────────────────────────────────
 let authMode='signin'; // or 'signup'
