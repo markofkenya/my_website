@@ -1751,6 +1751,7 @@ function clinicTypeValue(id){ const v=val(id); return v==='Other' ? val(id+'-oth
 function renderLogClinics(){
   const sp=specCfg();
   const specEntries=entries('clinics').filter(e=>e.scope!=='gim');
+  const specPatients=specEntries.reduce((a,e)=>a+(parseInt(e.patients,10)||0),0);
   const gimEntries=entries('clinics').filter(e=>e.scope==='gim');
   const specForm=`<input type="hidden" id="clinic-spec-scope" value="spec"><div class="field"><label>Clinic type</label>${otherClinicControl('clinic-spec-type', sp.logbook.clinics)}</div>${hospitalField('clinic-spec-hospital')}<div class="field"><label>Date</label><input class="input" id="clinic-spec-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Supervisor</label><input class="input" id="clinic-spec-supervisor" placeholder="Consultant name"></div><div class="field"><label>Patients seen / observed</label><input class="input" id="clinic-spec-patients" type="number" min="0"></div><div class="field"><label>Training year</label><select class="input" id="clinic-spec-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="clinic-spec-notes" placeholder="Optional"></div>`;
   const gimForm=`<input type="hidden" id="clinic-gim-scope" value="gim"><div class="field"><label>Clinic type</label>${otherClinicControl('clinic-gim-type', GIM_LOGBOOK.clinics)}</div>${hospitalField('clinic-gim-hospital')}<div class="field"><label>Date</label><input class="input" id="clinic-gim-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Supervisor</label><input class="input" id="clinic-gim-supervisor" placeholder="Consultant name"></div><div class="field"><label>Patients seen / observed</label><input class="input" id="clinic-gim-patients" type="number" min="0"></div><div class="field"><label>Training year</label><select class="input" id="clinic-gim-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="clinic-gim-notes" placeholder="Optional"></div>`;
@@ -1758,7 +1759,7 @@ function renderLogClinics(){
   const sdecCount = gimEntries.filter(e=>String(e.type||'').toLowerCase().includes('sdec')).length;
   const sdecCls = sdecCount>SDEC_CAP ? 'red' : sdecCount>=SDEC_CAP ? 'amber' : 'blue';
   document.getElementById('log-content').innerHTML=
-    logSummaryCards([{value:specEntries.length,label:`${sp.short} clinics · log only`,cls:'primary'},{value:gimEntries.length,label:`GIM clinics · cumulative (target 20)`,cls:'blue'},{value:`${sdecCount} / ${SDEC_CAP}`,label:`Medical SDEC · max 10 of 20`,cls:sdecCls}])+
+    logSummaryCards([{value:specEntries.length,label:`${sp.short} clinics · log only`,cls:'primary'},{value:specPatients,label:`${sp.short} clinic patients`,cls:'primary'},{value:gimEntries.length,label:`GIM clinics · cumulative (target 20)`,cls:'blue'},{value:`${sdecCount} / ${SDEC_CAP}`,label:`Medical SDEC · max 10 of 20`,cls:sdecCls}])+
     formPanel(`Add ${sp.short} clinic`,specForm,"saveClinic('spec')")+
     section(`${sp.short} clinics`,`${specEntries.length} entries`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('clinics',e=>e.scope!=='gim',['Date','Clinic type','Hospital','Supervisor','Patients','Year','Notes'], e=>[fmtDate(e.date),e.type,e.hospital,e.supervisor,e.patients,e.year,e.notes])}</div>`])+
     formPanel('Add GIM clinic',gimForm,"saveClinic('gim')")+
@@ -2514,7 +2515,7 @@ function printReport(style){
   <div class="figures">${figuresHtml}</div>
 
   ${formalSection('Clinics','I.','Outpatient attendances by sub-specialty and supervising consultant.')}
-  ${formalScopedTable(sp.short, specClinics, ['date','type','hospital','supervisor','patients','year'], 'spec')}
+  ${formalScopedTable(sp.short, specClinics, ['date','type','hospital','supervisor','patients','year'], 'spec', `${specClinics.reduce((a,e)=>a+(parseInt(e.patients,10)||0),0)} patients`)}
   ${formalScopedTable('GIM', gimClinics, ['date','type','hospital','supervisor','patients','year'], 'gim')}
 
   ${formalSection('Procedures','II.','Procedures performed under supervision, with directly observed assessment where indicated.')}
