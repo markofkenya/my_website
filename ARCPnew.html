@@ -3337,12 +3337,86 @@ function renderGIM(){
     section('GIM milestones','One-off items',milestones)+
     section('GIM DOPS procedures',`${stats.met} / ${stats.total} completed`,[dopsCardGrid()]);
 }
+// ─── DATA BRIDGE (neutral interchange with the personal app) ─────────
+// Neutral shape: { format:'arcp-logbook-bridge', version:1, exportedFrom:'beta',
+//   logbook:{ clinics:[{...,stream}], procedures:[...], cpd:[...], simulation:[], teaching:[], acute:[], ward:[] } }
+// Beta stores clinics/procedures/cpd as one array each with scope 'spec'(renal)/'gim'.
+function bridgeScopeToStream(s){ return s==='gim' ? 'gim' : 'renal'; }
+function bridgeStreamToScope(s){ return s==='gim' ? 'gim' : 'spec'; }
+function bridgeExport(){
+  const lb = state.logbook || {};
+  const withStream = k => (lb[k]||[]).map(e => ({ ...e, stream: bridgeScopeToStream(e.scope) }));
+  const neutral = {
+    format:'arcp-logbook-bridge', version:1, exportedFrom:'beta', exportedAt:new Date().toISOString(),
+    logbook:{
+      clinics:    withStream('clinics'),
+      procedures: withStream('procedures'),
+      cpd:        withStream('cpd'),
+      simulation: (lb.simulation||[]).slice(),
+      teaching:   (lb.teaching||[]).slice(),
+      acute:      (lb.acute||[]).slice(),
+      ward:       (lb.ward||[]).slice()
+    }
+  };
+  const blob = new Blob([JSON.stringify(neutral,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`arcp-logbook-bridge-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+function bridgeImport(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json';
+  inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{
+      let data; try{ data=JSON.parse(r.result); }catch{ alert('Not a valid bridge file.'); return; }
+      if(!data || data.format!=='arcp-logbook-bridge' || !data.logbook){ alert('This file is not an ARCP logbook bridge export.'); return; }
+      const nb = data.logbook;
+      // Scoped kinds: map neutral stream → beta scope, then merge by id
+      let added=0;
+      const scopedKinds = ['clinics','procedures','cpd'];
+      scopedKinds.forEach(kind=>{
+        const incoming = (nb[kind]||[]).map(e => ({ ...e, scope: bridgeStreamToScope(e.stream) }));
+        const before = (state.logbook[kind]||[]).length;
+        state.logbook[kind] = bridgeMergeById(state.logbook[kind]||[], incoming);
+        added += state.logbook[kind].length - before;
+      });
+      const plainKinds = ['simulation','teaching','acute','ward'];
+      plainKinds.forEach(kind=>{
+        const before = (state.logbook[kind]||[]).length;
+        state.logbook[kind] = bridgeMergeById(state.logbook[kind]||[], nb[kind]||[]);
+        added += state.logbook[kind].length - before;
+      });
+      saveState(); render();
+      alert(`Bridge import complete. ${added} new entr${added===1?'y':'ies'} merged from ${data.exportedFrom||'the other app'}.`);
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+function bridgeMergeById(localArr, incomingArr){
+  const ts = e => Number(e && (e.updatedAt||e.createdAt||e.id) || 0);
+  const byId = new Map();
+  [Array.isArray(localArr)?localArr:[], Array.isArray(incomingArr)?incomingArr:[]].forEach(arr=>{
+    arr.forEach(e=>{ if(!e||e.id===undefined) return; const id=String(e.id); const prev=byId.get(id);
+      if(!prev || ts(e)>=ts(prev)) byId.set(id,e); });
+  });
+  return [...byId.values()];
+}
+function toggleBridgeSection(){
+  const el=document.getElementById('bridge-body'); const car=document.getElementById('bridge-caret');
+  if(!el) return; const open=el.style.display!=='none'; el.style.display=open?'none':'block'; if(car) car.textContent=open?'\u25B8':'\u25BE';
+}
+window.bridgeExport=bridgeExport; window.bridgeImport=bridgeImport; window.toggleBridgeSection=toggleBridgeSection;
+
 function renderAdmin(){
   if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; }
   const hosp=hospitalOptions();
   const userEmail = window.ARCP_FB?.user?.email || '\u2014';
   const accountBlock = `<section class="section"><div class="sec-head"><span class="sec-title">Account</span><span class="sec-rule"></span><span class="sec-note">Signed in across devices</span></div><div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap"><div><div style="font-size:11px;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;font-family:var(--font-mono);margin-bottom:6px">Signed in as</div><div style="font-size:15px;color:var(--text);font-weight:500;word-break:break-all">${safe(userEmail)}</div></div><button class="btn small danger" onclick="signOutUser()">Sign out</button></div></div></section>`;
-  document.getElementById('main').innerHTML=accountBlock+`<section class="section"><div class="sec-head"><span class="sec-title">Profile & deanery</span><span class="sec-rule"></span><span class="sec-note">Used in reports and hospital dropdowns</span></div><div class="panel"><div class="form-grid"><div class="field"><label>ALS expiry</label><input class="input" type="date" value="${state.als||''}" onchange="state.als=this.value;saveState();render()"></div><div class="field"><label>${currentYear} ARCP date</label><input class="input" type="date" value="${state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]}" onchange="state.arcpDates['${currentYear}']=this.value;saveState();render()"></div><div class="field full"><label>Add hospital</label><div class="row"><input class="input" id="new-hospital" placeholder="Add hospital not in deanery list"><button class="btn primary" onclick="addAdminHospital()">ADD</button></div></div></div></div></section><section class="section"><div class="sec-head"><span class="sec-title">Hospitals</span><span class="sec-rule"></span><span class="sec-note">${hosp.length} available · delete hospitals you are not rotating in</span></div><div class="grid">${hosp.map(h=>`<div class="card"><div class="card-title">${safe(h)}</div><button class="btn small danger" onclick="deleteHospital('${safe(h)}')">Delete from list</button></div>`).join('')}</div></section><section class="section"><div class="sec-head"><span class="sec-title">GIM acute take</span><span class="sec-rule"></span><span class="sec-note">Firth-style placement records</span></div><div id="acute-admin-content"></div></section><section class="section"><div class="sec-head"><span class="sec-title">GIM ward cover</span><span class="sec-rule"></span><span class="sec-note">Months of dedicated GIM ward cover</span></div><div id="ward-admin-content"></div></section>`;
+  document.getElementById('main').innerHTML=accountBlock+`<section class="section"><div class="sec-head"><span class="sec-title">Profile & deanery</span><span class="sec-rule"></span><span class="sec-note">Used in reports and hospital dropdowns</span></div><div class="panel"><div class="form-grid"><div class="field"><label>ALS expiry</label><input class="input" type="date" value="${state.als||''}" onchange="state.als=this.value;saveState();render()"></div><div class="field"><label>${currentYear} ARCP date</label><input class="input" type="date" value="${state.arcpDates[currentYear]||ARCP_DEFAULTS[currentYear]}" onchange="state.arcpDates['${currentYear}']=this.value;saveState();render()"></div><div class="field full"><label>Add hospital</label><div class="row"><input class="input" id="new-hospital" placeholder="Add hospital not in deanery list"><button class="btn primary" onclick="addAdminHospital()">ADD</button></div></div></div></div></section><section class="section"><div class="sec-head"><span class="sec-title">Hospitals</span><span class="sec-rule"></span><span class="sec-note">${hosp.length} available · delete hospitals you are not rotating in</span></div><div class="grid">${hosp.map(h=>`<div class="card"><div class="card-title">${safe(h)}</div><button class="btn small danger" onclick="deleteHospital('${safe(h)}')">Delete from list</button></div>`).join('')}</div></section><section class="section"><div class="sec-head"><span class="sec-title">GIM acute take</span><span class="sec-rule"></span><span class="sec-note">Firth-style placement records</span></div><div id="acute-admin-content"></div></section><section class="section"><div class="sec-head"><span class="sec-title">GIM ward cover</span><span class="sec-rule"></span><span class="sec-note">Months of dedicated GIM ward cover</span></div><div id="ward-admin-content"></div></section>`+
+    `<section class="section"><div class="sec-head" style="cursor:pointer" onclick="toggleBridgeSection()"><span class="sec-title">Advanced <span id="bridge-caret" style="color:var(--dim)">\u25B8</span></span><span class="sec-rule"></span><span class="sec-note">Data bridge</span></div><div id="bridge-body" style="display:none"><div class="panel"><div style="font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:12px">Move your whole logbook between this app and your personal ARCP app. Export writes a bridge file; import merges it in without duplicates (matches by entry, newest wins).</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" onclick="bridgeExport()">\u21E9 Export logbook (bridge)</button><button class="btn small" onclick="bridgeImport()">\u21E7 Import logbook (bridge)</button></div></div></div></section>`;
   renderAcute('acute-admin-content');
   renderWard('ward-admin-content');
 }
