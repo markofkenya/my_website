@@ -2274,6 +2274,7 @@ function renderLogbook() {
 function renderLbClinics(el) {
   const gimEntries   = getLbEntries("clinics_gim");
   const renalEntries = getLbEntries("clinics_renal");
+  const renalPatients = renalEntries.reduce((a,e) => a + (parseInt(e.patients,10) || 0), 0);
 
   // Summary cards
   const sumDiv = document.createElement("div");
@@ -2286,12 +2287,15 @@ function renderLbClinics(el) {
   const sdecOver  = sdecCount > SDEC_CAP;
   const countedClinics = gimEntries.length - Math.max(0, sdecCount - SDEC_CAP);
   sumDiv.innerHTML = `
-    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--gim);padding:12px 16px;flex:1;min-width:140px;">
-           <div style="font-size:20px;font-weight:700;color:var(--renal);">${renalEntries.length}</div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--renal);padding:12px 16px;flex:1;min-width:140px;">
+      <div style="font-size:20px;font-weight:700;color:var(--renal);">${renalEntries.length}</div>
       <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">RENAL CLINICS · LOG ONLY</div>
-      </div>
     </div>
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--renal);padding:12px 16px;flex:1;min-width:140px;">
+      <div style="font-size:20px;font-weight:700;color:var(--renal);">${renalPatients}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">RENAL CLINIC PATIENTS</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--gim);padding:12px 16px;flex:1;min-width:140px;">
    <div style="font-size:20px;font-weight:700;color:var(--gim);">${gimEntries.length}<span style="font-size:11px;color:var(--dim);"> / ${gimTarget}</span></div>
       <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:3px;">GIM CLINICS · CUMULATIVE</div>
       <div style="height:3px;background:var(--blue5);margin-top:6px;border-radius:2px;overflow:hidden;">
@@ -3742,7 +3746,7 @@ function printLogbookReport() {
   </div>
  
   ${secHead("Clinics","both")}
-  ${subHead(badge("Renal","badge-renal"), `${renalClinics.length} entries · ${yr}`)}
+  ${subHead(badge("Renal","badge-renal"), `${renalClinics.length} entries · ${renalClinics.reduce((a,e)=>a+(parseInt(e.patients,10)||0),0)} patients · ${yr}`)}
   ${tbl(["Date","Type","Hospital","Supervisor","Patients","Notes"],
     renalClinics.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.hospital,e.supervisor,e.patients?e.patients+" pts":"—",e.notes]),
     "#7c3aed")}
