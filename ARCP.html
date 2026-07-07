@@ -40,23 +40,38 @@
     // ── Logbook sync — separate path, raw JSON per type ──────────────────────
         onValue(logbookRef, snap => {
       const data = snap.val();
-      if (!data) return;
+      const firstReconcile = !window._lbRemoteReady;
+      if (!data) {
+        // No remote logbook yet (new account): mark ready and flush any queued local pushes
+        window._lbRemoteReady = true;
+        flushPendingLbPushes(true);
+        return;
+      }
       let changed = false;
       Object.entries(data).forEach(([k, val]) => {
-        if (typeof val === "string" && !k.endsWith("_ts")) {
+        if (typeof val === "string" && !k.endsWith("_tomb") && !k.endsWith("_ts")) {
           const localKey = "pft_lb_" + k + "_entries";
-          const localTs  = parseInt(localStorage.getItem(`pft_lb_${k}_ts`) || "0");
-          const remoteTs = parseInt(data[`${k}_ts`] || "0");
-          if (remoteTs >= localTs) {
-            const current = localStorage.getItem(localKey);
-            if (current !== val) {
-              localStorage.setItem(localKey, val);
-              localStorage.setItem(`pft_lb_${k}_ts`, String(remoteTs));
-              changed = true;
-            }
+          let remoteArr = []; try { remoteArr = JSON.parse(val) || []; } catch { remoteArr = []; }
+          let localArr  = []; try { localArr = JSON.parse(localStorage.getItem(localKey) || "[]") || []; } catch { localArr = []; }
+          // Merge tombstones (local + any remote copy) then merge entries by id
+          const remoteTomb = (data[`${k}_tomb`] && typeof data[`${k}_tomb`]==="string") ? (()=>{try{return JSON.parse(data[`${k}_tomb`]);}catch{return {};}})() : {};
+          const tombs = lbSetTombs(k, Object.assign({}, lbGetTombs(k), remoteTomb));
+          const merged = lbMergeArrays(localArr, remoteArr, tombs);
+          const mergedStr = JSON.stringify(merged);
+          if (mergedStr !== JSON.stringify(localArr)) {
+            localStorage.setItem(localKey, mergedStr);
+            localStorage.setItem(`pft_lb_${k}_ts`, String(Date.now()));
+            changed = true;
+          }
+          // If our merged view differs from what the cloud holds, we hold entries it lacks → push back
+          if (mergedStr !== JSON.stringify(remoteArr)) {
+            window._lbPendingPush[k] = true;
           }
         }
       });
+      window._lbRemoteReady = true;
+      // On the first reconcile (or whenever we found local-only entries), push the merged view up
+      flushPendingLbPushes(firstReconcile);
       if (changed) {
         window.dispatchEvent(new CustomEvent("arcp-sync", { detail: { ok: true, changed: true } }));
       }
@@ -1320,6 +1335,79 @@ function renderRenal() {
   el.appendChild(makeSection("MILESTONES","renal","One-off requirements — deadlines shown",["renal_temp_lines","renal_eseneph","renal_patient_survey_st5","renal_qip","renal_teaching_obs","renal_patient_survey_st7","renal_mgmt_course"]));
 }
 
+function bridgeExportP(){
+  const g = k => getLbEntries(k) || [];
+  const tagged = (renalKey, gimKey) =>
+    g(renalKey).map(e=>({ ...e, stream:'renal' })).concat(g(gimKey).map(e=>({ ...e, stream:'gim' })));
+  const neutral = {
+    format:'arcp-logbook-bridge', version:1, exportedFrom:'personal', exportedAt:new Date().toISOString(),
+    logbook:{
+      clinics:    tagged('clinics_renal','clinics_gim'),
+      procedures: tagged('procedures_renal','procedures_gim'),
+      cpd:        tagged('cpd_renal','cpd_gim'),
+      simulation: g('simulation').slice(),
+      teaching:   g('teaching').slice(),
+      acute:      g('acute_take').slice(),
+      ward:       g('ward_cover').slice()
+    }
+  };
+  const blob=new Blob([JSON.stringify(neutral,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`arcp-logbook-bridge-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+function bridgeMergeByIdP(localArr, incomingArr){
+  const ts = e => Number(e && (e.updatedAt||e.createdAt||e.id) || 0);
+  const byId = new Map();
+  [Array.isArray(localArr)?localArr:[], Array.isArray(incomingArr)?incomingArr:[]].forEach(arr=>{
+    arr.forEach(e=>{ if(!e||e.id===undefined) return; const id=String(e.id); const prev=byId.get(id);
+      if(!prev || ts(e)>=ts(prev)) byId.set(id,e); });
+  });
+  return [...byId.values()];
+}
+function bridgeImportP(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json';
+  inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{
+      let data; try{ data=JSON.parse(r.result); }catch{ alert('Not a valid bridge file.'); return; }
+      if(!data || data.format!=='arcp-logbook-bridge' || !data.logbook){ alert('This file is not an ARCP logbook bridge export.'); return; }
+      const nb=data.logbook; let added=0;
+      // Split scoped kinds back into renal/gim keys
+      const splitInto = (arr, renalKey, gimKey) => {
+        const renal=(arr||[]).filter(e=>e.stream!=='gim');
+        const gim=(arr||[]).filter(e=>e.stream==='gim');
+        [[renalKey,renal],[gimKey,gim]].forEach(([key,inc])=>{
+          const before=getLbEntries(key).length;
+          const merged=bridgeMergeByIdP(getLbEntries(key), inc.map(e=>{ const {stream,...rest}=e; return rest; }));
+          saveLbEntries(key, merged);
+          added += merged.length - before;
+        });
+      };
+      splitInto(nb.clinics,    'clinics_renal','clinics_gim');
+      splitInto(nb.procedures, 'procedures_renal','procedures_gim');
+      splitInto(nb.cpd,        'cpd_renal','cpd_gim');
+      [['simulation',nb.simulation],['teaching',nb.teaching],['acute_take',nb.acute],['ward_cover',nb.ward]].forEach(([key,inc])=>{
+        const before=getLbEntries(key).length;
+        const merged=bridgeMergeByIdP(getLbEntries(key), inc||[]);
+        saveLbEntries(key, merged);
+        added += merged.length - before;
+      });
+      if (typeof renderLogbook==='function') renderLogbook();
+      if (typeof updateReadiness==='function') updateReadiness();
+      alert(`Bridge import complete. ${added} new entr${added===1?'y':'ies'} merged from ${data.exportedFrom||'the other app'}.`);
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+function toggleBridgeSectionP(){
+  const el=document.getElementById('bridge-body-p'); const car=document.getElementById('bridge-caret-p');
+  if(!el) return; const open=el.style.display!=='none'; el.style.display=open?'none':'block'; if(car) car.textContent=open?'\u25B8':'\u25BE';
+}
+
 function renderAdmin() {
   const el = document.getElementById("tab-admin");
   el.innerHTML = "";
@@ -1387,6 +1475,19 @@ function renderAdmin() {
     arcpGrid.appendChild(card);
   });
   el.appendChild(arcpGrid);
+
+  // ── Advanced / Data bridge (collapsed) ──
+  const brHead = document.createElement("div");
+  brHead.className = "sec-head";
+  brHead.style.cursor = "pointer";
+  brHead.onclick = toggleBridgeSectionP;
+  brHead.innerHTML = `<span class="sec-title both">ADVANCED <span id="bridge-caret-p" style="color:var(--dim)">\u25B8</span></span><span class="sec-rule"></span><span class="sec-note">Data bridge</span>`;
+  el.appendChild(brHead);
+  const brBody = document.createElement("div");
+  brBody.id = "bridge-body-p";
+  brBody.style.display = "none";
+  brBody.innerHTML = `<div style="font-size:11px;color:var(--dim);line-height:1.6;margin:6px 0 12px;">Move your whole logbook between this app and the Outcome1 beta app. Export writes a bridge file; import merges it in without duplicates (matches by entry, newest wins).</div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn-reset" style="border-color:var(--dim);color:var(--dim);font-size:9px;padding:6px 14px;" onclick="bridgeExportP()">\u21E9 EXPORT LOGBOOK (BRIDGE)</button><button class="btn-reset" style="border-color:var(--dim);color:var(--dim);font-size:9px;padding:6px 14px;" onclick="bridgeImportP()">\u21E7 IMPORT LOGBOOK (BRIDGE)</button></div>`;
+  el.appendChild(brBody);
 }
 
 function renderOverview() {
@@ -1612,7 +1713,10 @@ document.getElementById("sb-year").textContent = currentYear;
 
 
 // Seed logbook timestamps on first load if missing
-(function seedLbTimestamps() {
+// DISABLED: this stamped local data with Date.now() before Firebase loaded, making stale
+// (often empty) local data look newer than the real cloud copy — the root of cross-device
+// data loss. Entry-level merge (below) now handles reconciliation safely instead.
+(function seedLbTimestamps_DISABLED() {
   const types = ["clinics_gim","clinics_renal","procedures_gim","procedures_renal","cpd_gim","cpd_renal","simulation","teaching","acute_take","ward_cover"];
   types.forEach(type => {
     const tsKey = `pft_lb_${type}_ts`;
@@ -2103,21 +2207,77 @@ const CLINIC_TYPES_RENAL = ["General Nephrology clinic","HD clinic","Transplant 
 // ── Storage helpers ──────────────────────────────────
 function lbKey(type, id) { return `pft_lb_${type}_${id}`; }
 
+// ─── MULTI-DEVICE SAFE SYNC ──────────────────────────────────────────
+// Logbook entries merge by id (newest wins); deletes use tombstones; no push to Firebase
+// until the first remote snapshot is reconciled, so a stale device can't clobber the cloud.
+window._lbRemoteReady = false;   // set true after first Firebase logbook snapshot reconciled
+window._lbPendingPush = {};      // {type:true} saves queued before remoteReady
+const LB_TOMBSTONE_TTL = 90*24*3600*1000;
+function lbEntryTs(e){ return Number(e && (e.updatedAt || e.createdAt || e.id) || 0); }
+function lbTombKey(type){ return `pft_lb_${type}_tomb`; }
+function lbGetTombs(type){ try { return JSON.parse(localStorage.getItem(lbTombKey(type))||"{}"); } catch { return {}; } }
+function lbSetTombs(type, t){
+  const now=Date.now(); const clean={};
+  Object.entries(t||{}).forEach(([id,ts])=>{ ts=Number(ts)||0; if(ts && now-ts<=LB_TOMBSTONE_TTL) clean[id]=ts; });
+  localStorage.setItem(lbTombKey(type), JSON.stringify(clean));
+  return clean;
+}
+function lbMergeArrays(localArr, remoteArr, tombs){
+  const byId=new Map();
+  [Array.isArray(remoteArr)?remoteArr:[], Array.isArray(localArr)?localArr:[]].forEach(arr=>{
+    arr.forEach(e=>{ if(!e || e.id===undefined) return;
+      const id=String(e.id); const prev=byId.get(id);
+      if(!prev || lbEntryTs(e)>=lbEntryTs(prev)) byId.set(id,e);
+    });
+  });
+  const dead=tombs||{};
+  return [...byId.values()].filter(e=>{ const d=dead[String(e.id)]; return !(d && d>=lbEntryTs(e)); });
+}
+
 function getLbEntries(type) {
   const raw = localStorage.getItem(lbKey(type, "entries"));
   return raw ? JSON.parse(raw) : [];
+}
+function flushPendingLbPushes(force) {
+  if (!window._arcp_fb || !window._arcp_fb.logbookRef) return;
+  const { update, db, ref } = window._arcp_fb;
+  const types = Object.keys(window._lbPendingPush || {});
+  if (!force && !types.length) return;
+  const payload = {};
+  const allTypes = force
+    ? ["clinics_gim","clinics_renal","procedures_gim","procedures_renal","cpd_gim","cpd_renal","simulation","teaching","acute_take","ward_cover"]
+    : types;
+  allTypes.forEach(type => {
+    const val = localStorage.getItem(`pft_lb_${type}_entries`);
+    if (val == null) return;
+    const ts = Date.now();
+    localStorage.setItem(`pft_lb_${type}_ts`, String(ts));
+    payload[type] = val;
+    payload[`${type}_ts`] = ts;
+    const tomb = localStorage.getItem(lbTombKey(type));
+    if (tomb) payload[`${type}_tomb`] = tomb;
+  });
+  window._lbPendingPush = {};
+  if (Object.keys(payload).length) {
+    update(ref(db, "logbookData"), payload).catch(e => console.error("Logbook flush error:", e));
+  }
 }
 function saveLbEntries(type, entries) {
   const k = lbKey(type, "entries");
   const val = JSON.stringify(entries);
   localStorage.setItem(k, val);
   // Sync to Firebase logbookData path (separate from arcpData to avoid corruption)
-    if (window._arcp_fb && window._arcp_fb.logbookRef) {
-    const { update, db, ref } = window._arcp_fb;
-    const ts = Date.now();
-    localStorage.setItem(`pft_lb_${type}_ts`, String(ts));
-    update(ref(db, "logbookData"), { [type]: val, [`${type}_ts`]: ts })
-      .catch(e => console.error("Logbook FB sync error:", e));
+  if (window._arcp_fb && window._arcp_fb.logbookRef) {
+    if (!window._lbRemoteReady) {
+      // Never push before the first remote reconcile — queue it instead
+      window._lbPendingPush[type] = true;
+    } else {
+      const { update, db, ref } = window._arcp_fb;
+      const ts = Date.now();
+      localStorage.setItem(`pft_lb_${type}_ts`, String(ts));
+      update(ref(db, "logbookData"), { [type]: val, [`${type}_ts`]: ts })
+        .catch(e => console.error("Logbook FB sync error:", e));
+    }
   }
 
   // If GIM clinics — sync cumulative target
@@ -2149,16 +2309,21 @@ function saveLbEntries(type, entries) {
 }
 function addLbEntry(type, entry) {
   const entries = getLbEntries(type);
-  entries.push({ ...entry, id: Date.now(), date: entry.date || new Date().toISOString().split("T")[0] });
+  const now = Date.now();
+  entries.push({ ...entry, id: now, createdAt: now, updatedAt: now, date: entry.date || new Date().toISOString().split("T")[0] });
   saveLbEntries(type, entries);
 }
 function deleteLbEntry(type, id) {
+  // Tombstone the deleted id so cross-device merge can't resurrect it
+  const tombs = lbGetTombs(type); tombs[String(id)] = Date.now(); lbSetTombs(type, tombs);
   const entries = getLbEntries(type).filter(e => String(e.id) !== String(id));
   saveLbEntries(type, entries);
+  // Push the tombstone up immediately if we're synced
+  if (window._lbRemoteReady) { window._lbPendingPush[type] = true; flushPendingLbPushes(false); }
 }
 function updateLbEntry(type, id, patch) {
   const entries = getLbEntries(type).map(e =>
-    String(e.id) === String(id) ? { ...e, ...patch, id: e.id } : e
+    String(e.id) === String(id) ? { ...e, ...patch, id: e.id, updatedAt: Date.now() } : e
   );
   saveLbEntries(type, entries);
 }
