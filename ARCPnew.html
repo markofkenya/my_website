@@ -172,6 +172,11 @@ body.focus .check{color:#fff}body.focus .btn.primary{color:#fff}body.focus .chec
 @keyframes o1SplashPop{from{opacity:0;transform:translateY(12px) scale(.94)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){#o1-splash .o1-mark,#o1-splash .o1-arc,#o1-splash .o1-word,#o1-splash .o1-sub{animation:none}}
 body.focus .brand-mark .bm-arc{stroke:#0a4f4a}
+.brand-mark svg{overflow:visible}
+.brand-mark .bm-arc{transform-origin:39px 39px;animation:bmSpinIn .9s cubic-bezier(.2,.7,.2,1) both}
+.brand-mark:hover .bm-arc{animation:bmSpinIn .9s cubic-bezier(.2,.7,.2,1)}
+@keyframes bmSpinIn{from{transform:rotate(-150deg);opacity:0}to{transform:rotate(0);opacity:1}}
+@media (prefers-reduced-motion:reduce){.brand-mark .bm-arc{animation:none}}
 body.focus .brand-mark .bm-dot{fill:#1d8054}
 .brand-main{font-weight:500;font-size:20px;color:var(--text);letter-spacing:-.03em;font-family:var(--font);display:flex;align-items:baseline;gap:0}
 .brand-main span{color:var(--primary);font-weight:600}
@@ -1799,8 +1804,8 @@ function renderLogClinics(){
 function saveClinic(scope='spec'){ const prefix=`clinic-${scope}`; addEntry('clinics',{scope,type:clinicTypeValue(`${prefix}-type`),hospital:val(`${prefix}-hospital`),date:val(`${prefix}-date`),supervisor:val(`${prefix}-supervisor`),patients:val(`${prefix}-patients`),year:val(`${prefix}-year`),notes:val(`${prefix}-notes`)}); addHospitalIfNew(val(`${prefix}-hospital`)); }
 function renderLogProcedures(){
   const sp=specCfg();
-  const specEntries=entries('procedures').filter(e=>e.scope!=='gim');
-  const gimEntries=entries('procedures').filter(e=>e.scope==='gim');
+  const specEntries=entries('procedures').filter(e=>e.scope!=='gim').filter(inCurrentYear); // per training year
+  const gimEntries=entries('procedures').filter(e=>e.scope==='gim').filter(inCurrentYear);   // per training year
   const specForm=`<input type="hidden" id="proc-spec-scope" value="spec"><div class="field"><label>Procedure</label><select class="input" id="proc-spec-type">${optionsHtml(sp.logbook.procedures)}</select></div><div class="field"><label>Date</label><input class="input" id="proc-spec-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Supervisor</label><input class="input" id="proc-spec-supervisor" placeholder="Supervising consultant"></div><div class="field"><label>DOPS signed?</label><select class="input" id="proc-spec-dops"><option>No</option><option>Yes</option></select></div>${hospitalField('proc-spec-hospital')}<div class="field"><label>Training year</label><select class="input" id="proc-spec-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="proc-spec-notes" placeholder="Optional"></div>`;
   const gimForm=`<input type="hidden" id="proc-gim-scope" value="gim"><div class="field"><label>Procedure</label><select class="input" id="proc-gim-type">${optionsHtml(GIM_LOGBOOK.procedures)}</select></div><div class="field"><label>Date</label><input class="input" id="proc-gim-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Supervisor</label><input class="input" id="proc-gim-supervisor" placeholder="Supervising consultant"></div><div class="field"><label>DOPS signed?</label><select class="input" id="proc-gim-dops"><option>No</option><option>Yes</option></select></div>${hospitalField('proc-gim-hospital')}<div class="field"><label>Training year</label><select class="input" id="proc-gim-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div><div class="field full"><label>Notes</label><input class="input" id="proc-gim-notes" placeholder="Optional"></div>`;
   document.getElementById('log-content').innerHTML=
@@ -1816,8 +1821,9 @@ function renderLogCPD(){
   const specEntries=entries('cpd').filter(e=>e.scope!=='gim');
   const gimEntries=entries('cpd').filter(e=>e.scope==='gim');
   const specHours=Math.round(specEntries.reduce((a,e)=>a+Number(e.hours||0),0)*10)/10;
-  const gimHours=gimExternalCpdHours();
-  const allCpd=entries('cpd');
+  const gimHours=gimExternalCpdHours(); // cumulative — the 100h ARCP target counts across all years
+  // Diary totals are per training year (annual view for ARCP review)
+  const allCpd=entries('cpd').filter(inCurrentYear);
   const totalHours=Math.round(allCpd.reduce((a,e)=>a+Number(e.hours||0),0)*10)/10;
   const internalHrs=Math.round(allCpd.filter(e=>(e.category||cpdCategoryFor(e.type))==='Internal').reduce((a,e)=>a+Number(e.hours||0),0)*10)/10;
   const externalHrs=Math.round((totalHours-internalHrs)*10)/10;
@@ -1867,7 +1873,7 @@ function renderLogCPD(){
 
   document.getElementById('log-content').innerHTML=
     logSummaryCards([
-      {value:totalHours,label:'Total CPD hours · diary',cls:'primary'},
+      {value:totalHours,label:'CPD hours · this year',cls:'primary'},
       {value:`${externalHrs} / ${internalHrs}`,label:'External / Internal hours',cls:'blue'},
       {value:gimHours,label:'GIM external CPD · cumulative target',cls:'green'}
     ])+
@@ -1904,7 +1910,7 @@ function cpdUploadCert(scope){
   );
 }
 function exportCpdDiary(){
-  const all = entries('cpd').slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const all = entries('cpd').filter(inCurrentYear).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')); // this training year only (annual ARCP view)
   const name = (state.profile && state.profile.name) || '';
   const sp = (typeof specCfg==='function'?specCfg().label:'Renal Medicine');
   const deanery = (state.profile && state.profile.deanery) || '';
@@ -4227,10 +4233,7 @@ window.updateReadiness=updateReadiness; window.renderGIM=renderGIM; window.rende
 (function(){
   var sp = document.getElementById('o1-splash');
   if(!sp) return;
-  var SEEN = 'o1_splash_seen_session';
-  if(sessionStorage.getItem(SEEN)){ sp.remove(); return; }  // already shown this session → skip
-  sessionStorage.setItem(SEEN, '1');
-  // Let the spin-in play (~1.2s) then fade out and remove
+  // Play on every load, then fade out and remove
   setTimeout(function(){ sp.classList.add('gone'); setTimeout(function(){ try{ sp.remove(); }catch(e){} }, 560); }, 1300);
 })();
 try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',e); }
