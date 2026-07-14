@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Associate PI Tracker — PALaDIN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!--
+  Optional cloud sync bridge. This loads Firebase's modular SDK straight from
+  Google's CDN and hands the handful of functions we need to the main script
+  via window.fb. If there's no internet access, or the person never sets up
+  cloud sync, this simply never fires — the rest of the app doesn't depend on it.
+-->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js';
+  import {
+    getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+    createUserWithEmailAndPassword, signOut, sendPasswordResetEmail,
+  } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
+  import {
+    getFirestore, doc, getDoc, setDoc, onSnapshot,
+  } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
+
+  window.fb = {
+    initializeApp, getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+    createUserWithEmailAndPassword, signOut, sendPasswordResetEmail,
+    getFirestore, doc, getDoc, setDoc, onSnapshot,
+  };
+  window.dispatchEvent(new Event('fb-sdk-ready'));
+</script>
+<style>
+  :root {
+    --bg: #F5F6F3;
+    --ink: #1E2A38;
+    --accent-teal: #2A7F79;
+    --accent-teal-rgb: 42,127,121;
+    --accent-amber: #C68A2E;
+    --accent-amber-rgb: 198,138,46;
+    --accent-rust: #A64B3A;
+    --accent-rust-rgb: 166,75,58;
+    --muted: #7C8595;
+    --line: #DBDFDD;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: 'Source Serif 4', Georgia, serif; }
+  .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 28px 18px 70px; }
+
+  .eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; color: var(--accent-teal); margin-bottom: 5px; }
+  h1.title { font-size: 2rem; margin: 0 0 4px; line-height: 1.15; }
+  .subtitle { color: var(--muted); font-size: .9rem; }
+
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 10px; }
+  .card-pad { padding: 16px; }
+
+  .section-head { margin-bottom: 18px; }
+  .section-title { font-size: 1.4rem; margin: 0 0 4px; }
+  .section-desc { color: var(--muted); font-size: .875rem; margin: 0; max-width: 640px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .82rem; font-weight: 500; font-family: inherit;
+    padding: 8px 14px; border-radius: 7px; border: 1px solid transparent;
+    cursor: pointer; background: none; color: var(--ink);
+    transition: background .12s ease, border-color .12s ease;
+    white-space: nowrap;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--accent-teal); color: #fff; }
+  .btn-primary:hover { background: #25706b; }
+  .btn-outline { border-color: var(--line); background: #fff; }
+  .btn-outline:hover { background: var(--bg); }
+  .btn-danger-outline { border-color: rgba(var(--accent-rust-rgb), .35); color: var(--accent-rust); background: #fff; }
+  .btn-danger-outline:hover { background: rgba(var(--accent-rust-rgb), .06); }
+  .btn-danger { background: var(--accent-rust); color: #fff; }
+  .btn-ghost { color: var(--accent-teal); padding-left: 4px; padding-right: 4px; }
+  .btn-ghost:hover { text-decoration: underline; }
+  .btn-sm { padding: 6px 11px; font-size: .78rem; }
+  .btn[disabled] { opacity: .5; cursor: default; }
+
+  label.field-label { display: block; font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+  input[type=text], input[type=number], input[type=date], textarea, select {
+    font-family: inherit; font-size: .875rem; padding: 8px 10px;
+    border: 1px solid var(--line); border-radius: 6px; background: #fff;
+    color: var(--ink); width: 100%;
+  }
+  textarea { min-height: 80px; resize: vertical; }
+  input:focus, textarea:focus, select:focus { outline: 2px solid rgba(var(--accent-teal-rgb), .35); outline-offset: 1px; border-color: var(--accent-teal); }
+
+  .field { margin-bottom: 14px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  @media (max-width: 640px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .tabs { display: flex; gap: 2px; overflow-x: auto; border-bottom: 1px solid var(--line); margin: 22px 0 24px; }
+  .tab-btn {
+    display: flex; align-items: center; gap: 6px; padding: 10px 13px;
+    font-size: .85rem; white-space: nowrap; border: none; background: none;
+    border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer;
+    font-family: inherit;
+  }
+  .tab-btn.active { color: var(--ink); border-bottom-color: var(--accent-teal); font-weight: 600; }
+  .tab-btn:hover:not(.active) { color: var(--ink); }
+
+  .stat-card { padding: 14px 16px; }
+  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
+  .stat-value { font-size: 1.8rem; margin-top: 3px; }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .alert { border: 1px solid rgba(var(--accent-amber-rgb), .4); background: rgba(var(--accent-amber-rgb), .06); border-radius: 8px; padding: 13px 15px; display: flex; gap: 10px; align-items: flex-start; }
+  .alert-title { font-weight: 600; font-size: .88rem; margin-bottom: 2px; }
+  .alert-desc { font-size: .82rem; color: var(--muted); }
+
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+
+  .row-between { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .stack { display: flex; flex-direction: column; }
+  .icon { width: 15px; height: 15px; flex-shrink: 0; }
+  .icon-lg { width: 20px; height: 20px; flex-shrink: 0; }
+
+  .checklist-item { display: flex; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; margin-bottom: 10px; }
+  .checklist-item .idx { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .checklist-item .label { font-size: .875rem; margin-bottom: 8px; }
+  .checklist-item .updated { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .chk-row { display: flex; align-items: center; gap: 8px; font-size: .875rem; cursor: pointer; }
+
+  .segbar { display: flex; gap: 6px; }
+  .seg { flex: 1; }
+  .seg-track { height: 12px; background: var(--line); border-radius: 3px; overflow: hidden; }
+  .seg-fill { height: 100%; background: var(--accent-teal); }
+  .seg-label { text-align: center; font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  .list-entry { display: flex; justify-content: space-between; gap: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: #fff; margin-bottom: 8px; }
+  .list-entry .meta { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+  .list-entry .body { font-size: .875rem; white-space: pre-wrap; }
+  .icon-btn { background: none; border: none; cursor: pointer; color: var(--muted); padding: 2px; display: flex; }
+  .icon-btn:hover { color: var(--accent-rust); }
+
+  .sched-row { display: flex; flex-direction: column; gap: 2px; padding: 12px; font-size: .85rem; }
+  .sched-row:nth-child(odd) { background: var(--bg); }
+  .sched-row .visit { font-weight: 600; }
+  .sched-row .notes { color: var(--muted); }
+  @media (min-width: 640px) {
+    .sched-row { flex-direction: row; align-items: center; gap: 16px; }
+    .sched-row .visit { width: 170px; flex-shrink: 0; }
+  }
+
+  .reminder-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 11px 13px; background: #fff; margin-bottom: 8px; }
+  .reminder-row.overdue { border-color: rgba(var(--accent-rust-rgb), .4); background: rgba(var(--accent-rust-rgb), .05); }
+  .reminder-row .left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; }
+  .reminder-row .done { text-decoration: line-through; color: var(--muted); }
+
+  hr.sep { border: none; border-top: 1px solid var(--line); margin: 24px 0; }
+
+  #toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; padding: 9px 16px; border-radius: 7px;
+    font-size: .82rem; opacity: 0; pointer-events: none; transition: opacity .2s ease;
+    z-index: 50;
+  }
+  #toast.show { opacity: 1; }
+
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .sync-dot.ok { background: var(--accent-teal); }
+  .sync-dot.busy { background: var(--accent-amber); }
+  .sync-dot.bad { background: var(--accent-rust); }
+  .sync-dot.off { background: var(--muted); }
+  .sync-row { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--muted); margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+<input type="file" id="import-file-input" accept="application/json" style="display:none">
+
+<script>
+/* ======================================================================
+   Associate PI Tracker — standalone build
+   Vanilla HTML/CSS/JS. Persists to the browser's localStorage.
+   ====================================================================== */
+
+const STORAGE_KEY = 'paladin-pi-tracker-v1';
+
+const SITE_OPTIONS = [
+  'Hull Royal Infirmary',
+  'Northern General Hospital, Sheffield',
+  "St James's University Hospital, Leeds",
+  'Other site',
+];
+
+const MANDATED_ITEMS = [
+  { id: 1, type: 'checkbox', label: "I've acted as a member of the research team and signed the study-specific site delegation log / site contact information." },
+  { id: 2, type: 'checkbox', label: "I've worked with the PI to make sure the delegation log / site contact information is correctly completed for every member of the research team." },
+  { id: 3, type: 'textarea', label: 'How have you helped disseminate the study in your local environment? Include engagement with relevant departments.' },
+  { id: 4, type: 'textarea', label: 'Describe a presentation you gave about the study to engage key staff and stakeholders.' },
+  { id: 5, type: 'textarea', label: 'Detail your regular engagement with the PI and the rest of the research team to help deliver the study.' },
+  { id: 6, type: 'textarea', label: "Describe how you helped the PI confirm every team member submitted a signed CV, had up-to-date GCP training, and was issued a GCP certificate. Enter 'Not applicable' if not relevant." },
+  { id: 7, type: 'textarea', label: 'Describe how you helped the PI ensure all delegated staff were adequately informed of protocol requirements and trained in study procedures.' },
+  { id: 8, type: 'checkbox', label: "I've kept a diary of research team meetings (at least monthly)." },
+  { id: 9, type: 'checkbox', label: "I've been involved in study delivery for at least 6 months." },
+  { id: 10, type: 'textarea', label: "Describe the regular checks you performed to ensure appropriate participants were screened and recruited. Enter 'Not applicable' if not relevant." },
+  { id: 11, type: 'checkbox', label: "I've completed the 'Equality, Diversity and Inclusion in Health and Social Care Research' training." },
+  { id: 12, type: 'textarea', label: 'Outline your involvement in recruiting, consenting and/or following up a defined number of participants (or equivalent activity, e.g. data sharing/linkage/cleaning). Keep in line with the Clinical Trials Regulations and local R&D permissions.' },
+  { id: 13, type: 'textarea', label: 'Commercial studies only: outline at least 3 instances where you directly reported to / communicated with the Sponsor or CRO. Skip if this is a non-commercial study.' },
+  { id: 14, type: 'checkbox', label: 'I understand three signatures (from three separate parties) are required before my checklist can be submitted.' },
+];
+
+const ACTIVITY_TYPES = [
+  { value: 'study', label: 'Additional study-related activity' },
+  { value: 'ppi', label: 'Patient & Public Involvement (PPI)' },
+  { value: 'tmg', label: 'Trial Management Group (TMG)' },
+  { value: 'training', label: 'Training course' },
+];
+
+const SCHEDULE_OF_ASSESSMENTS = [
+  { visit: 'Screening (Day -28 to 0)', notes: 'Eligibility, consent, randomisation, baseline bloods, 6MWT, IPOS-Renal, KDQOL-SF, PROMIS, MoCA' },
+  { visit: 'Month 3', notes: 'Bloods, obs, 6MWT, IPOS-Renal, AE review, ESA dose' },
+  { visit: 'Month 6', notes: 'Bloods, obs, 6MWT, IPOS-Renal, AE review, ESA dose' },
+  { visit: 'Month 9', notes: 'Bloods, obs, 6MWT, IPOS-Renal, AE review, ESA dose' },
+  { visit: 'Month 12', notes: 'Bloods, obs, 6MWT, IPOS-Renal, KDQOL-SF, PROMIS, MoCA, health economic assessment' },
+];
+
+const NAV = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'checklist', label: 'Mandated checklist' },
+  { id: 'activities', label: 'Additional activities' },
+  { id: 'paladin', label: 'PALaDIN tasks' },
+  { id: 'reminders', label: 'Reminders' },
+  { id: 'journal', label: 'Journal' },
+  { id: 'settings', label: 'Settings' },
+];
+
+/* ---------------------------------------------------------------------- */
+/* Helpers                                                                  */
+/* ---------------------------------------------------------------------- */
+
+function todayISO() { return new Date().toISOString().slice(0, 10); }
+
+function addMonthsISO(iso, n) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  d.setMonth(d.getMonth() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+function monthsBetween(startISO, endISO) {
+  if (!startISO || !endISO) return 0;
+  const a = new Date(startISO + 'T00:00:00');
+  const b = new Date(endISO + 'T00:00:00');
+  let months = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+  if (b.getDate() < a.getDate()) months -= 1;
+  return months;
+}
+
+function daysBetween(startISO, endISO) {
+  if (!startISO || !endISO) return 0;
+  const a = new Date(startISO + 'T00:00:00');
+  const b = new Date(endISO + 'T00:00:00');
+  return Math.round((b - a) / (1000 * 60 * 60 * 24));
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+
+function esc(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function defaultData() {
+  const start = todayISO();
+  const checklist = {};
+  MANDATED_ITEMS.forEach((item) => {
+    checklist[item.id] = { value: item.type === 'checkbox' ? false : '', updatedAt: null };
+  });
+  return {
+    settings: {
+      name: '', role: '', site: SITE_OPTIONS[0], piName: 'Dr Sebastian Spencer',
+      studyName: 'PALaDIN', startDate: start, extended: false, extendedEndDate: '',
+    },
+    checklist,
+    activities: [],
+    recruitment: { screened: 0, consented: 0, declined: 0, randomised: 0 },
+    consentReflections: [],
+    aeLog: [],
+    reminders: [],
+    autoRemindersDone: {},
+    journal: [],
+    updatedAt: null,
+  };
+}
+
+function buildAutoReminders(settings) {
+  const s = settings.startDate;
+  if (!s) return [];
+  return [
+    { key: 'm1-gcp', title: 'Complete GCP & Research Delivery e-learning', due: addMonthsISO(s, 1) },
+    { key: 'm1-deleg', title: 'Sign the delegation log / site contact list', due: addMonthsISO(s, 1) },
+    { key: 'm1-disseminate', title: 'Disseminate the study to your local department', due: addMonthsISO(s, 1) },
+    { key: 'm3-review', title: 'Halfway review — check for gaps in your mandated checklist items', due: addMonthsISO(s, 3) },
+    { key: 'm3-presentation', title: 'Give a presentation / stakeholder engagement activity', due: addMonthsISO(s, 3) },
+    { key: 'm5-gaps', title: 'Identify and close any remaining checklist gaps', due: addMonthsISO(s, 5) },
+    { key: 'm5-extension', title: 'Decide whether you need a tenure extension — request before your end date', due: addMonthsISO(s, 5) },
+    { key: 'm6-signoff', title: 'Get your checklist reviewed & signed off by your PI and the national study contact', due: addMonthsISO(s, 6) },
+    { key: 'm6-submit', title: 'Submit your Associate PI Checklist', due: addMonthsISO(s, 6) },
+  ];
+}
+
+/* ---------------------------------------------------------------------- */
+/* Icons (small hand-drawn set, feather-style)                              */
+/* ---------------------------------------------------------------------- */
+
+const ICON_PATHS = {
+  'check-circle': '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  'circle': '<circle cx="12" cy="12" r="10"/>',
+  'alert-triangle': '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  'info': '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+  'plus': '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  'trash': '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+  'copy': '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  'check': '<polyline points="20 6 9 17 4 12"/>',
+};
+
+function icon(name, cls) {
+  const p = ICON_PATHS[name] || '';
+  return `<svg class="${cls || 'icon'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Toast + copy-to-clipboard                                                */
+/* ---------------------------------------------------------------------- */
+
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+async function copyText(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) { /* fall through to legacy path */ }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* State load / save                                                        */
+/* ---------------------------------------------------------------------- */
+
+var state = load();
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultData();
+    const parsed = JSON.parse(raw);
+    const base = defaultData();
+    return {
+      ...base,
+      ...parsed,
+      settings: { ...base.settings, ...(parsed.settings || {}) },
+      checklist: { ...base.checklist, ...(parsed.checklist || {}) },
+    };
+  } catch (e) {
+    return defaultData();
+  }
+}
+
+function save() {
+  state.updatedAt = new Date().toISOString();
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    showToast("Couldn't save — your browser may be blocking local storage.");
+  }
+  queueCloudPush();
+}
+
+var activeTab = 'overview';
+
+/* ---------------------------------------------------------------------- */
+/* Cloud sync (optional, Firebase-backed)                                   */
+/* ---------------------------------------------------------------------- */
+
+const FB_CONFIG_KEY = 'paladin-pi-tracker-fb-config';
+
+function loadCloudConfig() {
+  try {
+    const raw = localStorage.getItem(FB_CONFIG_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveCloudConfig(cfg) {
+  try { localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(cfg)); } catch (e) { /* ignore */ }
+}
+
+function clearCloudConfigStorage() {
+  try { localStorage.removeItem(FB_CONFIG_KEY); } catch (e) { /* ignore */ }
+}
+
+// Accepts either strict JSON or the exact snippet the Firebase console gives you
+// (an unquoted-key JS object literal, optionally prefixed with "const firebaseConfig =").
+function parseFirebaseConfigInput(text) {
+  if (!text) return null;
+  const cleaned = text.trim()
+    .replace(/^\s*(const|let|var)\s+\w+\s*=\s*/, '')
+    .replace(/;\s*$/, '');
+  try {
+    const viaJSON = JSON.parse(cleaned);
+    if (viaJSON && viaJSON.apiKey && viaJSON.projectId) return viaJSON;
+  } catch (e) { /* fall through to relaxed parse */ }
+  try {
+    // Safe here: this only ever runs on text the person pasted into their own
+    // browser's Settings field — never on remote or third-party data.
+    const viaLiteral = Function('"use strict"; return (' + cleaned + ');')();
+    if (viaLiteral && typeof viaLiteral === 'object' && viaLiteral.apiKey && viaLiteral.projectId) return viaLiteral;
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
+var cloudConfig = loadCloudConfig();
+var fbApp = null, fbAuth = null, fbDb = null;
+var cloudUser = null;
+var cloudUnsub = null;
+var cloudPushTimer = null;
+var cloudStatus = cloudConfig ? 'connecting' : 'not-configured'; // not-configured | connecting | signed-out | syncing | synced | error
+var cloudErrorMsg = '';
+
+function setCloudStatus(status, errMsg) {
+  cloudStatus = status;
+  cloudErrorMsg = errMsg || '';
+  renderCloudSyncBlock();
+}
+
+function initFirebaseIfConfigured() {
+  if (!cloudConfig || !window.fb || fbApp) return;
+  try {
+    fbApp = window.fb.initializeApp(cloudConfig);
+    fbAuth = window.fb.getAuth(fbApp);
+    fbDb = window.fb.getFirestore(fbApp);
+    window.fb.onAuthStateChanged(fbAuth, onCloudAuthChanged, (err) => setCloudStatus('error', err.message));
+  } catch (e) {
+    setCloudStatus('error', e.message);
+  }
+}
+
+function onCloudAuthChanged(user) {
+  if (cloudUnsub) { cloudUnsub(); cloudUnsub = null; }
+  cloudUser = user;
+  if (user) {
+    setCloudStatus('syncing');
+    attachCloudListener(user.uid);
+    syncNowInitial(user.uid);
+  } else {
+    setCloudStatus('signed-out');
+  }
+}
+
+function mergeIncoming(data) {
+  const base = defaultData();
+  return {
+    ...base,
+    ...data,
+    settings: { ...base.settings, ...(data.settings || {}) },
+    checklist: { ...base.checklist, ...(data.checklist || {}) },
+  };
+}
+
+function attachCloudListener(uid) {
+  const ref = window.fb.doc(fbDb, 'trackers', uid);
+  cloudUnsub = window.fb.onSnapshot(ref, (snap) => {
+    if (snap.metadata && snap.metadata.hasPendingWrites) return; // ignore echo of our own write
+    if (!snap.exists()) return;
+    const data = snap.data();
+    if (!data.updatedAt || (state.updatedAt && data.updatedAt <= state.updatedAt)) return; // not newer than what we have
+    state = mergeIncoming(data);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    setCloudStatus('synced');
+    renderApp();
+    showToast('Pulled a newer update from another device.');
+  }, (err) => setCloudStatus('error', err.message));
+}
+
+async function syncNowInitial(uid) {
+  try {
+    const ref = window.fb.doc(fbDb, 'trackers', uid);
+    const snap = await window.fb.getDoc(ref);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (!state.updatedAt || (data.updatedAt && data.updatedAt > state.updatedAt)) {
+        state = mergeIncoming(data);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        renderApp();
+      } else {
+        await pushToCloudNow();
+      }
+    } else {
+      await pushToCloudNow();
+    }
+    setCloudStatus('synced');
+  } catch (e) {
+    setCloudStatus('error', e.message);
+  }
+}
+
+async function pushToCloudNow() {
+  if (!cloudUser || !fbDb) return;
+  try {
+    const ref = window.fb.doc(fbDb, 'trackers', cloudUser.uid);
+    await window.fb.setDoc(ref, state);
+    setCloudStatus('synced');
+  } catch (e) {
+    setCloudStatus('error', e.message);
+  }
+}
+
+function queueCloudPush() {
+  if (!cloudUser) return;
+  setCloudStatus('syncing');
+  clearTimeout(cloudPushTimer);
+  cloudPushTimer = setTimeout(pushToCloudNow, 1500);
+}
+
+function friendlyAuthError(e) {
+  const code = (e && e.code) || '';
+  const map = {
+    'auth/invalid-email': 'That email address looks invalid.',
+    'auth/user-not-found': 'No account with that email — try creating one.',
+    'auth/wrong-password': 'Wrong password.',
+    'auth/email-already-in-use': 'An account with that email already exists — try signing in instead.',
+    'auth/weak-password': 'Password should be at least 6 characters.',
+    'auth/invalid-credential': 'Email or password is incorrect.',
+    'auth/too-many-requests': 'Too many attempts — wait a bit and try again.',
+  };
+  return map[code] || ('Something went wrong (' + (code || (e && e.message) || 'unknown error') + ').');
+}
+
+async function cloudSignIn() {
+  const email = document.getElementById('fb-email').value.trim();
+  const pw = document.getElementById('fb-password').value;
+  if (!email || !pw) { showToast('Enter an email and password first.'); return; }
+  try { await window.fb.signInWithEmailAndPassword(fbAuth, email, pw); }
+  catch (e) { showToast(friendlyAuthError(e)); }
+}
+
+async function cloudSignUp() {
+  const email = document.getElementById('fb-email').value.trim();
+  const pw = document.getElementById('fb-password').value;
+  if (!email || !pw) { showToast('Enter an email and password first.'); return; }
+  try { await window.fb.createUserWithEmailAndPassword(fbAuth, email, pw); }
+  catch (e) { showToast(friendlyAuthError(e)); }
+}
+
+async function cloudSignOutAction() {
+  try { await window.fb.signOut(fbAuth); showToast('Signed out — your data stays saved locally.'); }
+  catch (e) { showToast(friendlyAuthError(e)); }
+}
+
+async function cloudResetPassword() {
+  const email = document.getElementById('fb-email').value.trim();
+  if (!email) { showToast('Enter your email above first.'); return; }
+  try { await window.fb.sendPasswordResetEmail(fbAuth, email); showToast('Password reset email sent.'); }
+  catch (e) { showToast(friendlyAuthError(e)); }
+}
+
+function saveCloudConfigFromInput() {
+  const text = document.getElementById('fb-config-input').value;
+  const parsed = parseFirebaseConfigInput(text);
+  if (!parsed) { showToast("Couldn't read that config — paste the snippet exactly as Firebase gave it to you."); return; }
+  cloudConfig = parsed;
+  saveCloudConfig(parsed);
+  setCloudStatus('connecting');
+  initFirebaseIfConfigured();
+  setTimeout(() => {
+    if (cloudStatus === 'connecting') setCloudStatus('error', 'Could not reach the cloud sync library — check your internet connection and try again.');
+  }, 9000);
+}
+
+function removeCloudConfigAction() {
+  if (cloudUnsub) { cloudUnsub(); cloudUnsub = null; }
+  cloudConfig = null;
+  cloudUser = null;
+  fbApp = fbAuth = fbDb = null;
+  clearCloudConfigStorage();
+  setCloudStatus('not-configured');
+}
+
+function renderCloudSyncBlock() {
+  const el = document.getElementById('cloud-sync-block');
+  if (!el) return; // settings tab isn't showing right now
+  el.innerHTML = cloudSyncBlockHTML();
+  bindCloudSyncEvents();
+}
+
+function cloudSyncBlockHTML() {
+  const dotClass = { 'not-configured': 'off', connecting: 'busy', 'signed-out': 'off', syncing: 'busy', synced: 'ok', error: 'bad' }[cloudStatus] || 'off';
+  const statusLine = {
+    'not-configured': 'Not set up yet — paste your Firebase config below to enable it.',
+    connecting: 'Connecting to your Firebase project…',
+    'signed-out': 'Connected, not signed in.',
+    syncing: 'Syncing…',
+    synced: 'Synced' + (cloudUser ? ' as ' + cloudUser.email : ''),
+    error: cloudErrorMsg || 'Something went wrong.',
+  }[cloudStatus];
+
+  let body = '';
+  if (cloudStatus === 'not-configured') {
+    body = `
+      <p style="font-size:.78rem; color:var(--muted); margin:0 0 8px;">
+        Create a free project at <span class="mono">firebase.google.com</span>, enable
+        <strong>Firestore</strong> and <strong>Authentication → Email/Password</strong>, then paste your
+        web app config below (Project settings → General → Your apps → SDK setup and configuration).
+      </p>
+      <textarea id="fb-config-input" placeholder='{ "apiKey": "...", "authDomain": "...", "projectId": "...", ... }' style="min-height:90px; margin-bottom:8px;"></textarea>
+      <button class="btn btn-primary btn-sm" data-action="save-fb-config">Save config</button>
+    `;
+  } else if (cloudStatus === 'signed-out' || cloudStatus === 'connecting' || cloudStatus === 'error') {
+    body = `
+      <div class="grid-2" style="margin-bottom:8px;">
+        <div><label class="field-label">Email</label><input type="text" id="fb-email" placeholder="you@example.com"></div>
+        <div><label class="field-label">Password</label><input type="text" id="fb-password" placeholder="At least 6 characters"></div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
+        <button class="btn btn-primary btn-sm" data-action="fb-sign-in">Sign in</button>
+        <button class="btn btn-outline btn-sm" data-action="fb-sign-up">Create account</button>
+        <button class="btn btn-ghost btn-sm" data-action="fb-reset-password">Forgot password?</button>
+      </div>
+      <button class="btn btn-danger-outline btn-sm" data-action="remove-fb-config">Remove cloud config</button>
+    `;
+  } else {
+    body = `
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" data-action="fb-sync-now">Sync now</button>
+        <button class="btn btn-outline btn-sm" data-action="fb-sign-out">Sign out</button>
+        <button class="btn btn-danger-outline btn-sm" data-action="remove-fb-config">Remove cloud config</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="sync-row"><span class="sync-dot ${dotClass}"></span>${esc(statusLine)}</div>
+    ${body}
+  `;
+}
+
+function bindCloudSyncEvents() {
+  const on = (sel, fn) => { const e = document.querySelector(sel); if (e) e.addEventListener('click', fn); };
+  on('[data-action="save-fb-config"]', saveCloudConfigFromInput);
+  on('[data-action="fb-sign-in"]', cloudSignIn);
+  on('[data-action="fb-sign-up"]', cloudSignUp);
+  on('[data-action="fb-reset-password"]', cloudResetPassword);
+  on('[data-action="fb-sign-out"]', cloudSignOutAction);
+  on('[data-action="fb-sync-now"]', pushToCloudNow);
+  on('[data-action="remove-fb-config"]', removeCloudConfigAction);
+}
+
+window.addEventListener('online', () => { if (cloudUser) setCloudStatus('syncing'); pushToCloudNow(); });
+window.addEventListener('offline', () => { if (cloudUser) setCloudStatus('error', 'Offline — changes are saved locally and will sync when you reconnect.'); });
+
+if (window.fb) initFirebaseIfConfigured();
+window.addEventListener('fb-sdk-ready', initFirebaseIfConfigured);
+if (cloudConfig && !window.fb) {
+  setTimeout(() => {
+    if (!fbApp) setCloudStatus('error', 'Could not reach the cloud sync library — check your internet connection.');
+  }, 9000);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Rendering: shell                                                          */
+/* ---------------------------------------------------------------------- */
+
+function renderApp() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="wrap">
+      <div id="header-timeline"></div>
+      <div class="tabs" id="tabs-nav"></div>
+      <div id="tab-content"></div>
+    </div>
+  `;
+  renderHeaderAndTimeline();
+  renderTabsNav();
+  renderTabContent();
+}
+
+function renderHeaderAndTimeline() {
+  const s = state.settings;
+  const start = s.startDate;
+  const end = s.extended && s.extendedEndDate ? s.extendedEndDate : addMonthsISO(start, 6);
+  const today = todayISO();
+  const segCount = 6;
+  const elapsedDays = Math.max(0, daysBetween(start, today));
+  const totalDays = Math.max(1, daysBetween(start, end));
+  const fracElapsed = Math.min(1, elapsedDays / totalDays);
+  const daysRemaining = Math.max(0, daysBetween(today, end));
+  const overdue = today > end;
+
+  let segs = '';
+  for (let i = 0; i < segCount; i++) {
+    const segStart = i / segCount, segEnd = (i + 1) / segCount;
+    let fill = 0;
+    if (fracElapsed >= segEnd) fill = 1;
+    else if (fracElapsed <= segStart) fill = 0;
+    else fill = (fracElapsed - segStart) / (segEnd - segStart);
+    segs += `
+      <div class="seg">
+        <div class="seg-track"><div class="seg-fill" style="width:${(fill * 100).toFixed(1)}%"></div></div>
+        <div class="seg-label mono">M${i + 1}</div>
+      </div>`;
+  }
+
+  document.getElementById('header-timeline').innerHTML = `
+    <div class="row-between" style="margin-bottom:22px; align-items:flex-end;">
+      <div>
+        <div class="eyebrow">Associate PI Scheme · ${esc(s.studyName || 'Study')}</div>
+        <h1 class="serif title">${s.name ? esc(s.name) + "'s tenure log" : 'Your tenure log'}</h1>
+        <div class="subtitle">${esc(s.site)}${s.piName ? ' · PI: ' + esc(s.piName) : ''}</div>
+      </div>
+    </div>
+    <div class="card card-pad" style="margin-bottom:6px;">
+      <div class="row-between" style="margin-bottom:12px;">
+        <div style="display:flex; align-items:baseline; gap:12px;">
+          <span class="serif" style="font-size:1.1rem;">Tenure timeline</span>
+          <span class="mono" style="font-size:.78rem; color:var(--muted);">${formatDate(start)} → ${formatDate(end)}</span>
+        </div>
+        <span class="mono" style="font-size:.78rem; padding:2px 9px; border-radius:5px; background:${overdue ? 'rgba(var(--accent-rust-rgb),.1)' : 'rgba(var(--accent-teal-rgb),.1)'}; color:${overdue ? 'var(--accent-rust)' : 'var(--accent-teal)'};">
+          ${overdue ? 'Tenure period ended' : daysRemaining + ' days remaining'}
+        </span>
+      </div>
+      <div class="segbar">${segs}</div>
+      ${s.extended ? `<div style="font-size:.78rem; color:var(--accent-amber); margin-top:10px; display:flex; align-items:center; gap:6px;">${icon('info')} Extended tenure — new end date ${formatDate(s.extendedEndDate)}</div>` : ''}
+    </div>
+  `;
+}
+
+function renderTabsNav() {
+  document.getElementById('tabs-nav').innerHTML = NAV.map((n) => `
+    <button class="tab-btn ${activeTab === n.id ? 'active' : ''}" data-action="switch-tab" data-tab="${n.id}">${n.label}</button>
+  `).join('');
+}
+
+function switchTab(tabId) {
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  activeTab = tabId;
+  renderTabsNav();
+  renderTabContent();
+}
+
+function renderTabContent() {
+  const el = document.getElementById('tab-content');
+  const renderers = {
+    overview: renderOverviewTab,
+    checklist: renderChecklistTab,
+    activities: renderActivitiesTab,
+    paladin: renderPaladinTab,
+    reminders: renderRemindersTab,
+    journal: renderJournalTab,
+    settings: renderSettingsTab,
+  };
+  el.innerHTML = renderers[activeTab] ? renderers[activeTab]() : '';
+  bindTabEvents();
+}
+
+/* ---------------------------------------------------------------------- */
+/* Overview                                                                  */
+/* ---------------------------------------------------------------------- */
+
+function computeMandatedDone() {
+  return MANDATED_ITEMS.filter((item) => {
+    const v = state.checklist[item.id] && state.checklist[item.id].value;
+    return item.type === 'checkbox' ? !!v : !!(v && String(v).trim().length > 0);
+  }).length;
+}
+
+function computeAllReminders() {
+  const auto = buildAutoReminders(state.settings).map((r) => ({
+    ...r, done: !!state.autoRemindersDone[r.key], auto: true,
+  }));
+  const custom = state.reminders.map((r) => ({ ...r, auto: false }));
+  return [...auto, ...custom].sort((a, b) => (a.due < b.due ? -1 : 1));
+}
+
+function renderOverviewTab() {
+  const mandatedDone = computeMandatedDone();
+  const all = computeAllReminders();
+  const upcoming = all.filter((r) => !r.done);
+  const today = todayISO();
+  const nextFour = upcoming.slice(0, 4);
+  const r = state.recruitment;
+
+  return `
+    <div class="alert" style="margin-bottom:22px;">
+      ${icon('info', 'icon-lg')}
+      <div>
+        <div class="alert-title">NIHR Learn checklist can lose content</div>
+        <div class="alert-desc">NIHR Learn has warned that checklist entries are sometimes wiped. This tracker is your durable backup — fill it in here first, then use the copy buttons on the checklist tab to paste your answers back into NIHR Learn.</div>
+      </div>
+    </div>
+
+    <div class="grid-4" style="margin-bottom:22px;">
+      <div class="card stat-card"><div class="stat-label">Mandated items done</div><div class="serif stat-value">${mandatedDone}/${MANDATED_ITEMS.length}</div></div>
+      <div class="card stat-card"><div class="stat-label">Additional activities</div><div class="serif stat-value">${state.activities.length}</div></div>
+      <div class="card stat-card"><div class="stat-label">Journal entries</div><div class="serif stat-value">${state.journal.length}</div></div>
+      <div class="card stat-card"><div class="stat-label">Open reminders</div><div class="serif stat-value">${upcoming.length}</div>${upcoming.some(x => x.due < today) ? '<div class="stat-sub">includes overdue</div>' : ''}</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card card-pad">
+        <div class="serif" style="font-size:1.15rem; margin-bottom:2px;">What's next</div>
+        <div class="section-desc" style="margin-bottom:12px;">Nearest milestones and reminders</div>
+        ${nextFour.length === 0 ? '<p style="font-size:.875rem; color:var(--muted);">Nothing outstanding — nice work.</p>' : nextFour.map((x) => `
+          <div class="row-between" style="padding:7px 0; border-bottom:1px solid var(--line);">
+            <span style="font-size:.875rem;">${esc(x.title)}</span>
+            <span class="mono" style="font-size:.78rem; color:${x.due < today ? 'var(--accent-rust)' : 'var(--muted)'};">${formatDate(x.due)}</span>
+          </div>
+        `).join('')}
+        <button class="btn btn-ghost btn-sm" data-action="switch-tab" data-tab="reminders" style="margin-top:8px;">View all reminders →</button>
+      </div>
+
+      <div class="card card-pad">
+        <div class="serif" style="font-size:1.15rem; margin-bottom:2px;">Recruitment at your site</div>
+        <div class="section-desc" style="margin-bottom:12px;">Aggregate counts only — no participant identifiers</div>
+        <div class="grid-2" style="gap:10px;">
+          ${[['Screened', r.screened], ['Consented', r.consented], ['Declined', r.declined], ['Randomised', r.randomised]].map(([label, val]) => `
+            <div style="border:1px solid var(--line); border-radius:8px; padding:10px; text-align:center;">
+              <div class="serif" style="font-size:1.5rem;">${val}</div>
+              <div style="font-size:.72rem; color:var(--muted);">${label}</div>
+            </div>
+          `).join('')}
+        </div>
+        <button class="btn btn-ghost btn-sm" data-action="switch-tab" data-tab="paladin" style="margin-top:10px;">Update counts →</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Mandated checklist                                                       */
+/* ---------------------------------------------------------------------- */
+
+function checklistFullText() {
+  return MANDATED_ITEMS.map((item) => {
+    const entry = state.checklist[item.id];
+    const val = item.type === 'checkbox'
+      ? (entry && entry.value ? 'Confirmed' : 'Not yet confirmed')
+      : ((entry && entry.value) || '(not yet answered)');
+    return `${item.id}. ${item.label}\n${val}\n`;
+  }).join('\n');
+}
+
+function renderChecklistTab() {
+  return `
+    <div class="row-between section-head">
+      <div>
+        <div class="eyebrow">12 required activities</div>
+        <div class="serif section-title">Mandated checklist</div>
+        <p class="section-desc">These mirror the Associate PI Checklist on NIHR Learn. Fill them in here, then copy your answers across.</p>
+      </div>
+      <button class="btn btn-outline btn-sm" data-action="copy-checklist">${icon('copy')} Copy all answers</button>
+    </div>
+    ${MANDATED_ITEMS.map((item) => {
+      const entry = state.checklist[item.id] || { value: item.type === 'checkbox' ? false : '' };
+      const done = item.type === 'checkbox' ? !!entry.value : !!(entry.value && String(entry.value).trim().length > 0);
+      return `
+        <div class="checklist-item">
+          <div id="ind-${item.id}" style="margin-top:1px; color:${done ? 'var(--accent-teal)' : 'var(--line)'};">${icon(done ? 'check-circle' : 'circle', 'icon-lg')}</div>
+          <div style="flex:1; min-width:0;">
+            <div class="idx mono">Item ${item.id}</div>
+            <div class="label">${esc(item.label)}</div>
+            ${item.type === 'checkbox' ? `
+              <label class="chk-row">
+                <input type="checkbox" data-chk="${item.id}" ${entry.value ? 'checked' : ''}>
+                I confirm this.
+              </label>
+            ` : `
+              <textarea data-chk="${item.id}" placeholder="Write a journal-style entry…">${esc(entry.value)}</textarea>
+            `}
+            <div id="upd-${item.id}" class="updated mono">${entry.updatedAt ? 'Updated ' + formatDate(entry.updatedAt) : ''}</div>
+          </div>
+        </div>
+      `;
+    }).join('')}
+  `;
+}
+
+function bindChecklistEvents() {
+  MANDATED_ITEMS.forEach((item) => {
+    const el = document.querySelector(`[data-chk="${item.id}"]`);
+    if (!el) return;
+    const evt = item.type === 'checkbox' ? 'change' : 'input';
+    el.addEventListener(evt, (e) => {
+      const val = item.type === 'checkbox' ? e.target.checked : e.target.value;
+      state.checklist[item.id] = { value: val, updatedAt: todayISO() };
+      save();
+      const done = item.type === 'checkbox' ? !!val : !!(val && String(val).trim().length > 0);
+      const ind = document.getElementById('ind-' + item.id);
+      if (ind) { ind.style.color = done ? 'var(--accent-teal)' : 'var(--line)'; ind.innerHTML = icon(done ? 'check-circle' : 'circle', 'icon-lg'); }
+      const upd = document.getElementById('upd-' + item.id);
+      if (upd) upd.textContent = 'Updated ' + formatDate(todayISO());
+    });
+  });
+}
+
+/* ---------------------------------------------------------------------- */
+/* Additional activities                                                     */
+/* ---------------------------------------------------------------------- */
+
+function activitiesFullText() {
+  return ACTIVITY_TYPES.map((t) => {
+    const items = state.activities.filter((a) => a.type === t.value);
+    const body = items.length ? items.map((a) => `- ${formatDate(a.date)}: ${a.description}`).join('\n') : '(none logged)';
+    return `${t.label}\n${body}\n`;
+  }).join('\n');
+}
+
+function renderActivitiesTab() {
+  return `
+    <div class="row-between section-head">
+      <div>
+        <div class="eyebrow">Not mandatory, but strengthens your evidence</div>
+        <div class="serif section-title">Additional activities</div>
+        <p class="section-desc">Log study-related activities, PPI involvement, TMG meetings, and training as they happen — this becomes items 15–18 on the NIHR checklist.</p>
+      </div>
+      <button class="btn btn-outline btn-sm" data-action="copy-activities">${icon('copy')} Copy log</button>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:20px;">
+      <div class="grid-2" style="margin-bottom:10px;">
+        <select id="new-activity-type">
+          ${ACTIVITY_TYPES.map((t) => `<option value="${t.value}">${t.label}</option>`).join('')}
+        </select>
+        <input type="date" id="new-activity-date" value="${todayISO()}">
+      </div>
+      <textarea id="new-activity-desc" placeholder="What did you do? e.g. Deputised for the PI at the site investigator meeting…" style="margin-bottom:10px;"></textarea>
+      <button class="btn btn-primary btn-sm" data-action="add-activity">${icon('plus')} Add entry</button>
+    </div>
+
+    ${ACTIVITY_TYPES.map((t) => {
+      const items = state.activities.filter((a) => a.type === t.value);
+      return `
+        <div style="margin-bottom:18px;">
+          <div style="font-size:.875rem; font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+            ${t.label} <span class="badge mono">${items.length}</span>
+          </div>
+          ${items.length === 0
+            ? '<p style="font-size:.78rem; color:var(--muted);">No entries yet.</p>'
+            : items.map((a) => `
+              <div class="list-entry">
+                <div>
+                  <div class="meta mono">${formatDate(a.date)}</div>
+                  <div class="body">${esc(a.description)}</div>
+                </div>
+                <button class="icon-btn" data-action="remove-activity" data-id="${a.id}">${icon('trash')}</button>
+              </div>
+            `).join('')}
+        </div>
+      `;
+    }).join('')}
+  `;
+}
+
+/* ---------------------------------------------------------------------- */
+/* PALaDIN tasks                                                            */
+/* ---------------------------------------------------------------------- */
+
+function renderPaladinTab() {
+  const r = state.recruitment;
+  return `
+    <div class="section-head">
+      <div class="eyebrow">Study reference</div>
+      <div class="serif section-title">PALaDIN at a glance</div>
+      <p class="section-desc">Quick reference pulled from the protocol, so you don't have to dig back through the PDF.</p>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:22px;">
+      <div class="grid-2" style="font-size:.875rem; row-gap:8px;">
+        <div><span style="color:var(--muted);">Design:</span> Open-label, 3-arm randomised feasibility study</div>
+        <div><span style="color:var(--muted);">Arms:</span> Proactive high-dose IV iron / reactive low-dose IV iron / oral iron</div>
+        <div><span style="color:var(--muted);">Target N:</span> 30 participants across sites</div>
+        <div><span style="color:var(--muted);">Sponsor:</span> Hull University Teaching Hospitals NHS Trust</div>
+        <div><span style="color:var(--muted);">Funder:</span> Pharmacosmos</div>
+        <div><span style="color:var(--muted);">IRAS ID:</span> 351547</div>
+      </div>
+    </div>
+
+    <div class="serif" style="font-size:1.15rem; margin-bottom:8px;">Schedule of assessments</div>
+    <div class="card" style="overflow:hidden; margin-bottom:22px;">
+      ${SCHEDULE_OF_ASSESSMENTS.map((row) => `
+        <div class="sched-row">
+          <div class="visit">${row.visit}</div>
+          <div class="notes">${row.notes}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <hr class="sep">
+
+    <div class="section-head">
+      <div class="serif section-title" style="font-size:1.2rem;">Recruitment counts</div>
+      <p class="section-desc">Aggregate numbers at your site only — never enter names, NHS numbers, or dates of birth.</p>
+    </div>
+    <div class="grid-4" style="margin-bottom:22px;">
+      ${[['screened', 'Screened'], ['consented', 'Consented'], ['declined', 'Declined'], ['randomised', 'Randomised']].map(([key, label]) => `
+        <div>
+          <label class="field-label">${label}</label>
+          <input type="number" min="0" data-recruit="${key}" value="${r[key]}">
+        </div>
+      `).join('')}
+    </div>
+
+    <hr class="sep">
+
+    <div class="section-head">
+      <div class="serif section-title" style="font-size:1.2rem;">Consent experience log</div>
+      <p class="section-desc">Month 6 asks for a step-by-step account of consent, how many people, declines, and what you learned. Log it here as it happens so you're not reconstructing it later.</p>
+    </div>
+    <div class="card card-pad" style="margin-bottom:14px;">
+      <div class="grid-4" style="margin-bottom:10px;">
+        <div><label class="field-label">Date</label><input type="date" id="cr-date" value="${todayISO()}"></div>
+        <div><label class="field-label">Approached</label><input type="number" min="0" id="cr-approached"></div>
+        <div><label class="field-label">Consented</label><input type="number" min="0" id="cr-consented"></div>
+        <div><label class="field-label">Declined</label><input type="number" min="0" id="cr-declined"></div>
+      </div>
+      <textarea id="cr-learned" placeholder="What did you learn from this? Step-by-step notes on the consent process, any reasons for declining, reflections…" style="margin-bottom:10px;"></textarea>
+      <button class="btn btn-primary btn-sm" data-action="add-consent-reflection">${icon('plus')} Add reflection</button>
+    </div>
+    <div style="margin-bottom:22px;">
+      ${state.consentReflections.map((cr) => `
+        <div class="list-entry">
+          <div>
+            <div class="meta mono">${formatDate(cr.date)} · approached ${cr.approached || 0} · consented ${cr.consented || 0} · declined ${cr.declined || 0}</div>
+            <div class="body">${esc(cr.learned)}</div>
+          </div>
+          <button class="icon-btn" data-action="remove-consent-reflection" data-id="${cr.id}">${icon('trash')}</button>
+        </div>
+      `).join('')}
+    </div>
+
+    <hr class="sep">
+
+    <div class="section-head">
+      <div class="serif section-title" style="font-size:1.2rem;">AE / SAE involvement log</div>
+      <p class="section-desc">Note dates you took part in adverse-event review or causality discussions. Keep entries anonymised — no participant identifiers.</p>
+    </div>
+    <div class="card card-pad" style="margin-bottom:14px;">
+      <div class="grid-2" style="margin-bottom:10px;">
+        <input type="date" id="ae-date" value="${todayISO()}">
+        <input type="text" id="ae-note" placeholder="e.g. Attended SAE causality discussion with PI">
+      </div>
+      <button class="btn btn-primary btn-sm" data-action="add-ae">${icon('plus')} Add entry</button>
+    </div>
+    <div>
+      ${state.aeLog.map((a) => `
+        <div class="list-entry">
+          <div><span class="meta mono" style="margin-right:8px;">${formatDate(a.date)}</span><span class="body" style="display:inline; white-space:normal;">${esc(a.note)}</span></div>
+          <button class="icon-btn" data-action="remove-ae" data-id="${a.id}">${icon('trash')}</button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function bindPaladinEvents() {
+  ['screened', 'consented', 'declined', 'randomised'].forEach((key) => {
+    const el = document.querySelector(`[data-recruit="${key}"]`);
+    if (!el) return;
+    el.addEventListener('input', (e) => {
+      const n = Math.max(0, parseInt(e.target.value || '0', 10) || 0);
+      state.recruitment[key] = n;
+      save();
+    });
+  });
+}
+
+/* ---------------------------------------------------------------------- */
+/* Reminders                                                                 */
+/* ---------------------------------------------------------------------- */
+
+function renderRemindersTab() {
+  const all = computeAllReminders();
+  const today = todayISO();
+  return `
+    <div class="section-head">
+      <div class="eyebrow">Auto-generated from your tenure dates + your own</div>
+      <div class="serif section-title">Reminders</div>
+      <p class="section-desc">The scheme's own month-by-month milestones, plus anything you add.</p>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
+      <input type="text" id="new-reminder-title" placeholder="Add a custom reminder…" style="flex:1; min-width:180px;">
+      <input type="date" id="new-reminder-due" value="${todayISO()}" style="width:auto;">
+      <button class="btn btn-primary btn-sm" data-action="add-reminder">${icon('plus')} Add</button>
+    </div>
+
+    ${all.map((r) => {
+      const overdue = !r.done && r.due < today;
+      return `
+        <div class="reminder-row ${overdue ? 'overdue' : ''}">
+          <label class="left">
+            <input type="checkbox" ${r.done ? 'checked' : ''} data-action="${r.auto ? 'toggle-auto-reminder' : 'toggle-custom-reminder'}" data-key="${r.auto ? r.key : r.id}">
+            <span class="${r.done ? 'done' : ''}" style="font-size:.875rem;">${esc(r.title)}</span>
+            ${r.auto ? '<span class="badge" style="flex-shrink:0;">scheme milestone</span>' : ''}
+          </label>
+          <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+            ${overdue ? icon('alert-triangle') : ''}
+            <span class="mono" style="font-size:.78rem; color:${overdue ? 'var(--accent-rust)' : 'var(--muted)'};">${formatDate(r.due)}</span>
+            ${!r.auto ? `<button class="icon-btn" data-action="remove-reminder" data-id="${r.id}">${icon('trash')}</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('')}
+  `;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Journal                                                                   */
+/* ---------------------------------------------------------------------- */
+
+function renderJournalTab() {
+  return `
+    <div class="section-head">
+      <div class="eyebrow">Free-form reflection</div>
+      <div class="serif section-title">Journal</div>
+      <p class="section-desc">Anything worth remembering that doesn't fit neatly into a checklist box — this is your raw material for appraisal and your research CV later.</p>
+    </div>
+    <div class="card card-pad" style="margin-bottom:20px;">
+      <input type="date" id="new-journal-date" value="${todayISO()}" style="width:auto; margin-bottom:10px;">
+      <textarea id="new-journal-text" placeholder="What happened, what you learned, what you'd do differently…" style="margin-bottom:10px;"></textarea>
+      <button class="btn btn-primary btn-sm" data-action="add-journal">${icon('plus')} Add entry</button>
+    </div>
+    ${state.journal.length === 0 ? '<p style="font-size:.875rem; color:var(--muted);">No journal entries yet.</p>' : ''}
+    ${state.journal.map((j) => `
+      <div class="card card-pad" style="margin-bottom:10px;">
+        <div class="row-between" style="margin-bottom:6px;">
+          <span class="meta mono" style="font-size:.75rem; color:var(--muted);">${formatDate(j.date)}</span>
+          <button class="icon-btn" data-action="remove-journal" data-id="${j.id}">${icon('trash')}</button>
+        </div>
+        <p style="font-size:.875rem; white-space:pre-wrap; margin:0;">${esc(j.text)}</p>
+      </div>
+    `).join('')}
+  `;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Settings                                                                  */
+/* ---------------------------------------------------------------------- */
+
+function renderSettingsTab() {
+  const s = state.settings;
+  return `
+    <div class="section-head">
+      <div class="serif section-title">Settings</div>
+      <p class="section-desc">These drive the tenure timeline and auto-generated reminders.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="field"><label class="field-label">Your name</label><input type="text" id="set-name" value="${esc(s.name)}" placeholder="Optional"></div>
+      <div class="field"><label class="field-label">Your role</label><input type="text" id="set-role" value="${esc(s.role)}" placeholder="e.g. Research nurse, FY2, ST3"></div>
+      <div class="field">
+        <label class="field-label">Site</label>
+        <select id="set-site">
+          ${SITE_OPTIONS.map((opt) => `<option value="${esc(opt)}" ${s.site === opt ? 'selected' : ''}>${esc(opt)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label class="field-label">Supervising PI</label><input type="text" id="set-pi" value="${esc(s.piName)}"></div>
+      <div class="field"><label class="field-label">Study name</label><input type="text" id="set-study" value="${esc(s.studyName)}"></div>
+      <div class="field"><label class="field-label">Tenure start date</label><input type="date" id="set-start" value="${s.startDate}"></div>
+    </div>
+
+    <hr class="sep">
+
+    <label class="chk-row" style="margin-bottom:10px;">
+      <input type="checkbox" id="set-extended" ${s.extended ? 'checked' : ''}>
+      I've requested / been granted a tenure extension
+    </label>
+    <div id="extended-block">
+      ${s.extended ? `
+        <div class="field" style="max-width:220px;">
+          <label class="field-label">New planned end date</label>
+          <input type="date" id="set-extended-end" value="${s.extendedEndDate}">
+        </div>
+      ` : `
+        <p id="planned-end-preview" style="font-size:.78rem; color:var(--muted);">Planned end date: ${formatDate(addMonthsISO(s.startDate, 6))} (start date + 6 months)</p>
+      `}
+    </div>
+
+    <hr class="sep">
+
+    <div class="serif" style="font-size:1.15rem; margin-bottom:2px;">Cloud sync (optional)</div>
+    <p style="font-size:.78rem; color:var(--muted); margin:0 0 12px;">
+      Everything already works fully offline via this browser's local storage. Set this up if you also want your
+      data backed up to your own Firebase project and available from another device.
+    </p>
+    <div id="cloud-sync-block"></div>
+
+    <hr class="sep">
+
+    <div class="serif" style="font-size:1.15rem; margin-bottom:6px;">Data</div>
+    <p style="font-size:.78rem; color:var(--muted); margin-bottom:12px;">
+      Everything is stored privately in this browser's local storage — nothing is sent anywhere automatically. If you switch
+      browsers or devices, or clear browser data, use the backup buttons below to move your data across.
+    </p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-outline btn-sm" data-action="copy-backup">${icon('copy')} Copy full backup (JSON)</button>
+      <button class="btn btn-outline btn-sm" data-action="download-backup">${icon('copy')} Download backup (.json)</button>
+      <button class="btn btn-outline btn-sm" data-action="trigger-import">${icon('copy')} Import backup</button>
+      <button class="btn btn-danger-outline btn-sm" data-action="reset-confirm">${icon('trash')} Reset all data</button>
+    </div>
+    <div id="reset-confirm-row" style="margin-top:10px;"></div>
+  `;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Actions                                                                   */
+/* ---------------------------------------------------------------------- */
+
+function addActivity() {
+  const type = document.getElementById('new-activity-type').value;
+  const date = document.getElementById('new-activity-date').value || todayISO();
+  const description = document.getElementById('new-activity-desc').value.trim();
+  if (!description) return;
+  state.activities.unshift({ id: uid(), type, date, description });
+  save();
+  renderTabContent();
+}
+
+function removeActivity(id) {
+  state.activities = state.activities.filter((a) => a.id !== id);
+  save();
+  renderTabContent();
+}
+
+function addConsentReflection() {
+  const date = document.getElementById('cr-date').value || todayISO();
+  const approached = document.getElementById('cr-approached').value;
+  const consented = document.getElementById('cr-consented').value;
+  const declined = document.getElementById('cr-declined').value;
+  const learned = document.getElementById('cr-learned').value.trim();
+  if (!learned && !approached && !consented) return;
+  state.consentReflections.unshift({ id: uid(), date, approached, consented, declined, learned });
+  save();
+  renderTabContent();
+}
+
+function removeConsentReflection(id) {
+  state.consentReflections = state.consentReflections.filter((r) => r.id !== id);
+  save();
+  renderTabContent();
+}
+
+function addAe() {
+  const date = document.getElementById('ae-date').value || todayISO();
+  const note = document.getElementById('ae-note').value.trim();
+  if (!note) return;
+  state.aeLog.unshift({ id: uid(), date, note });
+  save();
+  renderTabContent();
+}
+
+function removeAe(id) {
+  state.aeLog = state.aeLog.filter((a) => a.id !== id);
+  save();
+  renderTabContent();
+}
+
+function addReminder() {
+  const title = document.getElementById('new-reminder-title').value.trim();
+  const due = document.getElementById('new-reminder-due').value || todayISO();
+  if (!title) return;
+  state.reminders.push({ id: uid(), title, due, done: false });
+  save();
+  renderTabContent();
+}
+
+function removeReminder(id) {
+  state.reminders = state.reminders.filter((r) => r.id !== id);
+  save();
+  renderTabContent();
+}
+
+function toggleAutoReminder(key) {
+  state.autoRemindersDone[key] = !state.autoRemindersDone[key];
+  save();
+  renderTabContent();
+}
+
+function toggleCustomReminder(id) {
+  state.reminders = state.reminders.map((r) => (r.id === id ? { ...r, done: !r.done } : r));
+  save();
+  renderTabContent();
+}
+
+function addJournal() {
+  const date = document.getElementById('new-journal-date').value || todayISO();
+  const text = document.getElementById('new-journal-text').value.trim();
+  if (!text) return;
+  state.journal.unshift({ id: uid(), date, text });
+  save();
+  renderTabContent();
+}
+
+function removeJournal(id) {
+  state.journal = state.journal.filter((j) => j.id !== id);
+  save();
+  renderTabContent();
+}
+
+function resetAllData() {
+  state = defaultData();
+  save();
+  renderApp();
+}
+
+function importBackup(jsonText) {
+  try {
+    const parsed = JSON.parse(jsonText);
+    const base = defaultData();
+    state = {
+      ...base,
+      ...parsed,
+      settings: { ...base.settings, ...(parsed.settings || {}) },
+      checklist: { ...base.checklist, ...(parsed.checklist || {}) },
+    };
+    save();
+    renderApp();
+    showToast('Backup imported.');
+  } catch (e) {
+    showToast("That file doesn't look like a valid backup.");
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Event binding                                                            */
+/* ---------------------------------------------------------------------- */
+
+function bindTabEvents() {
+  if (activeTab === 'checklist') bindChecklistEvents();
+  if (activeTab === 'paladin') bindPaladinEvents();
+  if (activeTab === 'settings') { bindSettingsEvents(); renderCloudSyncBlock(); }
+}
+
+function bindSettingsEvents() {
+  const s = state.settings;
+
+  const bindText = (id, key) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', (e) => {
+      s[key] = e.target.value;
+      save();
+      renderHeaderAndTimeline();
+      if (key === 'startDate') {
+        const preview = document.getElementById('planned-end-preview');
+        if (preview) preview.textContent = 'Planned end date: ' + formatDate(addMonthsISO(s.startDate, 6)) + ' (start date + 6 months)';
+      }
+    });
+  };
+  bindText('set-name', 'name');
+  bindText('set-role', 'role');
+  bindText('set-pi', 'piName');
+  bindText('set-study', 'studyName');
+  bindText('set-start', 'startDate');
+
+  const siteEl = document.getElementById('set-site');
+  if (siteEl) siteEl.addEventListener('change', (e) => { s.site = e.target.value; save(); renderHeaderAndTimeline(); });
+
+  const extEl = document.getElementById('set-extended');
+  if (extEl) extEl.addEventListener('change', (e) => {
+    s.extended = e.target.checked;
+    if (!s.extended) s.extendedEndDate = '';
+    save();
+    renderTabContent();
+    renderHeaderAndTimeline();
+  });
+
+  const extEndEl = document.getElementById('set-extended-end');
+  if (extEndEl) extEndEl.addEventListener('input', (e) => { s.extendedEndDate = e.target.value; save(); renderHeaderAndTimeline(); });
+}
+
+document.addEventListener('click', async (e) => {
+  const t = e.target.closest('[data-action]');
+  if (!t) return;
+  const action = t.dataset.action;
+
+  if (action === 'switch-tab') { switchTab(t.dataset.tab); return; }
+  if (action === 'add-activity') { addActivity(); return; }
+  if (action === 'remove-activity') { removeActivity(t.dataset.id); return; }
+  if (action === 'add-consent-reflection') { addConsentReflection(); return; }
+  if (action === 'remove-consent-reflection') { removeConsentReflection(t.dataset.id); return; }
+  if (action === 'add-ae') { addAe(); return; }
+  if (action === 'remove-ae') { removeAe(t.dataset.id); return; }
+  if (action === 'add-reminder') { addReminder(); return; }
+  if (action === 'remove-reminder') { removeReminder(t.dataset.id); return; }
+  if (action === 'add-journal') { addJournal(); return; }
+  if (action === 'remove-journal') { removeJournal(t.dataset.id); return; }
+
+  if (action === 'copy-checklist') {
+    const ok = await copyText(checklistFullText());
+    showToast(ok ? 'Checklist answers copied.' : 'Copy failed — select and copy manually.');
+    return;
+  }
+  if (action === 'copy-activities') {
+    const ok = await copyText(activitiesFullText());
+    showToast(ok ? 'Activity log copied.' : 'Copy failed — select and copy manually.');
+    return;
+  }
+  if (action === 'copy-backup') {
+    const ok = await copyText(JSON.stringify(state, null, 2));
+    showToast(ok ? 'Backup copied to clipboard.' : 'Copy failed — try Download instead.');
+    return;
+  }
+  if (action === 'download-backup') {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'associate-pi-tracker-backup.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return;
+  }
+  if (action === 'trigger-import') {
+    document.getElementById('import-file-input').click();
+    return;
+  }
+  if (action === 'reset-confirm') {
+    document.getElementById('reset-confirm-row').innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <span style="font-size:.8rem; color:var(--accent-rust);">Delete everything? This can't be undone.</span>
+        <button class="btn btn-danger btn-sm" data-action="reset-yes">Yes, reset</button>
+        <button class="btn btn-outline btn-sm" data-action="reset-cancel">Cancel</button>
+      </div>
+    `;
+    return;
+  }
+  if (action === 'reset-yes') { resetAllData(); return; }
+  if (action === 'reset-cancel') { document.getElementById('reset-confirm-row').innerHTML = ''; return; }
+});
+
+document.addEventListener('change', (e) => {
+  if (e.target.matches('[data-action="toggle-auto-reminder"]')) { toggleAutoReminder(e.target.dataset.key); }
+  if (e.target.matches('[data-action="toggle-custom-reminder"]')) { toggleCustomReminder(e.target.dataset.key); }
+});
+
+document.getElementById('import-file-input').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => importBackup(String(reader.result));
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+/* ---------------------------------------------------------------------- */
+/* Boot                                                                      */
+/* ---------------------------------------------------------------------- */
+
+renderApp();
+</script>
+</body>
+</html>
