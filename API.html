@@ -253,7 +253,8 @@
   .sync-dot.busy { background: var(--accent-amber); }
   .sync-dot.bad { background: var(--accent-rust); }
   .sync-dot.off { background: var(--muted); }
-  .sync-row { display: flex; align-items: center; gap: 9px; font-size: .84rem; color: var(--muted); margin-bottom: 14px; }
+  .sync-row { display: flex; align-items: flex-start; gap: 9px; font-size: .84rem; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+  .sync-row .sync-dot { margin-top: 6px; }
 
   /* ============ Palette switcher ============ */
   #theme-switch {
@@ -665,24 +666,32 @@ function friendlyAuthError(e) {
     'auth/weak-password': 'Password should be at least 6 characters.',
     'auth/invalid-credential': 'Email or password is incorrect.',
     'auth/too-many-requests': 'Too many attempts — wait a bit and try again.',
+    'auth/unauthorized-domain': "This page's web address isn't authorised in Firebase. In the Firebase console go to Authentication → Settings → Authorized domains and add the domain you're opening this file from (e.g. localhost, or your host). Opening the file directly as file:// won't work — serve it over http/https.",
+    'auth/operation-not-allowed': 'Email/Password sign-in is turned off. In the Firebase console enable Authentication → Sign-in method → Email/Password.',
+    'auth/configuration-not-found': 'Firebase can\u2019t find your Authentication setup. Make sure you\u2019ve enabled Authentication (Email/Password) in the console and pasted the config from the same project.',
+    'auth/network-request-failed': 'Network problem reaching Firebase — check your internet connection, VPN, or firewall and try again.',
+    'auth/api-key-not-valid': 'The API key in your config isn\u2019t valid — re-copy the whole config snippet from the Firebase console.',
+    'auth/invalid-api-key': 'The API key in your config isn\u2019t valid — re-copy the whole config snippet from the Firebase console.',
   };
   return map[code] || ('Something went wrong (' + (code || (e && e.message) || 'unknown error') + ').');
 }
 
 async function cloudSignIn() {
+  if (!fbAuth) { showToast('Cloud sync isn\u2019t connected yet — save your Firebase config first.'); return; }
   const email = document.getElementById('fb-email').value.trim();
   const pw = document.getElementById('fb-password').value;
   if (!email || !pw) { showToast('Enter an email and password first.'); return; }
   try { await window.fb.signInWithEmailAndPassword(fbAuth, email, pw); }
-  catch (e) { showToast(friendlyAuthError(e)); }
+  catch (e) { const msg = friendlyAuthError(e); showToast(msg); setCloudStatus('error', msg); }
 }
 
 async function cloudSignUp() {
+  if (!fbAuth) { showToast('Cloud sync isn\u2019t connected yet — save your Firebase config first.'); return; }
   const email = document.getElementById('fb-email').value.trim();
   const pw = document.getElementById('fb-password').value;
   if (!email || !pw) { showToast('Enter an email and password first.'); return; }
   try { await window.fb.createUserWithEmailAndPassword(fbAuth, email, pw); }
-  catch (e) { showToast(friendlyAuthError(e)); }
+  catch (e) { const msg = friendlyAuthError(e); showToast(msg); setCloudStatus('error', msg); }
 }
 
 async function cloudSignOutAction() {
@@ -752,7 +761,7 @@ function cloudSyncBlockHTML() {
     body = `
       <div class="grid-2" style="margin-bottom:8px;">
         <div><label class="field-label">Email</label><input type="text" id="fb-email" placeholder="you@example.com"></div>
-        <div><label class="field-label">Password</label><input type="text" id="fb-password" placeholder="At least 6 characters"></div>
+        <div><label class="field-label">Password</label><input type="password" id="fb-password" placeholder="At least 6 characters" autocomplete="current-password"></div>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
         <button class="btn btn-primary btn-sm" data-action="fb-sign-in">Sign in</button>
