@@ -4,6 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Associate PI Tracker — PALaDIN</title>
+
+<!--
+  iOS home screen. Safari ignores manifest icons and uses apple-touch-icon,
+  so this is the tag that matters. The href is deliberately RELATIVE: on a
+  GitHub Pages project site the app lives at /<repo>/, and a leading slash
+  would wrongly resolve to the domain root. Keep apple-touch-icon.png in the
+  same folder as this file. Bump ?v= to force iOS to re-fetch a changed icon.
+-->
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=1">
+<link rel="icon" type="image/png" href="apple-touch-icon.png?v=1">
+<meta name="apple-mobile-web-app-title" content="PI Tracker">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#EFF2EE">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!--
@@ -932,14 +948,6 @@ function renderOverviewTab() {
   const r = state.recruitment;
 
   return `
-    <div class="alert" style="margin-bottom:22px;">
-      ${icon('info', 'icon-lg')}
-      <div>
-        <div class="alert-title">NIHR Learn checklist can lose content</div>
-        <div class="alert-desc">NIHR Learn has warned that checklist entries are sometimes wiped. This tracker is your durable backup — fill it in here first, then use the copy buttons on the checklist tab to paste your answers back into NIHR Learn.</div>
-      </div>
-    </div>
-
     <div class="grid-4" style="margin-bottom:22px;">
       <div class="card stat-card"><div class="stat-label">Mandated items done</div><div class="serif stat-value">${mandatedDone}/${MANDATED_ITEMS.length}</div></div>
       <div class="card stat-card"><div class="stat-label">Additional activities</div><div class="serif stat-value">${state.activities.length}</div></div>
