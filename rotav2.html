@@ -1163,8 +1163,9 @@
     <div class="rota-head"><div class="kicker" style="margin-bottom:2px">LTFT full-shift rota for HR</div><h2 class="rota-title" id="hrWho">HR rota export</h2></div>
     <div class="hr-controls">
       <label>Doctor<input type="text" id="hrDoctor" readonly></label>
-      <label>Week 1 Monday<input type="date" id="hrStart"></label>
-      <label>Weeks<input type="number" id="hrWeeks" min="1" max="53" step="1"></label>
+      <label>From month<select id="hrFrom"></select></label>
+      <label>To month<select id="hrTo"></select></label>
+      <label>Weeks<input type="text" id="hrWeeks" readonly></label>
     </div>
     <div class="hr-conflicts" id="hrConflicts" style="display:none"></div>
     <div class="hr-legend">On-Call <b>12+3.5</b> · Standard <b>8.5</b> · Std Monday <b>9</b> · NWD / Zero Day <b>blank</b> · tap a cell to change</div>
@@ -2026,15 +2027,30 @@ function hrZeroDaysFor(ds){ const wd=hrDow(ds);
   return [hrAddDays(ds,1)];                             // Sun,Mon,Tue,Wed,Thu -> next day
 }
 function hrFirstMondayOnOrAfter(ds){ let d=new Date(ds+"T00:00:00"); while(d.getDay()!==1) d.setDate(d.getDate()+1); return leaveISO(d); }
-function hrDefaults(){
-  // default to the active roster's first Monday + a week count spanning it
-  const L=getLeave(), Y=(new Date()).getMonth()>=1?(new Date()).getFullYear():(new Date()).getFullYear()-1;
-  const curHalf=(new Date()).getMonth()>=1 && (new Date()).getMonth()<=6 ? "H1":"H2";
-  const start = curHalf==="H1"?`${Y}-02-01`:`${Y}-08-01`;
-  const end   = curHalf==="H1"?`${Y}-07-31`:`${Y+1}-01-31`;
-  const firstMon=hrFirstMondayOnOrAfter(start);
-  const weeks=Math.max(1, Math.ceil((new Date(end+"T00:00:00")-new Date(firstMon+"T00:00:00"))/(7*86400000)));
+function hrMonthKey(y,m){ return `${y}-${String(m+1).padStart(2,"0")}`; }
+function hrMonthLabel(y,m){ return new Date(y,m,1).toLocaleDateString("en-GB",{month:"short",year:"numeric"}); }
+function hrMonthStart(key){ return key+"-01"; }
+function hrMonthEnd(key){ const [y,m]=key.split("-").map(Number); const d=new Date(y, m, 0); return leaveISO(d); } // last day of month m (1-based → day 0 of next)
+function hrBuildMonthOptions(){
+  // 18 months back to 18 months forward from today
+  const now=new Date(); const opts=[];
+  for(let i=-18;i<=18;i++){ const d=new Date(now.getFullYear(), now.getMonth()+i, 1); opts.push({key:hrMonthKey(d.getFullYear(),d.getMonth()), label:hrMonthLabel(d.getFullYear(),d.getMonth())}); }
+  return opts;
+}
+function hrWeeksBetween(fromKey, toKey){
+  const firstMon=hrFirstMondayOnOrAfter(hrMonthStart(fromKey));
+  const end=hrMonthEnd(toKey);
+  if(end<firstMon) return {start:firstMon, weeks:1};
+  const weeks=Math.max(1, Math.ceil((new Date(end+"T00:00:00")-new Date(firstMon+"T00:00:00")+86400000)/(7*86400000)));
   return {start:firstMon, weeks};
+}
+function hrDefaults(){
+  // default to the active roster window: Aug–Feb (H2) or Feb–Jul (H1)
+  const now=new Date(), Y=now.getMonth()>=1?now.getFullYear():now.getFullYear()-1;
+  const curHalf=(now.getMonth()>=1 && now.getMonth()<=6)?"H1":"H2";
+  const fromKey = curHalf==="H1"?hrMonthKey(Y,1):hrMonthKey(Y,7);          // Feb or Aug
+  const toKey   = curHalf==="H1"?hrMonthKey(Y,6):hrMonthKey(Y+1,0);        // Jul or next Jan
+  return {fromKey, toKey};
 }
 function hrClassify(){
   const m=(state.myShifts&&state.myShifts[meKey])||{}; const L=getLeave();
@@ -2060,15 +2076,28 @@ function hrClassify(){
   }
   return {rows, conflicts};
 }
+function hrSyncFromMonths(){
+  const fromKey=document.getElementById("hrFrom").value, toKey=document.getElementById("hrTo").value;
+  if(toKey<fromKey){ document.getElementById("hrTo").value=fromKey; }
+  const to2=document.getElementById("hrTo").value;
+  const {start, weeks}=hrWeeksBetween(fromKey, to2);
+  hrState.start=start; hrState.weeks=weeks; hrState.fromKey=fromKey; hrState.toKey=to2; hrState.overrides={};
+  document.getElementById("hrWeeks").value=`${weeks} (from Mon ${new Date(start+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"})})`;
+  renderHr();
+}
 function openHrExport(){
-  const d=hrDefaults();
-  hrState={start:d.start, weeks:d.weeks, overrides:{}};
+  const dflt=hrDefaults();
+  hrState={overrides:{}};
   document.getElementById("rotaOverlay").classList.remove("show");
   document.getElementById("hrOverlay").classList.add("show");
   document.getElementById("hrDoctor").value = (state.people[meKey] && state.people[meKey].name) || "";
-  document.getElementById("hrStart").value = d.start;
-  document.getElementById("hrWeeks").value = d.weeks;
-  renderHr();
+  const opts=hrBuildMonthOptions();
+  const optHtml=opts.map(o=>`<option value="${o.key}">${o.label}</option>`).join("");
+  const fromSel=document.getElementById("hrFrom"), toSel=document.getElementById("hrTo");
+  fromSel.innerHTML=optHtml; toSel.innerHTML=optHtml;
+  fromSel.value=dflt.fromKey; toSel.value=dflt.toKey;
+  fromSel.onchange=hrSyncFromMonths; toSel.onchange=hrSyncFromMonths;
+  hrSyncFromMonths();
 }
 function closeHr(){ document.getElementById("hrOverlay").classList.remove("show"); openMyRota(); }
 function renderHr(){
@@ -2957,8 +2986,6 @@ function boot(){
   document.getElementById("exportHr").onclick=openHrExport;
   document.getElementById("hrBack").onclick=closeHr;
   document.getElementById("hrDownload").onclick=hrDownload;
-  document.getElementById("hrStart").onchange=e=>{ let v=e.target.value; if(v){ const mon=hrFirstMondayOnOrAfter(v); if(mon!==v){ e.target.value=mon; v=mon; } hrState.start=v; hrState.overrides={}; renderHr(); } };
-  document.getElementById("hrWeeks").onchange=e=>{ let n=parseInt(e.target.value,10); if(!(n>=1)) n=1; if(n>53) n=53; e.target.value=n; hrState.weeks=n; renderHr(); };
   document.getElementById("leaveBtn").onclick=openLeave;
   document.getElementById("leaveBack").onclick=closeLeave;
   document.getElementById("leaveMyRota").onclick=()=>{ openMyRota(); requestAnimationFrame(()=>document.getElementById("leaveOverlay").classList.remove("show")); };
