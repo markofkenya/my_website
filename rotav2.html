@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
@@ -404,6 +404,9 @@
   .hr-controls label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--ink-soft);font-weight:600}
   .hr-controls input{background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;color:var(--ink);font-family:var(--font-b);font-size:14px}
   .hr-controls input[readonly]{opacity:.75}
+  .hr-controls select{background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;color:var(--ink);font-family:var(--font-b);font-size:14px}
+  .hr-my{display:flex;gap:6px}
+  .hr-yr{width:78px}
   .hr-legend{font-size:12px;color:var(--ink-faint);margin-bottom:12px}
   .hr-legend b{color:var(--ink-soft)}
   .hr-conflicts{background:#fdecea;border:1px solid #f0b8ae;border-left:4px solid #c2412f;border-radius:11px;padding:11px 13px;margin-bottom:12px;font-size:13px;color:#7c2317}
@@ -1160,11 +1163,11 @@
       <button class="rota-back" id="hrBack">‹ Back</button>
       <div class="rota-top-actions"><button class="btn key-al" id="hrDownload">Download .xlsx</button></div>
     </div>
-    <div class="rota-head"><div class="kicker" style="margin-bottom:2px">LTFT full-shift rota for HR</div><h2 class="rota-title" id="hrWho">HR rota export</h2></div>
+    <div class="rota-head"><div class="kicker" style="margin-bottom:2px">LTFT work schedule for HR</div><h2 class="rota-title" id="hrWho">Work schedule export</h2></div>
     <div class="hr-controls">
       <label>Doctor<input type="text" id="hrDoctor" readonly></label>
-      <label>From month<select id="hrFrom"></select></label>
-      <label>To month<select id="hrTo"></select></label>
+      <label>From<span class="hr-my"><select id="hrFromM"></select><input type="number" id="hrFromY" class="hr-yr" min="2000" max="2099" step="1"></span></label>
+      <label>To<span class="hr-my"><select id="hrToM"></select><input type="number" id="hrToY" class="hr-yr" min="2000" max="2099" step="1"></span></label>
       <label>Weeks<input type="text" id="hrWeeks" readonly></label>
     </div>
     <div class="hr-conflicts" id="hrConflicts" style="display:none"></div>
@@ -1180,7 +1183,7 @@
       <div class="rota-top-actions">
         <button class="btn key-al" id="leaveBtn">Annual Leave</button>
         <button class="btn" id="exportIcs">Add to phone calendar (.ics)</button>
-        <button class="btn" id="exportHr">Export HR rota</button>
+        <button class="btn" id="exportHr">Export work schedule</button>
       </div>
     </div>
     <div class="rota-head">
@@ -2031,12 +2034,9 @@ function hrMonthKey(y,m){ return `${y}-${String(m+1).padStart(2,"0")}`; }
 function hrMonthLabel(y,m){ return new Date(y,m,1).toLocaleDateString("en-GB",{month:"short",year:"numeric"}); }
 function hrMonthStart(key){ return key+"-01"; }
 function hrMonthEnd(key){ const [y,m]=key.split("-").map(Number); const d=new Date(y, m, 0); return leaveISO(d); } // last day of month m (1-based → day 0 of next)
-function hrBuildMonthOptions(){
-  // 18 months back to 18 months forward from today
-  const now=new Date(); const opts=[];
-  for(let i=-18;i<=18;i++){ const d=new Date(now.getFullYear(), now.getMonth()+i, 1); opts.push({key:hrMonthKey(d.getFullYear(),d.getMonth()), label:hrMonthLabel(d.getFullYear(),d.getMonth())}); }
-  return opts;
-}
+const HR_MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function hrClampYear(v){ let y=parseInt(v,10); if(!(y>=2000)) y=new Date().getFullYear(); if(y>2099) y=2099; if(y<2000) y=2000; return y; }
+function hrKeyFromControls(mSel, ySel){ const m=parseInt(document.getElementById(mSel).value,10); const y=hrClampYear(document.getElementById(ySel).value); return hrMonthKey(y, m); }
 function hrWeeksBetween(fromKey, toKey){
   const firstMon=hrFirstMondayOnOrAfter(hrMonthStart(fromKey));
   const end=hrMonthEnd(toKey);
@@ -2077,11 +2077,16 @@ function hrClassify(){
   return {rows, conflicts};
 }
 function hrSyncFromMonths(){
-  const fromKey=document.getElementById("hrFrom").value, toKey=document.getElementById("hrTo").value;
-  if(toKey<fromKey){ document.getElementById("hrTo").value=fromKey; }
-  const to2=document.getElementById("hrTo").value;
-  const {start, weeks}=hrWeeksBetween(fromKey, to2);
-  hrState.start=start; hrState.weeks=weeks; hrState.fromKey=fromKey; hrState.toKey=to2; hrState.overrides={};
+  let fromKey=hrKeyFromControls("hrFromM","hrFromY");
+  let toKey=hrKeyFromControls("hrToM","hrToY");
+  if(toKey<fromKey){ // bump To up to From
+    const [fy,fm]=fromKey.split("-").map(Number);
+    document.getElementById("hrToM").value=String(fm-1);
+    document.getElementById("hrToY").value=String(fy);
+    toKey=fromKey;
+  }
+  const {start, weeks}=hrWeeksBetween(fromKey, toKey);
+  hrState.start=start; hrState.weeks=weeks; hrState.fromKey=fromKey; hrState.toKey=toKey; hrState.overrides={};
   document.getElementById("hrWeeks").value=`${weeks} (from Mon ${new Date(start+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"})})`;
   renderHr();
 }
@@ -2091,12 +2096,12 @@ function openHrExport(){
   document.getElementById("rotaOverlay").classList.remove("show");
   document.getElementById("hrOverlay").classList.add("show");
   document.getElementById("hrDoctor").value = (state.people[meKey] && state.people[meKey].name) || "";
-  const opts=hrBuildMonthOptions();
-  const optHtml=opts.map(o=>`<option value="${o.key}">${o.label}</option>`).join("");
-  const fromSel=document.getElementById("hrFrom"), toSel=document.getElementById("hrTo");
-  fromSel.innerHTML=optHtml; toSel.innerHTML=optHtml;
-  fromSel.value=dflt.fromKey; toSel.value=dflt.toKey;
-  fromSel.onchange=hrSyncFromMonths; toSel.onchange=hrSyncFromMonths;
+  const monthOpts=HR_MONTHS.map((n,i)=>`<option value="${i}">${n}</option>`).join("");
+  const fM=document.getElementById("hrFromM"), fY=document.getElementById("hrFromY"), tM=document.getElementById("hrToM"), tY=document.getElementById("hrToY");
+  fM.innerHTML=monthOpts; tM.innerHTML=monthOpts;
+  const [fy,fmo]=dflt.fromKey.split("-").map(Number); const [ty,tmo]=dflt.toKey.split("-").map(Number);
+  fM.value=String(fmo-1); fY.value=String(fy); tM.value=String(tmo-1); tY.value=String(ty);
+  [fM,fY,tM,tY].forEach(el=>{ el.onchange=hrSyncFromMonths; });
   hrSyncFromMonths();
 }
 function closeHr(){ document.getElementById("hrOverlay").classList.remove("show"); openMyRota(); }
