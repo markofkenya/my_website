@@ -462,6 +462,13 @@
   .swap-card .sw-why div{margin-top:2px}
   details.swap-blocked{margin-top:12px}
   details.swap-blocked summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-faint)}
+  .dept-lists{display:flex;flex-direction:column;gap:10px}
+  .dept-group{border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:var(--surface-2)}
+  .dept-group.add{border-left:4px solid #2f9e63}
+  .dept-group.skip{border-left:4px solid var(--ink-faint);opacity:.8}
+  .dept-group .dg-t{font-size:13px;font-weight:700;margin-bottom:6px}
+  .dept-group .dg-days{display:flex;flex-wrap:wrap;gap:6px}
+  .dept-day{font-size:12px;border:1px solid var(--line);border-radius:16px;padding:4px 10px;background:var(--surface)}
   .btn.key-al{background:#2f7d4f;color:#fff;padding:11px 18px;font-size:14.5px;font-weight:600;box-shadow:0 1px 0 #256a42,0 7px 16px -9px #2f7d4f}
   .leave-hero{display:flex;gap:22px;align-items:center;background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-radius:20px;padding:20px 22px;margin:10px 0 18px;box-shadow:0 1px 2px rgba(20,28,34,.03)}
   .leave-ringwrap{position:relative;width:120px;height:120px;flex:0 0 auto}
@@ -920,6 +927,7 @@
     </div>
     <div class="head-right">
       <button class="msg-tab" id="hubMsgTab" aria-label="Messages">Messages<span class="msg-badge" id="hubMsgBadge" hidden></span></button>
+      <button class="msg-tab" id="hubDeptBtn">Department rota</button>
       <button class="acct-btn" id="hubAccountBtn">Sign in</button>
     </div>
   </header>
@@ -1252,6 +1260,36 @@
 </div>
 
 <!-- MY ROTA (personal view) -->
+<div class="rota-overlay" id="deptOverlay">
+  <div class="rota-inner">
+    <div class="rota-top">
+      <button class="rota-back" id="deptBack">‹ Back</button>
+    </div>
+    <div class="rota-head"><div class="kicker" style="margin-bottom:2px">Add your on-calls from the published rota</div><h2 class="rota-title">Department rota</h2></div>
+
+    <div class="swap-step">
+      <div class="swap-step-label">1 · Upload the published rota (.xlsx)</div>
+      <div class="swap-upload">
+        <input type="file" id="deptFile" accept=".xlsx,.xls" style="display:none">
+        <button class="btn key-al" id="deptChoose">Choose rota file</button>
+        <span class="swap-status" id="deptStatus">Read on this device only — nothing is uploaded to a server.</span>
+      </div>
+    </div>
+
+    <div class="swap-step" id="deptStep2" style="display:none">
+      <div class="swap-step-label">2 · Which initials are you?</div>
+      <div class="swap-chips" id="deptWho"></div>
+    </div>
+
+    <div class="swap-step" id="deptStep3" style="display:none">
+      <div class="swap-step-label">3 · On-calls found</div>
+      <div class="swap-block-summary" id="deptSum"></div>
+      <div class="dept-lists" id="deptLists"></div>
+      <div style="margin-top:12px"><button class="btn key-al" id="deptApplyBtn">Add to My Rota</button></div>
+    </div>
+  </div>
+</div>
+
 <div class="rota-overlay" id="swapOverlay">
   <div class="rota-inner">
     <div class="rota-top">
@@ -2523,6 +2561,64 @@ async function swapHandleFile(file){
     swapRenderWho();
   }catch(e){ console.warn(e); status.textContent="Couldn't read that file — expected the Trust rota .xlsx with Date and On-call columns. ("+(e.message||e)+")"; }
 }
+/* ===== Department rota — add-only on-call import from the published sheet ===== */
+let deptData=null, deptMe=null;
+function deptOncallStatus(ds){
+  const m=(state.myShifts&&state.myShifts[meKey])||{};
+  if(Array.isArray(m[ds]) && m[ds].some(s=>s.type==="oncall")) return "have";
+  const a=(state.assignments||{})[ds]; if(a && a.p===meKey) return "have";
+  return "new";
+}
+function openDept(){ deptData=null; deptMe=null; document.getElementById("deptStatus").textContent="Read on this device only — nothing is uploaded to a server."; document.getElementById("deptStep2").style.display="none"; document.getElementById("deptStep3").style.display="none"; document.getElementById("deptOverlay").classList.add("show"); }
+function closeDept(){ document.getElementById("deptOverlay").classList.remove("show"); requestAnimationFrame(replayHubSpin); }
+async function deptHandleFile(file){
+  const status=document.getElementById("deptStatus");
+  try{
+    status.textContent="Loading…";
+    const XL=await hrLoadSheetJS();
+    const buf=await file.arrayBuffer();
+    const wb=XL.read(new Uint8Array(buf),{type:"array",cellDates:true});
+    deptData=swapParse(wb); deptMe=null;
+    document.getElementById("deptStep3").style.display="none";
+    status.textContent=`Read "${deptData.sheet}": ${deptData.dates.length} days (${swapNiceDate(deptData.dates[0])} → ${swapNiceDate(deptData.dates[deptData.dates.length-1])}). Held in memory only.`;
+    const host=document.getElementById("deptWho");
+    const oncallsOf=p=>deptData.dates.filter(ds=>deptData.byDate[ds].oncall.includes(p));
+    host.innerHTML=deptData.doctors.map(p=>`<button class="swap-chip ${p===deptMe?"sel":""}" data-p="${p}">${p}<span class="sc-sub">${oncallsOf(p).length} on-call${oncallsOf(p).length===1?"":"s"}</span></button>`).join("");
+    host.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ deptMe=b.dataset.p; host.querySelectorAll(".swap-chip").forEach(c=>c.classList.toggle("sel",c.dataset.p===deptMe)); deptRenderPreview(); });
+    document.getElementById("deptStep2").style.display="block";
+  }catch(e){ console.warn(e); status.textContent="Couldn't read that file — expected the Trust rota .xlsx with Date and On-call columns. ("+(e.message||e)+")"; }
+}
+function deptRenderPreview(){
+  const mine=deptData.dates.filter(ds=>deptData.byDate[ds].oncall.includes(deptMe));
+  const add=mine.filter(ds=>deptOncallStatus(ds)==="new");
+  const skip=mine.filter(ds=>deptOncallStatus(ds)==="have");
+  document.getElementById("deptSum").innerHTML=`Found <b>${mine.length}</b> on-call${mine.length===1?"":"s"} for <b>${deptMe}</b>${mine.length?` · ${swapNiceDate(mine[0])} → ${swapNiceDate(mine[mine.length-1])}`:""}. Add-only: nothing is ever removed from your calendar.`;
+  const chip=ds=>`<span class="dept-day">${swapNiceDate(ds)}</span>`;
+  document.getElementById("deptLists").innerHTML=
+    `<div class="dept-group add"><div class="dg-t">Will add (${add.length})</div><div class="dg-days">${add.length?add.map(chip).join(""):"<span class='swap-status'>Nothing new — all already in My Rota.</span>"}</div></div>`+
+    (skip.length?`<div class="dept-group skip"><div class="dg-t">Already in My Rota — skipped (${skip.length})</div><div class="dg-days">${skip.map(chip).join("")}</div></div>`:"");
+  const btn=document.getElementById("deptApplyBtn");
+  btn.disabled=!add.length; btn.textContent=add.length?`Add ${add.length} on-call${add.length===1?"":"s"} to My Rota`:"Nothing to add";
+  document.getElementById("deptStep3").style.display="block";
+}
+function deptApply(){
+  if(!deptData||!deptMe) return;
+  const mine=deptData.dates.filter(ds=>deptData.byDate[ds].oncall.includes(deptMe));
+  const add=mine.filter(ds=>deptOncallStatus(ds)==="new");
+  if(!add.length) return;
+  if(!state.myShifts) state.myShifts={};
+  if(!state.myShifts[meKey]) state.myShifts[meKey]={};
+  add.forEach(ds=>{
+    const arr=state.myShifts[meKey][ds]||[];
+    arr.push({id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:"oncall"});
+    state.myShifts[meKey][ds]=arr;
+    touchDay(meKey, ds);
+  });
+  persist(); renderMyCalendar(); renderLeave();
+  flashMsg(`${add.length} on-call${add.length===1?"":"s"} added to My Rota`);
+  deptRenderPreview();   // re-render: added ones move to "skipped"
+}
+
 function openSwap(){ document.getElementById("swapOverlay").classList.add("show"); requestAnimationFrame(()=>document.getElementById("rotaOverlay").classList.remove("show")); }
 function closeSwap(){ openMyRota(); requestAnimationFrame(()=>document.getElementById("swapOverlay").classList.remove("show")); }
 
@@ -3386,6 +3482,11 @@ function boot(){
   document.getElementById("swapBack").onclick=closeSwap;
   document.getElementById("swapChoose").onclick=()=>document.getElementById("swapFile").click();
   document.getElementById("swapFile").onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(f) swapHandleFile(f); e.target.value=""; };
+  document.getElementById("hubDeptBtn").onclick=openDept;
+  document.getElementById("deptBack").onclick=closeDept;
+  document.getElementById("deptChoose").onclick=()=>document.getElementById("deptFile").click();
+  document.getElementById("deptFile").onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(f) deptHandleFile(f); e.target.value=""; };
+  document.getElementById("deptApplyBtn").onclick=deptApply;
   document.getElementById("hrBack").onclick=closeHr;
   document.getElementById("hrDownload").onclick=hrDownload;
   document.getElementById("leaveBtn").onclick=openLeave;
