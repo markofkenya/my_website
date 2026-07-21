@@ -1154,10 +1154,19 @@
       <input id="onbPIni" type="text" placeholder="e.g. SL" maxlength="4" autocomplete="off" autocapitalize="characters">
     </div>
 
+    <div class="onb-step" id="onbStepNwd" style="display:none">
+      <p>Which day is your non-working day?</p>
+      <div class="onb-solo-note" style="margin-bottom:8px">You and your call partner share the same non-working day. This is used by the work-schedule export and leave.</div>
+      <label class="fld-label">Non-working day</label>
+      <select id="onbNwd">
+        <option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option>
+      </select>
+    </div>
+
     <div class="onb-step" id="onbStepCode" style="display:none">
       <p>Your private rota code — <b>share this with your call partner</b> so they join the same rota. Anyone with the code can see this rota, so keep it private.</p>
       <label class="fld-label">Rota code</label>
-      <div style="display:flex;gap:8px"><input id="onbCode" type="text" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn ghost" id="onbRegen" title="Generate another">↻</button></div>
+      <div style="display:flex;gap:8px"><input id="onbCode" type="text" maxlength="40" placeholder="e.g. ngh-renal-2026" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn ghost" id="onbRegen" title="Suggest a secure code">Suggest</button></div>
       <div class="onb-solo-note" id="onbCodeNote"></div>
     </div>
 
@@ -2196,11 +2205,12 @@ function hrClassify(){
   const zero=new Set();
   for(let i=-3;i<weeks*7;i++){ const ds=hrAddDays(start,i); if(oncall.has(ds)) hrZeroDaysFor(ds).forEach(z=>zero.add(z)); }
   const rows=[], conflicts=[];
+  const nwd = (getLeave().nwd!=null) ? getLeave().nwd : 1;   // per-rota non-working weekday
   for(let i=0;i<weeks*7;i++){
     const ds=hrAddDays(start,i), wd=hrDow(ds);
     let cls;
     if(oncall.has(ds)) cls="On-Call";
-    else if(wd===1) cls="NWD";                          // Monday = contractual non-working day (priority)
+    else if(wd===nwd) cls="NWD";                        // contractual non-working day (priority)
     else if(zero.has(ds)) cls="Zero Day";
     else if(wd>=1&&wd<=5) cls="Standard";               // Mon-Fri incl bank holidays
     else cls="";
@@ -3223,25 +3233,23 @@ function renderLoginWho(){
 let onb={mode:"", step:0};
 function openOnboarding(){
   onb={mode:"", step:0};
-  ["onbName","onbIni","onbGrade","onbSpec","onbHosp","onbGmc","onbPName","onbPIni"].forEach(id=>{const el=document.getElementById(id); if(el) el.value="";});
+  ["onbName","onbIni","onbGrade","onbSpec","onbHosp","onbGmc","onbPName","onbPIni","onbCode"].forEach(id=>{const el=document.getElementById(id); if(el) el.value="";});
   document.getElementById("onbErr").textContent="";
   document.getElementById("loginOverlay").classList.remove("show");
   document.getElementById("onbOverlay").classList.add("show");
   onbShow();
 }
-function onbSteps(){ return onb.mode==="ltft" ? ["mode","you","partner","code"] : ["mode","you","code"]; }
+function onbSteps(){ return onb.mode==="ltft" ? ["mode","you","partner","nwd","code"] : ["mode","you","code"]; }
 function onbShow(){
   const steps=onbSteps(), cur=steps[onb.step];
-  ["Mode","You","Partner","Code"].forEach(s=>{ const el=document.getElementById("onbStep"+s); if(el) el.style.display="none"; });
+  ["Mode","You","Partner","Nwd","Code"].forEach(s=>{ const el=document.getElementById("onbStep"+s); if(el) el.style.display="none"; });
   document.getElementById("onbStep"+cur.charAt(0).toUpperCase()+cur.slice(1)).style.display="block";
   document.getElementById("onbBack").style.display = onb.step>0 ? "" : "none";
   document.getElementById("onbNext").textContent = (cur==="code") ? "Start" : "Continue";
   document.getElementById("onbErr").textContent="";
   if(cur==="mode"){ document.querySelectorAll(".onb-choice").forEach(c=>c.classList.toggle("sel", c.dataset.mode===onb.mode)); }
   if(cur==="code"){
-    const code=genRotaCode(document.getElementById("onbHosp").value||document.getElementById("onbIni").value);
-    document.getElementById("onbCode").value=code;
-    document.getElementById("onbCodeNote").textContent = onb.mode==="ltft" ? "Your partner enters this same code and picks their name." : "Keep this code to open your rota on any device.";
+    document.getElementById("onbCodeNote").textContent = onb.mode==="ltft" ? "You and your partner type this same code. Keep it private — anyone with it can see this rota." : "Type a code to open your rota on any device. Keep it private.";
   }
 }
 function onbNext(){
@@ -3269,6 +3277,7 @@ function onbFinish(){
     : {name:"", initials:""};
   state=fresh; normalize();
   const L=getLeave("A");
+  if(onb.mode==="ltft"){ const nwdEl=document.getElementById("onbNwd"); if(nwdEl) L.nwd=parseInt(nwdEl.value,10); }
   L.profile={name:fresh.people.A.name, grade:document.getElementById("onbGrade").value.trim(), specialty:document.getElementById("onbSpec").value.trim()||"Renal Medicine", ward:"", hospital:document.getElementById("onbHosp").value.trim(), gmc:document.getElementById("onbGmc").value.trim()};
   meKey="A"; saveMe("A");
   writeLocal(state);
