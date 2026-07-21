@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
@@ -2040,8 +2040,12 @@ function hrKeyFromControls(mSel, ySel){ const m=parseInt(document.getElementById
 function hrWeeksBetween(fromKey, toKey){
   const firstMon=hrFirstMondayOnOrAfter(hrMonthStart(fromKey));
   const end=hrMonthEnd(toKey);
-  if(end<firstMon) return {start:firstMon, weeks:1};
-  const weeks=Math.max(1, Math.ceil((new Date(end+"T00:00:00")-new Date(firstMon+"T00:00:00")+86400000)/(7*86400000)));
+  const fm=new Date(firstMon+"T00:00:00"), e=new Date(end+"T00:00:00");
+  if(e<fm) return {start:firstMon, weeks:1};
+  // last Monday on or before the To-month end — the final rota week starts on it
+  const back=(e.getDay()===0?6:e.getDay()-1);
+  const lastMon=new Date(e); lastMon.setDate(e.getDate()-back);
+  const weeks=Math.max(1, Math.round((lastMon-fm)/(7*86400000))+1);
   return {start:firstMon, weeks};
 }
 function hrDefaults(){
@@ -2057,6 +2061,8 @@ function hrClassify(){
   const oncall=new Set(), worked=new Set();
   Object.keys(m).forEach(ds=>{ const arr=m[ds]||[]; if(arr.some(s=>s.type==="oncall")) oncall.add(ds);
     if(arr.some(s=>s.type!=="oncall"&&s.type!=="annual_leave"&&s.type!=="study_leave")) worked.add(ds); });
+  // also include on-calls assigned to me on the shared Split rota (My Rota shows these via myOncall)
+  Object.keys(state.assignments||{}).forEach(ds=>{ const a=state.assignments[ds]; if(a && a.p===meKey) oncall.add(ds); });
   const {start, weeks, overrides}=hrState;
   const zero=new Set();
   for(let i=-3;i<weeks*7;i++){ const ds=hrAddDays(start,i); if(oncall.has(ds)) hrZeroDaysFor(ds).forEach(z=>zero.add(z)); }
