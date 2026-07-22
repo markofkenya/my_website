@@ -1126,6 +1126,19 @@
   </div>
 </div>
 
+<!-- ENTRY FORK (after sign out) -->
+<div class="overlay center" id="entryOverlay">
+  <div class="mini-dialog login-dialog">
+    <div class="kicker" style="margin-bottom:2px">InstaRota</div>
+    <h3>Open your rota</h3>
+    <label class="fld-label">Enter a rota code</label>
+    <input id="entryCode" type="text" placeholder="e.g. ngh-renal-2026" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="sync-err" id="entryErr"></div>
+    <div class="dialog-actions"><button class="btn" id="entryConnect">Connect</button></div>
+    <div style="margin-top:14px;text-align:center;border-top:1px solid var(--line);padding-top:14px"><button class="btn ghost" id="entryNew">Set up a new rota</button></div>
+  </div>
+</div>
+
 <!-- ONBOARDING (first use of a new rota code) -->
 <div class="overlay center" id="onbOverlay">
   <div class="mini-dialog login-dialog">
@@ -1205,6 +1218,7 @@
       <button class="btn" id="loginConnect">Connect</button>
     </div>
     <div style="margin-top:10px;text-align:center"><button class="btn ghost" id="loginNewRota" style="font-size:12px">Set up a new rota instead</button></div>
+    <div style="margin-top:6px;text-align:center"><button class="btn ghost danger-ghost" id="loginSignout" style="font-size:12px">Sign out of this rota on this device</button></div>
     <details class="paste-details" style="margin-top:12px">
       <summary>What’s a rota code?</summary>
       <div class="sync-help">Any word or phrase you both agree on — it decides which shared rota you join. Keep it private: anyone who knows it (and has this app) can see the rota. To start a fresh shared rota later, both enter a new code.</div>
@@ -2643,6 +2657,8 @@ function getLeave(){
   if(typeof L.wte!=="number") L.wte=0.8;
   if(typeof L.nwd!=="number") L.nwd=1;                 // Monday (0=Sun..6=Sat)
   if(typeof L.slEntitlement!=="number") L.slEntitlement=30;
+  if(L.trainingStart!=="aug" && L.trainingStart!=="feb") L.trainingStart="feb";
+  if(L.nhsStartYear!==undefined && typeof L.nhsStartYear!=="number") { const n=parseInt(L.nhsStartYear,10); L.nhsStartYear=isNaN(n)?undefined:n; }
   if(!L.rosters || typeof L.rosters!=="object") L.rosters={};
   if(typeof L.coordEmail!=="string") L.coordEmail="";
   if(!Array.isArray(L.requests)) L.requests=[];
@@ -2652,7 +2668,28 @@ function getLeave(){
   return L;
 }
 function annualFT(year){ return year>=2029?32:27; }
-function activeLeaveYear(){ if(leaveViewYear!=null) return leaveViewYear; const r=new Date(); let y=r.getFullYear(); if(r.getMonth()<1) y-=1; return y; }
+function isSolo(){ return state.mode==="solo"; }
+function leaveAnchor(){ const L=getLeave(); return (L.trainingStart==="aug")?8:2; }   // 1-indexed anchor month (Feb default)
+function annualDays(Y){ const L=getLeave(); if(typeof L.nhsStartYear==="number" && L.nhsStartYear>0){ return (Y-L.nhsStartYear>=5)?32:27; } return annualFT(Y); }
+function halfBounds(Y, half){
+  const am=leaveAnchor(), iso=d=>leaveISO(d);
+  return half==="H1"
+    ? {start:iso(new Date(Y,am-1,1)), end:iso(new Date(Y,am-1+6,0))}
+    : {start:iso(new Date(Y,am-1+6,1)), end:iso(new Date(Y,am-1+12,0))};
+}
+function halfLabel(Y, half){
+  const am=leaveAnchor();
+  const mn=i=>new Date(2000,((i%12)+12)%12,1).toLocaleDateString("en-GB",{month:"short"});
+  const h1s=am-1, yA=Y, yB=(am-1+6>=12)?Y+1:Y, yC=(am-1+12>=12)?Y+1:Y;
+  return half==="H1" ? `${mn(h1s)} ${yA==yB?"":yA+" "}– ${mn(am-1+6)} ${yB}` : `${mn(am-1+6)} ${yB==yC?"":yB+" "}– ${mn(am-1+12)} ${yC}`;
+}
+function myAnnualOncallDates(){
+  const set=new Set(); const m=(state.myShifts&&state.myShifts[meKey])||{};
+  Object.keys(m).forEach(ds=>{ if((m[ds]||[]).some(s=>s.type==="oncall")) set.add(ds); });
+  Object.keys(state.assignments||{}).forEach(ds=>{ const a=state.assignments[ds]; if(a&&a.p===meKey) set.add(ds); });
+  return set;
+}
+function activeLeaveYear(){ if(leaveViewYear!=null) return leaveViewYear; const r=new Date(); const am=leaveAnchor(); let y=r.getFullYear(); if(r.getMonth() < am-1) y-=1; return y; }
 function bhInRange(fromISO,toISO){ return Object.keys(BANK_HOLIDAYS).filter(ds=>ds>=fromISO && ds<=toISO); }
 function countLeaveDays(typeId, fromISO, toExclusiveISO, toInclusiveISO, wteForPeriod){
   const L=getLeave();
@@ -2670,20 +2707,32 @@ function countLeaveDays(typeId, fromISO, toExclusiveISO, toInclusiveISO, wteForP
 }
 function rosterCfg(Y, half){ const L=getLeave(); const key=`${Y}-${half}`; if(!L.rosters[key]) L.rosters[key]={carryover:0, wte:null, override:null}; return L.rosters[key]; }
 function rosterCore(Y, half){
-  const L=getLeave(); const annual=annualFT(Y);
-  const start = half==="H1"?`${Y}-02-01`:`${Y}-08-01`;
-  const end   = half==="H1"?`${Y}-07-31`:`${Y+1}-01-31`;
+  const L=getLeave();
+  const b=halfBounds(Y,half); const start=b.start, end=b.end;
+  const annual=annualDays(Y);
   const halfDays = half==="H1"?Math.ceil(annual/2):Math.floor(annual/2);
   const cfg=rosterCfg(Y,half);
-  const wte=(cfg.wte!=null)?cfg.wte:L.wte;
-  const bhs=bhInRange(start,end);
-  const bhCount=bhs.length, bhWorked=bhs.filter(ds=>{ const wd=new Date(ds+"T00:00:00").getDay(); if(wd===0||wd===6) return false; /* weekend BHs never on a working day */ if(wte<1 && wd===L.nwd) return false; /* LTFT: the non-working day is free */ return true; }).length;
-  const auto=Math.round(((halfDays*wte)+(bhCount*wte)-bhWorked)*10)/10;
+  const solo=isSolo();
+  let wte, bhCount, bhWorked, bhLieu, auto;
+  if(solo){
+    // Full-time: no WTE, no NWD. Base = 14/13 or 16/16. Bank-holiday on-calls earn a day in lieu, in this half.
+    wte=1; bhCount=0; bhWorked=0;
+    const oncalls=myAnnualOncallDates();
+    bhLieu = bhInRange(start,end).filter(ds=>oncalls.has(ds)).length;
+    auto = Math.round((halfDays + bhLieu)*10)/10;
+  } else {
+    // LTFT: WTE-scaled, bank holidays folded into entitlement, worked BH on a working day nets off.
+    wte=(cfg.wte!=null)?cfg.wte:L.wte; bhLieu=0;
+    const bhs=bhInRange(start,end);
+    bhCount=bhs.length;
+    bhWorked=bhs.filter(ds=>{ const wd=new Date(ds+"T00:00:00").getDay(); if(wd===0||wd===6) return false; if(wte<1 && wd===L.nwd) return false; return true; }).length;
+    auto=Math.round(((halfDays*wte)+(bhCount*wte)-bhWorked)*10)/10;
+  }
   const entitlement=(cfg.override!=null)?cfg.override:auto;
   const baseTotal=Math.round((entitlement+cfg.carryover)*10)/10;
   const taken=countLeaveDays("annual_leave", start, null, end, wte);
-  const label = half==="H1"?`Feb – Aug ${Y}`:`Aug ${Y} – Feb ${Y+1}`;
-  return {start,end,half,halfDays,wte,bhCount,bhWorked,auto,entitlement,baseTotal,taken,label,cfg,key:`${Y}-${half}`};
+  const label=halfLabel(Y,half);
+  return {start,end,half,halfDays,wte,bhCount,bhWorked,bhLieu,auto,entitlement,baseTotal,taken,label,cfg,key:`${Y}-${half}`};
 }
 function rosterInfo(Y, half){
   const rnd=x=>Math.round(x*10)/10;
@@ -2750,7 +2799,7 @@ function renderLeave(){
       <div class="rc-sub">${r.taken} taken · ${r.total} total${r.autoCarry?` (incl. ${r.autoCarry} carried from Feb – Aug)`:''}${r.borrowed?` (incl. ${r.borrowed} drawn from ${r.half==="H1"?"Aug – Feb":"Feb – Aug"})`:''}${r.carriedOut?` (${r.carriedOut} carried to Aug – Feb)`:''}${r.lent?` (${r.lent} used by ${r.half==="H1"?"Aug – Feb":"Feb – Aug"} bookings)`:''}${r.cfg.carryover?` (incl. ${r.cfg.carryover} manual carryover)`:''}</div>
       <details class="rc-more"><summary>Adjust &amp; breakdown</summary>
         <div class="rc-calc">${r.halfDays} × ${r.wte} WTE + ${r.bhCount} BH × ${r.wte} − ${r.bhWorked} worked = <b>${r.auto}</b> days${r.autoCarry?` <span class="rc-carry">+ ${r.autoCarry} auto-carried from Feb – Aug</span>`:''}${r.borrowed?` <span class="rc-carry">+ ${r.borrowed} drawn from ${r.half==="H1"?"Aug – Feb":"Feb – Aug"}</span>`:''}</div>
-        <div class="rc-fields"><label>Carryover<input type="number" value="${r.cfg.carryover}" data-key="${r.key}" data-f="carryover" min="0" step="0.5"></label><label>WTE<input type="number" value="${r.cfg.wte!=null?r.cfg.wte:''}" placeholder="${L.wte}" data-key="${r.key}" data-f="wte" min="0.1" max="1" step="0.05"></label><label>Override<input type="number" value="${r.cfg.override!=null?r.cfg.override:''}" placeholder="auto" data-key="${r.key}" data-f="override" min="0" step="0.5"></label></div>
+        <div class="rc-fields"><label>Carryover<input type="number" value="${r.cfg.carryover}" data-key="${r.key}" data-f="carryover" min="0" step="0.5"></label>${isSolo()?"":`<label>WTE<input type="number" value="${r.cfg.wte!=null?r.cfg.wte:''}" placeholder="${L.wte}" data-key="${r.key}" data-f="wte" min="0.1" max="1" step="0.05"></label>`}<label>Override<input type="number" value="${r.cfg.override!=null?r.cfg.override:''}" placeholder="auto" data-key="${r.key}" data-f="override" min="0" step="0.5"></label></div>
       </details>
     </div>`; };
   // ---- unified bookings: requests + any loose logged leave ----
@@ -2776,7 +2825,7 @@ function renderLeave(){
   };
   const bkHTML = items.length ? items.map(bkItem).join("") : `<div class="bk-empty">No leave booked yet. Tap <b>＋ Request</b> to book annual or study leave.</div>`;
   host.innerHTML=`
-    <div class="leave-yearnav"><button class="iconbtn" id="lvPrev">‹</button><div class="lyn-label">Feb ${Y} – Feb ${Y+1}</div><button class="iconbtn" id="lvNext">›</button></div>
+    <div class="leave-yearnav"><button class="iconbtn" id="lvPrev">‹</button><div class="lyn-label">${(()=>{const am=leaveAnchor();const mn=i=>new Date(2000,(am-1),1).toLocaleDateString("en-GB",{month:"short"});return `${mn()} ${Y} – ${mn()} ${Y+1}`;})()}</div><button class="iconbtn" id="lvNext">›</button></div>
     <div class="leave-hero">
       <div class="leave-ringwrap"><svg viewBox="0 0 120 120" class="leave-ring"><circle class="lr-bg" cx="60" cy="60" r="${R}"></circle><circle class="lr-fg" cx="60" cy="60" r="${R}" style="stroke:${col};stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${off.toFixed(1)}"></circle></svg><div class="lr-center"><div class="lr-num">${yrLeft}</div><div class="lr-lbl">days left</div></div></div>
       <div class="leave-hero-meta"><div class="lh-year">Annual leave this year</div><div class="lh-stat"><b>${yrTaken}</b> taken of <b>${yrTotal}</b></div></div>
@@ -2792,19 +2841,27 @@ function renderLeave(){
       <div class="pdf-btns"><button class="btn ghost" id="pdfYear">This year (Feb–Feb)</button><button class="btn ghost" id="pdfH1">Feb–Aug roster</button><button class="btn ghost" id="pdfH2">Aug–Feb roster</button></div>
     </div>
     <details class="set-d"><summary>Settings &amp; how it works</summary>
-      <div class="leave-settings"><div class="ls-2"><label>Default WTE<input type="number" id="lvWte" value="${L.wte}" min="0.1" max="1" step="0.05"></label><label>Non-working day<select id="lvNwd">${WD.map(w=>`<option value="${w[0]}" ${(+w[0])===L.nwd?"selected":""}>${w[1]}</option>`).join("")}</select></label></div><label>Study leave allowance (days)<input type="number" id="lvSl" value="${L.slEntitlement}" min="0" step="0.5"></label></div>
+      <div class="leave-settings">
+        <div class="ls-2"><label>Training started<select id="lvTrain"><option value="feb" ${L.trainingStart!=="aug"?"selected":""}>February</option><option value="aug" ${L.trainingStart==="aug"?"selected":""}>August</option></select></label><label>NHS start year <span style="text-transform:none;letter-spacing:normal;font-weight:400;color:var(--ink-faint)">(sets 27 vs 32)</span><input type="number" id="lvNhs" value="${typeof L.nhsStartYear==='number'?L.nhsStartYear:''}" placeholder="e.g. 2021" min="1980" max="2099" step="1"></label></div>
+        ${isSolo()?"":`<div class="ls-2"><label>Default WTE<input type="number" id="lvWte" value="${L.wte}" min="0.1" max="1" step="0.05"></label><label>Non-working day<select id="lvNwd">${WD.map(w=>`<option value="${w[0]}" ${(+w[0])===L.nwd?"selected":""}>${w[1]}</option>`).join("")}</select></label></div>`}
+        <label>Study leave allowance (days)<input type="number" id="lvSl" value="${L.slEntitlement}" min="0" step="0.5"></label>
+      </div>
       <div class="ls-subhead">For leave requests &amp; the form</div>
       <div class="leave-settings"><label>Rota coordinator email<input type="email" id="lvCoord" value="${escapeHtml(L.coordEmail)}" placeholder="name@nhs.net"></label>
         <div class="ls-2"><label>Name<input id="pfName" value="${escapeHtml(p.name)}"></label><label>Grade<input id="pfGrade" value="${escapeHtml(p.grade)}"></label></div>
         <div class="ls-2"><label>Specialty<input id="pfSpec" value="${escapeHtml(p.specialty)}"></label><label>Ward<input id="pfWard" value="${escapeHtml(p.ward)}"></label></div>
         <div class="ls-2"><label>Hospital<input id="pfHosp" value="${escapeHtml(p.hospital)}"></label><label>GMC<input id="pfGmc" value="${escapeHtml(p.gmc)}"></label></div>
       </div>
-      <div class="leave-note">Annual leave splits into two six-month rosters (${annualFT(Y)} days a year ${annualFT(Y)===27?'→ 14 / 13':'→ 16 / 16'}; rises to 32 from Feb 2029). Each roster: half × WTE + bank holidays × WTE − bank holidays on a working day. All leave is booked through Request → approval; tap any row to see its actions.</div>
+      <div class="leave-note">${isSolo()
+        ? `Annual leave is ${annualDays(Y)} days a year (${annualDays(Y)===27?'14 / 13':'16 / 16'} across two six-month rosters), based on your NHS start year (32 once you pass 5 years' service). Each on-call worked on a bank holiday adds a day in lieu to that roster. All leave is booked through Request → approval; tap any row to see its actions.`
+        : `Annual leave splits into two six-month rosters (${annualDays(Y)} days a year ${annualDays(Y)===27?'→ 14 / 13':'→ 16 / 16'}). Each roster: half × WTE + bank holidays × WTE − bank holidays on a working day. All leave is booked through Request → approval; tap any row to see its actions.`}</div>
     </details>`;
   document.getElementById("lvPrev").onclick=()=>shiftLeaveYear(-1);
   document.getElementById("lvNext").onclick=()=>shiftLeaveYear(1);
-  document.getElementById("lvWte").onchange=e=>setLeaveField("wte",e.target.value,true);
-  document.getElementById("lvNwd").onchange=e=>setLeaveField("nwd",e.target.value,true);
+  { const wt=document.getElementById("lvWte"); if(wt) wt.onchange=e=>setLeaveField("wte",e.target.value,true); }
+  { const nw=document.getElementById("lvNwd"); if(nw) nw.onchange=e=>setLeaveField("nwd",e.target.value,true); }
+  document.getElementById("lvTrain").onchange=e=>setLeaveField("trainingStart",e.target.value,false);
+  document.getElementById("lvNhs").onchange=e=>{ const L=getLeave(); const t=(e.target.value||"").trim(); L.nhsStartYear = t===""?undefined:(parseInt(t,10)||undefined); persist(); renderLeave(); };
   document.getElementById("lvSl").onchange=e=>setLeaveField("slEntitlement",e.target.value,true);
   host.querySelectorAll(".rc-fields input").forEach(inp=>inp.onchange=()=>setRosterField(inp.dataset.key, inp.dataset.f, inp.value));
   document.getElementById("requestLeaveBtn").onclick=openRequest;
@@ -2935,9 +2992,10 @@ function makeRequestFromLogged(type, fromDs, toDs){ const m=(state.myShifts&&sta
 function removeLoggedRange(type, fromDs, toDs){ const m=state.myShifts&&state.myShifts[meKey]; if(!m) return; Object.keys(m).forEach(ds=>{ if(ds>=fromDs&&ds<=toDs&&Array.isArray(m[ds])){ const n=m[ds].length; m[ds]=m[ds].filter(s=>s.type!==type); if(m[ds].length!==n) touchDay(meKey, ds); if(!m[ds].length) delete m[ds]; } }); persist(); if(typeof renderMyCalendar==="function") renderMyCalendar(); renderLeave(); }
 function printLeaveTaken(scope){
   const Y=activeLeaveYear(); let fromISO,toIncl,title;
-  if(scope==="H1"){ fromISO=`${Y}-02-01`; toIncl=`${Y}-07-31`; title=`Feb – Aug ${Y}`; }
-  else if(scope==="H2"){ fromISO=`${Y}-08-01`; toIncl=`${Y+1}-01-31`; title=`Aug ${Y} – Feb ${Y+1}`; }
-  else { fromISO=`${Y}-02-01`; toIncl=`${Y+1}-01-31`; title=`Feb ${Y} – Feb ${Y+1}`; }
+  const b1=halfBounds(Y,"H1"), b2=halfBounds(Y,"H2");
+  if(scope==="H1"){ fromISO=b1.start; toIncl=b1.end; title=halfLabel(Y,"H1"); }
+  else if(scope==="H2"){ fromISO=b2.start; toIncl=b2.end; title=halfLabel(Y,"H2"); }
+  else { fromISO=b1.start; toIncl=b2.end; const mn=i=>new Date(2000,leaveAnchor()-1,1).toLocaleDateString("en-GB",{month:"short"}); title=`${mn()} ${Y} – ${mn()} ${Y+1}`; }
   const html=buildLeaveTakenHtml(title, fromISO, toIncl, scope, Y);
   const w=window.open("","_blank"); if(!w){ alert("Allow pop-ups to export, or try again."); return; }
   w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>{ try{ w.print(); }catch(e){} }, 450);
@@ -3282,6 +3340,7 @@ function attachSync(){
       mergeRequestsInto(base, state, val);
       const changed = contentSig({m:base.myShifts, q:base.leave}) !== contentSig({m:val.myShifts, q:val.leave});
       applyingRemote=true; state=base; normalize(); writeLocal(state); saveCacheCode(rotaCode); renderAll(); applyMode(); applyingRemote=false; maybeAlert(); enforcePinAfterSync();
+      if(document.getElementById("loginOverlay").classList.contains("show") && !meKey){ renderLoginWho(); renderLoginPin(); }
       if(firstEvent && meKey && !hasPin(meKey)) offerPinSetup(meKey);   // offer only once the room is known
       if((changed || remoteTs<localTs) && Date.now()-lastAutoPushAt>1500){
         lastAutoPushAt=Date.now();
@@ -3316,6 +3375,28 @@ function goOffline(){
   if(syncRef){ try{ syncRef.off(); }catch(e){} syncRef=null; }
   rotaCode=""; saveCode(""); saveCacheCode(""); syncPath="";
   setSyncStatus("local","Saved on this device · tap to sync");
+}
+/* Sign out — detach this DEVICE from the rota (data stays safe in the room). */
+function signOut(){
+  if(syncRef){ try{ syncRef.off(); }catch(e){} syncRef=null; }
+  firstSyncDone=false; syncPath="";
+  // forget local identity + rota binding + this device's PIN unlock, and the cached room copy
+  meKey=null; saveMe(""); rotaCode=""; saveCode(""); saveCacheCode("");
+  try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+  try{ localStorage.removeItem(PIN_OK); }catch(e){}
+  state=defaultState(); mem=null;
+  ["loginOverlay","onbOverlay","rotaOverlay","leaveOverlay","swapOverlay","deptOverlay","hrOverlay"].forEach(id=>{const el=document.getElementById(id); if(el) el.classList.remove("show");});
+  document.getElementById("entryCode").value=""; document.getElementById("entryErr").textContent="";
+  document.getElementById("entryOverlay").classList.add("show");
+}
+function openEntry(){ document.getElementById("entryCode").value=""; document.getElementById("entryErr").textContent=""; ["loginOverlay","onbOverlay"].forEach(id=>{const el=document.getElementById(id); if(el) el.classList.remove("show");}); document.getElementById("entryOverlay").classList.add("show"); }
+function entryConnect(){
+  const code=(document.getElementById("entryCode").value||"").trim().replace(/[^A-Za-z0-9_-]/g,"");
+  if(!code){ document.getElementById("entryErr").textContent="Enter your rota code."; return; }
+  document.getElementById("entryOverlay").classList.remove("show");
+  meKey=null; saveMe("");
+  connectWithCode(code);        // room's people arrive via sync
+  openLogin();                  // identity picker; refreshes when people load (see sync handler)
 }
 
 /* ---- login (rota code + identity) ---- */
@@ -3528,6 +3609,10 @@ function boot(){
   document.getElementById("onbRegen").onclick=()=>{ document.getElementById("onbCode").value=genRotaCode(document.getElementById("onbHosp").value||document.getElementById("onbIni").value); };
   document.getElementById("onbHaveCode").onclick=()=>{ document.getElementById("onbOverlay").classList.remove("show"); openLogin(); };
   { const ln=document.getElementById("loginNewRota"); if(ln) ln.onclick=openOnboarding; }
+  { const so=document.getElementById("loginSignout"); if(so) so.onclick=()=>{ openConfirm("Sign out of this rota?","This detaches this device from the rota. Your rota data stays safe — re-enter the code anytime to reconnect.","Sign out",signOut); }; }
+  { const ec=document.getElementById("entryConnect"); if(ec) ec.onclick=entryConnect; }
+  { const en=document.getElementById("entryNew"); if(en) en.onclick=openOnboarding; }
+  { const ei=document.getElementById("entryCode"); if(ei) ei.addEventListener("keydown",e=>{ if(e.key==="Enter") entryConnect(); }); }
 
   meKey=loadMe();
   rotaCode=loadCode();
@@ -3537,7 +3622,7 @@ function boot(){
   refreshBankHolidays();
 
   const known = state.people && ((state.people.A&&state.people.A.name) || (state.people.B&&state.people.B.name));
-  if(!meKey && !rotaCode && !known){ openOnboarding(); }      // brand-new device, nothing set up → onboard
+  if(!meKey && !rotaCode && !known){ openEntry(); }              // nothing set up → code-or-new fork
   else if(!meKey){ openLogin(); }
   else if(rotaCode){ connectWithCode(rotaCode); maybeAlert(); }
   else { setSyncStatus("local","Saved on this device · tap to sync"); maybeAlert(); enforcePinAfterSync(); }
