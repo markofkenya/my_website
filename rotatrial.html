@@ -937,6 +937,8 @@
     <button class="hub-card" id="hubSplit"><div class="hc-ic">⇄</div><div class="hc-t">Split</div><div class="hc-d">Share the on-call rota fairly with your call partner.</div></button>
   </div>
   <div class="hub-sync syncline" id="hubSync"><span class="syncdot local"></span> Saved on this device</div>
+  <div style="text-align:center;margin-top:8px"><button class="btn ghost" id="hubSignout" style="font-size:12px">Sign out / switch rota</button></div>
+  <div style="text-align:center;margin-top:6px;font-size:10px;color:var(--ink-faint);opacity:.6" id="buildTag">build 22-jul-b</div>
 </div>
 
 <div class="wrap" id="ss-root">
@@ -3380,12 +3382,14 @@ function goOffline(){
 function signOut(){
   if(syncRef){ try{ syncRef.off(); }catch(e){} syncRef=null; }
   firstSyncDone=false; syncPath="";
-  // forget local identity + rota binding + this device's PIN unlock, and the cached room copy
-  meKey=null; saveMe(""); rotaCode=""; saveCode(""); saveCacheCode("");
+  meKey=null; rotaCode=""; cacheCode="";
   try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+  try{ localStorage.removeItem(ME_STORE); }catch(e){}
+  try{ localStorage.removeItem(CODE_STORE); }catch(e){}
+  try{ localStorage.removeItem(CACHE_OWNER); }catch(e){}
   try{ localStorage.removeItem(PIN_OK); }catch(e){}
   state=defaultState(); mem=null;
-  ["loginOverlay","onbOverlay","rotaOverlay","leaveOverlay","swapOverlay","deptOverlay","hrOverlay"].forEach(id=>{const el=document.getElementById(id); if(el) el.classList.remove("show");});
+  ["loginOverlay","onbOverlay","rotaOverlay","leaveOverlay","swapOverlay","deptOverlay","hrOverlay","confirmOverlay"].forEach(id=>{const el=document.getElementById(id); if(el) el.classList.remove("show");});
   document.getElementById("entryCode").value=""; document.getElementById("entryErr").textContent="";
   document.getElementById("entryOverlay").classList.add("show");
 }
@@ -3608,6 +3612,7 @@ function boot(){
   document.getElementById("onbBack").onclick=onbBack;
   document.getElementById("onbRegen").onclick=()=>{ document.getElementById("onbCode").value=genRotaCode(document.getElementById("onbHosp").value||document.getElementById("onbIni").value); };
   document.getElementById("onbHaveCode").onclick=()=>{ document.getElementById("onbOverlay").classList.remove("show"); openLogin(); };
+  { const hso=document.getElementById("hubSignout"); if(hso) hso.onclick=()=>{ openConfirm("Sign out / switch rota?","This detaches this device from the rota. Your rota data stays safe in the room — re-enter the code anytime to reconnect.","Sign out",signOut); }; }
   { const ln=document.getElementById("loginNewRota"); if(ln) ln.onclick=openOnboarding; }
   { const so=document.getElementById("loginSignout"); if(so) so.onclick=()=>{ openConfirm("Sign out of this rota?","This detaches this device from the rota. Your rota data stays safe — re-enter the code anytime to reconnect.","Sign out",signOut); }; }
   { const ec=document.getElementById("entryConnect"); if(ec) ec.onclick=entryConnect; }
