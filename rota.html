@@ -469,6 +469,9 @@
   .dept-group .dg-t{font-size:13px;font-weight:700;margin-bottom:6px}
   .dept-group .dg-days{display:flex;flex-wrap:wrap;gap:6px}
   .dept-day{font-size:12px;border:1px solid var(--line);border-radius:16px;padding:4px 10px;background:var(--surface)}
+  .oc-move{margin-left:auto;padding:5px 11px;font-size:12px}
+  #myDayOncall input[type="date"]{border:1px solid var(--line);border-radius:8px;padding:6px 9px;background:var(--surface);color:var(--ink);font-family:var(--font-b);font-size:13px}
+  #myDayOncall .btn{padding:6px 12px;font-size:12.5px}
   .btn.key-al{background:#2f7d4f;color:#fff;padding:11px 18px;font-size:14.5px;font-weight:600;box-shadow:0 1px 0 #256a42,0 7px 16px -9px #2f7d4f}
   .leave-hero{display:flex;gap:22px;align-items:center;background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-radius:20px;padding:20px 22px;margin:10px 0 18px;box-shadow:0 1px 2px rgba(20,28,34,.03)}
   .leave-ringwrap{position:relative;width:120px;height:120px;flex:0 0 auto}
@@ -1539,6 +1542,8 @@ function genRotaCode(seed){
 }
 function shiftDate(ds,delta){ const d=new Date(ds+"T00:00:00"); d.setDate(d.getDate()+delta); return iso(d); }
 function isMonday(ds){ return new Date(ds+"T00:00:00").getDay()===1; }
+function rotaNwd(){ if(state.mode==="solo") return -1; const a=state.leave&&state.leave.A; const n=a&&typeof a.nwd==="number"?a.nwd:1; return n; }
+function isNwdDay(ds){ const n=rotaNwd(); return n>=0 && new Date(ds+"T00:00:00").getDay()===n; }
 function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
 function renderPeople(){
@@ -1637,7 +1642,7 @@ function renderCalendar(){
     if(we) cell.classList.add("weekend");
     if(bh) cell.classList.add("bh");
     if(ds===todayStr) cell.classList.add("today");
-    if(isMonday(ds)) cell.classList.add("nwd");
+    if(isNwdDay(ds)) cell.classList.add("nwd");
     const a=state.assignments[ds];
     if(a&&a.p==="A") cell.classList.add("assigned-a");
     else if(a&&a.p==="B") cell.classList.add("assigned-b");
@@ -2043,7 +2048,7 @@ function renderMyCalendar(){
     const cell=document.createElement("div"); cell.className="cell";
     if(isWeekend(ds)) cell.classList.add("weekend");
     if(isBH(ds)) cell.classList.add("bh");
-    if(isMonday(ds)) cell.classList.add("nwd");
+    if(isNwdDay(ds)) cell.classList.add("nwd");
     if(ds===todayStr) cell.classList.add("today");
     let html=`<div class="d">${day}</div>`;
     if(isBH(ds)) html+=`<div class="bh-mark"></div>`;
@@ -2130,7 +2135,25 @@ function renderMyDay(ds){
   const ocEl=document.getElementById("myDayOncall");
   const oc=myOncall(ds);
   if(oc){ const st=SHIFT_TYPES.find(s=>s.id===oc.type);
-    ocEl.style.display=""; ocEl.innerHTML=`<span class="oc-badge">On-call</span> <span>${st?escapeHtml(st.label):"On-call"}</span> <span class="oc-note">· 08:30–08:30 (24h) · from the shared rota</span>`; }
+    ocEl.style.display=""; ocEl.innerHTML=`<span class="oc-badge">On-call</span> <span>${st?escapeHtml(st.label):"On-call"}</span> <span class="oc-note">· 08:30–08:30 (24h) · from the shared rota</span> <button class="btn ghost oc-move" id="ocMoveBtn">Move…</button>`;
+    document.getElementById("ocMoveBtn").onclick=()=>{
+      ocEl.innerHTML=`<span class="oc-badge">On-call</span> <span class="oc-note">Moved after a swap? Pick its new date:</span> <input type="date" id="ocMoveDate" value="${ds}"> <button class="btn key-al" id="ocMoveGo">Move</button> <button class="btn ghost" id="ocMoveCancel">Cancel</button>`;
+      document.getElementById("ocMoveCancel").onclick=()=>renderMyDay(ds);
+      document.getElementById("ocMoveGo").onclick=()=>{
+        const to=document.getElementById("ocMoveDate").value;
+        if(!to || to===ds){ renderMyDay(ds); return; }
+        if(state.assignments[to]){ flashMsg("There's already an on-call that day on the shared rota"); return; }
+        const mine=(state.myShifts&&state.myShifts[meKey])||{};
+        if((mine[to]||[]).some(s=>s.type==="oncall")){ flashMsg("You already have an on-call that day"); return; }
+        const a=state.assignments[ds];
+        delete state.assignments[ds];
+        state.assignments[to]={p:a.p, type:a.type||"oncall", rota:a.rota||state.rotaId};
+        persist(); renderMyCalendar(); renderAll();
+        flashMsg(`On-call moved to ${prettyDate(to)}`);
+        renderMyDay(ds);
+      };
+    };
+  }
   else { ocEl.style.display="none"; ocEl.innerHTML=""; }
   const list=document.getElementById("myDayList");
   const arr=getMyArr(ds);
@@ -3228,7 +3251,7 @@ function renderPicker(){
     const ds=iso(new Date(pickerView.getFullYear(), pickerView.getMonth(), day));
     const cell=document.createElement("div"); cell.className="cell";
     if(isWeekend(ds)) cell.classList.add("weekend"); if(isBH(ds)) cell.classList.add("bh");
-    if(ds===todayStr) cell.classList.add("today"); if(isMonday(ds)) cell.classList.add("nwd");
+    if(ds===todayStr) cell.classList.add("today"); if(isNwdDay(ds)) cell.classList.add("nwd");
     const a=state.assignments[ds]; const lockedToPerson = a && (a.p==="A"||a.p==="B");
     let html=`<div class="d">${day}</div>`; if(isBH(ds)) html+=`<div class="bh-mark"></div>`;
     if(lockedToPerson){ cell.classList.add("locked"); html+=`<div class="who"><span class="ini" style="background:${a.p==="A"?"var(--a)":"var(--b)"}">${personIni(a.p)}</span></div>`; }
