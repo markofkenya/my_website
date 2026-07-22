@@ -400,75 +400,6 @@
   .leave-overlay.show{display:block}
   .leave-inner{max-width:660px;margin:0 auto;padding:14px 16px 64px}
   .rota-top-actions{display:flex;gap:8px;align-items:center}
-  .hr-controls{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 14px}
-  .hr-controls label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--ink-soft);font-weight:600}
-  .hr-controls input{background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;color:var(--ink);font-family:var(--font-b);font-size:14px}
-  .hr-controls input[readonly]{opacity:.75}
-  .hr-controls select{background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;color:var(--ink);font-family:var(--font-b);font-size:14px}
-  .hr-my{display:flex;gap:6px}
-  .hr-yr{width:78px}
-  .hr-legend{font-size:12px;color:var(--ink-faint);margin-bottom:12px}
-  .hr-legend b{color:var(--ink-soft)}
-  .hr-conflicts{background:#fdecea;border:1px solid #f0b8ae;border-left:4px solid #c2412f;border-radius:11px;padding:11px 13px;margin-bottom:12px;font-size:13px;color:#7c2317}
-  .hr-conflicts .hc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;flex-wrap:wrap}
-  .hr-conflicts .hc-opts{display:flex;gap:6px}
-  .hr-conflicts button{border:1px solid #c2412f;background:#fff;color:#7c2317;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer}
-  .hr-conflicts button.sel{background:#c2412f;color:#fff}
-  .hr-week{display:grid;grid-template-columns:34px repeat(7,1fr);gap:5px;margin-bottom:5px;align-items:stretch}
-  .hr-wk-no{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--ink-faint)}
-  .hr-daycols{display:grid;grid-template-columns:34px repeat(7,1fr);gap:5px;margin-bottom:6px;font-size:10px;letter-spacing:.04em;color:var(--ink-faint);text-transform:uppercase}
-  .hr-daycols span{text-align:center}
-  .hr-cell{border:1px solid var(--line);border-radius:8px;padding:6px 4px;min-height:52px;cursor:pointer;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;text-align:center;background:var(--surface-2);transition:transform .06s}
-  .hr-cell:active{transform:scale(.96)}
-  .hr-cell .hc-cls{font-size:10.5px;font-weight:700;line-height:1.1}
-  .hr-cell .hc-hrs{font-size:10px;color:var(--ink-faint)}
-  .hr-cell .hc-date{font-size:9px;color:var(--ink-faint);opacity:.7}
-  .hr-cell.oncall{background:rgba(207,58,58,.14);border-color:#cf3a3a}
-  .hr-cell.standard{background:rgba(47,125,79,.10);border-color:#2f7d4f55}
-  .hr-cell.stdmon{background:rgba(47,125,79,.16);border-color:#2f7d4f}
-  .hr-cell.nwd{background:repeating-linear-gradient(135deg,transparent 0,transparent 5px,rgba(126,224,179,.14) 5px,rgba(126,224,179,.14) 7px)}
-  .hr-cell.zero{background:rgba(107,114,128,.12);border-style:dashed}
-  .hr-cell.conflict{box-shadow:0 0 0 2px #c2412f}
-  /* Swap finder */
-  .btn.swap-open{padding:7px 13px;font-size:13px;font-weight:700;background:#2f9e63;color:#fff;border:none;box-shadow:0 1px 0 #25794d,0 7px 16px -9px #2f9e63}
-  .onb-choices{display:flex;flex-direction:column;gap:10px;margin-top:6px}
-  .onb-choice{text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:12px;padding:14px 15px;cursor:pointer;display:flex;flex-direction:column;gap:3px}
-  .onb-choice:hover{border-color:var(--a)}
-  .onb-choice.sel{border-color:var(--a);box-shadow:0 0 0 2px var(--a-tint)}
-  .onb-choice b{font-size:15px}
-  .onb-choice span{font-size:12.5px;color:var(--ink-faint)}
-  .onb-solo-note{font-size:12px;color:var(--ink-faint);margin-top:8px}
-  #onbCode{font-family:var(--font-mono,monospace);font-size:15px;letter-spacing:.02em}
-  .btn.swap-open:hover{background:#37ab6d}
-  .swap-step{margin-bottom:20px}
-  .swap-step-label{font-size:12px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;color:var(--ink-faint);margin-bottom:9px}
-  .swap-upload{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .swap-status{font-size:12px;color:var(--ink-faint)}
-  .swap-chips{display:flex;flex-wrap:wrap;gap:8px}
-  .swap-chip{border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:20px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer}
-  .swap-chip:hover{border-color:var(--a)}
-  .swap-chip.sel{background:#2f9e63;border-color:#2f9e63;color:#fff}
-  .swap-chip .sc-sub{font-size:10.5px;font-weight:500;opacity:.75;margin-left:6px}
-  .swap-block-summary{font-size:12.5px;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:12px}
-  .swap-card{border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:9px;background:var(--surface-2)}
-  .swap-card.ok{border-left:4px solid #2f9e63}
-  .swap-card.warn{border-left:4px solid #d99b23}
-  .swap-card.no{border-left:4px solid #c2412f;opacity:.85}
-  .swap-card .sw-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;font-weight:700}
-  .sw-tier{font-size:10px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;border-radius:20px;padding:2px 8px;border:1px solid var(--line);color:var(--ink-faint)}
-  .sw-tier.t1{background:rgba(47,158,99,.14);border-color:#2f9e63;color:#2f9e63}
-  .swap-card .sw-deal{font-size:13px;color:var(--ink-soft);margin-top:4px}
-  .swap-card .sw-why{font-size:12px;color:var(--ink-faint);margin-top:5px}
-  .swap-card .sw-why div{margin-top:2px}
-  details.swap-blocked{margin-top:12px}
-  details.swap-blocked summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-faint)}
-  .dept-lists{display:flex;flex-direction:column;gap:10px}
-  .dept-group{border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:var(--surface-2)}
-  .dept-group.add{border-left:4px solid #2f9e63}
-  .dept-group.skip{border-left:4px solid var(--ink-faint);opacity:.8}
-  .dept-group .dg-t{font-size:13px;font-weight:700;margin-bottom:6px}
-  .dept-group .dg-days{display:flex;flex-wrap:wrap;gap:6px}
-  .dept-day{font-size:12px;border:1px solid var(--line);border-radius:16px;padding:4px 10px;background:var(--surface)}
   .btn.key-al{background:#2f7d4f;color:#fff;padding:11px 18px;font-size:14.5px;font-weight:600;box-shadow:0 1px 0 #256a42,0 7px 16px -9px #2f7d4f}
   .leave-hero{display:flex;gap:22px;align-items:center;background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-radius:20px;padding:20px 22px;margin:10px 0 18px;box-shadow:0 1px 2px rgba(20,28,34,.03)}
   .leave-ringwrap{position:relative;width:120px;height:120px;flex:0 0 auto}
@@ -634,7 +565,6 @@
   @keyframes splashPop{from{opacity:0;transform:translateY(12px) scale(.92)}to{opacity:1;transform:none}}
   /* PIN lock */
   #pinOverlay{z-index:120}
-  #confirmOverlay{z-index:130}
   .pin-sheet{max-width:300px;text-align:center}
   .pin-title{font-family:var(--font-d);font-weight:700;font-size:18px;color:var(--ink)}
   .pin-sub{font-size:12.5px;color:var(--ink-faint);margin-top:4px;min-height:15px}
@@ -928,7 +858,6 @@
     </div>
     <div class="head-right">
       <button class="msg-tab" id="hubMsgTab" aria-label="Messages">Messages<span class="msg-badge" id="hubMsgBadge" hidden></span></button>
-      <button class="msg-tab" id="hubDeptBtn">Department rota</button>
       <button class="acct-btn" id="hubAccountBtn">Sign in</button>
     </div>
   </header>
@@ -938,8 +867,6 @@
     <button class="hub-card" id="hubSplit"><div class="hc-ic">⇄</div><div class="hc-t">Split</div><div class="hc-d">Share the on-call rota fairly with your call partner.</div></button>
   </div>
   <div class="hub-sync syncline" id="hubSync"><span class="syncdot local"></span> Saved on this device</div>
-  <div style="text-align:center;margin-top:8px"><button class="btn ghost" id="hubSignout" style="font-size:12px">Sign out / switch rota</button></div>
-  <div style="text-align:center;margin-top:6px;font-size:10px;color:var(--ink-faint);opacity:.6" id="buildTag">build 22-jul-b</div>
 </div>
 
 <div class="wrap" id="ss-root">
@@ -1129,80 +1056,6 @@
   </div>
 </div>
 
-<!-- ENTRY FORK (after sign out) -->
-<div class="overlay center" id="entryOverlay">
-  <div class="mini-dialog login-dialog">
-    <div class="kicker" style="margin-bottom:2px">InstaRota</div>
-    <h3>Open your rota</h3>
-    <label class="fld-label">Enter a rota code</label>
-    <input id="entryCode" type="text" placeholder="e.g. ngh-renal-2026" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <div class="sync-err" id="entryErr"></div>
-    <div class="dialog-actions"><button class="btn" id="entryConnect">Connect</button></div>
-    <div style="margin-top:14px;text-align:center;border-top:1px solid var(--line);padding-top:14px"><button class="btn ghost" id="entryNew">Set up a new rota</button></div>
-  </div>
-</div>
-
-<!-- ONBOARDING (first use of a new rota code) -->
-<div class="overlay center" id="onbOverlay">
-  <div class="mini-dialog login-dialog">
-    <div class="kicker" style="margin-bottom:2px">InstaRota</div>
-    <h3 id="onbTitle">Set up your rota</h3>
-
-    <div class="onb-step" id="onbStepMode">
-      <p>How do you work your on-calls?</p>
-      <div class="onb-choices">
-        <button class="onb-choice" data-mode="ltft"><b>LTFT — slot share</b><span>You split the on-call rota with a call partner.</span></button>
-        <button class="onb-choice" data-mode="solo"><b>Full-time — solo</b><span>Your own rota, no shared on-call partner.</span></button>
-      </div>
-    </div>
-
-    <div class="onb-step" id="onbStepYou" style="display:none">
-      <p>About you</p>
-      <label class="fld-label">Your name</label>
-      <input id="onbName" type="text" placeholder="e.g. Jane Doe" maxlength="40" autocomplete="off">
-      <label class="fld-label">Your initials <span style="font-weight:400;color:var(--ink-faint)">(as they appear on the department rota)</span></label>
-      <input id="onbIni" type="text" placeholder="e.g. JD" maxlength="4" autocomplete="off" autocapitalize="characters">
-      <details class="paste-details" style="margin-top:10px"><summary>Optional — for the HR work-schedule export</summary>
-        <label class="fld-label">Grade</label><input id="onbGrade" type="text" placeholder="e.g. ST4" maxlength="12">
-        <label class="fld-label">Specialty</label><input id="onbSpec" type="text" placeholder="Renal Medicine" maxlength="30">
-        <label class="fld-label">Hospital</label><input id="onbHosp" type="text" placeholder="e.g. NGH" maxlength="30">
-        <label class="fld-label">GMC number</label><input id="onbGmc" type="text" placeholder="7-digit" maxlength="10">
-      </details>
-    </div>
-
-    <div class="onb-step" id="onbStepPartner" style="display:none">
-      <p>Who's your call partner?</p>
-      <label class="fld-label">Partner's name</label>
-      <input id="onbPName" type="text" placeholder="e.g. Sam Lee" maxlength="40" autocomplete="off">
-      <label class="fld-label">Partner's initials</label>
-      <input id="onbPIni" type="text" placeholder="e.g. SL" maxlength="4" autocomplete="off" autocapitalize="characters">
-    </div>
-
-    <div class="onb-step" id="onbStepNwd" style="display:none">
-      <p>Which day is your non-working day?</p>
-      <div class="onb-solo-note" style="margin-bottom:8px">You and your call partner share the same non-working day. This is used by the work-schedule export and leave.</div>
-      <label class="fld-label">Non-working day</label>
-      <select id="onbNwd">
-        <option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option>
-      </select>
-    </div>
-
-    <div class="onb-step" id="onbStepCode" style="display:none">
-      <p>Your private rota code — <b>share this with your call partner</b> so they join the same rota. Anyone with the code can see this rota, so keep it private.</p>
-      <label class="fld-label">Rota code</label>
-      <div style="display:flex;gap:8px"><input id="onbCode" type="text" maxlength="40" placeholder="e.g. ngh-renal-2026" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn ghost" id="onbRegen" title="Suggest a secure code">Suggest</button></div>
-      <div class="onb-solo-note" id="onbCodeNote"></div>
-    </div>
-
-    <div class="sync-err" id="onbErr"></div>
-    <div class="dialog-actions">
-      <button class="btn ghost" id="onbBack" style="display:none">Back</button>
-      <button class="btn" id="onbNext">Continue</button>
-    </div>
-    <div style="margin-top:10px;text-align:center"><button class="btn ghost" id="onbHaveCode" style="font-size:12px">I already have a rota code</button></div>
-  </div>
-</div>
-
 <!-- LOGIN (rota code + identity) -->
 <div class="overlay center" id="loginOverlay">
   <div class="mini-dialog login-dialog">
@@ -1220,8 +1073,6 @@
       <button class="btn ghost" id="loginOffline">Use offline</button>
       <button class="btn" id="loginConnect">Connect</button>
     </div>
-    <div style="margin-top:10px;text-align:center"><button class="btn ghost" id="loginNewRota" style="font-size:12px">Set up a new rota instead</button></div>
-    <div style="margin-top:6px;text-align:center"><button class="btn ghost danger-ghost" id="loginSignout" style="font-size:12px">Sign out of this rota on this device</button></div>
     <details class="paste-details" style="margin-top:12px">
       <summary>What’s a rota code?</summary>
       <div class="sync-help">Any word or phrase you both agree on — it decides which shared rota you join. Keep it private: anyone who knows it (and has this app) can see the rota. To start a fresh shared rota later, both enter a new code.</div>
@@ -1277,89 +1128,6 @@
 </div>
 
 <!-- MY ROTA (personal view) -->
-<div class="rota-overlay" id="deptOverlay">
-  <div class="rota-inner">
-    <div class="rota-top">
-      <button class="rota-back" id="deptBack">‹ Back</button>
-    </div>
-    <div class="rota-head"><div class="kicker" style="margin-bottom:2px">Add your on-calls from the published rota</div><h2 class="rota-title">Department rota</h2></div>
-
-    <div class="swap-step">
-      <div class="swap-step-label">1 · Upload the published rota (.xlsx)</div>
-      <div class="swap-upload">
-        <input type="file" id="deptFile" accept=".xlsx,.xls" style="display:none">
-        <button class="btn key-al" id="deptChoose">Choose rota file</button>
-        <span class="swap-status" id="deptStatus">Read on this device only — nothing is uploaded to a server.</span>
-      </div>
-    </div>
-
-    <div class="swap-step" id="deptStep2" style="display:none">
-      <div class="swap-step-label">2 · Which initials are you?</div>
-      <div class="swap-chips" id="deptWho"></div>
-    </div>
-
-    <div class="swap-step" id="deptStep3" style="display:none">
-      <div class="swap-step-label">3 · On-calls found</div>
-      <div class="swap-block-summary" id="deptSum"></div>
-      <div class="dept-lists" id="deptLists"></div>
-      <div style="margin-top:12px"><button class="btn key-al" id="deptApplyBtn">Add to My Rota</button></div>
-    </div>
-  </div>
-</div>
-
-<div class="rota-overlay" id="swapOverlay">
-  <div class="rota-inner">
-    <div class="rota-top">
-      <button class="rota-back" id="swapBack">‹ Back</button>
-    </div>
-    <div class="rota-head"><div class="kicker" style="margin-bottom:2px">Find a mutual on-call trade from the published rota</div><h2 class="rota-title">Swap finder</h2></div>
-
-    <div class="swap-step" id="swapStep1">
-      <div class="swap-step-label">1 · Upload the published rota (.xlsx)</div>
-      <div class="swap-upload">
-        <input type="file" id="swapFile" accept=".xlsx,.xls" style="display:none">
-        <button class="btn key-al" id="swapChoose">Choose rota file</button>
-        <span class="swap-status" id="swapStatus">Nothing is uploaded to the server — the file is read on this device only.</span>
-      </div>
-    </div>
-
-    <div class="swap-step" id="swapStep2" style="display:none">
-      <div class="swap-step-label">2 · Which initials are you?</div>
-      <div class="swap-chips" id="swapWho"></div>
-    </div>
-
-    <div class="swap-step" id="swapStep3" style="display:none">
-      <div class="swap-step-label">3 · Which on-call do you want to trade?</div>
-      <div class="swap-chips" id="swapMine"></div>
-    </div>
-
-    <div class="swap-step" id="swapStep4" style="display:none">
-      <div class="swap-step-label">4 · Possible trades</div>
-      <div class="swap-block-summary" id="swapBlockSum"></div>
-      <div id="swapResults"></div>
-    </div>
-  </div>
-</div>
-
-<div class="rota-overlay" id="hrOverlay">
-  <div class="rota-inner">
-    <div class="rota-top">
-      <button class="rota-back" id="hrBack">‹ Back</button>
-      <div class="rota-top-actions"><button class="btn key-al" id="hrDownload">Download .xlsx</button></div>
-    </div>
-    <div class="rota-head"><div class="kicker" style="margin-bottom:2px">LTFT work schedule for HR</div><h2 class="rota-title" id="hrWho">Work schedule export</h2></div>
-    <div class="hr-controls">
-      <label>Doctor<input type="text" id="hrDoctor" readonly></label>
-      <label>From<span class="hr-my"><select id="hrFromM"></select><input type="number" id="hrFromY" class="hr-yr" min="2000" max="2099" step="1"></span></label>
-      <label>To<span class="hr-my"><select id="hrToM"></select><input type="number" id="hrToY" class="hr-yr" min="2000" max="2099" step="1"></span></label>
-      <label>Weeks<input type="text" id="hrWeeks" readonly></label>
-    </div>
-    <div class="hr-conflicts" id="hrConflicts" style="display:none"></div>
-    <div class="hr-legend">On-Call <b>12+3.5</b> · Standard <b>8.5</b> · Std Monday <b>9</b> · NWD / Zero Day <b>blank</b> · tap a cell to change</div>
-    <div class="hr-preview" id="hrPreview"></div>
-  </div>
-</div>
-
 <div class="rota-overlay" id="rotaOverlay">
   <div class="rota-inner">
     <div class="rota-top">
@@ -1367,7 +1135,6 @@
       <div class="rota-top-actions">
         <button class="btn key-al" id="leaveBtn">Annual Leave</button>
         <button class="btn" id="exportIcs">Add to phone calendar (.ics)</button>
-        <button class="btn" id="exportHr">Export work schedule</button>
       </div>
     </div>
     <div class="rota-head">
@@ -1379,7 +1146,6 @@
     <div class="calnav">
       <div class="mlabel" id="myMonth"></div>
       <div class="navbtns">
-        <button class="btn swap-open" id="swapBtn">＋ Swap</button>
         <button class="today-btn" id="myToday">Today</button>
         <button class="iconbtn" id="myPrev" aria-label="Previous month">‹</button>
         <button class="iconbtn" id="myNext" aria-label="Next month">›</button>
@@ -1477,8 +1243,8 @@ const STORE_KEY = "slotshare-v1";
 const THEME_KEY = "slotshare-theme";
 let mem = null;
 const defaultState = () => ({
-  people:{ A:{name:"", initials:""}, B:{name:"", initials:""} },
-  mode:"", assignments:{}, notes:[], rotaId:1, accept:{}, myShifts:{}, ready:{A:false,B:false}, comments:[]
+  people:{ A:{name:"Mark", initials:"MM"}, B:{name:"Ed", initials:"EB"} },
+  assignments:{}, notes:[], rotaId:1, accept:{}, myShifts:{}, ready:{A:false,B:false}, comments:[]
 });
 let state = defaultState();
 let scope = "rota";
@@ -1522,13 +1288,6 @@ function tally(){
 /* ===== render helpers ===== */
 function initials(name){ const p=(name||"").trim().split(/\s+/).filter(Boolean); if(!p.length) return "?"; if(p.length===1) return p[0].slice(0,2).toUpperCase(); return (p[0][0]+p[p.length-1][0]).toUpperCase(); }
 function personIni(key){ const p=state.people[key]; return (p.initials&&p.initials.trim())?p.initials.trim().toUpperCase():initials(p.name); }
-function genRotaCode(seed){
-  const clean=(seed||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,16);
-  const alpha="abcdefghjkmnpqrstuvwxyz23456789"; let rnd="";
-  const arr=new Uint32Array(8); (window.crypto||{}).getRandomValues? window.crypto.getRandomValues(arr): arr.forEach((_,i)=>arr[i]=Math.floor(Math.random()*4294967296));
-  for(let i=0;i<8;i++) rnd+=alpha[arr[i]%alpha.length];
-  return (clean?clean+"-":"rota-")+rnd;
-}
 function shiftDate(ds,delta){ const d=new Date(ds+"T00:00:00"); d.setDate(d.getDate()+delta); return iso(d); }
 function isMonday(ds){ return new Date(ds+"T00:00:00").getDay()===1; }
 function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
@@ -2210,435 +1969,6 @@ function myContentMonths(){
   const m=(state.myShifts&&state.myShifts[meKey])||{}; Object.keys(m).forEach(ds=> set.add(ds.slice(0,7)));
   return [...set].sort();
 }
-/* ===== HR LTFT full-shift rota export ===== */
-let hrState=null;
-const HR_CLASSES=["Standard","On-Call","Standard Monday","NWD","Zero Day",""];
-function hrHours(cls){ if(cls==="Standard") return {p:8.5,e:0}; if(cls==="Standard Monday") return {p:9,e:0}; if(cls==="On-Call") return {p:12,e:3.5}; return {p:0,e:0}; }
-function hrAddDays(ds,n){ const d=new Date(ds+"T00:00:00"); d.setDate(d.getDate()+n); return leaveISO(d); }
-function hrDow(ds){ return new Date(ds+"T00:00:00").getDay(); }
-function hrZeroDaysFor(ds){ const wd=hrDow(ds);
-  if(wd===5) return [hrAddDays(ds,-1)];                 // Fri -> Thu before
-  if(wd===6) return [hrAddDays(ds,1),hrAddDays(ds,2),hrAddDays(ds,3)]; // Sat -> Sun,Mon,Tue
-  return [hrAddDays(ds,1)];                             // Sun,Mon,Tue,Wed,Thu -> next day
-}
-function hrFirstMondayOnOrAfter(ds){ let d=new Date(ds+"T00:00:00"); while(d.getDay()!==1) d.setDate(d.getDate()+1); return leaveISO(d); }
-function hrMonthKey(y,m){ return `${y}-${String(m+1).padStart(2,"0")}`; }
-function hrMonthLabel(y,m){ return new Date(y,m,1).toLocaleDateString("en-GB",{month:"short",year:"numeric"}); }
-function hrMonthStart(key){ return key+"-01"; }
-function hrMonthEnd(key){ const [y,m]=key.split("-").map(Number); const d=new Date(y, m, 0); return leaveISO(d); } // last day of month m (1-based → day 0 of next)
-const HR_MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
-function hrClampYear(v){ let y=parseInt(v,10); if(!(y>=2000)) y=new Date().getFullYear(); if(y>2099) y=2099; if(y<2000) y=2000; return y; }
-function hrKeyFromControls(mSel, ySel){ const m=parseInt(document.getElementById(mSel).value,10); const y=hrClampYear(document.getElementById(ySel).value); return hrMonthKey(y, m); }
-function hrWeeksBetween(fromKey, toKey){
-  const firstMon=hrFirstMondayOnOrAfter(hrMonthStart(fromKey));
-  // "To" month is EXCLUSIVE (rota nomenclature): Aug→Feb ends end of Jan; Feb→Aug ends end of Jul
-  const end=leaveISO(new Date(new Date(hrMonthStart(toKey)+"T00:00:00").getTime()-86400000));
-  const fm=new Date(firstMon+"T00:00:00"), e=new Date(end+"T00:00:00");
-  if(e<fm) return {start:firstMon, weeks:1, end:firstMon};
-  const back=(e.getDay()===0?6:e.getDay()-1);
-  const lastMon=new Date(e); lastMon.setDate(e.getDate()-back);
-  const weeks=Math.max(1, Math.round((lastMon-fm)/(7*86400000))+1);
-  const blockEnd=leaveISO(new Date(fm.getTime()+(weeks*7-1)*86400000));
-  return {start:firstMon, weeks, end:blockEnd};
-}
-function hrDefaults(){
-  // default to the active roster window: Aug–Feb (H2) or Feb–Jul (H1)
-  const now=new Date(), Y=now.getMonth()>=1?now.getFullYear():now.getFullYear()-1;
-  const curHalf=(now.getMonth()>=1 && now.getMonth()<=6)?"H1":"H2";
-  const fromKey = curHalf==="H1"?hrMonthKey(Y,1):hrMonthKey(Y,7);          // Feb or Aug
-  const toKey   = curHalf==="H1"?hrMonthKey(Y,7):hrMonthKey(Y+1,1);        // Aug (excl) or next Feb (excl)
-  return {fromKey, toKey};
-}
-function hrClassify(){
-  const m=(state.myShifts&&state.myShifts[meKey])||{}; const L=getLeave();
-  const oncall=new Set(), worked=new Set();
-  Object.keys(m).forEach(ds=>{ const arr=m[ds]||[]; if(arr.some(s=>s.type==="oncall")) oncall.add(ds);
-    if(arr.some(s=>s.type!=="oncall"&&s.type!=="annual_leave"&&s.type!=="study_leave")) worked.add(ds); });
-  // also include on-calls assigned to me on the shared Split rota (My Rota shows these via myOncall)
-  Object.keys(state.assignments||{}).forEach(ds=>{ const a=state.assignments[ds]; if(a && a.p===meKey) oncall.add(ds); });
-  const {start, weeks, overrides}=hrState;
-  const zero=new Set();
-  for(let i=-3;i<weeks*7;i++){ const ds=hrAddDays(start,i); if(oncall.has(ds)) hrZeroDaysFor(ds).forEach(z=>zero.add(z)); }
-  const rows=[], conflicts=[];
-  const nwd = (getLeave().nwd!=null) ? getLeave().nwd : 1;   // per-rota non-working weekday
-  for(let i=0;i<weeks*7;i++){
-    const ds=hrAddDays(start,i), wd=hrDow(ds);
-    let cls;
-    if(oncall.has(ds)) cls="On-Call";
-    else if(wd===nwd) cls="NWD";                        // contractual non-working day (priority)
-    else if(zero.has(ds)) cls="Zero Day";
-    else if(wd>=1&&wd<=5) cls="Standard";               // Mon-Fri incl bank holidays
-    else cls="";
-    const auto=cls;
-    if(overrides && overrides[ds]!=null) cls=overrides[ds];
-    if(auto==="Zero Day" && worked.has(ds) && !(overrides&&overrides[ds]!=null)) conflicts.push(ds);
-    rows.push({ds, wd, cls, auto});
-  }
-  return {rows, conflicts};
-}
-function hrSyncFromMonths(){
-  let fromKey=hrKeyFromControls("hrFromM","hrFromY");
-  let toKey=hrKeyFromControls("hrToM","hrToY");
-  if(toKey<=fromKey){ // To is exclusive, so it must be strictly after From — bump to From + 1 month
-    const [fy,fm]=fromKey.split("-").map(Number);
-    const nd=new Date(fy, fm, 1); // fm is 1-based month index → next month
-    document.getElementById("hrToM").value=String(nd.getMonth());
-    document.getElementById("hrToY").value=String(nd.getFullYear());
-    toKey=hrMonthKey(nd.getFullYear(), nd.getMonth());
-  }
-  const {start, weeks, end}=hrWeeksBetween(fromKey, toKey);
-  hrState.start=start; hrState.weeks=weeks; hrState.fromKey=fromKey; hrState.toKey=toKey; hrState.overrides={};
-  const fmt=ds=>new Date(ds+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"});
-  document.getElementById("hrWeeks").value=`${weeks} · ${fmt(start)} → ${fmt(end)}`;
-  renderHr();
-}
-function openHrExport(){
-  const dflt=hrDefaults();
-  hrState={overrides:{}};
-  document.getElementById("rotaOverlay").classList.remove("show");
-  document.getElementById("hrOverlay").classList.add("show");
-  document.getElementById("hrDoctor").value = (state.people[meKey] && state.people[meKey].name) || "";
-  const monthOpts=HR_MONTHS.map((n,i)=>`<option value="${i}">${n}</option>`).join("");
-  const fM=document.getElementById("hrFromM"), fY=document.getElementById("hrFromY"), tM=document.getElementById("hrToM"), tY=document.getElementById("hrToY");
-  fM.innerHTML=monthOpts; tM.innerHTML=monthOpts;
-  const [fy,fmo]=dflt.fromKey.split("-").map(Number); const [ty,tmo]=dflt.toKey.split("-").map(Number);
-  fM.value=String(fmo-1); fY.value=String(fy); tM.value=String(tmo-1); tY.value=String(ty);
-  [fM,fY,tM,tY].forEach(el=>{ el.onchange=hrSyncFromMonths; });
-  hrSyncFromMonths();
-}
-function closeHr(){ document.getElementById("hrOverlay").classList.remove("show"); openMyRota(); }
-function renderHr(){
-  const {rows, conflicts}=hrClassify();
-  hrState.rows=rows;
-  const host=document.getElementById("hrPreview");
-  const DOW=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-  let html=`<div class="hr-daycols"><span></span>${DOW.map(x=>`<span>${x}</span>`).join("")}</div>`;
-  for(let w=0; w<hrState.weeks; w++){
-    html+=`<div class="hr-week"><div class="hr-wk-no">${w+1}</div>`;
-    for(let dd=0; dd<7; dd++){
-      const r=rows[w*7+dd]; const h=hrHours(r.cls);
-      const clsKey = r.cls==="On-Call"?"oncall":r.cls==="Standard"?"standard":r.cls==="Standard Monday"?"stdmon":r.cls==="NWD"?"nwd":r.cls==="Zero Day"?"zero":"";
-      const conf = conflicts.includes(r.ds)?" conflict":"";
-      const dnum=new Date(r.ds+"T00:00:00").getDate();
-      const lbl = r.cls===""?"—":r.cls==="Standard"?"Std":r.cls==="Standard Monday"?"Std Mon":r.cls==="On-Call"?"On-Call":r.cls;
-      const hrs = (h.p||h.e)?`${h.p||0}${h.e?"+"+h.e:""}`:"";
-      html+=`<div class="hr-cell ${clsKey}${conf}" data-ds="${r.ds}"><span class="hc-date">${dnum}</span><span class="hc-cls">${lbl}</span><span class="hc-hrs">${hrs}</span></div>`;
-    }
-    html+=`</div>`;
-  }
-  host.innerHTML=html;
-  host.querySelectorAll(".hr-cell").forEach(c=>c.onclick=()=>hrCycle(c.dataset.ds));
-  // conflicts panel
-  const cp=document.getElementById("hrConflicts");
-  if(conflicts.length){
-    cp.style.display="block";
-    cp.innerHTML=`<b>${conflicts.length} day${conflicts.length===1?"":"s"} need a decision.</b> A rest (Zero) day also has a worked session booked — choose which applies:`+
-      conflicts.map(ds=>{ const nice=new Date(ds+"T00:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}); return `<div class="hc-row"><span>${nice}</span><span class="hc-opts"><button data-ds="${ds}" data-c="On-Call">On-Call</button><button data-ds="${ds}" data-c="Standard">Worked (8.5)</button><button data-ds="${ds}" data-c="Zero Day">Zero Day</button></span></div>`; }).join("");
-    cp.querySelectorAll("button").forEach(b=>b.onclick=()=>{ hrState.overrides[b.dataset.ds]=b.dataset.c; renderHr(); });
-  } else cp.style.display="none";
-}
-function hrCycle(ds){
-  const cur=(hrState.rows.find(r=>r.ds===ds)||{}).cls || "";
-  const i=HR_CLASSES.indexOf(cur); const next=HR_CLASSES[(i+1)%HR_CLASSES.length];
-  const auto=(hrState.rows.find(r=>r.ds===ds)||{}).auto;
-  if(next===auto) delete hrState.overrides[ds]; else hrState.overrides[ds]=next;
-  renderHr();
-}
-function hrLoadSheetJS(){
-  return new Promise((res,rej)=>{ if(window.XLSX) return res(window.XLSX);
-    const tryLoad=(src,next)=>{ const s=document.createElement("script"); s.src=src;
-      s.onload=()=>window.XLSX?res(window.XLSX):(next?next():rej(new Error("load")));
-      s.onerror=()=>next?next():rej(new Error("offline"));
-      document.head.appendChild(s); };
-    // styled fork first (writes borders/bold); plain SheetJS as fallback (values+formulas only)
-    tryLoad("https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.full.min.js",
-      ()=>tryLoad("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js", null));
-  });
-}
-async function hrDownload(){
-  let XLSX; try{ XLSX=await hrLoadSheetJS(); }catch(e){ flashMsg("Connect to the internet once to enable Excel export"); return; }
-  const rows=hrState.rows, weeks=hrState.weeks, start=hrState.start;
-  const doctor=(state.people[meKey]&&state.people[meKey].name)||"";
-  const ws={}, merges=[];
-  // styles (honoured by xlsx-js-style; harmlessly ignored by plain SheetJS fallback)
-  const BD={style:"thin",color:{rgb:"FF9CA3AF"}};
-  const box={top:BD,bottom:BD,left:BD,right:BD};
-  const stCell={border:box, alignment:{horizontal:"center",vertical:"center"}};
-  const stLabel={border:box, font:{bold:false}, alignment:{vertical:"center"}};
-  const stHead={border:box, font:{bold:true}, alignment:{horizontal:"center",vertical:"center"}, fill:{fgColor:{rgb:"FFE9EDF2"}}};
-  const stBold={font:{bold:true}};
-  const stTot={border:box, font:{bold:true}, alignment:{horizontal:"center"}, fill:{fgColor:{rgb:"FFE9EDF2"}}};
-  const stDate={border:box, alignment:{horizontal:"center",vertical:"center"}, numFmt:"dd/mm/yyyy"};
-  const S=(a,v,s)=>{ ws[a]={t:"s",v:v}; if(s) ws[a].s=s; };
-  const N=(a,v,s)=>{ ws[a]={t:"n",v:v}; if(s) ws[a].s=s; };
-  const F=(a,f,s)=>{ ws[a]={t:"n",f:f}; if(s) ws[a].s=s; };
-  const prof=(getLeave().profile)||{};
-  S("A1","Doctor:",stBold); S("C1",doctor);
-  S("A2","Specialty:",stBold); S("C2",prof.specialty||"");
-  S("A3","Grade:",stBold); S("C3",prof.grade||"");
-  S("A4","Shift Pattern:",stBold); S("C4","On-Call ");
-  S("A5","Date Approved:",stBold);
-  S("A7","Week",stHead); ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"].forEach((d,i)=>S(String.fromCharCode(67+i)+"7",d,stHead));
-  S("B7","",stHead);
-  S("J7","Total Plain Time",stHead); S("K7","Total Enhanced Time",stHead); S("L7","Total Weekly Hours",stHead); S("M7","Week Commencing",stHead);
-  let base=8;
-  for(let w=0; w<weeks; w++){
-    const cR=base,pR=base+1,eR=base+2;
-    N("A"+cR, w+1, stTot); ws["A"+pR]={t:"s",v:"",s:stCell}; ws["A"+eR]={t:"s",v:"",s:stCell};
-    S("B"+cR,"Shift classification",stLabel); S("B"+pR,"Plain Time",stLabel); S("B"+eR,"Enhanced Time",stLabel);
-    for(let dd=0; dd<7; dd++){ const r=rows[w*7+dd]; const col=String.fromCharCode(67+dd); const h=hrHours(r.cls);
-      S(col+cR, r.cls, stCell);
-      if(h.p) N(col+pR,h.p,stCell); else S(col+pR,"",stCell);
-      if(h.e) N(col+eR,h.e,stCell); else S(col+eR,"",stCell);
-    }
-    F("J"+cR,`SUM(C${pR}:I${pR})`,stCell); ws["J"+pR]={t:"s",v:"",s:stCell}; ws["J"+eR]={t:"s",v:"",s:stCell};
-    F("K"+cR,`SUM(C${eR}:I${eR})`,stCell); ws["K"+pR]={t:"s",v:"",s:stCell}; ws["K"+eR]={t:"s",v:"",s:stCell};
-    F("L"+cR,`J${cR}+K${cR}`,stCell); ws["L"+pR]={t:"s",v:"",s:stCell}; ws["L"+eR]={t:"s",v:"",s:stCell};
-    if(w===0){ ws["M"+cR]={t:"d",v:new Date(start+"T00:00:00"), z:"dd/mm/yyyy", s:stDate}; }
-    else { ws["M"+cR]={t:"n",f:`M${cR-3}+7`, z:"dd/mm/yyyy", s:stDate}; }
-    ws["M"+pR]={t:"s",v:"",s:stCell}; ws["M"+eR]={t:"s",v:"",s:stCell};
-    [0,9,10,11,12].forEach(c=>merges.push({s:{r:cR-1,c},e:{r:eR-1,c}}));
-    base+=3;
-  }
-  const tot=base;
-  S("A"+tot,"TOTAL",stTot); S("B"+tot,"",stTot);
-  ["C","D","E","F","G","H","I"].forEach(c=>S(c+tot,"",stTot));
-  F("J"+tot,`SUM(J8:J${base-1})`,stTot); F("K"+tot,`SUM(K8:K${base-1})`,stTot); S("L"+tot,"",stTot); S("M"+tot,"",stTot);
-  const pR=tot+2, wR=tot+3, hR=tot+4, aR=tot+5;
-  S("A"+pR,"LTFT %",stBold); S("D"+pR,"please change to your percentage");
-  S("A"+wR,"No of Weeks on the Rota",stBold); N("C"+wR, weeks);
-  S("A"+hR,"Total Hours",stBold); F("C"+hR,`SUM(J${tot},K${tot})`);
-  S("A"+aR,"Average Hours / Week",stBold); F("C"+aR,`C${hR}/C${wR}`);
-  const lg=aR+3; S("D"+(lg-1),"Start Time",stBold); S("E"+(lg-1),"End Time",stBold);
-  S("A"+lg,"Shift Classifications:",stBold);
-  S("B"+lg,"Standard"); S("D"+lg,"08:30"); S("E"+lg,"17:00");
-  S("B"+(lg+1),"Standard Mondays"); S("D"+(lg+1),"08:00"); S("E"+(lg+1),"17:00");
-  S("B"+(lg+2),"On-Call"); S("D"+(lg+2),"08:30"); S("E"+(lg+2),"08:30");
-  S("B"+(lg+3),"On-Call Weekend"); S("D"+(lg+3),"same as above");
-  S("B"+(lg+4),"NWD / Zero Day"); S("D"+(lg+4),"blank (0 hours)");
-  ws["!ref"]=`A1:N${lg+5}`; ws["!merges"]=merges;
-  ws["!cols"]=[{wch:6},{wch:16},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:14},{wch:16},{wch:16},{wch:14}];
-  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Template");
-  const fn=`LTFT rota — ${doctor||"doctor"} — ${start}.xlsx`;
-  XLSX.writeFile(wb, fn, {bookType:"xlsx", cellDates:true});
-  flashMsg("HR rota downloaded");
-}
-
-/* ===== Project Swap — mutual on-call trade finder (stateless; uploaded rota lives in memory only) ===== */
-let swapData=null, swapMe=null, swapPick=null;
-const SWAP_STOP=new Set(["NO","SPR","TBC","TBA","NA","N","Y"]);
-function swapTokens(v){
-  if(v==null) return [];
-  return String(v).replace(/\([^)]*\)/g,"").split(/[,/;]+/).map(s=>s.trim().toUpperCase())
-    .filter(t=>/^[A-Z]{1,3}$/.test(t) && !SWAP_STOP.has(t));
-}
-function swapToISO(v){
-  if(v instanceof Date && !isNaN(v)) return leaveISO(v);
-  const s=String(v||"").trim();
-  let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if(m) return `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
-  m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return m[0];
-  return null;
-}
-function swapNiceDate(ds){ return new Date(ds+"T00:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}); }
-function swapParse(wb){
-  const XL=window.XLSX;
-  let sheetName=wb.SheetNames.find(n=>n.trim().toLowerCase()==="rota");
-  const tryRows=n=>XL.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:null});
-  let rows=null, used=null;
-  const cand=sheetName?[sheetName,...wb.SheetNames]:wb.SheetNames;
-  for(const n of cand){ const r=tryRows(n); const hi=r.findIndex(row=>row&&row.some(c=>String(c||"").toLowerCase().includes("on-call"))&&row.some(c=>String(c||"").toLowerCase().trim()==="date")); if(hi>=0){ rows=r; used={name:n, header:hi}; break; } }
-  if(!rows) throw new Error("Couldn't find a sheet with Date + On-call columns");
-  const header=rows[used.header].map(c=>String(c||"").trim().toLowerCase());
-  const col=name=>header.findIndex(h=>h===name);
-  const colLike=frag=>header.findIndex(h=>h.includes(frag));
-  const ci={ date:col("date"), oncall:colLike("on-call"), postcall:colLike("post-call"), zero:colLike("zero day"), leave:col("leave"), training:colLike("training"), bh:colLike("bank holiday") };
-  if(ci.date<0||ci.oncall<0) throw new Error("Missing Date or On-call column");
-  const restCols=["date","day","present","bank holiday","training","leave","zero day","post-call","on-call"];
-  const dutyCols=header.map((h,i)=>({h,i})).filter(o=>o.h && !restCols.some(r=>o.h.includes(r)));
-  const byDate={}, doctors=new Set();
-  for(let r=used.header+1; r<rows.length; r++){
-    const row=rows[r]; if(!row) continue;
-    const ds=swapToISO(row[ci.date]); if(!ds) continue;
-    const rec={ oncall:swapTokens(row[ci.oncall]), postcall:ci.postcall>=0?swapTokens(row[ci.postcall]):[], zero:ci.zero>=0?swapTokens(row[ci.zero]):[], leave:ci.leave>=0?swapTokens(row[ci.leave]):[], training:ci.training>=0?swapTokens(row[ci.training]):[], bh:ci.bh>=0&&row[ci.bh]?String(row[ci.bh]).trim():null, duties:{} };
-    dutyCols.forEach(o=>{ const t=swapTokens(row[o.i]); if(t.length) rec.duties[o.h]=t; });
-    [rec.oncall,rec.postcall,rec.zero,rec.leave,rec.training,...Object.values(rec.duties)].forEach(a=>a.forEach(t=>doctors.add(t)));
-    byDate[ds]=rec;
-  }
-  const dates=Object.keys(byDate).sort();
-  if(!dates.length) throw new Error("No dated rows parsed");
-  return { byDate, dates, doctors:[...doctors].sort(), sheet:used.name };
-}
-function swapOncallsOf(person){ return swapData.dates.filter(ds=>swapData.byDate[ds].oncall.includes(person)); }
-function swapBlockFor(person, ds){
-  // block = the on-call + every Post-call / Zero-day cell naming this person in the window around it (sheet is truth)
-  const rest=[]; const d0=new Date(ds+"T00:00:00");
-  const others=swapOncallsOf(person).filter(x=>x!==ds);
-  for(let off=-2; off<=4; off++){
-    if(off===0) continue;
-    const d=new Date(d0); d.setDate(d.getDate()+off); const k=leaveISO(d);
-    const rec=swapData.byDate[k]; if(!rec) continue;
-    if(rec.oncall.includes(person)) continue;
-    // don't steal rest that belongs to a different on-call of the same person sitting between
-    const between=others.some(o=> (o>ds && k>o) || (o<ds && k<o) );
-    if(between) continue;
-    if(rec.postcall.includes(person)) rest.push({ds:k, kind:"post-call"});
-    else if(rec.zero.includes(person)) rest.push({ds:k, kind:"zero day"});
-  }
-  return { oncall:ds, rest, all:[ds, ...rest.map(r=>r.ds)].sort() };
-}
-function swapCheckLeg(receiver, block, excludeDates){
-  // receiver takes 'block'; their own traded-away block dates are excluded from their conflict data
-  const hard=[], soft=[];
-  const ex=new Set(excludeDates||[]);
-  block.all.forEach(ds=>{
-    const rec=swapData.byDate[ds]; if(!rec) return;
-    const has=(arr)=>arr.includes(receiver);
-    if(!ex.has(ds)){
-      if(has(rec.oncall)) hard.push(`already on-call ${swapNiceDate(ds)}`);
-      if(has(rec.postcall)) hard.push(`own post-call ${swapNiceDate(ds)}`);
-      if(has(rec.zero)) hard.push(`own zero day ${swapNiceDate(ds)}`);
-    }
-    if(has(rec.leave)) hard.push(`annual leave ${swapNiceDate(ds)}`);
-    if(has(rec.training)) hard.push(`training day ${swapNiceDate(ds)}`);
-    Object.keys(rec.duties).forEach(dc=>{ if(rec.duties[dc].includes(receiver)) soft.push(`${dc} duty ${swapNiceDate(ds)}`); });
-  });
-  // R6: adjacent on-call clash around the block edges
-  [ -1, 1 ].forEach(side=>{
-    const edge = side<0 ? block.all[0] : block.all[block.all.length-1];
-    const d=new Date(edge+"T00:00:00"); d.setDate(d.getDate()+side); const k=leaveISO(d);
-    const rec=swapData.byDate[k];
-    if(rec && rec.oncall.includes(receiver) && !ex.has(k)) hard.push(`adjacent on-call ${swapNiceDate(k)}`);
-  });
-  const bh=block.all.filter(ds=>swapData.byDate[ds]&&swapData.byDate[ds].bh).map(ds=>swapNiceDate(ds));
-  return {hard:[...new Set(hard)], soft:[...new Set(soft)], bh};
-}
-function swapRun(){
-  const myBlock=swapBlockFor(swapMe, swapPick);
-  const myDow=new Date(swapPick+"T00:00:00").getDay();
-  const results=[];
-  swapData.doctors.filter(p=>p!==swapMe).forEach(partner=>{
-    swapOncallsOf(partner).forEach(theirs=>{
-      const theirBlock=swapBlockFor(partner, theirs);
-      const legA=swapCheckLeg(partner, myBlock, theirBlock.all);   // they receive mine
-      const legB=swapCheckLeg(swapMe, theirBlock, myBlock.all);    // I receive theirs
-      const hard=[...legA.hard.map(x=>`${partner}: ${x}`), ...legB.hard.map(x=>`you: ${x}`)];
-      const soft=[...legA.soft.map(x=>`${partner}: ${x}`), ...legB.soft.map(x=>`you: ${x}`)];
-      const tier=(new Date(theirs+"T00:00:00").getDay()===myDow)?1:2;
-      const status=hard.length?"no":(soft.length?"warn":"ok");
-      results.push({partner, theirs, theirBlock, tier, status, hard, soft, bh:[...new Set([...legA.bh,...legB.bh])]});
-    });
-  });
-  const rank=r=> (r.status==="ok"?0:r.status==="warn"?2:4) + (r.tier===1?0:1);
-  results.sort((a,b)=> rank(a)-rank(b) || a.theirs.localeCompare(b.theirs) || a.partner.localeCompare(b.partner));
-  return {myBlock, results};
-}
-function swapRenderResults(){
-  const {myBlock, results}=swapRun();
-  const sum=document.getElementById("swapBlockSum");
-  const restTxt=myBlock.rest.length?myBlock.rest.map(r=>`${swapNiceDate(r.ds)} (${r.kind})`).join(", "):"none listed on the sheet";
-  sum.innerHTML=`You're trading <b>${swapNiceDate(myBlock.oncall)}</b> on-call · linked rest: ${restTxt}`;
-  const host=document.getElementById("swapResults");
-  const card=r=>{
-    const deal=`Your <b>${swapNiceDate(swapPick)}</b> ↔ ${r.partner}'s <b>${swapNiceDate(r.theirs)}</b>`;
-    const theirRest=r.theirBlock.rest.length?` · their linked rest: ${r.theirBlock.rest.map(x=>swapNiceDate(x.ds)).join(", ")}`:"";
-    const why = r.status==="ok" ? `<div>Both legs clear — no on-call, leave, training or rest clash for either of you.</div>`
-      : [...r.hard.map(x=>`<div>❌ ${x}</div>`), ...r.soft.map(x=>`<div>⚠ ${x}</div>`)].join("");
-    const bh=r.bh.length?`<div>ⓘ includes bank holiday: ${r.bh.join(", ")}</div>`:"";
-    return `<div class="swap-card ${r.status}"><div class="sw-head">${r.status==="ok"?"✅":r.status==="warn"?"⚠":"❌"} ${r.partner}<span class="sw-tier ${r.tier===1?"t1":""}">Tier ${r.tier}${r.tier===1?" · like-for-like":""}</span></div><div class="sw-deal">${deal}${theirRest}</div><div class="sw-why">${why}${bh}</div></div>`;
-  };
-  const open=results.filter(r=>r.status!=="no"), blocked=results.filter(r=>r.status==="no");
-  host.innerHTML = (open.length?open.map(card).join(""):`<div class="swap-card warn"><div class="sw-head">No clean trades found</div><div class="sw-why">Every candidate has a hard conflict — see blocked options below.</div></div>`)
-    + (blocked.length?`<details class="swap-blocked"><summary>Blocked options (${blocked.length})</summary>${blocked.map(card).join("")}</details>`:"");
-  document.getElementById("swapStep4").style.display="block";
-}
-function swapRenderMine(){
-  const host=document.getElementById("swapMine");
-  const mine=swapOncallsOf(swapMe);
-  host.innerHTML = mine.length? mine.map(ds=>`<button class="swap-chip ${ds===swapPick?"sel":""}" data-ds="${ds}">${swapNiceDate(ds)}</button>`).join("") : `<span class="swap-status">No on-calls found for ${swapMe} in this rota.</span>`;
-  host.querySelectorAll("[data-ds]").forEach(b=>b.onclick=()=>{ swapPick=b.dataset.ds; swapRenderMine(); swapRenderResults(); });
-  document.getElementById("swapStep3").style.display="block";
-}
-function swapRenderWho(){
-  const host=document.getElementById("swapWho");
-  host.innerHTML=swapData.doctors.map(p=>`<button class="swap-chip ${p===swapMe?"sel":""}" data-p="${p}">${p}<span class="sc-sub">${swapOncallsOf(p).length} on-call${swapOncallsOf(p).length===1?"":"s"}</span></button>`).join("");
-  host.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ swapMe=b.dataset.p; swapPick=null; document.getElementById("swapStep4").style.display="none"; swapRenderWho(); swapRenderMine(); });
-  document.getElementById("swapStep2").style.display="block";
-}
-async function swapHandleFile(file){
-  const status=document.getElementById("swapStatus");
-  try{
-    status.textContent="Loading…";
-    const XL=await hrLoadSheetJS();
-    const buf=await file.arrayBuffer();
-    const wb=XL.read(new Uint8Array(buf),{type:"array",cellDates:true});
-    swapData=swapParse(wb); swapMe=null; swapPick=null;
-    document.getElementById("swapStep3").style.display="none";
-    document.getElementById("swapStep4").style.display="none";
-    status.textContent=`Read "${swapData.sheet}": ${swapData.dates.length} days (${swapNiceDate(swapData.dates[0])} → ${swapNiceDate(swapData.dates[swapData.dates.length-1])}), ${swapData.doctors.length} doctors. Held in memory only.`;
-    swapRenderWho();
-  }catch(e){ console.warn(e); status.textContent="Couldn't read that file — expected the Trust rota .xlsx with Date and On-call columns. ("+(e.message||e)+")"; }
-}
-/* ===== Department rota — add-only on-call import from the published sheet ===== */
-let deptData=null, deptMe=null;
-function deptOncallStatus(ds){
-  const m=(state.myShifts&&state.myShifts[meKey])||{};
-  if(Array.isArray(m[ds]) && m[ds].some(s=>s.type==="oncall")) return "have";
-  const a=(state.assignments||{})[ds]; if(a && a.p===meKey) return "have";
-  return "new";
-}
-function openDept(){ deptData=null; deptMe=null; document.getElementById("deptStatus").textContent="Read on this device only — nothing is uploaded to a server."; document.getElementById("deptStep2").style.display="none"; document.getElementById("deptStep3").style.display="none"; document.getElementById("deptOverlay").classList.add("show"); }
-function closeDept(){ document.getElementById("deptOverlay").classList.remove("show"); requestAnimationFrame(replayHubSpin); }
-async function deptHandleFile(file){
-  const status=document.getElementById("deptStatus");
-  try{
-    status.textContent="Loading…";
-    const XL=await hrLoadSheetJS();
-    const buf=await file.arrayBuffer();
-    const wb=XL.read(new Uint8Array(buf),{type:"array",cellDates:true});
-    deptData=swapParse(wb); deptMe=null;
-    document.getElementById("deptStep3").style.display="none";
-    status.textContent=`Read "${deptData.sheet}": ${deptData.dates.length} days (${swapNiceDate(deptData.dates[0])} → ${swapNiceDate(deptData.dates[deptData.dates.length-1])}). Held in memory only.`;
-    const host=document.getElementById("deptWho");
-    const oncallsOf=p=>deptData.dates.filter(ds=>deptData.byDate[ds].oncall.includes(p));
-    host.innerHTML=deptData.doctors.map(p=>`<button class="swap-chip ${p===deptMe?"sel":""}" data-p="${p}">${p}<span class="sc-sub">${oncallsOf(p).length} on-call${oncallsOf(p).length===1?"":"s"}</span></button>`).join("");
-    host.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ deptMe=b.dataset.p; host.querySelectorAll(".swap-chip").forEach(c=>c.classList.toggle("sel",c.dataset.p===deptMe)); deptRenderPreview(); });
-    document.getElementById("deptStep2").style.display="block";
-  }catch(e){ console.warn(e); status.textContent="Couldn't read that file — expected the Trust rota .xlsx with Date and On-call columns. ("+(e.message||e)+")"; }
-}
-function deptRenderPreview(){
-  const mine=deptData.dates.filter(ds=>deptData.byDate[ds].oncall.includes(deptMe));
-  const add=mine.filter(ds=>deptOncallStatus(ds)==="new");
-  const skip=mine.filter(ds=>deptOncallStatus(ds)==="have");
-  document.getElementById("deptSum").innerHTML=`Found <b>${mine.length}</b> on-call${mine.length===1?"":"s"} for <b>${deptMe}</b>${mine.length?` · ${swapNiceDate(mine[0])} → ${swapNiceDate(mine[mine.length-1])}`:""}. Add-only: nothing is ever removed from your calendar.`;
-  const chip=ds=>`<span class="dept-day">${swapNiceDate(ds)}</span>`;
-  document.getElementById("deptLists").innerHTML=
-    `<div class="dept-group add"><div class="dg-t">Will add (${add.length})</div><div class="dg-days">${add.length?add.map(chip).join(""):"<span class='swap-status'>Nothing new — all already in My Rota.</span>"}</div></div>`+
-    (skip.length?`<div class="dept-group skip"><div class="dg-t">Already in My Rota — skipped (${skip.length})</div><div class="dg-days">${skip.map(chip).join("")}</div></div>`:"");
-  const btn=document.getElementById("deptApplyBtn");
-  btn.disabled=!add.length; btn.textContent=add.length?`Add ${add.length} on-call${add.length===1?"":"s"} to My Rota`:"Nothing to add";
-  document.getElementById("deptStep3").style.display="block";
-}
-function deptApply(){
-  if(!deptData||!deptMe) return;
-  const mine=deptData.dates.filter(ds=>deptData.byDate[ds].oncall.includes(deptMe));
-  const add=mine.filter(ds=>deptOncallStatus(ds)==="new");
-  if(!add.length) return;
-  if(!state.myShifts) state.myShifts={};
-  if(!state.myShifts[meKey]) state.myShifts[meKey]={};
-  add.forEach(ds=>{
-    const arr=state.myShifts[meKey][ds]||[];
-    arr.push({id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:"oncall"});
-    state.myShifts[meKey][ds]=arr;
-    touchDay(meKey, ds);
-  });
-  persist(); renderMyCalendar(); renderLeave();
-  flashMsg(`${add.length} on-call${add.length===1?"":"s"} added to My Rota`);
-  deptRenderPreview();   // re-render: added ones move to "skipped"
-}
-
-function openSwap(){ document.getElementById("swapOverlay").classList.add("show"); requestAnimationFrame(()=>document.getElementById("rotaOverlay").classList.remove("show")); }
-function closeSwap(){ openMyRota(); requestAnimationFrame(()=>document.getElementById("swapOverlay").classList.remove("show")); }
-
 function exportICS(){
   const months=myContentMonths();
   if(!months.length){ alert("Nothing to export yet — add some sessions, or make sure you have on-calls assigned to you."); return; }
@@ -2660,39 +1990,18 @@ function getLeave(){
   if(typeof L.wte!=="number") L.wte=0.8;
   if(typeof L.nwd!=="number") L.nwd=1;                 // Monday (0=Sun..6=Sat)
   if(typeof L.slEntitlement!=="number") L.slEntitlement=30;
-  if(L.trainingStart!=="aug" && L.trainingStart!=="feb") L.trainingStart="feb";
-  if(L.nhsStartYear!==undefined && typeof L.nhsStartYear!=="number") { const n=parseInt(L.nhsStartYear,10); L.nhsStartYear=isNaN(n)?undefined:n; }
   if(!L.rosters || typeof L.rosters!=="object") L.rosters={};
   if(typeof L.coordEmail!=="string") L.coordEmail="";
   if(!Array.isArray(L.requests)) L.requests=[];
   if(!L.profile || typeof L.profile!=="object"){
-    L.profile = {name:(state.people[key]&&state.people[key].name)||"", grade:"", specialty:"Renal Medicine", ward:"", hospital:"", gmc:""};
+    L.profile = (key==="A")
+      ? {name:"Mark Maugo", grade:"ST4", specialty:"Renal", ward:"Renal", hospital:"NGH", gmc:"7968369"}
+      : {name:(state.people[key]&&state.people[key].name)||"", grade:"", specialty:"", ward:"", hospital:"", gmc:""};
   }
   return L;
 }
 function annualFT(year){ return year>=2029?32:27; }
-function isSolo(){ return state.mode==="solo"; }
-function leaveAnchor(){ const L=getLeave(); return (L.trainingStart==="aug")?8:2; }   // 1-indexed anchor month (Feb default)
-function annualDays(Y){ const L=getLeave(); if(typeof L.nhsStartYear==="number" && L.nhsStartYear>0){ return (Y-L.nhsStartYear>=5)?32:27; } return annualFT(Y); }
-function halfBounds(Y, half){
-  const am=leaveAnchor(), iso=d=>leaveISO(d);
-  return half==="H1"
-    ? {start:iso(new Date(Y,am-1,1)), end:iso(new Date(Y,am-1+6,0))}
-    : {start:iso(new Date(Y,am-1+6,1)), end:iso(new Date(Y,am-1+12,0))};
-}
-function halfLabel(Y, half){
-  const am=leaveAnchor();
-  const mn=i=>new Date(2000,((i%12)+12)%12,1).toLocaleDateString("en-GB",{month:"short"});
-  const h1s=am-1, yA=Y, yB=(am-1+6>=12)?Y+1:Y, yC=(am-1+12>=12)?Y+1:Y;
-  return half==="H1" ? `${mn(h1s)} ${yA==yB?"":yA+" "}– ${mn(am-1+6)} ${yB}` : `${mn(am-1+6)} ${yB==yC?"":yB+" "}– ${mn(am-1+12)} ${yC}`;
-}
-function myAnnualOncallDates(){
-  const set=new Set(); const m=(state.myShifts&&state.myShifts[meKey])||{};
-  Object.keys(m).forEach(ds=>{ if((m[ds]||[]).some(s=>s.type==="oncall")) set.add(ds); });
-  Object.keys(state.assignments||{}).forEach(ds=>{ const a=state.assignments[ds]; if(a&&a.p===meKey) set.add(ds); });
-  return set;
-}
-function activeLeaveYear(){ if(leaveViewYear!=null) return leaveViewYear; const r=new Date(); const am=leaveAnchor(); let y=r.getFullYear(); if(r.getMonth() < am-1) y-=1; return y; }
+function activeLeaveYear(){ if(leaveViewYear!=null) return leaveViewYear; const r=new Date(); let y=r.getFullYear(); if(r.getMonth()<1) y-=1; return y; }
 function bhInRange(fromISO,toISO){ return Object.keys(BANK_HOLIDAYS).filter(ds=>ds>=fromISO && ds<=toISO); }
 function countLeaveDays(typeId, fromISO, toExclusiveISO, toInclusiveISO, wteForPeriod){
   const L=getLeave();
@@ -2710,32 +2019,20 @@ function countLeaveDays(typeId, fromISO, toExclusiveISO, toInclusiveISO, wteForP
 }
 function rosterCfg(Y, half){ const L=getLeave(); const key=`${Y}-${half}`; if(!L.rosters[key]) L.rosters[key]={carryover:0, wte:null, override:null}; return L.rosters[key]; }
 function rosterCore(Y, half){
-  const L=getLeave();
-  const b=halfBounds(Y,half); const start=b.start, end=b.end;
-  const annual=annualDays(Y);
+  const L=getLeave(); const annual=annualFT(Y);
+  const start = half==="H1"?`${Y}-02-01`:`${Y}-08-01`;
+  const end   = half==="H1"?`${Y}-07-31`:`${Y+1}-01-31`;
   const halfDays = half==="H1"?Math.ceil(annual/2):Math.floor(annual/2);
   const cfg=rosterCfg(Y,half);
-  const solo=isSolo();
-  let wte, bhCount, bhWorked, bhLieu, auto;
-  if(solo){
-    // Full-time: no WTE, no NWD. Base = 14/13 or 16/16. Bank-holiday on-calls earn a day in lieu, in this half.
-    wte=1; bhCount=0; bhWorked=0;
-    const oncalls=myAnnualOncallDates();
-    bhLieu = bhInRange(start,end).filter(ds=>oncalls.has(ds)).length;
-    auto = Math.round((halfDays + bhLieu)*10)/10;
-  } else {
-    // LTFT: WTE-scaled, bank holidays folded into entitlement, worked BH on a working day nets off.
-    wte=(cfg.wte!=null)?cfg.wte:L.wte; bhLieu=0;
-    const bhs=bhInRange(start,end);
-    bhCount=bhs.length;
-    bhWorked=bhs.filter(ds=>{ const wd=new Date(ds+"T00:00:00").getDay(); if(wd===0||wd===6) return false; if(wte<1 && wd===L.nwd) return false; return true; }).length;
-    auto=Math.round(((halfDays*wte)+(bhCount*wte)-bhWorked)*10)/10;
-  }
+  const wte=(cfg.wte!=null)?cfg.wte:L.wte;
+  const bhs=bhInRange(start,end);
+  const bhCount=bhs.length, bhWorked=bhs.filter(ds=>{ const wd=new Date(ds+"T00:00:00").getDay(); if(wd===0||wd===6) return false; /* weekend BHs never on a working day */ if(wte<1 && wd===L.nwd) return false; /* LTFT: the non-working day is free */ return true; }).length;
+  const auto=Math.round(((halfDays*wte)+(bhCount*wte)-bhWorked)*10)/10;
   const entitlement=(cfg.override!=null)?cfg.override:auto;
   const baseTotal=Math.round((entitlement+cfg.carryover)*10)/10;
   const taken=countLeaveDays("annual_leave", start, null, end, wte);
-  const label=halfLabel(Y,half);
-  return {start,end,half,halfDays,wte,bhCount,bhWorked,bhLieu,auto,entitlement,baseTotal,taken,label,cfg,key:`${Y}-${half}`};
+  const label = half==="H1"?`Feb – Aug ${Y}`:`Aug ${Y} – Feb ${Y+1}`;
+  return {start,end,half,halfDays,wte,bhCount,bhWorked,auto,entitlement,baseTotal,taken,label,cfg,key:`${Y}-${half}`};
 }
 function rosterInfo(Y, half){
   const rnd=x=>Math.round(x*10)/10;
@@ -2802,7 +2099,7 @@ function renderLeave(){
       <div class="rc-sub">${r.taken} taken · ${r.total} total${r.autoCarry?` (incl. ${r.autoCarry} carried from Feb – Aug)`:''}${r.borrowed?` (incl. ${r.borrowed} drawn from ${r.half==="H1"?"Aug – Feb":"Feb – Aug"})`:''}${r.carriedOut?` (${r.carriedOut} carried to Aug – Feb)`:''}${r.lent?` (${r.lent} used by ${r.half==="H1"?"Aug – Feb":"Feb – Aug"} bookings)`:''}${r.cfg.carryover?` (incl. ${r.cfg.carryover} manual carryover)`:''}</div>
       <details class="rc-more"><summary>Adjust &amp; breakdown</summary>
         <div class="rc-calc">${r.halfDays} × ${r.wte} WTE + ${r.bhCount} BH × ${r.wte} − ${r.bhWorked} worked = <b>${r.auto}</b> days${r.autoCarry?` <span class="rc-carry">+ ${r.autoCarry} auto-carried from Feb – Aug</span>`:''}${r.borrowed?` <span class="rc-carry">+ ${r.borrowed} drawn from ${r.half==="H1"?"Aug – Feb":"Feb – Aug"}</span>`:''}</div>
-        <div class="rc-fields"><label>Carryover<input type="number" value="${r.cfg.carryover}" data-key="${r.key}" data-f="carryover" min="0" step="0.5"></label>${isSolo()?"":`<label>WTE<input type="number" value="${r.cfg.wte!=null?r.cfg.wte:''}" placeholder="${L.wte}" data-key="${r.key}" data-f="wte" min="0.1" max="1" step="0.05"></label>`}<label>Override<input type="number" value="${r.cfg.override!=null?r.cfg.override:''}" placeholder="auto" data-key="${r.key}" data-f="override" min="0" step="0.5"></label></div>
+        <div class="rc-fields"><label>Carryover<input type="number" value="${r.cfg.carryover}" data-key="${r.key}" data-f="carryover" min="0" step="0.5"></label><label>WTE<input type="number" value="${r.cfg.wte!=null?r.cfg.wte:''}" placeholder="${L.wte}" data-key="${r.key}" data-f="wte" min="0.1" max="1" step="0.05"></label><label>Override<input type="number" value="${r.cfg.override!=null?r.cfg.override:''}" placeholder="auto" data-key="${r.key}" data-f="override" min="0" step="0.5"></label></div>
       </details>
     </div>`; };
   // ---- unified bookings: requests + any loose logged leave ----
@@ -2828,7 +2125,7 @@ function renderLeave(){
   };
   const bkHTML = items.length ? items.map(bkItem).join("") : `<div class="bk-empty">No leave booked yet. Tap <b>＋ Request</b> to book annual or study leave.</div>`;
   host.innerHTML=`
-    <div class="leave-yearnav"><button class="iconbtn" id="lvPrev">‹</button><div class="lyn-label">${(()=>{const am=leaveAnchor();const mn=i=>new Date(2000,(am-1),1).toLocaleDateString("en-GB",{month:"short"});return `${mn()} ${Y} – ${mn()} ${Y+1}`;})()}</div><button class="iconbtn" id="lvNext">›</button></div>
+    <div class="leave-yearnav"><button class="iconbtn" id="lvPrev">‹</button><div class="lyn-label">Feb ${Y} – Feb ${Y+1}</div><button class="iconbtn" id="lvNext">›</button></div>
     <div class="leave-hero">
       <div class="leave-ringwrap"><svg viewBox="0 0 120 120" class="leave-ring"><circle class="lr-bg" cx="60" cy="60" r="${R}"></circle><circle class="lr-fg" cx="60" cy="60" r="${R}" style="stroke:${col};stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${off.toFixed(1)}"></circle></svg><div class="lr-center"><div class="lr-num">${yrLeft}</div><div class="lr-lbl">days left</div></div></div>
       <div class="leave-hero-meta"><div class="lh-year">Annual leave this year</div><div class="lh-stat"><b>${yrTaken}</b> taken of <b>${yrTotal}</b></div></div>
@@ -2844,27 +2141,19 @@ function renderLeave(){
       <div class="pdf-btns"><button class="btn ghost" id="pdfYear">This year (Feb–Feb)</button><button class="btn ghost" id="pdfH1">Feb–Aug roster</button><button class="btn ghost" id="pdfH2">Aug–Feb roster</button></div>
     </div>
     <details class="set-d"><summary>Settings &amp; how it works</summary>
-      <div class="leave-settings">
-        <div class="ls-2"><label>Training started<select id="lvTrain"><option value="feb" ${L.trainingStart!=="aug"?"selected":""}>February</option><option value="aug" ${L.trainingStart==="aug"?"selected":""}>August</option></select></label><label>NHS start year <span style="text-transform:none;letter-spacing:normal;font-weight:400;color:var(--ink-faint)">(sets 27 vs 32)</span><input type="number" id="lvNhs" value="${typeof L.nhsStartYear==='number'?L.nhsStartYear:''}" placeholder="e.g. 2021" min="1980" max="2099" step="1"></label></div>
-        ${isSolo()?"":`<div class="ls-2"><label>Default WTE<input type="number" id="lvWte" value="${L.wte}" min="0.1" max="1" step="0.05"></label><label>Non-working day<select id="lvNwd">${WD.map(w=>`<option value="${w[0]}" ${(+w[0])===L.nwd?"selected":""}>${w[1]}</option>`).join("")}</select></label></div>`}
-        <label>Study leave allowance (days)<input type="number" id="lvSl" value="${L.slEntitlement}" min="0" step="0.5"></label>
-      </div>
+      <div class="leave-settings"><div class="ls-2"><label>Default WTE<input type="number" id="lvWte" value="${L.wte}" min="0.1" max="1" step="0.05"></label><label>Non-working day<select id="lvNwd">${WD.map(w=>`<option value="${w[0]}" ${(+w[0])===L.nwd?"selected":""}>${w[1]}</option>`).join("")}</select></label></div><label>Study leave allowance (days)<input type="number" id="lvSl" value="${L.slEntitlement}" min="0" step="0.5"></label></div>
       <div class="ls-subhead">For leave requests &amp; the form</div>
       <div class="leave-settings"><label>Rota coordinator email<input type="email" id="lvCoord" value="${escapeHtml(L.coordEmail)}" placeholder="name@nhs.net"></label>
         <div class="ls-2"><label>Name<input id="pfName" value="${escapeHtml(p.name)}"></label><label>Grade<input id="pfGrade" value="${escapeHtml(p.grade)}"></label></div>
         <div class="ls-2"><label>Specialty<input id="pfSpec" value="${escapeHtml(p.specialty)}"></label><label>Ward<input id="pfWard" value="${escapeHtml(p.ward)}"></label></div>
         <div class="ls-2"><label>Hospital<input id="pfHosp" value="${escapeHtml(p.hospital)}"></label><label>GMC<input id="pfGmc" value="${escapeHtml(p.gmc)}"></label></div>
       </div>
-      <div class="leave-note">${isSolo()
-        ? `Annual leave is ${annualDays(Y)} days a year (${annualDays(Y)===27?'14 / 13':'16 / 16'} across two six-month rosters), based on your NHS start year (32 once you pass 5 years' service). Each on-call worked on a bank holiday adds a day in lieu to that roster. All leave is booked through Request → approval; tap any row to see its actions.`
-        : `Annual leave splits into two six-month rosters (${annualDays(Y)} days a year ${annualDays(Y)===27?'→ 14 / 13':'→ 16 / 16'}). Each roster: half × WTE + bank holidays × WTE − bank holidays on a working day. All leave is booked through Request → approval; tap any row to see its actions.`}</div>
+      <div class="leave-note">Annual leave splits into two six-month rosters (${annualFT(Y)} days a year ${annualFT(Y)===27?'→ 14 / 13':'→ 16 / 16'}; rises to 32 from Feb 2029). Each roster: half × WTE + bank holidays × WTE − bank holidays on a working day. All leave is booked through Request → approval; tap any row to see its actions.</div>
     </details>`;
   document.getElementById("lvPrev").onclick=()=>shiftLeaveYear(-1);
   document.getElementById("lvNext").onclick=()=>shiftLeaveYear(1);
-  { const wt=document.getElementById("lvWte"); if(wt) wt.onchange=e=>setLeaveField("wte",e.target.value,true); }
-  { const nw=document.getElementById("lvNwd"); if(nw) nw.onchange=e=>setLeaveField("nwd",e.target.value,true); }
-  document.getElementById("lvTrain").onchange=e=>setLeaveField("trainingStart",e.target.value,false);
-  document.getElementById("lvNhs").onchange=e=>{ const L=getLeave(); const t=(e.target.value||"").trim(); L.nhsStartYear = t===""?undefined:(parseInt(t,10)||undefined); persist(); renderLeave(); };
+  document.getElementById("lvWte").onchange=e=>setLeaveField("wte",e.target.value,true);
+  document.getElementById("lvNwd").onchange=e=>setLeaveField("nwd",e.target.value,true);
   document.getElementById("lvSl").onchange=e=>setLeaveField("slEntitlement",e.target.value,true);
   host.querySelectorAll(".rc-fields input").forEach(inp=>inp.onchange=()=>setRosterField(inp.dataset.key, inp.dataset.f, inp.value));
   document.getElementById("requestLeaveBtn").onclick=openRequest;
@@ -2995,10 +2284,9 @@ function makeRequestFromLogged(type, fromDs, toDs){ const m=(state.myShifts&&sta
 function removeLoggedRange(type, fromDs, toDs){ const m=state.myShifts&&state.myShifts[meKey]; if(!m) return; Object.keys(m).forEach(ds=>{ if(ds>=fromDs&&ds<=toDs&&Array.isArray(m[ds])){ const n=m[ds].length; m[ds]=m[ds].filter(s=>s.type!==type); if(m[ds].length!==n) touchDay(meKey, ds); if(!m[ds].length) delete m[ds]; } }); persist(); if(typeof renderMyCalendar==="function") renderMyCalendar(); renderLeave(); }
 function printLeaveTaken(scope){
   const Y=activeLeaveYear(); let fromISO,toIncl,title;
-  const b1=halfBounds(Y,"H1"), b2=halfBounds(Y,"H2");
-  if(scope==="H1"){ fromISO=b1.start; toIncl=b1.end; title=halfLabel(Y,"H1"); }
-  else if(scope==="H2"){ fromISO=b2.start; toIncl=b2.end; title=halfLabel(Y,"H2"); }
-  else { fromISO=b1.start; toIncl=b2.end; const mn=i=>new Date(2000,leaveAnchor()-1,1).toLocaleDateString("en-GB",{month:"short"}); title=`${mn()} ${Y} – ${mn()} ${Y+1}`; }
+  if(scope==="H1"){ fromISO=`${Y}-02-01`; toIncl=`${Y}-07-31`; title=`Feb – Aug ${Y}`; }
+  else if(scope==="H2"){ fromISO=`${Y}-08-01`; toIncl=`${Y+1}-01-31`; title=`Aug ${Y} – Feb ${Y+1}`; }
+  else { fromISO=`${Y}-02-01`; toIncl=`${Y+1}-01-31`; title=`Feb ${Y} – Feb ${Y+1}`; }
   const html=buildLeaveTakenHtml(title, fromISO, toIncl, scope, Y);
   const w=window.open("","_blank"); if(!w){ alert("Allow pop-ups to export, or try again."); return; }
   w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>{ try{ w.print(); }catch(e){} }, 450);
@@ -3342,8 +2630,7 @@ function attachSync(){
       base.myShifts=merged.map; base.myShiftsTs=merged.ts;
       mergeRequestsInto(base, state, val);
       const changed = contentSig({m:base.myShifts, q:base.leave}) !== contentSig({m:val.myShifts, q:val.leave});
-      applyingRemote=true; state=base; normalize(); writeLocal(state); saveCacheCode(rotaCode); renderAll(); applyMode(); applyingRemote=false; maybeAlert(); enforcePinAfterSync();
-      if(document.getElementById("loginOverlay").classList.contains("show") && !meKey){ renderLoginWho(); renderLoginPin(); }
+      applyingRemote=true; state=base; normalize(); writeLocal(state); saveCacheCode(rotaCode); renderAll(); applyingRemote=false; maybeAlert(); enforcePinAfterSync();
       if(firstEvent && meKey && !hasPin(meKey)) offerPinSetup(meKey);   // offer only once the room is known
       if((changed || remoteTs<localTs) && Date.now()-lastAutoPushAt>1500){
         lastAutoPushAt=Date.now();
@@ -3379,116 +2666,13 @@ function goOffline(){
   rotaCode=""; saveCode(""); saveCacheCode(""); syncPath="";
   setSyncStatus("local","Saved on this device · tap to sync");
 }
-/* Sign out — detach this DEVICE from the rota (data stays safe in the room). */
-function signOut(){
-  if(syncRef){ try{ syncRef.off(); }catch(e){} syncRef=null; }
-  firstSyncDone=false; syncPath="";
-  meKey=null; rotaCode=""; cacheCode="";
-  try{ localStorage.removeItem(STORE_KEY); }catch(e){}
-  try{ localStorage.removeItem(ME_STORE); }catch(e){}
-  try{ localStorage.removeItem(CODE_STORE); }catch(e){}
-  try{ localStorage.removeItem(CACHE_OWNER); }catch(e){}
-  try{ localStorage.removeItem(PIN_OK); }catch(e){}
-  state=defaultState(); mem=null;
-  ["loginOverlay","onbOverlay","rotaOverlay","leaveOverlay","swapOverlay","deptOverlay","hrOverlay","confirmOverlay"].forEach(id=>{const el=document.getElementById(id); if(el) el.classList.remove("show");});
-  document.getElementById("entryCode").value=""; document.getElementById("entryErr").textContent="";
-  document.getElementById("entryOverlay").classList.add("show");
-}
-function openEntry(){ document.getElementById("entryCode").value=""; document.getElementById("entryErr").textContent=""; ["loginOverlay","onbOverlay"].forEach(id=>{const el=document.getElementById(id); if(el) el.classList.remove("show");}); document.getElementById("entryOverlay").classList.add("show"); }
-function entryConnect(){
-  const code=(document.getElementById("entryCode").value||"").trim().replace(/[^A-Za-z0-9_-]/g,"");
-  if(!code){ document.getElementById("entryErr").textContent="Enter your rota code."; return; }
-  document.getElementById("entryOverlay").classList.remove("show");
-  meKey=null; saveMe("");
-  connectWithCode(code);        // room's people arrive via sync
-  openLogin();                  // identity picker; refreshes when people load (see sync handler)
-}
 
 /* ---- login (rota code + identity) ---- */
 function renderLoginWho(){
   const opts=document.getElementById("loginWho");
-  const keys = state.mode==="solo" ? ["A"] : ["A","B"];
-  opts.innerHTML=keys.map(k=>`<div class="opt ${k.toLowerCase()} ${meKey===k?"sel":""}" data-k="${k}"><span class="sw">${personIni(k)}</span>${escapeHtml(state.people[k].name||("Person "+k))}</div>`).join("");
+  opts.innerHTML=["A","B"].map(k=>`<div class="opt ${k.toLowerCase()} ${meKey===k?"sel":""}" data-k="${k}"><span class="sw">${personIni(k)}</span>${escapeHtml(state.people[k].name)}</div>`).join("");
   opts.querySelectorAll(".opt").forEach(o=>o.onclick=()=>{ meKey=o.dataset.k; saveMe(meKey); renderLoginWho(); renderLoginPin(); });
 }
-/* ===== Onboarding (first use of a new rota code) ===== */
-let onb={mode:"", step:0};
-function openOnboarding(){
-  onb={mode:"", step:0};
-  ["onbName","onbIni","onbGrade","onbSpec","onbHosp","onbGmc","onbPName","onbPIni","onbCode"].forEach(id=>{const el=document.getElementById(id); if(el) el.value="";});
-  document.getElementById("onbErr").textContent="";
-  document.getElementById("loginOverlay").classList.remove("show");
-  document.getElementById("onbOverlay").classList.add("show");
-  onbShow();
-}
-function onbSteps(){ return onb.mode==="ltft" ? ["mode","you","partner","nwd","code"] : ["mode","you","code"]; }
-function onbShow(){
-  const steps=onbSteps(), cur=steps[onb.step];
-  ["Mode","You","Partner","Nwd","Code"].forEach(s=>{ const el=document.getElementById("onbStep"+s); if(el) el.style.display="none"; });
-  document.getElementById("onbStep"+cur.charAt(0).toUpperCase()+cur.slice(1)).style.display="block";
-  document.getElementById("onbBack").style.display = onb.step>0 ? "" : "none";
-  document.getElementById("onbNext").textContent = (cur==="code") ? "Start" : "Continue";
-  document.getElementById("onbErr").textContent="";
-  if(cur==="mode"){ document.querySelectorAll(".onb-choice").forEach(c=>c.classList.toggle("sel", c.dataset.mode===onb.mode)); }
-  if(cur==="code"){
-    document.getElementById("onbCodeNote").textContent = onb.mode==="ltft" ? "You and your partner type this same code. Keep it private — anyone with it can see this rota." : "Type a code to open your rota on any device. Keep it private.";
-  }
-}
-function onbNext(){
-  const steps=onbSteps(), cur=steps[onb.step], err=document.getElementById("onbErr");
-  if(cur==="mode"){ if(!onb.mode){ err.textContent="Pick how you work."; return; } }
-  if(cur==="you"){
-    if(!document.getElementById("onbName").value.trim()){ err.textContent="Enter your name."; return; }
-    if(!document.getElementById("onbIni").value.trim()){ err.textContent="Enter your initials — the Swap tool needs them."; return; }
-  }
-  if(cur==="partner" && onb.mode==="ltft"){
-    if(!document.getElementById("onbPName").value.trim()){ err.textContent="Enter your call partner's name."; return; }
-  }
-  if(cur==="code"){ onbFinish(); return; }
-  onb.step++; onbShow();
-}
-function onbBack(){ if(onb.step>0){ onb.step--; onbShow(); } }
-async function onbFinish(){
-  const code=(document.getElementById("onbCode").value||"").trim().replace(/[^A-Za-z0-9_-]/g,"");
-  const err=document.getElementById("onbErr");
-  if(!code){ err.textContent="Need a rota code."; return; }
-  // Don't adopt a code that already belongs to a live rota — that room's people would replace yours.
-  err.textContent="Checking code…";
-  try{
-    const ok=await ensureFirebase();
-    if(ok){
-      const snap=await db.ref("slotShare/"+code).once("value");
-      const room=snap && snap.val();
-      const roomPeople=room && room.people && ((room.people.A&&room.people.A.name)||(room.people.B&&room.people.B.name));
-      if(roomPeople){
-        const names=[room.people.A&&room.people.A.name, room.people.B&&room.people.B.name].filter(Boolean).join(" & ");
-        err.textContent=`That code is already used by an existing rota (${names}). Pick a different code — or use "I already have a rota code" to join it.`;
-        return;
-      }
-    }
-  }catch(e){ /* offline or rules issue — proceed; seeding will handle it */ }
-  err.textContent="";
-  const fresh=defaultState();
-  fresh.mode=onb.mode;
-  fresh.people.A={name:document.getElementById("onbName").value.trim(), initials:document.getElementById("onbIni").value.trim().toUpperCase()};
-  fresh.people.B = (onb.mode==="ltft")
-    ? {name:document.getElementById("onbPName").value.trim(), initials:(document.getElementById("onbPIni").value||"").trim().toUpperCase()}
-    : {name:"", initials:""};
-  state=fresh; normalize();
-  const L=getLeave("A");
-  if(onb.mode==="ltft"){ const nwdEl=document.getElementById("onbNwd"); if(nwdEl) L.nwd=parseInt(nwdEl.value,10); }
-  L.profile={name:fresh.people.A.name, grade:document.getElementById("onbGrade").value.trim(), specialty:document.getElementById("onbSpec").value.trim()||"Renal Medicine", ward:"", hospital:document.getElementById("onbHosp").value.trim(), gmc:document.getElementById("onbGmc").value.trim()};
-  meKey="A"; saveMe("A");
-  writeLocal(state);
-  document.getElementById("onbOverlay").classList.remove("show");
-  applyMode(); renderComposer(); renderAll();
-  connectWithCode(code);
-  requestAnimationFrame(replayHubSpin);
-}
-function applyMode(){
-  const sc=document.getElementById("hubSplit"); if(sc) sc.style.display = (state.mode==="solo") ? "none" : "";
-}
-
 function openLogin(){
   document.getElementById("loginErr").textContent="";
   document.getElementById("loginCode").value=rotaCode||"";
@@ -3520,8 +2704,7 @@ function normalize(){
   if(!Array.isArray(state.comments)) state.comments=[];
   if(!state.leave || typeof state.leave!=="object") state.leave={};
   Object.values(state.myShifts||{}).forEach(days=>Object.values(days||{}).forEach(arr=>{ if(Array.isArray(arr)) arr.forEach(s=>{ if(s && s.type==="leave") s.type="annual_leave"; }); }));
-  ["A","B"].forEach(k=>{ if(!state.people[k]) state.people[k]={name:"",initials:""}; if(state.people[k].name===undefined) state.people[k].name=""; if(state.people[k].initials===undefined) state.people[k].initials=""; });
-  if(state.mode===undefined) state.mode="";
+  ["A","B"].forEach(k=>{ if(!state.people[k]) state.people[k]={name:k==="A"?"Mark":"Ed"}; if(state.people[k].initials===undefined) state.people[k].initials=""; });
   Object.values(state.assignments||{}).forEach(a=>{ if((a.p==="A"||a.p==="B") && a.rota===undefined) a.rota=state.rotaId; });
   const statusMap={requested:"pending", agreed:"accepted", done:"accepted"};
   (state.notes||[]).forEach(n=>{ if(!n.from) n.from="A"; if(statusMap[n.status]) n.status=statusMap[n.status]; if(!["pending","accepted","rejected"].includes(n.status)) n.status="pending"; });
@@ -3580,18 +2763,6 @@ function boot(){
   document.getElementById("myDayClose").onclick=closeMyDay;
   document.getElementById("myDayOverlay").onclick=e=>{ if(e.target.id==="myDayOverlay") closeMyDay(); };
   document.getElementById("exportIcs").onclick=exportICS;
-  document.getElementById("exportHr").onclick=openHrExport;
-  document.getElementById("swapBtn").onclick=openSwap;
-  document.getElementById("swapBack").onclick=closeSwap;
-  document.getElementById("swapChoose").onclick=()=>document.getElementById("swapFile").click();
-  document.getElementById("swapFile").onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(f) swapHandleFile(f); e.target.value=""; };
-  document.getElementById("hubDeptBtn").onclick=openDept;
-  document.getElementById("deptBack").onclick=closeDept;
-  document.getElementById("deptChoose").onclick=()=>document.getElementById("deptFile").click();
-  document.getElementById("deptFile").onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(f) deptHandleFile(f); e.target.value=""; };
-  document.getElementById("deptApplyBtn").onclick=deptApply;
-  document.getElementById("hrBack").onclick=closeHr;
-  document.getElementById("hrDownload").onclick=hrDownload;
   document.getElementById("leaveBtn").onclick=openLeave;
   document.getElementById("leaveBack").onclick=closeLeave;
   document.getElementById("leaveMyRota").onclick=()=>{ openMyRota(); requestAnimationFrame(()=>document.getElementById("leaveOverlay").classList.remove("show")); };
@@ -3625,28 +2796,13 @@ function boot(){
   document.getElementById("loginDisconnect").onclick=()=>{ closeLogin(); goOffline(); };
   document.getElementById("loginCode").addEventListener("keydown",e=>{ if(e.key==="Enter") submitLogin(); });
 
-  document.querySelectorAll(".onb-choice").forEach(c=>c.onclick=()=>{ onb.mode=c.dataset.mode; onbShow(); });
-  document.getElementById("onbNext").onclick=onbNext;
-  document.getElementById("onbBack").onclick=onbBack;
-  document.getElementById("onbRegen").onclick=()=>{ document.getElementById("onbCode").value=genRotaCode(document.getElementById("onbHosp").value||document.getElementById("onbIni").value); };
-  document.getElementById("onbHaveCode").onclick=()=>{ document.getElementById("onbOverlay").classList.remove("show"); openLogin(); };
-  { const hso=document.getElementById("hubSignout"); if(hso) hso.onclick=()=>{ openConfirm("Sign out / switch rota?","This detaches this device from the rota. Your rota data stays safe in the room — re-enter the code anytime to reconnect.","Sign out",signOut); }; }
-  { const ln=document.getElementById("loginNewRota"); if(ln) ln.onclick=openOnboarding; }
-  { const so=document.getElementById("loginSignout"); if(so) so.onclick=()=>{ openConfirm("Sign out of this rota?","This detaches this device from the rota. Your rota data stays safe — re-enter the code anytime to reconnect.","Sign out",signOut); }; }
-  { const ec=document.getElementById("entryConnect"); if(ec) ec.onclick=entryConnect; }
-  { const en=document.getElementById("entryNew"); if(en) en.onclick=openOnboarding; }
-  { const ei=document.getElementById("entryCode"); if(ei) ei.addEventListener("keydown",e=>{ if(e.key==="Enter") entryConnect(); }); }
-
   meKey=loadMe();
   rotaCode=loadCode();
   cacheCode=loadCacheCode();
-  applyMode();
   renderAll();
   refreshBankHolidays();
 
-  const known = state.people && ((state.people.A&&state.people.A.name) || (state.people.B&&state.people.B.name));
-  if(!meKey && !rotaCode && !known){ openEntry(); }              // nothing set up → code-or-new fork
-  else if(!meKey){ openLogin(); }
+  if(!meKey){ openLogin(); }
   else if(rotaCode){ connectWithCode(rotaCode); maybeAlert(); }
   else { setSyncStatus("local","Saved on this device · tap to sync"); maybeAlert(); enforcePinAfterSync(); }
 }
