@@ -634,6 +634,7 @@
   @keyframes splashPop{from{opacity:0;transform:translateY(12px) scale(.92)}to{opacity:1;transform:none}}
   /* PIN lock */
   #pinOverlay{z-index:120}
+  #confirmOverlay{z-index:130}
   .pin-sheet{max-width:300px;text-align:center}
   .pin-title{font-family:var(--font-d);font-weight:700;font-size:18px;color:var(--ink)}
   .pin-sub{font-size:12.5px;color:var(--ink-faint);margin-top:4px;min-height:15px}
@@ -3447,9 +3448,26 @@ function onbNext(){
   onb.step++; onbShow();
 }
 function onbBack(){ if(onb.step>0){ onb.step--; onbShow(); } }
-function onbFinish(){
+async function onbFinish(){
   const code=(document.getElementById("onbCode").value||"").trim().replace(/[^A-Za-z0-9_-]/g,"");
-  if(!code){ document.getElementById("onbErr").textContent="Need a rota code."; return; }
+  const err=document.getElementById("onbErr");
+  if(!code){ err.textContent="Need a rota code."; return; }
+  // Don't adopt a code that already belongs to a live rota — that room's people would replace yours.
+  err.textContent="Checking code…";
+  try{
+    const ok=await ensureFirebase();
+    if(ok){
+      const snap=await db.ref("slotShare/"+code).once("value");
+      const room=snap && snap.val();
+      const roomPeople=room && room.people && ((room.people.A&&room.people.A.name)||(room.people.B&&room.people.B.name));
+      if(roomPeople){
+        const names=[room.people.A&&room.people.A.name, room.people.B&&room.people.B.name].filter(Boolean).join(" & ");
+        err.textContent=`That code is already used by an existing rota (${names}). Pick a different code — or use "I already have a rota code" to join it.`;
+        return;
+      }
+    }
+  }catch(e){ /* offline or rules issue — proceed; seeding will handle it */ }
+  err.textContent="";
   const fresh=defaultState();
   fresh.mode=onb.mode;
   fresh.people.A={name:document.getElementById("onbName").value.trim(), initials:document.getElementById("onbIni").value.trim().toUpperCase()};
