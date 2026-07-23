@@ -1542,7 +1542,18 @@ function genRotaCode(seed){
 }
 function shiftDate(ds,delta){ const d=new Date(ds+"T00:00:00"); d.setDate(d.getDate()+delta); return iso(d); }
 function isMonday(ds){ return new Date(ds+"T00:00:00").getDay()===1; }
-function rotaNwd(){ if(state.mode==="solo") return -1; const a=state.leave&&state.leave.A; const n=a&&typeof a.nwd==="number"?a.nwd:1; return n; }
+function rotaNwd(){
+  if(state.mode==="solo") return -1;
+  if(!state.leave) return 1;
+  const mine=state.leave[meKey||"A"];
+  if(mine && typeof mine.nwd==="number") return mine.nwd;      // match what Settings displays
+  const any=[state.leave.A, state.leave.B].find(x=>x&&typeof x.nwd==="number");
+  return any?any.nwd:1;
+}
+function setNwdShared(n){
+  if(!state.leave) state.leave={};
+  ["A","B"].forEach(k=>{ if(!state.leave[k]) state.leave[k]={}; state.leave[k].nwd=n; });  // NWD is shared by call partners
+}
 function isNwdDay(ds){ const n=rotaNwd(); return n>=0 && new Date(ds+"T00:00:00").getDay()===n; }
 function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
@@ -2893,7 +2904,7 @@ function renderLeave(){
   document.getElementById("lvPrev").onclick=()=>shiftLeaveYear(-1);
   document.getElementById("lvNext").onclick=()=>shiftLeaveYear(1);
   { const wt=document.getElementById("lvWte"); if(wt) wt.onchange=e=>setLeaveField("wte",e.target.value,true); }
-  { const nw=document.getElementById("lvNwd"); if(nw) nw.onchange=e=>setLeaveField("nwd",e.target.value,true); }
+  { const nw=document.getElementById("lvNwd"); if(nw) nw.onchange=e=>{ const n=parseInt(e.target.value,10); setNwdShared(isNaN(n)?1:n); persist(); renderLeave(); renderAll(); }; }
   document.getElementById("lvTrain").onchange=e=>setLeaveField("trainingStart",e.target.value,false);
   document.getElementById("lvNhs").onchange=e=>{ const L=getLeave(); const t=(e.target.value||"").trim(); L.nhsStartYear = t===""?undefined:(parseInt(t,10)||undefined); persist(); renderLeave(); };
   document.getElementById("lvSl").onchange=e=>setLeaveField("slEntitlement",e.target.value,true);
@@ -3546,7 +3557,7 @@ async function onbFinish(){
     : {name:"", initials:""};
   state=fresh; normalize();
   const L=getLeave("A");
-  if(onb.mode==="ltft"){ const nwdEl=document.getElementById("onbNwd"); if(nwdEl) L.nwd=parseInt(nwdEl.value,10); }
+  if(onb.mode==="ltft"){ const nwdEl=document.getElementById("onbNwd"); if(nwdEl) setNwdShared(parseInt(nwdEl.value,10)||1); }
   L.profile={name:fresh.people.A.name, grade:document.getElementById("onbGrade").value.trim(), specialty:document.getElementById("onbSpec").value.trim()||"Renal Medicine", ward:"", hospital:document.getElementById("onbHosp").value.trim(), gmc:document.getElementById("onbGmc").value.trim()};
   meKey="A"; saveMe("A");
   writeLocal(state);
