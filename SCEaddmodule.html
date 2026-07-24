@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SCE·NEP // Add Module</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#080c14;--bg2:#0e1420;--bg3:#141c2c;--border:#1e2a3a;--border2:#263445;
+--white:#dde6f0;--grey:#6a7d92;--grey2:#3d5068;--green:#4ade80;--yellow:#fbbf24;
+--cyan:#22d3ee;--red:#f87171;--pink:#f472b6;--purple:#a78bfa;--font:'Fira Code',monospace;}
+html,body{background:var(--bg);color:var(--white);font-family:var(--font);font-size:13px;line-height:1.6;min-height:100vh;}
+.wrap{max-width:760px;margin:0 auto;padding:24px 18px 60px;}
+.logo{font-size:18px;font-weight:600;color:var(--cyan);letter-spacing:0.04em;margin-bottom:2px;}
+.logo span{color:var(--grey);}
+.sub{font-size:9px;color:var(--grey);letter-spacing:0.18em;margin-bottom:20px;}
+.sync{font-size:10px;color:var(--grey2);letter-spacing:0.08em;margin-bottom:16px;}
+.sync.live{color:var(--green);}
+.card{background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--cyan);padding:14px 16px;margin-bottom:14px;}
+.card h2{font-size:10px;color:var(--cyan);letter-spacing:0.1em;margin-bottom:10px;font-weight:600;}
+label{display:block;font-size:9px;color:var(--grey);letter-spacing:0.1em;margin-bottom:5px;}
+input[type=text],textarea{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--white);
+font-family:var(--font);font-size:12px;padding:8px 10px;outline:none;caret-color:var(--cyan);}
+input[type=text]:focus,textarea:focus{border-color:var(--yellow);}
+textarea{min-height:170px;resize:vertical;line-height:1.5;}
+.hint{font-size:9px;color:var(--grey2);margin-top:5px;line-height:1.6;}
+.btn{display:block;width:100%;padding:12px;border:1px solid var(--cyan);background:rgba(34,211,238,0.08);
+color:var(--cyan);font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.08em;cursor:pointer;margin-top:12px;transition:all .15s;}
+.btn:hover{background:rgba(34,211,238,0.18);}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+.btn.go{border-color:var(--green);color:var(--green);background:rgba(74,222,128,0.08);}
+.btn.go:hover{background:rgba(74,222,128,0.18);}
+.btn.warn{border-color:var(--yellow);color:var(--yellow);background:rgba(251,191,36,0.08);}
+.btn.ghost{border-color:var(--border2);color:var(--grey);background:transparent;font-size:10px;padding:7px;}
+.btn.ghost:hover{border-color:var(--cyan);color:var(--cyan);}
+.row{display:flex;justify-content:space-between;font-size:11px;color:var(--grey);padding:3px 0;border-bottom:1px solid var(--border);}
+.row:last-child{border-bottom:none;}
+.row strong{color:var(--yellow);}
+.catline{display:flex;justify-content:space-between;font-size:10px;padding:3px 0;color:var(--grey);}
+.catline strong{color:var(--cyan);}
+.catline .nums{color:var(--grey2);font-size:9px;max-width:62%;text-align:right;word-break:break-word;}
+.msg{padding:9px 12px;margin-bottom:8px;font-size:10px;line-height:1.7;border-left:3px solid;}
+.msg.err{background:rgba(248,113,113,.07);border-color:var(--red);color:#ffd9d9;}
+.msg.warn{background:rgba(251,191,36,.07);border-color:var(--yellow);color:#ffeec2;}
+.msg.ok{background:rgba(74,222,128,.07);border-color:var(--green);color:#d3f5dd;}
+#log{background:var(--bg3);border:1px solid var(--border);padding:11px 13px;margin-top:14px;font-size:10px;
+color:var(--grey);white-space:pre-wrap;word-break:break-word;min-height:50px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">SCE<span>·</span>NEP <span style="font-size:12px;">// ADD MODULE</span></div>
+  <div class="sub">BULK-ADD A KSAP MODULE TO THE QUESTION BANK</div>
+  <div class="sync" id="sync">● connecting to firebase...</div>
+
+  <div class="card">
+    <h2>1 · MODULE</h2>
+    <label>Module code</label>
+    <input type="text" id="modName" placeholder="e.g. V9M1" autocapitalize="characters" spellcheck="false"/>
+    <div class="hint">Format V&lt;number&gt;M&lt;number&gt;. Sorting is numeric, so V9M1 will sit between V8M2 and V10M1.</div>
+  </div>
+
+  <div class="card">
+    <h2>2 · PASTE THE MODULE DATA</h2>
+    <label>Category then question numbers</label>
+    <textarea id="raw" spellcheck="false" placeholder="Sodium and Water abnormalities	9,26,50,58
+Acid-Base and Potassium Disorders	5,17,24,25
+Chronic Kidney Disease	&quot;4
+6
+14
+21&quot;
+..."></textarea>
+    <div class="hint">
+      Paste straight from your spreadsheet — one category per row, numbers after it.
+      Commas, spaces, new lines and quote marks are all fine, and a pasted header row is ignored.
+      Category names are matched loosely, so "Acid-Base", "Acid–Base", "Sodium and Water abnormalities"
+      and the long "Intensive Care Unit" wording all resolve correctly.
+    </div>
+    <button class="btn" id="parseBtn" onclick="doParse()">PARSE &amp; VALIDATE</button>
+  </div>
+
+  <div id="results"></div>
+
+  <div class="card" id="writeCard" style="display:none;border-left-color:var(--green);">
+    <h2>4 · WRITE TO FIREBASE</h2>
+    <div class="row"><span>Bank now</span><strong id="curCount">—</strong></div>
+    <div class="row"><span>This module adds</span><strong id="addCount">—</strong></div>
+    <div class="row"><span>Bank after write</span><strong id="afterCount">—</strong></div>
+    <button class="btn ghost" onclick="downloadBackup()">⬇ DOWNLOAD BACKUP OF CURRENT BANK FIRST</button>
+    <button class="btn go" id="writeBtn" onclick="doWrite()">APPEND MODULE TO FIREBASE</button>
+  </div>
+
+  <div id="log">// waiting for firebase connection...</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
+  authDomain: "task-monitor-bd7ee.firebaseapp.com",
+  databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "task-monitor-bd7ee",
+  storageBucket: "task-monitor-bd7ee.firebasestorage.app",
+  messagingSenderId: "544624731364",
+  appId: "1:544624731364:web:419d52fa061c5c7b4f38f1",
+};
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+/* ---------- canonical categories (must match the app exactly) ---------- */
+const CANON = [
+  "Acid\u2013Base and Potassium Disorders",
+  "Acute Kidney Injury and ICU Nephrology",
+  "Ca, Po4, Mg disorders & Stones",
+  "Chronic Kidney Disease",
+  "Glomerular and Vascular Disorders",
+  "Hypertension",
+  "Kidney Transplantation",
+  "Pharmacology",
+  "Sodium and Water Abnormalities",
+  "Tubular, Interstitial and Cystic Disorders",
+];
+const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
+// alias slug -> canonical name (for wordings that differ from the app's)
+const ALIAS = {
+  "acutekidneyinjuryandintensivecareunitnephrology": "Acute Kidney Injury and ICU Nephrology",
+  "calciumphosphorusandmagnesiumdisordersandstones": "Ca, Po4, Mg disorders & Stones",
+  "capo4mgdisordersandstones": "Ca, Po4, Mg disorders & Stones",
+};
+// build match table: slug -> canonical, longest slug wins
+const MATCH = [];
+CANON.forEach(c => MATCH.push([slug(c), c]));
+Object.entries(ALIAS).forEach(([s, c]) => MATCH.push([s, c]));
+MATCH.sort((a, b) => b[0].length - a[0].length);
+
+let curBank = null;   // current sceConfig/ksap
+let parsed  = null;   // {mod, entries, byCat}
+
+const log = m => { document.getElementById("log").textContent += "\n" + m; };
+
+/* ---------- connect ---------- */
+get(ref(db, "sceConfig/ksap")).then(snap => {
+  const v = snap.val();
+  curBank = Array.isArray(v) ? v : [];
+  const s = document.getElementById("sync");
+  s.textContent = "● firebase connected · live";
+  s.className = "sync live";
+  const mods = [...new Set(curBank.map(q => q.module))];
+  log("// connected");
+  log("// current bank: " + curBank.length + " questions across " + mods.length + " modules");
+  log("// modules: " + sortMods(mods).join(", "));
+}).catch(e => log("// connection error: " + e.message));
+
+function sortMods(a) {
+  return [...a].sort((x, y) => {
+    const px = /^V(\d+)M(\d+)$/.exec(x), py = /^V(\d+)M(\d+)$/.exec(y);
+    if (px && py) { const d = +px[1] - +py[1]; return d !== 0 ? d : +px[2] - +py[2]; }
+    return String(x).localeCompare(String(y));
+  });
+}
+
+/* ---------- parse ---------- */
+function parseRaw(text) {
+  const lines = text.split(/\r?\n/);
+  const out = [];              // [{cat, nums:[]}]
+  let cur = null;
+  const unmatched = [];
+
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const ls = slug(line);
+    let hit = null;
+    for (const [sg, canon] of MATCH) {
+      if (ls.startsWith(sg)) { hit = { canon, sg }; break; }
+    }
+    if (hit) {
+      // strip the category text off the front of the line, keep the rest as numbers
+      let rest = line;
+      let acc = "";
+      let i = 0;
+      for (; i < line.length; i++) {
+        acc += line[i];
+        if (slug(acc).length >= hit.sg.length) break;
+      }
+      rest = line.slice(i + 1);
+      cur = { cat: hit.canon, nums: [] };
+      out.push(cur);
+      pushNums(cur, rest);
+    } else if (cur) {
+      pushNums(cur, line);
+    } else {
+      // before any category — likely the header row; ignore but record
+      if (/\d/.test(line)) unmatched.push(line.trim());
+    }
+  }
+  return { groups: out, unmatched };
+}
+function pushNums(g, txt) {
+  const m = String(txt).match(/\d+/g);
+  if (m) m.forEach(n => g.nums.push(parseInt(n, 10)));
+}
+
+window.doParse = function () {
+  const mod = document.getElementById("modName").value.trim().toUpperCase();
+  const raw = document.getElementById("raw").value;
+  const res = document.getElementById("results");
+  const writeCard = document.getElementById("writeCard");
+  res.innerHTML = ""; writeCard.style.display = "none"; parsed = null;
+
+  const errs = [], warns = [];
+
+  if (!mod) { errs.push("Enter a module code."); }
+  else if (!/^V\d+M\d+$/.test(mod)) { warns.push("Module code \u201c" + mod + "\u201d is not in the usual V#M# form \u2014 sorting may be alphabetical."); }
+  if (!raw.trim()) errs.push("Paste the module data.");
+  if (!curBank) errs.push("Still connecting to Firebase \u2014 wait a moment and try again.");
+  if (errs.length) return showResults(errs, [], null, mod);
+
+  const { groups, unmatched } = parseRaw(raw);
+  if (!groups.length) {
+    errs.push("No categories recognised. Check the category names are spelled as in the app.");
+    return showResults(errs, warns, null, mod);
+  }
+
+  // merge duplicate category blocks
+  const byCat = {};
+  groups.forEach(g => { (byCat[g.cat] ||= []).push(...g.nums); });
+
+  // duplicates across the module
+  const seen = new Map();  // num -> [cats]
+  Object.entries(byCat).forEach(([cat, nums]) => {
+    nums.forEach(n => { (seen.get(n) || seen.set(n, []).get(n)).push(cat); });
+  });
+  const dupes = [...seen.entries()].filter(([, cats]) => cats.length > 1);
+  dupes.forEach(([n, cats]) => errs.push("Q" + n + " appears in " + cats.length + " categories: " + [...new Set(cats)].join(" / ")));
+
+  // gaps
+  const all = [...seen.keys()].sort((a, b) => a - b);
+  const max = all[all.length - 1] || 0;
+  const missing = [];
+  for (let i = 1; i <= max; i++) if (!seen.has(i)) missing.push(i);
+  if (missing.length) warns.push("Missing between 1 and " + max + ": Q" + missing.join(", Q"));
+
+  if (unmatched.length) warns.push("Ignored " + unmatched.length + " line(s) before the first category (header row?).");
+
+  // already in bank?
+  const existing = curBank.filter(q => q.module === mod).length;
+  if (existing) warns.push("Module " + mod + " already exists in the bank with " + existing + " questions \u2014 writing will REPLACE those entries.");
+
+  parsed = errs.length ? null : { mod, byCat, total: all.length, existing };
+  showResults(errs, warns, byCat, mod, all.length, max, existing);
+};
+
+function showResults(errs, warns, byCat, mod, total, max, existing) {
+  const res = document.getElementById("results");
+  let h = '<div class="card" style="border-left-color:' + (errs.length ? "var(--red)" : "var(--green)") + '"><h2>3 · VALIDATION</h2>';
+  errs.forEach(e => h += '<div class="msg err">\u2717 ' + esc(e) + "</div>");
+  warns.forEach(w => h += '<div class="msg warn">\u26a0 ' + esc(w) + "</div>");
+  if (!errs.length && byCat) {
+    h += '<div class="msg ok">\u2713 Parsed cleanly \u2014 ' + total + " questions in " + Object.keys(byCat).length + " categories, no duplicates.</div>";
+    h += '<div class="row"><span>Module</span><strong>' + esc(mod) + "</strong></div>";
+    h += '<div class="row"><span>Questions found</span><strong>' + total + "</strong></div>";
+    h += '<div class="row"><span>Highest number</span><strong>Q' + max + "</strong></div>";
+    h += '<div style="margin-top:10px;">';
+    Object.keys(byCat).sort().forEach(c => {
+      const nums = [...byCat[c]].sort((a, b) => a - b);
+      h += '<div class="catline"><span>' + esc(c) + ' <strong>' + nums.length + "</strong></span>" +
+           '<span class="nums">' + nums.join(", ") + "</span></div>";
+    });
+    h += "</div>";
+  }
+  h += "</div>";
+  res.innerHTML = h;
+
+  if (!errs.length && byCat) {
+    document.getElementById("writeCard").style.display = "block";
+    document.getElementById("curCount").textContent = curBank.length;
+    document.getElementById("addCount").textContent = total + (existing ? " (replacing " + existing + ")" : "");
+    document.getElementById("afterCount").textContent = (curBank.length - existing + total);
+    document.getElementById("writeBtn").textContent = existing ? "REPLACE MODULE IN FIREBASE" : "APPEND MODULE TO FIREBASE";
+    document.getElementById("writeBtn").className = existing ? "btn warn" : "btn go";
+  }
+}
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/* ---------- backup ---------- */
+window.downloadBackup = function () {
+  if (!curBank) return;
+  const blob = new Blob([JSON.stringify(curBank, null, 0)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "ksap_backup_" + new Date().toISOString().slice(0, 10) + ".json";
+  a.click();
+  log("// backup downloaded (" + curBank.length + " questions)");
+};
+
+/* ---------- write ---------- */
+window.doWrite = function () {
+  if (!parsed) return;
+  const { mod, byCat, existing } = parsed;
+  const verb = existing ? "REPLACE the existing " + existing + " questions in " + mod : "add " + mod;
+  if (!confirm("This will " + verb + " in the live question bank.\n\nContinue?")) return;
+
+  const btn = document.getElementById("writeBtn");
+  btn.disabled = true; btn.textContent = "writing...";
+
+  // keep everything that isn't this module, then append the new entries
+  const kept = curBank.filter(q => q.module !== mod);
+  const added = [];
+  Object.keys(byCat).sort().forEach(cat => {
+    [...new Set(byCat[cat])].sort((a, b) => a - b).forEach(n => {
+      added.push({ code: mod + "-Q" + n, category: cat, module: mod });
+    });
+  });
+  const next = kept.concat(added);
+
+  set(ref(db, "sceConfig/ksap"), next).then(() => {
+    curBank = next;
+    log("");
+    log("// \u2713 wrote " + added.length + " questions for " + mod);
+    log("// bank is now " + next.length + " questions");
+    log("// open the tracker \u2014 " + mod + " appears automatically in Pass 2 \u2192 BY MODULE");
+    btn.textContent = "\u2713 DONE \u2014 " + mod + " ADDED";
+    document.getElementById("curCount").textContent = next.length;
+  }).catch(e => {
+    log("// \u2717 write failed: " + e.message);
+    btn.disabled = false; btn.textContent = "RETRY WRITE";
+  });
+};
+</script>
+</body>
+</html>
