@@ -54,6 +54,14 @@ color:var(--grey);white-space:pre-wrap;word-break:break-word;min-height:50px;}
   <div class="sub">BULK-ADD A KSAP MODULE TO THE QUESTION BANK</div>
   <div class="sync" id="sync">● connecting to firebase...</div>
 
+  <div class="card" id="bankCard" style="display:none;border-left-color:var(--purple);">
+    <h2>CURRENT BANK</h2>
+    <div class="row"><span>Questions</span><strong id="bankCount">—</strong></div>
+    <div class="row"><span>Modules</span><strong id="bankMods">—</strong></div>
+    <button class="btn ghost" onclick="downloadBackup()">⬇ DOWNLOAD BACKUP (JSON)</button>
+    <div class="hint">Worth doing before your first write — saves the whole bank as it stands right now.</div>
+  </div>
+
   <div class="card">
     <h2>1 · MODULE</h2>
     <label>Module code</label>
@@ -149,6 +157,9 @@ get(ref(db, "sceConfig/ksap")).then(snap => {
   s.textContent = "● firebase connected · live";
   s.className = "sync live";
   const mods = [...new Set(curBank.map(q => q.module))];
+  document.getElementById("bankCard").style.display = "block";
+  document.getElementById("bankCount").textContent = curBank.length;
+  document.getElementById("bankMods").textContent = sortMods(mods).join(", ");
   log("// connected");
   log("// current bank: " + curBank.length + " questions across " + mods.length + " modules");
   log("// modules: " + sortMods(mods).join(", "));
@@ -324,6 +335,8 @@ window.doWrite = function () {
     log("// open the tracker \u2014 " + mod + " appears automatically in Pass 2 \u2192 BY MODULE");
     btn.textContent = "\u2713 DONE \u2014 " + mod + " ADDED";
     document.getElementById("curCount").textContent = next.length;
+    document.getElementById("bankCount").textContent = next.length;
+    document.getElementById("bankMods").textContent = sortMods([...new Set(next.map(q => q.module))]).join(", ");
   }).catch(e => {
     log("// \u2717 write failed: " + e.message);
     btn.disabled = false; btn.textContent = "RETRY WRITE";
