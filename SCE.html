@@ -883,7 +883,19 @@ let TOPICS = {
   }
 };
 
-const MODULES = ["V7M1","V7M2","V8M1","V8M2","V10M1","V11M1","V12M1"];
+// Modules are derived from the question bank itself, so any module added to
+// Firebase (sceConfig/ksap) appears automatically. Natural sort: V7M1 < V7M2
+// < V8M1 < V9M1 < V10M1 (not lexicographic, which would put V10 before V9).
+function getModules() {
+  return [...new Set(KSAP.map(q => q.module))].sort((a, b) => {
+    const pa = /^V(\d+)M(\d+)$/.exec(a), pb = /^V(\d+)M(\d+)$/.exec(b);
+    if (pa && pb) {
+      const d = parseInt(pa[1]) - parseInt(pb[1]);
+      return d !== 0 ? d : parseInt(pa[2]) - parseInt(pb[2]);
+    }
+    return a.localeCompare(b);
+  });
+}
 const CAT_COLORS = {
   "Acid–Base and Potassium Disorders": "var(--orange)",
   "Acute Kidney Injury and ICU Nephrology": "var(--red)",
@@ -1448,7 +1460,7 @@ function renderKSAP() {
   } else {
     // Module view
     html += `<div style="padding-top:10px;">`;
-    MODULES.forEach(mod => {
+    getModules().forEach(mod => {
       const allQs = KSAP.filter(q => q.module === mod)
         .slice().sort((a,b) => {
           const na = parseInt(a.code.split('-Q')[1]) || 0;
@@ -2235,8 +2247,9 @@ function saveRmBlock(idx) {
 // ADMIN PANEL
 // ══════════════════════════════════════════════════════════════════════
 let adminSubTab = "topics";
-const ALL_CATS = [...new Set(KSAP.map(q => q.category))].sort();
-const ALL_MODULES = [...new Set(KSAP.map(q => q.module))].sort();
+// Live getters — recomputed from the current bank so they stay correct
+// after Firebase replaces KSAP on sync.
+function allCats() { return [...new Set(KSAP.map(q => q.category))].sort(); }
 
 function renderAdmin() {
   const el = document.getElementById("tab-admin");
@@ -2418,13 +2431,13 @@ function renderAdminQuestions(el) {
     <div class="admin-row">
       <span class="admin-tag">CATEGORY</span>
       <select class="admin-sel" id="admin-q-cat" style="flex:1;max-width:360px;">
-        ${ALL_CATS.map(c => `<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join("")}
+        ${allCats().map(c => `<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join("")}
       </select>
     </div>
     <div class="admin-row">
       <span class="admin-tag">MODULE</span>
       <select class="admin-sel" id="admin-q-mod" style="max-width:160px;">
-        ${ALL_MODULES.map(m => `<option value="${m}">${m}</option>`).join("")}
+        ${getModules().map(m => `<option value="${m}">${m}</option>`).join("")}
         <option value="custom">custom</option>
       </select>
       <input class="admin-inp" id="admin-q-custmod" placeholder="custom module name" style="max-width:180px;" />
@@ -2501,10 +2514,10 @@ function adminAddQuestion() {
 function adminEditQuestion(idx) {
   const q = KSAP[idx];
   if (!q) return;
-  const cats = ALL_CATS.join("\n");
-  const newCat = prompt(`Edit category for ${q.code}:\n\nCurrent: ${q.category}\n\nAvailable categories:\n${ALL_CATS.map((c,i) => (i+1)+". "+c).join("\n")}\n\nType the new category exactly:`, q.category);
+  const cats = allCats().join("\n");
+  const newCat = prompt(`Edit category for ${q.code}:\n\nCurrent: ${q.category}\n\nAvailable categories:\n${allCats().map((c,i) => (i+1)+". "+c).join("\n")}\n\nType the new category exactly:`, q.category);
   if (!newCat || newCat === q.category) return;
-  if (!ALL_CATS.includes(newCat) && !Object.keys(TOPICS).includes(newCat)) {
+  if (!allCats().includes(newCat) && !Object.keys(TOPICS).includes(newCat)) {
     if (!confirm(`"${newCat}" is not an existing category. Add anyway?`)) return;
   }
   KSAP[idx].category = newCat;
