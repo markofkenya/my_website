@@ -178,8 +178,14 @@
 
     /* ── OVERVIEW ── */
     .overview-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:6px; margin-bottom:20px; }
-    .ov-card { background:var(--bg2); border:1px solid var(--border2); border-left:3px solid var(--border2); padding:10px 14px; }
-    .ov-cat { font-size:10px; color:var(--white); font-weight:500; margin-bottom:6px; }
+    .ov-card { background:var(--bg2); border:1px solid var(--border2); border-left:3px solid var(--border2); padding:10px 14px; transition:opacity 0.15s, transform 0.15s; }
+    .ov-card.ov-done { opacity:0.5; padding:7px 12px; }
+    .ov-card.ov-done:hover { opacity:1; }
+    .ov-card.ov-done .ov-row:not(:first-of-type), .ov-card.ov-done .ov-bar-bg { display:none; }
+    .ov-card.ov-done:hover .ov-row, .ov-card.ov-done:hover .ov-bar-bg { display:flex; }
+    .ov-card.ov-done:hover .ov-bar-bg { display:block; }
+    .ov-cat { font-size:10px; color:var(--white); font-weight:500; margin-bottom:6px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .ov-done-badge { font-size:8px; letter-spacing:0.08em; color:var(--green); border:1px solid var(--green); background:rgba(74,222,128,0.1); padding:1px 6px; border-radius:2px; }
     .ov-row { display:flex; justify-content:space-between; font-size:9px; color:var(--grey); margin-bottom:3px; }
     .ov-row strong { color:var(--yellow); }
     .ov-bar-bg { height:2px; background:var(--border2); margin-top:6px; overflow:hidden; }
@@ -1146,6 +1152,10 @@ function renderOverview() {
     if (cs.attempted > 0 && cs.pct < weakestPct) { weakest = cat; weakestPct = cs.pct; }
   });
 
+  // A category is "P1 complete" when every question has been attempted once.
+  const catIsDone = cat => { const cs = computeCatStats(cat); return cs.total > 0 && cs.p1done >= cs.total; };
+  const doneCount = cats.filter(catIsDone).length;
+
   let html = `
     <div class="sec-head">
       <span class="sec-title">SCE READINESS OVERVIEW</span>
@@ -1168,6 +1178,11 @@ function renderOverview() {
         <div style="font-size:20px;font-weight:500;color:var(--green)">${s.stRead} <span style="font-size:11px;color:var(--grey)">/ ${s.stTotal}</span></div>
         <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${s.topicPct}% subtopics read or reviewed</div>
       </div>
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid ${doneCount===cats.length?'var(--green)':'var(--cyan)'};padding:12px 14px;">
+        <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">CATEGORIES P1 COMPLETE</div>
+        <div style="font-size:20px;font-weight:500;color:${doneCount===cats.length?'var(--green)':'var(--cyan)'}">${doneCount} <span style="font-size:11px;color:var(--grey)">/ ${cats.length}</span></div>
+        <div style="font-size:9px;color:var(--grey2);margin-top:4px;">all questions attempted once</div>
+      </div>
       ${weakest ? `
       <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--red);padding:12px 14px;">
         <div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">WEAKEST CATEGORY</div>
@@ -1179,16 +1194,18 @@ function renderOverview() {
     <div class="sec-head">
       <span class="sec-title">BY CATEGORY</span>
       <span class="sec-rule"></span>
+      <span class="sec-note">${doneCount} done · ${cats.length - doneCount} in progress</span>
     </div>
     <div class="overview-grid">
-      ${cats.map(cat => {
+      ${[...cats].sort((a,b) => (catIsDone(a)?1:0) - (catIsDone(b)?1:0) || a.localeCompare(b)).map(cat => {
         const cs = computeCatStats(cat);
         const color = CAT_COLORS[cat] || "var(--cyan)";
         const pct = cs.attempted > 0 ? cs.pct : null;
         const p2pct = cs.p2done > 0 ? cs.p2pct : null;
+        const done = catIsDone(cat);
         return `
-          <div class="ov-card" style="border-left-color:${color};cursor:pointer;" onclick="jumpToKsapCat('${cat.replace(/'/g,"\\'")}')">
-            <div class="ov-cat">${cat}</div>
+          <div class="ov-card${done?' ov-done':''}" style="border-left-color:${done?'var(--green)':color};cursor:pointer;" onclick="jumpToKsapCat('${cat.replace(/'/g,"\\'")}')">
+            <div class="ov-cat">${cat}${done?'<span class="ov-done-badge">✓ DONE</span>':''}</div>
             <div class="ov-row"><span>P1 attempted</span><strong>${cs.p1done} / ${cs.total}</strong></div>
             <div class="ov-row"><span>P2 attempted</span><strong>${cs.p2done} / ${cs.total}</strong></div>
             <div class="ov-row"><span>% correct</span><strong>
@@ -1196,7 +1213,7 @@ function renderOverview() {
               <span style="color:var(--grey2)"> · </span>
               <span style="color:${p2pct !== null ? (p2pct>=70?"var(--green)":p2pct>=50?"var(--yellow)":"var(--red)") : "var(--grey2)"}">P2 ${p2pct !== null ? p2pct+"%" : "—"}</span>
             </strong></div>
-            <div class="ov-bar-bg"><div class="ov-bar" style="width:${Math.round(cs.p1done/cs.total*100)}%;background:${color}"></div></div>
+            <div class="ov-bar-bg"><div class="ov-bar" style="width:${Math.round(cs.p1done/cs.total*100)}%;background:${done?'var(--green)':color}"></div></div>
           </div>`;
       }).join("")}
     </div>
