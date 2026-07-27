@@ -128,23 +128,24 @@
     .cat-bar { height:100%; background:var(--cyan); transition:width 0.4s; }
 
     /* ── QUESTION LIST ── */
-    .q-list { background:var(--bg3); border:1px solid var(--border); border-top:none; padding:0; }
-    .q-row { display:flex; align-items:center; gap:10px; padding:7px 12px; border-bottom:1px solid var(--border); font-size:10px; transition:background 0.1s; }
-    .q-row:hover { background:var(--bg4); }
-    .q-row:last-child { border-bottom:none; }
-    .q-code { color:var(--cyan); font-size:9px; min-width:90px; letter-spacing:0.04em; }
-    .q-pass-label { font-size:8px; color:var(--grey2); min-width:40px; }
-    .q-actions { display:flex; gap:6px; align-items:center; margin-left:auto; }
-    .q-btn { padding:2px 8px; border:1px solid var(--border2); background:transparent; color:var(--grey2); font-family:var(--font); font-size:9px; cursor:pointer; transition:all 0.1s; }
-    .q-btn.correct { border-color:var(--green); color:var(--green); background:rgba(74,222,128,0.08); }
-    .q-btn.incorrect { border-color:var(--red); color:var(--red); background:rgba(248,113,113,0.08); }
-    .q-btn:hover:not(.correct):not(.incorrect) { border-color:var(--cyan); color:var(--cyan); }
-    .conf-dots { display:flex; gap:3px; }
-    .conf-dot { width:8px; height:8px; border-radius:50%; border:1px solid var(--border2); background:transparent; cursor:pointer; transition:all 0.1s; }
+    .q-list { background:var(--bg3); border:1px solid var(--border); border-top:none; padding:6px; display:flex; flex-direction:column; gap:6px; }
+    .q-card { background:var(--bg2); border:1px solid var(--border2); border-left:3px solid var(--border2); padding:9px 11px; display:flex; flex-direction:column; gap:8px; transition:background 0.1s; }
+    .q-card-top { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .q-code { font-size:13px; font-weight:600; letter-spacing:0.04em; }
+    .q-badges { display:flex; gap:5px; margin-left:auto; }
+    .q-card-actions { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+    .q-btn { padding:7px 12px; border:1px solid var(--border2); background:transparent; color:var(--grey); font-family:var(--font); font-size:12px; cursor:pointer; transition:all 0.1s; border-radius:3px; }
+    .q-btn.q-btn-icon { padding:7px 10px; font-size:13px; }
+    .q-btn.correct { border-color:var(--green); color:var(--green); background:rgba(74,222,128,0.12); }
+    .q-btn.incorrect { border-color:var(--red); color:var(--red); background:rgba(248,113,113,0.12); }
+    .q-btn:hover:not(.correct):not(.incorrect):not(.flagged) { border-color:var(--cyan); color:var(--cyan); }
+    .conf-dots { display:flex; gap:6px; padding:0 4px; }
+    .conf-dot { width:15px; height:15px; border-radius:50%; border:1.5px solid var(--border2); background:transparent; cursor:pointer; transition:all 0.1s; }
     .conf-dot.lit { background:var(--yellow); border-color:var(--yellow); }
-    .note-inp { background:var(--bg); border:1px solid var(--border2); color:var(--grey); font-family:var(--font); font-size:9px; padding:2px 6px; width:140px; outline:none; }
+    .note-inp { background:var(--bg); border:1px solid var(--border2); color:var(--white); font-family:var(--font); font-size:12px; padding:7px 10px; width:100%; outline:none; border-radius:3px; }
     .note-inp:focus { border-color:var(--yellow); color:var(--white); }
-    .pass-badge { font-size:7px; padding:1px 4px; letter-spacing:0.06em; border:1px solid; }
+    .note-inp::placeholder { color:var(--grey2); }
+    .pass-badge { font-size:9px; padding:2px 6px; letter-spacing:0.06em; border:1px solid; border-radius:2px; }
     .pass-badge.p1 { color:var(--blue); border-color:rgba(96,165,250,0.3); }
     .pass-badge.p1done { color:var(--green); border-color:rgba(74,222,128,0.3); }
     .pass-badge.p2 { color:var(--purple); border-color:rgba(167,139,250,0.3); }
@@ -194,7 +195,6 @@
 
     @media(max-width:640px) {
       .cat-grid,.overview-grid { grid-template-columns:1fr; }
-      .note-inp { width:80px; }
       #main { padding:10px 10px 80px; }
       .hdr-stat { min-width:80px; padding:8px 12px; }
     }
@@ -883,19 +883,7 @@ let TOPICS = {
   }
 };
 
-// Modules are derived from the question bank itself, so any module added to
-// Firebase (sceConfig/ksap) appears automatically. Natural sort: V7M1 < V7M2
-// < V8M1 < V9M1 < V10M1 (not lexicographic, which would put V10 before V9).
-function getModules() {
-  return [...new Set(KSAP.map(q => q.module))].sort((a, b) => {
-    const pa = /^V(\d+)M(\d+)$/.exec(a), pb = /^V(\d+)M(\d+)$/.exec(b);
-    if (pa && pb) {
-      const d = parseInt(pa[1]) - parseInt(pb[1]);
-      return d !== 0 ? d : parseInt(pa[2]) - parseInt(pb[2]);
-    }
-    return a.localeCompare(b);
-  });
-}
+const MODULES = ["V7M1","V7M2","V8M1","V8M2","V10M1","V11M1","V12M1"];
 const CAT_COLORS = {
   "Acid–Base and Potassium Disorders": "var(--orange)",
   "Acute Kidney Injury and ICU Nephrology": "var(--red)",
@@ -1460,7 +1448,7 @@ function renderKSAP() {
   } else {
     // Module view
     html += `<div style="padding-top:10px;">`;
-    getModules().forEach(mod => {
+    MODULES.forEach(mod => {
       const allQs = KSAP.filter(q => q.module === mod)
         .slice().sort((a,b) => {
           const na = parseInt(a.code.split('-Q')[1]) || 0;
@@ -1521,28 +1509,31 @@ function qRow(q, pass) {
 
   const isCorrect   = curCorrect;
   const isIncorrect = curIncorrect;
-  const rowBg = flagged ? 'background:rgba(244,114,182,0.03);' : isCorrect ? 'background:rgba(74,222,128,0.04);' : isIncorrect ? 'background:rgba(248,113,113,0.04);' : '';
-  return `<div class="q-row" style="${rowBg}">
-    <span class="q-code" style="color:${color}">${q.code}</span>
-    <span style="display:flex;gap:3px;">${p1badge}${p2badge}${flagged?'<span class="pass-badge flagged">⚑</span>':''}</span>
-    <div class="q-actions">
-      <button class="q-btn ${curCorrect?'correct':''}" onclick="toggleQ('${q.code}','${correctField}','${incorrectField}',${curCorrect||false})">✓</button>
-      <button class="q-btn ${curIncorrect?'incorrect':''}" onclick="toggleQ('${q.code}','${incorrectField}','${correctField}',${curIncorrect||false})">✗</button>
-      <button class="q-btn ${flagged?'flagged':''}" onclick="saveQ('${q.code}',{flagged:${!flagged}});renderKSAP();" title="Flag for review">⚑</button>
-      <div class="conf-dots">
+  const rowBg = flagged ? 'background:rgba(244,114,182,0.05);' : isCorrect ? 'background:rgba(74,222,128,0.05);' : isIncorrect ? 'background:rgba(248,113,113,0.05);' : '';
+  const edge = flagged ? 'var(--pink)' : isCorrect ? 'var(--green)' : isIncorrect ? 'var(--red)' : color;
+  return `<div class="q-card" style="${rowBg}border-left-color:${edge};">
+    <div class="q-card-top">
+      <span class="q-code" style="color:${color}">${q.code}</span>
+      <span class="q-badges">${p1badge}${p2badge}${flagged?'<span class="pass-badge flagged">⚑</span>':''}</span>
+    </div>
+    <div class="q-card-actions">
+      <button class="q-btn ${curCorrect?'correct':''}" onclick="toggleQ('${q.code}','${correctField}','${incorrectField}',${curCorrect||false})">✓ Correct</button>
+      <button class="q-btn ${curIncorrect?'incorrect':''}" onclick="toggleQ('${q.code}','${incorrectField}','${correctField}',${curIncorrect||false})">✗ Wrong</button>
+      <button class="q-btn q-btn-icon ${flagged?'flagged':''}" onclick="saveQ('${q.code}',{flagged:${!flagged}});renderKSAP();" title="Flag for review">⚑</button>
+      <div class="conf-dots" title="Confidence">
         ${[1,2,3].map(n => `<div class="conf-dot ${conf>=n?'lit':''}" style="${conf>=n?`background:${conf===1?'var(--red)':conf===2?'var(--yellow)':'var(--green)'};border-color:${conf===1?'var(--red)':conf===2?'var(--yellow)':'var(--green)'};`:''}" onclick="setQConf('${q.code}',${n})"></div>`).join("")}
       </div>
-      <input class="note-inp" value="${escHtml(note)}" placeholder="why wrong..."
-        onchange="saveQ('${q.code}',{note:this.value})" />
-      <div style="position:relative;display:inline-block;">
-        <button class="q-btn" onclick="toggleReassign('${q.code}')" title="Reassign category">✎</button>
-        <div id="reassign-${q.code}" style="display:none;position:absolute;right:0;top:100%;z-index:200;background:var(--bg2);border:1px solid var(--yellow);min-width:220px;max-height:200px;overflow-y:auto;">
-          ${cats.map(c => `<div style="padding:6px 10px;font-size:10px;cursor:pointer;color:${c===ec?'var(--yellow)':'var(--white)'};border-bottom:1px solid var(--border);"
+      <div style="position:relative;display:inline-block;margin-left:auto;">
+        <button class="q-btn q-btn-icon" onclick="toggleReassign('${q.code}')" title="Reassign category">✎</button>
+        <div id="reassign-${q.code}" style="display:none;position:absolute;right:0;top:100%;z-index:200;background:var(--bg2);border:1px solid var(--yellow);min-width:240px;max-height:240px;overflow-y:auto;">
+          ${cats.map(c => `<div style="padding:9px 12px;font-size:12px;cursor:pointer;color:${c===ec?'var(--yellow)':'var(--white)'};border-bottom:1px solid var(--border);"
             onmousedown="reassignQ('${q.code}','${c.replace(/'/g,"\\'")}');document.getElementById('reassign-${q.code}').style.display='none';renderKSAP();"
             >${c}</div>`).join('')}
         </div>
       </div>
     </div>
+    <input class="note-inp" value="${escHtml(note)}" placeholder="why wrong / key learning point..."
+      onchange="saveQ('${q.code}',{note:this.value})" />
   </div>`;
 }
 
@@ -2247,9 +2238,8 @@ function saveRmBlock(idx) {
 // ADMIN PANEL
 // ══════════════════════════════════════════════════════════════════════
 let adminSubTab = "topics";
-// Live getters — recomputed from the current bank so they stay correct
-// after Firebase replaces KSAP on sync.
-function allCats() { return [...new Set(KSAP.map(q => q.category))].sort(); }
+const ALL_CATS = [...new Set(KSAP.map(q => q.category))].sort();
+const ALL_MODULES = [...new Set(KSAP.map(q => q.module))].sort();
 
 function renderAdmin() {
   const el = document.getElementById("tab-admin");
@@ -2431,13 +2421,13 @@ function renderAdminQuestions(el) {
     <div class="admin-row">
       <span class="admin-tag">CATEGORY</span>
       <select class="admin-sel" id="admin-q-cat" style="flex:1;max-width:360px;">
-        ${allCats().map(c => `<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join("")}
+        ${ALL_CATS.map(c => `<option value="${c.replace(/"/g,'&quot;')}">${c}</option>`).join("")}
       </select>
     </div>
     <div class="admin-row">
       <span class="admin-tag">MODULE</span>
       <select class="admin-sel" id="admin-q-mod" style="max-width:160px;">
-        ${getModules().map(m => `<option value="${m}">${m}</option>`).join("")}
+        ${ALL_MODULES.map(m => `<option value="${m}">${m}</option>`).join("")}
         <option value="custom">custom</option>
       </select>
       <input class="admin-inp" id="admin-q-custmod" placeholder="custom module name" style="max-width:180px;" />
@@ -2514,10 +2504,10 @@ function adminAddQuestion() {
 function adminEditQuestion(idx) {
   const q = KSAP[idx];
   if (!q) return;
-  const cats = allCats().join("\n");
-  const newCat = prompt(`Edit category for ${q.code}:\n\nCurrent: ${q.category}\n\nAvailable categories:\n${allCats().map((c,i) => (i+1)+". "+c).join("\n")}\n\nType the new category exactly:`, q.category);
+  const cats = ALL_CATS.join("\n");
+  const newCat = prompt(`Edit category for ${q.code}:\n\nCurrent: ${q.category}\n\nAvailable categories:\n${ALL_CATS.map((c,i) => (i+1)+". "+c).join("\n")}\n\nType the new category exactly:`, q.category);
   if (!newCat || newCat === q.category) return;
-  if (!allCats().includes(newCat) && !Object.keys(TOPICS).includes(newCat)) {
+  if (!ALL_CATS.includes(newCat) && !Object.keys(TOPICS).includes(newCat)) {
     if (!confirm(`"${newCat}" is not an existing category. Add anyway?`)) return;
   }
   KSAP[idx].category = newCat;
