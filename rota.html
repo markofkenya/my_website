@@ -1515,6 +1515,14 @@ function iso(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0
 function isWeekend(ds){ const wd=new Date(ds+"T00:00:00").getDay(); return wd===0||wd===6; }
 function isBH(ds){ return !!BANK_HOLIDAYS[ds]; }
 function isUnsociable(ds){ return isWeekend(ds)||isBH(ds); }
+function leaveSkipDay(ds){
+  const wd=new Date(ds+"T00:00:00").getDay();
+  if(wd===0||wd===6) return true;        // weekend — no leave charged
+  if(isBH(ds)) return true;              // bank holiday — no leave charged
+  const nwd=rotaNwd();                   // -1 for solo (no NWD), else the shared non-working weekday
+  if(nwd>=0 && wd===nwd) return true;
+  return false;
+}
 function prettyDate(ds){ const d=new Date(ds+"T00:00:00"); const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]; return `${days[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; }
 function inScope(a){ if(scope==="all") return true; return (a.rota||1)===(state.rotaId||1); }
 
@@ -2309,7 +2317,8 @@ function hrClassify(){
     if(oncall.has(ds)) cls="On-Call";
     else if(wd===nwd) cls="NWD";                        // contractual non-working day (priority)
     else if(zero.has(ds)) cls="Zero Day";
-    else if(wd>=1&&wd<=5) cls="Standard";               // Mon-Fri incl bank holidays
+    else if(wd===1) cls="Standard Monday";              // worked Monday = 9h (08:00–17:00)
+    else if(wd>=2&&wd<=5) cls="Standard";               // Tue–Fri incl bank holidays = 8.5h
     else cls="";
     const auto=cls;
     if(overrides && overrides[ds]!=null) cls=overrides[ds];
@@ -2747,7 +2756,7 @@ function countLeaveDays(typeId, fromISO, toExclusiveISO, toInclusiveISO, wteForP
   const reqs=(L.requests||[]);
   reqs.forEach(r=>{ if(r.type===typeId && r.status!=="declined" && Array.isArray(r.days)) r.days.forEach(ds=>{ if(inWin(ds)) set.add(ds); }); });
   // 3) LTFT: a leave day on the non-working weekday costs nothing when that period is <1.0 WTE
-  let n=0; set.forEach(ds=>{ const wd=new Date(ds+"T00:00:00").getDay(); if(wteForPeriod!=null && wteForPeriod<1 && wd===L.nwd) return; n++; });
+  let n=0; set.forEach(ds=>{ const wd=new Date(ds+"T00:00:00").getDay(); if(wd===0||wd===6) return; if(isBH(ds)) return; if(wteForPeriod!=null && wteForPeriod<1 && wd===L.nwd) return; n++; });
   return n;
 }
 function rosterCfg(Y, half){ const L=getLeave(); const key=`${Y}-${half}`; if(!L.rosters[key]) L.rosters[key]={carryover:0, wte:null, override:null}; return L.rosters[key]; }
@@ -2810,9 +2819,9 @@ function logLeave(){
   if(!meKey) return; const L=getLeave();
   if(!state.myShifts) state.myShifts={}; if(!state.myShifts[meKey]) state.myShifts[meKey]={};
   let added=0; let d=new Date(from+"T00:00:00"); const end=new Date(to+"T00:00:00");
-  while(d<=end){ const wd=d.getDay(); if(wd!==0 && wd!==6 && wd!==L.nwd){ const ds=leaveISO(d); state.myShifts[meKey][ds]=[{id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:typeId, start:"08:30", end:"17:00"}]; touchDay(meKey, ds); added++; } d.setDate(d.getDate()+1); }
+  while(d<=end){ const ds=leaveISO(d); if(!leaveSkipDay(ds)){ state.myShifts[meKey][ds]=[{id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:typeId, start:"08:30", end:"17:00"}]; touchDay(meKey, ds); added++; } d.setDate(d.getDate()+1); }
   persist(); renderLeave(); renderMyCalendar();
-  flashMsg(`${added} ${typeId==="annual_leave"?"annual":"study"} leave day${added===1?"":"s"} logged${added?"":" (range was all weekends / your day off)"}`);
+  flashMsg(`${added} ${typeId==="annual_leave"?"annual":"study"} leave day${added===1?"":"s"} logged${added?"":" (range was all weekends / bank holidays / your day off)"}`);
 }
 function removeLeaveDay(ds){ const m=state.myShifts&&state.myShifts[meKey]; if(m&&m[ds]){ delete m[ds]; touchDay(meKey, ds); persist(); renderLeave(); renderMyCalendar(); } }
 function renderLeave(){
@@ -2853,7 +2862,7 @@ function renderLeave(){
   const m=(state.myShifts&&state.myShifts[meKey])||{};
   const reqsAll=(L.requests||[]).slice();
   const reqDates=new Set(); reqsAll.forEach(r=>(r.days||[]).forEach(d=>reqDates.add(d)));
-  const bridged=(prevDs,nextDs)=>{ let d=new Date(prevDs+"T00:00:00"); d.setDate(d.getDate()+1); const end=new Date(nextDs+"T00:00:00"); while(d<end){ const wd=d.getDay(); if(wd!==0&&wd!==6&&wd!==L.nwd) return false; d.setDate(d.getDate()+1);} return true; };
+  const bridged=(prevDs,nextDs)=>{ let d=new Date(prevDs+"T00:00:00"); d.setDate(d.getDate()+1); const end=new Date(nextDs+"T00:00:00"); while(d<end){ const ds=leaveISO(d); if(!leaveSkipDay(ds)) return false; d.setDate(d.getDate()+1);} return true; };
   const looseDays=[]; Object.keys(m).sort().forEach(ds=>{ if(ds>=yStart && ds<=yEndIncl && Array.isArray(m[ds])) m[ds].forEach(s=>{ if((s.type==="annual_leave"||s.type==="study_leave") && !reqDates.has(ds)) looseDays.push({ds,type:s.type}); }); });
   const loggedGroups=[]; let cg=null; looseDays.forEach(x=>{ if(cg && cg.type===x.type && bridged(cg.to,x.ds)){ cg.to=x.ds; cg.count++; } else { if(cg) loggedGroups.push(cg); cg={type:x.type,from:x.ds,to:x.ds,count:1}; } }); if(cg) loggedGroups.push(cg);
   const items=[];
@@ -2932,7 +2941,7 @@ function renderLeave(){
 /* ===== Request leave flow ===== */
 const NWD_NAME=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 let reqCreated=null;
-function rangeWorkingDays(fromISO,toISO){ const L=getLeave(); const out=[]; if(!fromISO) return out; if(!toISO) toISO=fromISO; if(toISO<fromISO){ const t=fromISO; fromISO=toISO; toISO=t; } let d=new Date(fromISO+"T00:00:00"); const end=new Date(toISO+"T00:00:00"); while(d<=end){ const wd=d.getDay(); if(wd!==0&&wd!==6&&wd!==L.nwd) out.push(leaveISO(d)); d.setDate(d.getDate()+1); } return out; }
+function rangeWorkingDays(fromISO,toISO){ const out=[]; if(!fromISO) return out; if(!toISO) toISO=fromISO; if(toISO<fromISO){ const t=fromISO; fromISO=toISO; toISO=t; } let d=new Date(fromISO+"T00:00:00"); const end=new Date(toISO+"T00:00:00"); while(d<=end){ const ds=leaveISO(d); if(!leaveSkipDay(ds)) out.push(ds); d.setDate(d.getDate()+1); } return out; }
 function openRequest(){ reqCreated=null; renderRequest(); document.getElementById("requestOverlay").classList.add("show"); }
 function closeRequest(){ document.getElementById("requestOverlay").classList.remove("show"); renderLeave(); }
 function applyRequestDays(req){ if(!state.myShifts) state.myShifts={}; if(!state.myShifts[meKey]) state.myShifts[meKey]={}; req.days.forEach(ds=>{ state.myShifts[meKey][ds]=[{id:Date.now()+"-"+Math.random().toString(36).slice(2,6), type:req.type, start:"08:30", end:"17:00"}]; touchDay(meKey, ds); }); }
@@ -3001,7 +3010,7 @@ function renderRequest(){
       <div class="req-summary" id="reqSummary"></div>
       <div class="req-actions"><button class="btn ghost" id="reqCancel">Cancel</button><button class="btn key-al" id="reqCreate">Create request</button></div>
     </div>`;
-  const upd=()=>{ const days=rangeWorkingDays(document.getElementById("reqFrom").value, document.getElementById("reqTo").value); const s=document.getElementById("reqSummary"); s.innerHTML = days.length? `<b>${days.length}</b> working day${days.length===1?"":"s"} will be booked — ${fmtNice(days[0])}${days.length>1?` to ${fmtNice(days[days.length-1])}`:""}. <span class="rs-sub">Weekends and your ${nm} are skipped.</span>` : `Pick dates to see how many days will be booked. <span class="rs-sub">Weekends and your ${nm} are skipped.</span>`; };
+  const upd=()=>{ const days=rangeWorkingDays(document.getElementById("reqFrom").value, document.getElementById("reqTo").value); const s=document.getElementById("reqSummary"); s.innerHTML = days.length? `<b>${days.length}</b> working day${days.length===1?"":"s"} will be booked — ${fmtNice(days[0])}${days.length>1?` to ${fmtNice(days[days.length-1])}`:""}. <span class="rs-sub">Weekends, bank holidays and your ${nm} are skipped.</span>` : `Pick dates to see how many days will be booked. <span class="rs-sub">Weekends, bank holidays and your ${nm} are skipped.</span>`; };
   document.getElementById("reqFrom").oninput=upd; document.getElementById("reqTo").oninput=upd; upd();
   document.getElementById("reqCancel").onclick=closeRequest;
   document.getElementById("reqCreate").onclick=createRequest;
@@ -3048,7 +3057,7 @@ function printLeaveTaken(scope){
 function buildLeaveTakenHtml(title, fromISO, toIncl, scope, Y){
   const esc=escapeHtml, L=getLeave(), p=L.profile, m=(state.myShifts&&state.myShifts[meKey])||{};
   const collect=(type)=>{ const out=[]; Object.keys(m).sort().forEach(d=>{ if(d>=fromISO&&d<=toIncl&&Array.isArray(m[d])) m[d].forEach(s=>{ if(s.type===type) out.push(d); }); }); return out; };
-  const bridged=(a,b)=>{ let d=new Date(a+"T00:00:00"); d.setDate(d.getDate()+1); const e=new Date(b+"T00:00:00"); while(d<e){ const wd=d.getDay(); if(wd!==0&&wd!==6&&wd!==L.nwd) return false; d.setDate(d.getDate()+1);} return true; };
+  const bridged=(a,b)=>{ let d=new Date(a+"T00:00:00"); d.setDate(d.getDate()+1); const e=new Date(b+"T00:00:00"); while(d<e){ const ds=leaveISO(d); if(!leaveSkipDay(ds)) return false; d.setDate(d.getDate()+1);} return true; };
   const group=(days)=>{ const out=[]; let c=null; days.forEach(d=>{ if(c && bridged(c.to,d)){ c.to=d; c.count++; } else { if(c) out.push(c); c={from:d,to:d,count:1}; } }); if(c) out.push(c); return out; };
   const al=collect("annual_leave"), sl=collect("study_leave");
   const rowsFor=(g)=> g.length? g.map(x=>`<tr><td>${esc(x.from===x.to?fmtNice(x.from):fmtNice(x.from)+" – "+fmtNice(x.to))}</td><td class="num">${x.count}</td></tr>`).join("") : `<tr><td colspan="2" class="muted">None recorded</td></tr>`;
