@@ -462,7 +462,17 @@
   .swap-card .sw-why div{margin-top:2px}
   .sw-actions{margin-top:10px}
   .btn.sw-agree{padding:7px 14px;font-size:12.5px}
+  #swapMailOverlay{z-index:90}
   #swapMailOverlay input,#swapMailOverlay textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink);font-family:var(--font-b);font-size:13px;padding:9px 11px}
+  .sw-group{margin-bottom:14px}
+  .sw-group-h{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;margin-bottom:7px}
+  .sw-group-h .sw-ini{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:3px 9px}
+  .sw-group-h .sw-count{font-size:11px;font-weight:600;color:var(--ink-faint)}
+  .sw-opt{border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:7px;background:var(--surface-2);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .sw-opt.ok{border-left:4px solid #2f9e63}
+  .sw-opt.warn{border-left:4px solid #d99b23}
+  .sw-opt .sw-opt-main{flex:1;min-width:180px;font-size:13px}
+  .sw-opt .sw-opt-why{font-size:11.5px;color:var(--ink-faint);margin-top:3px}
   details.swap-blocked{margin-top:12px}
   details.swap-blocked summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-faint)}
   .dept-lists{display:flex;flex-direction:column;gap:10px}
@@ -2607,19 +2617,35 @@ function swapRenderResults(){
   const restTxt=myBlock.rest.length?myBlock.rest.map(r=>`${swapNiceDate(r.ds)} (${r.kind})`).join(", "):"none listed on the sheet";
   sum.innerHTML=`You're trading <b>${swapNiceDate(myBlock.oncall)}</b> on-call · linked rest: ${restTxt}`;
   const host=document.getElementById("swapResults");
-  const card=(r,idx)=>{
-    const deal=`Your <b>${swapNiceDate(swapPick)}</b> ↔ ${r.partner}'s <b>${swapNiceDate(r.theirs)}</b>`;
-    const theirRest=r.theirBlock.rest.length?` · their linked rest: ${r.theirBlock.rest.map(x=>swapNiceDate(x.ds)).join(", ")}`:"";
-    const why = r.status==="ok" ? `<div>Both legs clear — no on-call, leave, training or rest clash for either of you.</div>`
-      : [...r.hard.map(x=>`<div>❌ ${x}</div>`), ...r.soft.map(x=>`<div>⚠ ${x}</div>`)].join("");
-    const bh=r.bh.length?`<div>ⓘ includes bank holiday: ${r.bh.join(", ")}</div>`:"";
-    const agree = r.status!=="no" ? `<div class="sw-actions"><button class="btn key-al sw-agree" data-i="${idx}">Agree this swap</button></div>` : "";
-    return `<div class="swap-card ${r.status}"><div class="sw-head">${r.status==="ok"?"✅":r.status==="warn"?"⚠":"❌"} ${r.partner}<span class="sw-tier ${r.tier===1?"t1":""}">Tier ${r.tier}${r.tier===1?" · like-for-like":""}</span></div><div class="sw-deal">${deal}${theirRest}</div><div class="sw-why">${why}${bh}</div>${agree}</div>`;
-  };
   swapLastResults=results;
-  const open=results.filter(r=>r.status!=="no"), blocked=results.filter(r=>r.status==="no");
-  host.innerHTML = (open.length?open.map((r)=>card(r,results.indexOf(r))).join(""):`<div class="swap-card warn"><div class="sw-head">No clean trades found</div><div class="sw-why">Every candidate has a hard conflict — see blocked options below.</div></div>`)
-    + (blocked.length?`<details class="swap-blocked"><summary>Blocked options (${blocked.length})</summary>${blocked.map((r)=>card(r,results.indexOf(r))).join("")}</details>`:"");
+  // group by partner (doctor); within a group sort by status then tier then date
+  const groups={};
+  results.forEach((r,i)=>{ r._i=i; (groups[r.partner]=groups[r.partner]||[]).push(r); });
+  const rankOpt=r=>(r.status==="ok"?0:r.status==="warn"?2:4)+(r.tier===1?0:1);
+  const groupList=Object.keys(groups).map(p=>{
+    const opts=groups[p].sort((a,b)=>rankOpt(a)-rankOpt(b)||a.theirs.localeCompare(b.theirs));
+    const best=Math.min(...opts.map(rankOpt));
+    const viable=opts.filter(o=>o.status!=="no").length;
+    return {partner:p, opts, best, viable};
+  }).sort((a,b)=> a.best-b.best || b.viable-a.viable || a.partner.localeCompare(b.partner));
+
+  const optRow=r=>{
+    const icon=r.status==="ok"?"✅":r.status==="warn"?"⚠":"❌";
+    const tierBadge=`<span class="sw-tier ${r.tier===1?"t1":""}">Tier ${r.tier}${r.tier===1?" · like-for-like":""}</span>`;
+    const why = r.status==="ok" ? "Both legs clear."
+      : [...r.hard.map(x=>`❌ ${x}`), ...r.soft.map(x=>`⚠ ${x}`)].join(" · ");
+    const bh=r.bh&&r.bh.length?` · ⓘ bank holiday: ${r.bh.join(", ")}`:"";
+    const agree = r.status!=="no" ? `<button class="btn key-al sw-agree" data-i="${r._i}">Agree</button>` : "";
+    return `<div class="sw-opt ${r.status}"><div class="sw-opt-main">${icon} Your <b>${swapNiceDate(swapPick)}</b> ↔ their <b>${swapNiceDate(r.theirs)}</b> ${tierBadge}<div class="sw-opt-why">${why}${bh}</div></div>${agree}</div>`;
+  };
+  const groupHtml=g=>`<div class="sw-group"><div class="sw-group-h"><span class="sw-ini">${g.partner}</span><span class="sw-count">${g.viable} viable trade${g.viable===1?"":"s"} of ${g.opts.length}</span></div>${g.opts.map(optRow).join("")}</div>`;
+
+  const anyViable=results.some(r=>r.status!=="no");
+  host.innerHTML = anyViable
+    ? groupList.filter(g=>g.viable>0).map(groupHtml).join("") +
+      (groupList.some(g=>g.viable===0)? `<details class="swap-blocked"><summary>Doctors with no viable trade (${groupList.filter(g=>g.viable===0).length})</summary>${groupList.filter(g=>g.viable===0).map(groupHtml).join("")}</details>`:"")
+    : `<div class="swap-card warn"><div class="sw-head">No clean trades found</div><div class="sw-why">Every candidate has a hard conflict.</div></div>` +
+      `<details class="swap-blocked"><summary>All options (${results.length})</summary>${groupList.map(groupHtml).join("")}</details>`;
   host.querySelectorAll(".sw-agree").forEach(b=>b.onclick=()=>swapAgree(swapLastResults[+b.dataset.i]));
   document.getElementById("swapStep4").style.display="block";
 }
