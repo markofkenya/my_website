@@ -460,6 +460,9 @@
   .swap-card .sw-deal{font-size:13px;color:var(--ink-soft);margin-top:4px}
   .swap-card .sw-why{font-size:12px;color:var(--ink-faint);margin-top:5px}
   .swap-card .sw-why div{margin-top:2px}
+  .sw-actions{margin-top:10px}
+  .btn.sw-agree{padding:7px 14px;font-size:12.5px}
+  #swapMailOverlay input,#swapMailOverlay textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink);font-family:var(--font-b);font-size:13px;padding:9px 11px}
   details.swap-blocked{margin-top:12px}
   details.swap-blocked summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-faint)}
   .dept-lists{display:flex;flex-direction:column;gap:10px}
@@ -1288,6 +1291,21 @@
 </div>
 
 <!-- MY ROTA (personal view) -->
+<div class="rota-overlay" id="swapMailOverlay">
+  <div class="rota-inner">
+    <div class="rota-top"><button class="rota-back" id="swapMailClose">‹ Back</button></div>
+    <div class="rota-head"><div class="kicker" style="margin-bottom:2px">Send to your rota coordinator</div><h2 class="rota-title">Swap agreement email</h2></div>
+    <label class="fld-label">To</label>
+    <input type="email" id="swapMailTo" placeholder="coordinator@nhs.net">
+    <div class="swap-status" id="swapMailHint" style="margin:4px 0 10px"></div>
+    <label class="fld-label">Subject</label>
+    <input type="text" id="swapMailSubject">
+    <label class="fld-label" style="margin-top:10px">Message</label>
+    <textarea id="swapMailBody" rows="14" style="width:100%;box-sizing:border-box;font-family:var(--font-b);font-size:13px;line-height:1.5;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink);padding:11px"></textarea>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn key-al" id="swapMailOpen">Open in email app</button><button class="btn ghost" id="swapMailCopy">Copy text</button></div>
+  </div>
+</div>
+
 <div class="rota-overlay" id="deptOverlay">
   <div class="rota-inner">
     <div class="rota-top">
@@ -2476,7 +2494,7 @@ async function hrDownload(){
 }
 
 /* ===== Project Swap — mutual on-call trade finder (stateless; uploaded rota lives in memory only) ===== */
-let swapData=null, swapMe=null, swapPick=null;
+let swapData=null, swapMe=null, swapPick=null, swapLastResults=[];
 const SWAP_STOP=new Set(["NO","SPR","TBC","TBA","NA","N","Y"]);
 function swapTokens(v){
   if(v==null) return [];
@@ -2589,18 +2607,61 @@ function swapRenderResults(){
   const restTxt=myBlock.rest.length?myBlock.rest.map(r=>`${swapNiceDate(r.ds)} (${r.kind})`).join(", "):"none listed on the sheet";
   sum.innerHTML=`You're trading <b>${swapNiceDate(myBlock.oncall)}</b> on-call · linked rest: ${restTxt}`;
   const host=document.getElementById("swapResults");
-  const card=r=>{
+  const card=(r,idx)=>{
     const deal=`Your <b>${swapNiceDate(swapPick)}</b> ↔ ${r.partner}'s <b>${swapNiceDate(r.theirs)}</b>`;
     const theirRest=r.theirBlock.rest.length?` · their linked rest: ${r.theirBlock.rest.map(x=>swapNiceDate(x.ds)).join(", ")}`:"";
     const why = r.status==="ok" ? `<div>Both legs clear — no on-call, leave, training or rest clash for either of you.</div>`
       : [...r.hard.map(x=>`<div>❌ ${x}</div>`), ...r.soft.map(x=>`<div>⚠ ${x}</div>`)].join("");
     const bh=r.bh.length?`<div>ⓘ includes bank holiday: ${r.bh.join(", ")}</div>`:"";
-    return `<div class="swap-card ${r.status}"><div class="sw-head">${r.status==="ok"?"✅":r.status==="warn"?"⚠":"❌"} ${r.partner}<span class="sw-tier ${r.tier===1?"t1":""}">Tier ${r.tier}${r.tier===1?" · like-for-like":""}</span></div><div class="sw-deal">${deal}${theirRest}</div><div class="sw-why">${why}${bh}</div></div>`;
+    const agree = r.status!=="no" ? `<div class="sw-actions"><button class="btn key-al sw-agree" data-i="${idx}">Agree this swap</button></div>` : "";
+    return `<div class="swap-card ${r.status}"><div class="sw-head">${r.status==="ok"?"✅":r.status==="warn"?"⚠":"❌"} ${r.partner}<span class="sw-tier ${r.tier===1?"t1":""}">Tier ${r.tier}${r.tier===1?" · like-for-like":""}</span></div><div class="sw-deal">${deal}${theirRest}</div><div class="sw-why">${why}${bh}</div>${agree}</div>`;
   };
+  swapLastResults=results;
   const open=results.filter(r=>r.status!=="no"), blocked=results.filter(r=>r.status==="no");
-  host.innerHTML = (open.length?open.map(card).join(""):`<div class="swap-card warn"><div class="sw-head">No clean trades found</div><div class="sw-why">Every candidate has a hard conflict — see blocked options below.</div></div>`)
-    + (blocked.length?`<details class="swap-blocked"><summary>Blocked options (${blocked.length})</summary>${blocked.map(card).join("")}</details>`:"");
+  host.innerHTML = (open.length?open.map((r)=>card(r,results.indexOf(r))).join(""):`<div class="swap-card warn"><div class="sw-head">No clean trades found</div><div class="sw-why">Every candidate has a hard conflict — see blocked options below.</div></div>`)
+    + (blocked.length?`<details class="swap-blocked"><summary>Blocked options (${blocked.length})</summary>${blocked.map((r)=>card(r,results.indexOf(r))).join("")}</details>`:"");
+  host.querySelectorAll(".sw-agree").forEach(b=>b.onclick=()=>swapAgree(swapLastResults[+b.dataset.i]));
   document.getElementById("swapStep4").style.display="block";
+}
+function swapAgree(r){
+  if(!r) return;
+  const myName=(state.people[meKey]&&state.people[meKey].name)||swapMe;
+  const myBlock=swapBlockFor(swapMe, swapPick);
+  const restLine=b=> b.rest.length? b.rest.map(x=>`${swapNiceDate(x.ds)} (${x.kind})`).join(", ") : "none";
+  const coord=(getLeave().coordEmail||"").trim();
+  const subject=`On-call swap agreed: ${swapMe} ${swapNiceDate(swapPick)} ↔ ${r.partner} ${swapNiceDate(r.theirs)}`;
+  const body=
+`Dear Rota Coordinator,
+
+${myName} (${swapMe}) and ${r.partner} have agreed to swap the following on-calls. Please update the master rota.
+
+• ${swapMe} gives up: ${swapNiceDate(swapPick)} on-call (linked rest: ${restLine(myBlock)})
+• ${r.partner} gives up: ${swapNiceDate(r.theirs)} on-call (linked rest: ${restLine(r.theirBlock)})
+
+After the swap:
+• ${swapMe} covers ${swapNiceDate(r.theirs)}
+• ${r.partner} covers ${swapNiceDate(swapPick)}
+
+Both doctors have confirmed the change works for their rota (no leave, training, or rest clashes).${r.bh&&r.bh.length?`\nNote: this includes a bank holiday (${r.bh.join(", ")}).`:""}
+
+Kind regards,
+${myName}`;
+  swapEmailDraft({to:coord, subject, body, partner:r.partner});
+}
+function swapEmailDraft(d){
+  const overlay=document.getElementById("swapMailOverlay");
+  document.getElementById("swapMailTo").value=d.to||"";
+  document.getElementById("swapMailSubject").value=d.subject;
+  document.getElementById("swapMailBody").value=d.body;
+  document.getElementById("swapMailHint").textContent = d.to ? "" : "Tip: set your rota coordinator's email in Annual Leave → Settings to pre-fill this.";
+  overlay.dataset.partner=d.partner||"";
+  overlay.classList.add("show");
+}
+function swapMailSend(){
+  const to=encodeURIComponent(document.getElementById("swapMailTo").value.trim());
+  const su=encodeURIComponent(document.getElementById("swapMailSubject").value);
+  const bo=encodeURIComponent(document.getElementById("swapMailBody").value);
+  window.location.href=`mailto:${to}?subject=${su}&body=${bo}`;
 }
 function swapRenderMine(){
   const host=document.getElementById("swapMine");
@@ -3696,6 +3757,9 @@ function boot(){
   document.getElementById("deptChoose").onclick=()=>document.getElementById("deptFile").click();
   document.getElementById("deptFile").onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(f) deptHandleFile(f); e.target.value=""; };
   document.getElementById("deptApplyBtn").onclick=deptApply;
+  { const c=document.getElementById("swapMailClose"); if(c) c.onclick=()=>document.getElementById("swapMailOverlay").classList.remove("show"); }
+  { const o=document.getElementById("swapMailOpen"); if(o) o.onclick=swapMailSend; }
+  { const cp=document.getElementById("swapMailCopy"); if(cp) cp.onclick=()=>{ const t=document.getElementById("swapMailBody").value; navigator.clipboard?navigator.clipboard.writeText(t).then(()=>flashMsg("Copied")).catch(()=>flashMsg("Copy failed")):flashMsg("Copy not available"); }; }
   document.getElementById("hrBack").onclick=closeHr;
   document.getElementById("hrDownload").onclick=hrDownload;
   document.getElementById("leaveBtn").onclick=openLeave;
