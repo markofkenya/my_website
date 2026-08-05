@@ -2251,7 +2251,11 @@ function setMyShiftTime(ds, sid, field, val){
 /* ICS export */
 function icsPad(n){ return String(n).padStart(2,"0"); }
 function icsStamp(){ const d=new Date(); return d.getUTCFullYear()+icsPad(d.getUTCMonth()+1)+icsPad(d.getUTCDate())+"T"+icsPad(d.getUTCHours())+icsPad(d.getUTCMinutes())+icsPad(d.getUTCSeconds())+"Z"; }
-function icsLocal(ds, hhmm){ const t=(hhmm||"00:00").split(":"); return ds.replace(/-/g,"")+"T"+icsPad(t[0])+icsPad(t[1])+"00"; }
+function icsLocal(ds, hhmm){ const t=(hhmm||"00:00").split(":"); return ";TZID=Europe/London:"+ds.replace(/-/g,"")+"T"+icsPad(t[0])+icsPad(t[1])+"00"; }
+const ICS_VTIMEZONE=["BEGIN:VTIMEZONE","TZID:Europe/London",
+  "BEGIN:DAYLIGHT","TZOFFSETFROM:+0000","TZOFFSETTO:+0100","TZNAME:BST","DTSTART:19700329T010000","RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU","END:DAYLIGHT",
+  "BEGIN:STANDARD","TZOFFSETFROM:+0100","TZOFFSETTO:+0000","TZNAME:GMT","DTSTART:19701025T020000","RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU","END:STANDARD",
+  "END:VTIMEZONE"].join("\r\n");
 function icsEsc(s){ return String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\n/g,"\\n"); }
 function buildICS(monthKey){
   if(!meKey) return null;
@@ -2263,7 +2267,7 @@ function buildICS(monthKey){
     const st=SHIFT_TYPES.find(s=>s.id===a.type);
     const title="On-call"+(st&&st.id!=="oncall"?" · "+st.label:"");
     ev.push(["BEGIN:VEVENT",`UID:oncall-${ds}@slotshare-myrota`,`DTSTAMP:${stamp}`,
-      `DTSTART:${icsLocal(ds,"08:30")}`,`DTEND:${icsLocal(shiftDate(ds,1),"08:30")}`,
+      `DTSTART${icsLocal(ds,"08:30")}`,`DTEND${icsLocal(shiftDate(ds,1),"08:30")}`,
       `SUMMARY:${icsEsc(title)}`,"END:VEVENT"].join("\r\n"));
   });
   const m=(state.myShifts&&state.myShifts[meKey])||{};
@@ -2272,15 +2276,15 @@ function buildICS(monthKey){
     if(s.type==="annual_leave"||s.type==="study_leave"){          // all-day event
       se=[`DTSTART;VALUE=DATE:${ds.replace(/-/g,"")}`,`DTEND;VALUE=DATE:${shiftDate(ds,1).replace(/-/g,"")}`];
     } else if(s.type==="oncall"){                                    // 24h on-call
-      se=[`DTSTART:${icsLocal(ds,"08:30")}`,`DTEND:${icsLocal(shiftDate(ds,1),"08:30")}`];
+      se=[`DTSTART${icsLocal(ds,"08:30")}`,`DTEND${icsLocal(shiftDate(ds,1),"08:30")}`];
     } else {
-      se=[`DTSTART:${icsLocal(ds,s.start)}`,`DTEND:${icsLocal(ds,s.end)}`];
+      se=[`DTSTART${icsLocal(ds,s.start)}`,`DTEND${icsLocal(ds,s.end)}`];
     }
     ev.push(["BEGIN:VEVENT",`UID:my-${ds}-${s.id}@slotshare-myrota`,`DTSTAMP:${stamp}`,...se,
       `SUMMARY:${icsEsc(t.label)}`,"END:VEVENT"].join("\r\n"));
   }); });
   if(!ev.length) return null;
-  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//InstaRota//My Rota//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH",...ev,"END:VCALENDAR"].join("\r\n");
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//InstaRota//My Rota//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH",ICS_VTIMEZONE,...ev,"END:VCALENDAR"].join("\r\n");
 }
 function myContentMonths(){
   const set=new Set();
