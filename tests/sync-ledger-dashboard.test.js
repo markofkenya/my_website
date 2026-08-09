@@ -15,3 +15,12 @@ test('converts a Sheets values matrix into named ledger rows while skipping blan
     { concept_id: 'b', main_topic: 'aki-icu-nephrology', status: 'strong' }
   ]);
 });
+
+test('uses the Hermes virtualenv interpreter for Google API calls by default', async () => {
+  const { resolveGooglePython } = await import('../curriculum/scripts/sync-ledger-dashboard.mjs');
+  assert.equal(
+    resolveGooglePython({}),
+    '/usr/local/lib/hermes-agent/venv/bin/python'
+  );
+  assert.equal(resolveGooglePython({ HERMES_PYTHON: '/custom/python' }), '/custom/python');
+});

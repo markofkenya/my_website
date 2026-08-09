@@ -14,6 +14,10 @@ const configPath = path.join(root, 'curriculum', 'coverage-ledger-config.json');
 const hierarchyPath = path.join(root, 'curriculum', 'ksap-hierarchy-v1.json');
 const googleApiPath = path.join(process.env.HERMES_HOME || path.join(process.env.HOME, '.hermes'), 'skills', 'productivity', 'google-workspace', 'scripts', 'google_api.py');
 
+export function resolveGooglePython(env = process.env) {
+  return env.HERMES_PYTHON || '/usr/local/lib/hermes-agent/venv/bin/python';
+}
+
 export function rowsFromValues(values) {
   if (!Array.isArray(values) || values.length < 2 || !Array.isArray(values[0])) return [];
   const headers = values[0].map(value => String(value || '').trim());
@@ -23,7 +27,7 @@ export function rowsFromValues(values) {
 }
 
 async function readSheet(spreadsheetId, range) {
-  const { stdout } = await execFileAsync('python3', [googleApiPath, 'sheets', 'get', spreadsheetId, range], { maxBuffer: 5 * 1024 * 1024 });
+  const { stdout } = await execFileAsync(resolveGooglePython(), [googleApiPath, 'sheets', 'get', spreadsheetId, range], { maxBuffer: 5 * 1024 * 1024 });
   return rowsFromValues(JSON.parse(stdout));
 }
 
