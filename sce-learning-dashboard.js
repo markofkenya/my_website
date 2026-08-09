@@ -82,7 +82,7 @@
   }
 
   function topicState(topic) {
-    const total = topic.neverDelivered + topic.deliveredUnconfirmed + topic.weak + topic.strong;
+    const total = topic.deliveredUnconfirmed + topic.weak + topic.strong;
     if (!total) return { total: 0, strongPct: 0 };
     return { total, strongPct: Math.round((topic.strong / total) * 100) };
   }

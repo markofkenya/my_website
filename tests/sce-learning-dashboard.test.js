@@ -40,3 +40,13 @@ test('renders the dashboard with a useful empty state and live metrics', () => {
   assert.match(ready, /5/);
   assert.match(ready, /Acute Kidney Injury/);
 });
+
+test('calculates topic strength from active learning events, not undelivered taxonomy references', () => {
+  const html = dashboard.renderDashboard(dashboard.normalizeDashboard({
+    generatedAt: '2026-08-09T08:30:00Z',
+    summary: { taxonomyConcepts: 3, deliveredUnconfirmed: 0, weak: 0, strong: 1, cardsDue: 0, pendingDebriefs: 0 },
+    topics: [{ name: 'Acute Kidney Injury', neverDelivered: 2, weak: 0, strong: 1, due: 0 }],
+  }));
+  assert.match(html, /100% confirmed strong/);
+  assert.doesNotMatch(html, /2 new/);
+});
