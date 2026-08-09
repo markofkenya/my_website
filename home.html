@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Command Centre // Home</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --parchment:      #f3ead9;
+    --parchment-2:    #ece0c8;
+    --parchment-3:    #e2d4b3;
+    --ink:            #2b2117;
+    --ink-soft:       #4a3d2e;
+    --ink-panel:      #2f251a;
+    --ink-panel-2:    #3d2f1f;
+    --copper:         #a5672f;
+    --copper-dark:    #7a4a1f;
+    --copper-light:   #c98a4f;
+    --line:           #cbb992;
+    --line-soft:      #d9c8a4;
+    --focus:          #2b2117;
+    --radius: 3px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--parchment);
+    color: var(--ink);
+    font-family: var(--font);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3 { font-weight: 700; margin: 0; }
+  p { margin: 0; }
+  a { color: inherit; }
+
+  /* ── Skip link ─────────────────────────────────────────── */
+  .skip-link {
+    position: absolute;
+    left: -999px;
+    top: 0;
+    background: var(--ink);
+    color: var(--parchment);
+    padding: 10px 16px;
+    z-index: 500;
+    border-radius: 0 0 var(--radius) 0;
+  }
+  .skip-link:focus {
+    left: 0;
+  }
+
+  /* ── Focus visibility ─────────────────────────────────────*/
+  a:focus-visible,
+  button:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+  }
+  /* Header sits on a dark panel; the default ink outline would be
+     nearly invisible there, so use a light outline for that context. */
+  .site-header :focus-visible {
+    outline-color: var(--parchment);
+  }
+
+  /* ── Header ────────────────────────────────────────────── */
+  .site-header {
+    background: var(--ink-panel);
+    color: var(--parchment);
+    padding: 28px 20px 22px;
+    border-bottom: 3px solid var(--copper-dark);
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  /* Portal motif: concentric rings, CSS-only, no gradients/imagery */
+  .portal-mark {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    flex: 0 0 auto;
+  }
+  .portal-mark span {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid var(--copper-light);
+  }
+  .portal-mark span:nth-child(1) { inset: 0; }
+  .portal-mark span:nth-child(2) { inset: 9px; border-color: var(--copper); }
+  .portal-mark span:nth-child(3) { inset: 18px; border-color: var(--parchment-2); }
+
+  .header-text { min-width: 0; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--copper-light);
+    margin-bottom: 4px;
+  }
+  .site-header h1 {
+    font-size: clamp(24px, 5vw, 32px);
+    letter-spacing: 0.01em;
+  }
+  .tagline {
+    font-size: 13px;
+    color: var(--parchment-3);
+    margin-top: 4px;
+  }
+
+  /* ── Role switch ───────────────────────────────────────── */
+  .role-switch-wrap {
+    max-width: 980px;
+    margin: 18px auto 0;
+  }
+  .role-hint {
+    font-size: 11px;
+    color: var(--parchment-3);
+    margin-bottom: 8px;
+  }
+  .role-switch {
+    display: inline-flex;
+    border: 1px solid var(--copper);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .role-btn {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: transparent;
+    color: var(--parchment-3);
+    border: none;
+    border-right: 1px solid var(--copper);
+    padding: 11px 18px;
+    min-height: 44px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .role-btn:last-child { border-right: none; }
+  .role-btn:hover { background: var(--ink-panel-2); color: var(--parchment); }
+  .role-btn[aria-checked="true"] {
+    background: var(--copper-dark);
+    color: var(--parchment);
+    font-weight: 700;
+  }
+
+  /* ── Main layout ───────────────────────────────────────── */
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 20px 8px;
+  }
+
+  .launcher-group { margin-bottom: 30px; }
+  .launcher-group[hidden] { display: none; }
+  .launcher-group h2 {
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--copper-dark);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 14px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  @media (min-width: 640px) {
+    .card-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--parchment-2);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--copper);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    min-height: 44px;
+    text-decoration: none;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  }
+  .card:hover {
+    background: var(--parchment-3);
+    border-left-color: var(--copper-dark);
+  }
+  .card:active { transform: translateY(1px); }
+  .card-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--ink);
+  }
+  .card-desc {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+  .card-path {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--copper-dark);
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Lower reference panels ────────────────────────────── */
+  .lower-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin: 8px 0 32px;
+  }
+  @media (min-width: 720px) {
+    .lower-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .panel {
+    background: var(--parchment-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 18px 20px;
+  }
+  .panel h2 {
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--copper-dark);
+    margin-bottom: 4px;
+  }
+  .panel-sub {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+  }
+
+  .routing-list {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    row-gap: 10px;
+    column-gap: 10px;
+    margin: 0;
+  }
+  .routing-list dt {
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .routing-list dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-align: right;
+    color: var(--copper-dark);
+    white-space: nowrap;
+  }
+  .routing-list dd::before { content: "\2192\00a0"; color: var(--copper); }
+  .routing-note {
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line-soft);
+  }
+
+  .howworks-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .howworks-list li {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .howworks-term {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    flex: 0 0 auto;
+    min-width: 78px;
+  }
+
+  /* ── Monitor: SCE Learning Loop summary ───────────────────── */
+  .monitor-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    row-gap: 16px;
+    margin: 0 0 32px;
+  }
+  .loop-status {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+  }
+  .loop-list[hidden] { display: none; }
+  .monitor-not-connected {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  /* ── Footer / library motif ────────────────────────────── */
+  .site-footer {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 10px 20px 34px;
+  }
+  .library-motif {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 26px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .library-motif span {
+    flex: 0 0 auto;
+    width: 5px;
+    height: 60%;
+    background: var(--line);
+  }
+  .library-motif span:nth-child(3n)   { height: 100%; background: var(--copper); }
+  .library-motif span:nth-child(5n)   { height: 40%;  background: var(--copper-dark); }
+  .library-motif span:nth-child(7n+1) { height: 80%; }
+
+  .footer-note {
+    font-size: 11px;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Reduced motion ────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#launchers">Skip to launchers</a>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="portal-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="header-text">
+      <p class="eyebrow">Command / Inspect</p>
+      <h1>Home</h1>
+      <p class="tagline">Triage and dispatch across the study &amp; admin toolset.</p>
+    </div>
+  </div>
+
+  <div class="role-switch-wrap">
+    <p class="role-hint" id="role-hint">Role filter — Ron shows every tool; SCE and Admin narrow the launcher list to that focus.</p>
+    <div class="role-switch" role="radiogroup" aria-label="Role filter" aria-describedby="role-hint">
+      <button type="button" class="role-btn" role="radio" data-role="ron" aria-checked="true" tabindex="0">Ron</button>
+      <button type="button" class="role-btn" role="radio" data-role="sce" aria-checked="false" tabindex="-1">SCE</button>
+      <button type="button" class="role-btn" role="radio" data-role="admin" aria-checked="false" tabindex="-1">Admin</button>
+    </div>
+  </div>
+</header>
+
+<main id="launchers">
+
+  <section class="launcher-group" data-group="general" aria-labelledby="h-general">
+    <h2 id="h-general">General</h2>
+    <div class="card-grid">
+      <a class="card" href="index.html" target="_blank" rel="noopener">
+        <span class="card-title">Renal Task Monitor</span>
+        <span class="card-desc">Referrals, results and follow-up tasks by due date.</span>
+        <span class="card-path">index.html</span>
+      </a>
+      <a class="card" href="budget.html" target="_blank" rel="noopener">
+        <span class="card-title">Budget</span>
+        <span class="card-desc">Personal budget and administrative planning.</span>
+        <span class="card-path">budget.html</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="launcher-group" data-group="sce" aria-labelledby="h-sce">
+    <h2 id="h-sce">SCE</h2>
+    <div class="card-grid">
+      <a class="card" href="SCE.html" target="_blank" rel="noopener">
+        <span class="card-title">SCE Nephrology Tracker</span>
+        <span class="card-desc">Topic coverage and progress for the SCE exam.</span>
+        <span class="card-path">SCE.html</span>
+      </a>
+      <a class="card" href="sce-quiz-pdf.html" target="_blank" rel="noopener">
+        <span class="card-title">SCE Quiz PDF</span>
+        <span class="card-desc">Turn a renal learning resource into a focused question set.</span>
+        <span class="card-path">sce-quiz-pdf.html</span>
+      </a>
+      <a class="card" href="sce-quiz/index.html" target="_blank" rel="noopener">
+        <span class="card-title">SCE Quiz Generator</span>
+        <span class="card-desc">Generate practice quiz questions for recall.</span>
+        <span class="card-path">sce-quiz/index.html</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="launcher-group" data-group="admin" aria-labelledby="h-admin">
+    <h2 id="h-admin">Admin</h2>
+    <div class="card-grid">
+      <a class="card" href="rotav2.html" target="_blank" rel="noopener">
+        <span class="card-title">InstaRota</span>
+        <span class="card-desc">Your clinics, on-calls and leave in one live rota.</span>
+        <span class="card-path">rotav2.html</span>
+      </a>
+      <a class="card" href="ARCP.html" target="_blank" rel="noopener">
+        <span class="card-title">Portfolio Tracker</span>
+        <span class="card-desc">ARCP evidence and portfolio entries.</span>
+        <span class="card-path">ARCP.html</span>
+      </a>
+      <a class="card" href="oncall-tracker.html" target="_blank" rel="noopener">
+        <span class="card-title">On-call Tracker</span>
+        <span class="card-desc">Track on-call activity and follow-up work.</span>
+        <span class="card-path">oncall-tracker.html</span>
+      </a>
+    </div>
+  </section>
+
+  <div class="lower-grid">
+    <section class="panel" aria-labelledby="h-routing">
+      <h2 id="h-routing">Telegram routing</h2>
+      <p class="panel-sub">Where each interaction is delivered. Reference only — not configurable here.</p>
+      <dl class="routing-list">
+        <dt>General</dt><dd>Ron / default</dd>
+        <dt>SCE Quiz</dt><dd>sce</dd>
+        <dt>SCE Debrief</dt><dd>sce</dd>
+        <dt>SCE Recall</dt><dd>sce</dd>
+        <dt>Rota</dt><dd>admin</dd>
+        <dt>Portfolio</dt><dd>admin</dd>
+      </dl>
+      <p class="routing-note">Routing destinations only — no chat or account identifiers are shown here.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="h-howworks">
+      <h2 id="h-howworks">How this works</h2>
+      <p class="panel-sub">Source of truth by layer.</p>
+      <ul class="howworks-list">
+        <li><span class="howworks-term">Firebase</span><span>QBank record</span></li>
+        <li><span class="howworks-term">Ledger</span><span>Recall state</span></li>
+        <li><span class="howworks-term">Telegram</span><span>Interaction</span></li>
+        <li><span class="howworks-term">Dashboard</span><span>Decision support</span></li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="monitor-grid">
+    <section class="panel monitor-panel" id="sce-learning-loop" aria-labelledby="h-monitor">
+      <h2 id="h-monitor">SCE Learning Loop</h2>
+      <p class="panel-sub">Monitor: read-only active-learning summary from Hermes.</p>
+      <p class="loop-status" id="loop-status" role="status" aria-live="polite">Loading learning loop summary…</p>
+      <dl class="routing-list loop-list" id="loop-list" hidden>
+        <dt>Recall due</dt><dd id="loop-recall-due">—</dd>
+        <dt>Weak concepts</dt><dd id="loop-weak-concepts">—</dd>
+        <dt>Pending debriefs</dt><dd id="loop-pending-debriefs">—</dd>
+      </dl>
+    </section>
+
+    <section class="panel monitor-panel" id="rota-next-shift" aria-labelledby="h-rota-monitor">
+      <h2 id="h-rota-monitor">Rota next shift</h2>
+      <p class="panel-sub">Monitor: next-shift summary — design-ready, not connected yet.</p>
+      <p class="monitor-not-connected">Not connected yet. The data source and authentication for this summary will be added later.</p>
+    </section>
+
+    <section class="panel monitor-panel" id="portfolio-pending-items" aria-labelledby="h-portfolio-monitor">
+      <h2 id="h-portfolio-monitor">Portfolio pending items</h2>
+      <p class="panel-sub">Monitor: pending-items summary — design-ready, not connected yet.</p>
+      <p class="monitor-not-connected">Not connected yet. The data source and authentication for this summary will be added later.</p>
+    </section>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="library-motif" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+  </div>
+  <p class="footer-note">One read-only SCE Learning Loop summary is live on this page.</p>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var STORAGE_KEY = "rwhome:role";
+  var roles = ["ron", "sce", "admin"];
+  var buttons = Array.prototype.slice.call(document.querySelectorAll(".role-btn"));
+  var groups = Array.prototype.slice.call(document.querySelectorAll(".launcher-group"));
+
+  function applyRole(role) {
+    buttons.forEach(function (btn) {
+      var active = btn.getAttribute("data-role") === role;
+      btn.setAttribute("aria-checked", active ? "true" : "false");
+      btn.tabIndex = active ? 0 : -1;
+    });
+    groups.forEach(function (group) {
+      var show = role === "ron" || group.getAttribute("data-group") === role;
+      group.hidden = !show;
+    });
+  }
+
+  function setRole(role) {
+    if (roles.indexOf(role) === -1) role = "ron";
+    applyRole(role);
+    try { window.localStorage.setItem(STORAGE_KEY, role); } catch (e) { /* storage unavailable */ }
+  }
+
+  buttons.forEach(function (btn, i) {
+    btn.addEventListener("click", function () { setRole(btn.getAttribute("data-role")); });
+    btn.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      e.preventDefault();
+      var next = e.key === "ArrowRight" ? (i + 1) % buttons.length : (i - 1 + buttons.length) % buttons.length;
+      buttons[next].focus();
+      setRole(buttons[next].getAttribute("data-role"));
+    });
+  });
+
+  var stored = null;
+  try { stored = window.localStorage.getItem(STORAGE_KEY); } catch (e) { /* storage unavailable */ }
+  setRole(stored || "ron");
+})();
+</script>
+
+<script>
+(function () {
+  "use strict";
+  var ENDPOINT = "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app/sceData/hermesDashboard.json";
+  var TIMEOUT_MS = 4000;
+
+  var statusEl = document.getElementById("loop-status");
+  var listEl = document.getElementById("loop-list");
+  var recallDueEl = document.getElementById("loop-recall-due");
+  var weakConceptsEl = document.getElementById("loop-weak-concepts");
+  var pendingDebriefsEl = document.getElementById("loop-pending-debriefs");
+
+  if (!statusEl || !listEl || !recallDueEl || !weakConceptsEl || !pendingDebriefsEl || !window.fetch) {
+    return;
+  }
+
+  function showUnavailable() {
+    statusEl.textContent = "Learning loop summary unavailable right now.";
+    listEl.hidden = true;
+  }
+
+  function isSafeCount(value) {
+    return Number.isSafeInteger(value) && value >= 0;
+  }
+
+  function showSummary(summary) {
+    var recallDue = summary && summary.cardsDue;
+    var weakConcepts = summary && summary.weak;
+    var pendingDebriefs = summary && summary.pendingDebriefs;
+    if (!isSafeCount(recallDue) || !isSafeCount(weakConcepts) || !isSafeCount(pendingDebriefs)) {
+      showUnavailable();
+      return;
+    }
+    recallDueEl.textContent = String(recallDue);
+    weakConceptsEl.textContent = String(weakConcepts);
+    pendingDebriefsEl.textContent = String(pendingDebriefs);
+    statusEl.textContent = "Live from the Hermes active-learning ledger.";
+    listEl.hidden = false;
+  }
+
+  var controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
+  var timeoutId = setTimeout(function () {
+    if (controller) controller.abort();
+  }, TIMEOUT_MS);
+
+  fetch(ENDPOINT, { method: "GET", signal: controller ? controller.signal : undefined })
+    .then(function (res) {
+      if (!res.ok) { throw new Error("learning loop summary request failed"); }
+      return res.json();
+    })
+    .then(function (data) {
+      showSummary(data && data.summary);
+    })
+    .catch(function () {
+      showUnavailable();
+    })
+    .then(function () {
+      clearTimeout(timeoutId);
+    });
+})();
+</script>
+
+</body>
+</html>
