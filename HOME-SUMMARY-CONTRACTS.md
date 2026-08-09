@@ -4,9 +4,25 @@ Home is a read-only signal layer. It never owns the underlying record and it nev
 
 ## Rota
 
-Owner: `rota.html`.
+Owner: `rota.html` / InstaRota.
 
-Proposed published read-only summary: current/next duty window, recovery flag, and conflict flag. Home may use these only to shape capacity language; it must not infer a shift from absence of data.
+Home must not read the rota room directly. The room contains a complete shared schedule and private syncing context. Dates, locations, shift labels, leave, and raw schedule entries remain in InstaRota.
+
+The future published read-only Rota aggregate may contain only:
+
+```text
+today.dutyState              = on-call | clinical | leave | recovery | unavailable
+today.capacity               = protected | limited | normal | unavailable
+today.conflict               = true | false
+week.workload                = protected | limited | normal | unavailable
+week.recovery                = true | false
+week.protectedStudyWindow    = true | false
+week.nextDutyProximity       = imminent | upcoming | none | unavailable
+attention.conflict           = true | false
+attention.recoveryProtection = true | false
+```
+
+No dates, locations, shift labels, leave type/reason, colleague identity, rota code, notes, or raw schedule entries may be written to or rendered by Home. Home may use the aggregate only to shape capacity language and priority; it must not infer a shift from absence of data.
 
 ## SCE
 
