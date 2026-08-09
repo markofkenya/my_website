@@ -29,7 +29,11 @@
     };
 
     const app          = initializeApp(firebaseConfig);
-    signInAnonymously(getAuth(app)).then(c => { console.log("UID:", c.user.uid); window._arcp_fb.uid = c.user.uid; });
+    signInAnonymously(getAuth(app)).then(c => {
+      console.log("UID:", c.user.uid);
+      window._arcp_fb.uid = c.user.uid;
+      window.dispatchEvent(new Event("arcp-firebase-ready"));
+    });
     const db           = getDatabase(app);
     const dataRef      = ref(db, "arcpData");
     const logbookRef   = ref(db, "logbookData");
@@ -960,7 +964,7 @@
     <button class="btn-reset" onclick="resetYearData()">RESET YEAR DATA</button>
   </div>
 </div>
-
+<script src="portfolio-home-summary.js"></script>
 <script>
 const ARCP_DEFAULTS = {
   ST4: "2026-12-01",
@@ -1201,7 +1205,34 @@ function updateReadiness() {
 
   document.getElementById("readiness-detail").textContent =
     `GIM ${gimMetWhole}/${gimTotal} · Renal ${renalMet}/${renalTotal} · Admin ${adminDone + alsOk}/${adminTotal + 1}`;
+  publishPortfolioHomeSummary({ renalPct, gimPct, adminDone, adminTotal, relevant });
 }
+
+function publishPortfolioHomeSummary({ renalPct, gimPct, adminDone, adminTotal, relevant }) {
+  if (!window.PortfolioHomeSummary || !window._arcp_fb || !window._arcp_fb.db) return;
+  const annualEvidenceMissing = relevant.some(id => REQS[id].deadline === "annual" && getStatus(id) !== "met");
+  const proceduresUnassessed = DOPS_PROCEDURES.some(proc => !getDops(proc));
+  const alsDate = getALS();
+  const daysToAls = alsDate ? Math.ceil((new Date(alsDate) - new Date()) / 86400000) : NaN;
+  const alsState = Number.isFinite(daysToAls) ? (daysToAls < 0 ? "expired" : daysToAls < 90 ? "due-soon" : "clear") : "unavailable";
+  const raw = {
+    renalPct,
+    gimPct,
+    cipPct: NaN,
+    adminPct: adminTotal ? Math.round((adminDone / adminTotal) * 100) : NaN,
+    logbookPct: NaN,
+    alsState,
+    annualEvidenceMissing,
+    proceduresUnassessed,
+    nextAction: renalPct < 70 ? "Review renal evidence" : gimPct < 70 ? "Review GIM evidence" : "Review ARCP source"
+  };
+  const summary = window.PortfolioHomeSummary.buildPortfolioHomeSummary(raw);
+  window._arcp_fb.update(window._arcp_fb.ref(window._arcp_fb.db, "arcpData/hermesDashboard"), summary)
+    .catch(e => console.error("Portfolio Home summary write error:", e));
+}
+
+window.addEventListener("arcp-firebase-ready", function () { publishPortfolioHomeSummaryFromCurrentState(); });
+function publishPortfolioHomeSummaryFromCurrentState() { updateReadiness(); }
 
 function updateDopsCount() {
   const done = DOPS_PROCEDURES.filter(p => getDops(p)).length;

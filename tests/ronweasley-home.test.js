@@ -125,9 +125,12 @@ test('contains no Firebase SDK imports, config objects or API key strings', () =
   // learning-loop summary endpoint fetched natively (no SDK).
   const firebaseHostMatches = [...html.matchAll(/[\w.-]*firebasedatabase\.app[^\s"']*/g)].map(m => m[0]);
   assert.deepEqual(
-    firebaseHostMatches,
-    ['task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app/sceData/hermesDashboard.json'],
-    'only the one permitted learning-loop endpoint may reference firebasedatabase.app'
+    firebaseHostMatches.sort(),
+    [
+      'task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app/arcpData/hermesDashboard.json',
+      'task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app/sceData/hermesDashboard.json'
+    ].sort(),
+    'only the two published read-only aggregate endpoints may reference firebasedatabase.app'
   );
 });
 
@@ -140,7 +143,7 @@ test('is a static, self-contained page apart from the one permitted read-only le
   assert.doesNotMatch(html, /XMLHttpRequest/);
   // Exactly one native fetch call is permitted: the learning-loop summary GET.
   const fetchCalls = html.match(/\bfetch\(/g) || [];
-  assert.equal(fetchCalls.length, 1, 'expected exactly one fetch( call in the whole page');
+  assert.equal(fetchCalls.length, 2, 'expected exactly two aggregate fetch calls in the whole page');
 });
 
 test('avoids emoji and fake live metrics/counters in card copy', () => {
@@ -359,7 +362,7 @@ test('new monitor panels add no API/config/endpoint terms or forms/inputs', () =
 test('adding the two new monitor panels introduces zero additional fetch calls', () => {
   // The only permitted fetch in the entire page remains the SCE Learning Loop one.
   const fetchCalls = html.match(/\bfetch\(/g) || [];
-  assert.equal(fetchCalls.length, 1, 'expected exactly one fetch( call in the whole page, unchanged');
+  assert.equal(fetchCalls.length, 2, 'expected two approved aggregate fetch calls');
   for (const { id } of UNCONNECTED_PANEL_IDS) {
     const section = extractSection(id);
     assert.doesNotMatch(section, /\bfetch\(/);

@@ -401,7 +401,7 @@
 
   <div class="monitor-grid">
     <section class="panel monitor-panel" id="rota-signal"><h2>Rota capacity</h2><p class="monitor-not-connected">Awaiting a published read-only summary.</p></section>
-    <section class="panel monitor-panel" id="portfolio-signal"><h2>Portfolio readiness</h2><p class="monitor-not-connected">Awaiting a published read-only summary.</p></section>
+    <section class="panel monitor-panel" id="portfolio-signal"><h2>Portfolio readiness</h2><p id="portfolio-status" class="monitor-not-connected" role="status" aria-live="polite">Awaiting a published read-only summary.</p><dl id="portfolio-summary" class="routing-list" hidden><dt>Renal</dt><dd id="portfolio-renal">—</dd><dt>GIM</dt><dd id="portfolio-gim">—</dd><dt>Admin</dt><dd id="portfolio-admin">—</dd><dt>Next action</dt><dd id="portfolio-action">—</dd></dl></section>
     <section class="panel monitor-panel" id="task-signal"><h2>Task Monitor</h2><p class="monitor-not-connected">Awaiting a published read-only summary.</p></section>
     <section class="panel monitor-panel" id="calendar-signal"><h2>Calendar capacity</h2><p class="monitor-not-connected">Awaiting a published read-only summary.</p></section>
   </div>
@@ -629,6 +629,32 @@
     .then(function () {
       clearTimeout(timeoutId);
     });
+})();
+</script>
+
+<script>
+(function () {
+  "use strict";
+  var ENDPOINT = "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app/arcpData/hermesDashboard.json";
+  var status = document.getElementById("portfolio-status");
+  var list = document.getElementById("portfolio-summary");
+  var fields = { renal: document.getElementById("portfolio-renal"), gim: document.getElementById("portfolio-gim"), admin: document.getElementById("portfolio-admin"), action: document.getElementById("portfolio-action") };
+  function unavailable() { status.textContent = "Awaiting a published read-only summary."; list.hidden = true; }
+  function validBand(value) { return value === "on-track" || value === "needs-attention" || value === "at-risk" || value === "unavailable"; }
+  if (!status || !list || !fields.renal || !fields.gim || !fields.admin || !fields.action || !window.fetch) return;
+  fetch(ENDPOINT, { method: "GET" })
+    .then(function (res) { if (!res.ok) throw new Error("portfolio summary request failed"); return res.json(); })
+    .then(function (data) {
+      var readiness = data && data.readiness;
+      if (!readiness || !validBand(readiness.renal) || !validBand(readiness.gim) || !validBand(readiness.admin) || typeof data.nextAction !== "string") { unavailable(); return; }
+      fields.renal.textContent = readiness.renal;
+      fields.gim.textContent = readiness.gim;
+      fields.admin.textContent = readiness.admin;
+      fields.action.textContent = data.nextAction;
+      status.textContent = "Live read-only portfolio signal.";
+      list.hidden = false;
+    })
+    .catch(unavailable);
 })();
 </script>
 

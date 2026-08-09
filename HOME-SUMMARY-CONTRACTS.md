@@ -18,7 +18,7 @@ Published read-only summary: cards due, weak concepts, pending debriefs, and one
 
 Owner: `ARCP.html`.
 
-ARCP remains the portfolio record. Proposed read-only summary: readiness by renal, GIM, CiP, admin and logbook domains; risk flags for ARCP timing, ALS expiry, annual evidence and unassessed procedures; and an approved next-best-action label.
+ARCP remains the portfolio record. The published read-only summary contains safe readiness bands for renal, GIM, CiP, admin and logbook, plus ALS/annual-evidence/procedure risk flags and one approved next-best-action label. It must not contain evidence text, dates, counts, identifiers, or personal data.
 
 ## Task Monitor
 
