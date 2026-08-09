@@ -22,24 +22,41 @@
     return { ...candidate, id, anchor_type: anchorType, anchor_label: anchorLabel, topic_key: topicKey };
   }
 
-  function normaliseEvent(value) {
+  function normaliseEvent(value, index) {
     const event = value && typeof value === 'object' ? value : {};
+    const completedAt = text(event.completed_at);
+    const selectedAt = text(event.selected_at);
+    const timestamp = Date.parse(completedAt || selectedAt);
     return {
       anchor_id: text(event.anchor_id),
       topic_key: text(event.topic_key),
       outcome: text(event.outcome).toLowerCase(),
+      timestamp: Number.isNaN(timestamp) ? 0 : timestamp,
+      index,
     };
   }
 
-  function previousState(candidate, events) {
-    const matching = events.filter(event => event.anchor_id === candidate.id || event.topic_key === candidate.topic_key);
-    if (!matching.length) return { eligible: true, repeat_permitted: 'no', repeat_reason: 'new-anchor' };
-    const latest = matching[matching.length - 1];
-    if (REPEATABLE_OUTCOMES.has(latest.outcome)) {
-      return { eligible: true, repeat_permitted: 'yes', repeat_reason: `previous-outcome-${latest.outcome}` };
+  function latestEvent(events) {
+    return events.reduce((latest, event) => {
+      if (!latest || event.timestamp > latest.timestamp || (event.timestamp === latest.timestamp && event.index > latest.index)) return event;
+      return latest;
+    }, null);
+  }
+
+  function outcomeState(event) {
+    if (REPEATABLE_OUTCOMES.has(event.outcome)) {
+      return { eligible: true, repeat_permitted: 'yes', repeat_reason: `previous-outcome-${event.outcome}` };
     }
-    const reason = BLOCKING_OUTCOMES.has(latest.outcome) ? `previous-outcome-${latest.outcome}` : 'previously-used';
+    const reason = BLOCKING_OUTCOMES.has(event.outcome) ? `previous-outcome-${event.outcome}` : 'previously-used';
     return { eligible: false, repeat_permitted: 'no', repeat_reason: reason };
+  }
+
+  function previousState(candidate, events) {
+    const topicEvent = latestEvent(events.filter(event => event.topic_key === candidate.topic_key));
+    if (topicEvent) return outcomeState(topicEvent);
+    const anchorEvent = latestEvent(events.filter(event => event.anchor_id === candidate.id));
+    if (anchorEvent) return outcomeState(anchorEvent);
+    return { eligible: true, repeat_permitted: 'no', repeat_reason: 'new-anchor' };
   }
 
   function selectDailyAnchor({ candidates, events, random = Math.random } = {}) {

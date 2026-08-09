@@ -5,6 +5,7 @@ import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { randomUUID } from 'node:crypto';
 import selectionModule from '../../sce-daily-selection.js';
 
 const execFileAsync = promisify(execFile);
@@ -36,6 +37,30 @@ export function dailyEventRowIndex(values, dailyEventId) {
   const target = text(dailyEventId);
   const index = values.slice(1).findIndex(row => Array.isArray(row) && text(row[idIndex]) === target);
   return index < 0 ? null : index + 2;
+}
+
+export function pendingEventFromSelection(selection, selectedAt = new Date().toISOString(), uuid = randomUUID) {
+  const selected = selection && typeof selection === 'object' ? selection : {};
+  const candidate = selected.candidate && typeof selected.candidate === 'object' ? selected.candidate : {};
+  if (!text(candidate.id) || !text(candidate.anchor_type) || !text(candidate.anchor_label) || !text(candidate.topic_key)) {
+    throw new Error('A pending daily event requires a complete selected candidate.');
+  }
+  return {
+    daily_event_id: `daily-${uuid()}`,
+    selected_at: text(selectedAt),
+    mode: 'daily-loop',
+    anchor_id: text(candidate.id),
+    anchor_type: text(candidate.anchor_type),
+    anchor_label: text(candidate.anchor_label),
+    topic_key: text(candidate.topic_key),
+    source_reference: text(candidate.source_reference) || text(candidate.anchor_type),
+    cold_case_status: 'selected',
+    mcq_status: 'not-started',
+    outcome: 'pending',
+    repeat_permitted: text(selected.repeat_permitted) || 'no',
+    repeat_reason: text(selected.repeat_reason) || 'new-anchor',
+    completed_at: '',
+  };
 }
 
 export function dailyEventRow(event) {
@@ -96,7 +121,13 @@ async function main() {
   if (command === 'select') {
     const candidates = JSON.parse(process.argv[3] || '');
     const selection = selectionModule.selectDailyAnchor({ candidates, events: await readDailyEvents() });
-    console.log(JSON.stringify(selection, null, 2));
+    if (!selection.candidate) {
+      console.log(JSON.stringify(selection, null, 2));
+      return;
+    }
+    const event = pendingEventFromSelection(selection);
+    const write = await appendDailyEvent(event);
+    console.log(JSON.stringify({ selection, event, write }, null, 2));
     return;
   }
   if (command === 'update') {

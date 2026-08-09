@@ -38,6 +38,31 @@ test('permits a repeat only when the previous matching topic is weak or incomple
   assert.equal(selection.repeat_reason, 'previous-outcome-weak');
 });
 
+test('does not let a weak event for a different topic re-enable a strong topic sharing the same anchor', () => {
+  const selection = selectDailyAnchor({
+    candidates: [{ id: 'shared-anchor', anchor_type: 'study-resource', anchor_label: 'Shared resource', topic_key: 'topic.strong' }],
+    events: [
+      { anchor_id: 'shared-anchor', topic_key: 'topic.strong', outcome: 'strong', completed_at: '2026-08-09T09:00:00Z' },
+      { anchor_id: 'shared-anchor', topic_key: 'topic.weak', outcome: 'weak', completed_at: '2026-08-09T10:00:00Z' }
+    ],
+    random: () => 0
+  });
+  assert.equal(selection.candidate, null);
+  assert.equal(selection.reason, 'no-eligible-anchor');
+});
+
+test('uses completed timestamp rather than sheet row order to determine a topic outcome', () => {
+  const selection = selectDailyAnchor({
+    candidates: [{ id: 'topic-timing', anchor_type: 'tracker-error', anchor_label: 'Timing test', topic_key: 'topic.timing' }],
+    events: [
+      { anchor_id: 'topic-timing', topic_key: 'topic.timing', outcome: 'strong', completed_at: '2026-08-09T12:00:00Z' },
+      { anchor_id: 'topic-timing', topic_key: 'topic.timing', outcome: 'weak', completed_at: '2026-08-09T09:00:00Z' }
+    ],
+    random: () => 0
+  });
+  assert.equal(selection.candidate, null);
+});
+
 test('does not select a pending daily event again', () => {
   const selection = selectDailyAnchor({
     candidates: [candidates[0]],

@@ -27,6 +27,21 @@ test('finds the sheet row for an existing daily event without relying on row ord
   assert.equal(dailyEventRowIndex([['daily_event_id'], ['daily-old']], 'missing'), null);
 });
 
+test('builds a complete pending event immediately from a selection', async () => {
+  const { pendingEventFromSelection } = await import('../curriculum/scripts/daily-events.mjs');
+  const event = pendingEventFromSelection({
+    candidate: { id: 'study-anca', anchor_type: 'study-resource', anchor_label: 'ANCA vasculitis', topic_key: 'glomerular.anca-vasculitis', source_reference: 'Study/ANCA vasculitis.md' },
+    repeat_permitted: 'no', repeat_reason: 'new-anchor'
+  }, '2026-08-10T09:00:00Z', () => 'event-uuid');
+  assert.deepEqual(event, {
+    daily_event_id: 'daily-event-uuid', selected_at: '2026-08-10T09:00:00Z', mode: 'daily-loop',
+    anchor_id: 'study-anca', anchor_type: 'study-resource', anchor_label: 'ANCA vasculitis',
+    topic_key: 'glomerular.anca-vasculitis', source_reference: 'Study/ANCA vasculitis.md',
+    cold_case_status: 'selected', mcq_status: 'not-started', outcome: 'pending',
+    repeat_permitted: 'no', repeat_reason: 'new-anchor', completed_at: ''
+  });
+});
+
 test('validates a daily event before it can be written', async () => {
   const { dailyEventRow } = await import('../curriculum/scripts/daily-events.mjs');
   assert.throws(() => dailyEventRow({ anchor_id: 'x' }), /daily_event_id/i);
