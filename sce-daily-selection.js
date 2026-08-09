@@ -44,6 +44,9 @@
   }
 
   function outcomeState(event) {
+    if (event.outcome === 'cancelled') {
+      return { eligible: true, repeat_permitted: 'no', repeat_reason: 'cancelled-not-delivered' };
+    }
     if (REPEATABLE_OUTCOMES.has(event.outcome)) {
       return { eligible: true, repeat_permitted: 'yes', repeat_reason: `previous-outcome-${event.outcome}` };
     }

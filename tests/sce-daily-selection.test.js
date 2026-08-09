@@ -63,6 +63,16 @@ test('uses completed timestamp rather than sheet row order to determine a topic 
   assert.equal(selection.candidate, null);
 });
 
+test('treats a cancelled pre-delivery event as eligible rather than consuming the topic', () => {
+  const selection = selectDailyAnchor({
+    candidates: [candidates[0]],
+    events: [{ anchor_id: candidates[0].id, topic_key: candidates[0].topic_key, outcome: 'cancelled', completed_at: '2026-08-09T20:03:00Z' }],
+    random: () => 0
+  });
+  assert.equal(selection.candidate.id, candidates[0].id);
+  assert.equal(selection.repeat_reason, 'cancelled-not-delivered');
+});
+
 test('does not select a pending daily event again', () => {
   const selection = selectDailyAnchor({
     candidates: [candidates[0]],
