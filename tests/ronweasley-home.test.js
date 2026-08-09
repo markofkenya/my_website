@@ -11,10 +11,39 @@ const REQUIRED_LINKS = [
   'SCE.html',
   'sce-quiz/index.html',
   'sce-quiz-pdf.html',
-  'rotav2.html',
+  'rota.html',
   'oncall-tracker.html',
   'ARCP.html',
 ];
+
+test('defines minimal source-owned contracts before rendering new operational signals', () => {
+  const contractPath = path.join(__dirname, '..', 'HOME-SUMMARY-CONTRACTS.md');
+  assert.ok(fs.existsSync(contractPath), 'expected Home summary contracts document');
+  const contracts = fs.readFileSync(contractPath, 'utf8');
+  for (const source of ['Rota', 'SCE', 'Portfolio', 'Task Monitor', 'Calendar']) {
+    assert.match(contracts, new RegExp(`## ${source}`));
+  }
+  assert.match(contracts, /read-only/i);
+  assert.match(contracts, /ARCP remains the portfolio record/i);
+  assert.doesNotMatch(contracts, /api[_ -]?key/i);
+  assert.doesNotMatch(contracts, /token/i);
+});
+
+test('centres the operational home around Today, This week and Attention', () => {
+  for (const id of ['today', 'this-week', 'attention']) {
+    assert.match(html, new RegExp(`<section\\b[^>]*\\bid="${id}"`));
+  }
+  assert.match(html, /RICK\s*\/\/\s*OPERATIONS/);
+  assert.match(html, /Read-only signal layer/i);
+});
+
+test('keeps unavailable source panels honest instead of inventing live metrics', () => {
+  for (const id of ['rota-signal', 'portfolio-signal', 'task-signal', 'calendar-signal']) {
+    const section = extractSection(id);
+    assert.match(section, /awaiting a published read-only summary/i);
+    assert.doesNotMatch(section, /\b\d+\b/);
+  }
+});
 
 test('links to every required launcher tool by relative href', () => {
   for (const href of REQUIRED_LINKS) {
