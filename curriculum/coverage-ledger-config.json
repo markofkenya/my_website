@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0-draft",
+  "spreadsheet_id": "1VqtHm2DaAsgxizS9EWxLSJNHPBNcodpH5qLpH1FqLMQ",
+  "spreadsheet_url": "https://docs.google.com/spreadsheets/d/1VqtHm2DaAsgxizS9EWxLSJNHPBNcodpH5qLpH1FqLMQ/edit",
+  "title": "Nephrology Coverage Ledger",
+  "tabs": [
+    "Concepts",
+    "Attempts",
+    "Cards",
+    "GuidelineUpdates"
+  ],
+  "canonical_roles": {
+    "qbank_progress_errors_overview": "existing Firebase SCE tracker",
+    "concept_coverage_recall": "Nephrology Coverage Ledger"
+  },
+  "taxonomy_source": "curriculum/ksap-concepts-v1.json",
+  "seeded_concepts": 364
+}

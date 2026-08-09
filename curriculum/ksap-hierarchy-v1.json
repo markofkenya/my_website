@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0-draft",
+  "status": "confirmed",
+  "purpose": "Primary curriculum taxonomy for the SCE Nephrology learning system. Derived from the 10 KSAP categories currently embedded in SCE.html. StudyPRN topics are a supplementary crosswalk, not the primary hierarchy.",
+  "source": {
+    "type": "local_ksap_tracker_taxonomy",
+    "file": "SCE.html",
+    "extracted_at": "2026-08-09",
+    "copyright_note": "Contains taxonomy labels and derived identifiers only; no proprietary question stems or answer content."
+  },
+  "identifier_convention": {
+    "main_topic_id": "lowercase kebab-case stable identifier",
+    "subtopic_id": "<main_topic_id>.<lowercase-kebab-case-subtopic>",
+    "concept_id": "<subtopic_id>.<lowercase-kebab-case-concept>",
+    "cross_cutting": "A concept has one primary main_topic_id. Use related_topic_ids only for secondary links."
+  },
+  "main_topics": [
+    {
+      "id": "sodium-water",
+      "name": "Sodium and Water Abnormalities",
+      "studyprn_crosswalk": ["AKI, acute RRT, fluid / electrolytes / acid-base"]
+    },
+    {
+      "id": "acid-base-potassium",
+      "name": "Acid–Base and Potassium Disorders",
+      "studyprn_crosswalk": ["AKI, acute RRT, fluid / electrolytes / acid-base"]
+    },
+    {
+      "id": "mineral-stones",
+      "name": "Calcium, Phosphorus, and Magnesium Disorders and Stones",
+      "studyprn_crosswalk": ["Urological — stones, UTI & obstruction", "Renal bone disease & renal anaemia", "Chronic kidney disease, haematuria, proteinuria"]
+    },
+    {
+      "id": "ckd-esrd",
+      "name": "Chronic Kidney Disease",
+      "scope_note": "Includes ESKD, haemodialysis, peritoneal dialysis, home haemodialysis, CKD-MBD, renal anaemia, and advanced-kidney-care decisions.",
+      "studyprn_crosswalk": ["Chronic kidney disease, haematuria, proteinuria", "Haemodialysis", "Peritoneal dialysis", "Renal bone disease & renal anaemia"]
+    },
+    {
+      "id": "hypertension",
+      "name": "Hypertension",
+      "studyprn_crosswalk": ["CVD, hypertension, renovascular & diabetes"]
+    },
+    {
+      "id": "tubular-interstitial-cystic",
+      "name": "Tubular, Interstitial, and Cystic Disorders",
+      "studyprn_crosswalk": ["Glomerulonephritis & tubulointerstitial nephritis", "Inherited & rarer diseases"]
+    },
+    {
+      "id": "glomerular-vascular",
+      "name": "Glomerular and Vascular Disorders",
+      "studyprn_crosswalk": ["Glomerulonephritis & tubulointerstitial nephritis"]
+    },
+    {
+      "id": "kidney-transplantation",
+      "name": "Kidney Transplantation",
+      "studyprn_crosswalk": ["Renal transplantation"]
+    },
+    {
+      "id": "pharmacology",
+      "name": "Pharmacology",
+      "studyprn_crosswalk": ["Other"]
+    },
+    {
+      "id": "aki-icu-nephrology",
+      "name": "Acute Kidney Injury and ICU Nephrology",
+      "studyprn_crosswalk": ["AKI, acute RRT, fluid / electrolytes / acid-base"]
+    }
+  ],
+  "selection_policy": {
+    "primary_taxonomy": "KSAP",
+    "supplementary_taxonomy": "StudyPRN",
+    "studyprn_handling": "Map notes, errors, and study activity to the most specific KSAP main topic and subtopic. Preserve the original StudyPRN label as source metadata only.",
+    "ckd_rule": "Do not create separate top-level HD, PD, CKD-MBD, or renal-anaemia categories; classify them beneath Chronic Kidney Disease.",
+    "cross_cutting_rule": "Where a concept is relevant to several areas, record one primary KSAP main topic and optional related_topic_ids; do not duplicate the concept."
+  }
+}
