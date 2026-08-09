@@ -7,7 +7,8 @@
     "Concepts",
     "Attempts",
     "Cards",
-    "GuidelineUpdates"
+    "GuidelineUpdates",
+    "DailyEvents"
   ],
   "canonical_roles": {
     "qbank_progress_errors_overview": "existing Firebase SCE tracker",
