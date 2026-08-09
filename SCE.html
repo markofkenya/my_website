@@ -66,6 +66,7 @@
     window._sce_fb.topicsRef = topicsRef;
     window._sce_fb.roadmapRef = roadmapRef;
   </script>
+  <script src="sce-learning-dashboard.js"></script>
 
   <style>
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
@@ -199,10 +200,43 @@
     .sb-items { display:flex; gap:18px; flex-wrap:wrap; }
     .sb-item strong { color:var(--yellow); }
 
+    /* ── LEARNING LOOP ── */
+    .ll-intro { color:var(--grey); font-size:9px; margin:-2px 0 16px; }
+    .ll-status { font-size:8px; letter-spacing:0.1em; }
+    .ll-status.live { color:var(--green); }
+    .ll-status.pending { color:var(--yellow); }
+    .ll-section { margin:0 0 20px; }
+    .ll-section-title { color:var(--grey); font-size:8px; letter-spacing:0.14em; margin:0 0 7px; }
+    .ll-metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:6px; }
+    .ll-metric { background:var(--bg2); border:1px solid var(--border2); padding:10px 11px; min-height:70px; display:flex; flex-direction:column; justify-content:space-between; }
+    .ll-metric span { color:var(--grey); font-size:8px; letter-spacing:0.08em; }
+    .ll-metric strong { color:var(--white); font-size:20px; font-weight:500; line-height:1; }
+    .ll-metric small { color:var(--grey2); font-size:8px; margin-top:4px; }
+    .ll-new { color:var(--cyan) !important; }
+    .ll-unconfirmed { color:var(--yellow) !important; }
+    .ll-weak { color:var(--red) !important; }
+    .ll-strong { color:var(--green) !important; }
+    .ll-due { color:var(--purple) !important; }
+    .ll-topic-list { border:1px solid var(--border2); background:var(--bg2); }
+    .ll-topic-row { display:grid; grid-template-columns:minmax(150px,1.3fr) minmax(220px,2fr) minmax(70px,1fr) 48px; gap:12px; align-items:center; padding:10px 12px; border-bottom:1px solid var(--border); }
+    .ll-topic-row:last-child { border-bottom:none; }
+    .ll-topic-name { color:var(--white); font-size:10px; }
+    .ll-topic-counts { display:flex; gap:8px; flex-wrap:wrap; font-size:8px; }
+    .ll-topic-bar { height:4px; background:var(--border2); overflow:hidden; }
+    .ll-topic-bar span { display:block; height:100%; background:var(--green); transition:width 0.35s ease; }
+    .ll-topic-due { color:var(--purple); font-size:9px; text-align:right; }
+    .ll-action-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:6px; }
+    .ll-action { display:flex; gap:10px; align-items:flex-start; background:var(--bg2); border:1px solid var(--border2); padding:10px 11px; }
+    .ll-action-kind { color:var(--cyan); border:1px solid rgba(34,211,238,0.35); padding:1px 5px; font-size:8px; letter-spacing:0.07em; text-transform:uppercase; }
+    .ll-action strong { display:block; color:var(--white); font-size:10px; font-weight:500; }
+    .ll-action small { display:block; color:var(--grey); font-size:9px; margin-top:3px; }
+
     @media(max-width:640px) {
       .cat-grid,.overview-grid { grid-template-columns:1fr; }
       #main { padding:10px 10px 80px; }
       .hdr-stat { min-width:80px; padding:8px 12px; }
+      .ll-topic-row { grid-template-columns:1fr; gap:6px; }
+      .ll-topic-due { text-align:left; }
     }
     .pass-badge.flagged { color:var(--pink); border-color:rgba(244,114,182,0.4); background:rgba(244,114,182,0.06); }
     .q-btn.flagged { border-color:var(--pink); color:var(--pink); background:rgba(244,114,182,0.08); }
@@ -331,6 +365,7 @@
   <button class="tab" onclick="setTab('topics')">TOPIC COVERAGE</button>
   <button class="tab" onclick="setTab('confidence')">CONFIDENCE</button>
   <button class="tab roadmap-tab" onclick="setTab('roadmap')">ROADMAP</button>
+  <button class="tab" onclick="setTab('learning')">LEARNING LOOP</button>
   <button class="tab" onclick="setTab('admin')">ADMIN</button>
   <button class="tab" onclick="setTab('errorlog')">ERROR LOG</button>
 </div>
@@ -338,6 +373,7 @@
 <div id="main">
   <div id="tab-overview" style="display:none"></div>
   <div id="tab-roadmap"  style="display:none"></div>
+  <div id="tab-learning" style="display:none"></div>
   <div id="tab-ksap"     style="display:none"></div>
   <div id="tab-topics"   style="display:none"></div>
   <div id="tab-confidence" style="display:none"></div>
@@ -1082,6 +1118,37 @@ function computeCatStats(cat) {
     p2pct: p2done > 0 ? Math.round(p2correct/p2done*100) : 0 };
 }
 
+// ── HERMES LEARNING LOOP ───────────────────────────────────────────────
+// Hermes writes a safe summary projection to `sceData/hermesDashboard`.
+// The detailed coverage ledger remains outside the public tracker; this page
+// receives only aggregate counts, topic state, and next retrieval work.
+function computeTrackerSignals() {
+  let incorrect = 0, flagged = 0, unresolvedErrors = 0;
+  KSAP.forEach(q => {
+    const d = getQ(q.code);
+    if (d.p1incorrect || d.p2incorrect) incorrect++;
+    if (d.flagged) flagged++;
+    if (d.note && !d.resolved) unresolvedErrors++;
+  });
+  Object.values(getStudyPRN()).forEach(entry => {
+    if (entry && !entry.resolved) unresolvedErrors++;
+  });
+  return { incorrect, flagged, unresolvedErrors };
+}
+
+function renderLearning() {
+  const el = document.getElementById("tab-learning");
+  const dashboard = window.SceLearningDashboard;
+  if (!dashboard) {
+    el.innerHTML = '<div class="empty-msg">Learning dashboard script did not load. Refresh and try again.</div>';
+    return;
+  }
+  const projection = sceData.hermesDashboard && typeof sceData.hermesDashboard === "object"
+    ? sceData.hermesDashboard : {};
+  const model = dashboard.normalizeDashboard({ ...projection, tracker: computeTrackerSignals() });
+  el.innerHTML = dashboard.renderDashboard(model);
+}
+
 // ══════════════════════════════════════════════════════════════════════
 // RENDER
 // ══════════════════════════════════════════════════════════════════════
@@ -1107,7 +1174,7 @@ function setTab(tab) {
   currentTab = tab;
   document.querySelectorAll(".tab").forEach(b =>
     b.classList.toggle("active", b.getAttribute("onclick").includes(`'${tab}'`)));
-  ["overview","roadmap","ksap","topics","confidence","admin","errorlog"].forEach(t =>
+  ["overview","roadmap","learning","ksap","topics","confidence","admin","errorlog"].forEach(t =>
     document.getElementById(`tab-${t}`).style.display = t === tab ? "block" : "none");
   renderTab(tab);
 }
@@ -1115,6 +1182,7 @@ function setTab(tab) {
 function renderTab(tab) {
   if (tab === "overview") renderOverview();
   if (tab === "roadmap")  renderRoadmap();
+  if (tab === "learning") renderLearning();
   if (tab === "ksap")     renderKSAP();
   if (tab === "topics")   renderTopics();
   if (tab === "confidence") renderConfidence();
