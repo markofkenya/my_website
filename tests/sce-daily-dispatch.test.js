@@ -11,16 +11,16 @@ const candidates = [
 test('selects distinct quiz and new-card anchors and reserves both before delivery', () => {
   const dispatch = selectDailyDispatch({ candidates, events: [], random: () => 0 });
   assert.equal(dispatch.quiz.candidate.id, 'study-anca');
-  assert.equal(dispatch.cards.candidate.id, 'study-acidosis');
+  assert.equal(dispatch.cards.candidate.id, 'tracker-sodium');
   assert.notEqual(dispatch.quiz.candidate.topic_key, dispatch.cards.candidate.topic_key);
   assert.equal(dispatch.quizEvent.outcome, 'pending');
   assert.equal(dispatch.cardEvent.outcome, 'pending');
   assert.equal(dispatch.cardEvent.mode, 'daily-cards');
 });
 
-test('requires a distinct Study resource for the three-new-card route', () => {
+test('requires a distinct real tracker-error anchor for the three-new-card route', () => {
   const dispatch = selectDailyDispatch({ candidates: candidates.slice(0, 2), events: [], random: () => 0 });
   assert.equal(dispatch.quiz.candidate.id, 'study-anca');
-  assert.equal(dispatch.cards.candidate, null);
-  assert.equal(dispatch.cardEvent, null);
+  assert.equal(dispatch.cards.candidate.id, 'tracker-sodium');
+  assert.equal(dispatch.cardEvent.anchor_type, 'tracker-error');
 });

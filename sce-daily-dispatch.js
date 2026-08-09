@@ -23,7 +23,7 @@
     const quiz = selection.selectDailyAnchor({ candidates, events, random });
     if (!quiz.candidate) return { quiz, cards: { candidate: null, eligible: [], reason: 'no-eligible-anchor' }, quizEvent: null, cardEvent: null };
     const quizEvent = makePendingEvent(quiz.candidate, quiz, 'daily-loop');
-    const remaining = (Array.isArray(candidates) ? candidates : []).filter(candidate => candidate.anchor_type === 'study-resource' && candidate.id !== quiz.candidate.id && candidate.topic_key !== quiz.candidate.topic_key);
+    const remaining = (Array.isArray(candidates) ? candidates : []).filter(candidate => candidate.anchor_type === 'tracker-error' && candidate.id !== quiz.candidate.id && candidate.topic_key !== quiz.candidate.topic_key);
     const cards = selection.selectDailyAnchor({ candidates: remaining, events: [...(Array.isArray(events) ? events : []), quizEvent], random });
     if (!cards.candidate) return { quiz, cards, quizEvent, cardEvent: null };
     const cardEvent = makePendingEvent(cards.candidate, cards, 'daily-cards');
