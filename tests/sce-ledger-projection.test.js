@@ -26,7 +26,7 @@ test('projects concept states, due cards, pending debriefs, and next actions fro
   }, new Date('2026-08-09T09:00:00Z'));
 
   assert.equal(projection.ready, true);
-  assert.equal(projection.summary.neverDelivered, 1);
+  assert.equal(projection.summary.taxonomyConcepts, 4);
   assert.equal(projection.summary.deliveredUnconfirmed, 1);
   assert.equal(projection.summary.weak, 1);
   assert.equal(projection.summary.strong, 1);
@@ -48,7 +48,7 @@ test('ignores unknown statuses and future-due cards without corrupting dashboard
     topicNames: { x: 'Experimental Topic' }
   }, new Date('2026-08-09T09:00:00Z'));
 
-  assert.equal(projection.summary.neverDelivered, 0);
+  assert.equal(projection.summary.taxonomyConcepts, 0);
   assert.equal(projection.summary.cardsDue, 0);
   assert.deepEqual(projection.topics[0], {
     id: 'x', name: 'Experimental Topic', neverDelivered: 0,

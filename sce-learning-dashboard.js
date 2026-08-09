@@ -56,7 +56,7 @@
       generatedAt,
       statusLabel: ready ? 'LIVE LEARNING SYNC' : 'AWAITING HERMES SYNC',
       summary: {
-        neverDelivered: safeNumber(summary.neverDelivered),
+        taxonomyConcepts: safeNumber(summary.taxonomyConcepts),
         deliveredUnconfirmed: safeNumber(summary.deliveredUnconfirmed),
         weak: safeNumber(summary.weak),
         strong: safeNumber(summary.strong),
@@ -96,7 +96,7 @@
           const state = topicState(topic);
           return `<div class="ll-topic-row">
             <div class="ll-topic-name">${escapeHtml(topic.name)}</div>
-            <div class="ll-topic-counts"><span class="ll-new">${topic.neverDelivered} new</span><span class="ll-unconfirmed">${topic.deliveredUnconfirmed} pending</span><span class="ll-weak">${topic.weak} weak</span><span class="ll-strong">${topic.strong} strong</span></div>
+            <div class="ll-topic-counts"><span class="ll-unconfirmed">${topic.deliveredUnconfirmed} pending</span><span class="ll-weak">${topic.weak} weak</span><span class="ll-strong">${topic.strong} strong</span></div>
             <div class="ll-topic-bar" aria-label="${state.strongPct}% confirmed strong"><span style="width:${state.strongPct}%"></span></div>
             <div class="ll-topic-due">${topic.due} due</div>
           </div>`;
@@ -110,11 +110,11 @@
       <span class="sec-title">LEARNING LOOP</span><span class="sec-rule"></span>
       <span class="ll-status ${data.ready ? 'live' : 'pending'}">● ${escapeHtml(data.statusLabel)}</span>
     </div>
-    <div class="ll-intro">QBank tracker → Hermes concept ledger → Telegram retrieval. Last ledger sync: ${escapeHtml(formatTimestamp(data.generatedAt))}.</div>
+    <div class="ll-intro">QBank errors and weak-case performance → targeted recall ledger → Telegram retrieval. Last ledger sync: ${escapeHtml(formatTimestamp(data.generatedAt))}.</div>
     <section class="ll-section">
-      <div class="ll-section-title">HERMES COVERAGE</div>
+      <div class="ll-section-title">ACTIVE RECALL SIGNALS</div>
       <div class="ll-metrics">
-        <div class="ll-metric"><span>NEVER DELIVERED</span><strong class="ll-new">${s.neverDelivered}</strong></div>
+        <div class="ll-metric"><span>TAXONOMY REFERENCES</span><strong>${s.taxonomyConcepts}</strong><small>guide only</small></div>
         <div class="ll-metric"><span>UNCONFIRMED</span><strong class="ll-unconfirmed">${s.deliveredUnconfirmed}</strong></div>
         <div class="ll-metric"><span>WEAK</span><strong class="ll-weak">${s.weak}</strong></div>
         <div class="ll-metric"><span>CONFIRMED STRONG</span><strong class="ll-strong">${s.strong}</strong></div>

@@ -57,13 +57,13 @@
 
     const pendingDebriefs = attempts.filter(attempt => String(attempt.outcome || '').trim() === 'unanswered').length;
     const summary = [...topics.values()].reduce((total, topic) => ({
-      neverDelivered: total.neverDelivered + topic.neverDelivered,
+      taxonomyConcepts: total.taxonomyConcepts + topic.neverDelivered + topic.deliveredUnconfirmed + topic.weak + topic.strong,
       deliveredUnconfirmed: total.deliveredUnconfirmed + topic.deliveredUnconfirmed,
       weak: total.weak + topic.weak,
       strong: total.strong + topic.strong,
       cardsDue: total.cardsDue + topic.due,
       pendingDebriefs: total.pendingDebriefs,
-    }), { neverDelivered: 0, deliveredUnconfirmed: 0, weak: 0, strong: 0, cardsDue: 0, pendingDebriefs });
+    }), { taxonomyConcepts: 0, deliveredUnconfirmed: 0, weak: 0, strong: 0, cardsDue: 0, pendingDebriefs });
 
     const nextActions = [];
     if (dueCards.length) nextActions.push({
@@ -78,11 +78,6 @@
     if (weak) nextActions.push({
       kind: 'decision drill', label: `Revisit ${weak.name}`,
       detail: `${weak.weak} weak concept${weak.weak === 1 ? '' : 's'} need targeted retrieval.`
-    });
-    const newTopic = [...topics.values()].filter(topic => topic.neverDelivered > 0).sort((a, b) => b.neverDelivered - a.neverDelivered)[0];
-    if (newTopic) nextActions.push({
-      kind: 'new case', label: `Select a new concept from ${newTopic.name}`,
-      detail: `${newTopic.neverDelivered} concepts have not yet been delivered.`
     });
 
     return {
