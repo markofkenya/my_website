@@ -45,8 +45,8 @@ test('keeps the two approved read-only summary fetches and no secrets', () => {
 });
 
 test('restores the decorative capacity sweep while respecting reduced motion', () => {
-  assert.match(html, /@keyframes\s+capacity-sweep/);
-  assert.match(html, /class="capacity-sweep"/);
+  assert.match(html, /capacity-sweep\{from\{transform:translateX\(-100%\)\}to\{transform:translateX\(220%\)\}\}/);
+  assert.match(html, /animation:capacity-sweep 5\.5s linear infinite/);
   assert.match(html, /prefers-reduced-motion/);
   assert.match(html, /min-height:\s*44px/);
 });
