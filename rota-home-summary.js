@@ -22,7 +22,12 @@
 
   function entriesFor(state, personKey, dateKey) {
     const entries = state?.myShifts?.[personKey]?.[dateKey];
-    return Array.isArray(entries) ? entries.filter(entry => entry && typeof entry.type === 'string') : [];
+    const personal = Array.isArray(entries) ? entries.filter(entry => entry && typeof entry.type === 'string') : [];
+    const assignment = state?.assignments?.[dateKey];
+    if (assignment && assignment.p === personKey && typeof assignment.type === 'string') {
+      personal.push({ type: assignment.type });
+    }
+    return personal;
   }
 
   function has(entries, types) {

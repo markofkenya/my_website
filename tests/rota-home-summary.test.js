@@ -30,6 +30,16 @@ test('derives only allowlisted operational signals from an explicit on-call entr
   assert.equal(JSON.stringify(summary).includes('Private'), false);
 });
 
+test('derives a personal on-call signal from the shared Split rota assignment', () => {
+  const summary = buildRotaHomeSummary({
+    assignments: { '2026-08-10': { p: 'A', type: 'oncall' } },
+  }, 'A', new Date('2026-08-10T09:00:00Z'));
+
+  assert.deepEqual(summary.today, { dutyState: 'on-call', capacity: 'limited', conflict: false });
+  assert.equal(summary.week.workload, 'limited');
+  assert.equal(summary.week.nextDutyProximity, 'imminent');
+});
+
 test('recognises an explicit study-leave entry without inventing a duty or workload state', () => {
   const summary = buildRotaHomeSummary({
     myShifts: { A: { '2026-08-12': [{ type: 'study_leave' }] } },
