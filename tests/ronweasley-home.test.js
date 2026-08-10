@@ -33,7 +33,7 @@ test('centres the operational home around Today, This week and Attention', () =>
   for (const id of ['today', 'this-week', 'attention']) {
     assert.match(html, new RegExp(`<section\\b[^>]*\\bid="${id}"`));
   }
-  assert.match(html, /RON\s*\/\/\s*FLIGHT CONSOLE/);
+  assert.match(html, /RICK\s*\/\/\s*FLIGHT CONSOLE/);
   assert.match(html, /Read-only signal layer/i);
 });
 
@@ -100,9 +100,9 @@ test('groups launcher cards under General, SCE and Admin headings', () => {
   assert.match(html, /<h2[^>]*id="h-admin"[^>]*>Admin<\/h2>/);
 });
 
-test('exposes a Ron / SCE / Admin role switcher as an accessible radiogroup', () => {
+test('exposes a Rick / SCE / Admin role switcher as an accessible radiogroup', () => {
   assert.match(html, /role="radiogroup"/);
-  assert.match(html, /data-role="ron"[^>]*>Ron<\/button>/);
+  assert.match(html, /data-role="ron"[^>]*>Rick<\/button>/);
   assert.match(html, /data-role="sce"[^>]*>SCE<\/button>/);
   assert.match(html, /data-role="admin"[^>]*>Admin<\/button>/);
   // exactly one role button starts checked
@@ -119,7 +119,7 @@ test('persists the role filter choice via localStorage, not a live backend', () 
 
 test('states the static Telegram routing table with no numeric chat/account IDs', () => {
   const routing = [
-    ['General', 'Ron / default'],
+    ['General', 'Rick / default'],
     ['SCE Quiz', 'sce'],
     ['SCE Debrief', 'sce'],
     ['SCE Recall', 'sce'],
