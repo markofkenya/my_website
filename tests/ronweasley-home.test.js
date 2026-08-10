@@ -44,8 +44,9 @@ test('keeps the two approved read-only summary fetches and no secrets', () => {
   assert.doesNotMatch(html, /(firebaseConfig|apiKey|AIzaSy|initializeApp)/);
 });
 
-test('supports keyboard use and reduced motion', () => {
-  assert.match(html, /:focus-visible/);
+test('restores the decorative capacity sweep while respecting reduced motion', () => {
+  assert.match(html, /@keyframes\s+capacity-sweep/);
+  assert.match(html, /class="capacity-sweep"/);
   assert.match(html, /prefers-reduced-motion/);
   assert.match(html, /min-height:\s*44px/);
 });
