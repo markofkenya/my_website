@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RICK // Operations Home</title>
+<title>RON // Flight Console</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   :root {
@@ -62,9 +62,8 @@
   }
   /* Header sits on a dark panel; the default ink outline would be
      nearly invisible there, so use a light outline for that context. */
-  .site-header :focus-visible {
-    outline-color: var(--parchment);
-  }
+  .site-header :focus-visible { outline-color: var(--focus); }
+  .all-systems-toggle:focus-visible { outline-color: var(--focus); }
 
   /* ── Header ────────────────────────────────────────────── */
   .site-header {
@@ -349,6 +348,32 @@
     letter-spacing: 0.02em;
   }
 
+  /* ── Flight console refinement ───────────────────────────── */
+  body { background-color: #011; background-image: linear-gradient(rgba(103,246,181,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(103,246,181,.035) 1px, transparent 1px); background-size: 28px 28px; }
+  .site-header { padding: 22px 20px; border-bottom: 1px solid var(--line); }
+  .header-inner { align-items: flex-start; }
+  .tagline, .role-hint { color: var(--ink-soft); }
+  .all-systems-toggle { margin-left: auto; min-height: 44px; padding: 10px 14px; background: transparent; border: 1px solid var(--line); border-radius: var(--radius); color: var(--ink); font: 700 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+  .all-systems-toggle:hover { border-color: var(--copper); color: var(--copper-light); }
+  .command-now { margin: 4px 0 16px; padding: clamp(22px, 5vw, 42px); border-color: var(--copper-dark); background: linear-gradient(135deg, #0b2426, #09161d 65%); }
+  .console-label { color: var(--copper); font: 700 11px var(--font-mono); letter-spacing: .16em; margin-bottom: 12px; }
+  .command-now h2 { font-size: clamp(30px, 6vw, 46px); max-width: 650px; color: var(--ink); }
+  .decision-copy { max-width: 650px; margin-top: 14px; color: var(--ink-soft); font-size: 17px; }
+  .why { margin-top: 26px; max-width: 650px; padding-left: 14px; border-left: 3px solid var(--copper-light); color: var(--ink-soft); }
+  .why strong { display: block; color: var(--copper-light); font: 700 11px var(--font-mono); text-transform: uppercase; letter-spacing: .12em; }
+  .source-action { display: inline-flex; gap: 10px; align-items: center; min-height: 44px; margin-top: 24px; padding: 10px 14px; color: var(--ink); text-decoration: none; border: 1px solid var(--line); font: 700 12px var(--font-mono); }
+  .source-action:hover { border-color: var(--copper); color: var(--copper-light); }
+  .week-panel, .attention-panel { margin-bottom: 16px; }
+  .week-horizon { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; margin: 20px 0 12px; padding: 0; list-style: none; }
+  .week-horizon li { min-height: 68px; padding: 10px 8px; background: #0a2026; border-top: 2px solid var(--line); color: var(--ink-soft); font: 700 10px var(--font-mono); letter-spacing: .08em; }
+  #all-systems { margin-top: 22px; }
+  #all-systems[hidden] { display: none; }
+  .launcher-group { margin-bottom: 22px; }
+  .card { background: #091b22; border-left-width: 2px; }
+  .attention-panel { border-color: #80594b; }
+  .attention-panel h2 { color: #ffd3a1; }
+  @media (max-width: 640px) { .header-inner { flex-wrap: wrap; } .all-systems-toggle { margin-left: 0; } .week-horizon { grid-template-columns: repeat(4, 1fr); } }
+
   /* ── Reduced motion ────────────────────────────────────── */
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
@@ -363,10 +388,11 @@
   <div class="header-inner">
     <div class="portal-mark" aria-hidden="true"><span></span><span></span><span></span></div>
     <div class="header-text">
-      <p class="eyebrow">RICK // OPERATIONS</p>
+      <p class="eyebrow">RON // FLIGHT CONSOLE</p>
       <h1>Home</h1>
-      <p class="tagline">Read-only signal layer. Find the next safe move; the source systems keep the records.</p>
+      <p class="tagline">Read-only signal layer. Decisions here; records stay in their source systems.</p>
     </div>
+    <button class="all-systems-toggle" id="all-systems-toggle" type="button" aria-controls="all-systems" aria-expanded="false">All systems</button>
   </div>
 
   <div class="role-switch-wrap">
@@ -381,22 +407,24 @@
 
 <main id="launchers">
 
-  <section class="panel" id="today" aria-labelledby="today-heading">
-    <h2 id="today-heading">Today</h2>
-    <p class="panel-sub">Capacity first. Home will not manufacture urgency while Rota and Calendar summaries are unavailable.</p>
-    <p class="monitor-not-connected">Awaiting a published read-only summary. Until then, open the canonical tool before committing time or energy.</p>
+  <section class="panel command-now" id="today" aria-labelledby="today-heading">
+    <p class="console-label">NOW / CAPACITY FIRST</p>
+    <h2 id="today-heading">Awaiting Rota</h2>
+    <p class="decision-copy">Awaiting a published capacity summary. Do not manufacture urgency while the source is unavailable.</p>
+    <p class="why"><strong>Constraint</strong> Home does not infer capacity from a missing rota signal.</p>
+    <a class="source-action" href="rota.html" target="_blank" rel="noopener">Open InstaRota <span aria-hidden="true">→</span></a>
   </section>
 
-  <section class="panel" id="this-week" aria-labelledby="week-heading">
-    <h2 id="week-heading">This week</h2>
-    <p class="panel-sub">A deliberate scan of rota, recovery, deadlines and realistic study space — not a duplicate task list.</p>
-    <p class="monitor-not-connected">The weekly capacity contract is defined; its source summaries are awaiting publication.</p>
-  </section>
-
-  <section class="panel" id="attention" aria-labelledby="attention-heading">
-    <h2 id="attention-heading">Attention</h2>
-    <p class="panel-sub">Only source-owned risk signals belong here: conflicts, due-soon evidence, blocked work and protected study windows.</p>
-    <p class="monitor-not-connected">No attention signals are claimed until their read-only sources publish them.</p>
+  <section class="panel week-panel" id="this-week" aria-labelledby="week-heading">
+    <div>
+      <p class="console-label">THIS WEEK / HORIZON</p>
+      <h2 id="week-heading">Capacity requires source review</h2>
+    </div>
+    <p class="panel-sub">The operational horizon will show only published capacity, recovery and conflict signals — never raw rota records.</p>
+    <ol class="week-horizon" aria-label="Weekly source status">
+      <li>MON</li><li>TUE</li><li>WED</li><li>THU</li><li>FRI</li><li>SAT</li><li>SUN</li>
+    </ol>
+    <p class="monitor-not-connected">No published weekly capacity signal yet.</p>
   </section>
 
   <div class="monitor-grid">
@@ -406,7 +434,8 @@
     <section class="panel monitor-panel" id="calendar-signal"><h2>Calendar capacity</h2><p class="monitor-not-connected">Awaiting a published read-only summary.</p></section>
   </div>
 
-  <section class="launcher-group" data-group="general" aria-labelledby="h-general">
+  <div id="all-systems" hidden>
+  <section class="launcher-group" id="workstreams" data-group="general" aria-labelledby="h-general">
     <h2 id="h-general">General</h2>
     <div class="card-grid">
       <a class="card" href="index.html" target="_blank" rel="noopener">
@@ -449,7 +478,7 @@
       <a class="card" href="rota.html" target="_blank" rel="noopener">
         <span class="card-title">InstaRota</span>
         <span class="card-desc">Your clinics, on-calls and leave in one live rota.</span>
-        <span class="card-path">rotav2.html</span>
+        <span class="card-path">rota.html</span>
       </a>
       <a class="card" href="ARCP.html" target="_blank" rel="noopener">
         <span class="card-title">Portfolio Tracker</span>
@@ -462,6 +491,14 @@
         <span class="card-path">oncall-tracker.html</span>
       </a>
     </div>
+  </section>
+  </div>
+
+  <section class="panel attention-panel" id="attention" aria-labelledby="attention-heading">
+    <p class="console-label">ATTENTION NEEDED / SIGNALS ONLY</p>
+    <h2 id="attention-heading">Awaiting published source signals</h2>
+    <p class="panel-sub">Attention will list only source-published conflicts, deadlines, recovery protection or blocked work.</p>
+    <p class="monitor-not-connected">No attention status is available until its source summaries are connected.</p>
   </section>
 
   <div class="lower-grid">
@@ -567,6 +604,21 @@
   var stored = null;
   try { stored = window.localStorage.getItem(STORAGE_KEY); } catch (e) { /* storage unavailable */ }
   setRole(stored || "ron");
+})();
+</script>
+
+<script>
+(function () {
+  "use strict";
+  var toggle = document.getElementById("all-systems-toggle");
+  var systems = document.getElementById("all-systems");
+  if (!toggle || !systems) return;
+  toggle.addEventListener("click", function () {
+    var isOpen = !systems.hidden;
+    systems.hidden = isOpen;
+    toggle.setAttribute("aria-expanded", isOpen ? "false" : "true");
+    toggle.textContent = isOpen ? "All systems" : "Hide systems";
+  });
 })();
 </script>
 

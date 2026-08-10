@@ -33,8 +33,33 @@ test('centres the operational home around Today, This week and Attention', () =>
   for (const id of ['today', 'this-week', 'attention']) {
     assert.match(html, new RegExp(`<section\\b[^>]*\\bid="${id}"`));
   }
-  assert.match(html, /RICK\s*\/\/\s*OPERATIONS/);
+  assert.match(html, /RON\s*\/\/\s*FLIGHT CONSOLE/);
   assert.match(html, /Read-only signal layer/i);
+});
+
+test('uses the flight-console hierarchy: Now first, then week, workstreams and attention', () => {
+  const now = html.indexOf('id="today"');
+  const week = html.indexOf('id="this-week"');
+  const workstreams = html.indexOf('id="workstreams"');
+  const attention = html.indexOf('id="attention"');
+  assert.ok(now >= 0 && now < week && week < workstreams && workstreams < attention);
+  assert.match(html, /<button[^>]*id="all-systems-toggle"[^>]*>All systems<\/button>/);
+  assert.match(html, /id="all-systems"[^>]*\bhidden\b/);
+});
+
+test('renders a quiet, honest Now state when the rota aggregate is unavailable', () => {
+  const section = extractSection('today');
+  assert.match(section, /Awaiting a published capacity summary/i);
+  assert.match(section, /Open InstaRota/i);
+  assert.doesNotMatch(section, /\b\d+\b/);
+  assert.doesNotMatch(section, /(sleep debt|drift|shift|location|rota code)/i);
+});
+
+test('keeps Attention explicitly unavailable until its source-owned feeds publish', () => {
+  const section = extractSection('attention');
+  assert.match(section, /Awaiting published source signals/i);
+  assert.doesNotMatch(section, /No source-backed blocker is published/i);
+  assert.doesNotMatch(section, /If it mattered, it would be here/i);
 });
 
 test('keeps unavailable source panels honest instead of inventing live metrics', () => {
