@@ -946,6 +946,7 @@
       <button class="msg-tab" id="hubMsgTab" aria-label="Messages">Messages<span class="msg-badge" id="hubMsgBadge" hidden></span></button>
       <button class="msg-tab" id="hubDeptBtn">Department rota</button>
       <button class="acct-btn" id="hubAccountBtn">Sign in</button>
+      <button class="acct-btn" id="homeSyncBtn" type="button">Home sync</button>
     </div>
   </header>
   <div class="hub-cards">
@@ -1451,6 +1452,7 @@
 
 <div id="toast" class="toast"></div>
 
+<script src="rota-home-summary.js"></script>
 <script>
 (function(){
   /* theme bootstrap (set before first render to avoid a flash) */
@@ -1532,10 +1534,11 @@ let notified = new Set();
 function readLocal(){ try{ const r=localStorage.getItem(STORE_KEY); return r?JSON.parse(r):null; }catch(e){ return mem; } }
 function writeLocal(obj){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(obj)); }catch(e){ mem=obj; } }
 let applyingRemote = false, db = null;
+let homeAuthUser = null, homeAuthListenerAttached = false;
 let lastRemoteTs=0, firstSyncDone=false, stampCounter=0, lastAutoPushAt=0;
 function stamp(){ const s=Math.max(Date.now(), lastRemoteTs+1, stampCounter+1); stampCounter=s; return s; }
 function touchDay(k, ds){ if(!k) return; if(!state.myShiftsTs) state.myShiftsTs={}; if(!state.myShiftsTs[k]) state.myShiftsTs[k]={}; state.myShiftsTs[k][ds]=stamp(); }
-function persist(){ state.updatedAt=Math.max(Date.now(), lastRemoteTs+1, (state.updatedAt||0)+1); lastRemoteTs=Math.max(lastRemoteTs, state.updatedAt); writeLocal(state); if(db && !applyingRemote && firstSyncDone){ try{ db.ref(syncPath).set(state).catch(e=>{ console.warn("sync write rejected", e); setSyncStatus("local","Sync error — changes saved on this device only. Tap to retry."); }); }catch(e){ console.warn("sync write failed", e); } } }
+function persist(){ state.updatedAt=Math.max(Date.now(), lastRemoteTs+1, (state.updatedAt||0)+1); lastRemoteTs=Math.max(lastRemoteTs, state.updatedAt); writeLocal(state); publishHomeSummary(); if(db && !applyingRemote && firstSyncDone){ try{ db.ref(syncPath).set(state).catch(e=>{ console.warn("sync write rejected", e); setSyncStatus("local","Sync error — changes saved on this device only. Tap to retry."); }); }catch(e){ console.warn("sync write failed", e); } } }
 
 /* ===== date helpers ===== */
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -3454,10 +3457,48 @@ function loadCode(){ try{ return localStorage.getItem(CODE_STORE)||""; }catch(e)
 function saveCode(c){ try{ localStorage.setItem(CODE_STORE, c); }catch(e){} }
 async function ensureFirebase(){
   if(!FIREBASE_CONFIG.databaseURL) return false;
-  if(!window.firebase){ await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"); await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"); }
+  if(!window.firebase) await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
+  if(typeof firebase.database!=="function") await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js");
+  if(typeof firebase.auth!=="function") await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js");
   if(!(firebase.apps && firebase.apps.length)) firebase.initializeApp(FIREBASE_CONFIG);
   db=firebase.database();
+  attachHomeAuthListener();
   return true;
+}
+function renderHomeSyncButton(){
+  const btn=document.getElementById("homeSyncBtn");
+  if(!btn) return;
+  btn.textContent=homeAuthUser ? "Home synced" : "Home sync";
+}
+function attachHomeAuthListener(){
+  if(homeAuthListenerAttached || !firebase.auth) return;
+  homeAuthListenerAttached=true;
+  firebase.auth().onAuthStateChanged(user=>{
+    homeAuthUser=user||null;
+    renderHomeSyncButton();
+    publishHomeSummary();
+  });
+}
+function publishHomeSummary(){
+  if(!db || !homeAuthUser || !meKey || !window.RotaHomeSummary) return;
+  try{
+    const write=window.RotaHomeSummary.buildHomePrivateWrite(homeAuthUser.uid, state, meKey);
+    db.ref(write.path).set(write.value).catch(error=>console.warn("private Home summary rejected", error));
+  }catch(error){ console.warn("private Home summary unavailable", error); }
+}
+async function signInForHomeSync(){
+  try{
+    const ok=await ensureFirebase();
+    if(!ok || !firebase.auth) throw new Error("Firebase authentication is unavailable");
+    if(!homeAuthUser){
+      const provider=new firebase.auth.GoogleAuthProvider();
+      await firebase.auth().signInWithPopup(provider);
+    }
+    publishHomeSummary();
+  }catch(error){
+    console.warn("Home sync sign-in failed", error);
+    flashMsg("Home sync sign-in did not complete");
+  }
 }
 function loadCacheCode(){ try{ return localStorage.getItem(CACHE_OWNER)||""; }catch(e){ return ""; } }
 function saveCacheCode(c){ cacheCode=c; try{ localStorage.setItem(CACHE_OWNER, c); }catch(e){} }
@@ -3497,6 +3538,7 @@ function attachSync(){
       try{ syncRef.set(state).catch(e=>{ console.warn("seed rejected", e); setSyncStatus("local","Sync error — check the rota code / connection. Saved on this device."); }); }catch(e){ console.warn("seed failed", e); }
       if(meKey && !hasPin(meKey)) offerPinSetup(meKey);
     }
+    publishHomeSummary();
   }, err=>{ console.warn(err); setSyncStatus("local","Sync error — saved on this device. Tap to retry."); });
   setSyncStatus("live", `Live · rota code “${rotaCode}”. Tap to change.`);
 }
@@ -3765,6 +3807,7 @@ function boot(){
   document.getElementById("hubAnnual").onclick=()=>openLeave();
   document.getElementById("hubSplit").onclick=()=>showBase("split");
   document.getElementById("hubAccountBtn").onclick=openLogin;
+  document.getElementById("homeSyncBtn").onclick=signInForHomeSync;
   document.getElementById("hubMsgTab").onclick=openMessages;
   document.getElementById("splitBack").onclick=()=>showBase("hub");
   document.getElementById("msgTab").onclick=openMessages;
