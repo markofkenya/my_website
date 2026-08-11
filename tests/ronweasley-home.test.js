@@ -39,6 +39,9 @@ test('provides distinct agent workstreams with scoped in-dashboard chat controls
   assert.match(html, /id="agent-chat"/);
   assert.match(html, /Agent chat is unavailable until private connection is configured/i);
   assert.match(html, /Budget bill signals are intentionally not connected/i);
+  assert.match(html, /home-source-summaries\.js/);
+  assert.match(html, /id="agentSceStatus"/);
+  assert.match(html, /id="agentPortfolioStatus"/);
 });
 
 test('does not expose Firebase configuration, a rota room, credentials, or raw source paths', () => {

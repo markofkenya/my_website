@@ -362,8 +362,8 @@
     <div class="sec-head"><svg class="i sm"><use href="#ic-user"/></svg><span class="lbl">Your team</span><span class="count">scoped support</span></div>
     <div class="cards agent-grid">
       <article class="card"><div class="ct"><span class="lbl">Ron · rota</span><span class="count">private</span></div><p>Week rota and scheduling context.</p><a class="btn" href="rota.html">Open full rota</a> <button class="btn" data-agent="Ron">Ask Ron</button></article>
-      <article class="card"><div class="ct"><span class="lbl">Hufflepuff · portfolio</span><span class="count">source-aware</span></div><p>ARCP position, opportunities and drafts.</p><a class="btn" href="ARCP.html">View portfolio</a> <button class="btn" data-agent="Hufflepuff">Ask Hufflepuff</button></article>
-      <article class="card"><div class="ct"><span class="lbl">Harry · SCE</span><span class="count">learning</span></div><p>Current Pass 1 module and next study action.</p><a class="btn" href="SCE.html">Open SCE</a> <button class="btn" data-agent="Harry">Ask Harry</button></article>
+      <article class="card"><div class="ct"><span class="lbl">Hufflepuff · portfolio</span><span class="count">source-aware</span></div><p id="agentPortfolioStatus">Portfolio summary unavailable.</p><a class="btn" href="ARCP.html">View portfolio</a> <button class="btn" data-agent="Hufflepuff">Ask Hufflepuff</button></article>
+      <article class="card"><div class="ct"><span class="lbl">Harry · SCE</span><span class="count">learning</span></div><p id="agentSceStatus">SCE summary unavailable.</p><a class="btn" href="SCE.html">Open SCE</a> <button class="btn" data-agent="Harry">Ask Harry</button></article>
       <article class="card"><div class="ct"><span class="lbl">Hagrid · life admin</span><span class="count">private</span></div><p>Life-admin projection awaiting authenticated source. Budget bill signals are intentionally not connected.</p><a class="btn" href="index.html">Open life admin</a> <button class="btn" data-agent="Hagrid">Ask Hagrid</button></article>
     </div>
   </section>
@@ -439,6 +439,7 @@
 </aside>
 
 <script src="home-private-rota.js"></script>
+<script src="home-source-summaries.js"></script>
 <script>
 /* =====================================================================
    Home agent brief. Read-first briefing and approval surface.
@@ -698,6 +699,7 @@ const session={
     intendedTopicId:'potassium-acid-base', updatedAt:null},
   sceCanonicalTopicId:'potassium-acid-base',
   approvals:{}, feedback:[],
+  sourceSummaries:{sce:null, portfolio:null},
   capture:[], captureType:'case', selectedDay:null
 };
 
@@ -705,6 +707,17 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
   .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const ico=(id,cls='i sm')=>`<svg class="${cls}"><use href="#${id}"/></svg>`;
+
+function renderSourceAgentStates(){
+  const sce=session.sourceSummaries.sce;
+  const portfolio=session.sourceSummaries.portfolio;
+  $('agentSceStatus').textContent = sce
+    ? `Learning summary: ${sce.summary.cardsDue} due cards · ${sce.summary.pendingDebriefs} pending debriefs${sce.topics.find(topic=>topic.due>0)?` · Focus: ${sce.topics.find(topic=>topic.due>0).name}`:''}.`
+    : 'SCE summary unavailable.';
+  $('agentPortfolioStatus').textContent = portfolio
+    ? `Renal: ${portfolio.readiness.renal.replace('-', ' ')} · GIM: ${portfolio.readiness.gim.replace('-', ' ')} · ${portfolio.nextAction}.`
+    : 'Portfolio summary unavailable.';
+}
 
 /* ---------- render ---------- */
 function render(){
@@ -1139,7 +1152,13 @@ $('runChecks').onclick=runChecks;
 
 /* ---------- boot ---------- */
 async function boot(){
-  renderBands(); renderChoices(); renderPrio(); renderConflict(); logFeedback('session','started');
+  renderBands(); renderChoices(); renderPrio(); renderConflict(); renderSourceAgentStates(); logFeedback('session','started');
+  if(window.HomeSourceSummaries){
+    window.HomeSourceSummaries.start({
+      onSce: summary => { session.sourceSummaries.sce=summary; renderSourceAgentStates(); },
+      onPortfolio: summary => { session.sourceSummaries.portfolio=summary; renderSourceAgentStates(); }
+    }).catch(() => { session.sourceSummaries.sce=null; session.sourceSummaries.portfolio=null; renderSourceAgentStates(); });
+  }
   if(PRIVATE_CONNECTION){
     try{
       const {initializeApp}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
