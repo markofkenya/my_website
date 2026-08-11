@@ -24,12 +24,13 @@
       || typeof value.generatedAt !== 'string' || Number.isNaN(new Date(value.generatedAt).getTime())
       || !exactKeys(value.summary, ['taxonomyConcepts', 'deliveredUnconfirmed', 'weak', 'strong', 'cardsDue', 'pendingDebriefs'])
       || !Object.values(value.summary).every(nonNegative) || !Array.isArray(value.topics)) return null;
-    const topics = value.topics.map(topic => {
+    const topics = [];
+    for (const topic of value.topics) {
       if (!exactKeys(topic, ['id', 'name', 'neverDelivered', 'deliveredUnconfirmed', 'weak', 'strong', 'due'])
         || !safeText(topic.id) || !safeText(topic.name)
         || !['neverDelivered', 'deliveredUnconfirmed', 'weak', 'strong', 'due'].every(key => nonNegative(topic[key]))) return null;
-      return { ...topic };
-    });
+      topics.push({ ...topic });
+    }
     return { ready: value.ready, generatedAt: value.generatedAt, summary: { ...value.summary }, topics };
   }
 
