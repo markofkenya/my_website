@@ -39,7 +39,8 @@ test('provides distinct agent workstreams with scoped in-dashboard chat controls
   assert.match(html, /id="agent-chat"/);
   assert.match(html, /Agent chat is unavailable until private connection is configured/i);
   assert.match(html, /Budget bill signals are intentionally not connected/i);
-  assert.match(html, /home-source-summaries\.js/);
+  assert.match(html, /home-source-summaries\.js\?v=/);
+  assert.match(html, /home-private-rota\.js\?v=/);
   assert.match(html, /id="agentSceStatus"/);
   assert.match(html, /id="agentPortfolioStatus"/);
 });
