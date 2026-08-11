@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Home — daily brief</title>
+<style>
+  :root{
+    --ground:#080B0A;
+    --panel:#0F1513;
+    --panel-2:#141C1A;
+    --raise:#18211E;
+    --line:#1E2A27;
+    --line-soft:#16201D;
+    --ink:#E8F1EE;
+    --ink-dim:#8CA39D;
+    --ink-faint:#5A6E69;
+    --teal:#3BDDB4;
+    --teal-dim:#1C6B58;
+    --teal-deep:#0C332B;
+    --amber:#E9B155;
+    --amber-deep:#33280E;
+    --rose:#EC7A72;
+    --rose-deep:#331715;
+    --mono: ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --sans: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--ground);color:var(--ink);font-family:var(--sans);
+    font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;padding-bottom:70px;
+  }
+  button{font:inherit;color:inherit;cursor:pointer}
+  .wrap{max-width:900px;margin:0 auto;padding:0 16px}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+  .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint)}
+  svg.i{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6;
+        stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+  svg.i.lg{width:20px;height:20px}
+  svg.i.sm{width:13px;height:13px}
+
+  /* ---------- top bar ---------- */
+  .bar{position:sticky;top:0;z-index:40;background:rgba(8,11,10,.94);
+       backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .bar-in{max-width:900px;margin:0 auto;padding:9px 16px;display:flex;align-items:center;gap:10px}
+  .brandmark{display:flex;align-items:center;gap:8px;color:var(--teal)}
+  .brandmark span{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink)}
+  .statechip{display:flex;align-items:center;gap:6px;padding:4px 9px;border-radius:999px;
+             font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+             border:1px solid var(--teal-dim);color:var(--teal);background:var(--teal-deep)}
+  .statechip.warn{border-color:#5A4718;color:var(--amber);background:var(--amber-deep)}
+  .statechip.bad{border-color:#5A2A26;color:var(--rose);background:var(--rose-deep)}
+  .iconbtn{margin-left:auto;display:flex;align-items:center;gap:7px;background:var(--panel-2);
+           border:1px solid var(--line);border-radius:7px;padding:6px 10px;color:var(--ink-dim);
+           font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+  .iconbtn:hover{border-color:var(--teal-dim);color:var(--ink)}
+
+  /* ---------- gauge row (signature) ---------- */
+  .gauges{display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr;gap:8px;margin-top:14px}
+  @media(max-width:680px){.gauges{grid-template-columns:1fr 1fr}}
+  .gauge{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 13px;
+         display:flex;flex-direction:column;gap:2px;min-height:98px;position:relative;overflow:hidden}
+  .gauge .top{display:flex;align-items:center;gap:6px;color:var(--ink-faint)}
+  .gauge .fig{font-size:32px;line-height:1.05;font-weight:600;margin-top:auto;color:var(--ink)}
+  .gauge .fig small{font-size:13px;font-weight:500;color:var(--ink-dim);margin-left:3px;letter-spacing:0}
+  .gauge .cap{font-size:11.5px;color:var(--ink-faint);line-height:1.3}
+  .gauge.accent .fig{color:var(--teal)}
+  .gauge.warn .fig{color:var(--amber)}
+  .gauge.bad .fig{color:var(--rose)}
+  .gauge.unknown .fig{color:var(--ink-faint)}
+  .ring{position:absolute;right:10px;top:10px}
+  .ring circle{fill:none;stroke-width:4}
+  .ring .bg{stroke:var(--line)}
+  .ring .fg{stroke:var(--teal);stroke-linecap:round;transition:stroke-dasharray .5s ease}
+
+  /* ---------- sections ---------- */
+  section{margin-top:22px}
+  .sec-head{display:flex;align-items:center;gap:8px;margin-bottom:9px;color:var(--teal)}
+  .sec-head .lbl{color:var(--teal)}
+  .sec-head .count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+
+  /* ---------- NOW ---------- */
+  .now{display:flex;gap:14px;padding:16px;position:relative;overflow:hidden}
+  .now::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--teal)}
+  .now[data-state="partial"]::before{background:repeating-linear-gradient(180deg,var(--amber) 0 9px,transparent 9px 16px)}
+  .now[data-state="cannot-determine"]::before{background:repeating-linear-gradient(180deg,var(--rose) 0 5px,transparent 5px 11px)}
+  .now .dial{flex:0 0 78px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+             border-right:1px solid var(--line-soft);padding-right:12px}
+  .now .dial .v{font-size:38px;font-weight:600;line-height:1;color:var(--teal)}
+  .now .dial .u{margin-top:3px}
+  .now .main{flex:1;min-width:0}
+  .now h2{margin:0 0 8px;font-size:20px;line-height:1.25;font-weight:600;letter-spacing:-.01em}
+  .metaline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+  .pill{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--panel-2);
+        border-radius:6px;padding:3px 8px;font-size:12px;color:var(--ink-dim)}
+  .pill.warn{border-color:#5A4718;color:var(--amber);background:var(--amber-deep)}
+  .fallback{display:flex;gap:7px;align-items:flex-start;font-size:13.5px;color:var(--ink-dim);
+            border-top:1px dashed var(--line);padding-top:9px;margin-top:2px}
+  .fallback svg{color:var(--amber);margin-top:2px}
+  .whybtn{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--line);
+          border-radius:6px;padding:4px 9px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+          text-transform:uppercase;color:var(--ink-faint);margin-top:10px}
+  .whybtn:hover{color:var(--teal);border-color:var(--teal-dim)}
+  .whybtn b{color:var(--teal);font-size:11px}
+  .why{margin-top:9px;display:none;flex-wrap:wrap;gap:5px}
+  .why[data-open="true"]{display:flex}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;
+        border:1px solid var(--line);border-radius:5px;background:var(--panel-2);padding:3px 7px;color:var(--ink-dim)}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);flex:0 0 6px}
+  .dot.aging{background:var(--amber)} .dot.stale{background:var(--rose)}
+  .chip .age{color:var(--ink-faint)}
+  .chip.gap{border-style:dashed;border-color:#5A2A26;color:var(--rose)}
+
+  /* ---------- PLAN ---------- */
+  .rows{display:flex;flex-direction:column;gap:6px}
+  .row{display:flex;align-items:center;gap:11px;background:var(--panel);border:1px solid var(--line);
+       border-radius:10px;padding:11px 13px}
+  .row .rk{font-size:20px;font-weight:600;color:var(--teal-dim);flex:0 0 20px;text-align:center}
+  .row .ico{color:var(--ink-faint);display:flex}
+  .row .txt{flex:1;min-width:0;font-size:14.5px}
+  .row .dur{font-family:var(--mono);font-size:13px;color:var(--ink-dim);white-space:nowrap}
+  .row .dur small{font-size:10px;color:var(--ink-faint);margin-left:2px}
+  .evdots{display:flex;gap:3px;flex:0 0 auto}
+  .evdots i{width:5px;height:5px;border-radius:50%;background:var(--teal-dim);display:block}
+  .evdots i.aging{background:var(--amber)} .evdots i.stale{background:var(--rose)}
+  .evdots.none i{background:var(--rose)}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  @media(max-width:620px){.split{grid-template-columns:1fr}}
+  .keep{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:var(--panel)}
+  .keep .kh{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+  .keep.protect .kh{color:var(--teal)} .keep.defer .kh{color:var(--amber)}
+  .keep .kh .lbl{color:inherit}
+  .keep ul{margin:0;padding:0;list-style:none}
+  .keep li{font-size:13.5px;color:var(--ink-dim);padding:3px 0 3px 12px;position:relative}
+  .keep li::before{content:"";position:absolute;left:0;top:11px;width:5px;height:1px;background:var(--ink-faint)}
+  .keep li.empty{padding-left:0;color:var(--ink-faint)}
+  .keep li.empty::before{display:none}
+
+  /* ---------- WEEK ---------- */
+  .week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .day{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 6px 8px;
+       display:flex;flex-direction:column;align-items:center;gap:3px;position:relative;overflow:hidden}
+  .day .wd{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+  .day .dt{font-size:19px;font-weight:600;line-height:1.1;color:var(--ink)}
+  .day .marks{display:flex;gap:2px;min-height:14px;align-items:center;color:var(--ink-faint)}
+  .day .marks svg{width:11px;height:11px}
+  .day::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--line)}
+  .day[data-ctx="protected"]::after{background:var(--teal)}
+  .day[data-ctx="working"]::after{background:var(--teal-dim)}
+  .day[data-ctx="recovery"]::after{background:var(--amber)}
+  .day[data-ctx="unavailable"]::after{background:var(--rose)}
+  .day[data-ctx="unknown"]::after{background:repeating-linear-gradient(90deg,var(--ink-faint) 0 3px,transparent 3px 6px)}
+  .day[aria-pressed="true"]{border-color:var(--teal-dim);background:var(--raise)}
+  .day[data-today="true"] .dt{color:var(--teal)}
+  .day[data-today="true"] .wd{color:var(--teal)}
+  .daydetail{margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+             padding:12px 13px;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+  .daydetail .dd{flex:0 0 62px;text-align:center;border-right:1px solid var(--line-soft);padding-right:12px}
+  .daydetail .dd .v{font-size:26px;font-weight:600;line-height:1;color:var(--teal)}
+  .daydetail .body{flex:1;min-width:180px}
+  .daydetail .body .t{font-size:14.5px;margin-bottom:7px}
+  .cats{display:flex;flex-wrap:wrap;gap:5px}
+
+  /* ---------- CAPTURE ---------- */
+  .capbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+  .capinput{display:flex;gap:7px}
+  .caplist{display:flex;flex-direction:column;gap:6px;margin-top:9px}
+  .capitem{display:flex;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--line);
+           border-radius:9px;padding:9px 11px}
+  .capitem .ico{color:var(--teal);display:flex}
+  .capitem .txt{flex:1;min-width:0;font-size:14px}
+  .capitem .tm{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);white-space:nowrap}
+  .capitem .x{background:none;border:none;color:var(--ink-faint);display:flex;padding:2px}
+  .capitem .x:hover{color:var(--rose)}
+  .capitem[data-draft="true"]{border-color:var(--teal-dim)}
+  .caphint{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;
+           color:var(--ink-faint);margin-top:10px;padding-top:9px;border-top:1px dashed var(--line)}
+
+  /* ---------- cards ---------- */
+  .cards{display:flex;flex-direction:column;gap:8px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 13px}
+  .card .ch{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .card .ch .cat{display:flex;align-items:center;gap:6px;color:var(--teal)}
+  .card .ch .when{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+  .card p{margin:0;font-size:14px;color:var(--ink)}
+  .card .sub{font-size:12.5px;color:var(--ink-faint);margin-top:5px;display:flex;gap:6px;align-items:flex-start}
+  .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .btn{display:inline-flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--line);
+       border-radius:7px;padding:6px 10px;font-size:13px;color:var(--ink-dim)}
+  .btn:hover{border-color:var(--teal-dim);color:var(--ink)}
+  .btn.go{border-color:var(--teal-dim);color:var(--teal);background:var(--teal-deep)}
+  .btn[aria-pressed="true"]{border-color:var(--teal-dim);color:var(--teal);background:var(--teal-deep)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.sm{padding:4px 8px;font-size:12px}
+  .status{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;
+          color:var(--teal);margin-top:8px}
+  .status.hold{color:var(--amber)}
+  .status.off{color:var(--ink-faint)}
+
+  /* ---------- SIGNALS ---------- */
+  .sigs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  @media(max-width:620px){.sigs{grid-template-columns:1fr 1fr}}
+  .sig{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px}
+  .sig .sh{display:flex;align-items:center;gap:6px;color:var(--ink-faint)}
+  .sig .v{font-size:22px;font-weight:600;margin-top:8px;color:var(--teal)}
+  .sig .v small{font-size:12px;font-weight:500;margin-left:1px}
+  .sig.aging .v,.sig.aging .sh{color:var(--amber)}
+  .sig.stale .v,.sig.stale .sh,.sig.missing .v,.sig.missing .sh{color:var(--rose)}
+  .sig .st{font-size:11px;color:var(--ink-faint);margin-top:1px}
+  .gapcard{display:flex;gap:9px;align-items:flex-start;border:1px dashed #5A2A26;background:var(--rose-deep);
+           border-radius:10px;padding:10px 12px;margin-top:8px;font-size:13px;color:var(--ink-dim)}
+  .gapcard svg{color:var(--rose);margin-top:2px}
+  .gapcard b{color:var(--rose);display:block;font-family:var(--mono);font-size:10px;
+             letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px}
+
+  /* ---------- feedback ---------- */
+  .fbrow{display:flex;flex-wrap:wrap;gap:6px}
+  .bands{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;padding-top:9px;border-top:1px dashed var(--line)}
+  .band{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:7px;
+        padding:5px 9px;background:var(--panel-2);color:var(--ink-dim);font-family:var(--mono);font-size:12px}
+  .band[aria-pressed="true"]{border-color:var(--teal-dim);color:var(--teal);background:var(--teal-deep)}
+  .log{margin-top:9px;font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+  .log div{padding:2px 0;display:flex;gap:8px}
+  .log .tm{color:var(--teal-dim)}
+
+  /* ---------- drawer ---------- */
+  .scrim{position:fixed;inset:0;background:rgba(3,6,5,.75);z-index:50;display:none}
+  .scrim[data-open="true"]{display:block}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(430px,100%);z-index:51;background:var(--panel);
+          border-left:1px solid var(--line);padding:18px;overflow-y:auto;transform:translateX(100%);
+          transition:transform .18s ease}
+  .drawer[data-open="true"]{transform:translateX(0)}
+  .drawer h3{margin:0 0 16px;font-size:17px;display:flex;align-items:center;gap:8px}
+  .fieldset{margin-top:18px}
+  .fieldset .lbl{display:block;margin-bottom:8px}
+  .choices{display:flex;flex-wrap:wrap;gap:6px}
+  .prio{list-style:none;margin:0;padding:0}
+  .prio li{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line-soft);font-size:14px}
+  .prio li span{flex:1}
+  .prio .x{background:none;border:none;color:var(--ink-faint);display:flex;padding:2px}
+  .prio .x:hover{color:var(--rose)}
+  input[type=text]{width:100%;background:var(--ground);border:1px solid var(--line);border-radius:7px;
+                   padding:8px 10px;color:var(--ink);font:inherit;font-size:14px}
+  input[type=text]:focus{outline:2px solid var(--teal-dim);border-color:var(--teal-dim)}
+  .conflict{border:1px solid #5A4718;background:var(--amber-deep);border-radius:10px;padding:11px;margin-top:10px;
+            font-size:13px;color:var(--ink-dim)}
+  .conflict .ch{display:flex;align-items:center;gap:6px;color:var(--amber);margin-bottom:6px}
+  .conflict strong{color:var(--ink)}
+
+  /* ---------- dev ---------- */
+  details.dev{margin-top:30px;border-top:1px solid var(--line);padding-top:12px}
+  details.dev summary{display:flex;align-items:center;gap:7px;color:var(--ink-faint);
+                      font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase}
+  .checks{font-family:var(--mono);font-size:11.5px;margin-top:10px}
+  .checks div{display:flex;gap:8px;align-items:flex-start;padding:3px 0;color:var(--ink-dim)}
+  .checks .ok{color:var(--teal)} .checks .no{color:var(--rose)}
+  .blocked{border:1px solid #5A2A26;background:var(--rose-deep);border-radius:10px;padding:14px}
+  .blocked .bh{display:flex;align-items:center;gap:7px;color:var(--rose);margin-bottom:7px}
+  .empty{color:var(--ink-faint);font-size:13.5px}
+  :focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:5px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="ic-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-7h6v7"/></symbol>
+  <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+  <symbol id="ic-book" viewBox="0 0 24 24"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H19v16H5.5A1.5 1.5 0 0 0 4 20.5z"/><path d="M4 17.5A1.5 1.5 0 0 1 5.5 16H19"/></symbol>
+  <symbol id="ic-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></symbol>
+  <symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="ic-folder" viewBox="0 0 24 24"><path d="M3.5 6.5A1.5 1.5 0 0 1 5 5h4l2 2.5h8a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 19.5H5A1.5 1.5 0 0 1 3.5 18z"/></symbol>
+  <symbol id="ic-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"/></symbol>
+  <symbol id="ic-bed" viewBox="0 0 24 24"><path d="M3 18V7M3 12h18v6M21 18v-4"/><circle cx="7.5" cy="9.5" r="1.8"/></symbol>
+  <symbol id="ic-steth" viewBox="0 0 24 24"><path d="M6 3v5a4 4 0 0 0 8 0V3"/><path d="M10 12v2a5 5 0 0 0 5 5 4 4 0 0 0 4-4v-2"/><circle cx="19" cy="10" r="2"/></symbol>
+  <symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6z"/></symbol>
+  <symbol id="ic-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24"><path d="M4.5 12.5 9.5 17.5 19.5 7"/></symbol>
+  <symbol id="ic-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="ic-alert" viewBox="0 0 24 24"><path d="M12 4.5 21 20H3z"/><path d="M12 10v4M12 17h.01"/></symbol>
+  <symbol id="ic-mail" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></symbol>
+  <symbol id="ic-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4h-4"/></symbol>
+  <symbol id="ic-flag" viewBox="0 0 24 24"><path d="M6 21V4M6 4h11l-2 3.5L17 11H6"/></symbol>
+  <symbol id="ic-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="ic-pen" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/></symbol>
+  <symbol id="ic-sliders" viewBox="0 0 24 24"><path d="M4 7h11M19 7h1M4 17h5M13 17h7"/><circle cx="17" cy="7" r="2"/><circle cx="11" cy="17" r="2"/></symbol>
+  <symbol id="ic-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 4 12L16 12h5"/></symbol>
+  <symbol id="ic-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></symbol>
+</defs></svg>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="brandmark"><svg class="i"><use href="#ic-home"/></svg><span>Home</span></div>
+    <div class="statechip" id="stateChip"></div>
+    <button class="iconbtn" id="openCheckin"><svg class="i sm"><use href="#ic-sliders"/></svg>Check-in</button>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <div class="gauges" id="gauges"></div>
+
+  <section id="sec-now">
+    <div class="sec-head"><svg class="i sm"><use href="#ic-pulse"/></svg><span class="lbl">Now</span>
+      <span class="count" id="nowAge"></span></div>
+    <div class="panel now" id="nowPanel" data-state="confirmed"></div>
+  </section>
+
+  <section id="sec-plan">
+    <div class="sec-head"><svg class="i sm"><use href="#ic-layers"/></svg><span class="lbl">Plan</span>
+      <span class="count" id="planCount"></span></div>
+    <div class="rows" id="rankList"></div>
+    <div class="split">
+      <div class="keep protect"><div class="kh"><svg class="i sm"><use href="#ic-shield"/></svg><span class="lbl">Protect</span></div><ul id="protectList"></ul></div>
+      <div class="keep defer"><div class="kh"><svg class="i sm"><use href="#ic-pause"/></svg><span class="lbl">Defer</span></div><ul id="deferList"></ul></div>
+    </div>
+  </section>
+
+  <section id="sec-week">
+    <div class="sec-head"><svg class="i sm"><use href="#ic-calendar"/></svg><span class="lbl">Week</span>
+      <span class="count" id="weekCount"></span></div>
+    <div class="week" id="weekStrip"></div>
+    <div id="dayDetail"></div>
+  </section>
+
+  <section id="sec-opportunities">
+    <div class="sec-head"><svg class="i sm"><use href="#ic-flag"/></svg><span class="lbl">Opportunities</span>
+      <span class="count" id="oppCount"></span></div>
+    <div class="cards" id="oppList"></div>
+  </section>
+
+  <section id="sec-capture">
+    <div class="sec-head"><svg class="i sm"><use href="#ic-check"/></svg><span class="lbl">Captured</span>
+      <span class="count" id="capCount"></span></div>
+    <div class="panel" style="padding:13px">
+      <div class="capbar" id="capTypes"></div>
+      <div class="capinput">
+        <input type="text" id="capInput" placeholder="What did you do?" maxlength="140" />
+        <button class="btn go" id="capAdd"><svg class="i sm"><use href="#ic-check"/></svg>Log</button>
+      </div>
+      <div class="caplist" id="capList"></div>
+      <div class="caphint" id="capHint"></div>
+    </div>
+  </section>
+
+  <section id="sec-drafts">
+    <div class="sec-head"><svg class="i sm"><use href="#ic-pen"/></svg><span class="lbl">Drafts</span>
+      <span class="count" id="draftCount"></span></div>
+    <div class="cards" id="draftList"></div>
+  </section>
+
+  <section id="sec-signals">
+    <div class="sec-head"><svg class="i sm"><use href="#ic-pulse"/></svg><span class="lbl">Signals</span>
+      <span class="count" id="sigNote"></span></div>
+    <div class="sigs" id="sigGrid"></div>
+    <div id="gapList"></div>
+  </section>
+
+  <section id="sec-feedback">
+    <div class="sec-head"><svg class="i sm"><use href="#ic-sliders"/></svg><span class="lbl">Feedback</span>
+      <span class="count">ranking only</span></div>
+    <div class="panel" style="padding:13px">
+      <div class="fbrow">
+        <button class="btn" data-fb="done"><svg class="i sm"><use href="#ic-check"/></svg>Done</button>
+        <button class="btn" data-fb="defer"><svg class="i sm"><use href="#ic-pause"/></svg>Defer</button>
+        <button class="btn" data-fb="not-realistic"><svg class="i sm"><use href="#ic-x"/></svg>Not realistic</button>
+        <button class="btn" data-fb="wrong-priority"><svg class="i sm"><use href="#ic-flag"/></svg>Wrong priority</button>
+        <button class="btn go" id="regen"><svg class="i sm"><use href="#ic-refresh"/></svg>New plan</button>
+      </div>
+      <div class="bands" id="timeBands" role="group" aria-label="Time available"></div>
+      <div class="log" id="fbLog"></div>
+    </div>
+  </section>
+
+  <details class="dev">
+    <summary><svg class="i sm"><use href="#ic-chevron"/></svg>Fixtures and contract checks</summary>
+    <div style="padding-top:11px">
+      <div class="fbrow" id="fixtureBtns"></div>
+      <div class="checks" id="checkOut"></div>
+    </div>
+  </details>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Check-in" data-open="false">
+  <h3><svg class="i lg" style="color:var(--teal)"><use href="#ic-sliders"/></svg>Check-in</h3>
+
+  <div class="fieldset"><span class="lbl">Time available</span><div class="choices" id="timeChoices"></div></div>
+  <div class="fieldset"><span class="lbl">Anything unusual</span><div class="choices" id="constraintChoices"></div></div>
+
+  <div class="fieldset">
+    <span class="lbl">Weekly priorities</span>
+    <ul class="prio" id="prioList"></ul>
+    <div style="margin-top:9px;display:flex;gap:7px">
+      <input type="text" id="prioInput" placeholder="Add one" maxlength="70" />
+      <button class="btn" id="prioAdd">Add</button>
+    </div>
+  </div>
+
+  <div class="fieldset">
+    <span class="lbl">Pass 1 topic</span>
+    <div class="choices" id="topicChoices"></div>
+    <div id="topicConflict"></div>
+  </div>
+
+  <div style="margin-top:22px;display:flex;gap:7px">
+    <button class="btn go" id="saveCheckin"><svg class="i sm"><use href="#ic-check"/></svg>Save</button>
+    <button class="btn" id="closeCheckin">Close</button>
+  </div>
+  <div class="status off" id="checkinStatus"></div>
+</aside>
+
+<script>
+/* =====================================================================
+   Home agent brief. Read-first briefing and approval surface.
+   Home never derives insight from raw records and never writes to
+   Rota, SCE or Portfolio. Missing data degrades state; it never
+   clears a risk.
+   ===================================================================== */
+
+const FIREBASE_CONFIG = null;                       // set to go live
+const BRIEF_PATH = uid => `homePrivate/${uid}/agentBrief`;
+const INPUT_PATH = uid => `homePrivate/${uid}/manualPlanningInput`;
+
+const FORBIDDEN_KEYS = ['room','rotaCode','code','name','names','patient','patients','nhsNumber',
+  'note','notes','shiftNote','location','site','freeText','text','colleague','colleagues','staff',
+  'consultant','bleep','comment','comments','email','phone','address','initials','mrn'];
+
+const CAPTURE_PATH = uid => `homePrivate/${uid}/captureLog`;   // Hermes reads, drafts land in agentBrief
+
+const BRIEF_KEYS = ['briefId','generatedAt','expiresAt','overallState','primaryAction','rankedActions',
+  'protectedItems','deferredItems','opportunityPrompts','proposedDrafts','evidence','sourceGaps',
+  'constraints','progress','week'];
+
+// Capture is the user's own note, not source data. It never becomes evidence on its own.
+const CAPTURE_TYPES = [
+  {id:'case', label:'Case', icon:'ic-bed'},
+  {id:'procedure', label:'Procedure', icon:'ic-pulse'},
+  {id:'clinic', label:'Clinic', icon:'ic-steth'},
+  {id:'teaching', label:'Teaching', icon:'ic-layers'},
+  {id:'questions', label:'Questions', icon:'ic-book'},
+  {id:'admin', label:'Admin', icon:'ic-pen'}
+];
+
+const CONTEXT_LABEL = {working:'Working', protected:'Protected', recovery:'Recovery',
+  unavailable:'Unavailable', unknown:'Unknown'};
+
+const SOURCES = [
+  {key:'rota', icon:'ic-calendar', label:'Rota'},
+  {key:'sce', icon:'ic-book', label:'SCE'},
+  {key:'portfolio', icon:'ic-folder', label:'Portfolio'},
+  {key:'manual', icon:'ic-user', label:'You'}
+];
+
+const ACTION_ICONS = {study:'ic-book', recall:'ic-refresh', portfolio:'ic-folder',
+  admin:'ic-pen', checkin:'ic-sliders'};
+const CATEGORY_ICONS = {ward:'ic-bed', clinic:'ic-steth', pdp:'ic-target',
+  transplant:'ic-layers', procedures:'ic-pulse'};
+const DRAFT_ICONS = {'feedback-request':'ic-mail','study-session':'ic-calendar',
+  'portfolio-entry':'ic-folder','telegram':'ic-mail'};
+
+const TIME_BANDS = [
+  {id:'none', label:'0'}, {id:'under-30', label:'<30'}, {id:'30-60', label:'30–60'},
+  {id:'1-2h', label:'1–2h'}, {id:'2h-plus', label:'2h+'}
+];
+const CONSTRAINTS = [
+  {id:'none', label:'Nothing'}, {id:'post-nights', label:'Post-nights'},
+  {id:'low-energy', label:'Low energy'}, {id:'family', label:'Family'},
+  {id:'away', label:'Away'}
+];
+const P1_TOPICS = [
+  {id:'potassium-acid-base', label:'K+ / acid–base'},
+  {id:'calcium-phosphate', label:'Ca / PO4'},
+  {id:'sodium-water', label:'Na / water'},
+  {id:'gn', label:'GN'},
+  {id:'transplant', label:'Transplant'}
+];
+
+/* ---------- fixtures ---------- */
+const MIN = 60000;
+const t = m => new Date(Date.now() - m*MIN).toISOString();
+const tPlus = m => new Date(Date.now() + m*MIN).toISOString();
+
+// Week days carry context, workload band and opportunity categories only.
+// No rota codes, rooms, people or shift text ever reach this structure.
+function mkWeek(spec){
+  const now=new Date();
+  const monday=new Date(now); monday.setHours(0,0,0,0);
+  monday.setDate(monday.getDate() - ((now.getDay()+6)%7));
+  return spec.map((s,i)=>{
+    const d=new Date(monday); d.setDate(monday.getDate()+i);
+    return {date:d.toISOString().slice(0,10), dayNum:d.getDate(),
+      weekday:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i], ...s};
+  });
+}
+const W_STD=[
+  {context:'working', workloadBand:'heavy', categories:['ward'], studyBand:'brief'},
+  {context:'working', workloadBand:'moderate', categories:['clinic'], studyBand:'brief'},
+  {context:'working', workloadBand:'heavy', categories:['ward'], studyBand:'brief'},
+  {context:'working', workloadBand:'moderate', categories:['procedures'], studyBand:'brief'},
+  {context:'working', workloadBand:'light', categories:['pdp'], studyBand:'moderate'},
+  {context:'protected', workloadBand:'none', categories:[], studyBand:'long'},
+  {context:'protected', workloadBand:'none', categories:[], studyBand:'long'}
+];
+
+const FIXTURES = {
+  confirmed:{
+    briefId:'b1', generatedAt:t(35), expiresAt:tPlus(360), overallState:'confirmed',
+    constraints:['RUE ward cover','Recall only until 18:00'],
+    week:mkWeek(W_STD),
+    progress:{topicLabel:'K+ / acid–base', answered:214, total:312, daysToTarget:23, targetDateKnown:true},
+    primaryAction:{actionId:'p1-potassium', kind:'study', wording:'Pass 1 questions — potassium and acid–base',
+      minutes:35, fallback:'10 min error review of recent potassium misses'},
+    rankedActions:[
+      {actionId:'p1-potassium', kind:'study', wording:'Pass 1 — unanswered questions first', rank:1, minutes:35},
+      {actionId:'recall-brief', kind:'recall', wording:'Recall: two weakest acid–base concepts', rank:2, minutes:10},
+      {actionId:'cbd-capture', kind:'portfolio', wording:'Capture one CBD-eligible case', rank:3, minutes:10}
+    ],
+    protectedItems:['Saturday study block','Recovery before 21:00'],
+    deferredItems:['Pass 2 mixed modules','Reflection backlog'],
+    opportunityPrompts:[
+      {eventId:'ev1', category:'ward', window:'AM', briefPrompt:'CBD and ACAT eligible today.', endCapturePrompt:'Which case stands as a CBD?'},
+      {eventId:'ev2', category:'pdp', window:'16:00', briefPrompt:'Good window for the pending feedback request.', endCapturePrompt:'Sent, or moved to Saturday?'}
+    ],
+    proposedDrafts:[
+      {draftId:'d1', type:'feedback-request', target:'Educational supervisor', summary:'Multi-source feedback for this ARCP window.', approvalRequired:true},
+      {draftId:'d2', type:'study-session', target:'Calendar', summary:'Saturday 09:30–11:00, Pass 1 potassium.', approvalRequired:true}
+    ],
+    evidence:[
+      {source:'rota', signalCode:'RUE_WARD_COVER', freshness:t(20), supportsActionIds:['p1-potassium','cbd-capture']},
+      {source:'rota', signalCode:'WEEKEND_PROTECTED', freshness:t(20), supportsActionIds:['p1-potassium']},
+      {source:'sce', signalCode:'P1_TOPIC_ACTIVE', freshness:t(55), supportsActionIds:['p1-potassium']},
+      {source:'sce', signalCode:'PACE_BEHIND', freshness:t(55), supportsActionIds:['p1-potassium','recall-brief']},
+      {source:'portfolio', signalCode:'CBD_INCOMPLETE', freshness:t(120), supportsActionIds:['cbd-capture']},
+      {source:'manual', signalCode:'TIME_30_60', freshness:t(35), supportsActionIds:['p1-potassium']}
+    ],
+    sourceGaps:[]
+  },
+
+  partial:{
+    briefId:'b2', generatedAt:t(50), expiresAt:tPlus(300), overallState:'partial',
+    constraints:['Clinic PM'],
+    week:mkWeek(W_STD.map((d,i)=>i===4?{...d,context:'recovery',studyBand:'brief'}:d)),
+    progress:{topicLabel:'K+ / acid–base', answered:214, total:312, daysToTarget:null, targetDateKnown:false},
+    primaryAction:{actionId:'p1-potassium', kind:'study', wording:'Pass 1 questions — potassium and acid–base',
+      minutes:35, fallback:'10 min error review'},
+    rankedActions:[
+      {actionId:'p1-potassium', kind:'study', wording:'Pass 1 — potassium and acid–base', rank:1, minutes:35},
+      {actionId:'recall-brief', kind:'recall', wording:'Recall on overdue items', rank:2, minutes:10}
+    ],
+    protectedItems:['Recovery'],
+    deferredItems:['Portfolio actions — no snapshot'],
+    opportunityPrompts:[
+      {eventId:'ev3', category:'clinic', window:'PM', briefPrompt:'ACAT and CBD eligible. Urgency unknown.', endCapturePrompt:'Note one case worth writing up.'}
+    ],
+    proposedDrafts:[],
+    evidence:[
+      {source:'rota', signalCode:'CLINIC_PM', freshness:t(40), supportsActionIds:[]},
+      {source:'sce', signalCode:'RECALL_OVERDUE', freshness:t(180), supportsActionIds:['recall-brief','p1-potassium']},
+      {source:'manual', signalCode:'TIME_30_60', freshness:t(50), supportsActionIds:['p1-potassium']}
+    ],
+    sourceGaps:[{source:'portfolio', reason:'No snapshot for 7 days.', affects:'Deadline and evidence-gap risk not assessed.'}]
+  },
+
+  stale:{
+    briefId:'b3', generatedAt:t(31*60), expiresAt:t(7*60), overallState:'confirmed',
+    constraints:['Yesterday\u2019s context'],
+    week:mkWeek(W_STD),
+    progress:{topicLabel:'K+ / acid–base', answered:209, total:312, daysToTarget:24, targetDateKnown:true},
+    primaryAction:{actionId:'p1-potassium', kind:'study', wording:'Pass 1 questions — potassium and acid–base',
+      minutes:35, fallback:'Brief recall block'},
+    rankedActions:[
+      {actionId:'p1-potassium', kind:'study', wording:'Pass 1 — potassium and acid–base', rank:1, minutes:35},
+      {actionId:'reflection', kind:'portfolio', wording:'Write up one reflection', rank:2, minutes:15}
+    ],
+    protectedItems:['Recovery'], deferredItems:['Pass 2 mixed modules'],
+    opportunityPrompts:[],
+    proposedDrafts:[{draftId:'d3', type:'portfolio-entry', target:'ARCP tracker', summary:'Reflection against the transplant MDT.', approvalRequired:true}],
+    evidence:[
+      {source:'rota', signalCode:'CLINIC_AM', freshness:t(31*60), supportsActionIds:['reflection']},
+      {source:'sce', signalCode:'P1_TOPIC_ACTIVE', freshness:t(30*60), supportsActionIds:['p1-potassium']},
+      {source:'portfolio', signalCode:'REFLECTION_BEHIND', freshness:t(29*60), supportsActionIds:['reflection']}
+    ],
+    sourceGaps:[]
+  },
+
+  'cannot-determine':{
+    briefId:'b4', generatedAt:t(15), expiresAt:tPlus(360), overallState:'cannot-determine',
+    constraints:['Capacity unknown'],
+    week:null,
+    progress:null,
+    primaryAction:{actionId:'manual-checkin', kind:'checkin', wording:'Set your time, then regenerate',
+      minutes:1, fallback:'Otherwise treat everything below as unverified'},
+    rankedActions:[{actionId:'manual-checkin', kind:'checkin', wording:'Complete the check-in', rank:1, minutes:1}],
+    protectedItems:[], deferredItems:[],
+    opportunityPrompts:[], proposedDrafts:[],
+    evidence:[{source:'sce', signalCode:'P1_TOPIC_ACTIVE', freshness:t(90), supportsActionIds:[]}],
+    sourceGaps:[
+      {source:'rota', reason:'No snapshot today.', affects:'Working, protected or recovery context unknown.'},
+      {source:'portfolio', reason:'Snapshot unavailable.', affects:'Deadline risk not assessed. Not the same as no risk.'},
+      {source:'manual', reason:'No check-in today.', affects:'Available time unknown.'}
+    ]
+  }
+};
+
+/* ---------- privacy + state ---------- */
+function findForbidden(v, p=''){
+  const hits=[];
+  (function walk(x,path){
+    if(x===null||typeof x!=='object')return;
+    if(Array.isArray(x)){x.forEach((it,i)=>walk(it,`${path}[${i}]`));return;}
+    for(const k of Object.keys(x)){
+      if(FORBIDDEN_KEYS.some(f=>f.toLowerCase()===k.toLowerCase())) hits.push(path?`${path}.${k}`:k);
+      walk(x[k], path?`${path}.${k}`:k);
+    }
+  })(v,p);
+  return hits;
+}
+function sanitise(raw){
+  const violations=findForbidden(raw), clean={};
+  for(const k of BRIEF_KEYS) if(k in raw) clean[k]=raw[k];
+  clean.rankedActions=(clean.rankedActions||[]).slice(0,3);
+  clean.opportunityPrompts=(clean.opportunityPrompts||[]).slice(0,3);
+  return {clean, violations};
+}
+const ageMin = iso => iso ? (Date.now()-new Date(iso).getTime())/MIN : Infinity;
+const freshClass = iso => { const a=ageMin(iso); return a<360?'fresh':a<1440?'aging':'stale'; };
+function ageNum(iso){
+  const a=ageMin(iso);
+  if(!isFinite(a)) return {v:'—', u:''};
+  if(a<60) return {v:Math.max(1,Math.round(a)), u:'m'};
+  if(a<2880) return {v:Math.round(a/60), u:'h'};
+  return {v:Math.round(a/1440), u:'d'};
+}
+const ORDER={confirmed:0, partial:1, 'cannot-determine':2};
+const worst=(a,b)=>ORDER[a]>=ORDER[b]?a:b;
+const srcLabel=k=>(SOURCES.find(s=>s.key===k)||{label:k}).label;
+
+function deriveState(b){
+  let state=b.overallState||'cannot-determine'; const reasons=[];
+  if(b.expiresAt && new Date(b.expiresAt).getTime()<Date.now()){
+    reasons.push('expired'); state=worst(state,'partial');
+  }
+  const stale=[...new Set((b.evidence||[]).filter(e=>freshClass(e.freshness)==='stale').map(e=>e.source))];
+  if(stale.length){ reasons.push(`${stale.map(srcLabel).join(', ')} over 24h old`); state=worst(state,'partial'); }
+  if((b.sourceGaps||[]).length) state=worst(state,'partial');
+  return {state, reasons};
+}
+function sourceStatus(b){
+  const gaps=new Set((b.sourceGaps||[]).map(g=>g.source));
+  return SOURCES.map(s=>{
+    if(gaps.has(s.key)) return {...s, cls:'missing', state:'Missing', age:{v:'—',u:''}};
+    const ev=(b.evidence||[]).filter(e=>e.source===s.key);
+    if(!ev.length) return {...s, cls:'missing', state:'Silent', age:{v:'—',u:''}};
+    const newest=ev.reduce((a,c)=>ageMin(a.freshness)<ageMin(c.freshness)?a:c);
+    const cls=freshClass(newest.freshness);
+    return {...s, cls, state:cls==='fresh'?'Current':cls==='aging'?'Ageing':'Stale', age:ageNum(newest.freshness)};
+  });
+}
+
+/* ---------- session ---------- */
+const session={
+  brief:null,
+  manual:{availableTimeBand:'30-60', unusualConstraintBand:'none',
+    weeklyPriorityIds:['Finish potassium Pass 1','Send supervisor feedback request'],
+    intendedTopicId:'potassium-acid-base', updatedAt:null},
+  sceCanonicalTopicId:'potassium-acid-base',
+  approvals:{}, feedback:[],
+  capture:[], captureType:'case', selectedDay:null
+};
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const ico=(id,cls='i sm')=>`<svg class="${cls}"><use href="#${id}"/></svg>`;
+
+/* ---------- render ---------- */
+function render(){
+  const {clean, violations}=sanitise(session.brief);
+  if(violations.length) return renderBlocked(violations);
+  const {state, reasons}=deriveState(clean);
+  renderChip(state, reasons);
+  renderGauges(clean, state);
+  renderNow(clean, state);
+  renderPlan(clean);
+  renderWeek(clean);
+  renderOpps(clean);
+  renderCapture();
+  renderDrafts(clean);
+  renderSignals(clean, reasons);
+}
+
+function renderBlocked(v){
+  $('nowPanel').innerHTML=`<div class="blocked" style="flex:1">
+    <div class="bh">${ico('ic-alert','i lg')}<span class="lbl" style="color:var(--rose)">Brief blocked</span></div>
+    Fields that must not leave the source systems were found. Fix the publisher.
+    <div class="why" data-open="true" style="margin-top:9px">
+      ${v.slice(0,10).map(x=>`<span class="chip gap">${esc(x)}</span>`).join('')}
+    </div></div>`;
+  ['rankList','oppList','draftList','sigGrid','gapList','protectList','deferList','gauges']
+    .forEach(id=>$(id).innerHTML='');
+}
+
+function renderChip(state, reasons){
+  const map={confirmed:['','ic-check','Confirmed'], partial:['warn','ic-alert','Partial'],
+    'cannot-determine':['bad','ic-x','Unknown']};
+  const [cls,icon,word]=map[state];
+  $('stateChip').className='statechip '+cls;
+  $('stateChip').innerHTML=ico(icon,'i sm')+word;
+  $('stateChip').title=reasons.join(' · ')||'All sources current';
+}
+
+function renderGauges(b, state){
+  const p=b.progress;
+  const left = p ? p.total - p.answered : null;
+  const pct = p ? Math.round(p.answered/p.total*100) : 0;
+  const drafts=(b.proposedDrafts||[]).filter(d=>!session.approvals[d.draftId]).length;
+  const band=TIME_BANDS.find(x=>x.id===session.manual.availableTimeBand);
+  const gaps=(b.sourceGaps||[]).length;
+
+  const ring = p ? `<svg class="ring" width="34" height="34" viewBox="0 0 34 34">
+      <circle class="bg" cx="17" cy="17" r="14"/>
+      <circle class="fg" cx="17" cy="17" r="14"
+        stroke-dasharray="${(pct/100*88).toFixed(1)} 88" transform="rotate(-90 17 17)"/>
+    </svg>` : '';
+
+  $('gauges').innerHTML=`
+    <div class="gauge accent">
+      ${ring}
+      <div class="top">${ico('ic-book')}<span class="lbl">Pass 1</span></div>
+      <div class="fig num">${p?left:'—'}<small>${p?'left':''}</small></div>
+      <div class="cap">${p?esc(p.topicLabel)+' · '+pct+'%':'No SCE progress data'}</div>
+    </div>
+    <div class="gauge ${p&&p.targetDateKnown?(p.daysToTarget<14?'warn':''):'unknown'}">
+      <div class="top">${ico('ic-target')}<span class="lbl">Target</span></div>
+      <div class="fig num">${p&&p.targetDateKnown?p.daysToTarget:'—'}<small>${p&&p.targetDateKnown?'d':''}</small></div>
+      <div class="cap">${p&&p.targetDateKnown?'to topic date':'Not forecast'}</div>
+    </div>
+    <div class="gauge">
+      <div class="top">${ico('ic-clock')}<span class="lbl">Today</span></div>
+      <div class="fig num">${esc(band.label)}<small>${band.id==='none'?'':'min'}</small></div>
+      <div class="cap">${session.manual.updatedAt?'you set this':'default — not confirmed'}</div>
+    </div>
+    <div class="gauge ${gaps?'bad':drafts?'warn':''}">
+      <div class="top">${ico(gaps?'ic-alert':'ic-pen')}<span class="lbl">${gaps?'Gaps':'Drafts'}</span></div>
+      <div class="fig num">${gaps||drafts}</div>
+      <div class="cap">${gaps?'sources missing':drafts?'need approval':'all clear'}</div>
+    </div>`;
+}
+
+function renderNow(b, state){
+  const p=b.primaryAction||{};
+  const ev=(b.evidence||[]).filter(e=>(e.supportsActionIds||[]).includes(p.actionId));
+  const a=ageNum(b.generatedAt);
+  $('nowAge').textContent=`${a.v}${a.u} ago`;
+  $('nowPanel').dataset.state=state;
+  $('nowPanel').innerHTML=`
+    <div class="dial">
+      <div class="v num">${p.minutes??'—'}</div>
+      <div class="u lbl">min</div>
+    </div>
+    <div class="main">
+      <h2>${esc(p.wording||'No action can be recommended')}</h2>
+      <div class="metaline">
+        ${(b.constraints||[]).map(c=>`<span class="pill">${ico('ic-alert','i sm')}${esc(c)}</span>`).join('')}
+      </div>
+      ${p.fallback?`<div class="fallback">${ico('ic-refresh','i sm')}<span>${esc(p.fallback)}</span></div>`:''}
+      <button class="whybtn" id="whyBtn" aria-expanded="false">${ico('ic-chevron','i sm')}Why<b>${ev.length}</b></button>
+      <div class="why" id="whyBox">
+        ${ev.length?ev.map(e=>`<span class="chip"><i class="dot ${freshClass(e.freshness)}"></i>${esc(srcLabel(e.source))} · ${esc(e.signalCode)}<span class="age">${ageNum(e.freshness).v}${ageNum(e.freshness).u}</span></span>`).join('')
+          :`<span class="chip gap">${ico('ic-alert','i sm')}No supporting evidence</span>`}
+      </div>
+    </div>`;
+  $('whyBtn').onclick=()=>{
+    const box=$('whyBox'), open=box.dataset.open!=='true';
+    box.dataset.open=String(open);
+    $('whyBtn').setAttribute('aria-expanded', String(open));
+  };
+}
+
+function renderPlan(b){
+  const acts=b.rankedActions||[];
+  $('planCount').textContent=`${acts.length}/3`;
+  $('rankList').innerHTML=acts.length?acts.map(a=>{
+    const ev=(b.evidence||[]).filter(e=>(e.supportsActionIds||[]).includes(a.actionId));
+    const dots=ev.length?ev.map(e=>`<i class="${freshClass(e.freshness)}"></i>`).join(''):'<i></i>';
+    return `<div class="row">
+      <span class="rk num">${a.rank??'·'}</span>
+      <span class="ico">${ico(ACTION_ICONS[a.kind]||'ic-layers')}</span>
+      <span class="txt">${esc(a.wording)}</span>
+      <span class="evdots ${ev.length?'':'none'}" title="${ev.length?ev.length+' signals':'no supporting signal'}">${dots}</span>
+      <span class="dur num">${a.minutes??'—'}<small>min</small></span>
+    </div>`;
+  }).join(''):`<div class="row"><span class="empty">Nothing rankable from the sources reporting.</span></div>`;
+
+  const li=(arr,f)=>arr&&arr.length?arr.map(i=>`<li>${esc(i)}</li>`).join(''):`<li class="empty">${f}</li>`;
+  $('protectList').innerHTML=li(b.protectedItems,'None flagged');
+  $('deferList').innerHTML=li(b.deferredItems,'None flagged');
+}
+
+function renderWeek(b){
+  const wk=b.week;
+  if(!wk||!wk.length){
+    $('weekCount').textContent='no snapshot';
+    $('weekStrip').innerHTML='';
+    $('dayDetail').innerHTML=`<div class="gapcard">${ico('ic-alert','i lg')}<div>
+      <b>Rota</b>No week snapshot. Working, protected and recovery days are unknown for every day shown as blank.</div></div>`;
+    return;
+  }
+  const today=new Date().toISOString().slice(0,10);
+  if(!session.selectedDay || !wk.some(d=>d.date===session.selectedDay))
+    session.selectedDay = wk.some(d=>d.date===today)?today:wk[0].date;
+
+  const protectedLeft=wk.filter(d=>d.context==='protected' && d.date>=today).length;
+  $('weekCount').textContent=`${protectedLeft} protected left`;
+
+  $('weekStrip').innerHTML=wk.map(d=>`
+    <button class="day" data-day="${d.date}" data-ctx="${esc(d.context||'unknown')}"
+      data-today="${d.date===today}" aria-pressed="${d.date===session.selectedDay}"
+      title="${esc(CONTEXT_LABEL[d.context]||'Unknown')}">
+      <span class="wd">${esc(d.weekday)}</span>
+      <span class="dt num">${d.dayNum}</span>
+      <span class="marks">${(d.categories||[]).slice(0,3).map(c=>ico(CATEGORY_ICONS[c]||'ic-flag','i')).join('')
+        || (d.context==='protected'?ico('ic-shield','i'):'')}</span>
+    </button>`).join('');
+
+  const d=wk.find(x=>x.date===session.selectedDay);
+  const studyText={brief:'Brief recall only', moderate:'Moderate block', long:'Long study block', none:'No capacity'};
+  $('dayDetail').innerHTML=`<div class="daydetail">
+    <div class="dd"><div class="v num">${d.dayNum}</div><div class="lbl">${esc(d.weekday)}</div></div>
+    <div class="body">
+      <div class="t">${esc(CONTEXT_LABEL[d.context]||'Unknown')} · ${esc(d.workloadBand||'band unknown')} load</div>
+      <div class="cats">
+        <span class="pill">${ico('ic-book','i sm')}${esc(studyText[d.studyBand]||'Capacity unknown')}</span>
+        ${(d.categories||[]).map(c=>`<span class="pill">${ico(CATEGORY_ICONS[c]||'ic-flag','i sm')}${esc(c)}</span>`).join('')}
+        ${!(d.categories||[]).length&&d.context==='protected'?`<span class="pill">${ico('ic-shield','i sm')}protected</span>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderCapture(){
+  $('capTypes').innerHTML=CAPTURE_TYPES.map(t=>
+    `<button class="band" data-captype="${t.id}" aria-pressed="${session.captureType===t.id}">${ico(t.icon,'i sm')}${t.label}</button>`).join('');
+
+  const wants=session.capture.filter(c=>c.wantsDraft).length;
+  $('capCount').textContent=session.capture.length
+    ? `${session.capture.length} logged · ${wants} for drafting` : 'nothing yet';
+
+  $('capList').innerHTML=session.capture.map((c,i)=>{
+    const ty=CAPTURE_TYPES.find(t=>t.id===c.type)||CAPTURE_TYPES[0];
+    return `<div class="capitem" data-draft="${c.wantsDraft}">
+      <span class="ico">${ico(ty.icon)}</span>
+      <span class="txt">${esc(c.text)}</span>
+      <button class="btn sm" data-capdraft="${i}" aria-pressed="${c.wantsDraft}"
+        title="Ask Hermes to draft something from this">${ico('ic-pen','i sm')}Draft</button>
+      <span class="tm">${c.at.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</span>
+      <button class="x" data-capdel="${i}" aria-label="Remove">${ico('ic-x','i sm')}</button>
+    </div>`;
+  }).join('')||`<div class="empty" style="padding:4px 0">Log what you actually did. Hermes drafts from this; nothing here counts as portfolio evidence until you approve a draft.</div>`;
+
+  $('capHint').innerHTML=ico('ic-alert','i sm')+
+    (FIREBASE_CONFIG?'Syncs to captureLog for Hermes.':'Session only — wire captureLog to Hermes to persist.');
+}
+
+function renderOpps(b){
+  const o=b.opportunityPrompts||[];
+  $('oppCount').textContent=`${o.length}/3`;
+  $('oppList').innerHTML=o.length?o.map(x=>`
+    <div class="card">
+      <div class="ch">
+        <span class="cat">${ico(CATEGORY_ICONS[x.category]||'ic-flag')}<span class="lbl" style="color:var(--teal)">${esc(x.category)}</span></span>
+        <span class="when">${esc(x.window||'')}</span>
+      </div>
+      <p>${esc(x.briefPrompt)}</p>
+      ${x.endCapturePrompt?`<div class="sub">${ico('ic-pen','i sm')}<span>${esc(x.endCapturePrompt)}</span></div>`:''}
+      <div class="acts">
+        <button class="btn sm" data-opp="${esc(x.eventId)}" data-outcome="took">${ico('ic-check','i sm')}Took it</button>
+        <button class="btn sm" data-opp="${esc(x.eventId)}" data-outcome="declined">${ico('ic-x','i sm')}Not today</button>
+      </div>
+      <div class="status off" id="opp-${esc(x.eventId)}"></div>
+    </div>`).join('')
+    :`<div class="card"><span class="empty">No eligible prompts. Home does not invent opportunities.</span></div>`;
+}
+
+function renderDrafts(b){
+  const d=b.proposedDrafts||[];
+  const pending=d.filter(x=>!session.approvals[x.draftId]).length;
+  $('draftCount').textContent=pending?`${pending} pending`:'none pending';
+  $('draftList').innerHTML=d.length?d.map(x=>{
+    const dec=session.approvals[x.draftId];
+    const msg=dec==='approve'?['','Approved — queued. Not sent.']
+      :dec==='edit'?['hold','Changes requested.']
+      :dec==='dismiss'?['off','Dismissed.']
+      :['hold','Awaiting approval. Nothing sent.'];
+    return `<div class="card">
+      <div class="ch">
+        <span class="cat">${ico(DRAFT_ICONS[x.type]||'ic-pen')}<span class="lbl" style="color:var(--teal)">${esc(x.type)}</span></span>
+        <span class="when">${esc(x.target)}</span>
+      </div>
+      <p>${esc(x.summary)}</p>
+      <div class="acts">
+        <button class="btn go sm" data-draft="${esc(x.draftId)}" data-decision="approve" ${dec?'disabled':''}>${ico('ic-check','i sm')}Approve</button>
+        <button class="btn sm" data-draft="${esc(x.draftId)}" data-decision="edit" ${dec?'disabled':''}>${ico('ic-pen','i sm')}Changes</button>
+        <button class="btn sm" data-draft="${esc(x.draftId)}" data-decision="dismiss" ${dec?'disabled':''}>${ico('ic-x','i sm')}Dismiss</button>
+      </div>
+      <div class="status ${msg[0]}">${ico('ic-clock','i sm')}${msg[1]}</div>
+    </div>`;
+  }).join(''):`<div class="card"><span class="empty">No drafts prepared.</span></div>`;
+}
+
+function renderSignals(b, reasons){
+  const rows=sourceStatus(b);
+  $('sigGrid').innerHTML=rows.map(s=>`
+    <div class="sig ${s.cls}">
+      <div class="sh">${ico(s.icon)}<span class="lbl" style="color:inherit">${esc(s.label)}</span></div>
+      <div class="v num">${s.age.v}<small>${s.age.u}</small></div>
+      <div class="st">${esc(s.state)}</div>
+    </div>`).join('');
+
+  const gaps=b.sourceGaps||[];
+  $('sigNote').textContent=gaps.length?`${gaps.length} missing`:'all reporting';
+  $('gapList').innerHTML=gaps.map(g=>`
+    <div class="gapcard">${ico('ic-alert','i lg')}<div><b>${esc(srcLabel(g.source))}</b>${esc(g.reason)} ${esc(g.affects)}</div></div>`).join('')
+    + (!gaps.length&&reasons.length?`<div class="gapcard">${ico('ic-alert','i lg')}<div><b>Freshness</b>${esc(reasons.join(' · '))}</div></div>`:'');
+}
+
+/* ---------- interaction ---------- */
+function logFeedback(kind, detail){
+  session.feedback.unshift({kind, detail, at:new Date()});
+  $('fbLog').innerHTML=session.feedback.slice(0,6).map(f=>
+    `<div><span class="tm">${f.at.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</span>${esc(f.kind)}${f.detail?' · '+esc(f.detail):''}</div>`
+  ).join('');
+}
+
+document.addEventListener('click', e=>{
+  const fb=e.target.closest('[data-fb]');
+  if(fb){ logFeedback(fb.dataset.fb, session.brief.primaryAction?.actionId||''); return; }
+
+  const band=e.target.closest('[data-band]');
+  if(band){ session.manual.availableTimeBand=band.dataset.band; session.manual.updatedAt=new Date().toISOString();
+    renderBands(); renderChoices(); renderGauges(sanitise(session.brief).clean);
+    logFeedback('time', band.dataset.band); return; }
+
+  const opp=e.target.closest('[data-opp]');
+  if(opp){ const el=$('opp-'+opp.dataset.opp);
+    el.className='status '+(opp.dataset.outcome==='took'?'':'off');
+    el.innerHTML=ico('ic-check','i sm')+(opp.dataset.outcome==='took'
+      ? 'Recorded. This is not portfolio evidence.' : 'Declined. Ranking will adjust.');
+    logFeedback('opportunity-'+opp.dataset.outcome, opp.dataset.opp); return; }
+
+  const dr=e.target.closest('[data-draft]');
+  if(dr){ session.approvals[dr.dataset.draft]=dr.dataset.decision;
+    logFeedback('draft-'+dr.dataset.decision, dr.dataset.draft);
+    const c=sanitise(session.brief).clean; renderDrafts(c); renderGauges(c); return; }
+
+  const fx=e.target.closest('[data-fixture]');
+  if(fx){ loadFixture(fx.dataset.fixture); return; }
+
+  const ch=e.target.closest('[data-choice]');
+  if(ch){ session.manual[ch.dataset.field]=ch.dataset.choice;
+    if(ch.dataset.field==='intendedTopicId') renderConflict();
+    renderChoices(); renderBands(); renderGauges(sanitise(session.brief).clean); return; }
+
+  const rs=e.target.closest('[data-resolve]');
+  if(rs){
+    if(rs.dataset.resolve==='sce'){ session.manual.intendedTopicId=session.sceCanonicalTopicId;
+      renderChoices(); renderConflict(); logFeedback('topic','matched to SCE'); }
+    else { $('resolveStatus').innerHTML=ico('ic-flag','i sm')+'Flagged. SCE not modified.';
+      logFeedback('topic','flagged discrepancy'); }
+    return; }
+
+  const dy=e.target.closest('[data-day]');
+  if(dy){ session.selectedDay=dy.dataset.day; renderWeek(sanitise(session.brief).clean); return; }
+
+  const ct=e.target.closest('[data-captype]');
+  if(ct){ session.captureType=ct.dataset.captype; renderCapture(); $('capInput').focus(); return; }
+
+  const cd=e.target.closest('[data-capdraft]');
+  if(cd){ const it=session.capture[+cd.dataset.capdraft];
+    it.wantsDraft=!it.wantsDraft; renderCapture();
+    logFeedback('capture', it.wantsDraft?'draft requested':'draft cancelled'); return; }
+
+  const cx=e.target.closest('[data-capdel]');
+  if(cx){ session.capture.splice(+cx.dataset.capdel,1); renderCapture(); return; }
+
+  const px=e.target.closest('[data-prio]');
+  if(px){ session.manual.weeklyPriorityIds.splice(+px.dataset.prio,1); renderPrio(); return; }
+});
+
+$('regen').onclick=()=>{
+  logFeedback('regenerate','requested');
+  $('regen').innerHTML=ico('ic-check','i sm')+'Requested';
+  setTimeout(()=>{$('regen').innerHTML=ico('ic-refresh','i sm')+'New plan';},2400);
+};
+
+$('capAdd').onclick=()=>{
+  const v=$('capInput').value.trim(); if(!v) return;
+  session.capture.unshift({id:'c'+Date.now(), type:session.captureType, text:v,
+    at:new Date(), wantsDraft:true, day:session.selectedDay});
+  $('capInput').value=''; renderCapture();
+  logFeedback('capture', session.captureType);
+};
+$('capInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('capAdd').click();});
+
+function renderBands(){
+  $('timeBands').innerHTML=TIME_BANDS.map(b=>
+    `<button class="band" data-band="${b.id}" aria-pressed="${session.manual.availableTimeBand===b.id}">${ico('ic-clock','i sm')}${b.label}</button>`).join('');
+}
+
+/* ---------- drawer ---------- */
+function openDrawer(o){ $('drawer').dataset.open=o; $('scrim').dataset.open=o;
+  (o?$('drawer'):$('openCheckin')).focus(); }
+$('openCheckin').onclick=()=>openDrawer(true);
+$('closeCheckin').onclick=()=>openDrawer(false);
+$('scrim').onclick=()=>openDrawer(false);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')openDrawer(false);});
+
+function choiceSet(el, field, items, icon){
+  $(el).innerHTML=items.map(i=>
+    `<button class="band" data-choice="${i.id}" data-field="${field}" aria-pressed="${session.manual[field]===i.id}">${ico(icon,'i sm')}${esc(i.label)}</button>`).join('');
+}
+function renderChoices(){
+  choiceSet('timeChoices','availableTimeBand',TIME_BANDS,'ic-clock');
+  choiceSet('constraintChoices','unusualConstraintBand',CONSTRAINTS,'ic-alert');
+  choiceSet('topicChoices','intendedTopicId',P1_TOPICS,'ic-book');
+}
+function renderPrio(){
+  $('prioList').innerHTML=session.manual.weeklyPriorityIds.map((p,i)=>
+    `<li><span>${esc(p)}</span><button class="x" data-prio="${i}" aria-label="Remove">${ico('ic-x','i sm')}</button></li>`
+  ).join('')||'<li class="empty">Nothing pinned</li>';
+}
+function renderConflict(){
+  const a=session.manual.intendedTopicId, c=session.sceCanonicalTopicId, box=$('topicConflict');
+  if(a===c){ box.innerHTML=''; return; }
+  const L=id=>(P1_TOPICS.find(x=>x.id===id)||{label:id}).label;
+  box.innerHTML=`<div class="conflict">
+    <div class="ch">${ico('ic-alert','i sm')}<span class="lbl" style="color:var(--amber)">Sources disagree</span></div>
+    Home: <strong>${esc(L(a))}</strong> · SCE tracker: <strong>${esc(L(c))}</strong>. Neither is changed.
+    <div class="acts">
+      <button class="btn sm" data-resolve="home">${ico('ic-flag','i sm')}Flag SCE</button>
+      <button class="btn sm" data-resolve="sce">${ico('ic-check','i sm')}Match SCE</button>
+    </div>
+    <div class="status hold" id="resolveStatus"></div></div>`;
+}
+$('prioAdd').onclick=()=>{
+  const v=$('prioInput').value.trim(); if(!v) return;
+  session.manual.weeklyPriorityIds.push(v); $('prioInput').value=''; renderPrio();
+};
+$('prioInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('prioAdd').click();});
+$('saveCheckin').onclick=()=>{
+  session.manual.updatedAt=new Date().toISOString();
+  renderBands(); renderGauges(sanitise(session.brief).clean);
+  $('checkinStatus').innerHTML=ico('ic-check','i sm')+(FIREBASE_CONFIG?'Saved.':'Saved for this session.');
+  logFeedback('check-in', session.manual.availableTimeBand);
+  setTimeout(()=>openDrawer(false),600);
+};
+
+/* ---------- fixtures + checks ---------- */
+function loadFixture(k){
+  session.brief=structuredClone(FIXTURES[k]); session.approvals={}; render();
+  document.querySelectorAll('[data-fixture]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fixture===k)));
+}
+$('fixtureBtns').innerHTML=Object.keys(FIXTURES).map(k=>
+  `<button class="btn sm" data-fixture="${k}">${k}</button>`).join('')+
+  `<button class="btn sm go" id="runChecks">${ico('ic-check','i sm')}Run checks</button>`;
+
+function runChecks(){
+  const out=[]; const ok=(n,c)=>out.push({n,pass:!!c});
+  const expected=['sec-now','sec-plan','sec-week','sec-opportunities','sec-capture','sec-drafts',
+    'sec-signals','sec-feedback'];
+  ok('Sections render in the agreed order',
+     expected.join()===[...document.querySelectorAll('main > section')].map(s=>s.id).join());
+  const dirty=structuredClone(FIXTURES.confirmed); dirty.opportunityPrompts[0].room='Ward 9 bay 3';
+  ok('A brief carrying a rota room is rejected', findForbidden(dirty).length>0);
+  ok('A compliant brief passes', sanitise(structuredClone(FIXTURES.confirmed)).violations.length===0);
+  ok('Missing portfolio degrades to partial', deriveState(sanitise(FIXTURES.partial).clean).state==='partial');
+  ok('A partial brief names the missing source', FIXTURES.partial.sourceGaps.every(g=>g.source&&g.reason));
+  ok('Unknown stays unknown', deriveState(sanitise(FIXTURES['cannot-determine']).clean).state==='cannot-determine');
+  const st=deriveState(sanitise(FIXTURES.stale).clean);
+  ok('A stale brief cannot show as confirmed', st.state!=='confirmed');
+  ok('Staleness is explained', st.reasons.length>0);
+  ok('Ranked actions capped at three', Object.values(FIXTURES).every(f=>sanitise(f).clean.rankedActions.length<=3));
+  ok('Opportunities capped at three', Object.values(FIXTURES).every(f=>sanitise(f).clean.opportunityPrompts.length<=3));
+  ok('Confirmed actions all carry evidence', FIXTURES.confirmed.rankedActions.every(a=>
+     FIXTURES.confirmed.evidence.some(e=>(e.supportsActionIds||[]).includes(a.actionId))));
+  ok('Every draft requires approval', Object.values(FIXTURES).every(f=>
+     (f.proposedDrafts||[]).every(d=>d.approvalRequired===true)));
+  ok('Week days carry no rota codes, rooms or people',
+     Object.values(FIXTURES).every(f=>findForbidden(f.week||[]).length===0));
+  ok('Every week day has a typed context',
+     Object.values(FIXTURES).filter(f=>f.week).every(f=>f.week.every(d=>d.context in CONTEXT_LABEL)));
+  ok('A missing week snapshot says unknown, not free',
+     (()=>{ renderWeek(sanitise(FIXTURES['cannot-determine']).clean);
+            return $('dayDetail').textContent.includes('unknown'); })());
+  ok('Captured items never carry approvalRequired',
+     session.capture.every(c=>!('approvalRequired' in c)));
+  ok('A missing figure shows as unknown, never zero',
+     (()=>{ const g=document.createElement('div'); g.innerHTML=''; renderGauges(sanitise(FIXTURES['cannot-determine']).clean);
+            const txt=$('gauges').textContent; return txt.includes('—') && !/\b0\s*left/.test(txt); })());
+  render();
+  $('checkOut').innerHTML=out.map(r=>
+    `<div><span class="${r.pass?'ok':'no'}">${r.pass?'PASS':'FAIL'}</span><span>${esc(r.n)}</span></div>`).join('')
+    +`<div style="padding-top:6px"><span class="ok">${out.filter(r=>r.pass).length}/${out.length}</span><span>passing</span></div>`;
+}
+$('runChecks').onclick=runChecks;
+
+/* ---------- boot ---------- */
+async function boot(){
+  renderBands(); renderChoices(); renderPrio(); renderConflict(); logFeedback('session','started');
+  if(FIREBASE_CONFIG){
+    try{
+      const {initializeApp}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+      const {getAuth,onAuthStateChanged}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+      const {getDatabase,ref,onValue}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js');
+      const app=initializeApp(FIREBASE_CONFIG), db=getDatabase(app);
+      onAuthStateChanged(getAuth(app), user=>{
+        if(!user){ loadFixture('cannot-determine'); return; }
+        onValue(ref(db, BRIEF_PATH(user.uid)), s=>{
+          const v=s.val(); if(!v){ loadFixture('cannot-determine'); return; }
+          session.brief=v; render();
+        });
+        onValue(ref(db, INPUT_PATH(user.uid)), s=>{
+          const v=s.val(); if(v){ Object.assign(session.manual,v); renderBands(); renderChoices(); renderPrio(); }
+        });
+      });
+      return;
+    }catch(err){ console.error('Live brief unavailable, using fixtures.', err); }
+  }
+  loadFixture('confirmed');
+}
+boot();
+</script>
+</body>
+</html>
