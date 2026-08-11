@@ -1,12 +1,17 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { validateRotaSummary, validatePrivateWeekSummary, projectPrivateWeekForDisplay } = require('../home-private-rota.js');
+const { validateRotaSummary, validatePrivateWeekSummary, projectPrivateWeekForDisplay, hasDefaultApp } = require('../home-private-rota.js');
 
 const valid = {
   today: { dutyState: 'clinical', capacity: 'normal', conflict: false },
   week: { workload: 'limited', recovery: true, protectedStudyWindow: false, nextDutyProximity: 'upcoming' },
   attention: { conflict: false, recoveryProtection: true },
 };
+
+test('detects the absence of the default Firebase app even when a named app exists', () => {
+  assert.equal(hasDefaultApp({ app: () => { throw new Error('no default'); }, apps: [{ name: 'hermione-home-summaries' }] }), false);
+  assert.equal(hasDefaultApp({ app: () => ({ name: '[DEFAULT]' }), apps: [{ name: '[DEFAULT]' }] }), true);
+});
 
 test('accepts only the closed rota Home aggregate contract', () => {
   assert.deepEqual(validateRotaSummary(valid), valid);

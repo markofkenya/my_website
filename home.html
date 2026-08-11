@@ -438,8 +438,8 @@
   <div class="status off" id="checkinStatus"></div>
 </aside>
 
-<script src="home-private-rota.js"></script>
-<script src="home-source-summaries.js"></script>
+<script src="home-private-rota.js?v=20260812b"></script>
+<script src="home-source-summaries.js?v=20260812b"></script>
 <script>
 /* =====================================================================
    Home agent brief. Read-first briefing and approval surface.
@@ -711,8 +711,9 @@ const ico=(id,cls='i sm')=>`<svg class="${cls}"><use href="#${id}"/></svg>`;
 function renderSourceAgentStates(){
   const sce=session.sourceSummaries.sce;
   const portfolio=session.sourceSummaries.portfolio;
+  const dueTopic=sce?.topics.find(topic=>topic && topic.due>0);
   $('agentSceStatus').textContent = sce
-    ? `Learning summary: ${sce.summary.cardsDue} due cards · ${sce.summary.pendingDebriefs} pending debriefs${sce.topics.find(topic=>topic.due>0)?` · Focus: ${sce.topics.find(topic=>topic.due>0).name}`:''}.`
+    ? `Learning summary: ${sce.summary.cardsDue} due cards · ${sce.summary.pendingDebriefs} pending debriefs${dueTopic?` · Focus: ${dueTopic.name}`:''}.`
     : 'SCE summary unavailable.';
   $('agentPortfolioStatus').textContent = portfolio
     ? `Renal: ${portfolio.readiness.renal.replace('-', ' ')} · GIM: ${portfolio.readiness.gim.replace('-', ' ')} · ${portfolio.nextAction}.`

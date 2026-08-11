@@ -13,6 +13,7 @@ test('accepts only the bounded SCE dashboard projection', () => {
   assert.equal(validateSceSummary({ ...value, rawQuestion: 'no' }), null);
   assert.equal(validateSceSummary({ ...value, summary: { ...value.summary, note: 'no' } }), null);
   assert.deepEqual(validateSceSummary({ ...value, topics: [{ id: 'potassium', name: 'Potassium: acid–base', neverDelivered: 0, deliveredUnconfirmed: 0, weak: 1, strong: 0, due: 1 }] })?.topics[0].name, 'Potassium: acid–base');
+  assert.equal(validateSceSummary({ ...value, topics: [{ id: 'ok', name: '<img>', neverDelivered: 0, deliveredUnconfirmed: 0, weak: 0, strong: 0, due: 0 }] }), null);
 });
 
 test('accepts only the bounded Portfolio dashboard projection', () => {

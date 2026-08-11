@@ -76,11 +76,16 @@
     });
   }
 
+  function hasDefaultApp(firebase) {
+    try { firebase.app(); return true; }
+    catch { return false; }
+  }
+
   async function ensureFirebase() {
     if (!root.firebase) await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
     if (typeof root.firebase.database !== 'function') await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');
     if (typeof root.firebase.auth !== 'function') await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js');
-    if (!(root.firebase.apps && root.firebase.apps.length)) root.firebase.initializeApp(FIREBASE_CONFIG);
+    if (!hasDefaultApp(root.firebase)) root.firebase.initializeApp(FIREBASE_CONFIG);
     return { auth: root.firebase.auth(), db: root.firebase.database() };
   }
 
@@ -126,5 +131,5 @@
     return auth.signInWithPopup(new root.firebase.auth.GoogleAuthProvider());
   }
 
-  return { validateRotaSummary, validatePrivateWeekSummary, projectPrivateWeekForDisplay, start, signIn };
+  return { validateRotaSummary, validatePrivateWeekSummary, projectPrivateWeekForDisplay, hasDefaultApp, start, signIn };
 });
