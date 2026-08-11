@@ -3,6 +3,9 @@
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (root) root.RotaHomeSummary = api;
 })(typeof window !== 'undefined' ? window : globalThis, function () {
+  const contracts = typeof module === 'object' && module.exports
+    ? require('./hermione-hq-contracts.js')
+    : globalThis.HermioneHQContracts;
   const DAY_MS = 24 * 60 * 60 * 1000;
 
   function localDateKey(date) {
@@ -70,5 +73,14 @@
     };
   }
 
-  return { buildRotaHomeSummary, buildHomePrivateWrite };
+  function buildHomePrivateWeekWrite(uid, state, personKey, now = new Date()) {
+    if (typeof uid !== 'string' || !uid.trim()) throw new TypeError('Firebase user ID is required');
+    if (!contracts || typeof contracts.buildPrivateWeekSummary !== 'function') throw new Error('Hermione HQ contracts are unavailable');
+    return {
+      path: `homePrivate/${uid}/rotaWeek`,
+      value: contracts.buildPrivateWeekSummary(state, personKey, now),
+    };
+  }
+
+  return { buildRotaHomeSummary, buildHomePrivateWrite, buildHomePrivateWeekWrite };
 });

@@ -6,7 +6,9 @@ Home is a read-only signal layer. It never owns the underlying record and it nev
 
 Owner: `rota.html` / InstaRota.
 
-Home must not read the rota room directly. The room contains a complete shared schedule and private syncing context. Dates, locations, shift labels, leave, and raw schedule entries remain in InstaRota.
+Home must not read the rota room directly. The room contains a complete shared schedule and private syncing context. Locations, times, leave reasons, colleague identity, rota code, notes, and raw schedule entries remain in InstaRota.
+
+For the user-approved authenticated private Home view, InstaRota may additionally publish a seven-day per-UID rota projection containing only each calendar date and a closed set of duty labels: `ward`, `clinic`, `procedure`, `oncall`, `night`, `annual_leave`, or `study_leave`. This projection must be written and read only at `homePrivate/{auth.uid}/rotaWeek` after Firebase Google authentication. It must not include a source-room path, names, locations, times, free text, leave reasons, or other raw rota fields.
 
 The future published read-only Rota aggregate may contain only:
 
@@ -22,7 +24,7 @@ attention.conflict           = true | false
 attention.recoveryProtection = true | false
 ```
 
-No dates, locations, shift labels, leave type/reason, colleague identity, rota code, notes, or raw schedule entries may be written to or rendered by Home. Home may use the aggregate only to shape capacity language and priority; it must not infer a shift from absence of data.
+Except for the user-approved authenticated private-week projection described above, no dates, locations, shift labels, leave type/reason, colleague identity, rota code, notes, or raw schedule entries may be written to or rendered by Home. Home uses the aggregate only to shape capacity language and priority; it must not infer a shift from absence of data.
 
 ## SCE
 

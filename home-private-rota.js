@@ -16,8 +16,10 @@
   const capacities = new Set(['protected', 'limited', 'normal', 'unavailable']);
   const workloads = new Set(['protected', 'limited', 'normal', 'unavailable']);
   const proximity = new Set(['imminent', 'upcoming', 'none', 'unavailable']);
+  const privateDutyTypes = new Set(['ward', 'clinic', 'procedure', 'oncall', 'night', 'annual_leave', 'study_leave']);
   let authListenerAttached = false;
   let rotaRef = null;
+  let weekRef = null;
   let callbacks = {};
 
   function exactKeys(value, expected) {
@@ -32,6 +34,36 @@
     if (!exactKeys(week, ['workload', 'recovery', 'protectedStudyWindow', 'nextDutyProximity']) || !workloads.has(week.workload) || typeof week.recovery !== 'boolean' || typeof week.protectedStudyWindow !== 'boolean' || !proximity.has(week.nextDutyProximity)) return null;
     if (!exactKeys(attention, ['conflict', 'recoveryProtection']) || typeof attention.conflict !== 'boolean' || typeof attention.recoveryProtection !== 'boolean') return null;
     return { today: { ...today }, week: { ...week }, attention: { ...attention } };
+  }
+
+  function validatePrivateWeekSummary(value) {
+    if (!exactKeys(value, ['generatedAt', 'days']) || typeof value.generatedAt !== 'string' || Number.isNaN(new Date(value.generatedAt).getTime()) || !Array.isArray(value.days) || value.days.length !== 7) return null;
+    const days = [];
+    for (const day of value.days) {
+      if (!exactKeys(day, ['date', 'duties']) || typeof day.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(day.date) || !Array.isArray(day.duties) || !day.duties.every(duty => privateDutyTypes.has(duty))) return null;
+      days.push({ date: day.date, duties: [...new Set(day.duties)] });
+    }
+    return { generatedAt: value.generatedAt, days };
+  }
+
+  function projectPrivateWeekForDisplay(value) {
+    const summary = validatePrivateWeekSummary(value);
+    if (!summary) return null;
+    const labels = { ward: 'Ward', clinic: 'Clinic', procedure: 'Procedure', oncall: 'On call', night: 'Night', annual_leave: 'Annual leave', study_leave: 'Study leave' };
+    return summary.days.map(day => {
+      const date = new Date(`${day.date}T00:00:00`);
+      const protectedDay = day.duties.includes('annual_leave') || day.duties.includes('study_leave');
+      const working = day.duties.length > 0 && !protectedDay;
+      return {
+        date: day.date,
+        weekday: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
+        dayNum: date.getDate(),
+        context: protectedDay ? 'protected' : working ? 'working' : 'unknown',
+        workloadBand: day.duties.some(duty => duty === 'oncall' || duty === 'night') ? 'limited' : working ? 'normal' : 'unknown',
+        studyBand: day.duties.includes('study_leave') ? 'long' : 'none',
+        categories: day.duties.map(duty => labels[duty]),
+      };
+    });
   }
 
   function loadScript(src) {
@@ -54,7 +86,9 @@
 
   function stopRotaListener() {
     if (rotaRef) rotaRef.off();
+    if (weekRef) weekRef.off();
     rotaRef = null;
+    weekRef = null;
   }
 
   async function start(options = {}) {
@@ -78,6 +112,11 @@
         }
         callbacks.onSummary?.(summary);
       }, () => callbacks.onState?.('unavailable'));
+      weekRef = db.ref(`homePrivate/${user.uid}/rotaWeek`);
+      weekRef.on('value', snapshot => {
+        const week = projectPrivateWeekForDisplay(snapshot.val());
+        if (week) callbacks.onWeek?.(week);
+      }, () => callbacks.onState?.('unavailable'));
     });
   }
 
@@ -87,5 +126,5 @@
     return auth.signInWithPopup(new root.firebase.auth.GoogleAuthProvider());
   }
 
-  return { validateRotaSummary, start, signIn };
+  return { validateRotaSummary, validatePrivateWeekSummary, projectPrivateWeekForDisplay, start, signIn };
 });

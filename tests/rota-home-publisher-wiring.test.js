@@ -8,9 +8,12 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'rota.html'), 'utf8');
 test('publishes only the allowlisted Rota summary after Google authentication', () => {
   assert.match(html, /<script src="rota-home-summary\.js"><\/script>/);
   assert.match(html, /firebase-auth-compat\.js/);
+  assert.match(html, /<script src="hermione-hq-contracts\.js"><\/script>/);
   assert.match(html, /function publishHomeSummary\(\)/);
   assert.match(html, /buildHomePrivateWrite\(homeAuthUser\.uid, state, meKey\)/);
-  assert.match(html, /db\.ref\(write\.path\)\.set\(write\.value\)/);
+  assert.match(html, /buildHomePrivateWeekWrite\(homeAuthUser\.uid, state, meKey\)/);
+  assert.match(html, /db\.ref\(summaryWrite\.path\)\.set\(summaryWrite\.value\)/);
+  assert.match(html, /db\.ref\(weekWrite\.path\)\.set\(weekWrite\.value\)/);
   assert.doesNotMatch(html, /homePrivate\/"\+rotaCode|homePrivate\/\$\{rotaCode\}/);
 });
 

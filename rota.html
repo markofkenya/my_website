@@ -1452,6 +1452,7 @@
 
 <div id="toast" class="toast"></div>
 
+<script src="hermione-hq-contracts.js"></script>
 <script src="rota-home-summary.js"></script>
 <script>
 (function(){
@@ -3482,8 +3483,12 @@ function attachHomeAuthListener(){
 function publishHomeSummary(){
   if(!db || !homeAuthUser || !meKey || !window.RotaHomeSummary) return;
   try{
-    const write=window.RotaHomeSummary.buildHomePrivateWrite(homeAuthUser.uid, state, meKey);
-    db.ref(write.path).set(write.value).catch(error=>console.warn("private Home summary rejected", error));
+    const summaryWrite=window.RotaHomeSummary.buildHomePrivateWrite(homeAuthUser.uid, state, meKey);
+    const weekWrite=window.RotaHomeSummary.buildHomePrivateWeekWrite(homeAuthUser.uid, state, meKey);
+    Promise.all([
+      db.ref(summaryWrite.path).set(summaryWrite.value),
+      db.ref(weekWrite.path).set(weekWrite.value)
+    ]).catch(error=>console.warn("private Home summary rejected", error));
   }catch(error){ console.warn("private Home summary unavailable", error); }
 }
 async function signInForHomeSync(){
