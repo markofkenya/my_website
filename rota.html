@@ -625,6 +625,7 @@
   .hub-card:nth-child(1) .hc-ic{color:#7ee0b3}
   .hub-card:nth-child(2) .hc-ic{color:#9aa6ff}
   .hub-card:nth-child(3) .hc-ic{color:var(--a,#3fbb83)}
+  .hub-card:nth-child(4) .hc-ic{color:#f2c76e}
   .hc-t{font-family:var(--font-d);font-weight:700;font-size:21px;color:var(--ink);line-height:1.1}
   .hc-d{font-size:13.5px;color:var(--ink-soft);margin-top:5px;line-height:1.45}
   .hub-sync{justify-content:flex-start}
@@ -979,9 +980,9 @@
   </header>
   <div class="hub-cards">
     <button class="hub-card" id="hubMyRota"><div class="hc-ic">▦</div><div class="hc-t">My Rota</div><div class="hc-d">Your clinics, on-calls and leave together in one calendar.</div></button>
-    <button class="hub-card" id="hubLocum"><div class="hc-ic">£</div><div class="hc-t">Locum</div><div class="hc-d">Track booked NHS bank and agency shifts through timesheet and payment.</div></button>
     <button class="hub-card" id="hubAnnual"><div class="hc-ic">✦</div><div class="hc-t">Annual Leave</div><div class="hc-d">Book leave and keep track of what you have left.</div></button>
     <button class="hub-card" id="hubSplit"><div class="hc-ic">⇄</div><div class="hc-t">Split</div><div class="hc-d">Share the on-call rota fairly with your call partner.</div></button>
+    <button class="hub-card" id="hubLocum"><div class="hc-ic">£</div><div class="hc-t">Locum</div><div class="hc-d">Track booked NHS bank and agency shifts through timesheet and payment.</div></button>
   </div>
   <div class="hub-sync syncline" id="hubSync"><span class="syncdot local"></span> Saved on this device</div>
 </div>
@@ -1311,8 +1312,10 @@
           <label class="locum-field">Expected payment date<input id="locumPayDate" type="date" required></label>
           <label class="locum-field">Start time<input id="locumStart" type="time" required value="08:00"></label>
           <label class="locum-field">Finish time<input id="locumEnd" type="time" required value="17:00"></label>
-          <label class="locum-field">Gross hourly rate (£)<input id="locumRate" type="number" min="0.01" max="1000" step="0.01" inputmode="decimal" required></label>
-          <label class="locum-field">Paid hours<input id="locumHours" type="number" min="0.01" max="24" step="0.25" inputmode="decimal" required></label>
+          <label class="locum-field">Social/base rate (£)<input id="locumSocialRate" type="number" min="0.01" max="1000" step="0.01" inputmode="decimal" required></label>
+          <label class="locum-field">Social/base paid hours<input id="locumSocialHours" type="number" min="0.01" max="24" step="0.01" inputmode="decimal" required></label>
+          <label class="locum-field">Unsocial rate (£) <span style="text-transform:none;font-weight:400">(optional)</span><input id="locumUnsocialRate" type="number" min="0.01" max="1000" step="0.01" inputmode="decimal"></label>
+          <label class="locum-field">Unsocial paid hours <span style="text-transform:none;font-weight:400">(optional)</span><input id="locumUnsocialHours" type="number" min="0.01" max="24" step="0.01" inputmode="decimal"></label>
           <label class="locum-field">Expected gross total (£)<input id="locumGross" type="text" readonly value="£0.00"></label>
           <label class="locum-field">Booking reference <span style="text-transform:none;font-weight:400">(optional)</span><input id="locumReference" maxlength="60"></label>
         </div>
@@ -3524,8 +3527,20 @@ function setLocumAuthView(){
 }
 function locumToday(){ return iso(new Date()); }
 function renderLocumGross(){
-  const rate=Number(document.getElementById("locumRate").value)||0, hours=Number(document.getElementById("locumHours").value)||0;
-  document.getElementById("locumGross").value=locumMoney.format(Math.round((rate*hours+Number.EPSILON)*100)/100);
+  const socialRate=Number(document.getElementById("locumSocialRate").value)||0;
+  const socialHours=Number(document.getElementById("locumSocialHours").value)||0;
+  const unsocialRate=Number(document.getElementById("locumUnsocialRate").value)||0;
+  const unsocialHours=Number(document.getElementById("locumUnsocialHours").value)||0;
+  document.getElementById("locumGross").value=locumMoney.format(Math.round((socialRate*socialHours+unsocialRate*unsocialHours+Number.EPSILON)*100)/100);
+}
+function locumPayLine(shift){
+  if(shift.payBands){
+    const parts=[];
+    if(shift.payBands.social) parts.push(`Social/base ${locumMoney.format(shift.payBands.social.hourlyRate)}/h × ${shift.payBands.social.paidHours} h`);
+    if(shift.payBands.unsocial) parts.push(`Unsocial ${locumMoney.format(shift.payBands.unsocial.hourlyRate)}/h × ${shift.payBands.unsocial.paidHours} h`);
+    return parts.join(" · ");
+  }
+  return `${locumMoney.format(shift.hourlyRate)}/h × ${shift.paidHours} h`;
 }
 function renderLocum(){
   setLocumAuthView(); if(!homeAuthUser) return;
@@ -3539,9 +3554,10 @@ function renderLocum(){
   if(!locumShifts.length){ list.innerHTML=`<div class="locum-empty">No booked locum shifts yet. Add the first one above—tiny payroll dragon, neatly labelled.</div>`; return; }
   list.innerHTML=locumShifts.slice().sort((a,b)=>a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime)).map(s=>{
     const ref=s.bookingReference?` · Ref ${escapeHtml(s.bookingReference)}`:"";
-    return `<article class="locum-item" data-id="${s.id}"><div class="locum-item-top"><div><div class="locum-item-title">${escapeHtml(s.organisation)}</div><div class="locum-item-sub">${escapeHtml(prettyDate(s.date))} · ${s.startTime}–${s.endTime} · ${LOCUM_ROUTE_LABELS[s.paymentRoute]}${ref}</div><div class="locum-item-sub">Expected ${escapeHtml(prettyDate(s.expectedPaymentDate))} · ${locumMoney.format(s.hourlyRate)}/h × ${s.paidHours} h</div></div><div class="locum-item-pay">${locumMoney.format(s.expectedGross)}</div></div><div class="locum-item-actions"><select class="locum-status" data-action="status" aria-label="Payment status">${window.LocumTracker.STATUSES.filter((st,i,all)=>st===s.status||all[all.indexOf(s.status)+1]===st).map(st=>`<option value="${st}" ${st===s.status?"selected":""}>${LOCUM_STATUS_LABELS[st]}</option>`).join("")}</select><button class="btn ghost" type="button" data-action="edit">Edit</button><button class="btn ghost danger-ghost" type="button" data-action="delete">Delete</button></div></article>`;
+    return `<article class="locum-item" data-id="${s.id}"><div class="locum-item-top"><div><div class="locum-item-title">${escapeHtml(s.organisation)}</div><div class="locum-item-sub">${escapeHtml(prettyDate(s.date))} · ${s.startTime}–${s.endTime} · ${LOCUM_ROUTE_LABELS[s.paymentRoute]}${ref}</div><div class="locum-item-sub">Expected ${escapeHtml(prettyDate(s.expectedPaymentDate))} · ${locumPayLine(s)}</div></div><div class="locum-item-pay">${locumMoney.format(s.expectedGross)}</div></div><div class="locum-item-actions"><select class="locum-status" data-action="status" aria-label="Payment status">${window.LocumTracker.STATUSES.filter((st,i,all)=>st===s.status||all[all.indexOf(s.status)+1]===st).map(st=>`<option value="${st}" ${st===s.status?"selected":""}>${LOCUM_STATUS_LABELS[st]}</option>`).join("")}</select><button class="btn ghost" type="button" data-action="calendar">Add to calendar</button><button class="btn ghost" type="button" data-action="edit">Edit</button><button class="btn ghost danger-ghost" type="button" data-action="delete">Delete</button></div></article>`;
   }).join("");
   list.querySelectorAll("[data-action=status]").forEach(el=>el.onchange=()=>updateLocumStatus(el.closest("[data-id]").dataset.id,el.value));
+  list.querySelectorAll("[data-action=calendar]").forEach(el=>el.onclick=()=>exportLocumIcs(el.closest("[data-id]").dataset.id));
   list.querySelectorAll("[data-action=edit]").forEach(el=>el.onclick=()=>editLocumShift(el.closest("[data-id]").dataset.id));
   list.querySelectorAll("[data-action=delete]").forEach(el=>el.onclick=()=>deleteLocumShift(el.closest("[data-id]").dataset.id));
 }
@@ -3550,10 +3566,15 @@ function resetLocumForm(){
   document.getElementById("locumEditId").value=""; document.getElementById("locumStart").value="08:00"; document.getElementById("locumEnd").value="17:00";
   document.getElementById("locumSave").textContent="Add booked shift"; document.getElementById("locumCancelEdit").hidden=true; renderLocumGross();
 }
-function locumFormInput(){ return {
+function locumFormInput(){
+  const unsocialRate=document.getElementById("locumUnsocialRate").value, unsocialHours=document.getElementById("locumUnsocialHours").value;
+  if(Boolean(unsocialRate)!==Boolean(unsocialHours)) throw new TypeError("Complete both unsocial rate fields");
+  const payBands={social:{hourlyRate:document.getElementById("locumSocialRate").value,paidHours:document.getElementById("locumSocialHours").value}};
+  if(unsocialRate&&unsocialHours) payBands.unsocial={hourlyRate:unsocialRate,paidHours:unsocialHours};
+  return {
   paymentRoute:document.getElementById("locumRoute").value, organisation:document.getElementById("locumOrganisation").value,
   date:document.getElementById("locumDate").value, startTime:document.getElementById("locumStart").value, endTime:document.getElementById("locumEnd").value,
-  hourlyRate:document.getElementById("locumRate").value, paidHours:document.getElementById("locumHours").value,
+  payBands,
   expectedPaymentDate:document.getElementById("locumPayDate").value, bookingReference:document.getElementById("locumReference").value,
 }; }
 function upsertLocumLocal(shift){ locumShifts=locumShifts.filter(s=>s.id!==shift.id).concat(shift); renderLocum(); }
@@ -3583,8 +3604,20 @@ function editLocumShift(id){
   const s=locumShifts.find(x=>x.id===id); if(!s) return;
   document.getElementById("locumEditId").value=s.id; document.getElementById("locumRoute").value=s.paymentRoute; document.getElementById("locumOrganisation").value=s.organisation;
   document.getElementById("locumDate").value=s.date; document.getElementById("locumPayDate").value=s.expectedPaymentDate; document.getElementById("locumStart").value=s.startTime; document.getElementById("locumEnd").value=s.endTime;
-  document.getElementById("locumRate").value=s.hourlyRate; document.getElementById("locumHours").value=s.paidHours; document.getElementById("locumReference").value=s.bookingReference;
+  const social=s.payBands&&s.payBands.social ? s.payBands.social : (!s.payBands&&s.hourlyRate?{hourlyRate:s.hourlyRate,paidHours:s.paidHours}:null);
+  const unsocial=s.payBands&&s.payBands.unsocial;
+  document.getElementById("locumSocialRate").value=social?social.hourlyRate:""; document.getElementById("locumSocialHours").value=social?social.paidHours:"";
+  document.getElementById("locumUnsocialRate").value=unsocial?unsocial.hourlyRate:""; document.getElementById("locumUnsocialHours").value=unsocial?unsocial.paidHours:""; document.getElementById("locumReference").value=s.bookingReference;
   document.getElementById("locumSave").textContent="Save shift"; document.getElementById("locumCancelEdit").hidden=false; renderLocumGross(); document.getElementById("locumForm").scrollIntoView({behavior:"smooth"});
+}
+function exportLocumIcs(id){
+  const shift=locumShifts.find(s=>s.id===id); if(!shift) return;
+  try{
+    const body=window.LocumTracker.buildShiftIcs(shift,Date.now());
+    const url=URL.createObjectURL(new Blob([body],{type:"text/calendar;charset=utf-8"}));
+    const a=document.createElement("a"); a.href=url; a.download=`locum-shift-${shift.date}.ics`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+    setLocumSync("Calendar file downloaded—open it to add the shift.",false);
+  }catch(error){ setLocumSync("Could not create the calendar file.",true); }
 }
 async function updateLocumStatus(id,status){
   const current=locumShifts.find(s=>s.id===id); if(!current) return;
@@ -4005,8 +4038,7 @@ function boot(){
   document.getElementById("locumPrivateSignOut").onclick=signOutLocum;
   document.getElementById("locumForm").onsubmit=saveLocumShift;
   document.getElementById("locumCancelEdit").onclick=resetLocumForm;
-  document.getElementById("locumRate").oninput=renderLocumGross;
-  document.getElementById("locumHours").oninput=renderLocumGross;
+  ["locumSocialRate","locumSocialHours","locumUnsocialRate","locumUnsocialHours"].forEach(id=>document.getElementById(id).oninput=renderLocumGross);
   document.getElementById("myBack").onclick=closeMyRota;
   document.getElementById("myPrev").onclick=()=>{ myView.setMonth(myView.getMonth()-1); renderMyCalendar(); };
   document.getElementById("myNext").onclick=()=>{ myView.setMonth(myView.getMonth()+1); renderMyCalendar(); };

@@ -10,6 +10,16 @@ test('adds a Locum card that opens a dedicated private tracker', () => {
   assert.match(html, /id="locumForm"/);
   assert.match(html, /id="locumList"/);
   assert.match(html, /<script src="locum-tracker\.js"><\/script>/);
+  assert.ok(html.indexOf('id="hubLocum"') > html.indexOf('id="hubSplit"'), 'Locum card should be the final hub card');
+});
+
+test('supports split-rate entry, decimal hours, and private ICS export', () => {
+  assert.match(html, /id="locumSocialRate"[^>]*step="0\.01"/);
+  assert.match(html, /id="locumSocialHours"[^>]*step="0\.01"/);
+  assert.match(html, /id="locumUnsocialRate"[^>]*step="0\.01"/);
+  assert.match(html, /id="locumUnsocialHours"[^>]*step="0\.01"/);
+  assert.match(html, /data-action="calendar"/);
+  assert.match(html, /LocumTracker\.buildShiftIcs\(shift/);
 });
 
 test('wires private authenticated locum storage without using the shared rota room', () => {

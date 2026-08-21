@@ -8,6 +8,7 @@ const {
   summariseShifts,
   buildPrivatePath,
   canTransitionStatus,
+  buildShiftIcs,
 } = require('../locum-tracker.js');
 
 test('creates a bounded NHS bank PAYE shift and calculates expected gross pay', () => {
@@ -24,11 +25,43 @@ test('creates a bounded NHS bank PAYE shift and calculates expected gross pay', 
   });
 });
 
+test('calculates split social and unsocial rates with decimal paid hours', () => {
+  const shift = createShift({
+    id:'split-rate', paymentRoute:'agency_paye', organisation:'Agency One', date:'2026-09-14',
+    startTime:'09:00', endTime:'23:00', expectedPaymentDate:'2026-10-15',
+    payBands:{social:{hourlyRate:60,paidHours:7.33},unsocial:{hourlyRate:80,paidHours:5.67}},
+  }, 2);
+  assert.deepEqual(shift.payBands, {
+    social:{hourlyRate:60,paidHours:7.33},
+    unsocial:{hourlyRate:80,paidHours:5.67},
+  });
+  assert.equal(shift.expectedGross, 893.4);
+  assert.equal(shift.hourlyRate, undefined);
+  assert.equal(shift.paidHours, undefined);
+});
+
+test('builds a private calendar event without financial or payment details', () => {
+  const shift = createShift({
+    id:'ics-1', paymentRoute:'nhs_bank_paye', organisation:'North Hospital', date:'2026-09-14',
+    startTime:'20:00', endTime:'08:00', expectedPaymentDate:'2026-10-15',
+    payBands:{unsocial:{hourlyRate:80,paidHours:12}}, bookingReference:'SECRET-RATE-REF',
+  }, 2);
+  const ics=buildShiftIcs(shift, Date.UTC(2026,7,21,12,0,0));
+  assert.match(ics, /SUMMARY:Locum shift - North Hospital/);
+  assert.match(ics, /DTSTART:20260914T200000/);
+  assert.match(ics, /DTEND:20260915T080000/);
+  assert.doesNotMatch(ics, /SECRET-RATE-REF|payment|PAYE|hourly|paid hours|£/i);
+});
+
 test('supports only NHS bank PAYE and agency PAYE with the agreed workflow', () => {
   assert.deepEqual(PAYMENT_ROUTES, ['nhs_bank_paye', 'agency_paye']);
   assert.deepEqual(STATUSES, ['booked', 'worked', 'timesheet_submitted', 'paid']);
   assert.equal(normaliseShift({ id:'x', paymentRoute:'umbrella', status:'booked' }), null);
   assert.equal(normaliseShift({ id:'x', paymentRoute:'agency_paye', status:'invoiced' }), null);
+  assert.equal(normaliseShift({
+    id:'x',paymentRoute:'agency_paye',organisation:'Agency',date:'2026-09-13',startTime:'09:00',endTime:'17:00',
+    payBands:{social:{hourlyRate:70,paidHours:7.5},unsocial:{hourlyRate:90}},expectedPaymentDate:'2026-10-12',status:'booked',updatedAt:1,
+  }), null);
   assert.equal(normaliseShift({
     id:'x',paymentRoute:'agency_paye',organisation:'Agency',date:'2026-09-13',startTime:'09:00',endTime:'17:00',
     hourlyRate:70,paidHours:8,expectedPaymentDate:'2026-09-12',status:'booked',updatedAt:1,
