@@ -38,6 +38,11 @@ test('calculates split social and unsocial rates with decimal paid hours', () =>
   assert.equal(shift.expectedGross, 893.4);
   assert.equal(shift.hourlyRate, undefined);
   assert.equal(shift.paidHours, undefined);
+  assert.throws(() => createShift({
+    id:'too-many-hours', paymentRoute:'agency_paye', organisation:'Agency One', date:'2026-09-14',
+    startTime:'00:00', endTime:'23:59', expectedPaymentDate:'2026-10-15',
+    payBands:{social:{hourlyRate:60,paidHours:24},unsocial:{hourlyRate:80,paidHours:24}},
+  }, 3));
 });
 
 test('builds a private calendar event without financial or payment details', () => {
@@ -51,6 +56,19 @@ test('builds a private calendar event without financial or payment details', () 
   assert.match(ics, /DTSTART:20260914T200000/);
   assert.match(ics, /DTEND:20260915T080000/);
   assert.doesNotMatch(ics, /SECRET-RATE-REF|payment|PAYE|hourly|paid hours|£/i);
+});
+
+test('escapes ICS line breaks and folds every content line to 75 UTF-8 octets', () => {
+  const shift = createShift({
+    id:'ics-fold', paymentRoute:'nhs_bank_paye', organisation:'Safe\rX-PRIVATE:leak,semi;slash\\'+'診'.repeat(20),
+    date:'2026-09-14', startTime:'09:00', endTime:'17:00', expectedPaymentDate:'2026-10-15',
+    hourlyRate:70, paidHours:8,
+  }, 2);
+  const ics=buildShiftIcs(shift, Date.UTC(2026,7,21,12,0,0));
+  assert.doesNotMatch(ics, /\r\nX-PRIVATE:/);
+  assert.match(ics, /Safe\\nX-PRIVATE:leak\\,semi\\;slash\\\\/);
+  ics.split('\r\n').filter(Boolean).forEach(line=>assert.ok(Buffer.byteLength(line,'utf8')<=75, `${Buffer.byteLength(line,'utf8')} octets: ${line}`));
+  assert.match(ics, /\r\n /);
 });
 
 test('supports only NHS bank PAYE and agency PAYE with the agreed workflow', () => {

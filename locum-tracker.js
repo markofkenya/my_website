@@ -36,7 +36,8 @@
       if(hourlyRate===null || paidHours===null){ invalid=true; return; }
       out[key]={hourlyRate,paidHours};
     });
-    return !invalid && Object.keys(out).length ? out : null;
+    const totalHours=Object.values(out).reduce((sum,band)=>sum+band.paidHours,0);
+    return !invalid && Object.keys(out).length && totalHours<=24 ? out : null;
   }
   function normaliseShift(input){
     if(!input || typeof input!=='object') return null;
@@ -90,7 +91,20 @@
     });
     return out;
   }
-  function icsEscape(value){ return String(value).replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;'); }
+  function icsEscape(value){ return String(value).replace(/\\/g,'\\\\').replace(/\r\n|\r|\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;'); }
+  function utf8Octets(character){
+    const code=character.codePointAt(0);
+    return code<=0x7f ? 1 : code<=0x7ff ? 2 : code<=0xffff ? 3 : 4;
+  }
+  function foldIcsLine(line){
+    const parts=[]; let current='', octets=0;
+    for(const character of line){
+      const size=utf8Octets(character);
+      if(current && octets+size>75){ parts.push(current); current=' '; octets=1; }
+      current+=character; octets+=size;
+    }
+    parts.push(current); return parts.join('\r\n');
+  }
   function icsLocalStamp(date,time){ return date.replace(/-/g,'')+'T'+time.replace(':','')+'00'; }
   function nextIsoDate(date){ const d=new Date(date+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+1); return d.toISOString().slice(0,10); }
   function buildShiftIcs(value,now){
@@ -101,7 +115,7 @@
     return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//InstaRota//Locum Shift//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT',
       `UID:${icsEscape(shift.id)}@instarota`,`DTSTAMP:${dtstamp}`,`DTSTART:${icsLocalStamp(shift.date,shift.startTime)}`,
       `DTEND:${icsLocalStamp(endDate,shift.endTime)}`,`SUMMARY:${icsEscape('Locum shift - '+shift.organisation)}`,
-      'DESCRIPTION:Private InstaRota locum shift.','END:VEVENT','END:VCALENDAR',''].join('\r\n');
+      'DESCRIPTION:Private InstaRota locum shift.','END:VEVENT','END:VCALENDAR',''].map(foldIcsLine).join('\r\n');
   }
   function buildPrivatePath(uid){
     if(typeof uid!=='string' || !/^[A-Za-z0-9_-]{1,128}$/.test(uid)) throw new TypeError('Invalid Firebase UID');

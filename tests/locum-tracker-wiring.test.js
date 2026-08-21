@@ -20,6 +20,7 @@ test('supports split-rate entry, decimal hours, and private ICS export', () => {
   assert.match(html, /id="locumUnsocialHours"[^>]*step="0\.01"/);
   assert.match(html, /data-action="calendar"/);
   assert.match(html, /LocumTracker\.buildShiftIcs\(shift/);
+  assert.match(html, /Total paid hours for one shift cannot exceed 24\./);
 });
 
 test('wires private authenticated locum storage without using the shared rota room', () => {

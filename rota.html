@@ -3527,10 +3527,14 @@ function setLocumAuthView(){
 }
 function locumToday(){ return iso(new Date()); }
 function renderLocumGross(){
-  const socialRate=Number(document.getElementById("locumSocialRate").value)||0;
-  const socialHours=Number(document.getElementById("locumSocialHours").value)||0;
-  const unsocialRate=Number(document.getElementById("locumUnsocialRate").value)||0;
-  const unsocialHours=Number(document.getElementById("locumUnsocialHours").value)||0;
+  const socialRateEl=document.getElementById("locumSocialRate"), socialHoursEl=document.getElementById("locumSocialHours");
+  const unsocialRateEl=document.getElementById("locumUnsocialRate"), unsocialHoursEl=document.getElementById("locumUnsocialHours");
+  const socialRate=Number(socialRateEl.value)||0, socialHours=Number(socialHoursEl.value)||0;
+  const unsocialRate=Number(unsocialRateEl.value)||0, unsocialHours=Number(unsocialHoursEl.value)||0;
+  socialHoursEl.setCustomValidity(""); unsocialRateEl.setCustomValidity(""); unsocialHoursEl.setCustomValidity("");
+  if(unsocialRateEl.value&&!unsocialHoursEl.value) unsocialHoursEl.setCustomValidity("Enter the unsocial paid hours.");
+  else if(unsocialHoursEl.value&&!unsocialRateEl.value) unsocialRateEl.setCustomValidity("Enter the unsocial hourly rate.");
+  if(socialHours+unsocialHours>24) (unsocialHoursEl.value?unsocialHoursEl:socialHoursEl).setCustomValidity("Total paid hours for one shift cannot exceed 24.");
   document.getElementById("locumGross").value=locumMoney.format(Math.round((socialRate*socialHours+unsocialRate*unsocialHours+Number.EPSILON)*100)/100);
 }
 function locumPayLine(shift){
