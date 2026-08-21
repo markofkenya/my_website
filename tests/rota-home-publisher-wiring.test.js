@@ -17,8 +17,12 @@ test('publishes only the allowlisted Rota summary after Google authentication', 
   assert.doesNotMatch(html, /homePrivate\/"\+rotaCode|homePrivate\/\$\{rotaCode\}/);
 });
 
-test('keeps private Home publication behind an explicit Google sign-in action', () => {
-  assert.match(html, /id="homeSyncBtn"/);
-  assert.match(html, /function signInForHomeSync\(\)/);
-  assert.match(html, /signInWithPopup/);
+test('publishes privately for an existing Google session without a separate Home sync control', () => {
+  assert.doesNotMatch(html, /id="homeSyncBtn"/);
+  assert.doesNotMatch(html, /function signInForHomeSync\(\)/);
+  assert.doesNotMatch(html, /signInWithPopup/);
+  assert.match(
+    html,
+    /firebase\.auth\(\)\.onAuthStateChanged\(user=>\{[\s\S]*?homeAuthUser=user\|\|null;[\s\S]*?publishHomeSummary\(\);[\s\S]*?\}\);/
+  );
 });

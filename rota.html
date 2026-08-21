@@ -946,7 +946,6 @@
       <button class="msg-tab" id="hubMsgTab" aria-label="Messages">Messages<span class="msg-badge" id="hubMsgBadge" hidden></span></button>
       <button class="msg-tab" id="hubDeptBtn">Department rota</button>
       <button class="acct-btn" id="hubAccountBtn">Sign in</button>
-      <button class="acct-btn" id="homeSyncBtn" type="button">Home sync</button>
     </div>
   </header>
   <div class="hub-cards">
@@ -3466,17 +3465,11 @@ async function ensureFirebase(){
   attachHomeAuthListener();
   return true;
 }
-function renderHomeSyncButton(){
-  const btn=document.getElementById("homeSyncBtn");
-  if(!btn) return;
-  btn.textContent=homeAuthUser ? "Home synced" : "Home sync";
-}
 function attachHomeAuthListener(){
   if(homeAuthListenerAttached || !firebase.auth) return;
   homeAuthListenerAttached=true;
   firebase.auth().onAuthStateChanged(user=>{
     homeAuthUser=user||null;
-    renderHomeSyncButton();
     publishHomeSummary();
   });
 }
@@ -3490,20 +3483,6 @@ function publishHomeSummary(){
       db.ref(weekWrite.path).set(weekWrite.value)
     ]).catch(error=>console.warn("private Home summary rejected", error));
   }catch(error){ console.warn("private Home summary unavailable", error); }
-}
-async function signInForHomeSync(){
-  try{
-    const ok=await ensureFirebase();
-    if(!ok || !firebase.auth) throw new Error("Firebase authentication is unavailable");
-    if(!homeAuthUser){
-      const provider=new firebase.auth.GoogleAuthProvider();
-      await firebase.auth().signInWithPopup(provider);
-    }
-    publishHomeSummary();
-  }catch(error){
-    console.warn("Home sync sign-in failed", error);
-    flashMsg("Home sync sign-in did not complete");
-  }
 }
 function loadCacheCode(){ try{ return localStorage.getItem(CACHE_OWNER)||""; }catch(e){ return ""; } }
 function saveCacheCode(c){ cacheCode=c; try{ localStorage.setItem(CACHE_OWNER, c); }catch(e){} }
@@ -3812,7 +3791,6 @@ function boot(){
   document.getElementById("hubAnnual").onclick=()=>openLeave();
   document.getElementById("hubSplit").onclick=()=>showBase("split");
   document.getElementById("hubAccountBtn").onclick=openLogin;
-  document.getElementById("homeSyncBtn").onclick=signInForHomeSync;
   document.getElementById("hubMsgTab").onclick=openMessages;
   document.getElementById("splitBack").onclick=()=>showBase("hub");
   document.getElementById("msgTab").onclick=openMessages;
