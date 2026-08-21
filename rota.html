@@ -3539,7 +3539,7 @@ function renderLocum(){
   if(!locumShifts.length){ list.innerHTML=`<div class="locum-empty">No booked locum shifts yet. Add the first one above—tiny payroll dragon, neatly labelled.</div>`; return; }
   list.innerHTML=locumShifts.slice().sort((a,b)=>a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime)).map(s=>{
     const ref=s.bookingReference?` · Ref ${escapeHtml(s.bookingReference)}`:"";
-    return `<article class="locum-item" data-id="${s.id}"><div class="locum-item-top"><div><div class="locum-item-title">${escapeHtml(s.organisation)}</div><div class="locum-item-sub">${escapeHtml(prettyDate(s.date))} · ${s.startTime}–${s.endTime} · ${LOCUM_ROUTE_LABELS[s.paymentRoute]}${ref}</div><div class="locum-item-sub">Expected ${escapeHtml(prettyDate(s.expectedPaymentDate))} · ${locumMoney.format(s.hourlyRate)}/h × ${s.paidHours} h</div></div><div class="locum-item-pay">${locumMoney.format(s.expectedGross)}</div></div><div class="locum-item-actions"><select class="locum-status" data-action="status" aria-label="Payment status">${window.LocumTracker.STATUSES.map(st=>`<option value="${st}" ${st===s.status?"selected":""}>${LOCUM_STATUS_LABELS[st]}</option>`).join("")}</select><button class="btn ghost" type="button" data-action="edit">Edit</button><button class="btn ghost danger-ghost" type="button" data-action="delete">Delete</button></div></article>`;
+    return `<article class="locum-item" data-id="${s.id}"><div class="locum-item-top"><div><div class="locum-item-title">${escapeHtml(s.organisation)}</div><div class="locum-item-sub">${escapeHtml(prettyDate(s.date))} · ${s.startTime}–${s.endTime} · ${LOCUM_ROUTE_LABELS[s.paymentRoute]}${ref}</div><div class="locum-item-sub">Expected ${escapeHtml(prettyDate(s.expectedPaymentDate))} · ${locumMoney.format(s.hourlyRate)}/h × ${s.paidHours} h</div></div><div class="locum-item-pay">${locumMoney.format(s.expectedGross)}</div></div><div class="locum-item-actions"><select class="locum-status" data-action="status" aria-label="Payment status">${window.LocumTracker.STATUSES.filter((st,i,all)=>st===s.status||all[all.indexOf(s.status)+1]===st).map(st=>`<option value="${st}" ${st===s.status?"selected":""}>${LOCUM_STATUS_LABELS[st]}</option>`).join("")}</select><button class="btn ghost" type="button" data-action="edit">Edit</button><button class="btn ghost danger-ghost" type="button" data-action="delete">Delete</button></div></article>`;
   }).join("");
   list.querySelectorAll("[data-action=status]").forEach(el=>el.onchange=()=>updateLocumStatus(el.closest("[data-id]").dataset.id,el.value));
   list.querySelectorAll("[data-action=edit]").forEach(el=>el.onclick=()=>editLocumShift(el.closest("[data-id]").dataset.id));
@@ -3588,6 +3588,7 @@ function editLocumShift(id){
 }
 async function updateLocumStatus(id,status){
   const current=locumShifts.find(s=>s.id===id); if(!current) return;
+  if(!window.LocumTracker.canTransitionStatus(current.status,status)){ setLocumSync("Status must move one step: Booked → Worked → Timesheet submitted → Paid.",true); renderLocum(); return; }
   const shift=window.LocumTracker.normaliseShift(Object.assign({},current,{status,updatedAt:Date.now()})); if(!shift){ renderLocum(); return; }
   if(await writeLocumRemote(shift)) upsertLocumLocal(shift); else renderLocum();
 }

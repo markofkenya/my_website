@@ -48,6 +48,10 @@
     if(!clean) throw new TypeError('Invalid locum shift');
     return clean;
   }
+  function canTransitionStatus(from,to){
+    const fromIndex=STATUSES.indexOf(from);
+    return fromIndex>=0 && STATUSES[fromIndex+1]===to;
+  }
   function summariseShifts(values,today){
     const out={
       nhs_bank_paye:{expected:0,paid:0,outstanding:0},
@@ -74,5 +78,5 @@
     if(!value || typeof value!=='object' || Array.isArray(value)) return [];
     return Object.values(value).map(normaliseShift).filter(Boolean).sort((a,b)=>a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime));
   }
-  return {PAYMENT_ROUTES,STATUSES,createShift,normaliseShift,summariseShifts,buildPrivatePath,sanitiseCollection};
+  return {PAYMENT_ROUTES,STATUSES,createShift,normaliseShift,canTransitionStatus,summariseShifts,buildPrivatePath,sanitiseCollection};
 });

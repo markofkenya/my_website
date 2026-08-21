@@ -7,6 +7,7 @@ const {
   normaliseShift,
   summariseShifts,
   buildPrivatePath,
+  canTransitionStatus,
 } = require('../locum-tracker.js');
 
 test('creates a bounded NHS bank PAYE shift and calculates expected gross pay', () => {
@@ -32,6 +33,18 @@ test('supports only NHS bank PAYE and agency PAYE with the agreed workflow', () 
     id:'x',paymentRoute:'agency_paye',organisation:'Agency',date:'2026-09-13',startTime:'09:00',endTime:'17:00',
     hourlyRate:70,paidHours:8,expectedPaymentDate:'2026-09-12',status:'booked',updatedAt:1,
   }), null);
+});
+
+test('enforces the booked-to-paid lifecycle without skips or backwards transitions', () => {
+  assert.equal(canTransitionStatus('booked', 'worked'), true);
+  assert.equal(canTransitionStatus('worked', 'timesheet_submitted'), true);
+  assert.equal(canTransitionStatus('timesheet_submitted', 'paid'), true);
+  assert.equal(canTransitionStatus('booked', 'timesheet_submitted'), false);
+  assert.equal(canTransitionStatus('booked', 'paid'), false);
+  assert.equal(canTransitionStatus('paid', 'worked'), false);
+  assert.equal(canTransitionStatus('worked', 'booked'), false);
+  assert.equal(canTransitionStatus('worked', 'worked'), false);
+  assert.equal(canTransitionStatus('unknown', 'worked'), false);
 });
 
 test('drops unknown and privacy-risk fields from stored locum data', () => {

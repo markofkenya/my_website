@@ -29,6 +29,8 @@ test('wires private authenticated locum storage without using the shared rota ro
   assert.match(locumBlock[0], /locumRemoteRef\.once\("value"\)\.then/);
   assert.doesNotMatch(locumBlock[0], /locumRemoteRef\.on\("value"/);
   assert.match(locumBlock[0], /if\(!locumSessionIsCurrent\(uid,generation\)\) return;/);
+  assert.match(locumBlock[0], /if\(!window\.LocumTracker\.canTransitionStatus\(current\.status,status\)\)/);
+  assert.match(locumBlock[0], /STATUSES\.filter\(\(st,i,all\)=>st===s\.status\|\|all\[all\.indexOf\(s\.status\)\+1\]===st\)/);
   assert.match(locumBlock[0], /function deleteLocumShift\(id\)[\s\S]*?const uid=homeAuthUser\.uid, generation=locumSessionGeneration;[\s\S]*?locumDeleteConfirmOpen=true;[\s\S]*?openConfirm/);
   assert.match(locumBlock[0], /function syncLocumForUser\(user\)\{\s*if\(locumDeleteConfirmOpen\) closeConfirm\(\);/);
   assert.match(locumBlock[0], /await db\.ref\(window\.LocumTracker\.buildPrivatePath\(uid\)\)\.child\(id\)\.remove\(\);[\s\S]*?if\(!locumSessionIsCurrent\(uid,generation\)\) return;[\s\S]*?locumShifts=locumShifts\.filter/);
