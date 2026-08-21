@@ -628,6 +628,35 @@
   .hc-t{font-family:var(--font-d);font-weight:700;font-size:21px;color:var(--ink);line-height:1.1}
   .hc-d{font-size:13.5px;color:var(--ink-soft);margin-top:5px;line-height:1.45}
   .hub-sync{justify-content:flex-start}
+  /* Private Locum tracker */
+  .locum-shell{max-width:980px;margin:0 auto}
+  .locum-head{margin:8px 0 18px}.locum-head h2{font-family:var(--font-d);font-size:30px;margin:2px 0 6px;color:var(--ink)}
+  .locum-privacy{font-size:12.5px;color:var(--ink-faint);line-height:1.5}
+  .locum-auth{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:16px;margin:16px 0}
+  .locum-auth[hidden],.locum-app[hidden]{display:none}
+  .locum-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
+  .locum-total{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px}
+  .locum-total .route{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)}
+  .locum-total .money{font-family:var(--font-d);font-size:25px;font-weight:700;color:var(--ink);margin-top:4px}
+  .locum-total .minor{font-size:12px;color:var(--ink-soft);margin-top:3px}
+  .locum-alerts{font-size:12.5px;color:var(--ink-soft);margin:8px 0 16px}
+  .locum-form{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:16px;margin-bottom:16px}
+  .locum-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .locum-field{display:flex;flex-direction:column;gap:5px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+  .locum-field.wide{grid-column:1/-1}
+  .locum-field input,.locum-field select{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:10px 11px;background:var(--surface-2);color:var(--ink);font:400 14px var(--font-b);text-transform:none;letter-spacing:normal}
+  .locum-field input:focus,.locum-field select:focus{outline:none;border-color:var(--a)}
+  .locum-form-actions{display:flex;gap:8px;margin-top:14px}.locum-form-actions .btn{flex:1}
+  .locum-sync{font-size:12px;color:var(--ink-faint);min-height:18px;margin-top:8px}.locum-sync.err{color:var(--warn)}
+  .locum-list{display:flex;flex-direction:column;gap:10px;padding-bottom:30px}
+  .locum-item{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px}
+  .locum-item-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+  .locum-item-title{font-weight:700;color:var(--ink)}.locum-item-sub{font-size:12px;color:var(--ink-soft);margin-top:3px}
+  .locum-item-pay{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--ink);white-space:nowrap}
+  .locum-item-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:11px}
+  .locum-status{border:1px solid var(--line);border-radius:9px;padding:7px 9px;background:var(--surface-2);color:var(--ink);font:500 12.5px var(--font-b)}
+  .locum-empty{border:1px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--ink-faint);font-size:13px}
+  @media(max-width:600px){.locum-summary,.locum-form-grid{grid-template-columns:1fr}.locum-field.wide{grid-column:auto}.locum-head h2{font-size:26px}}
   /* InstaRota brand */
   .logo-mark{display:inline-block;color:#34d6bb;flex:0 0 auto}
   .logo-lockup{display:inline-flex;align-items:center;gap:11px}
@@ -950,6 +979,7 @@
   </header>
   <div class="hub-cards">
     <button class="hub-card" id="hubMyRota"><div class="hc-ic">▦</div><div class="hc-t">My Rota</div><div class="hc-d">Your clinics, on-calls and leave together in one calendar.</div></button>
+    <button class="hub-card" id="hubLocum"><div class="hc-ic">£</div><div class="hc-t">Locum</div><div class="hc-d">Track booked NHS bank and agency shifts through timesheet and payment.</div></button>
     <button class="hub-card" id="hubAnnual"><div class="hc-ic">✦</div><div class="hc-t">Annual Leave</div><div class="hc-d">Book leave and keep track of what you have left.</div></button>
     <button class="hub-card" id="hubSplit"><div class="hc-ic">⇄</div><div class="hc-t">Split</div><div class="hc-d">Share the on-call rota fairly with your call partner.</div></button>
   </div>
@@ -1253,6 +1283,47 @@
   </div>
 </div>
 
+<!-- PRIVATE LOCUM TRACKER -->
+<div class="leave-overlay" id="locumOverlay">
+  <div class="leave-inner locum-shell">
+    <div class="rota-top"><button class="rota-back" id="locumBack">‹ Back</button></div>
+    <div class="locum-head">
+      <div class="kicker">Private earnings tracker</div>
+      <h2>Locum shifts</h2>
+      <div class="locum-privacy">Your rates and payment status use your Google-authenticated private space—not the shared rota room. No patient information or free-text notes.</div>
+    </div>
+    <div class="locum-auth" id="locumAuth">
+      <div style="font-weight:700;margin-bottom:5px">Sign in required</div>
+      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Sign in with your own Google account to open the private tracker across devices.</div>
+      <button class="btn key-al" id="locumSignIn" type="button">Sign in to Locum</button>
+      <div class="locum-sync" id="locumAuthStatus" aria-live="polite"></div>
+    </div>
+    <div class="locum-app" id="locumApp" hidden>
+      <div style="display:flex;justify-content:flex-end;margin:-6px 0 4px"><button class="btn ghost" id="locumPrivateSignOut" type="button">Sign out of private tracker</button></div>
+      <div class="locum-summary" id="locumSummary"></div>
+      <div class="locum-alerts" id="locumAlerts"></div>
+      <form class="locum-form" id="locumForm">
+        <input type="hidden" id="locumEditId">
+        <div class="locum-form-grid">
+          <label class="locum-field">Payment route<select id="locumRoute" required><option value="nhs_bank_paye">NHS staff bank · PAYE</option><option value="agency_paye">Locum agency · PAYE</option></select></label>
+          <label class="locum-field">Trust or agency<input id="locumOrganisation" maxlength="80" required autocomplete="organization"></label>
+          <label class="locum-field">Shift date<input id="locumDate" type="date" required></label>
+          <label class="locum-field">Expected payment date<input id="locumPayDate" type="date" required></label>
+          <label class="locum-field">Start time<input id="locumStart" type="time" required value="08:00"></label>
+          <label class="locum-field">Finish time<input id="locumEnd" type="time" required value="17:00"></label>
+          <label class="locum-field">Gross hourly rate (£)<input id="locumRate" type="number" min="0.01" max="1000" step="0.01" inputmode="decimal" required></label>
+          <label class="locum-field">Paid hours<input id="locumHours" type="number" min="0.01" max="24" step="0.25" inputmode="decimal" required></label>
+          <label class="locum-field">Expected gross total (£)<input id="locumGross" type="text" readonly value="£0.00"></label>
+          <label class="locum-field">Booking reference <span style="text-transform:none;font-weight:400">(optional)</span><input id="locumReference" maxlength="60"></label>
+        </div>
+        <div class="locum-form-actions"><button class="btn key-al" type="submit" id="locumSave">Add booked shift</button><button class="btn ghost" type="button" id="locumCancelEdit" hidden>Cancel edit</button></div>
+        <div class="locum-sync" id="locumSyncStatus" aria-live="polite"></div>
+      </form>
+      <div class="locum-list" id="locumList"></div>
+    </div>
+  </div>
+</div>
+
 <!-- LEAVE TRACKER -->
 <div class="leave-overlay" id="leaveOverlay">
   <div class="leave-inner">
@@ -1453,6 +1524,7 @@
 
 <script src="hermione-hq-contracts.js"></script>
 <script src="rota-home-summary.js"></script>
+<script src="locum-tracker.js"></script>
 <script>
 (function(){
   /* theme bootstrap (set before first render to avoid a flash) */
@@ -1535,6 +1607,7 @@ function readLocal(){ try{ const r=localStorage.getItem(STORE_KEY); return r?JSO
 function writeLocal(obj){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(obj)); }catch(e){ mem=obj; } }
 let applyingRemote = false, db = null;
 let homeAuthUser = null, homeAuthListenerAttached = false;
+let locumShifts = [], locumRemoteRef = null, locumSessionGeneration = 0, locumDeleteConfirmOpen = false;
 let lastRemoteTs=0, firstSyncDone=false, stampCounter=0, lastAutoPushAt=0;
 function stamp(){ const s=Math.max(Date.now(), lastRemoteTs+1, stampCounter+1); stampCounter=s; return s; }
 function touchDay(k, ds){ if(!k) return; if(!state.myShiftsTs) state.myShiftsTs={}; if(!state.myShiftsTs[k]) state.myShiftsTs[k]={}; state.myShiftsTs[k][ds]=stamp(); }
@@ -3386,7 +3459,7 @@ function addPicked(){ poolDates().forEach(d=>{ if(!pickerSel.has(d)) delete stat
 /* ===== confirm + new rota ===== */
 let confirmCb=null;
 function openConfirm(title,msg,okLabel,cb){ document.getElementById("confirmTitle").textContent=title; document.getElementById("confirmMsg").textContent=msg; document.getElementById("confirmOk").textContent=okLabel; confirmCb=cb; document.getElementById("confirmOverlay").classList.add("show"); }
-function closeConfirm(){ document.getElementById("confirmOverlay").classList.remove("show"); confirmCb=null; }
+function closeConfirm(){ document.getElementById("confirmOverlay").classList.remove("show"); document.getElementById("confirmTitle").textContent=""; document.getElementById("confirmMsg").textContent=""; confirmCb=null; locumDeleteConfirmOpen=false; }
 function newRota(){
   openConfirm("Start a new rota?","This starts a fresh per-rota fairness count and clears the pool so you can allocate the new dates. Shifts already on the calendar stay as history and still count under “All time”.","Start new rota",
     ()=>{ poolDates().forEach(d=>delete state.assignments[d]); state.rotaId=(state.rotaId||1)+1; state.comments=[]; state.ready={A:false,B:false}; scope="rota"; document.querySelectorAll("#scope button").forEach(x=>x.classList.toggle("on", x.dataset.scope==="rota")); persist(); renderAll(); });
@@ -3440,6 +3513,134 @@ function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<"
 /* ===== theme ===== */
 function applyTheme(name){ const root=document.documentElement; if(root) root.setAttribute("data-theme", name); try{ localStorage.setItem(THEME_KEY, name); }catch(e){} document.querySelectorAll("#themeSwitch button").forEach(b=>b.classList.toggle("on", b.dataset.theme===name)); }
 
+/* ===== private locum tracker ===== */
+const LOCUM_STATUS_LABELS={booked:"Booked",worked:"Worked",timesheet_submitted:"Timesheet submitted",paid:"Paid"};
+const LOCUM_ROUTE_LABELS={nhs_bank_paye:"NHS staff bank",agency_paye:"Locum agency"};
+const locumMoney=new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP"});
+function setLocumSync(text,isError){ ["locumSyncStatus","locumAuthStatus"].forEach(id=>{ const el=document.getElementById(id); if(el){ el.textContent=text||""; el.classList.toggle("err",!!isError); } }); }
+function setLocumAuthView(){
+  const auth=document.getElementById("locumAuth"), app=document.getElementById("locumApp"); if(!auth||!app) return;
+  auth.hidden=!!homeAuthUser; app.hidden=!homeAuthUser;
+}
+function locumToday(){ return iso(new Date()); }
+function renderLocumGross(){
+  const rate=Number(document.getElementById("locumRate").value)||0, hours=Number(document.getElementById("locumHours").value)||0;
+  document.getElementById("locumGross").value=locumMoney.format(Math.round((rate*hours+Number.EPSILON)*100)/100);
+}
+function renderLocum(){
+  setLocumAuthView(); if(!homeAuthUser) return;
+  const totals=window.LocumTracker.summariseShifts(locumShifts,locumToday());
+  document.getElementById("locumSummary").innerHTML=[
+    ["nhs_bank_paye","NHS staff bank · PAYE"],["agency_paye","Locum agency · PAYE"]
+  ].map(([key,label])=>`<div class="locum-total"><div class="route">${label}</div><div class="money">${locumMoney.format(totals[key].expected)}</div><div class="minor">${locumMoney.format(totals[key].outstanding)} outstanding · ${locumMoney.format(totals[key].paid)} marked paid</div></div>`).join("");
+  const alerts=[]; if(totals.awaitingTimesheet) alerts.push(`${totals.awaitingTimesheet} worked shift${totals.awaitingTimesheet===1?"":"s"} awaiting a timesheet`); if(totals.overdue) alerts.push(`${totals.overdue} overdue payment${totals.overdue===1?"":"s"}`);
+  document.getElementById("locumAlerts").textContent=alerts.length?alerts.join(" · "):"No timesheet or overdue-payment alerts.";
+  const list=document.getElementById("locumList");
+  if(!locumShifts.length){ list.innerHTML=`<div class="locum-empty">No booked locum shifts yet. Add the first one above—tiny payroll dragon, neatly labelled.</div>`; return; }
+  list.innerHTML=locumShifts.slice().sort((a,b)=>a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime)).map(s=>{
+    const ref=s.bookingReference?` · Ref ${escapeHtml(s.bookingReference)}`:"";
+    return `<article class="locum-item" data-id="${s.id}"><div class="locum-item-top"><div><div class="locum-item-title">${escapeHtml(s.organisation)}</div><div class="locum-item-sub">${escapeHtml(prettyDate(s.date))} · ${s.startTime}–${s.endTime} · ${LOCUM_ROUTE_LABELS[s.paymentRoute]}${ref}</div><div class="locum-item-sub">Expected ${escapeHtml(prettyDate(s.expectedPaymentDate))} · ${locumMoney.format(s.hourlyRate)}/h × ${s.paidHours} h</div></div><div class="locum-item-pay">${locumMoney.format(s.expectedGross)}</div></div><div class="locum-item-actions"><select class="locum-status" data-action="status" aria-label="Payment status">${window.LocumTracker.STATUSES.map(st=>`<option value="${st}" ${st===s.status?"selected":""}>${LOCUM_STATUS_LABELS[st]}</option>`).join("")}</select><button class="btn ghost" type="button" data-action="edit">Edit</button><button class="btn ghost danger-ghost" type="button" data-action="delete">Delete</button></div></article>`;
+  }).join("");
+  list.querySelectorAll("[data-action=status]").forEach(el=>el.onchange=()=>updateLocumStatus(el.closest("[data-id]").dataset.id,el.value));
+  list.querySelectorAll("[data-action=edit]").forEach(el=>el.onclick=()=>editLocumShift(el.closest("[data-id]").dataset.id));
+  list.querySelectorAll("[data-action=delete]").forEach(el=>el.onclick=()=>deleteLocumShift(el.closest("[data-id]").dataset.id));
+}
+function resetLocumForm(){
+  const form=document.getElementById("locumForm"); form.reset();
+  document.getElementById("locumEditId").value=""; document.getElementById("locumStart").value="08:00"; document.getElementById("locumEnd").value="17:00";
+  document.getElementById("locumSave").textContent="Add booked shift"; document.getElementById("locumCancelEdit").hidden=true; renderLocumGross();
+}
+function locumFormInput(){ return {
+  paymentRoute:document.getElementById("locumRoute").value, organisation:document.getElementById("locumOrganisation").value,
+  date:document.getElementById("locumDate").value, startTime:document.getElementById("locumStart").value, endTime:document.getElementById("locumEnd").value,
+  hourlyRate:document.getElementById("locumRate").value, paidHours:document.getElementById("locumHours").value,
+  expectedPaymentDate:document.getElementById("locumPayDate").value, bookingReference:document.getElementById("locumReference").value,
+}; }
+function upsertLocumLocal(shift){ locumShifts=locumShifts.filter(s=>s.id!==shift.id).concat(shift); renderLocum(); }
+function locumSessionIsCurrent(uid,generation){ return generation===locumSessionGeneration && !!homeAuthUser && homeAuthUser.uid===uid; }
+async function writeLocumRemote(shift){
+  if(!db||!homeAuthUser){ setLocumSync("Private storage is unavailable—this change was not saved.",true); return false; }
+  const uid=homeAuthUser.uid, generation=locumSessionGeneration;
+  try{
+    const path=window.LocumTracker.buildPrivatePath(uid); await db.ref(path).child(shift.id).set(shift);
+    if(!locumSessionIsCurrent(uid,generation)) return false;
+    setLocumSync("Private sync complete.",false); return true;
+  }
+  catch(error){ if(locumSessionIsCurrent(uid,generation)){ console.warn("private locum write rejected",error); setLocumSync("Private Firebase storage is not enabled—this change was not saved.",true); } return false; }
+}
+async function saveLocumShift(event){
+  event.preventDefault(); if(!homeAuthUser){ setLocumAuthView(); return; }
+  const editId=document.getElementById("locumEditId").value; const existing=locumShifts.find(s=>s.id===editId);
+  try{
+    let shift;
+    if(existing){ shift=window.LocumTracker.normaliseShift(Object.assign({},locumFormInput(),{id:existing.id,status:existing.status,updatedAt:Date.now()})); if(!shift) throw new TypeError("Invalid locum shift"); }
+    else { shift=window.LocumTracker.createShift(Object.assign({},locumFormInput(),{id:`locum-${Date.now()}-${Math.random().toString(36).slice(2,8)}`}),Date.now()); }
+    if(!(await writeLocumRemote(shift))) return;
+    upsertLocumLocal(shift); resetLocumForm();
+  }catch(error){ setLocumSync("Check the shift details, rate, hours and dates.",true); }
+}
+function editLocumShift(id){
+  const s=locumShifts.find(x=>x.id===id); if(!s) return;
+  document.getElementById("locumEditId").value=s.id; document.getElementById("locumRoute").value=s.paymentRoute; document.getElementById("locumOrganisation").value=s.organisation;
+  document.getElementById("locumDate").value=s.date; document.getElementById("locumPayDate").value=s.expectedPaymentDate; document.getElementById("locumStart").value=s.startTime; document.getElementById("locumEnd").value=s.endTime;
+  document.getElementById("locumRate").value=s.hourlyRate; document.getElementById("locumHours").value=s.paidHours; document.getElementById("locumReference").value=s.bookingReference;
+  document.getElementById("locumSave").textContent="Save shift"; document.getElementById("locumCancelEdit").hidden=false; renderLocumGross(); document.getElementById("locumForm").scrollIntoView({behavior:"smooth"});
+}
+async function updateLocumStatus(id,status){
+  const current=locumShifts.find(s=>s.id===id); if(!current) return;
+  const shift=window.LocumTracker.normaliseShift(Object.assign({},current,{status,updatedAt:Date.now()})); if(!shift){ renderLocum(); return; }
+  if(await writeLocumRemote(shift)) upsertLocumLocal(shift); else renderLocum();
+}
+function deleteLocumShift(id){
+  const shift=locumShifts.find(s=>s.id===id); if(!shift||!homeAuthUser) return;
+  const uid=homeAuthUser.uid, generation=locumSessionGeneration;
+  locumDeleteConfirmOpen=true;
+  openConfirm("Delete this locum shift?",`${shift.organisation} · ${prettyDate(shift.date)}. This removes its private payment record.`,"Delete",async()=>{
+    locumDeleteConfirmOpen=false;
+    if(!db||!locumSessionIsCurrent(uid,generation)){ return; }
+    try{
+      await db.ref(window.LocumTracker.buildPrivatePath(uid)).child(id).remove();
+      if(!locumSessionIsCurrent(uid,generation)) return;
+      locumShifts=locumShifts.filter(s=>s.id!==id); renderLocum(); setLocumSync("Shift deleted from private sync.",false);
+    }
+    catch(error){ if(locumSessionIsCurrent(uid,generation)){ console.warn("private locum delete rejected",error); setLocumSync("Private deletion failed—the shift remains stored.",true); } }
+  });
+}
+function detachLocumRemote(){ locumSessionGeneration++; if(locumRemoteRef){ try{ locumRemoteRef.off(); }catch(e){} locumRemoteRef=null; } }
+function syncLocumForUser(user){
+  if(locumDeleteConfirmOpen) closeConfirm();
+  detachLocumRemote(); homeAuthUser=user||null; setLocumAuthView(); locumShifts=[]; resetLocumForm();
+  if(!user){ renderLocum(); return; }
+  const uid=user.uid, generation=locumSessionGeneration;
+  renderLocum();
+  if(!db){ setLocumSync("Private storage is unavailable.",true); return; }
+  setLocumSync("Loading private shifts…",false);
+  try{
+    const path=window.LocumTracker.buildPrivatePath(uid); locumRemoteRef=db.ref(path);
+    locumRemoteRef.once("value").then(snap=>{
+      if(!locumSessionIsCurrent(uid,generation)) return;
+      locumShifts=window.LocumTracker.sanitiseCollection(snap.val()); renderLocum(); setLocumSync("Private sync complete.",false);
+    }).catch(error=>{
+      if(!locumSessionIsCurrent(uid,generation)) return;
+      console.warn("private locum read rejected",error); locumShifts=[]; renderLocum(); setLocumSync("Private Firebase storage is not enabled; no financial records were loaded.",true);
+    });
+  }catch(error){ if(locumSessionIsCurrent(uid,generation)) setLocumSync("Private sync is unavailable.",true); }
+}
+async function signInLocum(){
+  setLocumSync("Opening secure Google sign-in…",false);
+  try{ const ok=await ensureFirebase(); if(!ok||!firebase.auth) throw new Error("Firebase authentication unavailable"); if(!firebase.auth().currentUser){ const provider=new firebase.auth.GoogleAuthProvider(); await firebase.auth().signInWithPopup(provider); } syncLocumForUser(firebase.auth().currentUser); }
+  catch(error){ console.warn("locum sign-in failed",error); setLocumSync("Google sign-in did not complete. Check popup and authorised-domain settings.",true); }
+}
+async function signOutLocum(){
+  try{ detachLocumRemote(); if(window.firebase&&firebase.auth) await firebase.auth().signOut(); homeAuthUser=null; locumShifts=[]; resetLocumForm(); setLocumAuthView(); setLocumSync("Signed out of the private tracker.",false); }
+  catch(error){ console.warn("locum sign-out failed",error); setLocumSync("Private sign-out did not complete.",true); }
+}
+async function openLocum(){
+  document.getElementById("locumOverlay").classList.add("show"); setLocumAuthView(); renderLocum();
+  try{ await ensureFirebase(); if(firebase.auth().currentUser) syncLocumForUser(firebase.auth().currentUser); }catch(error){ setLocumSync("Private sign-in is unavailable right now.",true); }
+}
+function closeLocum(){ document.getElementById("locumOverlay").classList.remove("show"); resetLocumForm(); replayHubSpin(); }
+
 /* ===== live bank-holiday refresh ===== */
 async function refreshBankHolidays(){
   try{
@@ -3471,6 +3672,7 @@ function attachHomeAuthListener(){
   firebase.auth().onAuthStateChanged(user=>{
     homeAuthUser=user||null;
     publishHomeSummary();
+    syncLocumForUser(homeAuthUser);
   });
 }
 function publishHomeSummary(){
@@ -3788,6 +3990,7 @@ function boot(){
 
   document.getElementById("refreshBtn").onclick=newRota;
   document.getElementById("hubMyRota").onclick=()=>openMyRota();
+  document.getElementById("hubLocum").onclick=openLocum;
   document.getElementById("hubAnnual").onclick=()=>openLeave();
   document.getElementById("hubSplit").onclick=()=>showBase("split");
   document.getElementById("hubAccountBtn").onclick=openLogin;
@@ -3796,6 +3999,13 @@ function boot(){
   document.getElementById("msgTab").onclick=openMessages;
   document.getElementById("msgClose").onclick=closeMessages;
   document.getElementById("messagesOverlay").onclick=e=>{ if(e.target.id==="messagesOverlay") closeMessages(); };
+  document.getElementById("locumBack").onclick=closeLocum;
+  document.getElementById("locumSignIn").onclick=signInLocum;
+  document.getElementById("locumPrivateSignOut").onclick=signOutLocum;
+  document.getElementById("locumForm").onsubmit=saveLocumShift;
+  document.getElementById("locumCancelEdit").onclick=resetLocumForm;
+  document.getElementById("locumRate").oninput=renderLocumGross;
+  document.getElementById("locumHours").oninput=renderLocumGross;
   document.getElementById("myBack").onclick=closeMyRota;
   document.getElementById("myPrev").onclick=()=>{ myView.setMonth(myView.getMonth()-1); renderMyCalendar(); };
   document.getElementById("myNext").onclick=()=>{ myView.setMonth(myView.getMonth()+1); renderMyCalendar(); };
@@ -3842,7 +4052,7 @@ function boot(){
   let curTheme="clinical"; try{ curTheme=localStorage.getItem(THEME_KEY)||"clinical"; }catch(e){}
   document.querySelectorAll("#themeSwitch button").forEach(b=>{ b.classList.toggle("on", b.dataset.theme===curTheme); b.onclick=()=>applyTheme(b.dataset.theme); });
 
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("messagesOverlay").classList.contains("show")){ closeMessages(); return; } if(document.getElementById("leaveOverlay").classList.contains("show")){ closeLeave(); return; } if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); closePrint(); closeIcs(); document.getElementById("nameOverlay").classList.remove("show"); } });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(document.getElementById("messagesOverlay").classList.contains("show")){ closeMessages(); return; } if(document.getElementById("locumOverlay").classList.contains("show")){ closeLocum(); return; } if(document.getElementById("leaveOverlay").classList.contains("show")){ closeLeave(); return; } if(document.getElementById("myDayOverlay").classList.contains("show")){ closeMyDay(); return; } if(document.getElementById("rotaOverlay").classList.contains("show")){ closeMyRota(); return; } closeEditor(); closePicker(); closePrefs(); closeConfirm(); closeAlert(); closePrint(); closeIcs(); document.getElementById("nameOverlay").classList.remove("show"); } });
 
   document.getElementById("syncStatus").onclick=openLogin;
   document.getElementById("accountBtn").onclick=openLogin;

@@ -20,7 +20,9 @@ test('publishes only the allowlisted Rota summary after Google authentication', 
 test('publishes privately for an existing Google session without a separate Home sync control', () => {
   assert.doesNotMatch(html, /id="homeSyncBtn"/);
   assert.doesNotMatch(html, /function signInForHomeSync\(\)/);
-  assert.doesNotMatch(html, /signInWithPopup/);
+  const homeAuthBlock = html.match(/function attachHomeAuthListener\(\)[\s\S]*?function publishHomeSummary\(\)/);
+  assert.ok(homeAuthBlock, 'missing restored-session Home auth listener');
+  assert.doesNotMatch(homeAuthBlock[0], /signInWithPopup/);
   assert.match(
     html,
     /firebase\.auth\(\)\.onAuthStateChanged\(user=>\{[\s\S]*?homeAuthUser=user\|\|null;[\s\S]*?publishHomeSummary\(\);[\s\S]*?\}\);/
