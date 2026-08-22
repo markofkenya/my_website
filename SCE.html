@@ -1147,8 +1147,10 @@ function computeStats() {
   const p2Coverage  = p2Attempted / KSAP.length;
   const p2Score     = p2Perf * p2Coverage * 60;
 
+  // Readiness reflects KSAP performance and question coverage only.
+  // Topic coverage remains visible as its own progress metric.
   const ksapReadiness = Math.min(100, Math.round(p1Score + p2Score));
-  const readiness     = Math.round(ksapReadiness * 0.6 + topicPct * 0.4);
+  const readiness     = ksapReadiness;
   return { attempted, correct, ksapPct, topicPct, readiness, p1done, p2done, stTotal, stRead };
 }
 
