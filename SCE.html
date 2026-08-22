@@ -13,7 +13,6 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getDatabase, ref, onValue, update, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-    import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
@@ -27,14 +26,9 @@
 
     const app = initializeApp(firebaseConfig);
     const db  = getDatabase(app);
-    const auth = getAuth(app);
     const sceRef = ref(db, "sceData");
 
-    window._sce_fb = { db, ref, update, set, onValue, sceRef, auth, GoogleAuthProvider, signInWithPopup };
-    onAuthStateChanged(auth, user => {
-      window._sce_auth_user = user || null;
-      window.dispatchEvent(new CustomEvent("sce-auth-sync"));
-    });
+    window._sce_fb = { db, ref, update, set, onValue, sceRef };
 
     onValue(sceRef, snap => {
       window._sce_data = snap.val() || {};
@@ -73,7 +67,6 @@
     window._sce_fb.roadmapRef = roadmapRef;
   </script>
   <script src="sce-learning-dashboard.js"></script>
-  <script src="sce-private-summary.js"></script>
 
   <style>
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
@@ -1032,51 +1025,6 @@ function stKey(cat, topic, sub) { return `st_${cat}_${topic}_${sub}`.replace(/[^
 function getQ(code) { return sceData.ksap?.[qKey(code)] || {}; }
 function getST(cat, topic, sub) { return sceData.topics?.[stKey(cat,topic,sub)] || {}; }
 
-// ── PRIVATE HERMIONE HQ SCE SUMMARY ───────────────────────────────────
-// This is deliberately opt-in. It writes only four aggregate fields to the
-// signed-in Firebase user's homePrivate/<uid>/sce path; it never publishes
-// question IDs, answers, notes, performance, or error-log text.
-let privateSceCategory = localStorage.getItem("private-sce-category") || "Acid–Base and Potassium Disorders";
-
-function privateSceCategories() {
-  return Object.keys(window.ScePrivateSummary?.TOPICS || {});
-}
-
-function privateSceStatus() {
-  return window._sce_auth_user ? "Signed in for private HQ sync" : "Sign in with Google to publish your private summary";
-}
-
-async function signInForPrivateSce() {
-  if (!window._sce_fb) return;
-  try {
-    await window._sce_fb.signInWithPopup(window._sce_fb.auth, new window._sce_fb.GoogleAuthProvider());
-  } catch (error) {
-    alert(`Could not sign in: ${error?.message || "unknown error"}`);
-  }
-}
-
-async function publishPrivateSceSummary() {
-  const user = window._sce_auth_user;
-  if (!user || !window._sce_fb || !window.ScePrivateSummary) return;
-  try {
-    const summary = window.ScePrivateSummary.buildScePrivateSummary({
-      category: privateSceCategory,
-      questions: KSAP,
-      answers: sceData.ksap || {},
-      now: Date.now(),
-    });
-    await window._sce_fb.set(window._sce_fb.ref(window._sce_fb.db, `homePrivate/${user.uid}/sce`), summary);
-    alert("✓ Private SCE summary published to Hermione HQ.");
-    renderOverview();
-  } catch (error) {
-    alert(`Could not publish private SCE summary: ${error?.message || "unknown error"}`);
-  }
-}
-
-window.addEventListener("sce-auth-sync", () => {
-  if (currentTab === "overview") renderOverview();
-});
-
 function saveQ(code, updates) {
   if (!window._sce_fb) return;
   const { db, ref, update } = window._sce_fb;
@@ -1311,14 +1259,6 @@ function renderOverview() {
         <div style="font-size:11px;font-weight:500;color:var(--red);line-height:1.3;">${weakest}</div>
         <div style="font-size:9px;color:var(--grey2);margin-top:4px;">${weakestPct}% correct on attempted</div>
       </div>` : ""}
-    </div>
-
-    <div style="background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--purple);padding:12px 14px;margin-bottom:20px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-        <div><div style="font-size:9px;color:var(--grey);letter-spacing:0.12em;margin-bottom:4px;">HERMIONE HQ · PRIVATE SCE SUMMARY</div><div style="font-size:10px;color:var(--grey2);">${privateSceStatus()} · writes only topic, P1 remaining count, attention flag and freshness.</div></div>
-        ${window._sce_auth_user ? `<button onclick="publishPrivateSceSummary()" style="padding:5px 10px;border:1px solid var(--purple);background:transparent;color:var(--purple);font-family:var(--font);font-size:9px;cursor:pointer;letter-spacing:0.06em;">PUBLISH PRIVATE SUMMARY</button>` : `<button onclick="signInForPrivateSce()" style="padding:5px 10px;border:1px solid var(--purple);background:transparent;color:var(--purple);font-family:var(--font);font-size:9px;cursor:pointer;letter-spacing:0.06em;">SIGN IN WITH GOOGLE</button>`}
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;"><label for="private-sce-category" style="font-size:9px;color:var(--grey);letter-spacing:0.08em;">CURRENT TOPIC</label><select id="private-sce-category" onchange="privateSceCategory=this.value;localStorage.setItem('private-sce-category',this.value)" style="background:var(--bg3);border:1px solid var(--border2);color:var(--white);font-family:var(--font);font-size:10px;padding:5px 7px;">${privateSceCategories().map(category => `<option value="${category}" ${category === privateSceCategory ? "selected" : ""}>${category}</option>`).join("")}</select></div>
     </div>
 
     <div class="sec-head">
