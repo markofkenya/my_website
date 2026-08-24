@@ -17,7 +17,7 @@ test('projects only an allowlisted personal week into the authenticated Home sum
       },
     },
     assignments: { '2026-08-12': { p: 'A', type: 'oncall' } },
-  }, 'A', new Date('2026-08-10T08:00:00'));
+  }, 'A', new Date('2026-08-10T08:00:00Z'));
 
   assert.deepEqual(summary, {
     generatedAt: '2026-08-10T08:00:00.000Z',
@@ -33,6 +33,22 @@ test('projects only an allowlisted personal week into the authenticated Home sum
   });
 });
 
+test('projects a Wednesday publication into its containing Monday-to-Sunday week', () => {
+  const summary = buildPrivateWeekSummary({
+    myShifts: { A: {
+      '2026-08-24': [{ type: 'clinic_am' }],
+      '2026-08-26': [{ type: 'procedures' }],
+      '2026-08-30': [{ type: 'pdp' }],
+    } },
+  }, 'A', new Date('2026-08-26T18:00:00'));
+
+  assert.deepEqual(summary.days.map(day => day.date), [
+    '2026-08-24', '2026-08-25', '2026-08-26', '2026-08-27', '2026-08-28', '2026-08-29', '2026-08-30',
+  ]);
+  assert.deepEqual(summary.days[0].duties, ['clinic']);
+  assert.deepEqual(summary.days[6].duties, ['professional_development']);
+});
+
 test('maps InstaRota session and on-call identifiers into the bounded Hermione HQ vocabulary', () => {
   const summary = buildPrivateWeekSummary({
     myShifts: { A: {
@@ -44,7 +60,7 @@ test('maps InstaRota session and on-call identifiers into the bounded Hermione H
       '2026-08-13': { p: 'A', type: 'long' },
       '2026-08-14': { p: 'A', type: 'twilight' },
     },
-  }, 'A', new Date('2026-08-10T08:00:00'));
+  }, 'A', new Date('2026-08-10T08:00:00Z'));
 
   assert.deepEqual(summary.days.slice(0, 5), [
     { date: '2026-08-10', duties: ['clinic', 'procedure'] },
@@ -67,7 +83,7 @@ test('omits names, room data, locations, notes and unknown duty types from the p
     },
     people: { A: { name: 'Private name' } },
     room: 'secret',
-  }, 'A', new Date('2026-08-10T08:00:00'));
+  }, 'A', new Date('2026-08-10T08:00:00Z'));
 
   assert.deepEqual(summary.days[0], { date: '2026-08-10', duties: ['clinic'] });
   assert.doesNotMatch(JSON.stringify(summary), /name|room|note|location|colleague|free-text/i);
@@ -128,7 +144,7 @@ test('rejects a mission brief that claims confirmation when a required source is
 test('publishes a detailed week only under the authenticated user private path', () => {
   const write = buildHomePrivateWeekWrite('uid-1', {
     myShifts: { A: { '2026-08-10': [{ type: 'procedure', note: 'hidden' }] } },
-  }, 'A', new Date('2026-08-10T08:00:00'));
+  }, 'A', new Date('2026-08-10T08:00:00Z'));
 
   assert.equal(write.path, 'homePrivate/uid-1/rotaWeek');
   assert.deepEqual(write.value.days[0], { date: '2026-08-10', duties: ['procedure'] });

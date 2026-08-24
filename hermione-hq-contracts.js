@@ -57,10 +57,13 @@
     if (typeof personKey !== 'string' || !personKey.trim()) throw new TypeError('A rota person key is required');
     const current = now instanceof Date ? now : new Date(now);
     if (Number.isNaN(current.getTime())) throw new TypeError('A valid date is required');
+    const weekStart = new Date(current);
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(current.getDate() - ((current.getDay() + 6) % 7));
     return {
       generatedAt: current.toISOString(),
       days: Array.from({ length: 7 }, (_, index) => {
-        const date = addDays(current, index);
+        const date = addDays(weekStart, index);
         const dateKey = localDateKey(date);
         return { date: dateKey, duties: dayDuties(state, personKey, dateKey) };
       }),
