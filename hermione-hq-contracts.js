@@ -4,7 +4,14 @@
   if (root) root.HermioneHQContracts = api;
 })(typeof window !== 'undefined' ? window : globalThis, function () {
   const DAY_MS = 24 * 60 * 60 * 1000;
-  const DUTY_TYPES = new Set(['ward', 'clinic', 'procedure', 'oncall', 'night', 'annual_leave', 'study_leave']);
+  const DUTY_TYPES = new Set(['ward', 'clinic', 'procedure', 'oncall', 'night', 'annual_leave', 'study_leave', 'professional_development']);
+  const DUTY_TYPE_MAP = Object.freeze({
+    ward: 'ward', rue: 'ward', ruf: 'ward', transplant: 'ward', outliers: 'ward', day_cover: 'ward',
+    clinic: 'clinic', clinic_am: 'clinic', clinic_pm: 'clinic',
+    procedure: 'procedure', procedures: 'procedure',
+    oncall: 'oncall', long: 'oncall', twilight: 'oncall', night: 'night',
+    annual_leave: 'annual_leave', study_leave: 'study_leave', pdp: 'professional_development',
+  });
   const CAPTURE_TYPES = new Set(['case', 'procedure', 'clinic', 'teaching', 'questions', 'admin', 'reflection', 'life-admin']);
   const DRAFT_TYPES = new Set(['portfolio-reflection', 'portfolio-opportunity', 'study-action', 'life-admin-task']);
   const SOURCE_STATES = new Set(['current', 'stale', 'missing', 'unavailable']);
@@ -39,9 +46,10 @@
   function dayDuties(state, personKey, dateKey) {
     const personal = Array.isArray(state?.myShifts?.[personKey]?.[dateKey])
       ? state.myShifts[personKey][dateKey] : [];
-    const duties = personal.map(entry => entry?.type).filter(type => DUTY_TYPES.has(type));
+    const duties = personal.map(entry => DUTY_TYPE_MAP[entry?.type]).filter(type => DUTY_TYPES.has(type));
     const assignment = state?.assignments?.[dateKey];
-    if (assignment?.p === personKey && DUTY_TYPES.has(assignment.type)) duties.push(assignment.type);
+    const assignmentDuty = DUTY_TYPE_MAP[assignment?.type];
+    if (assignment?.p === personKey && DUTY_TYPES.has(assignmentDuty)) duties.push(assignmentDuty);
     return [...new Set(duties)];
   }
 

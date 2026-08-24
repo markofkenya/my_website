@@ -33,6 +33,28 @@ test('projects only an allowlisted personal week into the authenticated Home sum
   });
 });
 
+test('maps InstaRota session and on-call identifiers into the bounded Hermione HQ vocabulary', () => {
+  const summary = buildPrivateWeekSummary({
+    myShifts: { A: {
+      '2026-08-10': [{ type: 'clinic_am' }, { type: 'clinic_pm' }, { type: 'procedures' }],
+      '2026-08-11': [{ type: 'rue' }, { type: 'transplant' }, { type: 'day_cover' }],
+      '2026-08-12': [{ type: 'pdp' }],
+    } },
+    assignments: {
+      '2026-08-13': { p: 'A', type: 'long' },
+      '2026-08-14': { p: 'A', type: 'twilight' },
+    },
+  }, 'A', new Date('2026-08-10T08:00:00'));
+
+  assert.deepEqual(summary.days.slice(0, 5), [
+    { date: '2026-08-10', duties: ['clinic', 'procedure'] },
+    { date: '2026-08-11', duties: ['ward'] },
+    { date: '2026-08-12', duties: ['professional_development'] },
+    { date: '2026-08-13', duties: ['oncall'] },
+    { date: '2026-08-14', duties: ['oncall'] },
+  ]);
+});
+
 test('omits names, room data, locations, notes and unknown duty types from the private week projection', () => {
   const summary = buildPrivateWeekSummary({
     myShifts: {
