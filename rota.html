@@ -277,6 +277,7 @@
   /* tools */
   .tools{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:6px 2px 0}
   .tools .grow{flex:1}
+  .hub-home-sync{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:13px;background:var(--surface)}
   .theme-switch{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:var(--shadow)}
   .theme-switch button{border:0;background:transparent;cursor:pointer;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;padding:0;margin:0 1px}
   .theme-switch button .dotc{width:15px;height:15px;border-radius:50%;border:2px solid transparent}
@@ -985,6 +986,10 @@
     <button class="hub-card" id="hubLocum"><div class="hc-ic">£</div><div class="hc-t">Locum</div><div class="hc-d">Track booked NHS bank and agency shifts through timesheet and payment.</div></button>
   </div>
   <div class="hub-sync syncline" id="hubSync"><span class="syncdot local"></span> Saved on this device</div>
+  <div class="hub-home-sync">
+    <div class="syncline" id="hubHomeSyncStatus" aria-live="polite"><span class="syncdot local"></span> Hermione HQ not connected</div>
+    <button class="btn key" id="hubHomeSyncBtn" type="button">Connect Hermione HQ</button>
+  </div>
 </div>
 
 <div class="wrap" id="ss-root">
@@ -3711,18 +3716,18 @@ function attachHomeAuthListener(){
   homeAuthListenerAttached=true;
   firebase.auth().onAuthStateChanged(user=>{
     homeAuthUser=user||null;
-    const btn=document.getElementById("homeSyncBtn");
-    if(btn) btn.textContent=homeAuthUser?"Refresh Hermione HQ":"Connect Hermione HQ";
+    ["homeSyncBtn","hubHomeSyncBtn"].forEach(id=>{ const btn=document.getElementById(id); if(btn) btn.textContent=homeAuthUser?"Refresh Hermione HQ":"Connect Hermione HQ"; });
     if(!homeAuthUser){ homePublishRequested=false; setHomeSyncStatus("Hermione HQ not connected",false); }
     syncLocumForUser(homeAuthUser);
   });
 }
 function setHomeSyncStatus(text,isError){
-  const el=document.getElementById("homeSyncStatus");
-  if(!el) return;
-  const dot=document.createElement("span");
-  dot.className=`syncdot ${isError?"local":"live"}`;
-  el.replaceChildren(dot, document.createTextNode(" "+text));
+  ["homeSyncStatus","hubHomeSyncStatus"].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    const dot=document.createElement("span");
+    dot.className=`syncdot ${isError?"local":"live"}`;
+    el.replaceChildren(dot, document.createTextNode(" "+text));
+  });
 }
 async function publishHomeSummary(){
   if(!homePublishRequested) return false;
@@ -3745,11 +3750,11 @@ async function publishHomeSummary(){
   }catch(error){ console.warn("private Home summary unavailable", error); setHomeSyncStatus("Hermione HQ publish failed",true); return false; }
 }
 async function signInForHomeSync(){
-  const btn=document.getElementById("homeSyncBtn");
-  if(btn) btn.disabled=true;
-  if(!rotaCode){ setHomeSyncStatus("Open your rota with its rota code first",true); if(btn) btn.disabled=false; return; }
-  if(!meKey){ setHomeSyncStatus("Choose who you are in this rota first",true); if(btn) btn.disabled=false; return; }
-  if(!firstSyncDone){ setHomeSyncStatus("Wait until the rota says Live, then try again",true); if(btn) btn.disabled=false; return; }
+  const buttons=["homeSyncBtn","hubHomeSyncBtn"].map(id=>document.getElementById(id)).filter(Boolean);
+  buttons.forEach(btn=>btn.disabled=true);
+  if(!rotaCode){ setHomeSyncStatus("Open your rota with its rota code first",true); buttons.forEach(btn=>btn.disabled=false); return; }
+  if(!meKey){ setHomeSyncStatus("Choose who you are in this rota first",true); buttons.forEach(btn=>btn.disabled=false); return; }
+  if(!firstSyncDone){ setHomeSyncStatus("Wait until the rota says Live, then try again",true); buttons.forEach(btn=>btn.disabled=false); return; }
   setHomeSyncStatus("Opening Google sign-in…",false);
   try{
     const ok=await ensureFirebase();
@@ -3765,7 +3770,7 @@ async function signInForHomeSync(){
     console.warn("Hermione HQ sign-in failed",error);
     const code=error&&error.code?String(error.code):"";
     setHomeSyncStatus(code==="auth/popup-closed-by-user"?"Google sign-in was closed":"Google sign-in did not complete",true);
-  }finally{ if(btn) btn.disabled=false; }
+  }finally{ buttons.forEach(btn=>btn.disabled=false); }
 }
 function loadCacheCode(){ try{ return localStorage.getItem(CACHE_OWNER)||""; }catch(e){ return ""; } }
 function saveCacheCode(c){ cacheCode=c; try{ localStorage.setItem(CACHE_OWNER, c); }catch(e){} }
@@ -4073,6 +4078,7 @@ function boot(){
 
   document.getElementById("refreshBtn").onclick=newRota;
   document.getElementById("homeSyncBtn").onclick=signInForHomeSync;
+  document.getElementById("hubHomeSyncBtn").onclick=signInForHomeSync;
   document.getElementById("hubMyRota").onclick=()=>openMyRota();
   document.getElementById("hubLocum").onclick=openLocum;
   document.getElementById("hubAnnual").onclick=()=>openLeave();

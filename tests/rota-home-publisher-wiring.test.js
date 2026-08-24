@@ -20,8 +20,14 @@ test('publishes only the allowlisted Rota summary after Google authentication', 
 test('offers a separate Hermione HQ connection because ordinary rota access has no Google identity', () => {
   assert.match(html, /id="homeSyncBtn"/);
   assert.match(html, /id="homeSyncStatus"/);
+  assert.match(html, /id="hubHomeSyncBtn"/);
+  assert.match(html, /id="hubHomeSyncStatus"/);
+  const hubBlock = html.match(/<div class="wrap hub-screen" id="hubScreen">[\s\S]*?<div class="wrap" id="ss-root">/);
+  assert.ok(hubBlock, 'missing main InstaRota hub');
+  assert.match(hubBlock[0], /id="hubHomeSyncBtn"/);
   assert.match(html, /function signInForHomeSync\(\)/);
   assert.match(html, /homeSyncBtn.*signInForHomeSync/);
+  assert.match(html, /hubHomeSyncBtn.*signInForHomeSync/);
   assert.match(html, /signInWithPopup/);
   const homeAuthBlock = html.match(/function attachHomeAuthListener\(\)[\s\S]*?function publishHomeSummary\(\)/);
   assert.ok(homeAuthBlock, 'missing restored-session Home auth listener');
