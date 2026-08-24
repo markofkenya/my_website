@@ -1611,7 +1611,7 @@ let notified = new Set();
 function readLocal(){ try{ const r=localStorage.getItem(STORE_KEY); return r?JSON.parse(r):null; }catch(e){ return mem; } }
 function writeLocal(obj){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(obj)); }catch(e){ mem=obj; } }
 let applyingRemote = false, db = null;
-let homeAuthUser = null, homeAuthListenerAttached = false;
+let homeAuthUser = null, homeAuthListenerAttached = false, homePublishRequested = false;
 let locumShifts = [], locumRemoteRef = null, locumSessionGeneration = 0, locumDeleteConfirmOpen = false;
 let lastRemoteTs=0, firstSyncDone=false, stampCounter=0, lastAutoPushAt=0;
 function stamp(){ const s=Math.max(Date.now(), lastRemoteTs+1, stampCounter+1); stampCounter=s; return s; }
@@ -3713,18 +3713,23 @@ function attachHomeAuthListener(){
     homeAuthUser=user||null;
     const btn=document.getElementById("homeSyncBtn");
     if(btn) btn.textContent=homeAuthUser?"Refresh Hermione HQ":"Connect Hermione HQ";
-    if(!homeAuthUser) setHomeSyncStatus("Hermione HQ not connected",false);
-    publishHomeSummary();
+    if(!homeAuthUser){ homePublishRequested=false; setHomeSyncStatus("Hermione HQ not connected",false); }
     syncLocumForUser(homeAuthUser);
   });
 }
 function setHomeSyncStatus(text,isError){
   const el=document.getElementById("homeSyncStatus");
-  if(el) el.innerHTML=`<span class="syncdot ${isError?"local":"live"}"></span> ${text}`;
+  if(!el) return;
+  const dot=document.createElement("span");
+  dot.className=`syncdot ${isError?"local":"live"}`;
+  el.replaceChildren(dot, document.createTextNode(" "+text));
 }
 async function publishHomeSummary(){
+  if(!homePublishRequested) return false;
   if(!db || !homeAuthUser || !window.RotaHomeSummary) return false;
+  if(!rotaCode){ setHomeSyncStatus("Open your rota before publishing",true); return false; }
   if(!meKey){ setHomeSyncStatus("Choose who you are before publishing",true); return false; }
+  if(!firstSyncDone){ setHomeSyncStatus("Wait until the rota says Live, then try again",true); return false; }
   try{
     const summaryWrite=window.RotaHomeSummary.buildHomePrivateWrite(homeAuthUser.uid, state, meKey);
     const weekWrite=window.RotaHomeSummary.buildHomePrivateWeekWrite(homeAuthUser.uid, state, meKey);
@@ -3732,13 +3737,19 @@ async function publishHomeSummary(){
       db.ref(summaryWrite.path).set(summaryWrite.value),
       db.ref(weekWrite.path).set(weekWrite.value)
     ]);
-    setHomeSyncStatus("Hermione HQ week published",false);
+    const selectedPerson=(state.people&&state.people[meKey]&&state.people[meKey].name)||("Person "+meKey);
+    const dutyDays=weekWrite.value.days.filter(day=>day.duties.length>0).length;
+    if(dutyDays===0) setHomeSyncStatus(`${selectedPerson} published from rota “${rotaCode}”, but No explicit duties were found in the published seven-day window. Check this is the right rota and person.`,true);
+    else setHomeSyncStatus(`${selectedPerson} published from rota “${rotaCode}” · ${dutyDays}/7 days contain duties`,false);
     return true;
   }catch(error){ console.warn("private Home summary unavailable", error); setHomeSyncStatus("Hermione HQ publish failed",true); return false; }
 }
 async function signInForHomeSync(){
   const btn=document.getElementById("homeSyncBtn");
   if(btn) btn.disabled=true;
+  if(!rotaCode){ setHomeSyncStatus("Open your rota with its rota code first",true); if(btn) btn.disabled=false; return; }
+  if(!meKey){ setHomeSyncStatus("Choose who you are in this rota first",true); if(btn) btn.disabled=false; return; }
+  if(!firstSyncDone){ setHomeSyncStatus("Wait until the rota says Live, then try again",true); if(btn) btn.disabled=false; return; }
   setHomeSyncStatus("Opening Google sign-in…",false);
   try{
     const ok=await ensureFirebase();
@@ -3748,6 +3759,7 @@ async function signInForHomeSync(){
       await firebase.auth().signInWithPopup(provider);
     }
     homeAuthUser=firebase.auth().currentUser;
+    homePublishRequested=true;
     await publishHomeSummary();
   }catch(error){
     console.warn("Hermione HQ sign-in failed",error);
@@ -3801,6 +3813,8 @@ async function connectWithCode(code){
   // if the cached rota belongs to a different code, don't let it leak into this room
   const movingRooms = (cacheCode!=="" && cacheCode!==code);
   firstSyncDone=false;
+  homePublishRequested=false;
+  setHomeSyncStatus("Hermione HQ needs confirmation for this rota",false);
   rotaCode=code; saveCode(code); syncPath="slotShare/"+code;
   if(movingRooms){
     const fresh=defaultState(); fresh.people=state.people; state=fresh; normalize(); writeLocal(state); renderAll();

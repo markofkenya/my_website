@@ -26,8 +26,17 @@ test('offers a separate Hermione HQ connection because ordinary rota access has 
   const homeAuthBlock = html.match(/function attachHomeAuthListener\(\)[\s\S]*?function publishHomeSummary\(\)/);
   assert.ok(homeAuthBlock, 'missing restored-session Home auth listener');
   assert.doesNotMatch(homeAuthBlock[0], /signInWithPopup/);
-  assert.match(
-    html,
-    /firebase\.auth\(\)\.onAuthStateChanged\(user=>\{[\s\S]*?homeAuthUser=user\|\|null;[\s\S]*?publishHomeSummary\(\);[\s\S]*?\}\);/
-  );
+  assert.doesNotMatch(homeAuthBlock[0], /^\s+publishHomeSummary\(\);$/m, 'restoring Google auth must not publish an unidentified cached rota');
+});
+
+test('publishes only after a named rota and person have completed source sync', () => {
+  assert.match(html, /homePublishRequested/);
+  assert.match(html, /if\(!rotaCode\)/);
+  assert.match(html, /if\(!meKey\)/);
+  assert.match(html, /if\(!firstSyncDone\)/);
+  assert.match(html, /const selectedPerson=/);
+  assert.match(html, /from rota “\$\{rotaCode\}”/);
+  assert.match(html, /dutyDays/);
+  assert.match(html, /No explicit duties were found in the published seven-day window/);
+  assert.match(html, /homePublishRequested=false;[\s\S]*?rotaCode=code/);
 });
