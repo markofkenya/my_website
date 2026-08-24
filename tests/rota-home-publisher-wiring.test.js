@@ -17,9 +17,12 @@ test('publishes only the allowlisted Rota summary after Google authentication', 
   assert.doesNotMatch(html, /homePrivate\/"\+rotaCode|homePrivate\/\$\{rotaCode\}/);
 });
 
-test('publishes privately for an existing Google session without a separate Home sync control', () => {
-  assert.doesNotMatch(html, /id="homeSyncBtn"/);
-  assert.doesNotMatch(html, /function signInForHomeSync\(\)/);
+test('offers a separate Hermione HQ connection because ordinary rota access has no Google identity', () => {
+  assert.match(html, /id="homeSyncBtn"/);
+  assert.match(html, /id="homeSyncStatus"/);
+  assert.match(html, /function signInForHomeSync\(\)/);
+  assert.match(html, /homeSyncBtn.*signInForHomeSync/);
+  assert.match(html, /signInWithPopup/);
   const homeAuthBlock = html.match(/function attachHomeAuthListener\(\)[\s\S]*?function publishHomeSummary\(\)/);
   assert.ok(homeAuthBlock, 'missing restored-session Home auth listener');
   assert.doesNotMatch(homeAuthBlock[0], /signInWithPopup/);

@@ -1071,7 +1071,9 @@
       <button data-theme="indigo" title="Indigo &amp; magenta"><span class="dotc" style="background:#7d8cf2"></span></button>
     </div>
     <div class="syncline" id="syncStatus"><span class="syncdot local"></span> Saved on this device</div>
+    <div class="syncline" id="homeSyncStatus" aria-live="polite"><span class="syncdot local"></span> Hermione HQ not connected</div>
     <div class="grow"></div>
+    <button class="btn ghost" id="homeSyncBtn" type="button">Connect Hermione HQ</button>
     <button class="btn ghost danger-ghost" id="refreshBtn">New rota</button>
     <button class="btn ghost" id="exportBtn">Export</button>
     <button class="btn ghost" id="importBtn">Import</button>
@@ -3709,20 +3711,49 @@ function attachHomeAuthListener(){
   homeAuthListenerAttached=true;
   firebase.auth().onAuthStateChanged(user=>{
     homeAuthUser=user||null;
+    const btn=document.getElementById("homeSyncBtn");
+    if(btn) btn.textContent=homeAuthUser?"Refresh Hermione HQ":"Connect Hermione HQ";
+    if(!homeAuthUser) setHomeSyncStatus("Hermione HQ not connected",false);
     publishHomeSummary();
     syncLocumForUser(homeAuthUser);
   });
 }
-function publishHomeSummary(){
-  if(!db || !homeAuthUser || !meKey || !window.RotaHomeSummary) return;
+function setHomeSyncStatus(text,isError){
+  const el=document.getElementById("homeSyncStatus");
+  if(el) el.innerHTML=`<span class="syncdot ${isError?"local":"live"}"></span> ${text}`;
+}
+async function publishHomeSummary(){
+  if(!db || !homeAuthUser || !window.RotaHomeSummary) return false;
+  if(!meKey){ setHomeSyncStatus("Choose who you are before publishing",true); return false; }
   try{
     const summaryWrite=window.RotaHomeSummary.buildHomePrivateWrite(homeAuthUser.uid, state, meKey);
     const weekWrite=window.RotaHomeSummary.buildHomePrivateWeekWrite(homeAuthUser.uid, state, meKey);
-    Promise.all([
+    await Promise.all([
       db.ref(summaryWrite.path).set(summaryWrite.value),
       db.ref(weekWrite.path).set(weekWrite.value)
-    ]).catch(error=>console.warn("private Home summary rejected", error));
-  }catch(error){ console.warn("private Home summary unavailable", error); }
+    ]);
+    setHomeSyncStatus("Hermione HQ week published",false);
+    return true;
+  }catch(error){ console.warn("private Home summary unavailable", error); setHomeSyncStatus("Hermione HQ publish failed",true); return false; }
+}
+async function signInForHomeSync(){
+  const btn=document.getElementById("homeSyncBtn");
+  if(btn) btn.disabled=true;
+  setHomeSyncStatus("Opening Google sign-in…",false);
+  try{
+    const ok=await ensureFirebase();
+    if(!ok||!firebase.auth) throw new Error("Firebase authentication unavailable");
+    if(!firebase.auth().currentUser){
+      const provider=new firebase.auth.GoogleAuthProvider();
+      await firebase.auth().signInWithPopup(provider);
+    }
+    homeAuthUser=firebase.auth().currentUser;
+    await publishHomeSummary();
+  }catch(error){
+    console.warn("Hermione HQ sign-in failed",error);
+    const code=error&&error.code?String(error.code):"";
+    setHomeSyncStatus(code==="auth/popup-closed-by-user"?"Google sign-in was closed":"Google sign-in did not complete",true);
+  }finally{ if(btn) btn.disabled=false; }
 }
 function loadCacheCode(){ try{ return localStorage.getItem(CACHE_OWNER)||""; }catch(e){ return ""; } }
 function saveCacheCode(c){ cacheCode=c; try{ localStorage.setItem(CACHE_OWNER, c); }catch(e){} }
@@ -4027,6 +4058,7 @@ function boot(){
   document.getElementById("pickerOverlay").onclick=e=>{ if(e.target.id==="pickerOverlay") closePicker(); };
 
   document.getElementById("refreshBtn").onclick=newRota;
+  document.getElementById("homeSyncBtn").onclick=signInForHomeSync;
   document.getElementById("hubMyRota").onclick=()=>openMyRota();
   document.getElementById("hubLocum").onclick=openLocum;
   document.getElementById("hubAnnual").onclick=()=>openLeave();
