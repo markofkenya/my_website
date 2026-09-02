@@ -1925,6 +1925,11 @@ function cipEvidKey(cipId, itemLabel) {
 function cipEntrustKey(cipId) { return `pft_cip_entrust_${cipId}`; } // global — not year-specific
 function cipSatKey(cipId)     { return `pft_cip_sat_${currentYear}_${cipId}`; } // generic "satisfactory"
 
+function cipCountKey(cipId){ return `pft_cip_count_${cipId}`; }
+function getCipCount(cipId){ return parseInt(localStorage.getItem(cipCountKey(cipId)) || "0", 10) || 0; }
+function setCipCount(cipId, val){ val=Math.max(0,parseInt(val,10)||0); const k=cipCountKey(cipId); localStorage.setItem(k, String(val)); fbPush(k, val); }
+const CIP_EVID_TARGET = 3;
+function cipCountColor(n){ return n>=CIP_EVID_TARGET ? "var(--green)" : n>=1 ? "var(--amber)" : "var(--red)"; }
 function getCipEvid(cipId, itemLabel) {
   return parseInt(localStorage.getItem(cipEvidKey(cipId, itemLabel)) || "0");
 }
@@ -2012,10 +2017,20 @@ function renderCIPs() {
     return entrust && target && parseInt(entrust) >= target;
   }).length;
   const gimRenalTotal = CIP_GROUPS.filter(g => g.entrustType==="level").flatMap(g=>g.cips).length;
+  const evidComplete = allCips.filter(c => getCipCount(c.id) >= CIP_EVID_TARGET).length;
+  const evidNeeded   = allCips.length - evidComplete;
 
   const summaryDiv = document.createElement("div");
   summaryDiv.style.cssText = "display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;";
   summaryDiv.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${evidNeeded>0?"var(--red)":"var(--green)"};padding:10px 16px;flex:1;min-width:100px;">
+      <div style="font-size:20px;font-weight:700;color:${evidNeeded>0?"var(--red)":"var(--green)"};">${evidNeeded}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">CiPs NEEDING EVIDENCE</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--green);padding:10px 16px;flex:1;min-width:100px;">
+      <div style="font-size:20px;font-weight:700;color:var(--green);">${evidComplete}/${allCips.length}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">EVIDENCE COMPLETE (3/3)</div>
+    </div>
     <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--green);padding:10px 16px;flex:1;min-width:100px;">
       <div style="font-size:20px;font-weight:700;color:var(--green);">${level4 + satisfied}</div>
       <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">SIGNED OFF / SATISFACTORY</div>
@@ -2055,9 +2070,10 @@ function makeCipCard(cip, group) {
   const currentLevel = entrust ? parseInt(entrust) : 0;
   const atTarget     = isLevel ? (target && currentLevel >= target) : sat;
   const collapsed    = localStorage.getItem(`pft_cip_open_${cip.id}`) !== "true";
-  const evidTotal    = cipEvidTotal(cip.id, cip.evidence);
-  const evidColor    = evidBarColor(evidTotal);
-  const evidWidth    = Math.min(100, evidTotal * 20);
+  const evidCount    = getCipCount(cip.id);              // 0..3 pieces of evidence
+  const evidDone     = evidCount >= CIP_EVID_TARGET;
+  const evidColor    = cipCountColor(evidCount);
+  const evidWidth    = Math.min(100, (evidCount / CIP_EVID_TARGET) * 100);
 
   const ENTRUST_LABELS = {
     "":"— not assessed","1":"L1 · Observe only","2":"L2 · Direct supervision",
@@ -2067,10 +2083,12 @@ function makeCipCard(cip, group) {
     : currentLevel === 3 ? "var(--amber)"
     : currentLevel > 0  ? "var(--blue)"
     : "var(--dim)";
-  const borderColor = atTarget ? "var(--green)" : group.color;
-
+  // Incomplete CIPs (evidence < 3) stand out with a bold coloured border + warning tag
+  const evidBorder = evidDone ? "var(--green)" : cipCountColor(evidCount);
   const card = document.createElement("div");
-  card.style.cssText = `background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${borderColor};`;
+  card.style.cssText = evidDone
+    ? `background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--green);`
+    : `background:var(--bg2);border:1.5px solid ${evidBorder};border-left:4px solid ${evidBorder};box-shadow:0 0 0 1px ${evidBorder}22;`;
 
   // ── Header row ──────────────────────────────────────
   const header = document.createElement("div");
@@ -2083,10 +2101,10 @@ function makeCipCard(cip, group) {
   // Spectrum bar in header — red→green, 0–10
   const evidBar = `
     <div style="width:60px;">
-      <div style="height:4px;background:var(--blue5);border-radius:2px;overflow:hidden;">
+      <div style="height:5px;background:var(--blue5);border-radius:2px;overflow:hidden;">
         <div style="height:100%;width:${evidWidth}%;background:${evidColor};transition:width 0.3s,background 0.3s;"></div>
       </div>
-      <div style="font-size:7px;color:var(--dim);margin-top:2px;text-align:center;letter-spacing:0.06em;">${evidTotal}/5</div>
+      <div style="font-size:8px;color:${evidColor};font-weight:700;margin-top:2px;text-align:center;letter-spacing:0.06em;">${evidCount}/${CIP_EVID_TARGET}</div>
     </div>`;
 
   // Target indicator
@@ -2098,8 +2116,9 @@ function makeCipCard(cip, group) {
     ? `<div style="font-size:10px;font-weight:700;color:${levelColor};min-width:28px;text-align:right;">${entrust ? "L"+entrust : "—"}</div>`
     : `<div style="font-size:9px;font-weight:700;color:${sat?"var(--green)":"var(--dim)"};">${sat?"✓ SAT":"—"}</div>`;
 
+  const needsTag = evidDone ? "" : `<span style="display:inline-block;margin-left:7px;font-size:7px;font-weight:700;letter-spacing:0.08em;padding:1px 6px;border-radius:2px;background:${evidBorder}22;color:${evidBorder};border:1px solid ${evidBorder};vertical-align:middle;">${evidCount===0?"NOT STARTED":"NEEDS EVIDENCE"}</span>`;
   header.innerHTML = `
-    <div style="flex:1;font-size:11px;color:#c8d8ff;font-weight:500;line-height:1.3;">${cip.label}</div>
+    <div style="flex:1;font-size:11px;color:var(--text);font-weight:500;line-height:1.3;">${cip.label}${needsTag}</div>
     ${evidBar}
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
       ${targetBadge}
@@ -2152,37 +2171,34 @@ function makeCipCard(cip, group) {
     evidHead.textContent = "EVIDENCE TO INFORM DECISION";
     body.appendChild(evidHead);
 
-    const evidNote = document.createElement("div");
-    evidNote.style.cssText = "font-size:8px;color:var(--dim);letter-spacing:0.06em;margin-bottom:10px;";
-    evidNote.textContent = "// count each type — bar fills as evidence accumulates";
-    body.appendChild(evidNote);
+    // ── Evidence count (0..3) — single input; named types below are guidance only ──
+    const evidWrap = document.createElement("div");
+    evidWrap.style.cssText = "background:var(--bg3);border:1px solid var(--blue5);border-left:3px solid "+cipCountColor(evidCount)+";padding:10px 12px;margin-bottom:10px;";
+    evidWrap.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div style="font-size:9px;color:var(--dim);letter-spacing:0.08em;text-transform:uppercase;">Evidence gathered</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="number" min="0" max="3" value="${evidCount}"
+            style="background:var(--bg);border:1.5px solid ${cipCountColor(evidCount)};color:var(--text);
+              font-family:var(--font);font-size:15px;font-weight:700;padding:4px 8px;width:56px;text-align:center;outline:none;"
+            onchange="setCipCount('${cip.id}',this.value);renderCIPs();" />
+          <div style="font-size:13px;font-weight:700;color:${cipCountColor(evidCount)};">/ ${CIP_EVID_TARGET}${evidDone?" ✓":""}</div>
+        </div>
+      </div>
+      <div style="height:5px;background:var(--blue5);border-radius:2px;overflow:hidden;margin-top:9px;">
+        <div style="height:100%;width:${Math.min(100,(evidCount/CIP_EVID_TARGET)*100)}%;background:${cipCountColor(evidCount)};transition:width 0.3s;"></div>
+      </div>`;
+    body.appendChild(evidWrap);
 
-    const evidGrid = document.createElement("div");
-    evidGrid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;";
-
-    cip.evidence.forEach(item => {
-      const val     = getCipEvid(cip.id, item);
-      const hasEvid = val > 0;
-      const itemDiv = document.createElement("div");
-      itemDiv.style.cssText = `
-        background:var(--bg3);border:1px solid ${hasEvid?"var(--blue4)":"var(--blue5)"};
-        border-left:2px solid ${hasEvid?group.color:"var(--blue5)"};
-        padding:6px 8px;`;
-      itemDiv.innerHTML = `
-        <div style="font-size:9px;color:${hasEvid?"#c8d8ff":"var(--dim)"};margin-bottom:5px;line-height:1.3;">${item}</div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <input type="number" min="0" value="${val}"
-            style="background:var(--bg);border:1px solid var(--blue4);color:var(--blue);
-              font-family:var(--font);font-size:11px;padding:2px 5px;width:44px;outline:none;"
-            onchange="setCipEvid('${cip.id}','${item.replace(/'/g,"\\'")}',Math.max(0,parseInt(this.value)||0));renderCIPs();" />
-          <div style="flex:1;height:2px;background:var(--blue5);overflow:hidden;">
-            <div style="height:100%;width:${hasEvid?100:0}%;background:${group.color};"></div>
-          </div>
-          ${hasEvid?`<span style="font-size:8px;color:${group.color};">✓</span>`:""}
-        </div>`;
-      evidGrid.appendChild(itemDiv);
-    });
-    body.appendChild(evidGrid);
+    // Named evidence types — informational guidance only (no counters)
+    const evidGuide = document.createElement("div");
+    evidGuide.style.cssText = "margin-bottom:4px;";
+    evidGuide.innerHTML = `
+      <div style="font-size:8px;color:var(--dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">Suggested evidence · for guidance</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">
+        ${cip.evidence.map(item => `<span style="font-size:9px;color:var(--text2);background:var(--bg3);border:1px solid var(--blue5);padding:3px 8px;line-height:1.3;">${item}</span>`).join("")}
+      </div>`;
+    body.appendChild(evidGuide);
     card.appendChild(body);
   }
 
@@ -2197,8 +2213,8 @@ function makeCipCard(cip, group) {
 // ══════════════════════════════════════════════════════
 
 const LOGBOOK_PROCEDURES_RENAL = [
-  "Temp HD catheter — femoral",
-  "Temp HD catheter — jugular",
+  "Temp HD catheter (femoral)",
+  "Temp HD catheter (jugular)",
   "Tunnelled dialysis catheter",
   "Tunnelled line removal",
   "Native kidney biopsy",
@@ -2329,8 +2345,8 @@ function saveLbEntries(type, entries) {
     if (type === "cpd_gim") {
     const GIM_COUNTED_TYPES = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
     const ONLINE_LIMIT = 15;
-    const onlineHrs    = entries.filter(e => e.type === "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
-    const externalHrs  = entries.filter(e => GIM_COUNTED_TYPES.includes(e.type) && e.type !== "Online CPD").reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+    const onlineHrs    = entries.filter(e => cpdIsOnline(e)).reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
+    const externalHrs  = entries.filter(e => cpdIsExternalP(e) && !cpdIsOnline(e)).reduce((acc,e) => acc+(parseFloat(e.hours)||0),0);
     const countedTotal = externalHrs + Math.min(onlineHrs, ONLINE_LIMIT);
     const cumK = sKey("gim_cpd_hours");
     localStorage.setItem(cumK, String(Math.round(countedTotal)));
@@ -3726,7 +3742,7 @@ function exportCpdDiaryP(){
       <div><div class="k">Entries</div><div class="v">${all.length}</div></div>
     </div>
     <div class="body">${all.length?yearsHtml:'<p style="padding:30px 0;color:#9a8f6a;font-style:italic">No CPD entries logged yet.</p>'}</div>
-    <div class="ai">This CPD diary was designed using a custom self-developed application with AI assistance. All clinical entries and reflections are my own record of activity undertaken.</div>
+    <div class="ai"></div>
     <div class="ft"><span>CPD Diary · Reflective record for appraisal</span><span>Generated ${gen}</span></div>
   </div>
   </body></html>`;
@@ -3925,7 +3941,7 @@ function printLogbookReport() {
     <div class="doc-meta">
       <div><strong>Generated:</strong> ${today}</div>
       <div><strong>Training Year:</strong> ${yr}</div>
-      <div><strong>Programme:</strong> Renal + GIM ST4–ST7</div>
+      
     </div>
   </div>
  
@@ -3977,9 +3993,8 @@ function printLogbookReport() {
   ${secHead("Teaching","both")}
   <div class="cpd-summary">
     <strong>GIM Teaching Summary:</strong> &nbsp;
-    Counted total: <strong style="color:#005EB8">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
-    Online: <strong>${onlineCapped.toFixed(1)}h</strong> / 15h max &nbsp;·&nbsp;
-    External: <strong>${externalHrs.toFixed(1)}h</strong>
+    External: <strong style="color:#005EB8">${externalHrs.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
+    E-learning: <strong>${onlineCapped.toFixed(1)}h</strong> / 15h max
   </div>
   ${subHead(badge("GIM","badge-gim"), `${gimCpd.length} total entries · all years · cumulative target 100h`)}
   ${tbl(["Date","Type","Title / Event","Hours","Year","Notes"],
@@ -4040,7 +4055,7 @@ function printLogbookReport() {
     ]),
     "#005EB8")}
  
-  <div class="ai-disclosure">This logbook was designed using a custom self-developed application with AI assistance. All clinical entries and reflections are my own record of activity undertaken.</div>
+  <div class="ai-disclosure"></div>
   <div class="doc-footer">
     <span>ARCP Portfolio Tracker · Auto-generated document</span>
     <span>Generated ${fullDate} · Confidential</span>
