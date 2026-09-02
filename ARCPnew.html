@@ -567,7 +567,7 @@ const SPECIALTIES = {
       spec_survey_st7:{label:"Patient Survey (ST7)",type:"checkbox",deadline:"ST7",note:"Required again in ST7 for the Renal curriculum"},
       spec_mgmt:{label:"Management / leadership evidence",type:"checkbox",deadline:"ST7",note:"Course or equivalent"}
     },
-    logbook:{clinics:["General Nephrology clinic","HD clinic","Transplant clinic","HTN clinic","AKCC","Other"], procedures:["Temp HD catheter — femoral","Temp HD catheter — jugular","Tunnelled dialysis catheter","Tunnelled line removal","Native kidney biopsy","Transplant kidney biopsy","Other"], cpd:["Renal study day","Renal conference","Renal Training Day","Grand round","M&M / mortality meeting","Departmental teaching / journal club","Other"]}
+    logbook:{clinics:["General Nephrology clinic","HD clinic","Transplant clinic","HTN clinic","AKCC","Other"], procedures:["Temp HD catheter (femoral)","Temp HD catheter (jugular)","Tunnelled dialysis catheter","Tunnelled line removal","Native kidney biopsy","Transplant kidney biopsy","Other"], cpd:["Renal study day","Renal conference","Renal Training Day","Grand round","M&M / mortality meeting","Departmental teaching / journal club","Other"]}
   },
   respiratory:{ label:"Respiratory Medicine", short:"Resp", color:"#34d399", color2:"#059669", icon:"◉",
     reqs:{
@@ -1993,7 +1993,7 @@ function exportCpdDiary(){
       <div><div class="k">Entries</div><div class="v">${all.length}</div></div>
     </div>
     <div class="body">${all.length?yearsHtml:'<p style="padding:30px 0;color:#9a8f6a;font-style:italic">No CPD entries logged yet.</p>'}</div>
-    <div style="margin:18px 36px 0;padding-top:10px;border-top:1px solid #e2ddd0;font-size:8.5pt;line-height:1.5;color:#9a8f6a;font-style:italic;max-width:70ch">This CPD diary was designed using a custom self-developed application with AI assistance. All clinical entries and reflections are my own record of activity undertaken.</div>
+    <div style="margin:18px 36px 0;padding-top:10px;border-top:1px solid #e2ddd0;font-size:8.5pt;line-height:1.5;color:#9a8f6a;font-style:italic;max-width:70ch"></div>
     <div class="ft"><span>CPD Diary · Reflective record for appraisal</span><span>Generated ${gen}</span></div>
   </div>
   </body></html>`;
@@ -2560,7 +2560,7 @@ function printReport(style){
   ${formalScopedTable('GIM', gimProcsYr, ['date','type','hospital','supervisor','dops','year'], 'gim', `${gimProcsYr.filter(e=>e.dops==='Yes').length} DOPS-signed`)}
 
   ${formalSection('Continuing Professional Development','III.','Recorded study leave and professional development hours, by stream.')}
-  <div class="summary-line">GIM CPD \u2014 External total: <strong>${gimExternalCpdHours()} h</strong> against a 100-hour annual standard. ST7 minimum: <strong>${gimExternalCpdHours(e=>e.year==='ST7')} h</strong> / 20 h.</div>
+  <div class="summary-line">GIM CPD \u2014 External: <strong>${gimExternalCpdHours()} h</strong> / 100h. ST7 minimum: <strong>${gimExternalCpdHours(e=>e.year==='ST7')} h</strong> / 20 h.</div>
   ${formalScopedTable('GIM', gimCpd, ['date','type','title','hours','year'], 'gim')}
   <div class="summary-line">${safe(sp.short)} CPD \u2014 Total: <strong>${sumHours(specCpd)} h</strong> in ${safe(yr)}.</div>
   ${formalScopedTable(sp.short, specCpd, ['date','type','title','hours','year'], 'spec')}
@@ -2580,7 +2580,7 @@ function printReport(style){
   <div class="summary-line">Recorded ward cover: <strong>${wardMonths} months</strong> against the 12-month minimum.</div>
   ${formalScopedTable('Ward cover', wardAll, ['hospital','start','end','months','year','supervisor'], 'gim')}
 
-  <div class="ai-disclosure">This logbook was designed using a custom self-developed application with AI assistance. All clinical entries and reflections are my own record of activity undertaken.</div>
+  <div class="ai-disclosure"></div>
   <footer class="colophon-foot">
     <span>Outcome 1 \u00b7 ARCP Logbook \u00b7 ${safe(traineeName)} \u00b7 ${safe(trainingNumber)}</span>
     <em>Generated ${safe(generatedDate)} \u2014 confidential record</em>
@@ -3306,7 +3306,7 @@ function specDopsStats(){
   }
   if(getSpecKey()==='renal'){
     if(currentYear==='ST4'){
-      const target='Temp HD catheter — femoral';
+      const target='Temp HD catheter (femoral)';
       const met=entries('procedures').some(e=>e.scope!=='gim' && e.dops==='Yes' && e.type===target);
       return {met:met?1:0, total:1, label:'Renal DOPS'};
     }
