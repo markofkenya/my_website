@@ -2245,7 +2245,7 @@ function cpdCategoryFor(type){ return CPD_INTERNAL_DEFAULT.includes(type) ? "Int
 function cpdIsOnline(e){ return e.type === "E-learning / online module" || e.type === "Online CPD"; }
 // External (counts toward GIM target) — category if present, else legacy type-set
 const LEGACY_GIM_COUNTED = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
-function cpdIsExternalP(e){ if(e.category) return e.category === "External"; if(LEGACY_GIM_COUNTED.includes(e.type)) return true; return cpdCategoryFor(e.type) === "External"; }
+function cpdIsExternalP(e){ if(CPD_INTERNAL_DEFAULT.includes(e.type)) return false; if(e.category) return e.category === "External"; if(LEGACY_GIM_COUNTED.includes(e.type)) return true; return cpdCategoryFor(e.type) === "External"; }
 const SIM_COURSE_TYPES = ["GIMME","NOTES","Other simulation course"];
 const TEACHING_TYPES = ["Bedside teaching","Tutorial / seminar","Grand round presentation","Journal club","Simulation facilitation","Medical student supervision","Foundation doctor supervision","Audit / QIP presentation","Other"];
 const CLINIC_TYPES_GIM   = ["GIM outpatient clinic","Medical SDEC","Community clinic","Other GIM clinic"];
@@ -3978,7 +3978,7 @@ function printLogbookReport() {
   ${subHead(badge("Renal","badge-renal"), `${renalProcs.length} entries · ${yr}`)}
   ${(() => {
     const m = {};
-    renalProcs.forEach(e => { const t = (e.type||"Other").trim(); m[t] = (m[t]||0) + 1; });
+    renalProcs.forEach(e => { const t = normProcName((e.type||"Other").trim()); m[t] = (m[t]||0) + 1; });
     const line = Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`${t} \u00d7${n}`).join(" \u00b7 ");
     return line ? `<div class="cpd-summary" style="margin-bottom:8px;"><strong>By type:</strong> &nbsp;${line}</div>` : "";
   })()}
@@ -3987,7 +3987,7 @@ function printLogbookReport() {
     "#7c3aed")}
   ${subHead(badge("GIM","badge-gim"), `${gimProcs.length} entries · ${yr}`)}
   ${tbl(["Date","Procedure","Supervisor","DOPS","Notes"],
-    gimProcs.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),e.type,e.supervisor,e.dops==="Yes"?'<span class="dops-yes">✓ Yes</span>':"No",e.notes]),
+    gimProcs.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(e=>[fmt(e.date),normProcName(e.type),e.supervisor,e.dops==="Yes"?'<span class="dops-yes">✓ Yes</span>':"No",e.notes]),
     "#005EB8")}
  
   ${secHead("Teaching","both")}
@@ -4055,9 +4055,8 @@ function printLogbookReport() {
     ]),
     "#005EB8")}
  
-  <div class="ai-disclosure"></div>
   <div class="doc-footer">
-    <span>ARCP Portfolio Tracker · Auto-generated document</span>
+    <span>ARCP Portfolio Tracker</span>
     <span>Generated ${fullDate} · Confidential</span>
   </div>
  
