@@ -653,6 +653,7 @@ const CPD_DIARY_TYPES = [
 // Which types default to internal vs external (user can override per entry)
 const CPD_INTERNAL_DEFAULT = ["Journal club","Journal article","MDT meeting","M&M / clinical governance meeting","Grand round","Departmental teaching (attended)","Audit / QI meeting","Simulation (attended)"];
 function cpdCategoryFor(type){ return CPD_INTERNAL_DEFAULT.includes(type) ? "Internal" : "External"; }
+function normProcName(s){ return String(s||'').replace(/\s+[\u2014\u2013-]\s+femoral/gi,' (femoral)').replace(/\s+[\u2014\u2013-]\s+jugular/gi,' (jugular)'); }
 
 const RESP_PROCEDURE_TARGETS = {
   "Pleural aspiration": { ST4:"Independent", ST5:"Maintain", ST6:"Maintain", ST7:"Maintain" },
@@ -2194,6 +2195,7 @@ const EXTERNAL_GIM_CPD_TYPES = new Set(['Regional GIM training day','RCP / RSM /
 }
 // External = explicit category if set, else derive from type (covers legacy + new entries)
 function cpdIsExternal(e){
+  if(CPD_INTERNAL_DEFAULT.includes(e.type)) return false;   // internal type vetoes a stale/default 'External' category
   if(e.category) return e.category === 'External';
   if(EXTERNAL_GIM_CPD_TYPES.has(e.type)) return true;       // legacy external types
   return cpdCategoryFor(e.type) === 'External';              // new diary types
@@ -2615,6 +2617,7 @@ function formalScopedTable(label, arr, fields, kind, extra){
     if(['date','start','end'].includes(f)) cell=fmtDateShort(e[f]);
     else if(f==='dops') cell=e[f]==='Yes'?'<span class="yes">\u2713 Yes</span>':(e[f]?`<span class="no">${safe(e[f])}</span>`:'<span class="no">\u2014</span>');
     else if(f==='year') cell=e[f]||'\u2014';
+    else if(f==='type') cell=normProcName(e[f])||'\u2014';
     else cell=e[f]||'\u2014';
     return `<td${FORMAL_NUM_COLS.has(f)?' class="num"':''}>${typeof cell==='string'&&cell.startsWith('<span')?cell:safe(cell)}</td>`;
   }).join('')}</tr>`).join('')}</tbody>`;
