@@ -3994,8 +3994,9 @@ function printLogbookReport() {
   ${secHead("Teaching","both")}
   <div class="cpd-summary">
     <strong>GIM Teaching Summary:</strong> &nbsp;
-    External: <strong style="color:#005EB8">${externalHrs.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
-    E-learning: <strong>${onlineCapped.toFixed(1)}h</strong> / 15h max
+    Total External GIM hours: <strong style="color:#005EB8">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp;
+    External: <strong>${externalHrs.toFixed(1)}h</strong> &nbsp;·&nbsp;
+    Online: <strong>${onlineCapped.toFixed(1)}h</strong> / 15h max
   </div>
   ${subHead(badge("GIM","badge-gim"), `${gimCpd.length} total entries · all years · cumulative target 100h`)}
   ${tbl(["Date","Type","Title / Event","Hours","Year","Notes"],
