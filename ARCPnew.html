@@ -1632,6 +1632,13 @@ function maybeAutoRevealWrapped(){
 function render(){ if(!state.profile){ initOnboarding(); return; } syncLogbookTargets(); setTheme(); document.getElementById('app').classList.add('ready'); document.getElementById('gate').classList.remove('show'); renderHeader(); renderTabs(); const trialExpired = renderBetaTrial(); if(trialExpired){ updateReadiness(); return; } if(currentTab==='today') renderToday(); if(currentTab==='roadmap') renderRoadmap(); if(currentTab==='specialty') renderSpecialty(); if(currentTab==='gim') renderGIM(); if(currentTab==='logbook') renderLogbookV2(); if(currentTab==='logbook-form') renderLogbookFormWrap(); if(currentTab==='admin') renderAdmin(); if(currentTab==='overview') renderOverview(); updateReadiness(); forceLiveStatus(); maybeAutoRevealWrapped(); }
 
 function betaTrialInfo(){
+  // Owner exemption: the developer account is never gated by the trial.
+  try {
+    const email = (window.ARCP_FB?.user?.email || state.profile?.email || "").trim().toLowerCase();
+    if(email && email === BETA_FEEDBACK_EMAIL.trim().toLowerCase()){
+      return {expired:false, daysLeft:99999, start:Date.now(), end:Date.now()+99999*86400000, days:99999, owner:true};
+    }
+  } catch(e){}
   if(!state.profile) return {expired:false, daysLeft:BETA_TRIAL_DAYS, start:Date.now(), end:Date.now()+BETA_TRIAL_DAYS*86400000};
   const start = Number(state.profile.betaStart || state.profile.createdAt || Date.now());
   const days = Number(state.profile.betaDays || BETA_TRIAL_DAYS);
@@ -2232,12 +2239,12 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--serif);font
 .masthead h1 em{font-style:normal;color:var(--accent)}
 .masthead .right{font-family:var(--mono);font-size:9.5px;text-align:right;line-height:1.7;color:var(--ink-2);letter-spacing:.04em}
 .masthead .right b{color:var(--ink);font-weight:600}
-.info{display:grid;grid-template-columns:1fr 1.5fr 1fr 0.8fr 1fr;column-gap:0;border-bottom:1px solid var(--rule);padding:18px 0 22px;margin-bottom:34px}
-.info > div{padding:0 18px;border-right:1px solid var(--rule-soft)}
+.info{display:grid;grid-template-columns:1fr 2.4fr 1fr 0.7fr 1fr;column-gap:0;border-bottom:1px solid var(--rule);padding:18px 0 22px;margin-bottom:34px}
+.info > div{padding:0 18px;border-right:1px solid var(--rule-soft);min-width:0}
 .info > div:first-child{padding-left:0}
 .info > div:last-child{border-right:none;padding-right:0}
 .info dt{font-family:var(--mono);font-size:8.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px;font-weight:500}
-.info dd{margin:0;font-family:var(--serif);font-size:14pt;line-height:1.15;color:var(--ink);font-weight:500;letter-spacing:-.005em;font-feature-settings:"lnum"}
+.info dd{margin:0;font-family:var(--serif);font-size:14pt;line-height:1.15;color:var(--ink);font-weight:500;letter-spacing:-.005em;font-feature-settings:"lnum";overflow-wrap:anywhere}
 .lede{font-family:var(--serif);font-style:italic;font-size:13pt;line-height:1.55;color:var(--ink-2);max-width:62ch;margin:0 0 38px;border-left:3px solid var(--accent);padding-left:18px}
 .lede::first-letter{font-size:48px;line-height:.85;float:left;margin:5px 8px 0 0;color:var(--accent);font-style:normal;font-weight:600}
 .figures{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:0 0 40px}
@@ -2266,9 +2273,10 @@ table tbody td .no{color:var(--ink-3);font-style:italic}
 .empty-tbl{font-family:var(--serif);font-style:italic;color:var(--ink-3);padding:14px 8px;text-align:center;border-top:1.5px solid var(--rule);border-bottom:1px solid var(--rule);margin-bottom:8px;font-size:10.5pt}
 footer.colophon-foot{margin-top:60px;padding-top:14px;border-top:3px double var(--rule);font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between}
 footer.colophon-foot em{font-style:italic;text-transform:none;letter-spacing:.04em;color:var(--ink-2)}
-.ai-disclosure{margin-top:18px;padding-top:10px;font-size:8.5pt;line-height:1.5;color:var(--ink-3);font-style:italic;max-width:70ch;opacity:.85}\n@media print{
+.ai-disclosure{margin-top:18px;padding-top:10px;font-size:8.5pt;line-height:1.5;color:var(--ink-3);font-style:italic;max-width:70ch;opacity:.85}\n@page{margin:14mm 12mm}
+@media print{
   .toolbar{display:none}
-  .page{padding:24px 36px;max-width:none}
+  .page{padding:0;max-width:none}
   .page::before{display:none}
   body{background:white}
   h2.section{break-after:avoid}
@@ -2523,7 +2531,7 @@ function printReport(style){
   const figuresHtml = figures.map(f=>`<div class="figure ${f.accent?'accent':''}"><span class="num">${safe(f.n)}</span><span class="lab">${f.lab}</span></div>`).join('');
 
   const win=window.open('','_blank_'+Date.now());
-  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>[${style}] Logbook Report \u2014 ${safe(yr)} \u2014 ${safe(traineeName)}</title>
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Logbook Report \u2014 ${safe(traineeName)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&family=Libre+Franklin:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
