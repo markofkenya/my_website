@@ -2239,7 +2239,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--serif);font
 .masthead h1 em{font-style:normal;color:var(--accent)}
 .masthead .right{font-family:var(--mono);font-size:9.5px;text-align:right;line-height:1.7;color:var(--ink-2);letter-spacing:.04em}
 .masthead .right b{color:var(--ink);font-weight:600}
-.info{display:grid;grid-template-columns:1fr 2.0fr 1fr 0.7fr 1fr;column-gap:0;border-bottom:1px solid var(--rule);padding:18px 0 22px;margin-bottom:34px}
+.info{display:grid;grid-template-columns:1fr 2.4fr 1fr 0.7fr 1fr;column-gap:0;border-bottom:1px solid var(--rule);padding:18px 0 22px;margin-bottom:34px}
 .info > div{padding:0 18px;border-right:1px solid var(--rule-soft);min-width:0}
 .info > div:first-child{padding-left:0}
 .info > div:last-child{border-right:none;padding-right:0}
@@ -2252,6 +2252,7 @@ html,body{background:var(--paper);color:var(--ink);font-family:var(--serif);font
 .figure:last-child{border-right:none}
 .figure .num{font-family:var(--serif);font-weight:500;font-size:38px;line-height:1;letter-spacing:-.02em;color:var(--ink);font-feature-settings:"lnum","tnum";display:block;margin-bottom:6px}
 .figure.accent .num{color:var(--accent)}
+.figure.gim .num{color:var(--accent)}
 .figure .lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);line-height:1.45}
 h2.section{font-family:var(--serif);font-weight:600;font-size:14pt;letter-spacing:-.005em;margin:32px 0 4px;padding-bottom:6px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:baseline}
 h2.section .smallcaps{font-family:var(--mono);font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
@@ -2259,6 +2260,8 @@ h2.section .smallcaps{font-family:var(--mono);font-size:9px;letter-spacing:.24em
 .summary-line{font-family:var(--serif);font-size:10.5pt;color:var(--ink-2);margin:14px 0 18px;padding:10px 0;border-top:1px solid var(--rule-soft);border-bottom:1px solid var(--rule-soft)}
 .summary-line strong{font-weight:600;color:var(--accent);font-feature-settings:"lnum"}
 .scope-label{font-family:var(--mono);font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink);margin:18px 0 6px;display:flex;align-items:baseline;gap:10px}
+.scope-label.gim{color:var(--accent)}
+.scope-label.gim::before{color:var(--accent)}
 .scope-label::before{content:"§";font-family:var(--serif);font-style:italic;color:var(--accent);font-size:14px}
 .scope-label .count{font-family:var(--serif);font-style:italic;font-size:10pt;color:var(--ink-3);text-transform:none;letter-spacing:0;margin-left:auto}
 table{width:100%;border-collapse:collapse;margin:0 0 8px;font-family:var(--serif);font-size:10pt;table-layout:fixed}
@@ -2515,20 +2518,20 @@ function printReport(style){
   if(totalCpd) ledeBits.push(`${totalCpd} hours of recorded continuing professional development`);
   if(acuteEstimate) ledeBits.push(`an estimated ${acuteEstimate} unselected medical admissions across General Internal Medicine on-call placements`);
   const ledeListing = ledeBits.length ? ledeBits.slice(0,-1).join(', ')+(ledeBits.length>1?', and ':'')+ledeBits[ledeBits.length-1] : 'a developing record of clinical and educational activity';
-  const ledeText = `A clinical and educational record covering the period from ${periodFromYearStart} through ${periodTo} \u2014 comprising ${ledeListing}.`;
+  const ledeText = `A clinical and educational record covering the period from ${periodFromYearStart} through ${periodTo}, comprising ${ledeListing}.`;
 
   // Figures (top stats grid)
   const figures = [
-    {n:gimClinics.length, lab:`GIM clinics<br>total`, accent:false},
-    {n:specClinics.length, lab:`${safe(sp.short)} clinics<br>(${safe(yr)})`, accent:true},
-    {n:procYrTotal, lab:`Procedures<br>(${safe(yr)})`, accent:false},
-    {n:teachingYr.length, lab:`Teaching<br>(${safe(yr)})`, accent:false},
-    {n:totalCpd+'h', lab:`CPD<br>both streams`, accent:false},
-    {n:sumHours(simAll)+'h', lab:`Simulation<br>total`, accent:false},
-    {n:Math.round(acuteEstimate), lab:`Acute take<br>patients (est.)`, accent:true},
-    {n:wardMonths, lab:`Ward cover<br>(months)`, accent:false}
+    {n:gimClinics.length, lab:`GIM clinics<br>total`, gim:true},
+    {n:specClinics.length, lab:`${safe(sp.short)} clinics<br>(${safe(yr)})`},
+    {n:procYrTotal, lab:`Procedures<br>(${safe(yr)})`},
+    {n:teachingYr.length, lab:`Teaching<br>(${safe(yr)})`},
+    {n:totalCpd+'h', lab:`CPD<br>Renal + GIM`},
+    {n:sumHours(simAll)+'h', lab:`Simulation<br>total`},
+    {n:Math.round(acuteEstimate), lab:`Acute take<br>patients (est.)`, gim:true}, // GIM metric — burgundy
+    {n:wardMonths, lab:`Ward cover<br>(months)`, gim:true}
   ];
-  const figuresHtml = figures.map(f=>`<div class="figure ${f.accent?'accent':''}"><span class="num">${safe(f.n)}</span><span class="lab">${f.lab}</span></div>`).join('');
+  const figuresHtml = figures.map(f=>`<div class="figure ${f.gim?'gim':''}"><span class="num">${safe(f.n)}</span><span class="lab">${f.lab}</span></div>`).join('');
 
   const win=window.open('','_blank_'+Date.now());
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Logbook Report \u2014 ${safe(traineeName)}</title>
@@ -2565,11 +2568,11 @@ function printReport(style){
   ${formalScopedTable(sp.short, specClinics, ['date','type','hospital','supervisor','patients','year'], 'spec', `${specClinics.reduce((a,e)=>a+(parseInt(e.patients,10)||0),0)} patients`)}
   ${formalScopedTable('GIM', gimClinics, ['date','type','hospital','supervisor','patients','year'], 'gim')}
 
-  ${formalSection('Procedures','II.','Procedures performed under supervision, with directly observed assessment where indicated.')}
+  ${formalSection('Procedures','II.','Procedures performed with directly observed assessment where indicated.')}
   ${formalScopedTable(sp.short, specProcsYr, ['date','type','hospital','supervisor','dops','year'], 'spec', `${specProcsYr.filter(e=>e.dops==='Yes').length} DOPS-signed`)}
   ${formalScopedTable('GIM', gimProcsYr, ['date','type','hospital','supervisor','dops','year'], 'gim', `${gimProcsYr.filter(e=>e.dops==='Yes').length} DOPS-signed`)}
 
-  ${formalSection('Continuing Professional Development','III.','Recorded study leave and professional development hours, by stream.')}
+  ${formalSection('Continuing Professional Development','III.','Recorded study leave and professional development hours.')}
   <div class="summary-line">GIM CPD \u2014 External: <strong>${gimExternalCpdHours()} h</strong> / 100h. ST7 minimum: <strong>${gimExternalCpdHours(e=>e.year==='ST7')} h</strong> / 20 h.</div>
   ${formalScopedTable('GIM', gimCpd, ['date','type','title','hours','year'], 'gim')}
   <div class="summary-line">${safe(sp.short)} CPD \u2014 Total: <strong>${sumHours(specCpd)} h</strong> in ${safe(yr)}.</div>
@@ -2582,7 +2585,7 @@ function printReport(style){
   ${formalSection('Teaching','V.','Teaching delivered, by activity type and observer.')}
   ${formalScopedTable('Teaching', teachingYr, ['date','type','topic','audience','supervisor','signoff','year'], 'gim')}
 
-  ${formalSection('Acute Medical Take','VI.','Firth-calculator estimate of unselected admissions across general medicine on-call placements.')}
+  ${formalSection('Acute Medical Take','VI.','Firth-calculator estimate of unselected medical patients across general medicine on-call placements.')}
   <div class="summary-line">Estimated <strong>${acuteEstimate} patients</strong> against a 750-patient standard. ${safe(yr)} contribution: <strong>${acuteAll.filter(e=>e.year===yr).reduce((a,e)=>a+Number(e.estimated||0),0)}</strong>.</div>
   ${formalScopedTable('Acute take', acuteAll, ['hospital','start','end','months','takes','patients','estimated','year'], 'gim')}
 
@@ -2592,7 +2595,7 @@ function printReport(style){
 
   <div class="ai-disclosure"></div>
   <footer class="colophon-foot">
-    <span>Outcome 1 \u00b7 ARCP Logbook \u00b7 ${safe(traineeName)} \u00b7 ${safe(trainingNumber)}</span>
+    <span>ARCP Logbook \u00b7 ${safe(traineeName)} \u00b7 ${safe(trainingNumber)}</span>
     <em>Generated ${safe(generatedDate)} \u2014 confidential record</em>
   </footer>
 </div>
@@ -2615,7 +2618,7 @@ function fmtDateShort(d){
 function formalScopedTable(label, arr, fields, kind, extra){
   const cols=fields.map(f=>`<col style="width:${FORMAL_COL[f]||'auto'}">`).join('');
   const head=`<thead><tr>${fields.map(f=>`<th${FORMAL_NUM_COLS.has(f)?' class="num"':''}>${safe(FORMAL_LABELS[f]||f)}</th>`).join('')}</tr></thead>`;
-  const heading=`<div class="scope-label">${safe(label)}<span class="count">${arr.length} ${arr.length===1?'entry':'entries'}${extra?' \u00b7 '+safe(extra):''}</span></div>`;
+  const heading=`<div class="scope-label ${kind==='gim'?'gim':''}">${safe(label)}<span class="count">${arr.length} ${arr.length===1?'entry':'entries'}${extra?' \u00b7 '+safe(extra):''}</span></div>`;
   if(!arr.length){
     return heading+`<div class="empty-tbl">No entries logged.</div>`;
   }
