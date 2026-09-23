@@ -3588,43 +3588,43 @@ function locumVisaReport(){
     grandHours+=wkHours; const exceeded=wkHours>LOCUM_WEEKLY_CAP; if(exceeded) over++;
     const wkEnd=(()=>{ const d=new Date(wk+"T00:00:00"); d.setDate(d.getDate()+6); return shortDate(leaveISO(d)); })();
     const shiftRows=shifts.map(s=>`<tr><td>${esc(shortDate(s.date))}</td><td>${esc(s.organisation)}</td><td>${esc(s.startTime)}–${esc(s.endTime)}</td><td class="num">${locumHoursWorked(s).toFixed(2)}</td></tr>`).join("");
-    return `<tbody class="wk ${exceeded?"over":""}">
-      <tr class="wk-head"><td colspan="3">Week commencing <b>${esc(shortDate(wk))}</b> (to ${esc(wkEnd)})</td><td class="num"><b>${wkHours.toFixed(2)} h</b> ${exceeded?'<span class="flag">OVER 20h</span>':'<span class="ok">within 20h</span>'}</td></tr>
-      ${shiftRows}
-    </tbody>`;
+    return `<div class="wk ${exceeded?"over":""}">
+      <div class="wk-head"><div class="wk-range">Week commencing <b>${esc(shortDate(wk))}</b><span class="wk-to">to ${esc(wkEnd)}</span></div><div class="wk-total">${wkHours.toFixed(2)}<span class="wk-unit"> h</span>${exceeded?'<span class="flag">OVER 20h</span>':''}</div></div>
+      <table><thead><tr><th>Date</th><th>Organisation</th><th>Times</th><th class="num">Hours</th></tr></thead><tbody>${shiftRows}</tbody></table>
+    </div>`;
   }).join("");
   const html=`<!doctype html><html><head><meta charset="utf-8"><title>Locum supplementary hours</title>
   <style>
-    body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111;margin:32px;font-size:13px;line-height:1.5}
-    h1{font-size:20px;margin:0 0 2px} .sub{color:#555;font-size:12px;margin-bottom:16px}
-    .meta{margin:0 0 18px;font-size:12.5px} .meta div{margin:2px 0}
-    table{width:100%;border-collapse:collapse;margin-top:6px}
-    th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#666;border-bottom:2px solid #333;padding:6px 8px}
-    td{padding:6px 8px;border-bottom:1px solid #e3e3e3} td.num{text-align:right;white-space:nowrap}
-    tbody.wk .wk-head td{background:#f3f5f8;border-top:1px solid #cfd6df;font-size:12.5px}
-    tbody.wk.over .wk-head td{background:#fbe6e2}
-    .flag{color:#b02a15;font-weight:700;font-size:10.5px;margin-left:6px}
-    .ok{color:#1f7a4d;font-weight:600;font-size:10.5px;margin-left:6px}
-    .totals{margin-top:18px;padding-top:12px;border-top:2px solid #333;font-size:13px}
-    .totals b{font-size:15px}
-    .note{margin-top:18px;font-size:11px;color:#666;line-height:1.6}
-    @media print{body{margin:12mm}}
+    body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#141414;margin:34px;font-size:13px;line-height:1.5}
+    h1{font-size:21px;margin:0 0 3px;letter-spacing:-.01em} .sub{color:#666;font-size:12.5px;margin-bottom:20px}
+    .summary{display:flex;gap:0;border:1px solid #d7dce3;border-radius:12px;overflow:hidden;margin-bottom:8px}
+    .summary .cell{flex:1;padding:13px 16px;border-right:1px solid #e6e9ee}
+    .summary .cell:last-child{border-right:0}
+    .summary .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#7a828d;margin-bottom:4px}
+    .summary .v{font-size:20px;font-weight:700}
+    .summary .v.warn{color:#b02a15} .summary .v.good{color:#1f7a4d}
+    .who{font-size:12.5px;color:#555;margin:0 0 22px}
+    .wk{margin-bottom:16px;border:1px solid #e2e6ec;border-radius:12px;overflow:hidden;break-inside:avoid}
+    .wk-head{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:#f5f7fa;border-bottom:1px solid #e2e6ec}
+    .wk.over .wk-head{background:#fbe7e3}
+    .wk-range{font-size:13.5px} .wk-to{color:#7a828d;margin-left:8px;font-size:12px}
+    .wk-total{font-size:19px;font-weight:700} .wk-unit{font-size:12px;font-weight:600;color:#7a828d}
+    .flag{color:#b02a15;font-weight:700;font-size:11px;margin-left:10px;vertical-align:middle}
+    table{width:100%;border-collapse:collapse}
+    th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#8a919b;padding:8px 16px 6px}
+    td{padding:7px 16px;border-top:1px solid #eef1f4;font-size:12.5px} td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+    @media print{body{margin:12mm} .wk{break-inside:avoid}}
   </style></head><body>
     <h1>Supplementary employment — locum hours record</h1>
-    <div class="sub">Weekly hours worked, for evidence of compliance with the 20 hours per week supplementary-work limit.</div>
-    <div class="meta">
-      ${doctor?`<div><b>Doctor:</b> ${esc(doctor)}</div>`:""}
-      <div><b>Report generated:</b> ${shortDate(leaveISO(new Date()))}</div>
-      <div><b>Shifts covered:</b> ${locumShifts.length} across ${weekKeys.length} week${weekKeys.length===1?"":"s"} (${esc(shortDate(weekKeys[0]))} to ${esc(shortDate(weekKeys[weekKeys.length-1]))})</div>
+    <div class="sub">Weekly hours worked.</div>
+    <div class="summary">
+      <div class="cell"><div class="k">Total hours worked</div><div class="v">${grandHours.toFixed(2)}</div></div>
+      <div class="cell"><div class="k">Weeks recorded</div><div class="v">${weekKeys.length}</div></div>
+      <div class="cell"><div class="k">Locum shifts</div><div class="v">${locumShifts.length}</div></div>
+      <div class="cell"><div class="k">Weeks over 20h</div><div class="v ${over?"warn":"good"}">${over}</div></div>
     </div>
-    <table>
-      <thead><tr><th>Date</th><th>Organisation</th><th>Times</th><th class="num">Hours worked</th></tr></thead>
-      ${rows}
-    </table>
-    <div class="totals">
-      Total hours worked: <b>${grandHours.toFixed(2)} h</b> &nbsp;·&nbsp; Weeks recorded: <b>${weekKeys.length}</b> &nbsp;·&nbsp; Weeks exceeding 20h: <b style="color:${over?"#b02a15":"#1f7a4d"}">${over}</b>
-    </div>
-    <div class="note">Hours worked are calculated from the recorded start and finish time of each locum shift (a shift finishing on the following day is counted across midnight). Weeks run Monday to Sunday. This record is generated from shifts entered in the private locum tracker and is intended as a personal working record; it is not an official payroll or employer statement.</div>
+    <div class="who">${doctor?`${esc(doctor)} · `:""}${esc(shortDate(weekKeys[0]))} to ${esc(shortDate(weekKeys[weekKeys.length-1]))} · generated ${shortDate(leaveISO(new Date()))}</div>
+    ${rows}
   </body></html>`;
   const w=window.open("","_blank"); if(!w){ setLocumSync("Allow pop-ups to open the report.",true); return; }
   w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>{ try{ w.print(); }catch(e){} }, 450);
