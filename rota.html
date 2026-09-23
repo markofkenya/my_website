@@ -986,10 +986,6 @@
     <button class="hub-card" id="hubLocum"><div class="hc-ic">£</div><div class="hc-t">Locum</div><div class="hc-d">Track booked NHS bank and agency shifts through timesheet and payment.</div></button>
   </div>
   <div class="hub-sync syncline" id="hubSync"><span class="syncdot local"></span> Saved on this device</div>
-  <div class="hub-home-sync">
-    <div class="syncline" id="hubHomeSyncStatus" aria-live="polite"><span class="syncdot local"></span> Hermione HQ not connected</div>
-    <button class="btn key" id="hubHomeSyncBtn" type="button">Connect Hermione HQ</button>
-  </div>
 </div>
 
 <div class="wrap" id="ss-root">
@@ -1076,9 +1072,7 @@
       <button data-theme="indigo" title="Indigo &amp; magenta"><span class="dotc" style="background:#7d8cf2"></span></button>
     </div>
     <div class="syncline" id="syncStatus"><span class="syncdot local"></span> Saved on this device</div>
-    <div class="syncline" id="homeSyncStatus" aria-live="polite"><span class="syncdot local"></span> Hermione HQ not connected</div>
     <div class="grow"></div>
-    <button class="btn ghost" id="homeSyncBtn" type="button">Connect Hermione HQ</button>
     <button class="btn ghost danger-ghost" id="refreshBtn">New rota</button>
     <button class="btn ghost" id="exportBtn">Export</button>
     <button class="btn ghost" id="importBtn">Import</button>
@@ -1307,7 +1301,7 @@
       <div class="locum-sync" id="locumAuthStatus" aria-live="polite"></div>
     </div>
     <div class="locum-app" id="locumApp" hidden>
-      <div style="display:flex;justify-content:flex-end;margin:-6px 0 4px"><button class="btn ghost" id="locumPrivateSignOut" type="button">Sign out of private tracker</button></div>
+      <div style="display:flex;justify-content:space-between;gap:8px;margin:-6px 0 4px"><button class="btn ghost" id="locumVisaReport" type="button">Print visa hours report</button><button class="btn ghost" id="locumPrivateSignOut" type="button">Sign out of private tracker</button></div>
       <div class="locum-summary" id="locumSummary"></div>
       <div class="locum-alerts" id="locumAlerts"></div>
       <form class="locum-form" id="locumForm">
@@ -3572,6 +3566,70 @@ function renderLocum(){
   list.querySelectorAll("[data-action=edit]").forEach(el=>el.onclick=()=>editLocumShift(el.closest("[data-id]").dataset.id));
   list.querySelectorAll("[data-action=delete]").forEach(el=>el.onclick=()=>deleteLocumShift(el.closest("[data-id]").dataset.id));
 }
+const LOCUM_WEEKLY_CAP=20;
+function locumHoursWorked(s){
+  const p=(t)=>{ const [h,m]=String(t||"0:0").split(":").map(Number); return h*60+(m||0); };
+  let mins=p(s.endTime)-p(s.startTime); if(mins<=0) mins+=1440;   // crosses midnight
+  return Math.round((mins/60)*100)/100;
+}
+function locumWeekMonday(ds){ const d=new Date(ds+"T00:00:00"); const back=(d.getDay()+6)%7; d.setDate(d.getDate()-back); return leaveISO(d); }
+function locumVisaReport(){
+  if(!locumShifts.length){ setLocumSync("No locum shifts to report yet.",true); return; }
+  const weeks={};
+  locumShifts.forEach(s=>{ const wk=locumWeekMonday(s.date); (weeks[wk]=weeks[wk]||[]).push(s); });
+  const weekKeys=Object.keys(weeks).sort();
+  const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const shortDate=ds=>{ const d=new Date(ds+"T00:00:00"); return `${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)} ${d.getFullYear()}`; };
+  const doctor=(homeAuthUser&&homeAuthUser.displayName)||(meKey&&state.people[meKey]&&state.people[meKey].name)||"";
+  let grandHours=0, over=0;
+  const rows=weekKeys.map(wk=>{
+    const shifts=weeks[wk].slice().sort((a,b)=>a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime));
+    const wkHours=shifts.reduce((t,s)=>t+locumHoursWorked(s),0);
+    grandHours+=wkHours; const exceeded=wkHours>LOCUM_WEEKLY_CAP; if(exceeded) over++;
+    const wkEnd=(()=>{ const d=new Date(wk+"T00:00:00"); d.setDate(d.getDate()+6); return shortDate(leaveISO(d)); })();
+    const shiftRows=shifts.map(s=>`<tr><td>${esc(shortDate(s.date))}</td><td>${esc(s.organisation)}</td><td>${esc(s.startTime)}–${esc(s.endTime)}</td><td class="num">${locumHoursWorked(s).toFixed(2)}</td></tr>`).join("");
+    return `<tbody class="wk ${exceeded?"over":""}">
+      <tr class="wk-head"><td colspan="3">Week commencing <b>${esc(shortDate(wk))}</b> (to ${esc(wkEnd)})</td><td class="num"><b>${wkHours.toFixed(2)} h</b> ${exceeded?'<span class="flag">OVER 20h</span>':'<span class="ok">within 20h</span>'}</td></tr>
+      ${shiftRows}
+    </tbody>`;
+  }).join("");
+  const html=`<!doctype html><html><head><meta charset="utf-8"><title>Locum supplementary hours</title>
+  <style>
+    body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111;margin:32px;font-size:13px;line-height:1.5}
+    h1{font-size:20px;margin:0 0 2px} .sub{color:#555;font-size:12px;margin-bottom:16px}
+    .meta{margin:0 0 18px;font-size:12.5px} .meta div{margin:2px 0}
+    table{width:100%;border-collapse:collapse;margin-top:6px}
+    th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#666;border-bottom:2px solid #333;padding:6px 8px}
+    td{padding:6px 8px;border-bottom:1px solid #e3e3e3} td.num{text-align:right;white-space:nowrap}
+    tbody.wk .wk-head td{background:#f3f5f8;border-top:1px solid #cfd6df;font-size:12.5px}
+    tbody.wk.over .wk-head td{background:#fbe6e2}
+    .flag{color:#b02a15;font-weight:700;font-size:10.5px;margin-left:6px}
+    .ok{color:#1f7a4d;font-weight:600;font-size:10.5px;margin-left:6px}
+    .totals{margin-top:18px;padding-top:12px;border-top:2px solid #333;font-size:13px}
+    .totals b{font-size:15px}
+    .note{margin-top:18px;font-size:11px;color:#666;line-height:1.6}
+    @media print{body{margin:12mm}}
+  </style></head><body>
+    <h1>Supplementary employment — locum hours record</h1>
+    <div class="sub">Weekly hours worked, for evidence of compliance with the 20 hours per week supplementary-work limit.</div>
+    <div class="meta">
+      ${doctor?`<div><b>Doctor:</b> ${esc(doctor)}</div>`:""}
+      <div><b>Report generated:</b> ${shortDate(leaveISO(new Date()))}</div>
+      <div><b>Shifts covered:</b> ${locumShifts.length} across ${weekKeys.length} week${weekKeys.length===1?"":"s"} (${esc(shortDate(weekKeys[0]))} to ${esc(shortDate(weekKeys[weekKeys.length-1]))})</div>
+    </div>
+    <table>
+      <thead><tr><th>Date</th><th>Organisation</th><th>Times</th><th class="num">Hours worked</th></tr></thead>
+      ${rows}
+    </table>
+    <div class="totals">
+      Total hours worked: <b>${grandHours.toFixed(2)} h</b> &nbsp;·&nbsp; Weeks recorded: <b>${weekKeys.length}</b> &nbsp;·&nbsp; Weeks exceeding 20h: <b style="color:${over?"#b02a15":"#1f7a4d"}">${over}</b>
+    </div>
+    <div class="note">Hours worked are calculated from the recorded start and finish time of each locum shift (a shift finishing on the following day is counted across midnight). Weeks run Monday to Sunday. This record is generated from shifts entered in the private locum tracker and is intended as a personal working record; it is not an official payroll or employer statement.</div>
+  </body></html>`;
+  const w=window.open("","_blank"); if(!w){ setLocumSync("Allow pop-ups to open the report.",true); return; }
+  w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>{ try{ w.print(); }catch(e){} }, 450);
+  setLocumSync(`Visa hours report generated — ${weekKeys.length} week${weekKeys.length===1?"":"s"}, ${over} over 20h.`,false);
+}
 function resetLocumForm(){
   const form=document.getElementById("locumForm"); form.reset();
   document.getElementById("locumEditId").value=""; document.getElementById("locumStart").value="08:00"; document.getElementById("locumEnd").value="17:00";
@@ -4077,8 +4135,8 @@ function boot(){
   document.getElementById("pickerOverlay").onclick=e=>{ if(e.target.id==="pickerOverlay") closePicker(); };
 
   document.getElementById("refreshBtn").onclick=newRota;
-  document.getElementById("homeSyncBtn").onclick=signInForHomeSync;
-  document.getElementById("hubHomeSyncBtn").onclick=signInForHomeSync;
+  { const b=document.getElementById("homeSyncBtn"); if(b) b.onclick=signInForHomeSync; }
+  { const b=document.getElementById("hubHomeSyncBtn"); if(b) b.onclick=signInForHomeSync; }
   document.getElementById("hubMyRota").onclick=()=>openMyRota();
   document.getElementById("hubLocum").onclick=openLocum;
   document.getElementById("hubAnnual").onclick=()=>openLeave();
@@ -4092,6 +4150,7 @@ function boot(){
   document.getElementById("locumBack").onclick=closeLocum;
   document.getElementById("locumSignIn").onclick=signInLocum;
   document.getElementById("locumPrivateSignOut").onclick=signOutLocum;
+  { const b=document.getElementById("locumVisaReport"); if(b) b.onclick=locumVisaReport; }
   document.getElementById("locumForm").onsubmit=saveLocumShift;
   document.getElementById("locumCancelEdit").onclick=resetLocumForm;
   ["locumSocialRate","locumSocialHours","locumUnsocialRate","locumUnsocialHours"].forEach(id=>document.getElementById(id).oninput=renderLocumGross);
