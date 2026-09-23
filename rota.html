@@ -162,8 +162,8 @@
   .btn.block{width:100%;padding:14px;font-size:15px}
   .btn.ghost{background:var(--surface);color:var(--ink-soft);border:1px solid var(--line)}
   .btn.key{background:var(--a);color:#fff;box-shadow:0 1px 0 var(--a-edge),0 7px 16px -9px var(--a)}
-  .btn.locum-green{background:var(--good);color:#fff;border:none;box-shadow:0 1px 0 #2e9467,0 7px 16px -9px var(--good)}
-  .btn.locum-green:hover{filter:brightness(1.06)}
+  .btn.locum-green{background:#2f9e63;color:#fff;border:none;box-shadow:0 1px 0 #25794d,0 7px 16px -9px #2f9e63}
+  .btn.locum-green:hover{background:#37ab6d}
   .btn.key:hover{filter:brightness(1.05)}
   .req-badge{display:inline-block;background:rgba(255,255,255,.24);border-radius:999px;padding:1px 8px;margin-left:7px;font-size:12.5px;font-weight:700;font-family:var(--font-m)}
   .pool-divide .btn.key{flex:2}
@@ -3592,7 +3592,7 @@ function locumVisaReport(){
     const shiftRows=shifts.map(s=>`<tr><td>${esc(shortDate(s.date))}</td><td>${esc(s.organisation)}</td><td>${esc(s.startTime)}–${esc(s.endTime)}</td><td class="num">${locumHoursWorked(s).toFixed(2)}</td></tr>`).join("");
     return `<div class="wk ${exceeded?"over":""}">
       <div class="wk-head"><div class="wk-range">Week commencing <b>${esc(shortDate(wk))}</b><span class="wk-to">to ${esc(wkEnd)}</span></div><div class="wk-total">${wkHours.toFixed(2)}<span class="wk-unit"> h</span>${exceeded?'<span class="flag">OVER 20h</span>':''}</div></div>
-      <table><thead><tr><th>Date</th><th>Organisation</th><th>Times</th><th class="num">Hours</th></tr></thead><tbody>${shiftRows}</tbody></table>
+      <table><colgroup><col class="c-date"><col class="c-org"><col class="c-time"><col class="c-hrs"></colgroup><thead><tr><th>Date</th><th>Organisation</th><th>Times</th><th class="num">Hours</th></tr></thead><tbody>${shiftRows}</tbody></table>
     </div>`;
   }).join("");
   const html=`<!doctype html><html><head><meta charset="utf-8"><title>Locum supplementary hours</title>
@@ -3613,9 +3613,10 @@ function locumVisaReport(){
     .wk-range{font-size:13.5px} .wk-to{color:#7a828d;margin-left:8px;font-size:12px}
     .wk-total{font-size:19px;font-weight:700} .wk-unit{font-size:12px;font-weight:600;color:#7a828d}
     .flag{color:#b02a15;font-weight:700;font-size:11px;margin-left:10px;vertical-align:middle}
-    table{width:100%;border-collapse:collapse}
+    table{width:100%;border-collapse:collapse;table-layout:fixed}
+    col.c-date{width:26%} col.c-org{width:42%} col.c-time{width:18%} col.c-hrs{width:14%}
     th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#8a919b;padding:8px 16px 6px}
-    td{padding:7px 16px;border-top:1px solid #eef1f4;font-size:12.5px} td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+    td{padding:7px 16px;border-top:1px solid #eef1f4;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
     @page{margin:0}
     @media print{body{padding:14mm} .wk{break-inside:avoid}}
   </style></head><body>
