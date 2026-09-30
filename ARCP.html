@@ -1925,9 +1925,32 @@ function cipEvidKey(cipId, itemLabel) {
 function cipEntrustKey(cipId) { return `pft_cip_entrust_${cipId}`; } // global — not year-specific
 function cipSatKey(cipId)     { return `pft_cip_sat_${currentYear}_${cipId}`; } // generic "satisfactory"
 
-function cipCountKey(cipId){ return `pft_cip_count_${cipId}`; }
-function getCipCount(cipId){ return parseInt(localStorage.getItem(cipCountKey(cipId)) || "0", 10) || 0; }
-function setCipCount(cipId, val){ val=Math.max(0,parseInt(val,10)||0); const k=cipCountKey(cipId); localStorage.setItem(k, String(val)); fbPush(k, val); }
+// ── CiP evidence picks — tap an evidence chip to count it (target 3 per CiP) ──
+// Stored per CiP as JSON e.g. {"MCR":2,"QIP":1}. Old typed counts (pft_cip_count_*) are ignored, so picks start from zero.
+function cipPicksKey(cipId){ return `pft_cip_picks_${cipId}`; }
+function getCipPicks(cipId){
+  try { const o = JSON.parse(localStorage.getItem(cipPicksKey(cipId)) || "{}"); return (o && typeof o === "object") ? o : {}; }
+  catch(e){ return {}; }
+}
+function setCipPicks(cipId, picks){
+  const clean = {};
+  Object.entries(picks || {}).forEach(([t, v]) => { v = parseInt(v, 10) || 0; if (v > 0) clean[t] = v; });
+  const k = cipPicksKey(cipId), s = JSON.stringify(clean);
+  localStorage.setItem(k, s);
+  fbPush(k, s);
+}
+function addCipPick(cipId, type, delta){
+  const p = getCipPicks(cipId);
+  p[type] = Math.max(0, (parseInt(p[type], 10) || 0) + delta);
+  setCipPicks(cipId, p);
+}
+function getCipCount(cipId){ return Object.values(getCipPicks(cipId)).reduce((a, v) => a + (parseInt(v, 10) || 0), 0); }
+function cipPickSummary(cip){
+  const p = getCipPicks(cip.id);
+  const order = [...cip.evidence, ...Object.keys(p).filter(t => !cip.evidence.includes(t))];
+  return order.filter(t => p[t] > 0).map(t => p[t] > 1 ? `${t} ×${p[t]}` : t).join(", ");
+}
+function cipEsc(t){ return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 const CIP_EVID_TARGET = 3;
 function cipCountColor(n){ return n>=CIP_EVID_TARGET ? "var(--green)" : n>=1 ? "var(--amber)" : "var(--red)"; }
 function getCipEvid(cipId, itemLabel) {
@@ -1980,6 +2003,48 @@ function evidBarColor(count) {
 // ══════════════════════════════════════════════════════
 let cipSubTab = "cips-generic-renal";
 
+// Summary strip at the top of the CiP tab — rebuilt in place when evidence chips are tapped
+function cipSummaryHTML() {
+  const allCips    = CIP_GROUPS.flatMap(g => g.cips);
+  const level4     = allCips.filter(c => getCipEntrust(c.id) === "4").length;
+  const satisfied  = allCips.filter(c => {
+    const g = CIP_GROUPS.find(gr => gr.cips.includes(c));
+    return g?.entrustType === "satisfactory" ? getCipSat(c.id) : false;
+  }).length;
+  const targetMet  = allCips.filter(c => {
+    const entrust = getCipEntrust(c.id);
+    const target  = CIP_YEAR_TARGETS[c.id]?.[currentYear];
+    return entrust && target && parseInt(entrust) >= target;
+  }).length;
+  const evidComplete = allCips.filter(c => getCipCount(c.id) >= CIP_EVID_TARGET).length;
+  const evidNeeded   = allCips.length - evidComplete;
+  return `
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${evidNeeded>0?"var(--red)":"var(--green)"};padding:10px 16px;flex:1;min-width:100px;">
+      <div style="font-size:20px;font-weight:700;color:${evidNeeded>0?"var(--red)":"var(--green)"};">${evidNeeded}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">CiPs NEEDING EVIDENCE</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--green);padding:10px 16px;flex:1;min-width:100px;">
+      <div style="font-size:20px;font-weight:700;color:var(--green);">${evidComplete}/${allCips.length}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">EVIDENCE COMPLETE (3/3)</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--green);padding:10px 16px;flex:1;min-width:100px;">
+      <div style="font-size:20px;font-weight:700;color:var(--green);">${level4 + satisfied}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">SIGNED OFF / SATISFACTORY</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--amber);padding:10px 16px;flex:1;min-width:100px;">
+      <div style="font-size:20px;font-weight:700;color:var(--amber);">${targetMet}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">AT/ABOVE TARGET FOR ${currentYear}</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--blue);padding:10px 16px;flex:1;min-width:100px;">
+      <div style="font-size:20px;font-weight:700;color:var(--blue);">${allCips.length}</div>
+      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">TOTAL CiPs</div>
+    </div>`;
+}
+function refreshCipSummary() {
+  const el = document.getElementById("cip-summary");
+  if (el) el.innerHTML = cipSummaryHTML();
+}
+
 function renderCIPs() {
   const el = document.getElementById("tab-cips");
   el.innerHTML = "";
@@ -2017,32 +2082,10 @@ function renderCIPs() {
     return entrust && target && parseInt(entrust) >= target;
   }).length;
   const gimRenalTotal = CIP_GROUPS.filter(g => g.entrustType==="level").flatMap(g=>g.cips).length;
-  const evidComplete = allCips.filter(c => getCipCount(c.id) >= CIP_EVID_TARGET).length;
-  const evidNeeded   = allCips.length - evidComplete;
-
   const summaryDiv = document.createElement("div");
+  summaryDiv.id = "cip-summary";
   summaryDiv.style.cssText = "display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;";
-  summaryDiv.innerHTML = `
-    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid ${evidNeeded>0?"var(--red)":"var(--green)"};padding:10px 16px;flex:1;min-width:100px;">
-      <div style="font-size:20px;font-weight:700;color:${evidNeeded>0?"var(--red)":"var(--green)"};">${evidNeeded}</div>
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">CiPs NEEDING EVIDENCE</div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--green);padding:10px 16px;flex:1;min-width:100px;">
-      <div style="font-size:20px;font-weight:700;color:var(--green);">${evidComplete}/${allCips.length}</div>
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">EVIDENCE COMPLETE (3/3)</div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--green);padding:10px 16px;flex:1;min-width:100px;">
-      <div style="font-size:20px;font-weight:700;color:var(--green);">${level4 + satisfied}</div>
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">SIGNED OFF / SATISFACTORY</div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--amber);padding:10px 16px;flex:1;min-width:100px;">
-      <div style="font-size:20px;font-weight:700;color:var(--amber);">${targetMet}</div>
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">AT/ABOVE TARGET FOR ${currentYear}</div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--blue5);border-left:3px solid var(--blue);padding:10px 16px;flex:1;min-width:100px;">
-      <div style="font-size:20px;font-weight:700;color:var(--blue);">${allCips.length}</div>
-      <div style="font-size:8px;color:var(--blue3);letter-spacing:0.12em;margin-top:2px;">TOTAL CiPs</div>
-    </div>`;
+  summaryDiv.innerHTML = cipSummaryHTML();
   el.appendChild(summaryDiv);
 
   // Render groups for current sub-tab
@@ -2116,9 +2159,13 @@ function makeCipCard(cip, group) {
     ? `<div style="font-size:10px;font-weight:700;color:${levelColor};min-width:28px;text-align:right;">${entrust ? "L"+entrust : "—"}</div>`
     : `<div style="font-size:9px;font-weight:700;color:${sat?"var(--green)":"var(--dim)"};">${sat?"✓ SAT":"—"}</div>`;
 
+  const pickSummary = cipPickSummary(cip);
   const needsTag = evidDone ? "" : `<span style="display:inline-block;margin-left:7px;font-size:7px;font-weight:700;letter-spacing:0.08em;padding:1px 6px;border-radius:2px;background:${evidBorder}22;color:${evidBorder};border:1px solid ${evidBorder};vertical-align:middle;">${evidCount===0?"NOT STARTED":"NEEDS EVIDENCE"}</span>`;
   header.innerHTML = `
-    <div style="flex:1;font-size:11px;color:var(--text);font-weight:500;line-height:1.3;">${cip.label}${needsTag}</div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:11px;color:var(--text);font-weight:500;line-height:1.3;">${cip.label}${needsTag}</div>
+      ${pickSummary ? `<div style="font-size:9px;color:var(--text2);margin-top:3px;line-height:1.4;"><span style="color:${evidColor};font-weight:700;">${evidCount}/${CIP_EVID_TARGET}</span> · ${cipEsc(pickSummary)}</div>` : ""}
+    </div>
     ${evidBar}
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
       ${targetBadge}
@@ -2171,34 +2218,54 @@ function makeCipCard(cip, group) {
     evidHead.textContent = "EVIDENCE TO INFORM DECISION";
     body.appendChild(evidHead);
 
-    // ── Evidence count (0..3) — single input; named types below are guidance only ──
+    // ── Evidence chips — tap to add one; the small − removes one ──
+    const picks = getCipPicks(cip.id);
     const evidWrap = document.createElement("div");
-    evidWrap.style.cssText = "background:var(--bg3);border:1px solid var(--blue5);border-left:3px solid "+cipCountColor(evidCount)+";padding:10px 12px;margin-bottom:10px;";
+    evidWrap.style.cssText = "background:var(--bg3);border:1px solid var(--blue5);border-left:3px solid "+evidColor+";padding:10px 12px;margin-bottom:4px;";
     evidWrap.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-        <div style="font-size:9px;color:var(--dim);letter-spacing:0.08em;text-transform:uppercase;">Evidence gathered</div>
+        <div style="font-size:9px;color:var(--dim);letter-spacing:0.08em;text-transform:uppercase;">Tap evidence to count it</div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <input type="number" min="0" max="3" value="${evidCount}"
-            style="background:var(--bg);border:1.5px solid ${cipCountColor(evidCount)};color:var(--text);
-              font-family:var(--font);font-size:15px;font-weight:700;padding:4px 8px;width:56px;text-align:center;outline:none;"
-            onchange="setCipCount('${cip.id}',this.value);renderCIPs();" />
-          <div style="font-size:13px;font-weight:700;color:${cipCountColor(evidCount)};">/ ${CIP_EVID_TARGET}${evidDone?" ✓":""}</div>
+          ${evidCount > 0 ? `<button class="cip-clear" style="background:none;border:none;color:var(--dim);font-family:var(--font);font-size:9px;letter-spacing:0.06em;cursor:pointer;text-decoration:underline;padding:0;">clear</button>` : ""}
+          <div style="font-size:13px;font-weight:700;color:${evidColor};">${evidCount} / ${CIP_EVID_TARGET}${evidDone?" ✓":""}</div>
         </div>
       </div>
-      <div style="height:5px;background:var(--blue5);border-radius:2px;overflow:hidden;margin-top:9px;">
-        <div style="height:100%;width:${Math.min(100,(evidCount/CIP_EVID_TARGET)*100)}%;background:${cipCountColor(evidCount)};transition:width 0.3s;"></div>
+      <div style="height:5px;background:var(--blue5);border-radius:2px;overflow:hidden;margin:9px 0 10px;">
+        <div style="height:100%;width:${evidWidth}%;background:${evidColor};transition:width 0.3s;"></div>
       </div>`;
+    const chipRow = document.createElement("div");
+    chipRow.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;";
+    const redraw = () => { card.replaceWith(makeCipCard(cip, group)); refreshCipSummary(); };
+    cip.evidence.forEach(item => {
+      const n = parseInt(picks[item], 10) || 0;
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.title = n ? `Tap to add another ${item}` : `Tap to count ${item}`;
+      chip.style.cssText = `display:inline-flex;align-items:center;gap:6px;font-family:var(--font);font-size:10px;line-height:1.3;
+        padding:5px 9px;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent;user-select:none;
+        background:${n ? "var(--bg2)" : "var(--bg)"};color:${n ? "var(--text)" : "var(--text2)"};
+        border:${n ? "1.5px solid var(--blue)" : "1px dashed var(--blue4)"};font-weight:${n ? 600 : 400};`;
+      chip.innerHTML = `<span>${n ? "" : "+ "}${cipEsc(item)}</span>` + (n
+        ? `<span style="background:var(--blue);color:var(--bg);font-weight:700;font-size:9px;padding:0 5px;min-width:14px;text-align:center;">${n}</span>
+           <span class="cip-minus" title="Remove one" style="color:var(--dim);font-weight:700;font-size:12px;padding:0 2px 0 4px;border-left:1px solid var(--blue5);">−</span>`
+        : "");
+      chip.addEventListener("click", ev => {
+        ev.stopPropagation();
+        const minus = ev.target.closest(".cip-minus");
+        addCipPick(cip.id, item, minus ? -1 : 1);
+        redraw();
+      });
+      chipRow.appendChild(chip);
+    });
+    evidWrap.appendChild(chipRow);
+    const clearBtn = evidWrap.querySelector(".cip-clear");
+    if (clearBtn) clearBtn.addEventListener("click", ev => {
+      ev.stopPropagation();
+      if (!confirm(`Clear all counted evidence for "${cip.label}"?`)) return;
+      setCipPicks(cip.id, {});
+      redraw();
+    });
     body.appendChild(evidWrap);
-
-    // Named evidence types — informational guidance only (no counters)
-    const evidGuide = document.createElement("div");
-    evidGuide.style.cssText = "margin-bottom:4px;";
-    evidGuide.innerHTML = `
-      <div style="font-size:8px;color:var(--dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">Suggested evidence · for guidance</div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;">
-        ${cip.evidence.map(item => `<span style="font-size:9px;color:var(--text2);background:var(--bg3);border:1px solid var(--blue5);padding:3px 8px;line-height:1.3;">${item}</span>`).join("")}
-      </div>`;
-    body.appendChild(evidGuide);
     card.appendChild(body);
   }
 
