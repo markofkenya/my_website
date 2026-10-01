@@ -2236,7 +2236,10 @@ function makeCipCard(cip, group) {
     const chipRow = document.createElement("div");
     chipRow.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;";
     const redraw = () => { card.replaceWith(makeCipCard(cip, group)); refreshCipSummary(); };
-    cip.evidence.forEach(item => {
+    // Suggested types first, then any "Other" evidence the trainee has typed in
+    const customTypes = Object.keys(picks).filter(t => !cip.evidence.includes(t) && (parseInt(picks[t],10)||0) > 0);
+    [...cip.evidence, ...customTypes].forEach(item => {
+      const isCustom = !cip.evidence.includes(item);
       const n = parseInt(picks[item], 10) || 0;
       const chip = document.createElement("button");
       chip.type = "button";
@@ -2245,7 +2248,7 @@ function makeCipCard(cip, group) {
         padding:5px 9px;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent;user-select:none;
         background:${n ? "var(--bg2)" : "var(--bg)"};color:${n ? "var(--text)" : "var(--text2)"};
         border:${n ? "1.5px solid var(--blue)" : "1px dashed var(--blue4)"};font-weight:${n ? 600 : 400};`;
-      chip.innerHTML = `<span>${n ? "" : "+ "}${cipEsc(item)}</span>` + (n
+      chip.innerHTML = `<span>${n ? "" : "+ "}${cipEsc(item)}${isCustom ? ' <span style="font-size:8px;color:var(--dim);font-weight:400;letter-spacing:0.06em;">· OTHER</span>' : ""}</span>` + (n
         ? `<span style="background:var(--blue);color:var(--bg);font-weight:700;font-size:9px;padding:0 5px;min-width:14px;text-align:center;">${n}</span>
            <span class="cip-minus" title="Remove one" style="color:var(--dim);font-weight:700;font-size:12px;padding:0 2px 0 4px;border-left:1px solid var(--blue5);">−</span>`
         : "");
@@ -2257,6 +2260,52 @@ function makeCipCard(cip, group) {
       });
       chipRow.appendChild(chip);
     });
+
+    // "Other" chip — type your own evidence (e.g. Reflection); it counts towards the 3 like any other chip
+    const otherWrap = document.createElement("span");
+    otherWrap.style.cssText = "display:inline-flex;";
+    const showOtherButton = () => {
+      otherWrap.innerHTML = "";
+      const ob = document.createElement("button");
+      ob.type = "button";
+      ob.title = "Add other evidence (type your own)";
+      ob.style.cssText = `font-family:var(--font);font-size:10px;line-height:1.3;padding:5px 9px;cursor:pointer;
+        background:var(--bg);color:var(--text2);border:1px dashed var(--blue4);-webkit-tap-highlight-color:transparent;`;
+      ob.textContent = "+ Other…";
+      ob.addEventListener("click", ev => { ev.stopPropagation(); showOtherInput(); });
+      otherWrap.appendChild(ob);
+    };
+    const showOtherInput = () => {
+      otherWrap.innerHTML = "";
+      const box = document.createElement("span");
+      box.style.cssText = "display:inline-flex;align-items:stretch;border:1.5px solid var(--blue);background:var(--bg);";
+      const inp = document.createElement("input");
+      inp.type = "text"; inp.maxLength = 60; inp.placeholder = "e.g. Reflection";
+      inp.style.cssText = "background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:16px;padding:4px 8px;width:150px;max-width:50vw;";
+      const add = document.createElement("button");
+      add.type = "button"; add.textContent = "ADD";
+      add.style.cssText = "background:var(--blue);color:var(--bg);border:none;font-family:var(--font);font-size:9px;font-weight:700;letter-spacing:0.08em;padding:0 10px;cursor:pointer;";
+      const cancel = document.createElement("button");
+      cancel.type = "button"; cancel.textContent = "✕"; cancel.title = "Cancel";
+      cancel.style.cssText = "background:none;border:none;border-left:1px solid var(--blue5);color:var(--dim);font-family:var(--font);font-size:11px;padding:0 8px;cursor:pointer;";
+      const commit = () => {
+        const text = inp.value.trim().replace(/\s+/g, " ");
+        if (!text) { inp.focus(); return; }
+        // Re-use an existing chip if the name matches (ignoring case)
+        const existing = [...cip.evidence, ...Object.keys(getCipPicks(cip.id))].find(t => t.toLowerCase() === text.toLowerCase());
+        addCipPick(cip.id, existing || text, 1);
+        redraw();
+      };
+      [box, inp].forEach(el => el.addEventListener("click", ev => ev.stopPropagation()));
+      inp.addEventListener("keydown", ev => { if (ev.key === "Enter") { ev.preventDefault(); commit(); } if (ev.key === "Escape") showOtherButton(); });
+      add.addEventListener("click", ev => { ev.stopPropagation(); commit(); });
+      cancel.addEventListener("click", ev => { ev.stopPropagation(); showOtherButton(); });
+      box.append(inp, add, cancel);
+      otherWrap.appendChild(box);
+      inp.focus();
+    };
+    showOtherButton();
+    chipRow.appendChild(otherWrap);
     evidWrap.appendChild(chipRow);
     const clearBtn = evidWrap.querySelector(".cip-clear");
     if (clearBtn) clearBtn.addEventListener("click", ev => {
