@@ -2433,7 +2433,13 @@ footer.colophon-foot{margin-top:24px;padding:14px 4px 0;font-family:var(--mono);
 footer.colophon-foot em{font-style:normal;text-transform:none;color:var(--ink-2)}
 .ai-disclosure{margin-top:18px;padding-top:10px;font-size:8.5pt;line-height:1.5;color:var(--ink-3);font-style:italic;max-width:70ch;opacity:.85}\n@media print{.toolbar{display:none}.page{padding:12px;max-width:none}body{background:#fff}.figure,.info > div,h2.section,table,.lede{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-shadow:none}h2.section{break-after:avoid}tr{break-inside:avoid}thead{display:table-header-group}}
 `;
-  return THEMES[style] || THEMES.editorial;
+  const TALLY_CSS = `
+table.tally{width:auto;min-width:60%;max-width:100%;margin:2px 0 0;background:var(--paper-2,#f4f2ec)}
+table.tally tbody td{padding:4px 8px}
+table.tally tr.tally-total td{border-top:1.5px solid var(--rule,#222);border-bottom:none;font-weight:700}
+.tally-gap{height:12px}
+@media print{table.tally{break-inside:avoid}}`;
+  return (THEMES[style] || THEMES.editorial) + TALLY_CSS;
 }
 
 function showPrintStylePicker(){
@@ -2569,8 +2575,8 @@ function printReport(style){
   ${formalScopedTable('GIM', gimClinics, ['date','type','hospital','supervisor','patients','year'], 'gim')}
 
   ${formalSection('Procedures','II.','Procedures performed with directly observed assessment where indicated.')}
-  ${formalScopedTable(sp.short, specProcsYr, ['date','type','hospital','supervisor','dops','year'], 'spec', `${specProcsYr.filter(e=>e.dops==='Yes').length} DOPS-signed`)}
-  ${formalScopedTable('GIM', gimProcsYr, ['date','type','hospital','supervisor','dops','year'], 'gim', `${gimProcsYr.filter(e=>e.dops==='Yes').length} DOPS-signed`)}
+  ${formalScopedTable(sp.short, specProcsYr, ['date','type','hospital','supervisor','dops','year'], 'spec', `${specProcsYr.filter(e=>e.dops==='Yes').length} DOPS-signed`, {tally:true})}
+  ${formalScopedTable('GIM', gimProcsYr, ['date','type','hospital','supervisor','dops','year'], 'gim', `${gimProcsYr.filter(e=>e.dops==='Yes').length} DOPS-signed`, {tally:true})}
 
   ${formalSection('Continuing Professional Development','III.','Recorded study leave and professional development hours.')}
   <div class="summary-line">GIM CPD \u2014 External: <strong>${gimExternalCpdHours()} h</strong> / 100h. ST7 minimum: <strong>${gimExternalCpdHours(e=>e.year==='ST7')} h</strong> / 20 h.</div>
@@ -2615,7 +2621,24 @@ function fmtDateShort(d){
   if(isNaN(dt)) return d;
   return dt.toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
 }
-function formalScopedTable(label, arr, fields, kind, extra){
+// Per-procedure totals: how many of each procedure, and how many with a signed DOPS.
+function formalProcTally(arr){
+  const map=new Map();
+  arr.forEach(e=>{
+    const name=normProcName(e.type)||'Unspecified';
+    const r=map.get(name)||{n:0,dops:0};
+    r.n++; if(e.dops==='Yes') r.dops++;
+    map.set(name,r);
+  });
+  const rows=[...map.entries()].sort((a,b)=>b[1].n-a[1].n||a[0].localeCompare(b[0]));
+  const totDops=rows.reduce((a,[,r])=>a+r.dops,0);
+  return `<table class="tally"><colgroup><col style="width:auto"><col style="width:70px"><col style="width:90px"></colgroup>`+
+    `<thead><tr><th>Procedure</th><th class="num">Done</th><th class="num">DOPS signed</th></tr></thead><tbody>`+
+    rows.map(([name,r])=>`<tr><td>${safe(name)}</td><td class="num"><strong>${r.n}</strong></td><td class="num">${r.dops||'\u2014'}</td></tr>`).join('')+
+    `<tr class="tally-total"><td>Total</td><td class="num"><strong>${arr.length}</strong></td><td class="num">${totDops||'\u2014'}</td></tr>`+
+    `</tbody></table><div class="tally-gap"></div>`;
+}
+function formalScopedTable(label, arr, fields, kind, extra, opts){
   const cols=fields.map(f=>`<col style="width:${FORMAL_COL[f]||'auto'}">`).join('');
   const head=`<thead><tr>${fields.map(f=>`<th${FORMAL_NUM_COLS.has(f)?' class="num"':''}>${safe(FORMAL_LABELS[f]||f)}</th>`).join('')}</tr></thead>`;
   const heading=`<div class="scope-label ${kind==='gim'?'gim':''}">${safe(label)}<span class="count">${arr.length} ${arr.length===1?'entry':'entries'}${extra?' \u00b7 '+safe(extra):''}</span></div>`;
@@ -2632,7 +2655,8 @@ function formalScopedTable(label, arr, fields, kind, extra){
     else cell=e[f]||'\u2014';
     return `<td${FORMAL_NUM_COLS.has(f)?' class="num"':''}>${typeof cell==='string'&&cell.startsWith('<span')?cell:safe(cell)}</td>`;
   }).join('')}</tr>`).join('')}</tbody>`;
-  return heading+`<table><colgroup>${cols}</colgroup>${head}${body}</table>`;
+  const tally = (opts && opts.tally) ? formalProcTally(arr) : '';
+  return heading+tally+`<table><colgroup>${cols}</colgroup>${head}${body}</table>`;
 }
 function reportReqTable(scope, reqs, title){ return `<h2>${title} <span class="badge">${safe(scope)}</span></h2><table><tr><th>Requirement</th><th>Status</th><th>Value</th><th>Target</th><th>Deadline</th></tr>${Object.entries(reqs).map(([id,r])=>`<tr><td>${safe(r.label)}</td><td>${reqStatus(id,r)}</td><td>${r.type==='checkbox'?(getReqVal(id,r)?'Yes':'No'):getReqVal(id,r)}</td><td>${r.target||'—'} ${r.unit||''}</td><td>${r.deadline}</td></tr>`).join('')}</table>`; }
 function reportLogTable(title, arr, fields){ return `<h2>${title}</h2>${arr.length?`<table><tr>${fields.map(f=>`<th>${f}</th>`).join('')}</tr>${arr.map(e=>`<tr>${fields.map(f=>`<td>${safe(f.includes('date')||f==='start'||f==='end'?fmtDate(e[f]):e[f]||'')}</td>`).join('')}</tr>`).join('')}</table>`:'<p class="meta">No entries logged.</p>'}`; }
