@@ -1026,7 +1026,14 @@ const ADMIN_DOCS = [
   { id:"doc_form_r",   label:"Form R in Library",         note:"Required each year" },
   { id:"doc_cct_calc", label:"CCT Calculator in Library", note:"Update each year (especially if LTFT)" },
   { id:"doc_firth",    label:"Updated Firth Calculator",  note:"Update every year" },
+  { id:"doc_cpd_diary", label:"CPD Diary in Library",       note:"Export from Logbook → Teaching CPD and upload", action:"exportCpdDiaryP", actionLabel:"⎙ Open CPD diary" },
+  { id:"doc_renal_sot", label:"Renal Summary of Training in Library", note:"Procedures, clinics and renal teaching", action:"printRenalSummary", actionLabel:"⎙ Open Renal summary" },
+  { id:"doc_gim_sot",   label:"GIM Summary of Training in Library",   note:"Acute take, clinics, ward cover, teaching, simulation", action:"printGimSummary", actionLabel:"⎙ Open GIM summary" },
 ];
+function adminDocCardHTML(doc, done){
+  const act = doc.action ? `<button class="btn-reset" style="border-color:var(--blue);color:var(--blue);font-size:9px;padding:3px 10px;margin-top:8px;" onclick="${doc.action}()">${doc.actionLabel||"Open"}</button>` : "";
+  return `<div class="req-label">${doc.label}<span class="badge badge-both">ANNUAL</span></div><div class="req-check"><button class="chk ${done?"checked":""}" onclick="toggleAdmin('${doc.id}')">${done?"✓":""}</button><span class="chk-label" onclick="toggleAdmin('${doc.id}')">${done?"IN LIBRARY":"NOT YET DONE"}</span></div><div class="req-deadline">${doc.note}</div>${act}`;
+}
 
 const LOCKING_OUTCOMES = ["1","2","6","8"];
 function outcomeKey(yr)    { return `pft_arcp_outcome_${yr}`; }
@@ -1475,13 +1482,7 @@ function renderAdmin() {
     const card = document.createElement("div");
     card.className = `req-card ${done?"met":"unmet"}`;
     card.id = `admin-${doc.id}`;
-    card.innerHTML = `
-      <div class="req-label">${doc.label}<span class="badge badge-both">ANNUAL</span></div>
-      <div class="req-check">
-        <button class="chk ${done?"checked":""}" onclick="toggleAdmin('${doc.id}')">${done?"✓":""}</button>
-        <span class="chk-label" onclick="toggleAdmin('${doc.id}')">${done?"IN LIBRARY":"NOT YET DONE"}</span>
-      </div>
-      <div class="req-deadline">${doc.note}</div>`;
+    card.innerHTML = adminDocCardHTML(doc, done);
     docGrid.appendChild(card);
   });
   el.appendChild(docGrid);
@@ -1667,7 +1668,7 @@ function toggleAdmin(id) {
     const newCard = document.createElement("div");
     newCard.className = `req-card ${done?"met":"unmet"}`;
     newCard.id = `admin-${id}`;
-    newCard.innerHTML = `<div class="req-label">${doc.label}<span class="badge badge-both">ANNUAL</span></div><div class="req-check"><button class="chk ${done?"checked":""}" onclick="toggleAdmin('${id}')">${done?"✓":""}</button><span class="chk-label" onclick="toggleAdmin('${id}')">${done?"IN LIBRARY":"NOT YET DONE"}</span></div><div class="req-deadline">${doc.note}</div>`;
+    newCard.innerHTML = adminDocCardHTML(doc, done);
     card.replaceWith(newCard);
   }
 }
@@ -2586,20 +2587,20 @@ function renderLogbook() {
   xlsxBtn.textContent = "⇩ EXPORT EXCEL";
   xlsxBtn.onclick = () => exportLogbookXlsx();
   sendWrap.appendChild(xlsxBtn);
-  const pyrBtn = document.createElement("button");
-  pyrBtn.className = "btn-reset";
-  pyrBtn.title = "GIM PYR summary of training (acute take + outpatient clinics)";
-  pyrBtn.style.cssText = "border-color:var(--gim);color:var(--gim);font-size:9px;padding:4px 12px;";
-  pyrBtn.textContent = "⎙ PYR SUMMARY";
-  pyrBtn.onclick = () => printPyrSummary();
-  sendWrap.appendChild(pyrBtn);
-  const pyrXBtn = document.createElement("button");
-  pyrXBtn.className = "btn-reset";
-  pyrXBtn.title = "Download the filled GIM PYR summary spreadsheet";
-  pyrXBtn.style.cssText = "border-color:var(--gim);color:var(--gim);font-size:9px;padding:4px 12px;";
-  pyrXBtn.textContent = "⇩ PYR SPREADSHEET";
-  pyrXBtn.onclick = () => exportPyrXlsx();
-  sendWrap.appendChild(pyrXBtn);
+  const gimSotBtn = document.createElement("button");
+  gimSotBtn.className = "btn-reset";
+  gimSotBtn.title = "GIM Summary of Training — acute take, clinics, ward cover, teaching, simulation";
+  gimSotBtn.style.cssText = "border-color:var(--gim);color:var(--gim);font-size:9px;padding:4px 12px;";
+  gimSotBtn.textContent = "⎙ GIM SUMMARY";
+  gimSotBtn.onclick = () => printGimSummary();
+  sendWrap.appendChild(gimSotBtn);
+  const renalSotBtn = document.createElement("button");
+  renalSotBtn.className = "btn-reset";
+  renalSotBtn.title = "Renal Summary of Training — procedures, clinics, renal teaching";
+  renalSotBtn.style.cssText = "border-color:var(--renal);color:var(--renal);font-size:9px;padding:4px 12px;";
+  renalSotBtn.textContent = "⎙ RENAL SUMMARY";
+  renalSotBtn.onclick = () => printRenalSummary();
+  sendWrap.appendChild(renalSotBtn);
   el.appendChild(sendWrap);
 
   if (lbSubTab === "clinics")    renderLbClinics(el);
@@ -2955,6 +2956,9 @@ function renderLbTeaching(el) {
 // ════════════════════════════════════════════════════
 //  ACUTE TAKE
 // ════════════════════════════════════════════════════
+// WTE helpers — entries saved before the WTE field existed count as full time (1.0)
+function acuteWte(e){ const w=parseFloat(e && e.wte); return (w>0 && w<=1) ? w : 1; }
+function acuteWteMonths(e){ return Math.round((parseFloat(e && e.months)||0) * acuteWte(e) * 10) / 10; }
 function renderLbAcuteTake(el) {
   const entries = getLbEntries("acute_take");
   // Register fields for edit modal
@@ -2962,8 +2966,9 @@ function renderLbAcuteTake(el) {
     { id:"hospital",   label:"Hospital",              type:"text" },
     { id:"start",      label:"Start Date",            type:"date" },
     { id:"end",        label:"End Date",              type:"date" },
-    { id:"months",     label:"Months in Post",        type:"number" },
-    { id:"takes",      label:"Avg Takes / Month",     type:"number" },
+    { id:"months",     label:"Months in Post (calendar)", type:"number" },
+    { id:"wte",        label:"WTE (1 = full time, 0.8 = 80%)", type:"number" },
+    { id:"takes",      label:"Avg Takes / WTE Month", type:"number" },
     { id:"patients",   label:"Avg Patients / Take",   type:"number" },
     { id:"estimated",  label:"Estimated Patients",    type:"number" },
     { id:"year",       label:"Training Year",         type:"select", options:["ST4","ST5","ST6","ST7"] },
@@ -3006,7 +3011,7 @@ function renderLbAcuteTake(el) {
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;">
       <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Start Date</label>
-      <input class="req-input date-inp" id="at-start" type="date" style="width:100%;" />
+      <input class="req-input date-inp" id="at-start" type="date" style="width:100%;" oninput="calcAcuteTakeEstimate()" />
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;">
       <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── End Date</label>
@@ -3017,7 +3022,15 @@ function renderLbAcuteTake(el) {
       <input class="req-input" id="at-months" type="number" min="0" step="0.5" placeholder="auto" style="width:100%;" readonly />
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;">
-      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Avg Takes / Month</label>
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── WTE (1 = full time · 0.8 = 80%)</label>
+      <input class="req-input" id="at-wte" type="number" min="0.1" max="1" step="0.1" value="1" style="width:100%;" oninput="calcAcuteTakeEstimate()" />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── WTE Months</label>
+      <input class="req-input" id="at-wtemonths" type="number" placeholder="auto" style="width:100%;" readonly />
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:9px;color:var(--blue3);letter-spacing:0.12em;">── Avg Takes / WTE Month</label>
       <input class="req-input" id="at-takes" type="number" min="0" step="1" placeholder="e.g. 8" style="width:100%;" oninput="calcAcuteTakeEstimate()" />
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;">
@@ -3081,7 +3094,7 @@ function renderLbAcuteTake(el) {
       <span style="font-size:10px;color:#c8d8ff;min-width:120px;">${e.hospital||"—"}</span>
       <span style="font-size:9px;color:var(--dim);min-width:80px;">${fmtD(e.start)}</span>
       <span style="font-size:9px;color:var(--dim);min-width:80px;">${fmtD(e.end)}</span>
-      <span style="font-size:9px;color:var(--dim);min-width:50px;">${e.months||"—"}mo</span>
+      <span style="font-size:9px;color:var(--dim);min-width:50px;" title="${acuteWte(e)<1?`${e.months||0} calendar months × ${acuteWte(e)} WTE`:''}">${e.months?acuteWteMonths(e)+(acuteWte(e)<1?" WTE mo":"mo"):"—"}</span>
       <span style="font-size:11px;color:var(--green);flex:1;font-weight:700;">${Math.round(e.estimated||0)} pts</span>`;
     const editBtn = document.createElement("button");
     editBtn.style.cssText = "background:none;border:none;color:var(--dim);font-family:var(--font);font-size:11px;padding:0 4px;cursor:pointer;min-width:28px;text-align:center;";
@@ -3101,14 +3114,18 @@ function renderLbAcuteTake(el) {
             if (m >= 0) patch.months = m;
           }
           const months   = parseFloat(patch.months ?? e.months) || 0;
+          const wteRaw   = parseFloat(patch.wte ?? e.wte);
+          const wte      = (wteRaw > 0 && wteRaw <= 1) ? wteRaw : 1;
+          patch.wte = wte;
           const takes    = parseFloat(patch.takes ?? e.takes) || 0;
           const patients = parseFloat(patch.patients ?? e.patients) || 0;
           // Only auto-update estimated if user left their (possibly stale) value blank
           // or if it matches the previously-derived value. Otherwise respect their override.
           const userEstimated = patch.estimated;
-          const priorDerived  = Math.round((parseFloat(e.months)||0) * (parseFloat(e.takes)||0) * (parseFloat(e.patients)||0));
-          if (!userEstimated || parseInt(userEstimated) === priorDerived) {
-            patch.estimated = Math.round(months * takes * patients);
+          const priorDerived  = Math.round(acuteWteMonths(e) * (parseFloat(e.takes)||0) * (parseFloat(e.patients)||0));
+          const priorRaw      = Math.round((parseFloat(e.months)||0) * (parseFloat(e.takes)||0) * (parseFloat(e.patients)||0));
+          if (!userEstimated || parseInt(userEstimated) === priorDerived || parseInt(userEstimated) === priorRaw) {
+            patch.estimated = Math.round(months * wte * takes * patients);
           }
           patch.date = patch.start || e.start;
           return true;
@@ -3151,7 +3168,12 @@ function calcAcuteTakeEstimate() {
     if (mEl) mEl.value = months;
   }
 
-  const estimated = months * takes * patients;
+  const wteIn = parseFloat(document.getElementById("at-wte")?.value);
+  const wte   = (wteIn > 0 && wteIn <= 1) ? wteIn : 1;
+  const wteMonths = Math.round(months * wte * 10) / 10;
+  const wmEl = document.getElementById("at-wtemonths");
+  if (wmEl) wmEl.value = months ? wteMonths : "";
+  const estimated = wteMonths * takes * patients;
   const estEl = document.getElementById("at-estimated");
   if (estEl) estEl.value = Math.round(estimated);
 }
@@ -3163,13 +3185,15 @@ function saveAcuteTake() {
   const months     = parseFloat(document.getElementById("at-months")?.value || 0);
   const takes      = parseFloat(document.getElementById("at-takes")?.value || 0);
   const patients   = parseFloat(document.getElementById("at-patients")?.value || 0);
-  const estimated  = Math.round(months * takes * patients);
+  const wteIn      = parseFloat(document.getElementById("at-wte")?.value);
+  const wte        = (wteIn > 0 && wteIn <= 1) ? wteIn : 1;
+  const estimated  = Math.round(months * wte * takes * patients);
   const year       = document.getElementById("at-year")?.value;
   const supervisor = document.getElementById("at-supervisor")?.value.trim();
 
   if (!hospital || !start || !end) { alert("Please fill in hospital, start and end date."); return; }
 
-  addLbEntry("acute_take", { hospital, start, end, months, takes, patients, estimated, year, supervisor, date: start });
+  addLbEntry("acute_take", { hospital, start, end, months, wte, takes, patients, estimated, year, supervisor, date: start });
   syncAcutePatients();
   renderLogbook();
   updateReadiness();
@@ -3938,148 +3962,218 @@ async function exportLogbookXlsx(){
   const stamp = new Date().toISOString().slice(0,10);
   XLSX.writeFile(wb, `Logbook_Mark_Maugo_${stamp}.xlsx`);
 }
-// ══════════════════════════════════════════════════════
-//  GIM PYR — Summary of Training calculator (acute take + outpatient experience)
-//  Mirrors the JRCPTB spreadsheet; CCU/ITU/ward-round columns and the OPD-equivalent sheet removed.
-// ══════════════════════════════════════════════════════
-const PYR_ACUTE_HEAD = ["Hospital name","Start Date (DD/MM/YY)","End Date (DD/MM/YY)","WTE months in post (1)","WTE months on take rota (1)","Average number of take shifts per WTE month","Average number of take patients seen by you each shift (2)","Estimated number of patients seen by you on acute take","Name of educational supervisor who can verify estimates"];
-const PYR_OPD_HEAD = ["Hospital name","Start Date (DD/MM/YY)","End Date (DD/MM/YY)","WTE months in post","Average number of outpatient clinics per month","Estimated number of outpatient clinics done by you","Name of educational supervisor who can verify estimates"];
-const PYR_ACUTE_NOTES = [
-  "Note - minimum 1000 patients seen before CCT.",
-  "Note - (1) If working part time, insert number of whole time equivalent months.",
-  "Note - (2) 'Seen by' means having sufficient involvement for this to be recorded in the patient's notes"
-];
-const PYR_OPD_NOTES = [
-  "Note - minimum 186 outpatient clinics before CCT"
-];
-function pyrDate(d){ if(!d) return ""; const p=String(d).split("-"); return p.length===3 ? `${p[2]}/${p[1]}/${p[0].slice(2)}` : d; }
-function pyrNum(v, dp){ const n=parseFloat(v); if(!isFinite(n)) return ""; const f=Math.pow(10,dp||0); return Math.round(n*f)/f; }
 function pyrMonthsBetween(a,b){
   if(!a||!b) return 0;
   const s=new Date(a), e=new Date(b);
   return Math.max(0, Math.round(((e-s)/(1000*60*60*24*30.44))*10)/10);
 }
-function pyrAcuteRows(){
-  return getLbEntries("acute_take").slice()
-    .sort((a,b)=>(a.start||"").localeCompare(b.start||""))
-    .map(e=>{
-      const months = parseFloat(e.months)||pyrMonthsBetween(e.start,e.end);
-      const takes = parseFloat(e.takes)||0, pts = parseFloat(e.patients)||0;
-      const est = parseFloat(e.estimated) || Math.round(months*takes*pts);
-      return [e.hospital||"", pyrDate(e.start), pyrDate(e.end), pyrNum(months,1), pyrNum(months,1), pyrNum(takes,1), pyrNum(pts,1), Math.round(est), e.supervisor||""];
-    });
+// ══════════════════════════════════════════════════════
+//  SUMMARY OF TRAINING — GIM and Renal (printable, same layout)
+//  GIM: acute take (JRCPTB calculator columns, WTE-adjusted), GIM clinics, ward cover, GIM teaching, simulation
+//  Renal: procedures, clinics, renal teaching
+// ══════════════════════════════════════════════════════
+function sotDate(d){ if(!d) return ""; const p=String(d).split("-"); return p.length===3 ? `${p[2]}/${p[1]}/${p[0].slice(2)}` : d; }
+function sotNum(v, dp){ const n=parseFloat(v); if(!isFinite(n)) return ""; const f=Math.pow(10,dp||0); return Math.round(n*f)/f; }
+function sotEsc(t){ return String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+const byDateAsc = k => (a,b)=>(a[k]||"").localeCompare(b[k]||"");
+
+// table: head[], rows[][], opts {num:[colIdx], bold:[colIdx], total:{label, labelCol, valueCol, value}, raw:[colIdx] (cells already HTML)}
+function sotTable(head, rows, opts){
+  opts = opts||{};
+  const num=opts.num||[], bold=opts.bold||[], raw=opts.raw||[];
+  if(!rows.length) return `<div class="empty">No entries logged.</div>`;
+  const cell=(c,i)=>`<td${num.includes(i)?' class="num"':''}${bold.includes(i)?' style="font-weight:700"':''}>${raw.includes(i)?c:sotEsc(c)}</td>`;
+  const colgroup = opts.cols ? `<colgroup>${opts.cols.map(w=>`<col style="width:${w}">`).join("")}</colgroup>` : "";
+  let html=`<table${opts.cls?` class="${opts.cls}"`:''}>${colgroup}<thead><tr>${head.map((h,i)=>`<th${num.includes(i)?' class="num"':''}>${sotEsc(h)}</th>`).join("")}</tr></thead><tbody>`;
+  html+=rows.map(r=>`<tr>${r.map(cell).join("")}</tr>`).join("");
+  if(opts.total){
+    const t=opts.total;
+    html+=`<tr class="total">${head.map((_,i)=> i===t.labelCol?`<td class="num">${sotEsc(t.label||"Total")}</td>` : i===t.valueCol?`<td class="num tv">${sotEsc(t.value)}</td>` : '<td></td>').join("")}</tr>`;
+  }
+  return html+`</tbody></table>`;
 }
-// GIM clinics grouped into placements: a clinic joins an acute-take / ward-cover placement at the
-// same hospital whose dates cover it; otherwise clinics are grouped by hospital + training year.
-function pyrOpdRows(){
-  const norm = h => String(h||"").trim().toLowerCase();
-  const placements = [...getLbEntries("acute_take"), ...getLbEntries("ward_cover")]
-    .filter(p=>p.hospital && p.start && p.end);
-  const groups = new Map();
-  getLbEntries("clinics_gim").forEach(c=>{
-    const d = c.date || "";
-    const pl = placements.find(p=>norm(p.hospital)===norm(c.hospital) && d>=p.start && d<=p.end);
-    const key = pl ? `P|${norm(pl.hospital)}|${pl.start}|${pl.end}` : `H|${norm(c.hospital)}|${c.year||""}`;
-    if(!groups.has(key)) groups.set(key,{pl, hospital:(pl?pl.hospital:c.hospital)||"Not recorded", dates:[], n:0});
-    const g=groups.get(key); g.n++; if(d) g.dates.push(d);
-  });
-  return [...groups.values()].map(g=>{
-    g.dates.sort();
-    const start = g.pl ? g.pl.start : (g.dates[0]||"");
-    const end   = g.pl ? g.pl.end   : (g.dates[g.dates.length-1]||"");
-    let months = g.pl ? (parseFloat(g.pl.months)||pyrMonthsBetween(start,end)) : 0;
-    if(!g.pl && start && end){ const s=new Date(start), e=new Date(end); months=(e.getFullYear()-s.getFullYear())*12+(e.getMonth()-s.getMonth())+1; }
-    return { sortKey:start, row:[g.hospital, pyrDate(start), pyrDate(end), pyrNum(months,1), months?pyrNum(g.n/months,1):"", g.n, g.pl?(g.pl.supervisor||""):""] };
-  }).sort((a,b)=>a.sortKey.localeCompare(b.sortKey)).map(x=>x.row);
+function sotSection(title, summaryHtml, bodyHtml, notes){
+  return `<section class="sheet"><h2>${sotEsc(title)}</h2>${summaryHtml?`<div class="summary">${summaryHtml}</div>`:''}${bodyHtml}${notes&&notes.length?`<ul class="notes">${notes.map(n=>`<li>${sotEsc(n)}</li>`).join("")}</ul>`:''}</section>`;
 }
-async function exportPyrXlsx(){
-  const acute=pyrAcuteRows(), opd=pyrOpdRows();
-  if(!acute.length && !opd.length){ alert("No acute take placements or GIM clinics logged yet."); return; }
-  let XLSX;
-  try { XLSX = await loadSheetJS(); } catch(err){ alert("Could not load the spreadsheet library: "+err.message); return; }
-  const build = (title, head, rows, estCol, notes) => {
-    const minRows = Math.max(10, rows.length);
-    const body = rows.slice(); while(body.length<minRows) body.push(head.map(()=>""));
-    const totalRow = head.map(()=>""); totalRow[estCol-1]="Total";
-    const aoa=[[title], head, ...body, totalRow, ...notes.map(n=>[n])];
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    const col = XLSX.utils.encode_col(estCol);
-    const first = 3, last = 2+minRows, totRow = last+1;
-    ws[`${col}${totRow}`] = { t:"n", f:`SUM(${col}${first}:${col}${last})`, v: rows.reduce((a,r)=>a+(parseFloat(r[estCol])||0),0) };
-    ws["!cols"] = head.map((h,i)=>({ wch: i===0?30 : i===head.length-1?32 : 16 }));
-    ws["!merges"] = [{ s:{r:0,c:0}, e:{r:0,c:head.length-1} }];
-    return ws;
-  };
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, build("Summary calculation of acute medical take and general medical experience", PYR_ACUTE_HEAD, acute, 7, PYR_ACUTE_NOTES), "Acute medical take experience");
-  XLSX.utils.book_append_sheet(wb, build("Summary calculation of outpatient experience", PYR_OPD_HEAD, opd, 5, PYR_OPD_NOTES), "Outpatient experience");
-  XLSX.writeFile(wb, `GIM_PYR_Summary_of_Training_${new Date().toISOString().slice(0,10)}.xlsx`);
-}
-window.exportPyrXlsx = exportPyrXlsx;
-function printPyrSummary(){
-  const acute=pyrAcuteRows(), opd=pyrOpdRows();
-  const esc = t => String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  const acuteTotal = acute.reduce((a,r)=>a+(parseFloat(r[7])||0),0);
-  const opdTotal = opd.reduce((a,r)=>a+(parseFloat(r[5])||0),0);
-  const table = (head, rows, estCol, total, numCols) => {
-    const pad = Math.max(0, 4-rows.length);
-    const blank = `<tr class="blank">${head.map(()=>"<td>&nbsp;</td>").join("")}</tr>`;
-    return `<table><thead><tr>${head.map((h,i)=>`<th${numCols.includes(i)?' class="num"':''}>${esc(h)}</th>`).join("")}</tr></thead><tbody>`+
-      rows.map(r=>`<tr>${r.map((c,i)=>`<td${numCols.includes(i)?' class="num"':''}${i===estCol?' style="font-weight:700"':''}>${esc(c)}</td>`).join("")}</tr>`).join("")+
-      blank.repeat(pad)+
-      `<tr class="total">${head.map((_,i)=> i===estCol-1?'<td class="num">Total</td>': i===estCol?`<td class="num">${total}</td>`:'<td></td>').join("")}</tr></tbody></table>`;
-  };
+function sotOpen(title, stream, sectionsHtml){
   const today = new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"long",year:"numeric"});
-  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>GIM PYR Summary of Training — Mark Maugo</title>
+  const accent = stream==="renal" ? "#5b21b6" : "#003087";
+  const tint   = stream==="renal" ? "#ece6f8" : "#dfe6f3";
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${sotEsc(title)} — Mark Maugo</title>
 <style>
   @page{size:A4 landscape;margin:12mm}
   *{box-sizing:border-box}
   body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0;background:#eee;font-size:9.5pt}
   .page{background:#fff;max-width:297mm;margin:16px auto;padding:14mm 12mm;box-shadow:0 2px 10px rgba(0,0,0,.15)}
   .toolbar{max-width:297mm;margin:16px auto 0;display:flex;gap:8px;justify-content:flex-end}
-  .toolbar button{font:600 10pt Arial;padding:8px 16px;border:none;border-radius:3px;cursor:pointer;background:#003087;color:#fff}
-  .toolbar button.alt{background:#fff;color:#003087;border:1px solid #003087}
-  header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid #003087;padding-bottom:8px;margin-bottom:14px}
-  h1{font-size:14pt;margin:0;color:#003087}
+  .toolbar button{font:600 10pt Arial;padding:8px 16px;border:none;border-radius:3px;cursor:pointer;background:${accent};color:#fff}
+  header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid ${accent};padding-bottom:8px;margin-bottom:6px}
+  h1{font-size:14pt;margin:0;color:${accent}}
   .who{font-size:9pt;color:#444;text-align:right;line-height:1.5}
-  h2{font-size:10.5pt;margin:18px 0 6px;color:#003087}
-  table{width:100%;border-collapse:collapse;table-layout:fixed}
-  th{background:#dfe6f3;border:1px solid #8a99b8;padding:5px 5px;font-size:7.8pt;text-align:left;vertical-align:bottom;font-weight:700;line-height:1.25}
-  td{border:1px solid #b7c0d3;padding:5px;font-size:9pt;vertical-align:top;overflow-wrap:break-word}
-  .num{text-align:right}
+  h2{font-size:10.5pt;margin:18px 0 6px;color:${accent}}
+  h3{font-size:9pt;margin:10px 0 4px;color:#333;text-transform:uppercase;letter-spacing:.06em}
+  .summary{font-size:9pt;color:#222;background:#f6f7fa;border-left:3px solid ${accent};padding:6px 10px;margin:0 0 8px}
+  .summary strong{color:${accent}}
+  .summary .warn{color:#b42318;font-weight:700}
+  table{width:100%;border-collapse:collapse;table-layout:auto}
+  th{background:${tint};border:1px solid #9aa3b8;padding:5px;font-size:7.8pt;text-align:left;vertical-align:bottom;font-weight:700;line-height:1.25}
+  td{border:1px solid #c3c9d6;padding:4px 5px;font-size:8.8pt;vertical-align:top;overflow-wrap:anywhere}
+  .num{text-align:right;white-space:nowrap}
+  th.num{white-space:normal}
   tr.total td{border:none;font-weight:700;padding-top:6px}
-  tr.total td.num:last-of-type{border:1px solid #8a99b8;background:#f4f6fb}
+  tr.total td.tv{border:1px solid #9aa3b8;background:#f4f6fb}
+  table.fixed{table-layout:fixed}
+  table.fixed td,table.fixed th{overflow-wrap:break-word;word-break:normal}
+  table.tally{width:auto;min-width:55%;margin-bottom:10px}
+  table.tally tr.total td{border-top:1.5px solid #333}
+  .empty{font-style:italic;color:#888;padding:6px 0}
   .notes{margin:6px 0 0;padding:0;list-style:none;font-size:8pt;color:#444;line-height:1.5}
-  .sheet{break-inside:avoid}
-  .sheet + .sheet{margin-top:10px}
+  .sheet{break-inside:auto}
+  h2,h3,.summary{break-after:avoid}
+  tr{break-inside:avoid}
+  thead{display:table-header-group}
   footer{margin-top:18px;font-size:7.5pt;color:#888;display:flex;justify-content:space-between}
-  @media print{body{background:#fff}.toolbar{display:none}.page{box-shadow:none;margin:0;padding:0;max-width:none}.sheet.opd{break-before:page}}
+  @media print{body{background:#fff}.toolbar{display:none}.page{box-shadow:none;margin:0;padding:0;max-width:none}}
 </style></head><body>
-<div class="toolbar">
-  <button class="alt" onclick="window.opener && window.opener.exportPyrXlsx ? window.opener.exportPyrXlsx() : alert('Open from the ARCP app to download the spreadsheet.')">⇩ Download spreadsheet</button>
-  <button onclick="window.print()">⎙ Print / Save as PDF</button>
-</div>
+<div class="toolbar"><button onclick="window.print()">⎙ Print / Save as PDF</button></div>
 <div class="page">
   <header>
-    <h1>GIM PYR — Summary of Training</h1>
-    <div class="who"><b>Mark Maugo</b> · Renal Medicine + GIM<br>Training year: ${esc(currentYear)} · Generated ${esc(today)}</div>
+    <h1>${sotEsc(title)}</h1>
+    <div class="who"><b>Mark Maugo</b> · ${stream==="renal"?"Renal Medicine":"General Internal Medicine"}<br>Current training year: ${sotEsc(currentYear)} · Generated ${sotEsc(today)}</div>
   </header>
-  <div class="sheet">
-    <h2>Summary calculation of acute medical take and general medical experience</h2>
-    ${table(PYR_ACUTE_HEAD, acute, 7, acuteTotal, [3,4,5,6,7])}
-    <ul class="notes">${PYR_ACUTE_NOTES.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>
-  </div>
-  <div class="sheet opd">
-    <h2>Summary calculation of outpatient experience</h2>
-    ${table(PYR_OPD_HEAD, opd, 5, opdTotal, [3,4,5])}
-    <ul class="notes">${PYR_OPD_NOTES.map(n=>`<li>${esc(n)}</li>`).join("")}<li>Clinic numbers are counted from GIM clinics logged in the logbook.</li></ul>
-  </div>
-  <footer><span>GIM PYR Summary of Training</span><span>Mark Maugo</span></footer>
+  ${sectionsHtml}
+  <footer><span>${sotEsc(title)}</span><span>Mark Maugo</span></footer>
 </div></body></html>`;
   const w = window.open("", "_blank");
-  if(!w){ alert("Please allow popups for this site to open the PYR summary."); return; }
+  if(!w){ alert("Please allow popups for this site to open the summary."); return; }
   w.document.write(html); w.document.close();
 }
+
+// Procedures section (tally by procedure + full list) — shared by GIM and Renal summaries
+function sotProcSection(title, key){
+  const yr=currentYear;
+  const procs = getLbEntries(key).slice().sort(byDateAsc("date"));
+  const tally = new Map();
+  procs.forEach(e=>{ const n=normProcName((e.type||"Other").trim())||"Other"; const r=tally.get(n)||{n:0,d:0,y:0}; r.n++; if(e.dops==="Yes") r.d++; if(e.year===yr) r.y++; tally.set(n,r); });
+  const tallyRows=[...tally.entries()].sort((a,b)=>b[1].n-a[1].n||a[0].localeCompare(b[0])).map(([n,r])=>[n, r.y, r.n, r.d||"\u2014"]);
+  const dopsTotal = procs.filter(e=>e.dops==="Yes").length;
+  const body = (tallyRows.length ? `<h3>By procedure</h3>`+sotTable(["Procedure",`${yr}`,"All years","DOPS signed"], tallyRows, {num:[1,2,3], bold:[2], cls:"tally", total:{labelCol:0, valueCol:2, value:procs.length}}) : "")
+    + (procs.length ? `<h3>All procedures</h3>` : "")
+    + sotTable(["Date","Procedure","Hospital","Supervisor","DOPS","Year"],
+        procs.map(e=>[sotDate(e.date), normProcName(e.type)||"", e.hospital||"", e.supervisor||"", e.dops==="Yes"?"\u2713 Yes":(e.dops||"No"), e.year||""]), {});
+  return sotSection(title,
+    `${yr}: <strong>${procs.filter(e=>e.year===yr).length}</strong> \u00b7 All years: <strong>${procs.length}</strong> \u00b7 DOPS signed: ${dopsTotal}`,
+    body, []);
+}
+
+function printGimSummary(){
+  const sections=[];
+  // 1 — Acute take (JRCPTB calculator columns)
+  const acute = getLbEntries("acute_take").slice().sort(byDateAsc("start"));
+  const acuteRows = acute.map(e=>{
+    const wm = acuteWteMonths(e) || (acuteWte(e)*pyrMonthsBetween(e.start,e.end));
+    const takes=parseFloat(e.takes)||0, pts=parseFloat(e.patients)||0;
+    const est = parseFloat(e.estimated) || Math.round(wm*takes*pts);
+    return [e.hospital||"", sotDate(e.start), sotDate(e.end), sotNum(wm,1), sotNum(wm,1), sotNum(takes,1), sotNum(pts,1), Math.round(est), e.supervisor||""];
+  });
+  const acuteTotal = acuteRows.reduce((a,r)=>a+(parseFloat(r[7])||0),0);
+  sections.push(sotSection("Summary calculation of acute medical take and general medical experience",
+    `Estimated total: <strong>${acuteTotal}</strong> / 750 patients${acuteTotal>=750?' ✓':''} · ${acute.length} placement${acute.length===1?'':'s'}`,
+    sotTable(["Hospital name","Start Date (DD/MM/YY)","End Date (DD/MM/YY)","WTE months in post (1)","WTE months on take rota (1)","Average number of take shifts per WTE month","Average number of take patients seen by you each shift (2)","Estimated number of patients seen by you on acute take","Name of educational supervisor who can verify estimates"],
+      acuteRows, {num:[3,4,5,6,7], bold:[7], cls:"fixed", cols:["17%","8%","8%","8%","8%","10%","11%","11%","19%"], total:{labelCol:6, valueCol:7, value:acuteTotal}}),
+    ["Note - minimum 750 patients seen before CCT.",
+     "Note - (1) Whole time equivalent months: calendar months in post × WTE (1 = full time, 0.8 = 80% LTFT).",
+     "Note - (2) 'Seen by' means having sufficient involvement for this to be recorded in the patient's notes"]));
+
+  // 2 — GIM clinics (list; target 20, max 10 SDEC)
+  const clinics = getLbEntries("clinics_gim").slice().sort(byDateAsc("date"));
+  const SDEC_CAP=10, isSdec=e=>(e.type||"").toLowerCase().includes("sdec");
+  const sdec = clinics.filter(isSdec).length;
+  const counted = clinics.length - Math.max(0, sdec-SDEC_CAP);
+  sections.push(sotSection("GIM outpatient clinics",
+    `Counted towards target: <strong>${counted}</strong> / 20${counted>=20?' ✓':''} · ${clinics.length} logged · Medical SDEC: ${sdec} (max ${SDEC_CAP} count)${sdec>SDEC_CAP?` · <span class="warn">${sdec-SDEC_CAP} SDEC over the cap, not counted</span>`:''}`,
+    sotTable(["#","Date","Clinic type","Hospital","Supervisor","Patients","Year"],
+      clinics.map((e,i)=>[i+1, sotDate(e.date), e.type||"", e.hospital||"", e.supervisor||"", e.patients||"", e.year||""]),
+      {num:[0,5]}),
+    ["Note - minimum 20 GIM outpatient clinics before CCT, of which no more than 10 may be Medical SDEC."]));
+
+  // 3 — GIM procedures
+  sections.push(sotProcSection("GIM procedures", "procedures_gim"));
+
+  // 4 — Ward cover
+  const ward = getLbEntries("ward_cover").slice().sort(byDateAsc("start"));
+  const wardTotal = Math.round(ward.reduce((a,e)=>a+(parseFloat(e.months)||0),0)*10)/10;
+  sections.push(sotSection("IM ward cover",
+    `Total: <strong>${wardTotal}</strong> / 12 months${wardTotal>=12?' ✓':''} · ${ward.length} placement${ward.length===1?'':'s'}`,
+    sotTable(["Hospital","Start Date (DD/MM/YY)","End Date (DD/MM/YY)","Months","Year","Supervisor"],
+      ward.map(e=>[e.hospital||"", sotDate(e.start), sotDate(e.end), sotNum(e.months,1), e.year||"", e.supervisor||""]),
+      {num:[3], total:{labelCol:2, valueCol:3, value:wardTotal}}),
+    ["Note - 12 months of IM ward cover required by CCT."]));
+
+  // 4 — GIM teaching (CPD)
+  const cpd = getLbEntries("cpd_gim").slice().sort(byDateAsc("date"));
+  const onlineHrs = cpd.filter(e=>cpdIsOnline(e)).reduce((a,e)=>a+(parseFloat(e.hours)||0),0);
+  const onlineCapped = Math.min(onlineHrs,15);
+  const externalHrs = cpd.filter(e=>cpdIsExternalP(e) && !cpdIsOnline(e)).reduce((a,e)=>a+(parseFloat(e.hours)||0),0);
+  const countedCpd = externalHrs + onlineCapped;
+  const cpdLabel = e => cpdIsOnline(e) ? "Online" : cpdIsExternalP(e) ? "External" : "Internal";
+  sections.push(sotSection("GIM teaching",
+    `Total external GIM hours: <strong>${countedCpd.toFixed(1)}h</strong> / 100h${countedCpd>=100?' ✓':''} · External: ${externalHrs.toFixed(1)}h · Online: ${onlineCapped.toFixed(1)}h / 15h max${onlineHrs>15?` (${onlineHrs.toFixed(1)}h logged)`:''}`,
+    sotTable(["Date","Type","Title / Event","Counts as","Hours","Year"],
+      cpd.map(e=>[sotDate(e.date), e.type||"", e.title||"", cpdLabel(e), e.hours?sotNum(e.hours,1):"", e.year||""]),
+      {num:[4]}),
+    ["Note - 100 hours of external GIM CPD by CCT; online/e-learning counts up to 15 hours. Internal teaching (grand rounds, departmental) is listed but not counted."]));
+
+  // 5 — Simulation
+  const sim = getLbEntries("simulation").slice().sort(byDateAsc("date"));
+  const simTotal = sim.reduce((a,e)=>a+(parseFloat(e.hours)||0),0);
+  const simSt7 = sim.filter(e=>e.year==="ST7").reduce((a,e)=>a+(parseFloat(e.hours)||0),0);
+  sections.push(sotSection("Simulation",
+    `Total: <strong>${simTotal.toFixed(1)}h</strong> / 12h${simTotal>=12?' ✓':''} · ST7: ${simSt7.toFixed(1)}h / 4h minimum`,
+    sotTable(["Date","Course","Title / Session","Hospital / Venue","Hours","Year"],
+      sim.map(e=>[sotDate(e.date), e.course||"", e.title||"", e.hospital||"", e.hours?sotNum(e.hours,1):"", e.year||""]),
+      {num:[4], total:{labelCol:3, valueCol:4, value:simTotal.toFixed(1)}}),
+    ["Note - 12 hours of simulation by CCT, at least 4 hours of which in ST7."]));
+
+  sotOpen("GIM — Summary of Training", "gim", sections.join(""));
+}
+
+function printRenalSummary(){
+  const sections=[];
+  const yr=currentYear;
+  const thisYr = arr => arr.filter(e=>e.year===yr).length;
+
+  // 1 — Procedures: tally + list
+  sections.push(sotProcSection("Renal procedures", "procedures_renal"));
+
+  // 2 — Clinics
+  const clinics = getLbEntries("clinics_renal").slice().sort(byDateAsc("date"));
+  const pts = clinics.reduce((a,e)=>a+(parseInt(e.patients,10)||0),0);
+  const types = {}; clinics.forEach(e=>{ const t=e.type||"Other"; types[t]=(types[t]||0)+1; });
+  const typeLine = Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`${sotEsc(t)} ×${n}`).join(" · ");
+  sections.push(sotSection("Renal clinics",
+    `${yr}: <strong>${thisYr(clinics)}</strong> · All years: <strong>${clinics.length}</strong> · ${pts} patients${typeLine?`<br>${typeLine}`:''}`,
+    sotTable(["#","Date","Clinic type","Hospital","Supervisor","Patients","Year"],
+      clinics.map((e,i)=>[i+1, sotDate(e.date), e.type||"", e.hospital||"", e.supervisor||"", e.patients||"", e.year||""]),
+      {num:[0,5], total:{label:"Patients", labelCol:4, valueCol:5, value:pts}}),
+    []));
+
+  // 3 — Renal teaching
+  const cpd = getLbEntries("cpd_renal").slice().sort(byDateAsc("date"));
+  const hrsAll = cpd.reduce((a,e)=>a+(parseFloat(e.hours)||0),0);
+  const hrsYr = cpd.filter(e=>e.year===yr).reduce((a,e)=>a+(parseFloat(e.hours)||0),0);
+  sections.push(sotSection("Renal teaching",
+    `${yr}: <strong>${hrsYr.toFixed(1)}h</strong> · All years: <strong>${hrsAll.toFixed(1)}h</strong> · ${cpd.length} session${cpd.length===1?'':'s'}`,
+    sotTable(["Date","Type","Title / Event","Hours","Year"],
+      cpd.map(e=>[sotDate(e.date), e.type||"", e.title||"", e.hours?sotNum(e.hours,1):"", e.year||""]),
+      {num:[3], total:{labelCol:2, valueCol:3, value:hrsAll.toFixed(1)}}),
+    []));
+
+  sotOpen("Renal — Summary of Training", "renal", sections.join(""));
+}
+window.printGimSummary = printGimSummary;
+window.printRenalSummary = printRenalSummary;
+
 function exportCpdDataP(){
   const data = { cpd_gim:getLbEntries("cpd_gim"), cpd_renal:getLbEntries("cpd_renal") };
   const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
@@ -4306,9 +4400,9 @@ function printLogbookReport() {
     Estimated total: <strong style="color:#005EB8">${Math.round(getLbEntries("acute_take").reduce((a,e)=>a+(parseFloat(e.estimated)||0),0))}</strong> / 750 patients
   </div>
   ${subHead(badge("GIM","badge-gim"), `${getLbEntries("acute_take").length} placements · all years`)}
-  ${tbl(["Hospital","Start","End","Months","Takes/mo","Pts/Take","Est. Patients","Year","Supervisor"],
+  ${tbl(["Hospital","Start","End","WTE months","Takes/mo","Pts/Take","Est. Patients","Year","Supervisor"],
     getLbEntries("acute_take").sort((a,b)=>(b.start||"").localeCompare(a.start||"")).map(e=>[
-      e.hospital,fmt(e.start),fmt(e.end),e.months?e.months+"mo":"—",
+      e.hospital,fmt(e.start),fmt(e.end),e.months?acuteWteMonths(e)+"mo"+(acuteWte(e)<1?` (${acuteWte(e)} WTE)`:""):"—",
       e.takes||"—",e.patients||"—",
       `<strong>${Math.round(e.estimated||0)}</strong>`,
       e.year||"—",e.supervisor||"—"
