@@ -3906,6 +3906,16 @@ function printRenalSummary(){
       {num:[3], total:{labelCol:2, valueCol:3, value:hrsAll.toFixed(1)}}),
     []));
 
+  // 4 — Teaching participation (teaching delivered — same data as the logbook report section)
+  const tp = getLbEntries("teaching").slice().sort(byDateAsc("date"));
+  const tpSigned = tp.filter(e=>/signed off|^yes/i.test(String(e.signoff||""))).length;
+  const tpObserved = tp.filter(e=>String(e.supervisor||"").trim()).length;
+  sections.push(sotSection("Teaching participation",
+    `${yr}: <strong>${thisYr(tp)}</strong> \u00b7 All years: <strong>${tp.length}</strong> session${tp.length===1?'':'s'} \u00b7 Observed: ${tpObserved} \u00b7 Signed off: ${tpSigned}`,
+    sotTable(["Date","Type","Topic","Audience","Observed by","Sign-off","Year"],
+      tp.map(e=>[sotDate(e.date), e.type||"", e.topic||"", e.audience||"", e.supervisor||"", e.signoff||"", e.year||""]), {}),
+    []));
+
   sotOpen("Renal — Summary of Training", "renal", sections.join(""));
 }
 window.printGimSummary = printGimSummary;
