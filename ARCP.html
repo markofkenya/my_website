@@ -1026,9 +1026,9 @@ const ADMIN_DOCS = [
   { id:"doc_form_r",   label:"Form R in Library",         note:"Required each year" },
   { id:"doc_cct_calc", label:"CCT Calculator in Library", note:"Update each year (especially if LTFT)" },
   { id:"doc_firth",    label:"Updated Firth Calculator",  note:"Update every year" },
-  { id:"doc_cpd_diary", label:"CPD Diary in Library",       note:"Export from Logbook → Teaching CPD and upload", action:"exportCpdDiaryP", actionLabel:"⎙ Open CPD diary" },
   { id:"doc_renal_sot", label:"Renal Summary of Training in Library", note:"Procedures, clinics and renal teaching", action:"printRenalSummary", actionLabel:"⎙ Open Renal summary" },
   { id:"doc_gim_sot",   label:"GIM Summary of Training in Library",   note:"Acute take, clinics, ward cover, teaching, simulation", action:"printGimSummary", actionLabel:"⎙ Open GIM summary" },
+  { id:"doc_cpd_diary", label:"CPD Diary in Library",       note:"Export from Logbook → Teaching CPD and upload", action:"exportCpdDiaryP", actionLabel:"⎙ Open CPD diary" },
 ];
 function adminDocCardHTML(doc, done){
   const act = doc.action ? `<button class="btn-reset" style="border-color:var(--blue);color:var(--blue);font-size:9px;padding:3px 10px;margin-top:8px;" onclick="${doc.action}()">${doc.actionLabel||"Open"}</button>` : "";
@@ -4011,6 +4011,7 @@ function sotOpen(title, stream, sectionsHtml){
   h1{font-size:14pt;margin:0;color:${accent}}
   .who{font-size:9pt;color:#444;text-align:right;line-height:1.5}
   h2{font-size:10.5pt;margin:18px 0 6px;color:${accent}}
+  .kicker{font-size:12pt;font-weight:700;color:${accent};margin:20px 0 -8px;padding-bottom:4px;border-bottom:1px solid ${accent};text-transform:uppercase;letter-spacing:.06em;break-after:avoid}
   h3{font-size:9pt;margin:10px 0 4px;color:#333;text-transform:uppercase;letter-spacing:.06em}
   .summary{font-size:9pt;color:#222;background:#f6f7fa;border-left:3px solid ${accent};padding:6px 10px;margin:0 0 8px}
   .summary strong{color:${accent}}
@@ -4077,7 +4078,7 @@ function printGimSummary(){
     return [e.hospital||"", sotDate(e.start), sotDate(e.end), sotNum(wm,1), sotNum(wm,1), sotNum(takes,1), sotNum(pts,1), Math.round(est), e.supervisor||""];
   });
   const acuteTotal = acuteRows.reduce((a,r)=>a+(parseFloat(r[7])||0),0);
-  sections.push(sotSection("Summary calculation of acute medical take and general medical experience",
+  sections.push(`<div class="kicker">Firth Calculator</div>` + sotSection("Summary calculation of acute medical take and general medical experience",
     `Estimated total: <strong>${acuteTotal}</strong> / 750 patients${acuteTotal>=750?' ✓':''} · ${acute.length} placement${acute.length===1?'':'s'}`,
     sotTable(["Hospital name","Start Date (DD/MM/YY)","End Date (DD/MM/YY)","WTE months in post (1)","WTE months on take rota (1)","Average number of take shifts per WTE month","Average number of take patients seen by you each shift (2)","Estimated number of patients seen by you on acute take","Name of educational supervisor who can verify estimates"],
       acuteRows, {num:[3,4,5,6,7], bold:[7], cls:"fixed", cols:["17%","8%","8%","8%","8%","10%","11%","11%","19%"], total:{labelCol:6, valueCol:7, value:acuteTotal}}),
@@ -4103,12 +4104,12 @@ function printGimSummary(){
   // 4 — Ward cover
   const ward = getLbEntries("ward_cover").slice().sort(byDateAsc("start"));
   const wardTotal = Math.round(ward.reduce((a,e)=>a+(parseFloat(e.months)||0),0)*10)/10;
-  sections.push(sotSection("IM ward cover",
+  sections.push(sotSection("GIM ward cover",
     `Total: <strong>${wardTotal}</strong> / 12 months${wardTotal>=12?' ✓':''} · ${ward.length} placement${ward.length===1?'':'s'}`,
     sotTable(["Hospital","Start Date (DD/MM/YY)","End Date (DD/MM/YY)","Months","Year","Supervisor"],
       ward.map(e=>[e.hospital||"", sotDate(e.start), sotDate(e.end), sotNum(e.months,1), e.year||"", e.supervisor||""]),
       {num:[3], total:{labelCol:2, valueCol:3, value:wardTotal}}),
-    ["Note - 12 months of IM ward cover required by CCT."]));
+    ["Note - 12 months of GIM ward cover required by CCT."]));
 
   // 4 — GIM teaching (CPD)
   const cpd = getLbEntries("cpd_gim").slice().sort(byDateAsc("date"));
@@ -4135,6 +4136,9 @@ function printGimSummary(){
       {num:[4], total:{labelCol:3, valueCol:4, value:simTotal.toFixed(1)}}),
     ["Note - 12 hours of simulation by CCT, at least 4 hours of which in ST7."]));
 
+  const GIM_ORDER = ["Summary calculation of acute medical take","GIM ward cover","GIM outpatient clinics","GIM teaching","GIM procedures","Simulation"];
+  const rank = h => { const i = GIM_ORDER.findIndex(t => h.includes(`<h2>${t}`)); return i < 0 ? 99 : i; };
+  sections.sort((a,b) => rank(a) - rank(b));
   sotOpen("GIM — Summary of Training", "gim", sections.join(""));
 }
 
