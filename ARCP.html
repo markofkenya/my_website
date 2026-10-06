@@ -2586,6 +2586,20 @@ function renderLogbook() {
   xlsxBtn.textContent = "⇩ EXPORT EXCEL";
   xlsxBtn.onclick = () => exportLogbookXlsx();
   sendWrap.appendChild(xlsxBtn);
+  const pyrBtn = document.createElement("button");
+  pyrBtn.className = "btn-reset";
+  pyrBtn.title = "GIM PYR summary of training (acute take + outpatient clinics)";
+  pyrBtn.style.cssText = "border-color:var(--gim);color:var(--gim);font-size:9px;padding:4px 12px;";
+  pyrBtn.textContent = "⎙ PYR SUMMARY";
+  pyrBtn.onclick = () => printPyrSummary();
+  sendWrap.appendChild(pyrBtn);
+  const pyrXBtn = document.createElement("button");
+  pyrXBtn.className = "btn-reset";
+  pyrXBtn.title = "Download the filled GIM PYR summary spreadsheet";
+  pyrXBtn.style.cssText = "border-color:var(--gim);color:var(--gim);font-size:9px;padding:4px 12px;";
+  pyrXBtn.textContent = "⇩ PYR SPREADSHEET";
+  pyrXBtn.onclick = () => exportPyrXlsx();
+  sendWrap.appendChild(pyrXBtn);
   el.appendChild(sendWrap);
 
   if (lbSubTab === "clinics")    renderLbClinics(el);
@@ -3923,6 +3937,148 @@ async function exportLogbookXlsx(){
 
   const stamp = new Date().toISOString().slice(0,10);
   XLSX.writeFile(wb, `Logbook_Mark_Maugo_${stamp}.xlsx`);
+}
+// ══════════════════════════════════════════════════════
+//  GIM PYR — Summary of Training calculator (acute take + outpatient experience)
+//  Mirrors the JRCPTB spreadsheet; CCU/ITU/ward-round columns and the OPD-equivalent sheet removed.
+// ══════════════════════════════════════════════════════
+const PYR_ACUTE_HEAD = ["Hospital name","Start Date (DD/MM/YY)","End Date (DD/MM/YY)","WTE months in post (1)","WTE months on take rota (1)","Average number of take shifts per WTE month","Average number of take patients seen by you each shift (2)","Estimated number of patients seen by you on acute take","Name of educational supervisor who can verify estimates"];
+const PYR_OPD_HEAD = ["Hospital name","Start Date (DD/MM/YY)","End Date (DD/MM/YY)","WTE months in post","Average number of outpatient clinics per month","Estimated number of outpatient clinics done by you","Name of educational supervisor who can verify estimates"];
+const PYR_ACUTE_NOTES = [
+  "Note - minimum 1000 patients seen before CCT.",
+  "Note - (1) If working part time, insert number of whole time equivalent months.",
+  "Note - (2) 'Seen by' means having sufficient involvement for this to be recorded in the patient's notes"
+];
+const PYR_OPD_NOTES = [
+  "Note - minimum 186 outpatient clinics before CCT"
+];
+function pyrDate(d){ if(!d) return ""; const p=String(d).split("-"); return p.length===3 ? `${p[2]}/${p[1]}/${p[0].slice(2)}` : d; }
+function pyrNum(v, dp){ const n=parseFloat(v); if(!isFinite(n)) return ""; const f=Math.pow(10,dp||0); return Math.round(n*f)/f; }
+function pyrMonthsBetween(a,b){
+  if(!a||!b) return 0;
+  const s=new Date(a), e=new Date(b);
+  return Math.max(0, Math.round(((e-s)/(1000*60*60*24*30.44))*10)/10);
+}
+function pyrAcuteRows(){
+  return getLbEntries("acute_take").slice()
+    .sort((a,b)=>(a.start||"").localeCompare(b.start||""))
+    .map(e=>{
+      const months = parseFloat(e.months)||pyrMonthsBetween(e.start,e.end);
+      const takes = parseFloat(e.takes)||0, pts = parseFloat(e.patients)||0;
+      const est = parseFloat(e.estimated) || Math.round(months*takes*pts);
+      return [e.hospital||"", pyrDate(e.start), pyrDate(e.end), pyrNum(months,1), pyrNum(months,1), pyrNum(takes,1), pyrNum(pts,1), Math.round(est), e.supervisor||""];
+    });
+}
+// GIM clinics grouped into placements: a clinic joins an acute-take / ward-cover placement at the
+// same hospital whose dates cover it; otherwise clinics are grouped by hospital + training year.
+function pyrOpdRows(){
+  const norm = h => String(h||"").trim().toLowerCase();
+  const placements = [...getLbEntries("acute_take"), ...getLbEntries("ward_cover")]
+    .filter(p=>p.hospital && p.start && p.end);
+  const groups = new Map();
+  getLbEntries("clinics_gim").forEach(c=>{
+    const d = c.date || "";
+    const pl = placements.find(p=>norm(p.hospital)===norm(c.hospital) && d>=p.start && d<=p.end);
+    const key = pl ? `P|${norm(pl.hospital)}|${pl.start}|${pl.end}` : `H|${norm(c.hospital)}|${c.year||""}`;
+    if(!groups.has(key)) groups.set(key,{pl, hospital:(pl?pl.hospital:c.hospital)||"Not recorded", dates:[], n:0});
+    const g=groups.get(key); g.n++; if(d) g.dates.push(d);
+  });
+  return [...groups.values()].map(g=>{
+    g.dates.sort();
+    const start = g.pl ? g.pl.start : (g.dates[0]||"");
+    const end   = g.pl ? g.pl.end   : (g.dates[g.dates.length-1]||"");
+    let months = g.pl ? (parseFloat(g.pl.months)||pyrMonthsBetween(start,end)) : 0;
+    if(!g.pl && start && end){ const s=new Date(start), e=new Date(end); months=(e.getFullYear()-s.getFullYear())*12+(e.getMonth()-s.getMonth())+1; }
+    return { sortKey:start, row:[g.hospital, pyrDate(start), pyrDate(end), pyrNum(months,1), months?pyrNum(g.n/months,1):"", g.n, g.pl?(g.pl.supervisor||""):""] };
+  }).sort((a,b)=>a.sortKey.localeCompare(b.sortKey)).map(x=>x.row);
+}
+async function exportPyrXlsx(){
+  const acute=pyrAcuteRows(), opd=pyrOpdRows();
+  if(!acute.length && !opd.length){ alert("No acute take placements or GIM clinics logged yet."); return; }
+  let XLSX;
+  try { XLSX = await loadSheetJS(); } catch(err){ alert("Could not load the spreadsheet library: "+err.message); return; }
+  const build = (title, head, rows, estCol, notes) => {
+    const minRows = Math.max(10, rows.length);
+    const body = rows.slice(); while(body.length<minRows) body.push(head.map(()=>""));
+    const totalRow = head.map(()=>""); totalRow[estCol-1]="Total";
+    const aoa=[[title], head, ...body, totalRow, ...notes.map(n=>[n])];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const col = XLSX.utils.encode_col(estCol);
+    const first = 3, last = 2+minRows, totRow = last+1;
+    ws[`${col}${totRow}`] = { t:"n", f:`SUM(${col}${first}:${col}${last})`, v: rows.reduce((a,r)=>a+(parseFloat(r[estCol])||0),0) };
+    ws["!cols"] = head.map((h,i)=>({ wch: i===0?30 : i===head.length-1?32 : 16 }));
+    ws["!merges"] = [{ s:{r:0,c:0}, e:{r:0,c:head.length-1} }];
+    return ws;
+  };
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, build("Summary calculation of acute medical take and general medical experience", PYR_ACUTE_HEAD, acute, 7, PYR_ACUTE_NOTES), "Acute medical take experience");
+  XLSX.utils.book_append_sheet(wb, build("Summary calculation of outpatient experience", PYR_OPD_HEAD, opd, 5, PYR_OPD_NOTES), "Outpatient experience");
+  XLSX.writeFile(wb, `GIM_PYR_Summary_of_Training_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+window.exportPyrXlsx = exportPyrXlsx;
+function printPyrSummary(){
+  const acute=pyrAcuteRows(), opd=pyrOpdRows();
+  const esc = t => String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const acuteTotal = acute.reduce((a,r)=>a+(parseFloat(r[7])||0),0);
+  const opdTotal = opd.reduce((a,r)=>a+(parseFloat(r[5])||0),0);
+  const table = (head, rows, estCol, total, numCols) => {
+    const pad = Math.max(0, 4-rows.length);
+    const blank = `<tr class="blank">${head.map(()=>"<td>&nbsp;</td>").join("")}</tr>`;
+    return `<table><thead><tr>${head.map((h,i)=>`<th${numCols.includes(i)?' class="num"':''}>${esc(h)}</th>`).join("")}</tr></thead><tbody>`+
+      rows.map(r=>`<tr>${r.map((c,i)=>`<td${numCols.includes(i)?' class="num"':''}${i===estCol?' style="font-weight:700"':''}>${esc(c)}</td>`).join("")}</tr>`).join("")+
+      blank.repeat(pad)+
+      `<tr class="total">${head.map((_,i)=> i===estCol-1?'<td class="num">Total</td>': i===estCol?`<td class="num">${total}</td>`:'<td></td>').join("")}</tr></tbody></table>`;
+  };
+  const today = new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"long",year:"numeric"});
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>GIM PYR Summary of Training — Mark Maugo</title>
+<style>
+  @page{size:A4 landscape;margin:12mm}
+  *{box-sizing:border-box}
+  body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0;background:#eee;font-size:9.5pt}
+  .page{background:#fff;max-width:297mm;margin:16px auto;padding:14mm 12mm;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+  .toolbar{max-width:297mm;margin:16px auto 0;display:flex;gap:8px;justify-content:flex-end}
+  .toolbar button{font:600 10pt Arial;padding:8px 16px;border:none;border-radius:3px;cursor:pointer;background:#003087;color:#fff}
+  .toolbar button.alt{background:#fff;color:#003087;border:1px solid #003087}
+  header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid #003087;padding-bottom:8px;margin-bottom:14px}
+  h1{font-size:14pt;margin:0;color:#003087}
+  .who{font-size:9pt;color:#444;text-align:right;line-height:1.5}
+  h2{font-size:10.5pt;margin:18px 0 6px;color:#003087}
+  table{width:100%;border-collapse:collapse;table-layout:fixed}
+  th{background:#dfe6f3;border:1px solid #8a99b8;padding:5px 5px;font-size:7.8pt;text-align:left;vertical-align:bottom;font-weight:700;line-height:1.25}
+  td{border:1px solid #b7c0d3;padding:5px;font-size:9pt;vertical-align:top;overflow-wrap:break-word}
+  .num{text-align:right}
+  tr.total td{border:none;font-weight:700;padding-top:6px}
+  tr.total td.num:last-of-type{border:1px solid #8a99b8;background:#f4f6fb}
+  .notes{margin:6px 0 0;padding:0;list-style:none;font-size:8pt;color:#444;line-height:1.5}
+  .sheet{break-inside:avoid}
+  .sheet + .sheet{margin-top:10px}
+  footer{margin-top:18px;font-size:7.5pt;color:#888;display:flex;justify-content:space-between}
+  @media print{body{background:#fff}.toolbar{display:none}.page{box-shadow:none;margin:0;padding:0;max-width:none}.sheet.opd{break-before:page}}
+</style></head><body>
+<div class="toolbar">
+  <button class="alt" onclick="window.opener && window.opener.exportPyrXlsx ? window.opener.exportPyrXlsx() : alert('Open from the ARCP app to download the spreadsheet.')">⇩ Download spreadsheet</button>
+  <button onclick="window.print()">⎙ Print / Save as PDF</button>
+</div>
+<div class="page">
+  <header>
+    <h1>GIM PYR — Summary of Training</h1>
+    <div class="who"><b>Mark Maugo</b> · Renal Medicine + GIM<br>Training year: ${esc(currentYear)} · Generated ${esc(today)}</div>
+  </header>
+  <div class="sheet">
+    <h2>Summary calculation of acute medical take and general medical experience</h2>
+    ${table(PYR_ACUTE_HEAD, acute, 7, acuteTotal, [3,4,5,6,7])}
+    <ul class="notes">${PYR_ACUTE_NOTES.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>
+  </div>
+  <div class="sheet opd">
+    <h2>Summary calculation of outpatient experience</h2>
+    ${table(PYR_OPD_HEAD, opd, 5, opdTotal, [3,4,5])}
+    <ul class="notes">${PYR_OPD_NOTES.map(n=>`<li>${esc(n)}</li>`).join("")}<li>Clinic numbers are counted from GIM clinics logged in the logbook.</li></ul>
+  </div>
+  <footer><span>GIM PYR Summary of Training</span><span>Mark Maugo</span></footer>
+</div></body></html>`;
+  const w = window.open("", "_blank");
+  if(!w){ alert("Please allow popups for this site to open the PYR summary."); return; }
+  w.document.write(html); w.document.close();
 }
 function exportCpdDataP(){
   const data = { cpd_gim:getLbEntries("cpd_gim"), cpd_renal:getLbEntries("cpd_renal") };
