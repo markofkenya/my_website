@@ -3902,9 +3902,24 @@ function exportCpdDiaryP(){
   </div>
   </body></html>`;
 
-  const win = window.open("", "_blank_"+Date.now());
-  if(!win){ alert("Please allow popups to view the CPD diary report."); return; }
-  win.document.write(html); win.document.close();
+  openReportWindow(html, "Please allow popups to view the CPD diary report.");
+}
+// Open a generated report as a real document (blob URL) instead of writing into about:blank.
+// Browsers (esp. iOS Safari / home-screen app) save or share the page URL, so about:blank produced a 1 KB empty PDF.
+function openReportWindow(html, blockedMsg){
+  let url;
+  try { url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" })); } catch(e) { url = null; }
+  if (url) {
+    const w = window.open(url, "_blank");
+    if (w) { setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000); return w; }
+    URL.revokeObjectURL(url);
+    alert(blockedMsg || "Please allow popups for this site to open the report.");
+    return null;
+  }
+  const w = window.open("", "_blank");
+  if (!w) { alert(blockedMsg || "Please allow popups for this site to open the report."); return null; }
+  w.document.write(html); w.document.close();
+  return w;
 }
 function loadSheetJS(){
   return new Promise((resolve,reject)=>{
@@ -4045,9 +4060,7 @@ function sotOpen(title, stream, sectionsHtml){
   ${sectionsHtml}
   <footer><span>${sotEsc(title)}</span><span>Mark Maugo</span></footer>
 </div></body></html>`;
-  const w = window.open("", "_blank");
-  if(!w){ alert("Please allow popups for this site to open the summary."); return; }
-  w.document.write(html); w.document.close();
+  openReportWindow(html, "Please allow popups for this site to open the summary.");
 }
 
 // Procedures section (tally by procedure + full list) — shared by GIM and Renal summaries
@@ -4447,10 +4460,7 @@ function printLogbookReport() {
 </body>
 </html>`;
  
-  const w = window.open("", "_blank");
-  if (!w) { alert("Please allow popups for this site to use the print view."); return; }
-  w.document.write(html);
-  w.document.close();
+  openReportWindow(html, "Please allow popups for this site to use the print view.");
 }
 </script>
 
