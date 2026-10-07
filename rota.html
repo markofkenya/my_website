@@ -3756,7 +3756,11 @@ function editLocumShift(id){
 function exportLocumIcs(id){
   const shift=locumShifts.find(s=>s.id===id); if(!shift) return;
   try{
-    const body=window.LocumTracker.buildShiftIcs(shift,Date.now());
+    const endDs=(String(shift.endTime)<=String(shift.startTime))?shiftDate(shift.date,1):shift.date;   // crosses midnight
+    const body=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//InstaRota//Locum//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH",ICS_VTIMEZONE,
+      "BEGIN:VEVENT",`UID:locum-${shift.id}@instarota-myrota`,`DTSTAMP:${icsStamp()}`,
+      `DTSTART${icsLocal(shift.date,shift.startTime)}`,`DTEND${icsLocal(endDs,shift.endTime)}`,
+      `SUMMARY:${icsEsc("LOCUM · "+(shift.organisation||""))}`,"CATEGORIES:Locum","END:VEVENT","END:VCALENDAR"].join("\r\n");
     const url=URL.createObjectURL(new Blob([body],{type:"text/calendar;charset=utf-8"}));
     const a=document.createElement("a"); a.href=url; a.download=`locum-shift-${shift.date}.ics`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
     setLocumSync("Calendar file downloaded—open it to add the shift.",false);
