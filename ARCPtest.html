@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#0e0f11" />
   <link rel="apple-touch-icon" href="RCP-icon.png"/>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Silkscreen:wght@400;700&family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <script type="module">
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -617,115 +617,6 @@
     .lb-modal-box, #main ~ div [style*="max-width:720px"] { border-radius: 10px; }
     #main [style*="letter-spacing:0.15em"], #main [style*="letter-spacing:0.12em"] { letter-spacing: 0.08em !important; }
 
-  
-    /* ══ JOURNEY (pixel-art progress game) — scoped; deliberately its own arcade look in both themes ══ */
-    .q-root, .q-drawer {
-      --q-night:#14112b; --q-panel:#211c45; --q-panel2:#2c2660; --q-ink:#f4f1ff; --q-mute:#a7a0d6;
-      --q-coin:#ffc93c; --q-grass:#3fbf6a; --q-sky:#5cc8ff; --q-star:#ffe066; --q-lock:#5b5585; --q-alert:#ff6b6b; --q-brick:#c8673a; --q-edge:#0b0920;
-      --q-pixel:'Silkscreen','Courier New',monospace; --q-body:'Pixelify Sans','Trebuchet MS',system-ui,sans-serif;
-    }
-    .q-root.q-desert{--q-night:#2b1a12;--q-panel:#3d2618;--q-panel2:#523320;--q-brick:#d9a441}
-    .q-root.q-night{--q-night:#06141c;--q-panel:#0c2430;--q-panel2:#123544;--q-brick:#2e6f8e}
-    .q-root.q-snow{--q-night:#1a2238;--q-panel:#26324f;--q-panel2:#33426a;--q-brick:#cfe3ff}
-    .q-root{background:var(--q-night);color:var(--q-ink);font-family:var(--q-body);font-size:15px;line-height:1.4;padding:14px;margin:-4px 0 0;display:flex;flex-direction:column;gap:14px;border-radius:10px}
-    .q-root *, .q-drawer *{box-sizing:border-box}
-    .q-root button, .q-drawer button{font-family:inherit;color:inherit;cursor:pointer;border-radius:0}
-    .q-root button:focus-visible, .q-drawer button:focus-visible{outline:2px solid var(--q-coin);outline-offset:2px}
-    .q-box{background:var(--q-panel);border:3px solid var(--q-edge);box-shadow:inset -3px -3px 0 rgba(0,0,0,.35), inset 3px 3px 0 rgba(255,255,255,.06);padding:12px}
-    .q-root h3{font-family:var(--q-pixel);font-size:13px;margin:0 0 10px;color:var(--q-coin);letter-spacing:.04em}
-    .q-note{font-size:12px;color:var(--q-mute)}
-    .q-hud{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center}
-    .q-who{display:flex;gap:12px;align-items:center;min-width:0}
-    .q-avatar{width:60px;height:60px;image-rendering:pixelated;background:var(--q-panel2);border:3px solid var(--q-edge)}
-    .q-name{font-family:var(--q-pixel);font-size:15px}
-    .q-title{color:var(--q-mute);font-size:13px}
-    .q-xp{height:10px;background:var(--q-edge);margin-top:6px;width:min(200px,38vw)}
-    .q-xp > i{display:block;height:100%;background:var(--q-sky)}
-    .q-stats{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
-    .q-stat{text-align:center}
-    .q-stat > b{display:block;font-family:var(--q-pixel);font-size:19px;font-variant-numeric:tabular-nums}
-    .q-stat > span{font-size:11px;color:var(--q-mute);text-transform:uppercase;letter-spacing:.08em}
-    .q-coin{display:inline-block;width:13px;height:13px;background:var(--q-coin);border:2px solid #8a5a00;border-radius:50%;vertical-align:-1px;margin-right:4px;animation:q-spin 1.2s steps(4) infinite}
-    @keyframes q-spin{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.2)}}
-    .q-shop .q-coin, .q-drawer .q-coin{animation:none}
-    .q-mute{background:var(--q-panel2);border:3px solid var(--q-edge);padding:8px 10px;font-family:var(--q-pixel);font-size:11px}
-    .q-path{overflow-x:auto}
-    .q-track{display:flex;align-items:flex-end;min-width:660px;padding-top:58px}
-    .q-node{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;background:none;border:none;padding:0;text-align:center}
-    .q-plat{display:block;width:86%;height:20px;background:repeating-linear-gradient(90deg,var(--q-brick) 0 18px,rgba(0,0,0,.3) 18px 20px);border:3px solid var(--q-edge)}
-    .q-node.cur .q-plat{background:repeating-linear-gradient(90deg,var(--q-grass) 0 18px,#2c8a4c 18px 20px)}
-    .q-node.done .q-plat{background:repeating-linear-gradient(90deg,var(--q-coin) 0 18px,#c99200 18px 20px)}
-    .q-lbl{font-family:var(--q-pixel);font-size:12px}
-    .q-sub{font-size:11px;color:var(--q-mute)}
-    .q-pct{font-family:var(--q-pixel);font-size:10px;color:var(--q-grass)}
-    .q-walker{position:absolute;top:-50px;width:42px;height:42px;image-rendering:pixelated;animation:q-bob 1s steps(2) infinite}
-    @keyframes q-bob{50%{transform:translateY(-3px)}}
-    .q-castle{width:60px;height:60px;position:absolute;top:-58px}
-    .q-link{flex:0 0 14px;height:6px;margin-bottom:46px;background:repeating-linear-gradient(90deg,var(--q-mute) 0 6px,transparent 6px 10px)}
-    .q-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
-    .q-tabs{display:flex;gap:6px;flex-wrap:wrap}
-    .q-tab{background:var(--q-panel2);border:3px solid var(--q-edge);padding:7px 11px;font-family:var(--q-pixel);font-size:11px}
-    .q-tab[aria-selected="true"]{background:var(--q-sky);color:var(--q-night)}
-    .q-toggle{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--q-mute)}
-    .q-toggle input{width:18px;height:18px;accent-color:var(--q-coin)}
-    .q-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--q-mute);margin:10px 0 12px}
-    .q-legend i{display:inline-block;width:12px;height:12px;margin-right:5px;vertical-align:-1px;border:2px solid var(--q-edge)}
-    .q-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
-    .q-lvl{position:relative;text-align:left;background:var(--q-panel2);border:3px solid var(--q-edge);padding:10px 10px 10px 54px;min-height:94px;display:flex;flex-direction:column;gap:5px;box-shadow:inset -3px -3px 0 rgba(0,0,0,.35)}
-    @media (hover:hover) and (pointer:fine){ .q-lvl:hover{filter:brightness(1.12)} .q-node:hover .q-plat{filter:brightness(1.15)} }
-    .q-lvl:active{transform:translateY(1px)}
-    .q-root button, .q-drawer button, .q-root input{touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-    .q-blk{position:absolute;left:8px;top:10px;width:36px;height:36px;display:grid;place-items:center;font-family:var(--q-pixel);font-size:11px;border:3px solid var(--q-edge);box-shadow:inset -3px -3px 0 rgba(0,0,0,.3),inset 3px 3px 0 rgba(255,255,255,.25)}
-    .q-lvl.locked .q-blk{background:var(--q-lock);color:var(--q-ink)}
-    .q-lvl.prog .q-blk{background:var(--q-sky);color:var(--q-night)}
-    .q-lvl.clear .q-blk{background:var(--q-grass);color:var(--q-night)}
-    .q-lvl.master .q-blk{background:var(--q-star);color:var(--q-night)}
-    .q-nm{font-size:14px;line-height:1.25;font-weight:600}
-    .q-meta{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--q-mute)}
-    .q-pips{display:flex;gap:3px}
-    .q-pips i{width:12px;height:8px;background:var(--q-edge)}
-    .q-pips i.on{background:var(--q-grass)}
-    .q-stars{font-size:14px;letter-spacing:1px;color:var(--q-lock);white-space:nowrap}
-    .q-stars .on{color:var(--q-star)} .q-stars .tgt{color:var(--q-alert)}
-    .q-lvl.min{min-height:0;padding:6px 10px 6px 40px;opacity:.55}
-    .q-lvl.min .q-blk{width:24px;height:24px;font-size:9px;top:5px;left:6px}
-    .q-lvl.min .q-meta{display:none}
-    .q-lvl.min .q-nm{font-size:12px;font-weight:400}
-    .q-cols{display:grid;grid-template-columns:1fr 1.4fr;gap:14px}
-    .q-rules{width:100%;border-collapse:collapse;font-size:13px}
-    .q-rules td{padding:5px 4px;border-bottom:2px dotted rgba(167,160,214,.3)}
-    .q-rules td:last-child{text-align:right;font-family:var(--q-pixel);color:var(--q-coin);white-space:nowrap}
-    .q-shop{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
-    .q-item{background:var(--q-panel2);border:3px solid var(--q-edge);padding:9px;display:flex;flex-direction:column;gap:6px}
-    .q-item.eq{outline:3px solid var(--q-coin);outline-offset:-3px}
-    .q-cat{font-size:11px;color:var(--q-mute);text-transform:uppercase;letter-spacing:.08em}
-    .q-inm{font-weight:600}
-    .q-sw{display:block;height:14px;border:2px solid var(--q-edge)}
-    .q-btn{background:var(--q-coin);color:var(--q-night)!important;border:3px solid var(--q-edge);padding:7px 10px;font-family:var(--q-pixel);font-size:11px;box-shadow:inset -3px -3px 0 rgba(0,0,0,.25)}
-    .q-btn.alt{background:var(--q-panel2);color:var(--q-ink)!important}
-    .q-btn:disabled{opacity:.45;cursor:not-allowed}
-    @media (max-width:760px){ .q-cols{grid-template-columns:1fr} .q-hud{grid-template-columns:1fr auto} .q-stats{grid-column:1/-1;justify-content:space-between} .q-root{padding:10px} }
-    .q-drawer{position:fixed;left:0;right:0;bottom:0;max-height:82vh;overflow:auto;background:var(--q-panel);color:var(--q-ink);font-family:var(--q-body);border-top:4px solid var(--q-edge);padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));z-index:900;box-shadow:0 -10px 0 rgba(0,0,0,.3)}
-    .q-din{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
-    .q-drawer h2{font-family:var(--q-pixel);font-size:15px;margin:0;line-height:1.35}
-    .q-chips{display:flex;flex-wrap:wrap;gap:8px}
-    .q-chip{background:var(--q-panel2);border:3px solid var(--q-edge);padding:8px 10px;font-size:14px;display:flex;gap:8px;align-items:center}
-    .q-chip b{background:var(--q-coin);color:var(--q-night);font-family:var(--q-pixel);font-size:11px;padding:1px 6px}
-    .q-minus{font-family:var(--q-pixel);color:var(--q-mute);padding:0 4px}
-    .q-starbtns{display:flex;gap:6px}
-    .q-starbtns button{font-size:28px;background:none;border:none;color:var(--q-lock);padding:2px}
-    .q-starbtns button.on{color:var(--q-star)}
-    /* Global celebration FX (fire from any tab) */
-    .q-pop{position:fixed;font-family:'Silkscreen','Courier New',monospace;font-size:17px;color:#ffc93c;pointer-events:none;z-index:1000;animation:q-popup .9s steps(9) forwards;text-shadow:2px 2px 0 #0b0920}
-    @keyframes q-popup{to{transform:translateY(-60px);opacity:0}}
-    .q-banner{position:fixed;inset:0;display:grid;place-items:center;z-index:1001;pointer-events:none}
-    .q-banner div{font-family:'Silkscreen','Courier New',monospace;font-size:clamp(32px,10vw,72px);color:#ffe066;text-shadow:4px 4px 0 #0b0920,-2px -2px 0 #0b0920;animation:q-zoom 1.6s steps(12) forwards;text-align:center}
-    .q-banner small{display:block;font-size:clamp(12px,3vw,18px);color:#f4f1ff}
-    @keyframes q-zoom{0%{transform:scale(.3);opacity:0}20%{transform:scale(1.1);opacity:1}80%{opacity:1}100%{transform:scale(1);opacity:0}}
-    .q-confetti{position:fixed;width:8px;height:8px;z-index:1000;pointer-events:none;animation:q-fall 1.4s linear forwards}
-    @keyframes q-fall{to{transform:translateY(70vh) rotate(360deg);opacity:0}}
-    @media (prefers-reduced-motion:reduce){ .q-root *, .q-pop, .q-banner div, .q-confetti{animation:none!important} }
-
   </style>
 </head>
 <body>
@@ -782,7 +673,6 @@
   <button class="tab"                  onclick="setTab('overview')">Overview</button>
   <button class="tab"                  onclick="setTab('admin')">Admin / Docs</button>
   <button class="tab"                  onclick="setTab('cips')">CiPs</button>
-  <button class="tab journey-tab"      onclick="setTab('journey')">★ Journey</button>
 </div>
 
 <!-- ═══════════════════════════════════════════ MAIN -->
@@ -793,7 +683,6 @@
   <div id="tab-overview" style="display:none"></div>
   <div id="tab-cips"     style="display:none"></div>
   <div id="tab-logbook"  style="display:none"></div>
-  <div id="tab-journey"  style="display:none"></div>
 </div>
 
 <!-- ═══════════════════════════════════════════ STATUS BAR -->
@@ -1109,11 +998,10 @@ function setYear(yr) {
 function setTab(tab) {
   currentTab = tab;
   document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.getAttribute("onclick").includes(`'${tab}'`)));
-  ["gim","renal","admin","overview","cips","logbook","journey"].forEach(t => {
+  ["gim","renal","admin","overview","cips","logbook"].forEach(t => {
     document.getElementById(`tab-${t}`).style.display = t === tab ? "block" : "none";
   });
   if (tab === "cips") renderCIPs();
-  if (tab === "journey") renderJourney();
   if (tab === "logbook") renderLogbook();
 }
 
@@ -1129,7 +1017,6 @@ function renderAll() {
   updateDopsCount();
   if (currentTab === "cips") renderCIPs();
   if (currentTab === "logbook") renderLogbook();
-  if (currentTab === "journey" && !window._qSkipJourney) renderJourney();
 }
 
 function renderOutcomeSelector(el) {
@@ -4314,296 +4201,6 @@ function printLogbookReport() {
  
   openReportWindow(html, "Please allow popups for this site to use the print view.");
 }
-
-// ══════════════════════════════════════════════════════
-//  JOURNEY — pixel-art progress game layered on the real ARCP data
-//  Worlds = training years · Stages = Generic / Renal / GIM · Levels = CiPs
-//  Coins are DERIVED from logbook + CiP data every time (never stored), so they
-//  can't drift between devices and deleting an entry takes its coins back.
-//  Only shop purchases/equipment are stored (synced key pft_quest_shop).
-// ══════════════════════════════════════════════════════
-const QUEST_CCT = "2030-12-02";
-const QUEST_LB_TYPES = ["clinics_gim","clinics_renal","procedures_gim","procedures_renal","cpd_gim","cpd_renal","simulation","teaching","acute_take","ward_cover"];
-const QUEST_RULES = [
-  ["Any logbook entry (clinic, procedure, CPD, teaching, sim, take, ward cover)", 1],
-  ["DOPS signed (on a logged procedure)", 5],
-  ["CiP evidence added", 3],
-  ["CiP CLEAR! — reaches 3 evidence in a year", 10],
-  ["Each ★ of ES entrustment (Renal / GIM CiPs)", 15],
-  ["Generic CiP signed off satisfactory (per year)", 30],
-  ["WORLD CLEAR — all 20 CiPs cleared in a year", 100],
-];
-const QUEST_TITLES = ["Ward Rookie","Take Runner","Clinic Regular","Line Slinger","Firth Fighter","Referral Ranger","Dialysis Driver","Transplant Tamer","Registrar Elite","Consultant-in-Waiting","CCT Legend"];
-const QUEST_SHOP = [
-  {id:"sc-teal",cat:"Scrubs",nm:"Teal scrubs",price:0,slot:"scrubs",val:"#2bb5a6"},
-  {id:"sc-navy",cat:"Scrubs",nm:"Navy scrubs",price:60,slot:"scrubs",val:"#2a4aa8"},
-  {id:"sc-maroon",cat:"Scrubs",nm:"Maroon scrubs",price:80,slot:"scrubs",val:"#8c2c45"},
-  {id:"sc-green",cat:"Scrubs",nm:"Theatre greens",price:100,slot:"scrubs",val:"#3c8a4a"},
-  {id:"hat-none",cat:"Headwear",nm:"No hat",price:0,slot:"hat",val:null},
-  {id:"hat-cap",cat:"Headwear",nm:"Theatre cap",price:120,slot:"hat",val:"#5cc8ff"},
-  {id:"hat-band",cat:"Headwear",nm:"Red bandana",price:150,slot:"hat",val:"#e04848"},
-  {id:"hat-crown",cat:"Headwear",nm:"CCT crown",price:1000,slot:"hat",val:"#ffd23c"},
-  {id:"th-grass",cat:"Map theme",nm:"Ward grassland",price:0,slot:"theme",val:""},
-  {id:"th-desert",cat:"Map theme",nm:"Desert dunes",price:200,slot:"theme",val:"q-desert"},
-  {id:"th-night",cat:"Map theme",nm:"Night shift",price:250,slot:"theme",val:"q-night"},
-  {id:"th-snow",cat:"Map theme",nm:"Snow peaks",price:300,slot:"theme",val:"q-snow"},
-  {id:"fx-confetti",cat:"Celebration",nm:"Confetti",price:0,slot:"fx",val:"confetti"},
-  {id:"fx-fire",cat:"Celebration",nm:"Fireworks",price:400,slot:"fx",val:"fireworks"},
-  {id:"sd-chip",cat:"Coin sound",nm:"Chip blip",price:0,slot:"sound",val:"chip"},
-  {id:"sd-bell",cat:"Coin sound",nm:"Bell ting",price:150,slot:"sound",val:"bell"},
-];
-const QUEST_SHOP_DEFAULT = { spent:0, owned:["sc-teal","hat-none","th-grass","fx-confetti","sd-chip"], eq:{scrubs:"sc-teal",hat:"hat-none",theme:"th-grass",fx:"fx-confetti",sound:"sd-chip"} };
-
-function questShop(){
-  try { const o = JSON.parse(localStorage.getItem("pft_quest_shop") || "null");
-        if (o && typeof o === "object") return { spent:+o.spent||0, owned:Array.isArray(o.owned)?o.owned:QUEST_SHOP_DEFAULT.owned.slice(), eq:Object.assign({}, QUEST_SHOP_DEFAULT.eq, o.eq||{}) }; }
-  catch(e){}
-  return JSON.parse(JSON.stringify(QUEST_SHOP_DEFAULT));
-}
-function questSaveShop(s){ const v=JSON.stringify(s); localStorage.setItem("pft_quest_shop", v); fbPush("pft_quest_shop", v); }
-const questLocal = (k, d) => { try { const v = localStorage.getItem("pft_questlocal_"+k); return v===null ? d : JSON.parse(v); } catch(e){ return d; } };
-const questLocalSet = (k, v) => { try { localStorage.setItem("pft_questlocal_"+k, JSON.stringify(v)); } catch(e){} };  // device-only (not synced)
-
-// ── CiP state per year ──
-function questAllCips(){ return CIP_GROUPS.flatMap(g => g.cips.map((c,i) => ({ c, g, i }))); }
-function questTarget(id, yr){ return (CIP_YEAR_TARGETS[id] && CIP_YEAR_TARGETS[id][yr]) || 0; }
-function questSat(id, yr){ return localStorage.getItem(`pft_cip_sat_${yr}_${id}`) === "true"; }
-function questState(x, yr){
-  const n = getCipCount(x.c.id, yr);
-  const isLevel = x.g.entrustType === "level";
-  const mastered = isLevel ? (parseInt(getCipEntrust(x.c.id)) || 0) >= (questTarget(x.c.id, yr) || 99) : questSat(x.c.id, yr);
-  if (n >= CIP_EVID_TARGET && mastered) return "master";
-  if (n >= CIP_EVID_TARGET) return "clear";
-  return n ? "prog" : "locked";
-}
-function questClearedCount(yr){ return questAllCips().filter(x => ["clear","master"].includes(questState(x, yr))).length; }
-
-// ── Coins (derived) ──
-function questEarned(){
-  let coins = 0;
-  QUEST_LB_TYPES.forEach(t => {
-    const arr = getLbEntries(t);
-    coins += arr.length;
-    if (t.startsWith("procedures")) coins += arr.filter(e => e.dops === "Yes").length * 4;
-  });
-  const cips = questAllCips();
-  cips.forEach(x => { if (x.g.entrustType === "level") coins += (parseInt(getCipEntrust(x.c.id)) || 0) * 15; });
-  YEARS.forEach(yr => {
-    let cleared = 0;
-    cips.forEach(x => {
-      const n = getCipCount(x.c.id, yr);
-      coins += n * 3;
-      if (n >= CIP_EVID_TARGET) { coins += 10; cleared++; }
-      if (x.g.entrustType !== "level" && questSat(x.c.id, yr)) coins += 30;
-    });
-    if (cleared === cips.length) coins += 100;
-  });
-  return coins;
-}
-const questLevel = xp => { let l = 1; while (25*l*(l+1) <= xp) l++; return l; };
-const questLevelFloor = l => 25*(l-1)*l;
-const questTitle = l => QUEST_TITLES[Math.min(l-1, QUEST_TITLES.length-1)];
-
-// ── Sound (original chiptune blips, WebAudio) ──
-let _qAC = null;
-function qTone(f,t,d,type="square",vol=.07){
-  if (questLocal("muted", false)) return;
-  try {
-    _qAC = _qAC || new (window.AudioContext || window.webkitAudioContext)();
-    if (_qAC.state === "suspended") _qAC.resume();
-    const o=_qAC.createOscillator(), g=_qAC.createGain(); o.type=type; o.frequency.value=f;
-    g.gain.setValueAtTime(vol,_qAC.currentTime+t); g.gain.exponentialRampToValueAtTime(.0001,_qAC.currentTime+t+d);
-    o.connect(g).connect(_qAC.destination); o.start(_qAC.currentTime+t); o.stop(_qAC.currentTime+t+d+.02);
-  } catch(e){}
-}
-const QSFX = {
-  coin(){ if (questShop().eq.sound==="sd-bell"){ qTone(1568,0,.25,"triangle",.09); qTone(2093,.06,.35,"triangle",.07);} else { qTone(1047,0,.05); qTone(1319,.05,.05); qTone(1568,.1,.16);} },
-  big(){ [523,659,784,1047].forEach((f,i)=>qTone(f,i*.07,.09)); qTone(1319,.3,.3); },
-  clear(){ [392,523,659,784,1047,1319].forEach((f,i)=>qTone(f,i*.08,.1)); qTone(1568,.5,.5,"square",.08); qTone(784,.5,.5,"triangle",.06); },
-  star(){ [1175,1397,1760,2349].forEach((f,i)=>qTone(f,i*.06,.12,"triangle",.08)); },
-  level(){ [659,0,659,784,988,1319].forEach((f,i)=>f&&qTone(f,i*.09,.12)); qTone(1568,.6,.45); },
-  buy(){ qTone(220,0,.06,"sawtooth",.05); qTone(880,.06,.08); qTone(1760,.12,.2,"triangle"); },
-  nope(){ qTone(150,0,.15,"sawtooth",.05); }
-};
-
-// ── FX ──
-let _qPt = [window.innerWidth/2, window.innerHeight/2];
-document.addEventListener("pointerdown", e => { _qPt = [e.clientX, e.clientY]; }, true);
-function qPop(txt){ const e=document.createElement("div"); e.className="q-pop"; e.textContent=txt; e.style.left=(_qPt[0]-12)+"px"; e.style.top=(_qPt[1]-24)+"px"; document.body.appendChild(e); setTimeout(()=>e.remove(),950); }
-function qBanner(big, small){
-  const b=document.createElement("div"); b.className="q-banner"; b.innerHTML=`<div>${big}${small?`<small>${small}</small>`:""}</div>`; document.body.appendChild(b); setTimeout(()=>b.remove(),1700);
-  const fire = questShop().eq.fx === "fx-fire", n = fire ? 60 : 36;
-  for (let i=0;i<n;i++){ const c=document.createElement("i"); c.className="q-confetti";
-    c.style.background=["#ffc93c","#3fbf6a","#5cc8ff","#ff6b6b","#ffe066"][i%5];
-    if (fire){ c.style.left=(45+Math.random()*10)+"vw"; c.style.top="35vh"; c.style.animation="none";
-      const a=Math.random()*Math.PI*2, r=15+Math.random()*30; c.animate([{transform:"translate(0,0)",opacity:1},{transform:`translate(${Math.cos(a)*r}vw,${Math.sin(a)*r}vh)`,opacity:0}],{duration:1200,easing:"steps(10)"}); }
-    else { c.style.left=(Math.random()*100)+"vw"; c.style.top="-2vh"; c.style.animationDelay=(Math.random()*.4)+"s"; }
-    document.body.appendChild(c); setTimeout(()=>c.remove(),1700); }
-}
-
-// ── Reward wrapper: compare coins/levels/CiP states before vs after a user action ──
-function questSnapshot(){ const yr=currentYear; const st={}; questAllCips().forEach(x=>st[x.c.id]=questState(x,yr)); return { earned:questEarned(), states:st, cleared:Object.values(st).filter(s=>s==="clear"||s==="master").length }; }
-function questAfter(before){
-  try {
-    const after = questSnapshot(), diff = after.earned - before.earned;
-    if (diff <= 0) { if (currentTab === "journey") renderJourney(); return; }
-    qPop("+" + diff); diff >= 5 ? QSFX.big() : QSFX.coin();
-    let delay = 200;
-    const newlyClear = Object.keys(after.states).find(id => ["locked","prog"].includes(before.states[id]) && ["clear","master"].includes(after.states[id]));
-    const newlyMaster = Object.keys(after.states).find(id => before.states[id] !== "master" && after.states[id] === "master");
-    if (newlyMaster) { setTimeout(()=>{ QSFX.clear(); qBanner("MASTERED!", "Entrustment at target"); }, delay); delay += 1700; }
-    else if (newlyClear) { setTimeout(()=>{ QSFX.clear(); qBanner("CLEAR!", "+10 bonus"); }, delay); delay += 1700; }
-    if (after.cleared === questAllCips().length && before.cleared < after.cleared) { setTimeout(()=>{ QSFX.level(); qBanner("WORLD CLEAR!", `${currentYear} complete · +100`); }, delay); delay += 1700; }
-    const lb = questLevel(before.earned), la = questLevel(after.earned);
-    if (la > lb) setTimeout(()=>{ QSFX.level(); qBanner("LEVEL UP!", `Lv ${la} · ${questTitle(la)}`); }, delay);
-    if (currentTab === "journey") renderJourney();
-  } catch(e){ console.warn("journey reward", e); }
-}
-// Wrap the app's own write functions so coins/sounds fire wherever you log (any tab)
-(function(){
-  const wrap = name => { const orig = window[name]; if (typeof orig !== "function") return;
-    window[name] = function(...args){ const b = questSnapshot(); const r = orig.apply(this, args); questAfter(b); return r; }; };
-  ["addLbEntry","updateLbEntry","addCipPick","setCipEntrust","setCipSat"].forEach(wrap);
-})();
-
-// ── Pixel avatar (original sprite) ──
-const QUEST_SPRITE=["......aaaa......",".....hhhhhh.....","....hhhhhhhh....","....hssssssh....","....sesssses....","....ssssssss....",".....ssmmss.....","......ssss......","...cccuuuuccc...","..ccccuttucccc..","..cckcuuuuckcc..","..scccuttuccs...","...cccuuuuccc...","....pppppppp....","....ppp..ppp....","...bbbb..bbbb..."];
-function questDrawAvatar(cv){
-  const x=cv.getContext("2d"); x.clearRect(0,0,16,16); const eq=questShop().eq;
-  const scrubs=(QUEST_SHOP.find(i=>i.id===eq.scrubs)||QUEST_SHOP[0]).val, hat=(QUEST_SHOP.find(i=>i.id===eq.hat)||{}).val;
-  const pal={h:"#2b1b14",s:"#8d5a3b",e:"#1a1020",m:"#5a2f22",c:"#f2f2f7",k:"#c9c9d6",u:scrubs,t:"#9aa3b8",p:scrubs,b:"#2a2440",a:hat||"#2b1b14"};
-  QUEST_SPRITE.forEach((row,y)=>[...row].forEach((ch,xx)=>{ if(ch==="."||(ch==="a"&&!hat)) return; x.fillStyle=pal[ch]; x.fillRect(xx,y,1,1); }));
-}
-
-// ── Render ──
-const qEsc = t => String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-const qFmtDate = d => d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
-let questStage = null;
-function renderJourney(){
-  const el = document.getElementById("tab-journey"); if (!el) return;
-  const shop = questShop(), earned = questEarned(), bal = Math.max(0, earned - shop.spent), lv = questLevel(earned);
-  const lo = questLevelFloor(lv), hi = questLevelFloor(lv+1);
-  const yr = currentYear, cips = questAllCips(), cleared = questClearedCount(yr);
-  const today = new Date(); today.setHours(0,0,0,0);
-  const cct = new Date(QUEST_CCT);
-  const stars = cips.reduce((a,x)=> a + (x.g.entrustType==="level" ? (parseInt(getCipEntrust(x.c.id))||0) : (questSat(x.c.id,yr)?1:0)), 0);
-  const theme = (QUEST_SHOP.find(i=>i.id===shop.eq.theme)||{}).val || "";
-  const muted = questLocal("muted", false), gaps = questLocal("gaps", false);
-  if (!questStage || !CIP_GROUPS.some(g=>g.label===questStage)) questStage = (CIP_GROUPS.find(g=>g.tabId!=="cips-gim" && g.entrustType==="level")||CIP_GROUPS[0]).label;
-
-  const worlds = YEARS.map((y,i)=>{
-    const d = getARCPDate(y), pct = Math.round(questClearedCount(y)/cips.length*100);
-    const days = Math.round((d - today)/864e5), cls = y===yr ? "cur" : pct===100 ? "done" : "";
-    return `<button class="q-node ${cls}" data-year="${y}" title="Switch to ${y}">${y===yr?'<canvas class="q-walker" width="16" height="16"></canvas>':""}<span class="q-plat"></span><span class="q-lbl">WORLD ${i+1} · ${y}</span><span class="q-sub">Boss: ARCP ${qFmtDate(d)}${days>=0?` · ${days}d`:" · done"}</span><span class="q-pct">${pct}% CLEARED</span></button><span class="q-link"></span>`;
-  }).join("") + `<div class="q-node"><svg class="q-castle" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="12" height="10" fill="#8f8ab8"/><rect x="2" y="4" width="2" height="2" fill="#8f8ab8"/><rect x="6" y="4" width="4" height="2" fill="#8f8ab8"/><rect x="12" y="4" width="2" height="2" fill="#8f8ab8"/><rect x="6" y="11" width="4" height="5" fill="#14112b"/><rect x="7" y="1" width="1" height="4" fill="#f4f1ff"/><rect x="8" y="1" width="3" height="2" fill="#ff6b6b"/></svg><span class="q-plat" style="background:#5b5585"></span><span class="q-lbl">CCT CASTLE</span><span class="q-sub">${qFmtDate(cct)} (tentative)</span></div>`;
-
-  const group = CIP_GROUPS.find(g=>g.label===questStage);
-  const tabs = CIP_GROUPS.map(g=>{ const done = g.cips.filter(c=>["clear","master"].includes(questState({c,g},yr))).length;
-    return `<button class="q-tab" role="tab" aria-selected="${g.label===questStage}" data-stage="${qEsc(g.label)}">${qEsc(g.label.replace(/ CiPs$/,""))} ${done}/${g.cips.length}</button>`; }).join("");
-  const prefix = group.label.startsWith("GENERIC") ? "G" : group.label.startsWith("RENAL") ? "R" : "M";
-  const tiles = group.cips.map((c,i)=>{
-    const x={c,g:group,i}, st=questState(x,yr), n=getCipCount(c.id,yr), min = gaps && (st==="clear"||st==="master");
-    let starHtml;
-    if (group.entrustType === "level") { const e=parseInt(getCipEntrust(c.id))||0, t=questTarget(c.id,yr);
-      starHtml = `<span class="q-stars" title="Entrustment L${e} · ${yr} target L${t}">${[1,2,3,4].map(k=>`<span class="${k<=e?"on":k===t?"tgt":""}">${k<=e?"★":"☆"}</span>`).join("")}</span>`; }
-    else starHtml = `<span class="q-stars">${questSat(c.id,yr)?'<span class="on">⚑ SAT</span>':'⚑ —'}</span>`;
-    return `<button class="q-lvl ${st} ${min?"min":""}" data-cip="${c.id}" aria-label="${qEsc(c.label)}, ${st}">
-      <span class="q-blk">${prefix}-${i+1}</span><span class="q-nm">${qEsc(c.label)}</span>
-      <span class="q-meta"><span class="q-pips">${[0,1,2].map(k=>`<i class="${k<n?"on":""}"></i>`).join("")}</span><span>${n}/${CIP_EVID_TARGET}</span>${starHtml}</span></button>`;
-  }).join("");
-
-  const shopHtml = QUEST_SHOP.map(it=>{ const own=shop.owned.includes(it.id), eq=shop.eq[it.slot]===it.id;
-    const sw = (it.slot==="scrubs"||it.slot==="hat") ? `<span class="q-sw" style="background:${it.val||"transparent"}"></span>` : "";
-    return `<div class="q-item ${eq?"eq":""}"><span class="q-cat">${it.cat}</span><span class="q-inm">${it.nm}</span>${sw}
-      ${own ? `<button class="q-btn ${eq?"alt":""}" data-equip="${it.id}" ${eq?"disabled":""}>${eq?"EQUIPPED":"EQUIP"}</button>`
-            : `<button class="q-btn" data-buy="${it.id}" ${bal<it.price?"disabled":""}><span class="q-coin"></span>${it.price}</button>`}</div>`; }).join("");
-
-  el.innerHTML = `<div class="q-root ${theme}">
-    <header class="q-box q-hud">
-      <div class="q-who"><canvas class="q-avatar" width="16" height="16" aria-label="Your avatar"></canvas>
-        <div><div class="q-name">DR MAUGO</div><div class="q-title">Lv ${lv} · ${questTitle(lv)}</div><div class="q-xp" title="${earned - lo} / ${hi - lo} to next level"><i style="width:${Math.round((earned-lo)/(hi-lo)*100)}%"></i></div></div></div>
-      <div class="q-stats">
-        <div class="q-stat"><b><span class="q-coin"></span>${bal.toLocaleString()}</b><span>Coins</span></div>
-        <div class="q-stat"><b>${cleared}/${cips.length}</b><span>Cleared ${yr}</span></div>
-        <div class="q-stat"><b>${stars}</b><span>Stars</span></div>
-        <div class="q-stat"><b>${Math.max(0,Math.round((cct-today)/864e5)).toLocaleString()}</b><span>Days to CCT</span></div>
-      </div>
-      <button class="q-mute" data-mute aria-pressed="${muted}">${muted?"♪ OFF":"♪ ON"}</button>
-    </header>
-    <section class="q-box q-path" aria-label="Training journey"><div class="q-note">Your road to CCT · tap a world to switch year · ARCP dates come from Admin</div><div class="q-track">${worlds}</div></section>
-    <section class="q-box">
-      <div class="q-bar"><div class="q-tabs" role="tablist">${tabs}</div><label class="q-toggle"><input type="checkbox" id="q-gaps" ${gaps?"checked":""}> Gaps only</label></div>
-      <div class="q-legend"><span><i style="background:var(--q-lock)"></i>Locked · 0</span><span><i style="background:var(--q-sky)"></i>In progress · 1–2</span><span><i style="background:var(--q-grass)"></i>Cleared · 3+</span><span><i style="background:var(--q-star)"></i>Mastered · ES at target</span></div>
-      <div class="q-grid">${tiles}</div>
-      <p class="q-note">${yr} · tap a level to add evidence (+3) or set entrustment (+15 per ★). Red ☆ = this year's target.</p>
-    </section>
-    <div class="q-cols">
-      <section class="q-box"><h3>HOW COINS ARE EARNED</h3><table class="q-rules">${QUEST_RULES.map(([t,v])=>`<tr><td>${t}</td><td>+${v}</td></tr>`).join("")}</table>
-        <p class="q-note">Coins land wherever you log, in any tab. Lifetime coins: ${earned.toLocaleString()} · spent: ${shop.spent.toLocaleString()}</p></section>
-      <section class="q-box"><h3>ITEM SHOP</h3><p class="q-note" style="margin-top:0">Spending never lowers your level.</p><div class="q-shop">${shopHtml}</div></section>
-    </div>
-  </div>`;
-
-  el.querySelectorAll("canvas.q-avatar, canvas.q-walker").forEach(questDrawAvatar);
-  el.querySelector("[data-mute]").onclick = () => { questLocalSet("muted", !questLocal("muted", false)); renderJourney(); };
-  el.querySelector("#q-gaps").onchange = e => { questLocalSet("gaps", e.target.checked); renderJourney(); };
-  el.querySelectorAll("[data-year]").forEach(b => b.onclick = () => { if (b.dataset.year !== currentYear) questSwitchYear(b.dataset.year); });
-  el.querySelectorAll("[data-stage]").forEach(b => b.onclick = () => { questStage = b.dataset.stage; renderJourney(); });
-  el.querySelectorAll("[data-cip]").forEach(b => b.onclick = () => questOpenLevel(b.dataset.cip));
-  el.querySelectorAll("[data-buy]").forEach(b => b.onclick = () => {
-    const it = QUEST_SHOP.find(i=>i.id===b.dataset.buy), s = questShop(), have = Math.max(0, questEarned() - s.spent);
-    if (have < it.price) { QSFX.nope(); return; }
-    s.spent += it.price; if (!s.owned.includes(it.id)) s.owned.push(it.id); s.eq[it.slot] = it.id; questSaveShop(s);
-    QSFX.buy(); qPop("-" + it.price); renderJourney(); });
-  el.querySelectorAll("[data-equip]").forEach(b => b.onclick = () => { const it = QUEST_SHOP.find(i=>i.id===b.dataset.equip), s = questShop(); s.eq[it.slot] = it.id; questSaveShop(s); QSFX.coin(); renderJourney(); });
-}
-
-// Switch training year from the map without blocking the tap: the Journey redraws immediately,
-// the rest of the app (hidden tabs, header, readiness) refreshes just after the frame is painted.
-let _qYearTimer = null;
-function questSwitchYear(yr){
-  currentYear = yr;
-  localStorage.setItem("pft_current_year", yr);
-  renderYearBtns();
-  const sb = document.getElementById("sb-year"); if (sb) sb.textContent = yr;
-  const d = document.getElementById("q-drawer"); if (d) d.hidden = true;
-  renderJourney();
-  clearTimeout(_qYearTimer);
-  _qYearTimer = setTimeout(() => {
-    requestAnimationFrame(() => { window._qSkipJourney = true; try { renderAll(); } finally { window._qSkipJourney = false; } });
-  }, 120);
-}
-function questOpenLevel(id){
-  const x = questAllCips().find(q => q.c.id === id); if (!x) return;
-  let d = document.getElementById("q-drawer");
-  if (!d) { d = document.createElement("div"); d.id = "q-drawer"; d.className = "q-drawer"; document.body.appendChild(d); }
-  const yr = currentYear, picks = getCipPicks(id, yr), n = getCipCount(id, yr), st = questState(x, yr);
-  const types = [...x.c.evidence, ...Object.keys(picks).filter(t => !x.c.evidence.includes(t) && picks[t] > 0)];
-  const ent = parseInt(getCipEntrust(id)) || 0, tgt = questTarget(id, yr);
-  const prefix = x.g.label.startsWith("GENERIC") ? "G" : x.g.label.startsWith("RENAL") ? "R" : "M";
-  d.innerHTML = `<div class="q-din">
-    <button class="q-btn alt" data-close style="align-self:flex-end">✕ CLOSE</button>
-    <h2>${prefix}-${x.i+1} · ${qEsc(x.c.label)}</h2>
-    <div class="q-note">${yr} · ${n}/${CIP_EVID_TARGET} evidence · ${({master:"MASTERED",clear:"CLEARED",prog:"IN PROGRESS",locked:"LOCKED"})[st]} · tap to add (+3)</div>
-    <div class="q-chips">${types.map(t=>`<button class="q-chip" data-t="${qEsc(t)}">${qEsc(t)}${picks[t]?` <b>${picks[t]}</b><span class="q-minus" data-minus="1" aria-label="Remove one">−</span>`:""}</button>`).join("")}</div>
-    <div class="q-note">Typed "Other" evidence is added from the CiPs tab.</div>
-    ${x.g.entrustType === "level"
-      ? `<div><div class="q-note">ES entrustment · ${yr} target L${tgt} (+15 per ★)</div><div class="q-starbtns">${[1,2,3,4].map(k=>`<button data-star="${k}" class="${k<=ent?"on":""}" aria-label="Level ${k}">★</button>`).join("")}</div></div>`
-      : `<div><button class="q-btn ${questSat(id,yr)?"alt":""}" data-sat>${questSat(id,yr)?"✓ SIGNED OFF · tap to undo":"MARK SATISFACTORY (+30)"}</button></div>`}
-  </div>`;
-  d.hidden = false;
-  d.querySelector("[data-close]").onclick = () => { d.hidden = true; };
-  d.querySelectorAll(".q-chip").forEach(b => b.onclick = ev => {
-    const minus = ev.target.closest("[data-minus]");
-    addCipPick(id, b.dataset.t, minus ? -1 : 1);
-    questOpenLevel(id);
-  });
-  d.querySelectorAll("[data-star]").forEach(b => b.onclick = () => { const v = +b.dataset.star; const cur = parseInt(getCipEntrust(id)) || 0;
-    const nv = v === cur ? v - 1 : v; setCipEntrust(id, nv ? String(nv) : ""); questOpenLevel(id); });
-  const sb = d.querySelector("[data-sat]"); if (sb) sb.onclick = () => { setCipSat(id, !questSat(id,yr)); questOpenLevel(id); };
-}
-window.renderJourney = renderJourney;
-
 </script>
 
 
