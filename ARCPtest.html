@@ -647,6 +647,7 @@
     .q-stat > span{font-size:11px;color:var(--q-mute);text-transform:uppercase;letter-spacing:.08em}
     .q-coin{display:inline-block;width:13px;height:13px;background:var(--q-coin);border:2px solid #8a5a00;border-radius:50%;vertical-align:-1px;margin-right:4px;animation:q-spin 1.2s steps(4) infinite}
     @keyframes q-spin{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.2)}}
+    .q-shop .q-coin, .q-drawer .q-coin{animation:none}
     .q-mute{background:var(--q-panel2);border:3px solid var(--q-edge);padding:8px 10px;font-family:var(--q-pixel);font-size:11px}
     .q-path{overflow-x:auto}
     .q-track{display:flex;align-items:flex-end;min-width:660px;padding-top:58px}
@@ -671,7 +672,9 @@
     .q-legend i{display:inline-block;width:12px;height:12px;margin-right:5px;vertical-align:-1px;border:2px solid var(--q-edge)}
     .q-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
     .q-lvl{position:relative;text-align:left;background:var(--q-panel2);border:3px solid var(--q-edge);padding:10px 10px 10px 54px;min-height:94px;display:flex;flex-direction:column;gap:5px;box-shadow:inset -3px -3px 0 rgba(0,0,0,.35)}
-    .q-lvl:hover{transform:translateY(-2px)}
+    @media (hover:hover) and (pointer:fine){ .q-lvl:hover{filter:brightness(1.12)} .q-node:hover .q-plat{filter:brightness(1.15)} }
+    .q-lvl:active{transform:translateY(1px)}
+    .q-root button, .q-drawer button, .q-root input{touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
     .q-blk{position:absolute;left:8px;top:10px;width:36px;height:36px;display:grid;place-items:center;font-family:var(--q-pixel);font-size:11px;border:3px solid var(--q-edge);box-shadow:inset -3px -3px 0 rgba(0,0,0,.3),inset 3px 3px 0 rgba(255,255,255,.25)}
     .q-lvl.locked .q-blk{background:var(--q-lock);color:var(--q-ink)}
     .q-lvl.prog .q-blk{background:var(--q-sky);color:var(--q-night)}
@@ -1126,7 +1129,7 @@ function renderAll() {
   updateDopsCount();
   if (currentTab === "cips") renderCIPs();
   if (currentTab === "logbook") renderLogbook();
-  if (currentTab === "journey") renderJourney();
+  if (currentTab === "journey" && !window._qSkipJourney) renderJourney();
 }
 
 function renderOutcomeSelector(el) {
@@ -4544,7 +4547,7 @@ function renderJourney(){
   el.querySelectorAll("canvas.q-avatar, canvas.q-walker").forEach(questDrawAvatar);
   el.querySelector("[data-mute]").onclick = () => { questLocalSet("muted", !questLocal("muted", false)); renderJourney(); };
   el.querySelector("#q-gaps").onchange = e => { questLocalSet("gaps", e.target.checked); renderJourney(); };
-  el.querySelectorAll("[data-year]").forEach(b => b.onclick = () => { if (b.dataset.year !== currentYear) { setYear(b.dataset.year); setTab("journey"); } });
+  el.querySelectorAll("[data-year]").forEach(b => b.onclick = () => { if (b.dataset.year !== currentYear) questSwitchYear(b.dataset.year); });
   el.querySelectorAll("[data-stage]").forEach(b => b.onclick = () => { questStage = b.dataset.stage; renderJourney(); });
   el.querySelectorAll("[data-cip]").forEach(b => b.onclick = () => questOpenLevel(b.dataset.cip));
   el.querySelectorAll("[data-buy]").forEach(b => b.onclick = () => {
@@ -4555,6 +4558,21 @@ function renderJourney(){
   el.querySelectorAll("[data-equip]").forEach(b => b.onclick = () => { const it = QUEST_SHOP.find(i=>i.id===b.dataset.equip), s = questShop(); s.eq[it.slot] = it.id; questSaveShop(s); QSFX.coin(); renderJourney(); });
 }
 
+// Switch training year from the map without blocking the tap: the Journey redraws immediately,
+// the rest of the app (hidden tabs, header, readiness) refreshes just after the frame is painted.
+let _qYearTimer = null;
+function questSwitchYear(yr){
+  currentYear = yr;
+  localStorage.setItem("pft_current_year", yr);
+  renderYearBtns();
+  const sb = document.getElementById("sb-year"); if (sb) sb.textContent = yr;
+  const d = document.getElementById("q-drawer"); if (d) d.hidden = true;
+  renderJourney();
+  clearTimeout(_qYearTimer);
+  _qYearTimer = setTimeout(() => {
+    requestAnimationFrame(() => { window._qSkipJourney = true; try { renderAll(); } finally { window._qSkipJourney = false; } });
+  }, 120);
+}
 function questOpenLevel(id){
   const x = questAllCips().find(q => q.c.id === id); if (!x) return;
   let d = document.getElementById("q-drawer");
