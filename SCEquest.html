@@ -39,7 +39,9 @@
   signInAnonymously(getAuth(app)).catch(e => console.warn("auth", e)).finally(() => {
     fire("q-topics", "sceData/topics"); fire("q-quest", "sceData/quest"); fire("q-bx", "sceData/biopsyLog");
     fire("q-arcp", "arcpData"); fire("q-cfg", "sceConfig/topics");
-    fire("q-ksap", "sceData/ksap"); fire("q-kbank", "sceConfig/ksap");
+    const fireK = (name, path) => onValue(ref(db, path), s => window.dispatchEvent(new CustomEvent(name, { detail: s.val() })),
+      e => window.dispatchEvent(new CustomEvent("q-kerr", { detail: path + ": " + (e && e.message || e) })));   // a KSAP problem never stalls the rest
+    fireK("q-ksap", "sceData/ksap"); fireK("q-kbank", "sceConfig/ksap");
   });
 </script>
 
@@ -114,7 +116,7 @@ canvas.walker{position:absolute;top:-50px;width:42px;height:42px;image-rendering
 .node.final.open .castle{filter:drop-shadow(0 0 4px var(--coin))}
 .kbf{position:absolute;top:-16px;right:6%;font-size:14px;line-height:1;color:var(--mute)} .kbf.k2{color:var(--coin)} .kbf.k1{color:var(--sky)}
 .wcastle{margin-top:18px;background:var(--night);border:3px solid #4a2470;padding:10px}
-.wcastle.dead{border-color:var(--star)}
+.wcastle.dead{border-color:var(--star)} .kerr{color:var(--alert)}
 .wcastle .bossrow{align-items:flex-start}
 .kboss{width:72px;height:72px;flex:none;animation:bob 1s steps(2) infinite}
 .wcastle.dead .kboss{animation:none;transform:rotate(90deg)}
@@ -259,6 +261,9 @@ details summary{cursor:pointer;margin:8px 0 0}
 .rules{width:100%;border-collapse:collapse;font-size:13px}
 .rules td{padding:5px 4px;border-bottom:2px dotted rgba(167,160,214,.3)}
 .rules td:last-child{text-align:right;font-family:var(--pixel);color:var(--coin);white-space:nowrap}
+.rules td:nth-child(2),.rules td:nth-child(3){text-align:right;white-space:nowrap;color:var(--mute);font-size:12px}
+.rules tr.zero td{opacity:.5} .rules tr.rh td{font-size:10px;color:var(--mute);font-family:var(--pixel)}
+.rules tr.rt td{border-bottom:none;font-weight:600;padding-top:8px}
 
 /* FX */
 .pop{position:fixed;font-family:var(--pixel);font-size:17px;color:var(--coin);pointer-events:none;z-index:70;animation:popup .9s steps(9) forwards;text-shadow:2px 2px 0 var(--edge)}
@@ -297,7 +302,7 @@ details summary{cursor:pointer;margin:8px 0 0}
       <button class="sbtn hunt" data-act="hunt" id="huntBtn">👻 HUNT</button>
       <button class="sbtn" data-act="mute" id="mute">♪ ON</button>
       <button class="sbtn" data-act="shop">🛒 SHOP</button>
-      <a class="sbtn" href="journey.html">ARCP ↗</a>
+      <a class="sbtn" href="quest.html">ARCP ↗</a>
       <div class="sync" id="sync">● connecting</div>
     </div>
   </header>
@@ -496,7 +501,7 @@ const kbSlain = (w, n) => kbPhase(w, n).won;
 const gatesOpen = () => WORLDS.length > 0 && WORLDS.filter(wbossOf).length >= WBOSS.length && WORLDS.filter(wbossOf).every(w => kbSlain(w, 2));
 const princessSaved = () => !!(Q().sce || {}).passed;
 function syncKBoss(){   // save any newly finished, winning pass and celebrate it
-  if (!allLoaded()) return;
+  if (!kbReady()) return;
   const pairs = [], wins = [], gatesBefore = gatesOpen();
   WORLDS.forEach(w => { const b = wbossOf(w); if (!b) return; const st = ksapStats(w);
     [1, 2].forEach(n => { const ph = kbPhase(w, n, st); if (!ph.rec && ph.done && ph.score >= KB_PASS[n]){
@@ -534,11 +539,15 @@ const arcpEarned = () => parseInt(raw("pft_quest_arcp_earned"), 10) || 0;
 function shop(){ try { const o = JSON.parse(raw("pft_quest_shop") || "null"); if (o && typeof o === "object") return { spent:+o.spent||0, owned:Array.isArray(o.owned)?o.owned:SHOP_DEFAULT.owned.slice(), eq:Object.assign({}, SHOP_DEFAULT.eq, o.eq||{}) }; } catch(e){}
   return JSON.parse(JSON.stringify(SHOP_DEFAULT)); }
 function setArcp(k, val){ S.arcp = Object.assign({}, S.arcp, { [k]: { value:String(val), ts:now() } }); local.set("arcp", S.arcp); if (window.QFB) window.QFB.arcp(k, val); }
-const balance = t => Math.max(0, arcpEarned() + (t || tally()).sce - shop().spent);
+// Until the updated ARCP Quest has been opened once, its coins are unknown here but its spending is not, which would zero the wallet.
+// So show this game's coins on their own and hold purchases until ARCP Quest has reported in.
+const arcpSynced = () => raw("pft_quest_arcp_earned") !== null;
+const balance = t => arcpSynced() ? Math.max(0, arcpEarned() + (t || tally()).sce - shop().spent) : (t || tally()).sce;
 const levelFor = xp => { let l = 1; while (45*l*(l+1) <= xp) l++; return l; };
 const floorFor = l => 45*(l-1)*l;
 const titleFor = l => TITLES[Math.min(l-1, TITLES.length-1)];
-const allLoaded = () => S.got.topics && S.got.quest && S.got.bx && S.got.arcp && S.got.cfg && S.got.ksap && S.got.kbank;
+const allLoaded = () => S.got.topics && S.got.quest && S.got.bx && S.got.arcp && S.got.cfg;
+const kbReady = () => allLoaded() && S.got.ksap && S.got.kbank;   // the world bosses wait for your KSAP data; nothing else does
 function publishEarned(t){   // only once every node has loaded, so a half-loaded total is never written
   if (!allLoaded() || !window.QFB) return;
   if (raw("pft_quest_sce_earned") !== String(t.sce)){ S.arcp = Object.assign({}, S.arcp, { pft_quest_sce_earned: { value:String(t.sce), ts:now() } }); window.QFB.arcp("pft_quest_sce_earned", t.sce); }
@@ -595,7 +604,7 @@ function examDays(){ const d = raw("pft_eseneph_date") || SCE_DATE; if (!d) retu
 function renderHUD(t){
   t = t || tally(); const sh = shop(), lv = levelFor(t.sce), lo = floorFor(lv), hi = floorFor(lv+1);   // level: this game's coins only
   document.body.className = (SHOP.find(i=>i.id===sh.eq.theme)||{}).val || "";
-  $("coins").textContent = balance(t).toLocaleString();
+  $("coins").textContent = balance(t).toLocaleString() + (arcpSynced() ? "" : "*");
   $("ttl").textContent = `Lv ${lv} · ${titleFor(lv)}`;
   $("xp").style.transform = `scaleX(${Math.min(1,(t.sce-lo)/(hi-lo))})`;
   $("documented").textContent = `${t.cleared}/${LEVELS.length}`;
@@ -605,7 +614,7 @@ function renderHUD(t){
   const ed = examDays(); $("exam").textContent = ed === null ? "?" : ed >= 0 ? ed.toLocaleString() : "DONE";
   $("examLbl").textContent = ed === null ? "SCE date?" : "Days to SCE";
   $("mute").textContent = S.muted ? "♪ OFF" : "♪ ON";
-  $("lifetime").textContent = `SCE Quest ${t.sce.toLocaleString()} (your level here) + ARCP Quest ${arcpEarned().toLocaleString()} = ${(t.sce + arcpEarned()).toLocaleString()} lifetime · spent ${sh.spent.toLocaleString()} on items and treats`;
+  $("lifetime").textContent = !arcpSynced() ? `* Showing SCE Quest coins only (${t.sce.toLocaleString()}). The shared wallet needs ARCP Quest to report its coins: open the latest ARCP Quest (quest.html) once and it syncs. Buying is paused until then, so nothing is overspent.` : `SCE Quest ${t.sce.toLocaleString()} (your level here) + ARCP Quest ${arcpEarned().toLocaleString()} = ${(t.sce + arcpEarned()).toLocaleString()} lifetime · spent ${sh.spent.toLocaleString()} on items and treats`;
   drawAvatar($("av"));
 }
 const kbFlag = w => { if (!wbossOf(w)) return ""; const n = (kbSlain(w,1)?1:0) + (kbSlain(w,2)?1:0); return `<span class="kbf k${n}" title="World boss: ${n}/2 phases">${n === 2 ? "⚑" : n === 1 ? "⚐" : ""}</span>`; };
@@ -651,8 +660,10 @@ function phaseHTML(w, n, st){
 function castleHTML(w){
   const b = wbossOf(w); if (!b) return "";
   const st = ksapStats(w), dead = kbSlain(w, 2);
+  const status = S.kerr ? `<div class="note kerr">Couldn't load your KSAP answers (${esc(S.kerr)}). Bosses you've already beaten still count.</div>`
+    : !(S.got.ksap && S.got.kbank) ? `<div class="note">Loading your KSAP answers…</div>` : "";
   return `<div class="wcastle ${dead ? "dead" : ""}"><div class="thead"><span class="tname">🏰 WORLD BOSS · ${b.name}</span><a class="note" href="SCE.html">KSAPs in SCE.html ↗</a></div>
-    <div class="bossrow">${KBOSS.replace('class="kboss"', `class="kboss" style="filter:hue-rotate(${WBOSS.indexOf(b)*36}deg)${dead ? " grayscale(1) opacity(.45)" : ""}"`)}<div class="kphs">${phaseHTML(w, 1, st)}${phaseHTML(w, 2, st)}</div></div></div>`;
+    ${status}<div class="bossrow">${KBOSS.replace('class="kboss"', `class="kboss" style="filter:hue-rotate(${WBOSS.indexOf(b)*36}deg)${dead ? " grayscale(1) opacity(.45)" : ""}"`)}<div class="kphs">${phaseHTML(w, 1, st)}${phaseHTML(w, 2, st)}</div></div></div>`;
 }
 function openFinal(){
   S.open = null; S.hunt = null; S.board = null; S.final = true;
@@ -768,8 +779,11 @@ const TREATS_HOST = {
   addSpent: d => { const sh = shop(); sh.spent = Math.max(0, sh.spent + d); setArcp("pft_quest_shop", JSON.stringify(sh)); },
   write: (k, v) => setArcp(k, v),
   after: () => { const tt = tally(); renderHUD(tt); renderShop(tt); } };
-function renderRules(){ $("rules").innerHTML = RULES.map(([,l,v]) => `<tr><td>${esc(l)}</td><td>+${v}</td></tr>`).join(""); }
-function renderAll(){ buildTaxonomy(); migrateCards(); stampReads(); syncKBoss(); const t = tally(); renderHUD(t); renderMap(); renderWorld(); renderBx(); renderShop(t); renderRules(); publishEarned(t);
+function renderRules(t){ t = t || tally();
+  const n = { read:t.read, first:t.sets, q:t.qs - t.sets, win:t.wins, boss:t.bosses, topic:t.topics, world:t.worlds, kb1:t.kb1, kb2:t.kb2, gates:t.gates, princess:t.princess, case:t.cases, week:t.weeks };
+  $("rules").innerHTML = `<tr class="rh"><td></td><td>each</td><td>you</td><td>coins</td></tr>` + RULES.map(([k,l,v]) => `<tr class="${n[k] ? "" : "zero"}"><td>${esc(l)}</td><td>+${v}</td><td>×${(n[k]||0).toLocaleString()}</td><td>${((n[k]||0)*v).toLocaleString()}</td></tr>`).join("")
+    + `<tr class="rt"><td>SCE Quest total</td><td></td><td></td><td>${t.sce.toLocaleString()}</td></tr>`; }
+function renderAll(){ buildTaxonomy(); migrateCards(); stampReads(); syncKBoss(); const t = tally(); renderHUD(t); renderMap(); renderWorld(); renderBx(); renderShop(t); renderRules(t); publishEarned(t);
   const typing = document.activeElement && $("drawer").contains(document.activeElement) && /^(TEXTAREA|INPUT|SELECT)$/.test(document.activeElement.tagName);
   if (!$("drawer").hidden && !typing){ if (S.open) openLevel(S.open, true); else if (S.hunt) renderHunt(); else if (S.board) renderBoard(); else if (S.final) openFinal(); } }
 let rq = 0; const scheduleRender = () => { if (rq) return; rq = requestAnimationFrame(() => { rq = 0; renderAll(); }); };
@@ -800,7 +814,7 @@ function act(change){
   WORLDS.forEach(w => { if (worldDone(w)) bWorlds.add(w.wi); w.topics.forEach(tp => { if (topicDone(tp)) bTopics.add(w.wi + "|" + tp.topic); }); });
   change();
   const a = tally(), diff = a.sce - b.sce;
-  renderHUD(a); renderMap(); renderWorld(); renderBx(); renderShop(a); publishEarned(a);
+  renderHUD(a); renderMap(); renderWorld(); renderBx(); renderShop(a); renderRules(a); publishEarned(a);
   if (diff > 0){ pop("+" + diff); diff >= 5 ? SFX.big() : SFX.coin(); } else if (diff < 0) SFX.down();
   let delay = 250;
   const newTopic = WORLDS.flatMap(w => w.topics.filter(tp => topicDone(tp) && !bTopics.has(w.wi + "|" + tp.topic)).map(tp => tp.topic));
@@ -916,6 +930,7 @@ document.addEventListener("click", ev => {
   if (ev.target.closest("#bxDrop")){ $("bxFile").click(); return; }
   const z = ev.target.closest("[data-zoom]"); if (z){ $("lightboxImg").src = z.src; $("lightbox").hidden = false; return; }
   const t = ev.target.closest("button"); if (!t) return;
+  if ((t.dataset.buy || t.dataset.treat) && !arcpSynced()){ SFX.nope(); toast("Open ARCP Quest once to sync the shared wallet, then you can buy."); return; }
   if (treatsClick(t)) return;
   const L = S.open ? BYQK[S.open] : null;
   if (t.dataset.buy){ const it = SHOP.find(i => i.id === t.dataset.buy), sh = shop(); if (!it || balance() < it.price){ SFX.nope(); return; }
@@ -1013,6 +1028,7 @@ window.addEventListener("q-arcp",   e => onNode("arcp", e.detail));
 window.addEventListener("q-cfg",    e => { S.cfg = e.detail || null; S.got.cfg = true; local.set("cfg", S.cfg); scheduleRender(); welcome(); });
 window.addEventListener("q-ksap",   e => onNode("ksap", e.detail));
 window.addEventListener("q-kbank",  e => { S.kbank = Array.isArray(e.detail) ? e.detail : null; S.got.kbank = true; local.set("kbank", S.kbank); scheduleRender(); welcome(); });
+window.addEventListener("q-kerr",   e => { S.kerr = String(e.detail || "unknown error"); console.warn("KSAP load", S.kerr); scheduleRender(); });
 window.addEventListener("q-offline", () => { $("sync").textContent = "● offline"; $("sync").className = "sync bad"; });
 let welcomed = false;
 function welcome(){   // coins from reading you ticked in the SCE app since you were last here
