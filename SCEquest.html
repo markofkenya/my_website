@@ -9,7 +9,6 @@
 <meta name="apple-mobile-web-app-title" content="SCE Quest" />
 <meta name="theme-color" content="#14112b" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="apple-touch-icon" href="journey-icon1.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
 <!-- Same Firebase project as SCE.html and ARCP Quest.
@@ -166,6 +165,29 @@ textarea{resize:vertical;min-height:58px}
 .qa .a.hide{color:transparent;text-shadow:0 0 9px rgba(244,241,255,.55);user-select:none}
 .huntbar{height:10px;background:var(--edge)} .huntbar i{display:block;height:100%;background:var(--boo);transform-origin:left;transition:transform .3s steps(6)}
 
+/* Questions + boss */
+.qrow{background:var(--night);border:3px solid var(--edge);padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.qq{font-weight:600;white-space:pre-wrap;overflow-wrap:anywhere}
+.qa2{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;margin-top:4px}
+.qmeta{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--mute)}
+.btn.mini{min-height:0;padding:4px 8px;font-size:10px}
+.hq{font-size:18px;font-weight:600;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--panel2);border:3px solid var(--edge);padding:12px}
+.bossfight{border-color:#4a2470} .bossfight.got{border-color:var(--star)}
+.bossrow{display:flex;gap:12px;align-items:center}
+.vamp{width:64px;height:64px;flex:none;animation:bob 1s steps(2) infinite}
+.bossfight.got .vamp{filter:grayscale(1) opacity(.45);animation:none;transform:rotate(90deg)}
+.hp{height:12px;background:var(--edge);margin:6px 0 4px;width:min(240px,50vw)}
+.hp i{display:block;height:100%;background:var(--alert);transform-origin:left;transition:transform .35s steps(8)}
+.bossin{display:flex;gap:8px;flex-wrap:wrap} .bossin select{flex:1 1 160px;width:auto} .bossin input{flex:0 1 110px;font-family:var(--body);font-size:16px;color:var(--ink);background:var(--night);border:3px solid var(--edge);padding:8px;border-radius:0;min-height:44px}
+.bossin .btn{flex:1 1 120px}
+.tries{display:flex;flex-direction:column;gap:4px}
+.try{display:flex;gap:10px;align-items:center;font-size:13px;background:var(--night);border:3px solid var(--edge);padding:5px 8px}
+.try b{font-family:var(--pixel);font-size:12px;color:var(--alert)} .try.win b{color:var(--grass)} .try .note{flex:1}
+.lvl .crown{margin-left:4px}
+.lvl .vampt{position:absolute;right:6px;top:-12px;width:28px;height:28px;animation:float 1.4s steps(2) infinite} .lvl .vampt.two{right:36px}
+.bossfight.awake{border-color:var(--alert)}
+.lvl.crowned{border-color:var(--star)}
+
 /* Bonus stage */
 .bxhead{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .pips{display:flex;gap:4px} .pips i{width:22px;height:22px;background:var(--edge);border:3px solid var(--edge)} .pips i.on{background:var(--coin)}
@@ -183,6 +205,8 @@ textarea{resize:vertical;min-height:58px}
 .lightbox{position:fixed;inset:0;background:rgba(11,9,32,.92);z-index:80;display:grid;place-items:center;padding:20px}
 .lightbox img{max-width:100%;max-height:90vh;border:3px solid var(--edge)}
 details summary{cursor:pointer;margin:8px 0 0}
+.bxbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:10px;border-top:2px dotted rgba(167,160,214,.3)}
+#bxSearch{font-family:var(--body);font-size:16px;color:var(--ink);background:var(--night);border:3px solid var(--edge);padding:8px;width:100%;border-radius:0;margin-top:10px}
 
 /* Shop (same look as ARCP Quest) */
 .shop{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
@@ -239,8 +263,8 @@ details summary{cursor:pointer;margin:8px 0 0}
     </div>
     <div class="stats">
       <div class="stat"><b><span class="coin"></span><span id="coins">–</span></b><span>Coins</span></div>
-      <div class="stat"><b id="documented">–</b><span>Cards</span></div>
-      <div class="stat"><b id="stars">–</b><span>Stars</span></div>
+      <div class="stat"><b id="documented">–</b><span>Levels</span></div>
+      <div class="stat"><b id="stars">–</b><span>Bosses</span></div>
       <div class="stat haunt"><b id="ghosts">–</b><span>Ghosts</span></div>
       <div class="stat"><b id="exam">–</b><span id="examLbl">To SCE</span></div>
     </div>
@@ -260,7 +284,7 @@ details summary{cursor:pointer;margin:8px 0 0}
 
   <section class="box" aria-label="Levels">
     <div class="bar"><div class="wtitle" id="wtitle"></div><label class="toggle"><input type="checkbox" id="gaps"> Gaps only</label></div>
-    <div class="legend"><span><i style="background:var(--lock)"></i>Not started</span><span><i style="background:var(--sky)"></i>★ Read</span><span><i style="background:var(--grass)"></i>★★ Card written</span><span><i style="background:var(--star)"></i>★★★ Recalled</span><span>👻 Due for recall</span></div>
+    <div class="legend"><span><i style="background:var(--lock)"></i>Not started</span><span><i style="background:var(--sky)"></i>★ Read</span><span><i style="background:var(--grass)"></i>★★ Questions set</span><span><i style="background:var(--star)"></i>★★★ All recalled</span><span>👻 Due</span><span>🧛 Boss awake</span><span>👑 Boss beaten</span></div>
     <p class="note" id="wnote" style="margin:4px 0 0"></p>
     <div id="topics"></div>
   </section>
@@ -275,6 +299,8 @@ details summary{cursor:pointer;margin:8px 0 0}
       <div class="field wide"><div class="drop" id="bxDrop">Tap to add an image (optional)<img id="bxPrev" alt="" hidden></div><input type="file" id="bxFile" accept="image/*" hidden></div>
       <div class="brow wide"><button class="btn" data-act="bxSave" id="bxSave">SAVE CASE +3</button><button class="btn alt" data-act="bxClear">CLEAR</button></div>
     </div>
+    <div class="bxbar"><button class="btn alt" id="bxToggle" data-act="bxToggle" aria-expanded="false"></button><span class="note" id="bxLast"></span></div>
+    <input type="search" id="bxSearch" placeholder="Search diagnosis or features" aria-label="Search saved cases" hidden>
     <div id="bxList"></div>
   </section>
 
@@ -301,8 +327,13 @@ const SHORT = {"Sodium and Water Abnormalities":"Na & Water","Acid–Base and Po
 const SOURCES = [["ohb","OHB"],["online","Online"],["ccn","CCN"],["kdigo","KDIGO"],["ksap","KSAP"],["prn","StudyPRN"]];
 const RECALL_DAYS = [3, 7, 21, 45, 90];     // gap before the next recall, by number of recalls in a row
 const MISS_DAYS = 1;                        // a missed recall comes back tomorrow
-const RULES = [["read","Subtopic read (★)",1],["card","Learning card written (★★)",5],["win","Ghost busted · correct recall (★★★)",3],
-  ["topic","Topic clear · every subtopic has a card",10],["world","World clear · every subtopic in a category has a card",50],
+// The optional boss on every subtopic. He wakes 3 days after you read it; beat him with 80% or more from one of your own
+// study methods. You can also dare him early: a win clears the whole subtopic, so topics you already know get cleared fast.
+const BOSS = { name:"COUNT GLOMERULA", pass:80, wakeDays:3, methods:[["feynman","Feynman"],["study2","Study² Protocol"],["review","Nephrology review"]] };
+const scoreLabel = n => n >= 85 ? "Expert" : n >= 70 ? "Confident" : n >= 60 ? "Somewhat Confident" : n >= 40 ? "Building Knowledge" : "Needs More Practice";
+const RULES = [["read","Subtopic read (★)",1],["q","Each question you write (★★)",1],["win","Ghost busted · correct recall",3],
+  ["boss","Count Glomerula defeated · 80% or more · clears the subtopic (👑)",20],
+  ["topic","Topic clear · every subtopic has a question or a 👑",10],["world","World clear · every subtopic in a category cleared",50],
   ["case","Pathology case logged",3],["week","Bonus stage clear · 3 cases in a week",10]];
 const R = Object.fromEntries(RULES.map(r => [r[0], r[2]]));
 // This game's own titles and level curve (SCE Slayer at about 4,000 coins: every subtopic carded and recalled once)
@@ -325,7 +356,7 @@ const local = { get(k,d){ try{ const v=localStorage.getItem("sce_quest_"+k); ret
                 set(k,v){ try{ localStorage.setItem("sce_quest_"+k, JSON.stringify(v)); }catch(e){} } };
 const S = { topics: local.get("topics", {}), quest: local.get("quest", {}), bx: local.get("bx", {}), arcp: local.get("arcp", {}), cfg: local.get("cfg", null),
             got: { topics:false, quest:false, bx:false, arcp:false }, view: local.get("view", 0), gaps: local.get("gaps", false), muted: local.get("muted", false),
-            open: null, hunt: null, img: null, confirm: null };
+            open: null, hunt: null, img: null, confirm: null, bxOpen: local.get("bxOpen", false) };
 const $ = id => document.getElementById(id);
 const esc = t => String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 const DAY = 864e5, now = () => Date.now();
@@ -355,21 +386,46 @@ function buildTaxonomy(){
 
 // ── Per-level progress ──
 const Q = () => S.quest || {};
-const card = L => (Q().cards || {})[L.qk] || null;
-const recall = L => (Q().recall || {})[L.qk] || null;
+const card = L => (Q().cards || {})[L.qk] || null;                 // reading sources live here
+function questions(L){ const o = (Q().qs || {})[L.qk] || {};
+  return Object.entries(o).filter(([,q]) => q && String(q.q||"").trim()).map(([id,q]) => Object.assign({ id }, q)).sort((a,b) => (a.ts||0) - (b.ts||0)); }
 function isRead(L){ const own = (Q().read || {})[L.qk]; if (own === true || own === false) return own;
   const d = (S.topics || {})[L.st] || {}; return !!(d.read || d.reviewed); }
-const hasCard = L => { const c = card(L); return !!(c && String(c.mech||"").trim()); };
-const recalled = L => ((recall(L) || {}).wins || 0) > 0;
-const starsOf = L => (isRead(L)?1:0) + (hasCard(L)?1:0) + (recalled(L)?1:0);
-function stateOf(L){ if (hasCard(L)) return recalled(L) ? "master" : "clear"; return isRead(L) ? "prog" : "locked"; }
-function dueAt(L){ if (!hasCard(L)) return null; const r = recall(L), c = card(L);
-  if (r && r.last){ if (r.ok === false) return r.last + MISS_DAYS*DAY; return r.last + RECALL_DAYS[Math.min(r.streak||0, RECALL_DAYS.length-1)]*DAY; }
-  return (c.ts || now()) + RECALL_DAYS[0]*DAY; }
+const hasQs = L => questions(L).length > 0;
+const recalled = L => { const qs = questions(L); return qs.length > 0 && qs.every(q => (q.wins||0) > 0); };
+const bossTries = L => Object.entries((Q().boss || {})[L.qk] || {}).filter(([,a]) => a && a.score != null).map(([id,a]) => Object.assign({ id }, a)).sort((a,b) => (b.ts||0) - (a.ts||0));
+const bestScore = L => bossTries(L).reduce((m,a) => Math.max(m, +a.score||0), -1);
+const mastered = L => bestScore(L) >= BOSS.pass;
+const cleared = L => hasQs(L) || mastered(L);          // a boss win clears a subtopic even with no questions
+const readAt = L => (Q().readTs || {})[L.qk] || null;
+const bossAwake = L => !mastered(L) && isRead(L) && !!readAt(L) && now() >= readAt(L) + BOSS.wakeDays*DAY;
+const starsOf = L => mastered(L) ? 3 : (isRead(L)?1:0) + (hasQs(L)?1:0) + (recalled(L)?1:0);
+function stateOf(L){ if (mastered(L)) return "master"; if (hasQs(L)) return recalled(L) ? "master" : "clear"; return isRead(L) ? "prog" : "locked"; }
+function qDue(q){ if (q.last){ if (q.ok === false) return q.last + MISS_DAYS*DAY; return q.last + RECALL_DAYS[Math.min(q.streak||0, RECALL_DAYS.length-1)]*DAY; }
+  return (q.ts || now()) + RECALL_DAYS[0]*DAY; }
+const dueQs = L => questions(L).filter(q => qDue(q) <= now());
+function dueAt(L){ const qs = questions(L); return qs.length ? Math.min(...qs.map(qDue)) : null; }
 const isDue = L => { const d = dueAt(L); return d !== null && d <= now(); };
-const ghosts = (list = LEVELS) => list.filter(isDue).sort((a,b) => dueAt(a) - dueAt(b));
-const topicDone = tp => tp.levels.length > 0 && tp.levels.every(hasCard);
-const worldDone = w => w.levels.length > 0 && w.levels.every(hasCard);
+function ghosts(list = LEVELS){ const out = []; list.forEach(L => questions(L).forEach(q => { const d = qDue(q); if (d <= now()) out.push({ qk:L.qk, id:q.id, d, L }); }));
+  return out.sort((a,b) => a.d - b.d); }
+const topicDone = tp => tp.levels.length > 0 && tp.levels.every(cleared);
+const worldDone = w => w.levels.length > 0 && w.levels.every(cleared);
+// Subtopics ticked as read before this version (or in the SCE app) have no read date: start their 3-day clock now, once.
+let stamped = false;
+function stampReads(){ if (stamped || !allLoaded()) return; stamped = true;
+  const pairs = LEVELS.filter(L => isRead(L) && !readAt(L) && !mastered(L)).map(L => setQuest("readTs/" + L.qk, now()));
+  if (pairs.length) write(pairs); }
+// One-off: an earlier version stored a mechanism / number / trap card. Turn any of those into questions so nothing is lost.
+let migrated = false;
+function migrateCards(){
+  if (migrated || !allLoaded()) return; migrated = true; const pairs = [];
+  Object.entries(Q().cards || {}).forEach(([qk, c]) => { if (!c) return;
+    const parts = [["What's the key mechanism?", c.mech], ["What's the number or threshold that matters?", c.num], ["What's the trap they set?", c.trap]].filter(([,a]) => a && String(a).trim());
+    if (!parts.length) return; const r = (Q().recall || {})[qk] || {};
+    parts.forEach(([q,a], i) => pairs.push(setQuest(`qs/${qk}/m${i}`, { q, a, ts: c.ts || now(), last: r.last || 0, streak: r.streak || 0, wins: i ? 0 : (r.wins || 0), misses: r.misses || 0, ok: r.ok === false ? false : true })));
+    pairs.push(setQuest(`cards/${qk}/mech`, null), setQuest(`cards/${qk}/num`, null), setQuest(`cards/${qk}/trap`, null), setQuest(`recall/${qk}`, null)); });
+  if (pairs.length) write(pairs);
+}
 
 // ── Pathology bonus stage (same records as SCEtopics: {dx, feat, caseNo, img, ts, week}) ──
 function isoWeekKey(d){ const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = dt.getUTCDay() || 7; dt.setUTCDate(dt.getUTCDate() + 4 - day);
@@ -379,11 +435,13 @@ function bxWeeksCleared(){ const per = {}; cases().forEach(([,r]) => { const k =
 
 // ── Coins: derived from data every time ──
 function tally(){
-  const t = { read:0, cards:0, wins:0, topics:0, worlds:0, cases:0, weeks:0, stars:0 };
-  LEVELS.forEach(L => { if (isRead(L)) t.read++; if (hasCard(L)) t.cards++; t.wins += (recall(L) || {}).wins || 0; t.stars += starsOf(L); });
+  const t = { read:0, cleared:0, qs:0, wins:0, bosses:0, awake:0, topics:0, worlds:0, cases:0, weeks:0, stars:0 };
+  LEVELS.forEach(L => { if (isRead(L)) t.read++; if (cleared(L)) t.cleared++; const qs = questions(L);
+    t.qs += qs.length; qs.forEach(q => t.wins += q.wins || 0);
+    if (mastered(L)) t.bosses++; if (bossAwake(L)) t.awake++; t.stars += starsOf(L); });
   WORLDS.forEach(w => { w.topics.forEach(tp => { if (topicDone(tp)) t.topics++; }); if (worldDone(w)) t.worlds++; });
   t.cases = cases().length; t.weeks = bxWeeksCleared();
-  t.sce = t.read*R.read + t.cards*R.card + t.wins*R.win + t.topics*R.topic + t.worlds*R.world + t.cases*R.case + t.weeks*R.week;
+  t.sce = t.read*R.read + t.qs*R.q + t.wins*R.win + t.bosses*R.boss + t.topics*R.topic + t.worlds*R.world + t.cases*R.case + t.weeks*R.week;
   return t;
 }
 // Shared wallet with ARCP Quest: lifetime = ARCP Quest's published total + this game's; spending lives in pft_quest_shop
@@ -441,6 +499,7 @@ function drawAvatar(cv){ const x=cv.getContext("2d"), eq=shop().eq; x.clearRect(
   const pal={h:"#2b1b14",s:"#8d5a3b",e:"#1a1020",m:"#5a2f22",c:"#f2f2f7",k:"#c9c9d6",u:scrubs,t:"#9aa3b8",p:scrubs,b:"#2a2440",a:hat||"#2b1b14"};
   SPRITE.forEach((row,y)=>[...row].forEach((ch,xx)=>{ if(ch==="."||(ch==="a"&&!hat)) return; x.fillStyle=pal[ch]; x.fillRect(xx,y,1,1); })); }
 const BOO = `<svg class="boo" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="2" width="8" height="1" fill="#0b0920"/><rect x="3" y="3" width="10" height="1" fill="#0b0920"/><rect x="2" y="4" width="12" height="9" fill="#0b0920"/><rect x="5" y="3" width="6" height="1" fill="#e9e6ff"/><rect x="4" y="4" width="8" height="1" fill="#e9e6ff"/><rect x="3" y="5" width="10" height="7" fill="#e9e6ff"/><rect x="2" y="13" width="2" height="1" fill="#0b0920"/><rect x="6" y="13" width="2" height="1" fill="#0b0920"/><rect x="10" y="13" width="2" height="1" fill="#0b0920"/><rect x="3" y="12" width="2" height="1" fill="#e9e6ff"/><rect x="7" y="12" width="2" height="1" fill="#e9e6ff"/><rect x="11" y="12" width="2" height="1" fill="#e9e6ff"/><rect x="5" y="6" width="2" height="2" fill="#0b0920"/><rect x="9" y="6" width="2" height="2" fill="#0b0920"/><rect x="6" y="9" width="4" height="1" fill="#ff6b6b"/></svg>`;
+const VAMP = `<svg class="vamp" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="7" width="12" height="9" fill="#2a1240"/><rect x="1" y="9" width="2" height="7" fill="#7a1530"/><rect x="13" y="9" width="2" height="7" fill="#7a1530"/><rect x="4" y="1" width="8" height="2" fill="#1a0f22"/><rect x="3" y="2" width="10" height="2" fill="#1a0f22"/><rect x="7" y="3" width="2" height="1" fill="#1a0f22"/><rect x="4" y="3" width="3" height="5" fill="#e8e0f0"/><rect x="9" y="3" width="3" height="5" fill="#e8e0f0"/><rect x="7" y="4" width="2" height="4" fill="#e8e0f0"/><rect x="5" y="4" width="1" height="1" fill="#ff3b3b"/><rect x="10" y="4" width="1" height="1" fill="#ff3b3b"/><rect x="6" y="6" width="4" height="1" fill="#7a1530"/><rect x="6" y="7" width="1" height="1" fill="#fff"/><rect x="9" y="7" width="1" height="1" fill="#fff"/><rect x="5" y="8" width="6" height="1" fill="#f4f1ff"/><rect x="7" y="9" width="2" height="4" fill="#c8102e"/></svg>`;
 const CASTLE = `<svg class="castle" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="12" height="10" fill="#8f8ab8"/><rect x="2" y="4" width="2" height="2" fill="#8f8ab8"/><rect x="6" y="4" width="4" height="2" fill="#8f8ab8"/><rect x="12" y="4" width="2" height="2" fill="#8f8ab8"/><rect x="6" y="11" width="4" height="5" fill="#14112b"/><rect x="7" y="1" width="1" height="3" fill="#f4f1ff"/><rect x="8" y="1" width="3" height="2" fill="#ff6b6b"/><rect x="3" y="8" width="2" height="2" fill="#14112b"/><rect x="11" y="8" width="2" height="2" fill="#14112b"/></svg>`;
 
 // ── Render ──
@@ -452,8 +511,8 @@ function renderHUD(t){
   $("coins").textContent = balance(t).toLocaleString();
   $("ttl").textContent = `Lv ${lv} · ${titleFor(lv)}`;
   $("xp").style.transform = `scaleX(${Math.min(1,(t.sce-lo)/(hi-lo))})`;
-  $("documented").textContent = `${t.cards}/${LEVELS.length}`;
-  $("stars").textContent = `${t.stars}`;
+  $("documented").textContent = `${t.cleared}/${LEVELS.length}`;
+  $("stars").textContent = t.awake ? `👑${t.bosses}·🧛${t.awake}` : `👑${t.bosses}`;
   const g = ghosts().length; $("ghosts").textContent = g;
   $("huntBtn").disabled = g === 0; $("huntBtn").textContent = g ? `👻 HUNT ${g}` : "👻 NO GHOSTS";
   const ed = examDays(); $("exam").textContent = ed === null ? "?" : ed >= 0 ? ed.toLocaleString() : "DONE";
@@ -465,27 +524,27 @@ function renderHUD(t){
 function renderMap(){
   const ed = examDays();
   $("track").innerHTML = WORLDS.map((w,i) => {
-    const docd = w.levels.filter(hasCard).length, pct = w.levels.length ? Math.round(docd/w.levels.length*100) : 0, g = w.levels.filter(isDue).length;
+    const docd = w.levels.filter(cleared).length, pct = w.levels.length ? Math.round(docd/w.levels.length*100) : 0, g = ghosts(w.levels).length, aw = w.levels.filter(bossAwake).length;
     const cls = [w.levels.some(L => starsOf(L) > 0) ? "some" : "", worldDone(w) ? "done" : "", i === S.view ? "view" : ""].join(" ");
-    return (i ? '<span class="link"></span>' : "") + `<button class="node ${cls}" data-world="${i}" aria-label="World ${i+1}, ${esc(w.cat)}, ${pct}% documented">${i===S.view?'<canvas class="walker" width="16" height="16"></canvas>':""}<span class="plat"></span><span class="lbl">W${i+1}</span><span class="sub">${esc(w.short)}</span><span class="pct">${pct}%</span><span class="gh">${g ? "👻" + g : "&nbsp;"}</span></button>`;
+    return (i ? '<span class="link"></span>' : "") + `<button class="node ${cls}" data-world="${i}" aria-label="World ${i+1}, ${esc(w.cat)}, ${pct}% cleared">${i===S.view?'<canvas class="walker" width="16" height="16"></canvas>':""}<span class="plat"></span><span class="lbl">W${i+1}</span><span class="sub">${esc(w.short)}</span><span class="pct">${pct}%</span><span class="gh">${g ? "👻" + g : ""}${aw ? (g ? " " : "") + "🧛" + aw : ""}${g || aw ? "" : "&nbsp;"}</span></button>`;
   }).join("") + `<span class="link"></span><div class="node">${CASTLE}<span class="plat" style="visibility:hidden"></span><span class="lbl">SCE</span><span class="sub">${ed===null?"date?":ed>=0?ed+"d":"done"}</span><span class="pct">&nbsp;</span><span class="gh">&nbsp;</span></div>`;
   const wk = $("track").querySelector("canvas.walker"); if (wk) drawAvatar(wk);
   const v = $("track").querySelector(".node.view"), box = $("track").parentElement;   // keep the chosen world in view on a phone
   if (v && box.scrollWidth > box.clientWidth) box.scrollLeft = Math.max(0, v.offsetLeft - box.clientWidth/2 + v.offsetWidth/2);
 }
 function tileHTML(L){
-  const st = stateOf(L), s = starsOf(L), due = isDue(L), min = S.gaps && st === "master" && !due;
-  const d = dueAt(L), next = d === null ? "" : due ? "recall due" : `recall in ${Math.max(1, Math.ceil((d - now())/DAY))}d`;
-  return `<button class="lvl ${st} ${due?"haunted":""} ${min?"min":""}" data-lvl="${L.qk}" aria-label="${esc(L.sub)}, ${s} of 3 stars${due?", due for recall":""}">${due?BOO:""}<span class="blk">${L.code}</span><span class="lnm">${esc(L.sub)}</span><span class="meta"><span class="stars">${[1,2,3].map(k=>`<span class="${k<=s?"on":""}">${k<=s?"★":"☆"}</span>`).join("")}</span><span>${next}</span></span></button>`;
+  const st = stateOf(L), s = starsOf(L), qs = questions(L), dq = dueQs(L).length, due = dq > 0, m = mastered(L), aw = bossAwake(L), min = S.gaps && st === "master" && !due && !aw;
+  const d = dueAt(L), next = due ? `${dq} due` : aw ? "🧛 boss awake" : !qs.length ? "" : `${qs.length}Q · next ${Math.max(1, Math.ceil((d - now())/DAY))}d`;
+  return `<button class="lvl ${st} ${due?"haunted":""} ${m?"crowned":""} ${min?"min":""}" data-lvl="${L.qk}" aria-label="${esc(L.sub)}, ${s} of 3 stars${m?", boss beaten":""}${aw?", boss awake":""}${due?`, ${dq} due`:""}">${due?BOO:""}${aw?VAMP.replace('class="vamp"', `class="vampt${due?" two":""}"`):""}<span class="blk">${L.code}</span><span class="lnm">${esc(L.sub)}</span><span class="meta"><span class="stars">${[1,2,3].map(k=>`<span class="${k<=s?"on":""}">${k<=s?"★":"☆"}</span>`).join("")}${m?'<span class="crown">👑</span>':""}</span><span>${next}</span></span></button>`;
 }
 function renderWorld(){
   const w = WORLDS[S.view]; if (!w){ $("topics").innerHTML = ""; return; }
-  const docd = w.levels.filter(hasCard).length, g = w.levels.filter(isDue).length;
+  const set = w.levels.filter(cleared).length, g = ghosts(w.levels).length, m = w.levels.filter(mastered).length, aw = w.levels.filter(bossAwake).length;
   $("wtitle").textContent = `WORLD ${w.wi+1} · ${w.cat.toUpperCase()}`;
   $("gaps").checked = S.gaps;
-  $("wnote").textContent = `${docd}/${w.levels.length} documented${g ? ` · ${g} ghost${g>1?"s":""} waiting` : ""} · tap a level to read, write its card or recall it`;
+  $("wnote").textContent = `${set}/${w.levels.length} cleared${g ? ` · ${g} ghost${g>1?"s":""} waiting` : ""}${aw ? ` · 🧛 ${aw} boss${aw>1?"es":""} awake` : ""}${m ? ` · 👑 ${m}` : ""} · tap a level to read, write questions or face the boss`;
   $("topics").innerHTML = w.topics.map(tp => {
-    const n = tp.levels.filter(hasCard).length, done = topicDone(tp);
+    const n = tp.levels.filter(cleared).length, done = topicDone(tp);
     return `<div class="topic"><div class="thead"><span class="tname">${esc(tp.topic)}</span><span class="tcnt ${done?"done":""}">${done?"CLEAR ✓":`${n}/${tp.levels.length}`}</span></div><div class="grid">${tp.levels.map(tileHTML).join("")}</div></div>`;
   }).join("");
 }
@@ -495,7 +554,16 @@ function renderBx(){
   $("bxMeta").textContent = `${Math.min(n,3)}/3 this week${n>=3?" · STAGE CLEAR":""} · ${all.length} case${all.length===1?"":"s"} logged · ${bxWeeksCleared()} week${bxWeeksCleared()===1?"":"s"} cleared`;
   $("bxSave").disabled = !$("bxDx").value.trim();
   const card = ([id,r]) => `<div class="case">${r.img?`<img src="${r.img}" alt="${esc(r.dx||"")}" data-zoom="${id}">`:""}<div class="cb"><div class="dx">${esc(r.dx||"Untitled")}</div>${r.feat?`<div class="ft">${esc(r.feat)}</div>`:""}<div class="cf"><span>${r.caseNo?esc(r.caseNo)+" · ":""}${fmtDate(new Date(r.ts||0))}</span><button class="btn alt" style="min-height:0;padding:4px 8px" data-bxdel="${id}">${S.confirm===id?"DELETE?":"✕"}</button></div></div></div>`;
-  $("bxList").innerHTML = all.length ? `<div class="cases">${all.slice(0,4).map(card).join("")}</div>` + (all.length > 4 ? `<details><summary class="note">All cases (${all.length})</summary><div class="cases">${all.slice(4).map(card).join("")}</div></details>` : "") : `<p class="note">No cases yet. Review one on Kidney Pathology and log it here.</p>`;
+  // Saved cases sit behind a toggle (closed by default, remembered) so the page stays short
+  const last = all[0];
+  $("bxToggle").hidden = !all.length; $("bxToggle").setAttribute("aria-expanded", S.bxOpen);
+  $("bxToggle").textContent = `${S.bxOpen ? "▾ HIDE" : "▸ SHOW"} SAVED CASES (${all.length})`;
+  $("bxLast").textContent = !all.length ? "No cases yet. Review one on Kidney Pathology and log it here." : S.bxOpen ? "" : `Last: ${last[1].dx || "Untitled"} · ${fmtDate(new Date(last[1].ts||0))}`;
+  $("bxSearch").hidden = !S.bxOpen || all.length <= 4;
+  if (!S.bxOpen){ $("bxList").innerHTML = ""; return; }
+  const q = $("bxSearch").hidden ? "" : $("bxSearch").value.trim().toLowerCase();
+  const shown = q ? all.filter(([,r]) => `${r.dx||""} ${r.feat||""} ${r.caseNo||""}`.toLowerCase().includes(q)) : all;
+  $("bxList").innerHTML = shown.length ? `<div class="cases">${shown.map(card).join("")}</div>` : `<p class="note">No cases match "${esc(q)}".</p>`;
 }
 function renderShop(t){
   const sh = shop(), bal = balance(t);
@@ -576,7 +644,7 @@ const TREATS_HOST = {
   write: (k, v) => setArcp(k, v),
   after: () => { const tt = tally(); renderHUD(tt); renderShop(tt); } };
 function renderRules(){ $("rules").innerHTML = RULES.map(([,l,v]) => `<tr><td>${esc(l)}</td><td>+${v}</td></tr>`).join(""); }
-function renderAll(){ buildTaxonomy(); const t = tally(); renderHUD(t); renderMap(); renderWorld(); renderBx(); renderShop(t); renderRules(); publishEarned(t);
+function renderAll(){ buildTaxonomy(); migrateCards(); stampReads(); const t = tally(); renderHUD(t); renderMap(); renderWorld(); renderBx(); renderShop(t); renderRules(); publishEarned(t);
   if (!$("drawer").hidden){ if (S.open) openLevel(S.open, true); else if (S.hunt) renderHunt(); } }
 let rq = 0; const scheduleRender = () => { if (rq) return; rq = requestAnimationFrame(() => { rq = 0; renderAll(); }); };
 
@@ -610,6 +678,7 @@ function act(change){
   if (diff > 0){ pop("+" + diff); diff >= 5 ? SFX.big() : SFX.coin(); } else if (diff < 0) SFX.down();
   let delay = 250;
   const newTopic = WORLDS.flatMap(w => w.topics.filter(tp => topicDone(tp) && !bTopics.has(w.wi + "|" + tp.topic)).map(tp => tp.topic));
+  if (a.bosses > b.bosses){ setTimeout(() => { SFX.level(); banner(`${BOSS.name}<br>DEFEATED!`, `👑 Subtopic cleared · +${R.boss}`); }, delay); delay += 1700; }
   const newWorld = WORLDS.filter(w => worldDone(w) && !bWorlds.has(w.wi));
   if (newWorld.length){ setTimeout(() => { SFX.level(); banner("WORLD CLEAR!", `${esc(newWorld[0].short)} · +${R.world}`); }, delay); delay += 1700; }
   else if (newTopic.length){ setTimeout(() => { SFX.clear(); banner("TOPIC CLEAR!", `${esc(newTopic[0])} · +${R.topic}`); }, delay); delay += 1700; }
@@ -619,52 +688,69 @@ function act(change){
   return { b, a };
 }
 
-// ── Level drawer: the three stars for one subtopic ──
+// ── Level drawer: read · your questions · recall · the boss ──
 function openLevel(qk, keep){
   const L = BYQK[qk]; if (!L) return; S.open = qk; S.hunt = null;
-  const c = card(L) || {}, r = recall(L) || {}, read = isRead(L), doc = hasCard(L), due = isDue(L), d = dueAt(L), src = c.src || {};
-  const drafts = keep ? { mech: $("cMech") && $("cMech").value, num: $("cNum") && $("cNum").value, trap: $("cTrap") && $("cTrap").value } : null;
-  const val = k => esc(drafts && drafts[k] != null ? drafts[k] : (c[k] || ""));
-  const st3 = !doc ? `<div class="note">Write the card first. Your first recall unlocks ${RECALL_DAYS[0]} days after that.</div>`
-    : due ? `<div class="note">👻 A ghost is haunting this level. Recall the card without looking to bust it.</div><div class="brow"><button class="btn boo" data-act="huntOne">RECALL NOW ▸ +${R.win}</button></div>`
-    : `<div class="note">${r.wins ? `${r.wins} correct recall${r.wins>1?"s":""}${r.streak?` · ${r.streak} in a row`:""} · ` : ""}next recall ${fmtDate(new Date(d))} (in ${Math.max(1, Math.ceil((d - now())/DAY))} days)</div>`;
+  const c = card(L) || {}, read = isRead(L), qs = questions(L), src = c.src || {}, tries = bossTries(L), best = bestScore(L), m = mastered(L), dq = dueQs(L).length;
+  const keepVal = id => keep && $(id) ? $(id).value : "";
+  const qRow = q => { const d = qDue(q), due = d <= now();
+    if (S.editQ === q.id) return `<div class="qrow"><div class="field"><label for="eq">Question</label><textarea id="eq" rows="2" maxlength="600">${esc(keep && $("eq") ? $("eq").value : q.q)}</textarea></div>
+      <div class="field"><label for="ea">Answer</label><textarea id="ea" rows="3" maxlength="2000">${esc(keep && $("ea") ? $("ea").value : q.a)}</textarea></div>
+      <div class="brow"><button class="btn" data-qsave="${q.id}">SAVE</button><button class="btn alt" data-act="qcancel">CANCEL</button><button class="btn alt" data-qdel="${q.id}">${S.confirm===q.id?"DELETE?":"DELETE"}</button></div></div>`;
+    return `<div class="qrow"><div class="qq">${esc(q.q)}</div><details><summary class="note">Show answer</summary><div class="qa2">${esc(q.a||"")}</div></details>
+      <div class="qmeta"><span>${due ? "👻 due now" : `next ${fmtDate(new Date(d))}`}${q.wins?` · ${q.wins}✓`:""}${q.misses?` · ${q.misses}✗`:""}</span><button class="btn alt mini" data-qedit="${q.id}">EDIT</button></div></div>`; };
+  const hp = m ? 0 : Math.max(0, 1 - Math.max(0, best) / BOSS.pass), aw = bossAwake(L), ra = readAt(L);
+  const bossMsg = m ? `Defeated with ${best}%. This subtopic is cleared and mastered.`
+    : aw ? `🧛 He's awake. You read this ${Math.floor((now() - ra)/DAY)} days ago. Beat him with ${BOSS.pass}% or more in a Feynman explanation, a Study² Protocol viva or a Nephrology review.`
+    : read && ra ? `He wakes on ${fmtDate(new Date(ra + BOSS.wakeDays*DAY))}, ${BOSS.wakeDays} days after you read this. Or dare him now.`
+    : `Know this one already? Dare him now. ${BOSS.pass}% or more clears the whole subtopic: read, stars and crown, no questions needed.`;
   const dr = $("drawer");
   dr.innerHTML = `<div class="din"><button class="btn alt" data-act="close" style="align-self:flex-end">✕ CLOSE</button>
     <h2>${L.code} · ${esc(L.sub)}</h2><div class="crumb">${esc(L.cat)} › ${esc(L.topic)}</div>
     <div class="step ${read?"got":""}"><div class="shd"><b class="${read?"":"off"}">★ READ</b><button class="btn ${read?"alt":""}" data-act="read">${read?"✓ READ · tap to undo":`MARK READ +${R.read}`}</button></div>
       <div class="note">Where did you read it? (optional)</div>
       <div class="chips">${SOURCES.map(([k,l]) => `<button class="chip ${src[k]?"on":""}" data-src="${k}">${l}</button>`).join("")}</div></div>
-    <div class="step ${doc?"got":""}"><div class="shd"><b class="${doc?"":"off"}">★★ LEARNING CARD</b>${c.upd?`<span class="note">edited ${fmtDate(new Date(c.upd))}</span>`:""}</div>
-      <div class="field"><label for="cMech">The key mechanism, in one line (required)</label><textarea id="cMech" rows="2" maxlength="600" placeholder="Why it happens, not just what happens">${val("mech")}</textarea></div>
-      <div class="field"><label for="cNum">The number or threshold that matters</label><textarea id="cNum" rows="2" maxlength="600" placeholder="A target, cut-off, dose or guideline threshold">${val("num")}</textarea></div>
-      <div class="field"><label for="cTrap">The trap they set</label><textarea id="cTrap" rows="2" maxlength="600" placeholder="The tempting wrong answer, and why it's wrong">${val("trap")}</textarea></div>
-      <div class="brow"><button class="btn" data-act="saveCard">${doc?"SAVE CHANGES":`SAVE CARD +${R.card}`}</button>${doc?`<button class="btn alt" data-act="delCard">${S.confirm==="card"?"DELETE CARD?":"DELETE"}</button>`:""}</div></div>
-    <div class="step ${recalled(L)?"got":""}"><div class="shd"><b class="${recalled(L)?"":"off"}">★★★ RECALL</b></div>${st3}</div></div>`;
+    <div class="step ${qs.length?"got":""}"><div class="shd"><b class="${qs.length?"":"off"}">★★ YOUR QUESTIONS${qs.length?` · ${qs.length}`:""}</b></div>
+      ${qs.map(qRow).join("")}
+      <div class="field"><label for="nq">${qs.length ? "Add another question" : "Write a question you'd want to be asked"}</label><textarea id="nq" rows="2" maxlength="600" placeholder="e.g. Na 118, euvolaemic, urine osmolality 520. Why does 0.9% saline make it worse?">${esc(keepVal("nq"))}</textarea></div>
+      <div class="field"><label for="na">Answer</label><textarea id="na" rows="3" maxlength="2000" placeholder="What you'd want to say in the exam">${esc(keepVal("na"))}</textarea></div>
+      <div class="brow"><button class="btn" data-act="addQ">ADD QUESTION +${R.q}</button></div>
+      <div class="note">Each question comes back as a ghost after ${RECALL_DAYS.join(", ")} days as you keep getting it right. A miss brings it back tomorrow.</div></div>
+    <div class="step ${recalled(L)?"got":""}"><div class="shd"><b class="${recalled(L)?"":"off"}">★★★ RECALLED</b></div>
+      <div class="note">${!qs.length ? "Add a question first. Its first recall unlocks " + RECALL_DAYS[0] + " days later." : `${qs.filter(q => q.wins > 0).length}/${qs.length} questions answered correctly at least once.`}</div>
+      ${dq ? `<div class="brow"><button class="btn boo" data-act="huntOne">👻 RECALL ${dq} DUE NOW</button></div>` : ""}</div>
+    <div class="step bossfight ${m?"got":""} ${aw?"awake":""}"><div class="shd"><b class="${m?"":"off"}">👑 BOSS · ${BOSS.name}</b><span class="note">optional · +${R.boss}</span></div>
+      <div class="bossrow">${VAMP}<div><div class="note">${bossMsg}</div>
+        <div class="hp" aria-label="Boss HP"><i style="transform:scaleX(${hp})"></i></div>${best >= 0 ? `<div class="note">Best ${best}% · ${scoreLabel(best)}</div>` : ""}</div></div>
+      <div class="bossin"><select id="bm" aria-label="Method">${BOSS.methods.map(([k,l]) => `<option value="${k}" ${keep && $("bm") && $("bm").value===k?"selected":""}>${l}</option>`).join("")}</select>
+        <input type="number" id="bsc" min="0" max="100" step="1" inputmode="numeric" placeholder="Score %" aria-label="Score percent" value="${esc(keepVal("bsc"))}">
+        <button class="btn" data-act="logBoss">${m ? "LOG SCORE" : aw ? "ATTACK ▸" : "DARE ▸"}</button></div>
+      ${tries.length ? `<div class="tries">${tries.slice(0,8).map(a => `<div class="try ${+a.score >= BOSS.pass ? "win" : ""}"><span>${esc((BOSS.methods.find(x => x[0] === a.m) || [,a.m])[1])}</span><b>${a.score}%</b><span class="note">${scoreLabel(+a.score)} · ${fmtDate(new Date(a.ts||0))}</span><button class="btn alt mini" data-bossdel="${a.id}">${S.confirm===a.id?"DELETE?":"✕"}</button></div>`).join("")}</div>` : ""}</div></div>`;
   dr.hidden = false; if (!keep) dr.scrollTop = 0;
 }
 
-// ── Ghost hunt: due cards one at a time, answer hidden until you reveal ──
-function startHunt(list){ const q = list.map(L => L.qk); if (!q.length){ SFX.nope(); toast("No ghosts right now. Write more cards and they'll come back to haunt you."); return; }
-  S.hunt = { queue: q, i: 0, shown: false, won: 0, total: q.length }; S.open = null; renderHunt(); $("drawer").hidden = false; $("drawer").scrollTop = 0; SFX.boo(); }
+// ── Ghost hunt: your due questions one at a time, answer hidden until you reveal ──
+function startHunt(items){ if (!items.length){ SFX.nope(); toast("No ghosts right now. Write more questions and they'll come back to haunt you."); return; }
+  S.hunt = { queue: items.map(x => ({ qk:x.qk, id:x.id })), i: 0, shown: false, won: 0, total: items.length }; S.open = null; renderHunt(); $("drawer").hidden = false; $("drawer").scrollTop = 0; SFX.boo(); }
+const huntQ = it => { const L = BYQK[it.qk]; return L ? { L, q: questions(L).find(q => q.id === it.id) } : {}; };
 function renderHunt(){
   const h = S.hunt, dr = $("drawer"); if (!h) return;
-  if (h.i >= h.queue.length){ dr.innerHTML = `<div class="din"><button class="btn alt" data-act="close" style="align-self:flex-end">✕ CLOSE</button><h2>HUNT OVER</h2><div class="note">${h.won}/${h.total} busted.${h.won < h.total ? ` Missed ones come back tomorrow.` : ""}</div><div class="brow"><button class="btn" data-act="close">BACK TO THE MAP</button></div></div>`; return; }
-  const L = BYQK[h.queue[h.i]]; if (!L){ h.i++; renderHunt(); return; }
-  const c = card(L) || {}, hide = h.shown ? "" : "hide";
-  const qa = (q, a) => a && String(a).trim() ? `<div class="qa"><div class="q">${q}</div><div class="a ${hide}" aria-hidden="${!h.shown}">${esc(a)}</div></div>` : "";
+  if (h.i >= h.queue.length){ dr.innerHTML = `<div class="din"><button class="btn alt" data-act="close" style="align-self:flex-end">✕ CLOSE</button><h2>HUNT OVER</h2><div class="note">${h.won}/${h.total} busted.${h.won < h.total ? " Missed ones come back tomorrow." : ""}</div><div class="brow"><button class="btn" data-act="close">BACK TO THE MAP</button></div></div>`; return; }
+  const { L, q } = huntQ(h.queue[h.i]); if (!L || !q){ h.i++; renderHunt(); return; }
   dr.innerHTML = `<div class="din"><button class="btn alt" data-act="close" style="align-self:flex-end">✕ CLOSE</button>
     <h2>👻 GHOST HUNT · ${h.i+1}/${h.total}</h2><div class="huntbar"><i style="transform:scaleX(${h.i/h.total})"></i></div>
-    <div class="crumb">${esc(L.cat)} › ${esc(L.topic)}</div><h2>${esc(L.sub)}</h2>
-    <div class="note">${h.shown ? "Did your answer match?" : "Say the mechanism, the number and the trap out loud, then reveal."}</div>
-    ${qa("Mechanism", c.mech)}${qa("Number / threshold", c.num)}${qa("The trap", c.trap)}
+    <div class="crumb">${esc(L.w.short)} › ${esc(L.topic)} › ${esc(L.sub)}</div>
+    <div class="hq">${esc(q.q)}</div>
+    <div class="note">${h.shown ? "Did your answer match?" : "Answer it out loud first, then reveal."}</div>
+    <div class="qa"><div class="q">Answer</div><div class="a ${h.shown?"":"hide"}" aria-hidden="${!h.shown}">${esc(q.a||"")}</div></div>
     <div class="brow">${h.shown ? `<button class="btn good" data-act="got">GOT IT ✓ +${R.win}</button><button class="btn bad" data-act="missed">MISSED ✗</button>` : `<button class="btn boo" data-act="reveal">REVEAL</button><button class="btn alt" data-act="skip">SKIP</button>`}</div></div>`;
 }
 function answer(ok){
-  const h = S.hunt, L = BYQK[h.queue[h.i]]; if (!L) return;
-  const r = Object.assign({ wins:0, misses:0, streak:0 }, recall(L) || {});
-  r.last = now(); r.ok = ok; if (ok){ r.wins++; r.streak++; h.won++; } else { r.misses++; r.streak = 0; }
-  act(() => write([setQuest("recall/" + L.qk, r)]));
-  if (ok){ SFX.bust(); pop("BOO! +" + R.win); } else { SFX.boo(); toast(`Back tomorrow. Tweak the card if it was unclear.`); }
+  const h = S.hunt, { L, q } = huntQ(h.queue[h.i]); if (!L || !q) return;
+  const nq = Object.assign({}, q); delete nq.id;
+  nq.last = now(); nq.ok = ok; if (ok){ nq.wins = (nq.wins||0) + 1; nq.streak = (nq.streak||0) + 1; h.won++; } else { nq.misses = (nq.misses||0) + 1; nq.streak = 0; }
+  act(() => write([setQuest(`qs/${L.qk}/${q.id}`, nq)]));
+  if (ok){ SFX.bust(); pop("BOO! +" + R.win); } else { SFX.boo(); toast("Back tomorrow. Tweak the question if it was unclear."); }
   h.i++; h.shown = false;
   if (h.i >= h.queue.length && h.won === h.total && h.total > 1) setTimeout(() => { SFX.clear(); banner("ALL GHOSTS BUSTED!", `${h.total} recalled`); }, 400);
   renderHunt();
@@ -693,37 +779,58 @@ document.addEventListener("click", ev => {
   if (t.dataset.equip){ const it = SHOP.find(i => i.id === t.dataset.equip), sh = shop(); if (!it) return; sh.eq[it.slot] = it.id; setArcp("pft_quest_shop", JSON.stringify(sh));
     SFX.coin(); const tt = tally(); renderHUD(tt); renderShop(tt); renderMap(); return; }
   if (t.dataset.world){ S.view = +t.dataset.world; local.set("view", S.view); $("drawer").hidden = true; S.open = null; S.hunt = null; SFX.tick(); renderMap(); renderWorld(); return; }
-  if (t.dataset.lvl){ SFX.tick(); S.confirm = null; openLevel(t.dataset.lvl); return; }
+  if (t.dataset.lvl){ SFX.tick(); S.confirm = null; S.editQ = null; openLevel(t.dataset.lvl); return; }
   if (t.dataset.src && L){ const c = Object.assign({}, card(L) || {}), src = Object.assign({}, c.src || {}); src[t.dataset.src] = !src[t.dataset.src];
     if (!src[t.dataset.src]) delete src[t.dataset.src]; c.src = src; if (!c.ts) c.ts = now();
     write([setQuest("cards/" + L.qk, c)]); SFX.tick(); openLevel(L.qk, true); return; }
+  if (t.dataset.qedit && L){ S.editQ = t.dataset.qedit; S.confirm = null; SFX.tick(); openLevel(L.qk); const el = $("eq"); if (el) el.focus(); return; }
+  if (t.dataset.qsave && L){ const q = questions(L).find(x => x.id === t.dataset.qsave); if (!q) return;
+    const nq = Object.assign({}, q, { q: $("eq").value.trim() || q.q, a: $("ea").value.trim(), upd: now() }); delete nq.id;
+    write([setQuest(`qs/${L.qk}/${q.id}`, nq)]); S.editQ = null; SFX.tick(); toast("Question updated"); openLevel(L.qk, true); return; }
+  if (t.dataset.qdel && L){ const id = t.dataset.qdel;
+    if (S.confirm !== id){ S.confirm = id; openLevel(L.qk, true); setTimeout(() => { if (S.confirm === id){ S.confirm = null; if (S.open === L.qk) openLevel(L.qk, true); } }, 3000); return; }
+    S.confirm = null; S.editQ = null; act(() => write([setQuest(`qs/${L.qk}/${id}`, null)])); openLevel(L.qk); return; }
+  if (t.dataset.bossdel && L){ const id = t.dataset.bossdel;
+    if (S.confirm !== id){ S.confirm = id; openLevel(L.qk, true); setTimeout(() => { if (S.confirm === id){ S.confirm = null; if (S.open === L.qk) openLevel(L.qk, true); } }, 3000); return; }
+    S.confirm = null; act(() => write([setQuest(`boss/${L.qk}/${id}`, null)])); openLevel(L.qk, true); return; }
   if (t.dataset.bxdel){ const id = t.dataset.bxdel;
     if (S.confirm !== id){ S.confirm = id; renderBx(); setTimeout(() => { if (S.confirm === id){ S.confirm = null; renderBx(); } }, 3000); return; }
     S.confirm = null; act(() => { const bx = Object.assign({}, S.bx); delete bx[id]; S.bx = bx; local.set("bx", bx); if (window.QFB) window.QFB.delBx(id); }); return; }
   switch (t.dataset.act){
-    case "close": $("drawer").hidden = true; S.open = null; S.hunt = null; S.confirm = null; renderWorld(); return;
+    case "close": $("drawer").hidden = true; S.open = null; S.hunt = null; S.confirm = null; S.editQ = null; renderWorld(); return;
     case "shop": $("shopBox").scrollIntoView({ behavior:"smooth", block:"start" }); return;
     case "mute": S.muted = !S.muted; local.set("muted", S.muted); $("mute").textContent = S.muted ? "♪ OFF" : "♪ ON"; return;
-    case "hunt": { const w = WORLDS[S.view], all = ghosts(), here = w ? all.filter(x => x.w === w) : [];   // this world's ghosts first
+    case "hunt": { const w = WORLDS[S.view], all = ghosts(), here = w ? all.filter(x => x.L.w === w) : [];   // this world's ghosts first
       startHunt(here.concat(all.filter(x => !here.includes(x)))); return; }
-    case "huntOne": if (L) startHunt([L]); return;
-    case "read": if (!L) return; { const v = !isRead(L); act(() => { const sib = setTopicFlag(L, v); write([...sib, setQuest("read/" + L.qk, v)]); }); openLevel(L.qk, true); } return;
-    case "saveCard": { if (!L) return; const mech = $("cMech").value.trim(), num = $("cNum").value.trim(), trap = $("cTrap").value.trim();
-      if (!mech){ SFX.nope(); toast("Write the mechanism line first. That's what earns the star."); $("cMech").focus(); return; }
-      const first = !hasCard(L), c = Object.assign({}, card(L) || {}, { mech, num, trap, upd: now() }); if (first || !c.ts) c.ts = now();
+    case "huntOne": if (L) startHunt(ghosts([L])); return;
+    case "read": if (!L) return; { const v = !isRead(L);
+      act(() => { const sib = setTopicFlag(L, v); write([...sib, setQuest("read/" + L.qk, v), setQuest("readTs/" + L.qk, v ? now() : null)]); });
+      if (v && !mastered(L)) toast(`🧛 Count Glomerula wakes here in ${BOSS.wakeDays} days`); openLevel(L.qk, true); } return;
+    case "addQ": { if (!L) return; const q = $("nq").value.trim(), a = $("na").value.trim();
+      if (!q){ SFX.nope(); toast("Write the question first."); $("nq").focus(); return; }
+      if (!a){ SFX.nope(); toast("Add the answer too, so you can check yourself later."); $("na").focus(); return; }
+      const first = !hasQs(L), id = "q" + now().toString(36);
       act(() => { const pairs = [];
-        if (!isRead(L)) pairs.push(...setTopicFlag(L, true), setQuest("read/" + L.qk, true));   // writing it up means you read it
-        pairs.push(setQuest("cards/" + L.qk, c)); write(pairs); });
-      if (first) toast(`Card saved. First recall in ${RECALL_DAYS[0]} days.`); else { SFX.tick(); toast("Card updated"); }
+        if (!isRead(L)) pairs.push(...setTopicFlag(L, true), setQuest("read/" + L.qk, true), setQuest("readTs/" + L.qk, now()));   // writing questions means you read it
+        pairs.push(setQuest(`qs/${L.qk}/${id}`, { q, a, ts: now(), streak: 0, wins: 0, misses: 0 })); write(pairs); });
+      toast(first ? `Question set. It comes back as a ghost in ${RECALL_DAYS[0]} days.` : "Question added");
+      openLevel(L.qk); setTimeout(() => { const el = $("nq"); if (el) el.scrollIntoView({ block:"center" }); }, 50); return; }
+    case "qcancel": S.editQ = null; S.confirm = null; if (L) openLevel(L.qk); return;
+    case "logBoss": { if (!L) return; const sc = parseInt($("bsc").value, 10), mth = $("bm").value;
+      if (!(sc >= 0 && sc <= 100)){ SFX.nope(); toast("Enter your score as a percentage, 0 to 100."); $("bsc").focus(); return; }
+      const won = sc >= BOSS.pass, was = mastered(L);
+      act(() => { const pairs = [setQuest(`boss/${L.qk}/b${now().toString(36)}`, { m: mth, score: sc, ts: now() })];
+        if (won && !isRead(L)) pairs.push(...setTopicFlag(L, true), setQuest("read/" + L.qk, true), setQuest("readTs/" + L.qk, now()));   // a win clears the subtopic
+        write(pairs); });
+      if (!won){ SFX.boo(); toast(`${sc}% · ${scoreLabel(sc)}. He falls at ${BOSS.pass}% or more. Come back stronger.`); }
+      else if (was){ SFX.coin(); toast(`${sc}% · ${scoreLabel(sc)}. Logged.`); }
       openLevel(L.qk); return; }
-    case "delCard": if (!L) return;
-      if (S.confirm !== "card"){ S.confirm = "card"; openLevel(L.qk, true); setTimeout(() => { if (S.confirm === "card"){ S.confirm = null; if (S.open === L.qk) openLevel(L.qk, true); } }, 3000); return; }
-      S.confirm = null; act(() => write([setQuest("cards/" + L.qk, null), setQuest("recall/" + L.qk, null)])); openLevel(L.qk); return;
     case "reveal": if (S.hunt){ S.hunt.shown = true; SFX.reveal(); renderHunt(); } return;
     case "skip": if (S.hunt){ S.hunt.i++; S.hunt.shown = false; SFX.tick(); renderHunt(); } return;
     case "got": if (S.hunt) answer(true); return;
     case "missed": if (S.hunt) answer(false); return;
     case "bxClear": bxReset(); return;
+    case "bxToggle": S.bxOpen = !S.bxOpen; local.set("bxOpen", S.bxOpen); S.confirm = null; SFX.tick(); renderBx(); return;
     case "bxSave": { const dx = $("bxDx").value.trim(); if (!dx){ SFX.nope(); toast("Add the diagnosis first."); return; }
       const rec = { dx, feat: $("bxFeat").value.trim(), caseNo: $("bxCase").value.trim() || null, img: S.img || null, ts: now(), week: isoWeekKey(new Date()) };
       const tmp = "local-" + now();
@@ -732,7 +839,7 @@ document.addEventListener("click", ev => {
       bxReset(); toast("Case logged"); return; }
   }
 });
-document.addEventListener("input", e => { if (e.target.id === "bxDx") $("bxSave").disabled = !e.target.value.trim(); });
+document.addEventListener("input", e => { if (e.target.id === "bxDx") $("bxSave").disabled = !e.target.value.trim(); if (e.target.id === "bxSearch") renderBx(); });
 $("bxFile").addEventListener("change", () => { const f = $("bxFile").files[0]; if (!f) return; toast("Compressing image…");
   compressImage(f, data => { if (!data){ toast("Couldn't read that image"); return; } S.img = data; $("bxPrev").src = data; $("bxPrev").hidden = false; }); });
 $("gaps").addEventListener("change", e => { S.gaps = e.target.checked; local.set("gaps", S.gaps); renderWorld(); });
@@ -758,6 +865,7 @@ function welcome(){   // coins from reading you ticked in the SCE app since you 
   const t = tally(), seen = local.get("seen", null);
   if (seen !== null && t.sce > seen){ setTimeout(() => { pop("+" + (t.sce - seen)); SFX.big(); toast(`Welcome back · +${t.sce - seen} coins since your last visit`); }, 500); }
   local.set("seen", t.sce);
+  if (t.awake) setTimeout(() => { SFX.boo(); toast(`🧛 Count Glomerula is awake on ${t.awake} subtopic${t.awake>1?"s":""}. Look for the vampires.`); }, seen !== null && t.sce > seen ? 3200 : 600);
 }
 renderAll();   // instant first paint from the cached snapshot
 </script>
