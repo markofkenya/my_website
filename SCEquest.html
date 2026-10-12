@@ -17,6 +17,7 @@
                     sceData/biopsyLog         pathology cases, same record format SCEtopics used
      Reads:         sceConfig/topics          the topic list, if you have customised it in SCE.html's Admin tab
                     arcpData                  shared avatar, shop and ARCP Quest's coin total
+                    sceData/ksap, sceConfig/ksap   your KSAP answers and question bank from SCE.html, for the world bosses
      Writes:        arcpData/pft_quest_sce_earned   this game's lifetime coins, so ARCP Quest can add them to the wallet -->
 <script type="module">
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -38,6 +39,7 @@
   signInAnonymously(getAuth(app)).catch(e => console.warn("auth", e)).finally(() => {
     fire("q-topics", "sceData/topics"); fire("q-quest", "sceData/quest"); fire("q-bx", "sceData/biopsyLog");
     fire("q-arcp", "arcpData"); fire("q-cfg", "sceConfig/topics");
+    fire("q-ksap", "sceData/ksap"); fire("q-kbank", "sceConfig/ksap");
   });
 </script>
 
@@ -106,6 +108,20 @@ canvas.av{width:60px;height:60px;image-rendering:pixelated;background:var(--pane
 canvas.walker{position:absolute;top:-50px;width:42px;height:42px;image-rendering:pixelated;animation:bob 1s steps(2) infinite}
 @keyframes bob{50%{transform:translateY(-3px)}}
 .castle{width:56px;height:56px;position:absolute;top:-56px}
+.node.final .castle{left:50%;margin-left:-40px}
+.princess{width:30px;height:30px;position:absolute;top:-36px;left:50%;margin-left:8px;animation:bob 1.2s steps(2) infinite}
+.node.final.saved .princess{top:-30px;margin-left:14px}
+.node.final.open .castle{filter:drop-shadow(0 0 4px var(--coin))}
+.kbf{position:absolute;top:-16px;right:6%;font-size:14px;line-height:1;color:var(--mute)} .kbf.k2{color:var(--coin)} .kbf.k1{color:var(--sky)}
+.wcastle{margin-top:18px;background:var(--night);border:3px solid #4a2470;padding:10px}
+.wcastle.dead{border-color:var(--star)}
+.wcastle .bossrow{align-items:flex-start}
+.kboss{width:72px;height:72px;flex:none;animation:bob 1s steps(2) infinite}
+.wcastle.dead .kboss{animation:none;transform:rotate(90deg)}
+.kphs{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
+.kph .hp{width:100%}
+.kph.won .hp i{background:var(--grass)} .kph.lost b{color:var(--alert)}
+.finalbox .princess{position:static;margin:0;width:64px;height:64px;flex:none}
 .link{flex:0 0 8px;height:6px;margin-bottom:62px;background:repeating-linear-gradient(90deg,var(--mute) 0 4px,transparent 4px 7px)}
 
 /* Levels */
@@ -287,13 +303,13 @@ details summary{cursor:pointer;margin:8px 0 0}
   </header>
 
   <section class="box path" aria-label="Worlds">
-    <div class="note">Ten worlds, one per KSAP category · tap a world to view its levels · the castle is exam day</div>
+    <div class="note">Ten worlds, one per KSAP category · tap a world to view its levels and its boss castle · the SCE castle at the end holds Princess Nephra</div>
     <div class="track" id="track"></div>
   </section>
 
   <section class="box" aria-label="Levels">
     <div class="bar"><div class="wtitle" id="wtitle"></div><label class="toggle"><input type="checkbox" id="gaps"> Gaps only</label></div>
-    <div class="legend"><span><i style="background:var(--lock)"></i>Not started</span><span><i style="background:var(--sky)"></i>★ Read</span><span><i style="background:var(--grass)"></i>★★ Questions set</span><span><i style="background:var(--star)"></i>★★★ All recalled</span><span>👻 Due</span><span>🧛 Boss awake</span><span>👑 Boss beaten</span></div>
+    <div class="legend"><span><i style="background:var(--lock)"></i>Not started</span><span><i style="background:var(--sky)"></i>★ Read</span><span><i style="background:var(--grass)"></i>★★ Questions set</span><span><i style="background:var(--star)"></i>★★★ All recalled</span><span>👻 Due</span><span>🧛 Boss awake</span><span>👑 Boss beaten</span><span>⚐⚑ World boss phases</span></div>
     <p class="note" id="wnote" style="margin:4px 0 0"></p>
     <div id="topics"></div>
   </section>
@@ -343,6 +359,8 @@ const scoreLabel = n => n >= 85 ? "Expert" : n >= 70 ? "Confident" : n >= 60 ? "
 const RULES = [["read","Subtopic read (★)",5],["first","First question on a subtopic (★★)",5],["q","Each extra question",1],["win","Ghost busted · correct recall",3],
   ["boss","Count Glomerula defeated · 80% or more · clears the subtopic (👑)",20],
   ["topic","Topic clear · every subtopic has a question or a 👑",10],["world","World clear · every subtopic in a category cleared",50],
+  ["kb1","World boss · first KSAP pass on that world, 75% or more",75],["kb2","World boss · second KSAP pass, 80% or more",150],
+  ["gates","SCE castle gates open · all ten world bosses slain on the second pass",250],["princess","Princess Nephra rescued · you passed the SCE",1000],
   ["case","Pathology case logged",3],["week","Bonus stage clear · 3 cases in a week",10]];
 const R = Object.fromEntries(RULES.map(r => [r[0], r[2]]));
 // This game's own titles and level curve (SCE Slayer at about 4,000 coins: every subtopic carded and recalled once)
@@ -364,7 +382,8 @@ const SHOP_DEFAULT = { spent:0, owned:["sc-teal","hat-none","th-grass","fx-confe
 const local = { get(k,d){ try{ const v=localStorage.getItem("sce_quest_"+k); return v===null?d:JSON.parse(v);}catch(e){return d;} },
                 set(k,v){ try{ localStorage.setItem("sce_quest_"+k, JSON.stringify(v)); }catch(e){} } };
 const S = { topics: local.get("topics", {}), quest: local.get("quest", {}), bx: local.get("bx", {}), arcp: local.get("arcp", {}), cfg: local.get("cfg", null),
-            got: { topics:false, quest:false, bx:false, arcp:false, cfg:false }, view: local.get("view", 0), gaps: local.get("gaps", false), muted: local.get("muted", false),
+            ksap: local.get("ksap", {}), kbank: local.get("kbank", null),
+            got: { topics:false, quest:false, bx:false, arcp:false, cfg:false, ksap:false, kbank:false }, view: local.get("view", 0), gaps: local.get("gaps", false), muted: local.get("muted", false),
             open: null, hunt: null, board: null, img: null, confirm: null, bxOpen: local.get("bxOpen", false), boardOnOpen: local.get("boardOnOpen", true) };
 const $ = id => document.getElementById(id);
 const esc = t => String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -438,6 +457,58 @@ function migrateCards(){
   if (pairs.length) write(pairs);
 }
 
+// ── World bosses: one per world, fought with your KSAP answers in SCE.html ──
+// A phase is decided only when the whole pass on that world is finished: every question answered once (first pass) or twice (second).
+// A win is saved in sceData/quest/kboss, so adding a new KSAP module later never takes a slain boss back.
+const KSAP_FALLBACK = {"Sodium and Water Abnormalities":["V7M1-Q9","V7M1-Q26","V7M1-Q50","V7M1-Q58","V7M2-Q5","V7M2-Q7","V7M2-Q13","V7M2-Q24","V7M2-Q72","V8M1-Q25","V8M1-Q29","V8M1-Q41","V8M1-Q49","V8M1-Q71","V8M1-Q75","V8M2-Q9","V8M2-Q19","V8M2-Q42","V8M2-Q45","V8M2-Q66","V10M1-Q14","V10M1-Q46","V10M1-Q47","V10M1-Q58","V10M1-Q64","V11M1-Q23","V11M1-Q26","V11M1-Q46","V11M1-Q53","V11M1-Q60","V12M1-Q9","V12M1-Q31","V12M1-Q43","V12M1-Q55","V12M1-Q72"],"Acid–Base and Potassium Disorders":["V7M1-Q5","V7M1-Q17","V7M1-Q24","V7M1-Q25","V7M1-Q57","V7M1-Q66","V7M1-Q71","V7M1-Q74","V7M2-Q12","V7M2-Q36","V7M2-Q51","V7M2-Q53","V7M2-Q57","V7M2-Q67","V7M2-Q75","V8M1-Q22","V8M1-Q23","V8M1-Q35","V8M1-Q47","V8M1-Q48","V8M1-Q50","V8M1-Q66","V8M2-Q3","V8M2-Q24","V8M2-Q29","V8M2-Q31","V8M2-Q41","V8M2-Q50","V8M2-Q67","V8M2-Q72","V10M1-Q3","V10M1-Q25","V10M1-Q42","V10M1-Q55","V10M1-Q61","V10M1-Q65","V10M1-Q69","V11M1-Q3","V11M1-Q13","V11M1-Q20","V11M1-Q33","V11M1-Q41","V11M1-Q52","V11M1-Q71","V12M1-Q11","V12M1-Q35","V12M1-Q38","V12M1-Q44","V12M1-Q53","V12M1-Q63","V12M1-Q70","V12M1-Q74"],"Ca, Po4, Mg disorders & Stones":["V7M1-Q20","V7M1-Q46","V7M1-Q49","V7M2-Q17","V7M2-Q25","V7M2-Q27","V7M2-Q40","V7M2-Q54","V7M2-Q66","V8M1-Q14","V8M1-Q69","V8M1-Q70","V8M2-Q1","V8M2-Q2","V8M2-Q68","V8M2-Q70","V8M2-Q71","V8M2-Q75","V10M1-Q2","V10M1-Q34","V10M1-Q70","V11M1-Q30","V11M1-Q49","V11M1-Q65","V12M1-Q5","V12M1-Q10","V12M1-Q23","V12M1-Q57"],"Chronic Kidney Disease":["V7M1-Q4","V7M1-Q6","V7M1-Q14","V7M1-Q21","V7M1-Q29","V7M1-Q31","V7M1-Q32","V7M1-Q41","V7M1-Q48","V7M1-Q52","V7M1-Q54","V7M1-Q55","V7M1-Q56","V7M1-Q60","V7M1-Q62","V7M1-Q63","V7M1-Q72","V7M1-Q73","V7M1-Q75","V7M2-Q11","V7M2-Q16","V7M2-Q19","V7M2-Q29","V7M2-Q33","V7M2-Q43","V7M2-Q49","V7M2-Q52","V7M2-Q60","V7M2-Q61","V7M2-Q65","V7M2-Q68","V7M2-Q69","V7M2-Q71","V7M2-Q73","V7M2-Q74","V8M1-Q5","V8M1-Q9","V8M1-Q15","V8M1-Q16","V8M1-Q18","V8M1-Q20","V8M1-Q24","V8M1-Q27","V8M1-Q36","V8M1-Q51","V8M1-Q55","V8M1-Q56","V8M1-Q58","V8M1-Q59","V8M1-Q61","V8M1-Q72","V8M2-Q8","V8M2-Q10","V8M2-Q12","V8M2-Q16","V8M2-Q18","V8M2-Q28","V8M2-Q30","V8M2-Q34","V8M2-Q36","V8M2-Q40","V8M2-Q48","V8M2-Q55","V8M2-Q57","V8M2-Q60","V8M2-Q62","V8M2-Q63","V8M2-Q69","V8M2-Q73","V8M2-Q76","V10M1-Q5","V10M1-Q10","V10M1-Q11","V10M1-Q12","V10M1-Q17","V10M1-Q18","V10M1-Q21","V10M1-Q23","V10M1-Q26","V10M1-Q28","V10M1-Q30","V10M1-Q32","V10M1-Q35","V10M1-Q36","V10M1-Q53","V10M1-Q62","V10M1-Q63","V10M1-Q66","V11M1-Q1","V11M1-Q4","V11M1-Q8","V11M1-Q12","V11M1-Q16","V11M1-Q21","V11M1-Q24","V11M1-Q31","V11M1-Q35","V11M1-Q40","V11M1-Q44","V11M1-Q48","V11M1-Q55","V11M1-Q61","V11M1-Q63","V11M1-Q66","V11M1-Q73","V11M1-Q75","V12M1-Q2","V12M1-Q7","V12M1-Q16","V12M1-Q22","V12M1-Q24","V12M1-Q28","V12M1-Q32","V12M1-Q34","V12M1-Q39","V12M1-Q41","V12M1-Q49","V12M1-Q52","V12M1-Q56","V12M1-Q60","V12M1-Q66","V12M1-Q73"],"Hypertension":["V7M1-Q3","V7M1-Q8","V7M1-Q13","V7M1-Q35","V7M1-Q45","V7M1-Q53","V7M1-Q70","V7M2-Q2","V7M2-Q4","V7M2-Q6","V7M2-Q8","V7M2-Q15","V7M2-Q37","V7M2-Q58","V7M2-Q59","V7M2-Q70","V8M1-Q10","V8M1-Q26","V8M1-Q31","V8M1-Q32","V8M1-Q52","V8M1-Q60","V8M1-Q63","V8M1-Q64","V8M2-Q11","V8M2-Q20","V8M2-Q27","V8M2-Q37","V8M2-Q56","V8M2-Q65","V10M1-Q1","V10M1-Q8","V10M1-Q9","V10M1-Q13","V10M1-Q15","V10M1-Q27","V10M1-Q45","V10M1-Q52","V11M1-Q22","V11M1-Q34","V11M1-Q38","V11M1-Q47","V11M1-Q51","V11M1-Q59","V11M1-Q69","V11M1-Q72","V11M1-Q74","V12M1-Q3","V12M1-Q4","V12M1-Q17","V12M1-Q25","V12M1-Q29","V12M1-Q47","V12M1-Q50","V12M1-Q65"],"Tubular, Interstitial and Cystic Disorders":["V7M1-Q18","V7M1-Q23","V7M1-Q42","V7M1-Q64","V7M1-Q65","V7M2-Q9","V7M2-Q45","V7M2-Q50","V8M1-Q6","V8M1-Q73","V8M1-Q74","V8M2-Q44","V8M2-Q51","V8M2-Q52","V8M2-Q74","V10M1-Q43","V10M1-Q57","V10M1-Q73","V11M1-Q17","V11M1-Q45","V11M1-Q58","V12M1-Q6","V12M1-Q68","V12M1-Q75"],"Glomerular and Vascular Disorders":["V7M1-Q10","V7M1-Q28","V7M1-Q33","V7M1-Q34","V7M1-Q40","V7M1-Q68","V7M2-Q18","V7M2-Q48","V7M2-Q55","V7M2-Q56","V7M2-Q62","V8M1-Q3","V8M1-Q11","V8M1-Q19","V8M1-Q30","V8M1-Q42","V8M1-Q45","V8M1-Q54","V8M1-Q57","V8M1-Q68","V8M2-Q7","V8M2-Q25","V8M2-Q32","V8M2-Q38","V8M2-Q39","V8M2-Q43","V8M2-Q59","V10M1-Q38","V10M1-Q49","V10M1-Q50","V10M1-Q51","V10M1-Q54","V10M1-Q56","V10M1-Q60","V10M1-Q75","V11M1-Q9","V11M1-Q15","V11M1-Q27","V11M1-Q37","V11M1-Q43","V11M1-Q57","V11M1-Q62","V12M1-Q1","V12M1-Q12","V12M1-Q14","V12M1-Q18","V12M1-Q21","V12M1-Q27","V12M1-Q37","V12M1-Q46","V12M1-Q64"],"Kidney Transplantation":["V7M1-Q1","V7M1-Q7","V7M1-Q16","V7M1-Q37","V7M1-Q38","V7M1-Q61","V7M1-Q67","V7M2-Q20","V7M2-Q22","V7M2-Q28","V7M2-Q30","V7M2-Q38","V7M2-Q39","V7M2-Q41","V7M2-Q42","V7M2-Q63","V7M2-Q64","V8M1-Q4","V8M1-Q12","V8M1-Q17","V8M1-Q37","V8M1-Q38","V8M1-Q39","V8M1-Q43","V8M1-Q46","V8M1-Q62","V8M2-Q4","V8M2-Q13","V8M2-Q22","V8M2-Q47","V8M2-Q49","V8M2-Q53","V10M1-Q16","V10M1-Q20","V10M1-Q22","V10M1-Q33","V10M1-Q44","V10M1-Q68","V10M1-Q71","V10M1-Q74","V11M1-Q2","V11M1-Q5","V11M1-Q11","V11M1-Q18","V11M1-Q29","V11M1-Q50","V11M1-Q56","V11M1-Q67","V12M1-Q13","V12M1-Q15","V12M1-Q19","V12M1-Q42","V12M1-Q48","V12M1-Q58"],"Pharmacology":["V7M1-Q44","V7M1-Q47","V7M1-Q69","V7M2-Q1","V7M2-Q3","V7M2-Q32","V7M2-Q34","V8M1-Q1","V8M1-Q2","V8M1-Q8","V8M1-Q33","V8M2-Q33","V8M2-Q54","V8M2-Q61","V8M2-Q64","V10M1-Q4","V10M1-Q24","V10M1-Q39","V10M1-Q72","V11M1-Q7","V11M1-Q25","V11M1-Q39","V11M1-Q68","V12M1-Q36","V12M1-Q40","V12M1-Q62","V12M1-Q69"],"Acute Kidney Injury and ICU Nephrology":["V7M1-Q2","V7M1-Q11","V7M1-Q12","V7M1-Q15","V7M1-Q19","V7M1-Q22","V7M1-Q27","V7M1-Q30","V7M1-Q36","V7M1-Q39","V7M1-Q43","V7M1-Q51","V7M1-Q59","V7M2-Q10","V7M2-Q14","V7M2-Q21","V7M2-Q23","V7M2-Q26","V7M2-Q31","V7M2-Q35","V7M2-Q44","V7M2-Q46","V7M2-Q47","V8M1-Q7","V8M1-Q13","V8M1-Q21","V8M1-Q28","V8M1-Q34","V8M1-Q40","V8M1-Q44","V8M1-Q53","V8M1-Q65","V8M1-Q67","V8M2-Q5","V8M2-Q6","V8M2-Q14","V8M2-Q15","V8M2-Q17","V8M2-Q21","V8M2-Q23","V8M2-Q26","V8M2-Q35","V8M2-Q46","V8M2-Q58","V10M1-Q6","V10M1-Q7","V10M1-Q19","V10M1-Q29","V10M1-Q31","V10M1-Q37","V10M1-Q40","V10M1-Q41","V10M1-Q48","V10M1-Q59","V10M1-Q67","V11M1-Q6","V11M1-Q10","V11M1-Q14","V11M1-Q19","V11M1-Q28","V11M1-Q32","V11M1-Q36","V11M1-Q42","V11M1-Q54","V11M1-Q64","V11M1-Q70","V12M1-Q8","V12M1-Q20","V12M1-Q26","V12M1-Q30","V12M1-Q33","V12M1-Q45","V12M1-Q51","V12M1-Q54","V12M1-Q59","V12M1-Q61","V12M1-Q67","V12M1-Q71"]};   // code lists by category, from SCE.html; the live bank in sceConfig/ksap is used when present
+const WBOSS = [   // matched to worlds by keyword, because KSAP and the topic list spell some categories differently
+  { id:"na",    re:/^sodium/i,                 name:"KING VASOPRESSIN" },
+  { id:"kab",   re:/^acid/i,                   name:"THE ANION GAPSTER" },
+  { id:"capm",  re:/^(ca\b|calcium)/i,         name:"BARON CALCULUS" },
+  { id:"ckd",   re:/^chronic/i,                name:"LORD URAEMIA" },
+  { id:"htn",   re:/^hypertension/i,           name:"THE PRESSURE TITAN" },
+  { id:"tic",   re:/^tubular/i,                name:"THE CYST LORD" },
+  { id:"glom",  re:/^glomerular/i,             name:"THE CRESCENT QUEEN" },
+  { id:"tx",    re:/transplant/i,              name:"THE REJECTOR" },
+  { id:"pharm", re:/^pharmacolog/i,            name:"DR NEPHROTOXIN" },
+  { id:"aki",   re:/^acute|^aki/i,             name:"CREATININE KONG" }];
+const KB_PASS = { 1: 75, 2: 80 };
+const bossFor = cat => WBOSS.find(b => b.re.test(String(cat || "").trim())) || null;
+const wbossOf = w => bossFor(w.cat);
+function ksapBank(){
+  if (Array.isArray(S.kbank) && S.kbank.length) return S.kbank.filter(q => q && q.code);
+  const out = []; Object.entries(KSAP_FALLBACK).forEach(([category, codes]) => codes.forEach(code => out.push({ code, category }))); return out;
+}
+const kKey = code => String(code).replace(/[^a-zA-Z0-9]/g, "_");   // SCE.html's key for sceData/ksap
+function ksapStats(w){   // mirrors SCE.html's per-category stats, including questions you moved to another category
+  const b = wbossOf(w), r = { total:0, p1done:0, p1ok:0, p2done:0, p2ok:0 }; if (!b) return r;
+  ksapBank().forEach(q => { const d = (S.ksap || {})[kKey(q.code)] || {}; if (bossFor(d.reassignedCategory || q.category) !== b) return;
+    r.total++; if (d.p1correct || d.p1incorrect) r.p1done++; if (d.p1correct) r.p1ok++; if (d.p2correct || d.p2incorrect) r.p2done++; if (d.p2correct) r.p2ok++; });
+  return r;
+}
+const kbRec = (w, n) => { const b = wbossOf(w); return b ? (((Q().kboss || {})[b.id] || {})["p" + n] || null) : null; };
+function kbPhase(w, n, st){   // { done, score, won, rec, answered, total }
+  st = st || ksapStats(w); const done = st.total > 0 && st["p" + n + "done"] === st.total, rec = kbRec(w, n);
+  const score = st["p" + n + "done"] ? Math.round(st["p" + n + "ok"] / st.total * 100) : 0, soFar = st["p" + n + "done"] ? Math.round(st["p" + n + "ok"] / st["p" + n + "done"] * 100) : null;
+  return { done, score, soFar, won: !!rec || (done && score >= KB_PASS[n]), rec, answered: st["p" + n + "done"], total: st.total };
+}
+const kbSlain = (w, n) => kbPhase(w, n).won;
+const gatesOpen = () => WORLDS.length > 0 && WORLDS.filter(wbossOf).length >= WBOSS.length && WORLDS.filter(wbossOf).every(w => kbSlain(w, 2));
+const princessSaved = () => !!(Q().sce || {}).passed;
+function syncKBoss(){   // save any newly finished, winning pass and celebrate it
+  if (!allLoaded()) return;
+  const pairs = [], wins = [], gatesBefore = gatesOpen();
+  WORLDS.forEach(w => { const b = wbossOf(w); if (!b) return; const st = ksapStats(w);
+    [1, 2].forEach(n => { const ph = kbPhase(w, n, st); if (!ph.rec && ph.done && ph.score >= KB_PASS[n]){
+      pairs.push(setQuest(`kboss/${b.id}/p${n}`, { score: ph.score, n: ph.total, ts: now() })); wins.push({ b, n, score: ph.score }); } }); });
+  if (!pairs.length) return;
+  write(pairs);
+  let delay = 400;
+  wins.forEach(x => { setTimeout(() => { SFX.level(); banner(`${x.b.name}<br>${x.n === 1 ? "FALLS!" : "SLAIN!"}`, `${x.n === 1 ? "First" : "Second"} KSAP pass · ${x.score}% · +${R["kb" + x.n]}`); }, delay); delay += 1900; });
+  if (!gatesBefore && gatesOpen()) setTimeout(() => { SFX.level(); banner("THE CASTLE<br>GATES OPEN!", `All ten bosses slain · +${R.gates}`); }, delay);
+  local.set("seen", tally().sce);
+}
+
 // ── Pathology bonus stage (same records as SCEtopics: {dx, feat, caseNo, img, ts, week}) ──
 function isoWeekKey(d){ const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = dt.getUTCDay() || 7; dt.setUTCDate(dt.getUTCDate() + 4 - day);
   const y0 = new Date(Date.UTC(dt.getUTCFullYear(),0,1)); return dt.getUTCFullYear() + "-W" + String(Math.ceil((((dt - y0)/DAY) + 1)/7)).padStart(2,"0"); }
@@ -452,7 +523,9 @@ function tally(){
     if (mastered(L)) t.bosses++; if (bossAwake(L)) t.awake++; t.stars += starsOf(L); });
   WORLDS.forEach(w => { w.topics.forEach(tp => { if (topicDone(tp)) t.topics++; }); if (worldDone(w)) t.worlds++; });
   t.cases = cases().length; t.weeks = bxWeeksCleared();
-  t.sce = t.read*R.read + t.sets*R.first + (t.qs - t.sets)*R.q + t.wins*R.win + t.bosses*R.boss + t.topics*R.topic + t.worlds*R.world + t.cases*R.case + t.weeks*R.week;
+  t.kb1 = 0; t.kb2 = 0; WORLDS.forEach(w => { if (!wbossOf(w)) return; if (kbSlain(w, 1)) t.kb1++; if (kbSlain(w, 2)) t.kb2++; });
+  t.gates = gatesOpen() ? 1 : 0; t.princess = princessSaved() ? 1 : 0;
+  t.sce = t.kb1*R.kb1 + t.kb2*R.kb2 + t.gates*R.gates + t.princess*R.princess + t.read*R.read + t.sets*R.first + (t.qs - t.sets)*R.q + t.wins*R.win + t.bosses*R.boss + t.topics*R.topic + t.worlds*R.world + t.cases*R.case + t.weeks*R.week;
   return t;
 }
 // Shared wallet with ARCP Quest: lifetime = ARCP Quest's published total + this game's; spending lives in pft_quest_shop
@@ -465,7 +538,7 @@ const balance = t => Math.max(0, arcpEarned() + (t || tally()).sce - shop().spen
 const levelFor = xp => { let l = 1; while (45*l*(l+1) <= xp) l++; return l; };
 const floorFor = l => 45*(l-1)*l;
 const titleFor = l => TITLES[Math.min(l-1, TITLES.length-1)];
-const allLoaded = () => S.got.topics && S.got.quest && S.got.bx && S.got.arcp && S.got.cfg;
+const allLoaded = () => S.got.topics && S.got.quest && S.got.bx && S.got.arcp && S.got.cfg && S.got.ksap && S.got.kbank;
 function publishEarned(t){   // only once every node has loaded, so a half-loaded total is never written
   if (!allLoaded() || !window.QFB) return;
   if (raw("pft_quest_sce_earned") !== String(t.sce)){ S.arcp = Object.assign({}, S.arcp, { pft_quest_sce_earned: { value:String(t.sce), ts:now() } }); window.QFB.arcp("pft_quest_sce_earned", t.sce); }
@@ -513,6 +586,9 @@ const BOO = `<svg class="boo" viewBox="0 0 16 16" shape-rendering="crispEdges" a
 const VAMP = `<svg class="vamp" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="7" width="12" height="9" fill="#2a1240"/><rect x="1" y="9" width="2" height="7" fill="#7a1530"/><rect x="13" y="9" width="2" height="7" fill="#7a1530"/><rect x="4" y="1" width="8" height="2" fill="#1a0f22"/><rect x="3" y="2" width="10" height="2" fill="#1a0f22"/><rect x="7" y="3" width="2" height="1" fill="#1a0f22"/><rect x="4" y="3" width="3" height="5" fill="#e8e0f0"/><rect x="9" y="3" width="3" height="5" fill="#e8e0f0"/><rect x="7" y="4" width="2" height="4" fill="#e8e0f0"/><rect x="5" y="4" width="1" height="1" fill="#ff3b3b"/><rect x="10" y="4" width="1" height="1" fill="#ff3b3b"/><rect x="6" y="6" width="4" height="1" fill="#7a1530"/><rect x="6" y="7" width="1" height="1" fill="#fff"/><rect x="9" y="7" width="1" height="1" fill="#fff"/><rect x="5" y="8" width="6" height="1" fill="#f4f1ff"/><rect x="7" y="9" width="2" height="4" fill="#c8102e"/></svg>`;
 const CASTLE = `<svg class="castle" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="12" height="10" fill="#8f8ab8"/><rect x="2" y="4" width="2" height="2" fill="#8f8ab8"/><rect x="6" y="4" width="4" height="2" fill="#8f8ab8"/><rect x="12" y="4" width="2" height="2" fill="#8f8ab8"/><rect x="6" y="11" width="4" height="5" fill="#14112b"/><rect x="7" y="1" width="1" height="3" fill="#f4f1ff"/><rect x="8" y="1" width="3" height="2" fill="#ff6b6b"/><rect x="3" y="8" width="2" height="2" fill="#14112b"/><rect x="11" y="8" width="2" height="2" fill="#14112b"/></svg>`;
 
+const KBOSS = `<svg class="kboss" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="2" width="8" height="1" fill="#ffc93c"/><rect x="4" y="0" width="1" height="2" fill="#ffc93c"/><rect x="7" y="0" width="2" height="2" fill="#ffc93c"/><rect x="11" y="0" width="1" height="2" fill="#ffc93c"/><rect x="1" y="2" width="2" height="1" fill="#f4f1ff"/><rect x="13" y="2" width="2" height="1" fill="#f4f1ff"/><rect x="2" y="3" width="1" height="1" fill="#f4f1ff"/><rect x="13" y="3" width="1" height="1" fill="#f4f1ff"/><rect x="3" y="3" width="10" height="1" fill="#9b2f52"/><rect x="2" y="4" width="12" height="8" fill="#9b2f52"/><rect x="5" y="10" width="6" height="2" fill="#c8577a"/><rect x="3" y="12" width="4" height="2" fill="#9b2f52"/><rect x="9" y="12" width="4" height="2" fill="#9b2f52"/><rect x="2" y="14" width="5" height="1" fill="#0b0920"/><rect x="9" y="14" width="5" height="1" fill="#0b0920"/><rect x="4" y="4" width="3" height="1" fill="#0b0920"/><rect x="9" y="4" width="3" height="1" fill="#0b0920"/><rect x="4" y="5" width="3" height="2" fill="#f4f1ff"/><rect x="9" y="5" width="3" height="2" fill="#f4f1ff"/><rect x="5" y="6" width="1" height="1" fill="#ff3b3b"/><rect x="10" y="6" width="1" height="1" fill="#ff3b3b"/><rect x="5" y="8" width="6" height="1" fill="#0b0920"/><rect x="5" y="9" width="1" height="1" fill="#f4f1ff"/><rect x="10" y="9" width="1" height="1" fill="#f4f1ff"/></svg>`;
+const PRINCESS = `<svg class="princess" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="6" y="0" width="4" height="1" fill="#ffc93c"/><rect x="7" y="0" width="2" height="1" fill="#5cc8ff"/><rect x="5" y="1" width="6" height="1" fill="#ffc93c"/><rect x="4" y="2" width="8" height="2" fill="#3a2216"/><rect x="3" y="4" width="2" height="6" fill="#3a2216"/><rect x="11" y="4" width="2" height="6" fill="#3a2216"/><rect x="5" y="4" width="6" height="4" fill="#c68a5e"/><rect x="6" y="5" width="1" height="1" fill="#14112b"/><rect x="9" y="5" width="1" height="1" fill="#14112b"/><rect x="7" y="7" width="2" height="1" fill="#8a3b2a"/><rect x="5" y="8" width="6" height="2" fill="#2fb3a3"/><rect x="4" y="9" width="1" height="2" fill="#c68a5e"/><rect x="11" y="9" width="1" height="2" fill="#c68a5e"/><rect x="7" y="9" width="2" height="1" fill="#ff6b6b"/><rect x="4" y="11" width="8" height="1" fill="#2fb3a3"/><rect x="3" y="12" width="10" height="3" fill="#2fb3a3"/><rect x="3" y="15" width="10" height="1" fill="#1f7d72"/></svg>`;
+
 // ── Render ──
 const SCE_DATE = "2027-05-05";   // 5 May 2027 · a date set in the ARCP app takes over if you change it there
 function examDays(){ const d = raw("pft_eseneph_date") || SCE_DATE; if (!d) return null; const t = new Date(d); if (isNaN(t)) return null; return Math.round((t.getTime() - startOfDay())/DAY); }
@@ -532,13 +608,14 @@ function renderHUD(t){
   $("lifetime").textContent = `SCE Quest ${t.sce.toLocaleString()} (your level here) + ARCP Quest ${arcpEarned().toLocaleString()} = ${(t.sce + arcpEarned()).toLocaleString()} lifetime · spent ${sh.spent.toLocaleString()} on items and treats`;
   drawAvatar($("av"));
 }
+const kbFlag = w => { if (!wbossOf(w)) return ""; const n = (kbSlain(w,1)?1:0) + (kbSlain(w,2)?1:0); return `<span class="kbf k${n}" title="World boss: ${n}/2 phases">${n === 2 ? "⚑" : n === 1 ? "⚐" : ""}</span>`; };
 function renderMap(){
   const ed = examDays();
   $("track").innerHTML = WORLDS.map((w,i) => {
     const docd = w.levels.filter(cleared).length, pct = w.levels.length ? Math.round(docd/w.levels.length*100) : 0, g = ghosts(w.levels).length, aw = w.levels.filter(bossAwake).length;
     const cls = [w.levels.some(L => starsOf(L) > 0) ? "some" : "", worldDone(w) ? "done" : "", i === S.view ? "view" : ""].join(" ");
-    return (i ? '<span class="link"></span>' : "") + `<button class="node ${cls}" data-world="${i}" aria-label="World ${i+1}, ${esc(w.cat)}, ${pct}% cleared">${i===S.view?'<canvas class="walker" width="16" height="16"></canvas>':""}<span class="plat"></span><span class="lbl">W${i+1}</span><span class="sub">${esc(w.short)}</span><span class="pct">${pct}%</span><span class="gh">${g ? "👻" + g : ""}${aw ? (g ? " " : "") + "🧛" + aw : ""}${g || aw ? "" : "&nbsp;"}</span></button>`;
-  }).join("") + `<span class="link"></span><div class="node">${CASTLE}<span class="plat" style="visibility:hidden"></span><span class="lbl">SCE</span><span class="sub">${ed===null?"date?":ed>=0?ed+"d":"done"}</span><span class="pct">&nbsp;</span><span class="gh">&nbsp;</span></div>`;
+    return (i ? '<span class="link"></span>' : "") + `<button class="node ${cls}" data-world="${i}" aria-label="World ${i+1}, ${esc(w.cat)}, ${pct}% cleared">${i===S.view?'<canvas class="walker" width="16" height="16"></canvas>':""}<span class="plat"></span><span class="lbl">W${i+1}</span><span class="sub">${esc(w.short)}</span><span class="pct">${pct}%</span><span class="gh">${g ? "👻" + g : ""}${aw ? (g ? " " : "") + "🧛" + aw : ""}${g || aw ? "" : "&nbsp;"}</span>${kbFlag(w)}</button>`;
+  }).join("") + `<span class="link"></span><button class="node final ${gatesOpen()?"open":""} ${princessSaved()?"saved":""}" data-act="final" aria-label="SCE castle, Princess Nephra">${CASTLE}${PRINCESS}<span class="plat" style="visibility:hidden"></span><span class="lbl">SCE</span><span class="sub">${ed===null?"date?":ed>=0?ed+"d":"done"}</span><span class="pct">${WORLDS.filter(w => wbossOf(w) && kbSlain(w,2)).length}/${WBOSS.length}</span><span class="gh">${princessSaved() ? "♥" : "&nbsp;"}</span></button>`;
   const wk = $("track").querySelector("canvas.walker"); if (wk) drawAvatar(wk);
   const v = $("track").querySelector(".node.view"), box = $("track").parentElement;   // keep the chosen world in view on a phone
   if (v && box.scrollWidth > box.clientWidth) box.scrollLeft = Math.max(0, v.offsetLeft - box.clientWidth/2 + v.offsetWidth/2);
@@ -557,7 +634,44 @@ function renderWorld(){
   $("topics").innerHTML = w.topics.map(tp => {
     const n = tp.levels.filter(cleared).length, done = topicDone(tp);
     return `<div class="topic"><div class="thead"><span class="tname">${esc(tp.topic)}</span><span class="tcnt ${done?"done":""}">${done?"CLEAR ✓":`${n}/${tp.levels.length}`}</span></div><div class="grid">${tp.levels.map(tileHTML).join("")}</div></div>`;
-  }).join("");
+  }).join("") + castleHTML(w);
+}
+function phaseHTML(w, n, st){
+  const ph = kbPhase(w, n, st), need = KB_PASS[n], lab = n === 1 ? "PHASE 1 · FIRST PASS" : "PHASE 2 · SECOND PASS";
+  const hp = ph.won ? 0 : ph.total ? 1 - ph.answered / ph.total : 1;
+  let msg;
+  if (ph.won) msg = `SLAIN · ${ph.rec ? ph.rec.score : ph.score}% on ${ph.rec ? ph.rec.n : ph.total} questions${ph.rec ? " · " + fmtDate(new Date(ph.rec.ts)) : ""}`;
+  else if (!ph.total) msg = "No KSAP questions in this category yet.";
+  else if (ph.done) msg = n === 1 ? `SURVIVED · ${ph.score}% (he falls at ${need}%). He retreats to his castle; your second pass is the rematch.` : `SURVIVED · ${ph.score}% (he falls at ${need}%). Keep going: answers you change in SCE.html count.`;
+  else if (!ph.answered) msg = n === 2 && !kbPhase(w, 1, st).done ? `Waits for your second pass. ${need}% or more slays him.` : `Answer all ${ph.total} of this world's KSAPs in SCE.html. ${need}% or more slays him.`;
+  else msg = `${ph.answered}/${ph.total} answered · ${ph.soFar}% correct so far · decided when all ${ph.total} are done`;
+  return `<div class="kph ${ph.won ? "won" : ph.done ? "lost" : ""}"><div class="shd"><b class="${ph.won ? "" : "off"}">${lab}</b><span class="note">${need}% or more · +${R["kb" + n]}</span></div>
+    <div class="hp" aria-label="Boss HP"><i style="transform:scaleX(${hp})"></i></div><div class="note">${msg}</div></div>`;
+}
+function castleHTML(w){
+  const b = wbossOf(w); if (!b) return "";
+  const st = ksapStats(w), dead = kbSlain(w, 2);
+  return `<div class="wcastle ${dead ? "dead" : ""}"><div class="thead"><span class="tname">🏰 WORLD BOSS · ${b.name}</span><a class="note" href="SCE.html">KSAPs in SCE.html ↗</a></div>
+    <div class="bossrow">${KBOSS.replace('class="kboss"', `class="kboss" style="filter:hue-rotate(${WBOSS.indexOf(b)*36}deg)${dead ? " grayscale(1) opacity(.45)" : ""}"`)}<div class="kphs">${phaseHTML(w, 1, st)}${phaseHTML(w, 2, st)}</div></div></div>`;
+}
+function openFinal(){
+  S.open = null; S.hunt = null; S.board = null; S.final = true;
+  const ed = examDays(), gates = gatesOpen(), saved = princessSaved(), sce = Q().sce || {}, date = raw("pft_eseneph_date") || SCE_DATE;
+  const rows = WORLDS.filter(wbossOf).map(w => { const b = wbossOf(w), p1 = kbSlain(w,1), p2 = kbSlain(w,2);
+    return `<button class="grow" data-world="${w.wi}"><b>W${w.wi+1} · ${b.name}</b><span class="note">${p1 ? "⚐ 1st ✓" : "1st ·"} ${p2 ? "⚑ 2nd ✓" : "2nd ·"}</span><span class="note">${esc(w.short)}</span><span></span></button>`; }).join("");
+  const slain = WORLDS.filter(w => wbossOf(w) && kbSlain(w,2)).length;
+  const msg = saved ? `Rescued on ${fmtDate(new Date(sce.ts||0))}. You passed the SCE. Well done, Dr Maugo.`
+    : ed !== null && ed > 0 ? `She waits in the castle. ${ed} day${ed===1?"":"s"} to go (${fmtDate(new Date(date))}). Slay all ten world bosses on your second KSAP pass to open the gates, then pass the SCE to rescue her.`
+    : `Exam day has come. Once you have your result, rescue her here.`;
+  $("drawer").innerHTML = `<div class="din"><button class="btn alt" data-act="close" style="align-self:flex-end">✕ CLOSE</button>
+    <h2>🏰 SCE CASTLE · PRINCESS NEPHRA</h2>
+    <div class="step finalbox ${saved ? "got" : ""}"><div class="bossrow">${PRINCESS}<div class="note">${msg}</div></div>
+      ${saved ? `<button class="btn alt" data-act="unpass">${S.confirm === "unpass" ? "UNDO RESCUE?" : "Undo"}</button>`
+        : ed !== null && ed <= 0 ? `<button class="btn" data-act="passed">${S.confirm === "passed" ? "CONFIRM: I PASSED ✓" : `I PASSED THE SCE · +${R.princess}`}</button>` : ""}</div>
+    <div class="step ${gates ? "got" : ""}"><div class="shd"><b class="${gates ? "" : "off"}">THE GATES · ${slain}/${WBOSS.length} BOSSES SLAIN</b><span class="note">+${R.gates}</span></div>
+      <div class="note">${gates ? "Open. Every world boss has fallen on your second pass." : "Each world boss falls for good on your second KSAP pass at 80% or more. Tap a world to see its castle."}</div>
+      <div class="board">${rows}</div></div></div>`;
+  $("drawer").hidden = false;
 }
 function renderBx(){
   const all = cases(), wk = isoWeekKey(new Date()), n = all.filter(([,r]) => (r.week || isoWeekKey(new Date(r.ts||0))) === wk).length;
@@ -655,9 +769,9 @@ const TREATS_HOST = {
   write: (k, v) => setArcp(k, v),
   after: () => { const tt = tally(); renderHUD(tt); renderShop(tt); } };
 function renderRules(){ $("rules").innerHTML = RULES.map(([,l,v]) => `<tr><td>${esc(l)}</td><td>+${v}</td></tr>`).join(""); }
-function renderAll(){ buildTaxonomy(); migrateCards(); stampReads(); const t = tally(); renderHUD(t); renderMap(); renderWorld(); renderBx(); renderShop(t); renderRules(); publishEarned(t);
+function renderAll(){ buildTaxonomy(); migrateCards(); stampReads(); syncKBoss(); const t = tally(); renderHUD(t); renderMap(); renderWorld(); renderBx(); renderShop(t); renderRules(); publishEarned(t);
   const typing = document.activeElement && $("drawer").contains(document.activeElement) && /^(TEXTAREA|INPUT|SELECT)$/.test(document.activeElement.tagName);
-  if (!$("drawer").hidden && !typing){ if (S.open) openLevel(S.open, true); else if (S.hunt) renderHunt(); else if (S.board) renderBoard(); } }
+  if (!$("drawer").hidden && !typing){ if (S.open) openLevel(S.open, true); else if (S.hunt) renderHunt(); else if (S.board) renderBoard(); else if (S.final) openFinal(); } }
 let rq = 0; const scheduleRender = () => { if (rq) return; rq = requestAnimationFrame(() => { rq = 0; renderAll(); }); };
 
 // ── Writes (optimistic: update local state, cache, then Firebase) ──
@@ -694,6 +808,7 @@ function act(change){
   const newWorld = WORLDS.filter(w => worldDone(w) && !bWorlds.has(w.wi));
   if (newWorld.length){ setTimeout(() => { SFX.level(); banner("WORLD CLEAR!", `${esc(newWorld[0].short)} · +${R.world}`); }, delay); delay += 1700; }
   else if (newTopic.length){ setTimeout(() => { SFX.clear(); banner("TOPIC CLEAR!", `${esc(newTopic[0])} · +${R.topic}`); }, delay); delay += 1700; }
+  if (a.princess > b.princess){ setTimeout(() => { SFX.level(); banner("PRINCESS NEPHRA<br>RESCUED!", `You passed the SCE · +${R.princess}`); }, delay); delay += 1700; }
   if (a.weeks > b.weeks){ setTimeout(() => { SFX.clear(); banner("BONUS STAGE CLEAR!", `3 cases this week · +${R.week}`); }, delay); delay += 1700; }
   if (levelFor(a.sce) > levelFor(b.sce)) setTimeout(() => { SFX.level(); banner("LEVEL UP!", `Lv ${levelFor(a.sce)} · ${titleFor(levelFor(a.sce))}`); }, delay);
   local.set("seen", a.sce);
@@ -702,7 +817,7 @@ function act(change){
 
 // ── Level drawer: read · your questions · recall · the boss ──
 function openLevel(qk, keep){
-  const L = BYQK[qk]; if (!L) return; S.open = qk; S.hunt = null; S.board = null;
+  const L = BYQK[qk]; if (!L) return; S.open = qk; S.hunt = null; S.board = null; S.final = false;
   const c = card(L) || {}, read = isRead(L), qs = questions(L), src = c.src || {}, tries = bossTries(L), best = bestScore(L), m = mastered(L), dq = dueQs(L).length;
   const keepVal = id => keep && $(id) ? $(id).value : "";
   const qRow = q => { const d = qDue(q), due = d <= now();
@@ -743,7 +858,7 @@ function openLevel(qk, keep){
 
 // ── Ghost board: every due question in one list, to sift through and clear ──
 const agoTxt = d => { const n = Math.floor((now() - d)/DAY); return n <= 0 ? "due today" : n === 1 ? "due 1 day ago" : `due ${n} days ago`; };
-function openBoard(){ S.board = S.board || { w: "all" }; S.open = null; S.hunt = null; renderBoard(); $("drawer").hidden = false; $("drawer").scrollTop = 0; }
+function openBoard(){ S.board = S.board || { w: "all" }; S.open = null; S.hunt = null; S.final = false; renderBoard(); $("drawer").hidden = false; $("drawer").scrollTop = 0; }
 function boardItems(){ const all = ghosts(); return S.board && S.board.w !== "all" ? all.filter(g => String(g.L.w.wi) === S.board.w) : all; }
 function renderBoard(){
   const all = ghosts(), items = boardItems(), dr = $("drawer"), aw = LEVELS.filter(bossAwake).length;
@@ -808,7 +923,8 @@ document.addEventListener("click", ev => {
     SFX.buy(); pop("-" + it.price); const tt = tally(); renderHUD(tt); renderShop(tt); renderMap(); return; }
   if (t.dataset.equip){ const it = SHOP.find(i => i.id === t.dataset.equip), sh = shop(); if (!it) return; sh.eq[it.slot] = it.id; setArcp("pft_quest_shop", JSON.stringify(sh));
     SFX.coin(); const tt = tally(); renderHUD(tt); renderShop(tt); renderMap(); return; }
-  if (t.dataset.world){ S.view = +t.dataset.world; local.set("view", S.view); $("drawer").hidden = true; S.open = null; S.hunt = null; SFX.tick(); renderMap(); renderWorld(); return; }
+  if (t.dataset.world){ const fromFinal = S.final; S.view = +t.dataset.world; local.set("view", S.view); $("drawer").hidden = true; S.open = null; S.hunt = null; S.final = false;
+    if (fromFinal) setTimeout(() => { const c = document.querySelector(".wcastle"); if (c) c.scrollIntoView({ behavior:"smooth", block:"center" }); }, 60); SFX.tick(); renderMap(); renderWorld(); return; }
   if (t.dataset.lvl){ SFX.tick(); S.confirm = null; S.editQ = null; openLevel(t.dataset.lvl); return; }
   if (t.dataset.src && L){ const c = Object.assign({}, card(L) || {}), src = Object.assign({}, c.src || {}); src[t.dataset.src] = !src[t.dataset.src];
     if (!src[t.dataset.src]) delete src[t.dataset.src]; c.src = src; if (!c.ts) c.ts = now();
@@ -830,8 +946,13 @@ document.addEventListener("click", ev => {
     if (S.confirm !== id){ S.confirm = id; renderBx(); setTimeout(() => { if (S.confirm === id){ S.confirm = null; renderBx(); } }, 3000); return; }
     S.confirm = null; act(() => { const bx = Object.assign({}, S.bx); delete bx[id]; S.bx = bx; local.set("bx", bx); if (window.QFB) window.QFB.delBx(id); }); return; }
   switch (t.dataset.act){
-    case "close": $("drawer").hidden = true; S.open = null; S.hunt = null; S.board = null; S.confirm = null; S.editQ = null; renderWorld(); return;
+    case "close": $("drawer").hidden = true; S.open = null; S.hunt = null; S.board = null; S.final = false; S.confirm = null; S.editQ = null; renderWorld(); return;
     case "board": SFX.tick(); openBoard(); return;
+    case "final": SFX.tick(); S.confirm = null; openFinal(); $("drawer").scrollTop = 0; return;
+    case "passed": if (S.confirm !== "passed"){ S.confirm = "passed"; openFinal(); setTimeout(() => { if (S.confirm === "passed"){ S.confirm = null; if (S.final) openFinal(); } }, 3000); return; }
+      S.confirm = null; act(() => write([setQuest("sce", { passed: true, ts: now() })])); openFinal(); return;
+    case "unpass": if (S.confirm !== "unpass"){ S.confirm = "unpass"; openFinal(); setTimeout(() => { if (S.confirm === "unpass"){ S.confirm = null; if (S.final) openFinal(); } }, 3000); return; }
+      S.confirm = null; act(() => write([setQuest("sce", null)])); openFinal(); return;
     case "huntAll": startHunt(boardItems(), true); return;
     case "shop": $("shopBox").scrollIntoView({ behavior:"smooth", block:"start" }); return;
     case "mute": S.muted = !S.muted; local.set("muted", S.muted); $("mute").textContent = S.muted ? "♪ OFF" : "♪ ON"; return;
@@ -890,10 +1011,12 @@ window.addEventListener("q-quest",  e => onNode("quest", e.detail));
 window.addEventListener("q-bx",     e => onNode("bx", e.detail));
 window.addEventListener("q-arcp",   e => onNode("arcp", e.detail));
 window.addEventListener("q-cfg",    e => { S.cfg = e.detail || null; S.got.cfg = true; local.set("cfg", S.cfg); scheduleRender(); welcome(); });
+window.addEventListener("q-ksap",   e => onNode("ksap", e.detail));
+window.addEventListener("q-kbank",  e => { S.kbank = Array.isArray(e.detail) ? e.detail : null; S.got.kbank = true; local.set("kbank", S.kbank); scheduleRender(); welcome(); });
 window.addEventListener("q-offline", () => { $("sync").textContent = "● offline"; $("sync").className = "sync bad"; });
 let welcomed = false;
 function welcome(){   // coins from reading you ticked in the SCE app since you were last here
-  if (welcomed || !allLoaded()) return; welcomed = true; buildTaxonomy();
+  if (welcomed || !allLoaded()) return; welcomed = true; buildTaxonomy(); syncKBoss();
   const t = tally(), seen = local.get("seen", null);
   if (seen !== null && t.sce > seen){ setTimeout(() => { pop("+" + (t.sce - seen)); SFX.big(); toast(`Welcome back · +${t.sce - seen} coins since your last visit`); }, 500); }
   local.set("seen", t.sce);
