@@ -281,7 +281,7 @@ details summary{cursor:pointer;margin:8px 0 0}
       <button class="sbtn hunt" data-act="hunt" id="huntBtn">👻 HUNT</button>
       <button class="sbtn" data-act="mute" id="mute">♪ ON</button>
       <button class="sbtn" data-act="shop">🛒 SHOP</button>
-      <a class="sbtn" href="quest.html">ARCP ↗</a>
+      <a class="sbtn" href="journey.html">ARCP ↗</a>
       <div class="sync" id="sync">● connecting</div>
     </div>
   </header>
@@ -340,7 +340,7 @@ const MISS_DAYS = 1;                        // a missed recall comes back tomorr
 // study methods. You can also dare him early: a win clears the whole subtopic, so topics you already know get cleared fast.
 const BOSS = { name:"COUNT GLOMERULA", pass:80, wakeDays:2, methods:[["feynman","Feynman"],["study2","Study² Protocol"],["review","Nephrology review"]] };
 const scoreLabel = n => n >= 85 ? "Expert" : n >= 70 ? "Confident" : n >= 60 ? "Somewhat Confident" : n >= 40 ? "Building Knowledge" : "Needs More Practice";
-const RULES = [["read","Subtopic read (★)",1],["first","First question on a subtopic (★★)",5],["q","Each extra question",1],["win","Ghost busted · correct recall",3],
+const RULES = [["read","Subtopic read (★)",5],["first","First question on a subtopic (★★)",5],["q","Each extra question",1],["win","Ghost busted · correct recall",3],
   ["boss","Count Glomerula defeated · 80% or more · clears the subtopic (👑)",20],
   ["topic","Topic clear · every subtopic has a question or a 👑",10],["world","World clear · every subtopic in a category cleared",50],
   ["case","Pathology case logged",3],["week","Bonus stage clear · 3 cases in a week",10]];
