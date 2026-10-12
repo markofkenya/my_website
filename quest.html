@@ -8,8 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="ARCP Quest" />
 <meta name="theme-color" content="#14112b" />
+<link rel="apple-touch-icon" href="journey-icon.png" />
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAFnklEQVR4nK1US4wcVxU9971Xv67qrm63pz2eie0ED2AlfAYUW+QHcdigKAgFFlkkAjYRIBZISOyQkAhCRIgFilggWfwUiKIs+ElkkSCEIEaKxCdGMQYnYTz4N+OZ7unuquqqep/Lwpbt4O5hFnP1Fq+ens6pc+65j07fdRd2o5hu7Ilv7NXuoAM+S6cZgFBUk71OtwsEDHhOnPeGg8OFItFcCRbrVAtHu0LAgMfiXDyQj7vld84DvHK2v/rs1qFJpxaGmMROUBxgpy0AglAZO/rA5PgjRzZWstXTW8cfOTJcLkptBGhHChhoEom3de5a5ewAqp1O5wKwrLSpjAELtVeUpJsIGPx/CAgQwIvVJGN3s1gGBPCgHzUIDem/8c+yLLK5bjIpdZFn5qxrInBgALRNTAkw4Iz5S6PNC874N4lgQAHfbXUPS09ADFGu3rt56L6OFLTyh8FtJzspIgNH2xA4ICH6vS6/kw+dcRZMdCPqzCCwlPIrSfqAF5QsamMuN0aCad+kGSh1FR3b90CASuvWa/34Bw8FvqqMu5FuQZ6gn/7lXG6s8oSB8z15uOoC0J4z7HY0B5Y5Df33NjtZKbqtYCFS1vFV9GFhzm/W755P26UyjonAzJUwABHjpqHGzJgSQVs33248/P4Dv3lt61+XCrArtS21ZeY31yc/O7l2z9L8gT1xbd1V84jp1qhtp4AAA5exe/LBfYEntEPoSQDa8rvmoy9/bBE+lc4J2gZjNgExrKQ9ubvnreL1gw2jRL+fX97IiXBgPo2bvozkneeKbu6MnPLjO1JgnY1ycyAvc7aX9kUjQkAQAkQcZ/XezfLgWqUsWylIzLR6NgGRTFpQ0hKWJ27kAtVL7pjbAyAn19g0R0fI2hGDRK25KsHTVcwgIHKDfvdb3w7vu9eMsmYY/fXMq79YX409BaDQ5hO9g48dOTYuJ147Gf3k2cFTX5P79sO5W5FukUYEZylqzH3/RHDsQ7KReL2e1+5kSXy7aH2mXHiiXGirpIhjr9Px5noijOOPP9o78SMKIzgL+t+OT/OOmZSK7v+IbKXVKOtf6btaS2cduwJmAsNshbXQZmtzqxrl3uL+6MPHSampLs2wiNn2+/7++aKsV1cvL6RpAHHW0xfjEYCidoqIiS5cvLI43w0bke33d9wDZhJSl8VzT3/uo1/4+m1L75OBIiFyuOUq+NS4Y4AfRhsV2Bp75D1LL5/4Bl566eikafOMpLyVZopFTETOLZ38R+ykH3v7Gw0VejHkeaVfbmS/i7O+sA2SKvTbQh795KcP3/1Qceb1q7O8U4uE49srX/38l39fv/zqOw61QP/JR1s+/uTVBLCmc/n4uZUzQ+ceWLuyOKyvROGsQZj5XFspk7X1F48tf/WLn03yPPCDxLmwNgxMAn9CKOsqi+OnnvnBw38+lfd6wtqpOGr6MeCYg2bS7KR7kjgF95vJ/b995cnnf1173jc//8SpO5f2TpQfx2m348WJdTNaDKiOnGIcAz7c92T3ldPD8OkXnLUsvdbw0h3OlLVtvPBHbpxy1kZSnrg4Gnntx+QkY5JTCZ4f6GtmEYBrKWAgAP/KmrcGG603LoEwYfpbYH4cQjOffe3NkZEVQYD/rXzPNyjqnIWkt4WICGDQM4/eLYiK2gzyCkA7DmJfGes2stJzthWoVhIBPMyrrcpaorkkTDyqatvPS4C6Dc/3vbHhzazUluNAduIQwCAvi9oKgjq+GAiicSXWhhZAL/XT0KuMu7hlSyNboddLQwDrQx6XOlBioR14Sg4n9frIAui1wjTyjbEXtmxtXBp6vTQAsDZ040oLIjWqWRCymjPNAKKaSXBtONNcG1aS89oBKDTnmjXzuGbfuVxzoRlArllKd/2+kBzWDGCsOdMsCEoQri8AN3/uzvmMdO1a/RfNx/Ce5Bz69AAAAABJRU5ErkJggg==" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="apple-touch-icon" href="journey-icon-block.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
 <!-- Same Firebase project as the ARCP app, written in the ARCP app's own formats. Logbook: Journey only ADDS
@@ -35,6 +36,825 @@
 /* Layout: one screen — HUD, world path, level grid for the chosen world, then rules + shop. Deliberate single dark arcade look. */
 :root{
   color-scheme: dark;
+  --night:#14112b; --panel:#211c45; --panel2:#2c2660; --ink:#f4f1ff; --mute:#a7a0d6;
+  --coin:#ffc93c; --grass:#3fbf6a; --sky:#5cc8ff; --star:#ffe066; --lock:#5b5585; --alert:#ff6b6b; --brick:#c8673a; --edge:#0b0920;
+  --pixel:'Silkscreen','Courier New',monospace; --body:'Pixelify Sans','Trebuchet MS',system-ui,sans-serif;
+}
+body.t-desert{--night:#2b1a12;--panel:#3d2618;--panel2:#523320;--brick:#d9a441}
+body.t-night{--night:#06141c;--panel:#0c2430;--panel2:#123544;--brick:#2e6f8e}
+body.t-snow{--night:#1a2238;--panel:#26324f;--panel2:#33426a;--brick:#cfe3ff}
+*{box-sizing:border-box}
+[hidden]{display:none!important}   /* hidden overlays must never block taps */
+html{background:var(--night)}
+body{margin:0;background:var(--night);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.4;
+  padding:calc(10px + env(safe-area-inset-top,0px)) 16px calc(30px + env(safe-area-inset-bottom,0px));-webkit-text-size-adjust:100%}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;border-radius:0}
+button:focus-visible{outline:2px solid var(--coin);outline-offset:2px}
+.box{background:var(--panel);border:3px solid var(--edge);box-shadow:inset -3px -3px 0 rgba(0,0,0,.35);padding:12px}
+h3{font-family:var(--pixel);font-size:13px;margin:0 0 10px;color:var(--coin);letter-spacing:.04em}
+.note{font-size:12px;color:var(--mute)}
+a{color:var(--sky)}
+
+/* HUD */
+.hud{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
+.who{display:flex;gap:12px;align-items:center;min-width:0}
+canvas.av{width:60px;height:60px;image-rendering:pixelated;background:var(--panel2);border:3px solid var(--edge)}
+.nm{font-family:var(--pixel);font-size:15px}
+.ttl{color:var(--mute);font-size:13px}
+.xp{height:10px;background:var(--edge);margin-top:6px;width:min(200px,38vw)}
+.xp i{display:block;height:100%;background:var(--sky);transform-origin:left;transition:transform .35s steps(8)}
+.stats{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.stat{text-align:center}
+.stat > b{display:block;font-family:var(--pixel);font-size:19px;font-variant-numeric:tabular-nums}
+.stat > span{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em}
+.coin{display:inline-block;width:13px;height:13px;background:var(--coin);border:2px solid #8a5a00;border-radius:50%;vertical-align:-1px;margin-right:4px}
+.hud .coin{animation:spin 1.2s steps(4) infinite}
+@keyframes spin{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.2)}}
+.side{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.sbtn{background:var(--panel2);border:3px solid var(--edge);padding:7px 10px;font-family:var(--pixel);font-size:10px;text-decoration:none;color:var(--ink);text-align:center}
+.sync{font-size:11px;color:var(--mute);text-align:center}
+.sync.ok{color:var(--grass)} .sync.bad{color:var(--alert)}
+
+/* Path */
+.path{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.track{display:flex;align-items:flex-end;min-width:660px;padding-top:58px}
+.node{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;background:none;border:none;padding:0;text-align:center}
+.plat{display:block;width:86%;height:20px;background:repeating-linear-gradient(90deg,var(--brick) 0 18px,rgba(0,0,0,.3) 18px 20px);border:3px solid var(--edge)}
+.node.now .plat{background:repeating-linear-gradient(90deg,var(--grass) 0 18px,#2c8a4c 18px 20px)}
+.node.done .plat{background:repeating-linear-gradient(90deg,var(--coin) 0 18px,#c99200 18px 20px)}
+.node.view .lbl{color:var(--coin)}
+.node.view .plat{outline:3px solid var(--coin);outline-offset:2px}
+.lbl{font-family:var(--pixel);font-size:12px}
+.sub{font-size:11px;color:var(--mute)}
+.pct{font-family:var(--pixel);font-size:10px;color:var(--grass)} .pct.bhp{color:var(--alert);margin-top:-3px}
+canvas.walker{position:absolute;top:-50px;width:42px;height:42px;image-rendering:pixelated;animation:bob 1s steps(2) infinite}
+@keyframes bob{50%{transform:translateY(-3px)}}
+.castle{width:60px;height:60px;position:absolute;top:-58px}
+.link{flex:0 0 14px;height:6px;margin-bottom:46px;background:repeating-linear-gradient(90deg,var(--mute) 0 6px,transparent 6px 10px)}
+
+/* Levels */
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{background:var(--panel2);border:3px solid var(--edge);padding:7px 11px;font-family:var(--pixel);font-size:11px}
+@media (max-width:440px){ .tabs{gap:4px} .tab{padding:7px 7px;font-size:10px} }
+.tab[aria-selected="true"]{background:var(--sky);color:var(--night)}
+.toggle{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mute)}
+.toggle input{width:20px;height:20px;accent-color:var(--coin)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--mute);margin:10px 0 12px}
+.legend i{display:inline-block;width:12px;height:12px;margin-right:5px;vertical-align:-1px;border:2px solid var(--edge)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.lvl{position:relative;text-align:left;background:var(--panel2);border:3px solid var(--edge);padding:10px 10px 10px 54px;min-height:94px;display:flex;flex-direction:column;gap:5px}
+.lvl:active{transform:translateY(1px)}
+@media (hover:hover) and (pointer:fine){ .lvl:hover{filter:brightness(1.12)} }
+.blk{position:absolute;left:8px;top:10px;width:36px;height:36px;display:grid;place-items:center;font-family:var(--pixel);font-size:11px;border:3px solid var(--edge);box-shadow:inset -3px -3px 0 rgba(0,0,0,.3),inset 3px 3px 0 rgba(255,255,255,.25)}
+.lvl.locked .blk{background:var(--lock)} .lvl.prog .blk{background:var(--sky);color:var(--night)}
+.lvl.clear .blk{background:var(--grass);color:var(--night)} .lvl.master .blk{background:var(--star);color:var(--night)}
+.lnm{font-size:14px;line-height:1.25;font-weight:600}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--mute)}
+.pips{display:flex;gap:3px} .pips i{width:12px;height:8px;background:var(--edge)} .pips i.on{background:var(--grass)}
+.stars{font-size:14px;letter-spacing:1px;color:var(--lock);white-space:nowrap} .stars .on{color:var(--star)} .stars .tgt{color:var(--alert)}
+.lvl.min{min-height:0;padding:6px 10px 6px 40px;opacity:.55} .lvl.min .blk{width:24px;height:24px;font-size:9px;top:5px;left:6px}
+.lvl.min .meta{display:none} .lvl.min .lnm{font-size:12px;font-weight:400}
+
+/* Drawer */
+.drawer{position:fixed;left:0;right:0;bottom:0;max-height:82vh;overflow:auto;background:var(--panel);border-top:4px solid var(--edge);padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));z-index:50;box-shadow:0 -10px 0 rgba(0,0,0,.3);-webkit-overflow-scrolling:touch}
+.din{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.drawer h2{font-family:var(--pixel);font-size:15px;margin:0;line-height:1.35}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--panel2);border:3px solid var(--edge);padding:9px 11px;font-size:14px;display:flex;gap:8px;align-items:center}
+.chip b{background:var(--coin);color:var(--night);font-family:var(--pixel);font-size:11px;padding:1px 6px}
+.minus{font-family:var(--pixel);color:var(--mute);padding:2px 6px;border-left:2px solid var(--edge)}
+.starbtns{display:flex;gap:6px}
+.starbtns button{font-size:30px;background:none;border:none;color:var(--lock);padding:2px 4px}
+.starbtns button.on{color:var(--star)}
+.btn{background:var(--coin);color:var(--night);border:3px solid var(--edge);padding:8px 11px;font-family:var(--pixel);font-size:11px;box-shadow:inset -3px -3px 0 rgba(0,0,0,.25)}
+.btn.alt{background:var(--panel2);color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* Rules + shop */
+.cols{display:grid;grid-template-columns:1fr 1.4fr;gap:14px}
+.rules{width:100%;border-collapse:collapse;font-size:13px}
+.rules td{padding:5px 4px;border-bottom:2px dotted rgba(167,160,214,.3)}
+.rules td:last-child{text-align:right;font-family:var(--pixel);color:var(--coin);white-space:nowrap}
+.shop{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.item{background:var(--panel2);border:3px solid var(--edge);padding:9px;display:flex;flex-direction:column;gap:6px}
+.item.eq{outline:3px solid var(--coin);outline-offset:-3px}
+.cat{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em}
+.inm{font-weight:600}
+.sw{display:block;height:14px;border:2px solid var(--edge)}
+@media (max-width:760px){ .cols{grid-template-columns:1fr} .hud{grid-template-columns:1fr auto} .stats{grid-column:1/-1;justify-content:space-between} }
+
+/* Welcome-back coin collection */
+.collect{position:fixed;inset:0;z-index:60;background:rgba(11,9,32,.88);display:grid;place-items:center;padding:20px}
+.cbox{background:var(--panel);border:4px solid var(--edge);box-shadow:inset -4px -4px 0 rgba(0,0,0,.35);padding:20px;max-width:420px;width:100%;text-align:center;display:flex;flex-direction:column;gap:12px}
+.cbox .big{font-family:var(--pixel);font-size:40px;color:var(--coin);font-variant-numeric:tabular-nums}
+.cbox ul{list-style:none;margin:0;padding:0;text-align:left;font-size:14px;display:grid;gap:4px}
+.cbox li{display:flex;justify-content:space-between;border-bottom:2px dotted rgba(167,160,214,.3);padding:3px 0}
+.cbox li b{font-family:var(--pixel);color:var(--coin);font-size:12px}
+
+/* FX */
+.pop{position:fixed;font-family:var(--pixel);font-size:17px;color:var(--coin);pointer-events:none;z-index:70;animation:popup .9s steps(9) forwards;text-shadow:2px 2px 0 var(--edge)}
+@keyframes popup{to{transform:translateY(-60px);opacity:0}}
+.banner{position:fixed;inset:0;display:grid;place-items:center;z-index:71;pointer-events:none}
+.banner div{font-family:var(--pixel);font-size:clamp(32px,10vw,72px);color:var(--star);text-shadow:4px 4px 0 var(--edge),-2px -2px 0 var(--edge);animation:zoom 1.6s steps(12) forwards;text-align:center}
+.banner small{display:block;font-size:clamp(12px,3vw,18px);color:var(--ink)}
+@keyframes zoom{0%{transform:scale(.3);opacity:0}20%{transform:scale(1.1);opacity:1}80%{opacity:1}100%{transform:scale(1);opacity:0}}
+.conf{position:fixed;width:8px;height:8px;z-index:70;pointer-events:none;animation:fall 1.4s linear forwards;will-change:transform}
+@keyframes fall{to{transform:translateY(70vh) rotate(360deg);opacity:0}}
+/* Boss checklist */
+.tab.boss{background:#4a2470;color:var(--ink)} .tab.boss[aria-selected="true"]{background:var(--alert);color:var(--night)}
+.bossv{display:flex;flex-direction:column;gap:10px}
+.bosshd{display:flex;gap:14px;align-items:center;background:var(--panel2);border:3px solid var(--edge);padding:10px}
+.bsvg{width:72px;height:72px;flex:none;animation:bob 1s steps(2) infinite}
+.bosshd.dead .bsvg{filter:grayscale(1) opacity(.45);animation:none;transform:rotate(90deg)}
+.hp{height:12px;background:var(--edge);margin:6px 0 4px;width:min(260px,50vw)}
+.hp i{display:block;height:100%;background:var(--alert);transform-origin:left;transition:transform .35s steps(8)}
+.rgrp{font-family:var(--pixel);font-size:11px;color:var(--mute);margin:6px 0 0}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
+.req{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--panel2);border:3px solid var(--edge);padding:8px 10px}
+.req.met{opacity:.62} .req.met .rl{color:var(--grass)}
+.rl{font-size:14px;font-weight:600;line-height:1.25}
+.stp{display:inline-flex;align-items:center;gap:6px;flex:none}
+.stp b{font-family:var(--pixel);font-size:12px;min-width:40px;text-align:center;color:var(--ink)}
+.sb,.ck{width:36px;height:36px;flex:none;background:var(--night);border:3px solid var(--edge);font-family:var(--pixel);font-size:15px;padding:0}
+.ck{color:var(--night)} .ck.on{background:var(--grass)}
+.tag{flex:none;font-family:var(--pixel);font-size:10px;color:var(--mute);border:2px solid var(--lock);padding:3px 6px;text-decoration:none}
+.req.met .tag{color:var(--grass);border-color:var(--grass)}
+/* Secret exits */
+.secrets{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:2px dotted rgba(167,160,214,.3)}
+.secrets .lbl{margin-right:4px}
+.pipe{display:flex;align-items:center;gap:6px;background:var(--panel2);border:3px solid var(--edge);padding:4px 9px 4px 5px;font-size:13px}
+.pipe svg{width:22px;height:22px;filter:grayscale(1) brightness(.55)}
+.pipe.on{color:var(--coin);border-color:#8a5a00} .pipe.on svg{filter:none}
+.pipe:not(.on) span{color:var(--mute);font-family:var(--pixel);font-size:11px}
+/* Reflection inbox */
+textarea,select{font-family:var(--body);font-size:16px;color:var(--ink);background:var(--night);border:3px solid var(--edge);padding:8px;width:100%;border-radius:0}
+textarea{resize:vertical;min-height:76px}
+.nrow{display:flex;gap:8px;margin:8px 0 12px;align-items:stretch} .nrow select{flex:1;min-width:0}
+.nt{background:var(--panel2);border:3px solid var(--edge);padding:9px 10px;margin-bottom:8px}
+.nt.done{opacity:.6}
+.ntx{white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0 8px;font-size:14px}
+.nbtns{display:flex;gap:6px;flex-wrap:wrap}
+details summary{cursor:pointer;margin:6px 0}
+.rhead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px} .rhead h3{margin-bottom:6px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel2);border:3px solid var(--edge);box-shadow:0 6px 0 rgba(0,0,0,.35);padding:10px 14px;z-index:72;width:max-content;max-width:min(420px,90vw);font-size:14px;text-align:center}
+@media (max-width:760px){ .side{grid-column:1/-1;flex-direction:row;flex-wrap:wrap} .side .sbtn{flex:1} .side .sync{flex-basis:100%} .rgrid{grid-template-columns:1fr} }
+/* Quick log (item blocks) */
+.blocks{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.qb{background:none;border:none;padding:4px 0;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--ink)}
+.qbk{width:48px;height:48px;display:grid;place-items:center;background:var(--coin);color:#8a5a00;font-family:var(--pixel);font-size:24px;border:3px solid var(--edge);box-shadow:inset -4px -4px 0 rgba(0,0,0,.25),inset 4px 4px 0 rgba(255,255,255,.45)}
+.qb.renal .qbk{background:#ff9f5a} .qb.both .qbk{background:#7be39a;color:#1d6b36}
+.qb.bump .qbk{animation:bump .28s steps(4)}
+@keyframes bump{50%{transform:translateY(-10px)}}
+.qbl{font-family:var(--pixel);font-size:10px;text-align:center;line-height:1.25}
+.qbc{font-size:11px;color:var(--coin)}
+.lform{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.lf{display:flex;flex-direction:column;gap:4px}
+.lf label{font-size:12px;color:var(--mute)}
+.lf.wide{grid-column:1/-1}
+.drawer input[type=text],.drawer input[type=number],.drawer input[type=date]{font-family:var(--body);font-size:16px;color:var(--ink);background:var(--night);border:3px solid var(--edge);padding:8px;width:100%;border-radius:0;min-height:44px;-webkit-appearance:none;appearance:none}
+.drawer select{min-height:44px}
+.lsave{position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom,0px));background:var(--panel);padding:10px 0 4px;display:flex;gap:8px}
+.lsave .btn{flex:1;font-size:13px;padding:12px}
+@media (max-width:760px){ .blocks{grid-template-columns:repeat(4,1fr);row-gap:12px} }
+/* Treats (shared) */
+.tsz{font-family:var(--pixel);font-size:11px;color:var(--mute);margin:12px 0 6px}
+.claims{display:flex;flex-direction:column;gap:6px}
+.claim{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel2);border:3px solid var(--edge);padding:7px 10px}
+.claim .cnm{font-weight:600;flex:1;min-width:140px}
+.claim .cbtns{display:flex;gap:6px}
+.claim.done{opacity:.6}
+.item.addt{border-style:dashed;background:none;font-family:var(--pixel);font-size:11px;color:var(--mute);justify-content:center;min-height:70px}
+.item.tedit{gap:6px}
+#treats .item{justify-content:space-between}
+#treats.editing .shop{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.trow{display:flex;gap:6px;align-items:center}
+.item.tedit input{font-family:var(--body);font-size:16px;color:var(--ink);background:var(--night);border:3px solid var(--edge);padding:6px;width:100%;min-width:0;border-radius:0;min-height:40px}
+.item.tedit input.tic{width:3.2em;flex:none;text-align:center}
+.item.tedit .btn{flex:none;min-height:40px}
+@media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="box hud">
+    <div class="who">
+      <canvas class="av" id="av" width="16" height="16" aria-label="Your avatar"></canvas>
+      <div><div class="nm">DR MAUGO</div><div class="ttl" id="ttl">Loading…</div><div class="xp"><i id="xp" style="transform:scaleX(0)"></i></div></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b><span class="coin"></span><span id="coins">–</span></b><span>Coins</span></div>
+      <div class="stat"><b id="cleared">–</b><span id="clearedLbl">Cleared</span></div>
+      <div class="stat"><b id="stars">–</b><span>Stars</span></div>
+      <div class="stat"><b id="cct">–</b><span>Days to CCT</span></div>
+    </div>
+    <div class="side">
+      <button class="sbtn" data-act="note">✎ NOTE</button>
+      <button class="sbtn" data-act="mute" id="mute">♪ ON</button>
+      <a class="sbtn" href="ARCP.html">LOG ↗</a>
+      <a class="sbtn" href="sce-quest.html">SCE ↗</a>
+      <div class="sync" id="sync">● connecting</div>
+    </div>
+  </header>
+
+  <section class="box" aria-label="Quick log">
+    <div class="rhead"><h3>QUICK LOG</h3><span class="note" id="lastlog"></span></div>
+    <div class="blocks" id="blocks"></div>
+  </section>
+
+  <section class="box path" aria-label="Training journey">
+    <div class="note">Your road to CCT · tap a world to view it · ARCP dates come from the ARCP app's Admin tab</div>
+    <div class="track" id="track"></div>
+    <div class="secrets" id="secrets"></div>
+  </section>
+
+  <section class="box">
+    <div class="bar"><div class="tabs" role="tablist" id="tabs"></div><label class="toggle"><input type="checkbox" id="gaps"> Gaps only</label></div>
+    <div class="legend" id="legend"><span><i style="background:var(--lock)"></i>Locked · 0</span><span><i style="background:var(--sky)"></i>In progress · 1–2</span><span><i style="background:var(--grass)"></i>Cleared · 3+</span><span><i style="background:var(--star)"></i>Mastered · ES at target</span></div>
+    <div class="grid" id="grid"></div>
+    <p class="note" id="gridnote"></p>
+  </section>
+
+  <section class="box" id="inboxBox">
+    <h3>REFLECTION INBOX</h3>
+    <p class="note" style="margin-top:0">Jot it down now, write it up in the ePortfolio later. Tag a CiP and, once written up, it counts as Reflection evidence for that CiP.</p>
+    <textarea id="nt" rows="3" maxlength="1500" placeholder="What happened? What did you learn? What will you do differently?"></textarea>
+    <div class="nrow"><select id="ncip" aria-label="Tag a CiP"><option value="">No CiP tag</option></select><button class="btn" data-act="addNote" id="addNote">SAVE NOTE</button></div>
+    <div id="inbox"></div>
+  </section>
+
+  <div class="cols">
+    <section class="box"><div class="rhead"><h3>HOW COINS ARE EARNED</h3><span><button class="btn alt" data-act="rulesReset" id="rulesReset" hidden>RESET</button> <button class="btn alt" data-act="rulesEdit" id="rulesEdit">TUNE</button></span></div><table class="rules" id="rules"></table><p class="note" id="lifetime"></p></section>
+    <section class="box"><h3>ITEM SHOP</h3><p class="note" style="margin-top:0">Spending never lowers your level. Shared with SCE Quest.</p><div class="shop" id="shop"></div></section>
+  </div>
+  <section class="box" id="treatsBox"><div class="rhead"><h3>TREATS</h3><button class="btn alt" id="treatEdit">EDIT</button></div><p class="note" id="treatNote" style="margin-top:0"></p><div id="treats"></div></section>
+</div>
+<div class="drawer" id="drawer" hidden></div>
+<div class="collect" id="collect" hidden></div>
+
+<script>
+const CIP_GROUPS = [{"label": "GENERIC CiPs", "type": "sat", "cips": [["g1", "Function within NHS organisational & management systems", ["MCR", "MSF", "Active role in governance structures", "Management course", "End of placement reports"]], ["g2", "Deal with ethical and legal issues in clinical practice", ["MCR", "MSF", "CbD", "DOPS", "Mini-CEX", "ALS certificate", "EOL care & capacity assessment", "End of placement reports"]], ["g3", "Communicate effectively & share decision making", ["MCR", "MSF", "Patient survey", "End of placement reports"]], ["g4", "Patient safety & quality improvement", ["MCR", "MSF", "QIPAT", "End of placement reports"]], ["g5", "Research & managing data appropriately", ["MCR", "MSF", "GCP certificate", "Literature search / critical appraisal", "Use of clinical guidelines", "QIP / audit", "Evidence of research activity", "End of placement reports"]], ["g6", "Acting as a clinical teacher and clinical supervisor", ["MCR", "MSF", "Teaching observation (TO)", "Relevant teaching course", "End of placement reports"]]]}, {"label": "RENAL CiPs", "type": "level", "cips": [["r1", "Running a renal ward", ["MCR", "MSF", "CbD", "ACAT", "Mini-CEX", "Logbook of cases", "Reflections"]], ["r2", "Managing HD and PD programme", ["MCR", "MSF", "CbD", "Mini-CEX", "DOPS (line insertion)", "Logbook of cases", "Reflections"]], ["r3", "Running an acute renal referral service", ["MCR", "MSF", "CbD", "ACAT", "Logbook of cases", "Reflections"]], ["r4", "Managing patients with CKD stage 1–5", ["MCR", "MSF", "CbD", "Mini-CEX", "OPCAT / clinic letters", "Patient survey", "Logbook of cases"]], ["r5", "Understanding of subspecialty clinical services", ["MCR", "MSF", "CbD", "Evidence of subspecialty exposure", "Reflections"]], ["r6", "Managing renal transplant patients", ["MCR", "MSF", "CbD", "Mini-CEX", "Logbook of cases", "Reflections"]]]}, {"label": "GIM CiPs", "type": "level", "cips": [["m1", "Managing an acute unselected take", ["MCR", "MSF", "CbD", "ACAT", "Logbook of cases", "Simulation training with assessment"]], ["m2", "Managing acute care within a medical specialty service", ["MCR", "MSF", "CbD", "ACAT", "Logbook of cases", "Simulation training with assessment"]], ["m3", "Continuity of care — comorbidities & cognitive impairment", ["MCR", "MSF", "ACAT", "Mini-CEX", "DOPS"]], ["m4", "Outpatient / ambulatory / community — long-term conditions", ["MCR", "ACAT", "Mini-CEX", "Patient survey", "Clinic letters"]], ["m5", "Medical problems in other specialties & special cases", ["MCR", "ACAT", "CbD"]], ["m6", "Managing MDT including effective discharge planning", ["MCR", "MSF", "ACAT", "Discharge summaries"]], ["m7", "Effective resuscitation & managing the acutely deteriorating patient", ["MCR", "DOPS", "ACAT", "MSF", "ALS certificate", "Logbook of cases", "Reflection", "Simulation training with assessment"]], ["m8", "Managing end of life & applying palliative care skills", ["MCR", "MSF", "CbD", "Mini-CEX", "DOPS (syringe driver)", "EOL care e-learning", "Reflection", "Logbook of cases"]]]}];
+const CIP_TARGETS = {"m1": {"ST4": 3, "ST5": 3, "ST6": 3, "ST7": 4}, "m2": {"ST4": 2, "ST5": 3, "ST6": 3, "ST7": 4}, "m3": {"ST4": 3, "ST5": 3, "ST6": 3, "ST7": 4}, "m4": {"ST4": 3, "ST5": 3, "ST6": 3, "ST7": 4}, "m5": {"ST4": 3, "ST5": 3, "ST6": 3, "ST7": 4}, "m6": {"ST4": 3, "ST5": 3, "ST6": 3, "ST7": 4}, "m7": {"ST4": 4, "ST5": 4, "ST6": 4, "ST7": 4}, "m8": {"ST4": 3, "ST5": 3, "ST6": 3, "ST7": 4}, "r1": {"ST4": 2, "ST5": 2, "ST6": 3, "ST7": 4}, "r2": {"ST4": 2, "ST5": 2, "ST6": 3, "ST7": 4}, "r3": {"ST4": 2, "ST5": 2, "ST6": 3, "ST7": 4}, "r4": {"ST4": 2, "ST5": 2, "ST6": 3, "ST7": 4}, "r5": {"ST4": 2, "ST5": 2, "ST6": 3, "ST7": 4}, "r6": {"ST4": 2, "ST5": 2, "ST6": 3, "ST7": 4}};
+
+// Requirement definitions copied from the ARCP app (same keys, so ticks sync both ways)
+const REQS = {"gim_acats":{"label":"GIM ACATs","stream":"gim","type":"number","target":4,"unit":"ACATs","deadline":"annual","note":"GIM consultants, labelled GIM"},"gim_mcrs":{"label":"GIM MCRs","stream":"gim","type":"number","target":2,"unit":"MCRs","deadline":"annual","note":"GIM consultants only, labelled GIM"},"gim_sles":{"label":"GIM SLEs (miniCEX / CBD)","stream":"gim","type":"number","target":3,"unit":"SLEs","deadline":"annual","note":"Labelled GIM by GIM consultants"},"gim_msf_raters":{"label":"GIM MSF Raters","stream":"gim","type":"number","target":4,"unit":"raters","deadline":"annual","note":"4 GIM raters in MSF (part of 12 total)"},"gim_es_report":{"label":"GIM Educational Supervisor Report","stream":"gim","type":"checkbox","deadline":"annual","note":"1 per year — even without a GIM placement"},"gim_clinics":{"label":"GIM Clinics","stream":"gim","type":"number","target":20,"unit":"clinics","deadline":"ST7","cumulative":true,"note":"20 total by end of training"},"gim_cpd_hours":{"label":"IM Study Leave / CPD Hours","stream":"gim","type":"number","target":75,"unit":"hours","deadline":"ST7","cumulative":true,"note":"75hrs total, 20 in final year"},"gim_sim_hours":{"label":"Simulation Hours","stream":"gim","type":"number","target":12,"unit":"hours","deadline":"ST7","cumulative":true,"note":"12hrs total (GIMME/NOTES), 4 in final year"},"gim_acute_patients":{"label":"Acute GIM Patients","stream":"gim","type":"number","target":750,"unit":"patients","deadline":"ST7","cumulative":true,"note":"750 total, 100 in final year"},"gim_ward_cover":{"label":"IM Ward Cover","stream":"gim","type":"number","target":12,"unit":"months","deadline":"ST7","cumulative":true,"note":"12 months total IM ward cover"},"gim_teaching_obs":{"label":"Teaching Observation","stream":"gim","type":"checkbox","deadline":"ST7","sharedWith":"renal_teaching_obs","note":"Can be done in Renal — applies to GIM"},"gim_patient_survey":{"label":"Patient Survey","stream":"gim","type":"checkbox","deadline":"ST5","sharedWith":"renal_patient_survey_st5","note":"ST5 Renal survey counts as GIM — no separate GIM survey needed"},"gim_qip":{"label":"GIM QIP + QIPAT","stream":"gim","type":"checkbox","deadline":"ST7","note":"By end of ST7"},"renal_mcrs":{"label":"Renal MCRs","stream":"renal","type":"number","target":4,"unit":"MCRs","deadline":"annual","note":"Renal consultants, labelled renal"},"renal_msf_raters":{"label":"Renal MSF Raters","stream":"renal","type":"number","target":8,"unit":"raters","deadline":"annual","note":"8 renal raters + 4 GIM = 12 total (3 must be consultants)"},"renal_sles":{"label":"Renal SLEs (ACATs / CBD / miniCEX)","stream":"renal","type":"number","target":15,"unit":"SLEs","deadline":"annual","note":"Minimum 15 per year across all SLE types"},"renal_teaching_log":{"label":"Renal Teaching Hours Log","stream":"renal","type":"checkbox","deadline":"annual","note":"Log on spreadsheet in library"},"renal_teaching_involvement":{"label":"Evidence of Teaching Involvement","stream":"renal","type":"checkbox","deadline":"annual","note":"Required every year"},"renal_es_report":{"label":"Renal Educational Supervisor Report","stream":"renal","type":"checkbox","deadline":"annual","note":"1 per year"},"renal_temp_lines":{"label":"Temporary Line Competency","stream":"renal","type":"checkbox","deadline":"ST4","note":"Competent by end of ST4"},"renal_eseneph":{"label":"ESENeph Exam","stream":"renal","type":"eseneph","deadline":"ST6","note":"Held once a year — book early. Alert 1 year before due."},"renal_patient_survey_st5":{"label":"Patient Survey (ST5)","stream":"renal","type":"checkbox","deadline":"ST5","sharesTo":"gim_patient_survey","note":"Counts as the GIM Patient Survey — ticking this ticks GIM too"},"renal_qip":{"label":"Renal QIP + QIPAT","stream":"renal","type":"checkbox","deadline":"ST6","note":"By end of ST6"},"renal_teaching_obs":{"label":"Teaching Observation","stream":"renal","type":"checkbox","deadline":"ST6","sharesTo":"gim_teaching_obs","note":"Applies to GIM — ticking this ticks GIM too"},"renal_patient_survey_st7":{"label":"Patient Survey (ST7)","stream":"renal","type":"checkbox","deadline":"ST7","note":"Required again in ST7 for Renal curriculum (separate from ST5)"},"renal_mgmt_course":{"label":"Management & Leadership Course","stream":"renal","type":"checkbox","deadline":"ST7","note":"By end of ST7"}};
+const ADMIN_DOCS = [{"id":"doc_form_r","label":"Form R in Library","note":"Required each year"},{"id":"doc_cct_calc","label":"CCT Calculator in Library","note":"Update each year (especially if LTFT)"},{"id":"doc_firth","label":"Updated Firth Calculator","note":"Update every year"},{"id":"doc_renal_sot","label":"Renal Summary of Training in Library","note":"Procedures, clinics and renal teaching"},{"id":"doc_gim_sot","label":"GIM Summary of Training in Library","note":"Acute take, clinics, ward cover, teaching, simulation"},{"id":"doc_cpd_diary","label":"CPD Diary in Library","note":"Export from Logbook → Teaching CPD and upload"}];
+const DOPS_PROCEDURES = ["Advanced cardiopulmonary resuscitation (CPR)","Direct current (DC) cardioversion","Temporary cardiac pacing using an external device","Central venous cannulation (internal jugular or subclavian)","Access to circulation for resuscitation (femoral vein or intraosseous)","Pleural aspiration for fluid (diagnostic)","Pleural aspiration (pneumothorax)","Intercostal drain for pneumothorax","Intercostal drain for effusion","Nasogastric (NG) tube","Ascitic tap","Abdominal paracentesis","Lumbar puncture"];
+// Logbook option lists copied from the ARCP app's forms
+const LOGBOOK_PROCEDURES_RENAL = ["Temp HD catheter (femoral)","Temp HD catheter (jugular)","Tunnelled dialysis catheter","Tunnelled line removal","Native kidney biopsy","Transplant kidney biopsy"];
+const LOGBOOK_PROCEDURES_GIM = ["DC cardioversion","Temporary cardiac pacing (external device)","Central venous cannulation (IJ or subclavian)","Access to circulation — femoral / intraosseous","Pleural aspiration","Intercostal drain","Nasogastric (NG) tube","Ascitic tap","Abdominal paracentesis","Lumbar puncture"];
+const CLINIC_TYPES_GIM = ["GIM outpatient clinic","Medical SDEC","Community clinic","Other GIM clinic"];
+const CLINIC_TYPES_RENAL = ["General Nephrology clinic","HD clinic","Transplant clinic","HTN clinic","AKCC","Other renal clinic"];
+const CPD_DIARY_TYPES = ["Course / workshop","Conference","E-learning / online module","Journal club","Journal article","MDT meeting","M&M / clinical governance meeting","Grand round","Departmental teaching (attended)","Regional training day","Webinar","Audit / QI meeting","Simulation (attended)","Other"];
+const CPD_INTERNAL_DEFAULT = ["Journal club","Journal article","MDT meeting","M&M / clinical governance meeting","Grand round","Departmental teaching (attended)","Audit / QI meeting","Simulation (attended)"];
+const SIM_COURSE_TYPES = ["GIMME","NOTES","Other simulation course"];
+const TEACHING_TYPES = ["Bedside teaching","Tutorial / seminar","Grand round presentation","Journal club","Simulation facilitation","Medical student supervision","Foundation doctor supervision","Audit / QIP presentation","Other"];
+const LEGACY_GIM_COUNTED = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
+const YEARS = ["ST4","ST5","ST6","ST7"];
+const ARCP_DEFAULTS = { ST4:"2026-12-02", ST5:"2027-12-02", ST6:"2028-12-02", ST7:"2029-12-02" };
+const CCT_DATE = "2030-12-02";
+const EVID_TARGET = 3;
+const LB_TYPES = { clinics_gim:"GIM clinic", clinics_renal:"Renal clinic", procedures_gim:"GIM procedure", procedures_renal:"Renal procedure",
+  cpd_gim:"GIM CPD", cpd_renal:"Renal CPD", simulation:"Simulation", teaching:"Teaching", acute_take:"Acute take", ward_cover:"Ward cover" };
+// Coin values: defaults below, tunable in the app (stored as pft_quest_rules, only the ones you change)
+const RULE_DEFS = [
+  ["clinic","Clinic logged (GIM or renal)",2], ["proc","Procedure logged",2], ["dops","DOPS signed on a logged procedure (bonus)",5],
+  ["cpd","CPD / study leave entry",2], ["teach","Teaching delivered",3], ["sim","Simulation session",3],
+  ["block","Acute take or ward-cover placement logged",10], ["evidence","CiP evidence added",3], ["clear","CiP CLEAR! (3 evidence in a year)",10],
+  ["star","Each ★ of ES entrustment (Renal / GIM)",15], ["sat","Generic CiP signed off satisfactory (per year)",30], ["world","WORLD CLEAR (all 20 CiPs in a year)",100],
+  ["hit","ARCP requirement met (boss hit)",5], ["boss","BOSS DEFEATED (every requirement for that ARCP)",75], ["secret","Secret exit found",100],
+  ["note","Reflection note captured",2], ["written","Reflection written up in ePortfolio",8]];
+const LB_RULE = { clinics_gim:"clinic", clinics_renal:"clinic", procedures_gim:"proc", procedures_renal:"proc", cpd_gim:"cpd", cpd_renal:"cpd",
+  teaching:"teach", simulation:"sim", acute_take:"block", ward_cover:"block" };
+const TITLES = ["Ward Rookie","Take Runner","Clinic Regular","Line Slinger","Firth Fighter","Referral Ranger","Dialysis Driver","Transplant Tamer","Registrar Elite","Consultant-in-Waiting","CCT Legend"];
+const SHOP = [
+  {id:"sc-teal",cat:"Scrubs",nm:"Teal scrubs",price:0,slot:"scrubs",val:"#2bb5a6"},{id:"sc-navy",cat:"Scrubs",nm:"Navy scrubs",price:60,slot:"scrubs",val:"#2a4aa8"},
+  {id:"sc-maroon",cat:"Scrubs",nm:"Maroon scrubs",price:80,slot:"scrubs",val:"#8c2c45"},{id:"sc-green",cat:"Scrubs",nm:"Theatre greens",price:100,slot:"scrubs",val:"#3c8a4a"},
+  {id:"hat-none",cat:"Headwear",nm:"No hat",price:0,slot:"hat",val:null},{id:"hat-cap",cat:"Headwear",nm:"Theatre cap",price:120,slot:"hat",val:"#5cc8ff"},
+  {id:"hat-band",cat:"Headwear",nm:"Red bandana",price:150,slot:"hat",val:"#e04848"},{id:"hat-crown",cat:"Headwear",nm:"CCT crown",price:1000,slot:"hat",val:"#ffd23c"},
+  {id:"th-grass",cat:"Map theme",nm:"Ward grassland",price:0,slot:"theme",val:""},{id:"th-desert",cat:"Map theme",nm:"Desert dunes",price:200,slot:"theme",val:"t-desert"},
+  {id:"th-night",cat:"Map theme",nm:"Night shift",price:250,slot:"theme",val:"t-night"},{id:"th-snow",cat:"Map theme",nm:"Snow peaks",price:300,slot:"theme",val:"t-snow"},
+  {id:"fx-confetti",cat:"Celebration",nm:"Confetti",price:0,slot:"fx",val:"confetti"},{id:"fx-fire",cat:"Celebration",nm:"Fireworks",price:400,slot:"fx",val:"fireworks"},
+  {id:"sd-chip",cat:"Coin sound",nm:"Chip blip",price:0,slot:"sound",val:"chip"},{id:"sd-bell",cat:"Coin sound",nm:"Bell ting",price:150,slot:"sound",val:"bell"}];
+const SHOP_DEFAULT = { spent:0, owned:["sc-teal","hat-none","th-grass","fx-confetti","sd-chip"], eq:{scrubs:"sc-teal",hat:"hat-none",theme:"th-grass",fx:"fx-confetti",sound:"sd-chip"} };
+
+// ── State: a snapshot of the synced data (cached so the page opens instantly) ──
+const local = { get(k,d){ try{ const v=localStorage.getItem("pft_journey_"+k); return v===null?d:JSON.parse(v);}catch(e){return d;} },
+                set(k,v){ try{ localStorage.setItem("pft_journey_"+k, JSON.stringify(v)); }catch(e){} } };
+const S = { data: local.get("cache_data", {}), lb: local.get("cache_lb", {}), gotData:false, gotLb:false,
+            view:null, stage:"RENAL CiPs", gaps: local.get("gaps", false), muted: local.get("muted", false) };
+const raw = k => { const v = S.data[k]; if (v == null) return null; if (typeof v === "string") return v; if (typeof v === "object" && v.value !== "__reset__") return v.value ?? null; return null; };
+function setRaw(k, val){ S.data[k] = { value:String(val), ts:Date.now() }; local.set("cache_data", S.data); if (window.QFB) window.QFB.write(k, val); }
+
+// ── Data accessors (same keys as the ARCP app) ──
+function picks(id, yr){ let r = raw(`pft_cip_picks_${yr}_${id}`); if (r === null && yr === "ST4") r = raw(`pft_cip_picks_${id}`);
+  try { const o = JSON.parse(r || "{}"); return (o && typeof o === "object") ? o : {}; } catch(e){ return {}; } }
+function setPicks(id, yr, p){ const clean = {}; Object.entries(p).forEach(([t,v]) => { v = parseInt(v,10)||0; if (v>0) clean[t]=v; }); setRaw(`pft_cip_picks_${yr}_${id}`, JSON.stringify(clean)); }
+const count = (id, yr) => Object.values(picks(id, yr)).reduce((a,v)=>a+(parseInt(v,10)||0),0);
+const entrust = id => parseInt(raw(`pft_cip_entrust_${id}`)) || 0;
+const sat = (id, yr) => raw(`pft_cip_sat_${yr}_${id}`) === "true";
+const target = (id, yr) => (CIP_TARGETS[id] && CIP_TARGETS[id][yr]) || 0;
+const arcpDate = yr => { const c = raw(`pft_arcp_date_${yr}`); const d = new Date(c || ARCP_DEFAULTS[yr]); return isNaN(d) ? new Date(ARCP_DEFAULTS[yr]) : d; };
+function shop(){ try { const o = JSON.parse(raw("pft_quest_shop") || "null"); if (o && typeof o === "object") return { spent:+o.spent||0, owned:Array.isArray(o.owned)?o.owned:SHOP_DEFAULT.owned.slice(), eq:Object.assign({}, SHOP_DEFAULT.eq, o.eq||{}) }; } catch(e){}
+  return JSON.parse(JSON.stringify(SHOP_DEFAULT)); }
+function lbEntries(type){ const v = S.lb[type]; if (typeof v !== "string") return [];
+  let arr = []; try { arr = JSON.parse(v) || []; } catch(e){}
+  let tomb = {}; try { tomb = JSON.parse(S.lb[type+"_tomb"] || "{}") || {}; } catch(e){}
+  return arr.filter(e => e && !tomb[String(e.id)]); }
+const allCips = () => CIP_GROUPS.flatMap(g => g.cips.map((c,i) => ({ id:c[0], nm:c[1], ev:c[2], g, i })));
+function state(x, yr){ const n = count(x.id, yr);
+  const mastered = x.g.type === "level" ? entrust(x.id) >= (target(x.id, yr) || 99) : sat(x.id, yr);
+  return n >= EVID_TARGET ? (mastered ? "master" : "clear") : n ? "prog" : "locked"; }
+const clearedIn = yr => allCips().filter(x => ["clear","master"].includes(state(x, yr))).length;
+const nowYear = () => { const t = new Date(); t.setHours(0,0,0,0); return YEARS.find(y => arcpDate(y) >= t) || "ST7"; };
+const cipCode = x => `${x.id[0].toUpperCase()}-${x.i+1}`;
+function ruleOverrides(){ try { const o = JSON.parse(raw("pft_quest_rules") || "{}"); return (o && typeof o === "object") ? o : {}; } catch(e){ return {}; } }
+function rules(){ const o = ruleOverrides(), r = {}; RULE_DEFS.forEach(([k,,d]) => { const v = parseInt(o[k],10); r[k] = Number.isFinite(v) && v >= 0 ? v : d; }); return r; }
+
+// ── Boss: the ARCP for each year = every requirement the ARCP app tracks for that year ──
+const reqKey = (id, yr) => { const q = REQS[id]; if (q.cumulative) return `pft_cum_${id}`; if (q.deadline !== "annual") return `pft_milestone_${id}`; return `pft_${yr}_${id}`; };
+function bossItems(yr){
+  const items = [];
+  Object.keys(REQS).forEach(id => { const q = REQS[id];
+    if (!(q.deadline === "annual" || q.deadline === yr)) return;
+    if (q.sharedWith && REQS[q.sharedWith] && REQS[q.sharedWith].deadline === yr) return;   // one tick covers both — count it once
+    if (q.type === "eseneph"){ const d = raw("pft_eseneph_date"); items.push({ id, grp:q.stream, lbl:q.label, note: d ? `Exam date ${fmtDate(new Date(d))}` : "Set the exam date in the ARCP app", kind:"info", met: !!d && new Date(d) <= today() }); return; }
+    const key = reqKey(id, yr);
+    if (q.type === "checkbox"){ let v = raw(key) === "true"; if (!v && q.sharedWith) v = raw(reqKey(q.sharedWith, yr)) === "true";
+      items.push({ id, grp:q.stream, lbl:q.label, note:q.note, kind:"chk", key, also: q.sharesTo ? reqKey(q.sharesTo, yr) : null, met:v }); }
+    else { const v = parseInt(raw(key),10) || 0; items.push({ id, grp:q.stream, lbl:q.label, note:q.note, kind:"num", key, val:v, target:q.target, met: v >= q.target }); }
+  });
+  ADMIN_DOCS.forEach(d => { const key = `pft_admin_${yr}_${d.id}`; items.push({ id:d.id, grp:"admin", lbl:d.label, note:d.note, kind:"chk", key, met: raw(key) === "true" }); });
+  const als = raw("pft_als_expiry");
+  items.push({ id:"als", grp:"admin", lbl:"ALS certificate in date on ARCP day", note: als ? `Expires ${fmtDate(new Date(als))}` : "Set the expiry date in the ARCP app", kind:"info", met: !!als && new Date(als) >= arcpDate(yr) });
+  if (yr === "ST7"){ const done = DOPS_PROCEDURES.filter(p => raw(`pft_dops_${p.replace(/\s+/g,"_").toLowerCase()}`) === "true").length;
+    items.push({ id:"dops", grp:"gim", lbl:"GIM procedures signed off (DOPS)", note:`${done}/${DOPS_PROCEDURES.length} · tick in the ARCP app`, kind:"info", met: done === DOPS_PROCEDURES.length }); }
+  return items;
+}
+function boss(yr){ const items = bossItems(yr), met = items.filter(i => i.met).length, out = raw(`pft_arcp_outcome_${yr}`) || "";
+  return { items, met, total: items.length, hp: items.length - met, outcome: out, defeated: met === items.length || out === "1" || out === "6" }; }
+const yearOpen = yr => YEARS.indexOf(yr) <= YEARS.indexOf(nowYear());
+
+// ── Secret exits: hidden bonus levels found by doing the big one-off things ──
+const SECRETS = [
+  { id:"sce", nm:"ESENeph exam", hint:"A single exam day, due by the end of ST6. Book early.", found:()=>{ const d = raw("pft_eseneph_date"); return !!d && new Date(d) <= today(); }, info:()=>`Sat ${fmtDate(new Date(raw("pft_eseneph_date")))}` },
+  { id:"rqip", nm:"Renal QIP", hint:"Fix one thing on the renal unit and get a QIPAT. Due by ST6.", found:()=>raw("pft_milestone_renal_qip") === "true", info:()=>"Renal QIP + QIPAT ticked" },
+  { id:"gqip", nm:"GIM QIP", hint:"Fix one thing on the take and get a QIPAT. Due by ST7.", found:()=>raw("pft_milestone_gim_qip") === "true", info:()=>"GIM QIP + QIPAT ticked" },
+  { id:"als", nm:"ALS", hint:"Shock, compress, repeat. Add your certificate expiry in the ARCP app.", found:()=>!!raw("pft_als_expiry"),
+    info:()=>{ const d = new Date(raw("pft_als_expiry")), n = Math.round((d - today())/864e5); return n < 0 ? `EXPIRED ${fmtDate(d)}. Renew it!` : `Valid to ${fmtDate(d)}${n < 183 ? ". Renew soon" : ""}`; } }];
+
+// ── Reflection inbox (synced as pft_quest_inbox) ──
+function inbox(){ try { const a = JSON.parse(raw("pft_quest_inbox") || "[]"); return Array.isArray(a) ? a.filter(n => n && n.id) : []; } catch(e){ return []; } }
+const saveInbox = a => setRaw("pft_quest_inbox", JSON.stringify(a));
+const reflType = x => x.ev.find(e => /^reflections?$/i.test(e)) || "Reflection";
+
+// ── Quick log: add-only logbook entries, same fields and format as the ARCP app's forms ──
+// Field: [id, label, kind, options?, default?]. kinds: date, select, other (select + "Other" free text), text, sup (text + past supervisors), number, area, year, cat (CPD category)
+const F_YEAR = ["year","Training year","year"];
+const LOG_BLOCKS = [
+  { type:"clinics_gim", nm:"GIM clinic", short:"GIM CLINIC", cls:"", fields:[["date","Date","date"],["type","Clinic type","other",CLINIC_TYPES_GIM],["hospital","Hospital","text",null,"Rotherham DGH"],["supervisor","Supervisor","sup"],["patients","Patients seen / observed","number"],F_YEAR,["notes","Notes","text"]] },
+  { type:"clinics_renal", nm:"Renal clinic", short:"RENAL CLINIC", cls:"renal", fields:[["date","Date","date"],["type","Clinic type","other",CLINIC_TYPES_RENAL],["hospital","Hospital","text",null,"Northern General Hospital"],["supervisor","Supervisor","sup"],["patients","Patients seen / observed","number"],F_YEAR,["notes","Notes","text"]] },
+  { type:"procedures_gim", nm:"GIM procedure", short:"GIM PROC", cls:"", fields:[["date","Date","date"],["type","Procedure","select",LOGBOOK_PROCEDURES_GIM],["supervisor","Supervisor","sup"],["dops","DOPS signed off","select",["No","Yes"]],F_YEAR,["notes","Notes","text"]] },
+  { type:"procedures_renal", nm:"Renal procedure", short:"RENAL PROC", cls:"renal", fields:[["date","Date","date"],["type","Procedure","select",LOGBOOK_PROCEDURES_RENAL],["supervisor","Supervisor","sup"],["dops","DOPS signed off","select",["No","Yes"]],F_YEAR,["notes","Notes","text"]] },
+  { type:"cpd_gim", nm:"GIM CPD", short:"GIM CPD", cls:"", fields:[["date","Date","date"],["type","CPD type","select",CPD_DIARY_TYPES],["category","Category","cat"],["title","Activity / title","text"],["provider","Provider / location","text"],["hours","Hours","number"],F_YEAR,["learning","Key learning points","text"],["reflection","Reflection: what will you do differently?","area"]] },
+  { type:"cpd_renal", nm:"Renal CPD", short:"RENAL CPD", cls:"renal", fields:[["date","Date","date"],["type","CPD type","select",CPD_DIARY_TYPES],["category","Category","cat"],["title","Activity / title","text"],["provider","Provider / location","text"],["hours","Hours","number"],F_YEAR,["learning","Key learning points","text"],["reflection","Reflection: what will you do differently?","area"]] },
+  { type:"teaching", nm:"Teaching", short:"TEACHING", cls:"both", fields:[["date","Date","date"],["type","Type","select",TEACHING_TYPES],["audience","Audience","text"],["topic","Topic","text"],["supervisor","Supervisor / observed by","sup"],["signoff","Sign-off","select",["Informal — not observed","Formally observed — signed off"]],F_YEAR,["notes","Notes","text"]] },
+  { type:"simulation", nm:"Simulation", short:"SIM", cls:"both", fields:[["date","Date","date"],["course","Course","other",SIM_COURSE_TYPES],["title","Session / title","text"],["hours","Hours","number"],["hospital","Hospital / venue","text"],F_YEAR,["notes","Notes / reflection","text"]] }];
+const REMEMBER = ["type","hospital","supervisor","course","provider","audience","category"];   // pre-filled from your last entry of that kind
+const cpdCategoryFor = t => CPD_INTERNAL_DEFAULT.includes(t) ? "Internal" : "External";
+const cpdIsOnline = e => e.type === "E-learning / online module" || e.type === "Online CPD";
+function cpdIsExternal(e){ if (CPD_INTERNAL_DEFAULT.includes(e.type)) return false; if (e.category) return e.category === "External"; if (LEGACY_GIM_COUNTED.includes(e.type)) return true; return cpdCategoryFor(e.type) === "External"; }
+const isoToday = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
+function pastSupervisors(){ const seen = new Map();
+  ["clinics_gim","clinics_renal","procedures_gim","procedures_renal","teaching"].forEach(k => lbEntries(k).forEach(e => { const n = (e.supervisor||"").trim(); if (n){ const ts = +e.createdAt || +e.id || 0; if (!seen.has(n) || seen.get(n) < ts) seen.set(n, ts); } }));
+  return [...seen.entries()].sort((a,b) => b[1]-a[1]).slice(0,40).map(x => x[0]); }
+function openLog(type){
+  const bt = LOG_BLOCKS.find(b => b.type === type); if (!bt) return; S.open = null; S.form = type;
+  const last = (local.get("lastvals", {})[type]) || {}, R = rules(), per = R[LB_RULE[type]];
+  const field = ([id, label, kind, opts, def]) => {
+    const v = last[id] != null && REMEMBER.includes(id) ? last[id] : (def || ""), nm = `id="lf-${id}" name="${id}"`;
+    let inp;
+    if (kind === "date") inp = `<input type="date" ${nm} value="${isoToday()}">`;
+    else if (kind === "year") inp = `<select ${nm}>${YEARS.map(y => `<option ${y===nowYear()?"selected":""}>${y}</option>`).join("")}</select>`;
+    else if (kind === "cat") inp = `<select ${nm}><option>External</option><option>Internal</option></select>`;
+    else if (kind === "select" || kind === "other"){ const known = opts.includes(v);
+      inp = `<select ${nm}>${opts.map(o => `<option ${(known ? o===v : false)?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+      if (kind === "other") inp += `<input type="text" id="lf-${id}-other" placeholder="Please specify" ${known || !v ? "hidden" : ""} value="${known ? "" : esc(v)}">`; }
+    else if (kind === "area") inp = `<textarea ${nm} rows="3"></textarea>`;
+    else if (kind === "number") inp = `<input type="number" ${nm} min="0" step="0.5" inputmode="decimal">`;
+    else inp = `<input type="text" ${nm} value="${esc(v)}" ${kind==="sup"?'list="lf-sups" autocomplete="off"':""}>`;
+    return `<div class="lf ${kind==="area"?"wide":""}"><label for="lf-${id}">${esc(label)}</label>${inp}</div>`; };
+  const d = $("drawer");
+  d.innerHTML = `<div class="din"><button class="btn alt" data-act="close" style="align-self:flex-end">✕ CLOSE</button>
+    <h2>LOG · ${esc(bt.nm.toUpperCase())}</h2><div class="note">+${per} coins${type.startsWith("procedures") ? ` · +${R.dops} more if DOPS signed` : ""} · saved straight to your ARCP logbook</div>
+    <div class="lform">${bt.fields.map(field).join("")}</div>
+    <datalist id="lf-sups">${pastSupervisors().map(n => `<option value="${esc(n)}"></option>`).join("")}</datalist>
+    <div class="lsave"><button class="btn" data-act="saveLog">LOG IT ▸ +${per}</button></div></div>`;
+  const other = bt.fields.find(f => f[2] === "other"); if (other && last[other[0]] && !other[3].includes(last[other[0]])) $(`lf-${other[0]}`).value = other[3].find(o => o.startsWith("Other")) || other[3][other[3].length-1];
+  if (bt.fields.some(f => f[2] === "cat")) $("lf-category").value = cpdCategoryFor($("lf-type").value);
+  d.hidden = false; d.scrollTop = 0;
+}
+function syncCumulative(type){   // mirror the ARCP app's running totals for the GIM requirements
+  const a = lbEntries(type), sum = arr => arr.reduce((t,e) => t + (parseFloat(e.hours)||0), 0);
+  if (type === "clinics_gim") setRaw("pft_cum_gim_clinics", String(a.length));
+  if (type === "simulation") setRaw("pft_cum_gim_sim_hours", String(Math.round(sum(a)*10)/10));
+  if (type === "cpd_gim") setRaw("pft_cum_gim_cpd_hours", String(Math.round(sum(a.filter(e => cpdIsExternal(e) && !cpdIsOnline(e))) + Math.min(sum(a.filter(cpdIsOnline)), 15))));
+}
+function saveLog(){
+  const bt = LOG_BLOCKS.find(b => b.type === S.form); if (!bt) return;
+  if (!S.gotLb){ SFX.nope(); toast("Still connecting to your logbook. Try again in a moment."); return; }
+  const entry = {};
+  bt.fields.forEach(([id,,kind]) => { const el = $(`lf-${id}`); let v = el ? el.value.trim() : "";
+    if (kind === "other" && /^Other/.test(v)){ const o = $(`lf-${id}-other`); if (o && o.value.trim()) v = o.value.trim(); }
+    entry[id] = v; });
+  if (!entry.date){ SFX.nope(); toast("Add a date first."); return; }
+  const lastAll = local.get("lastvals", {}); lastAll[bt.type] = {}; REMEMBER.forEach(k => { if (entry[k]) lastAll[bt.type][k] = entry[k]; }); local.set("lastvals", lastAll);
+  act(() => {
+    let arr = []; try { arr = JSON.parse(typeof S.lb[bt.type] === "string" ? S.lb[bt.type] : "[]") || []; } catch(e){ arr = []; }
+    let now = Date.now(); while (arr.some(e => e && String(e.id) === String(now))) now++;
+    arr.push(Object.assign({}, entry, { id:now, createdAt:now, updatedAt:now }));
+    const val = JSON.stringify(arr);
+    S.lb = Object.assign({}, S.lb, { [bt.type]: val, [bt.type + "_ts"]: now }); local.set("cache_lb", S.lb);
+    if (window.QFB && window.QFB.writeLb) window.QFB.writeLb({ [bt.type]: val, [bt.type + "_ts"]: now });
+    syncCumulative(bt.type);
+  });
+  const what = bt.nm + (entry.type && !/^cpd/.test(bt.type) ? ` · ${entry.type}` : entry.title ? ` · ${entry.title}` : "");
+  local.set("lastlog", { what, ts: Date.now() });
+  $("drawer").hidden = true; S.form = null; renderBlocks();
+  const blk = document.querySelector(`.qb[data-log="${bt.type}"]`); if (blk){ blk.classList.remove("bump"); void blk.offsetWidth; blk.classList.add("bump"); }
+  toast(`Logged: ${what}`);
+}
+function renderBlocks(){ const R = rules();
+  $("blocks").innerHTML = LOG_BLOCKS.map(b => `<button class="qb ${b.cls}" data-log="${b.type}" aria-label="Log a ${esc(b.nm)}"><span class="qbk" aria-hidden="true">?</span><span class="qbl">${b.short}</span><span class="qbc">+${R[LB_RULE[b.type]]}</span></button>`).join("");
+  const l = local.get("lastlog", null);
+  $("lastlog").textContent = l ? `Last: ${l.what} · ${fmtDate(new Date(l.ts))}` : "Tap a block to log";
+}
+
+// ── Coins: derived from data every time + a breakdown (for the welcome-back screen) ──
+function tally(){
+  const R = rules(), t = { entries:{}, dops:0, evidence:0, clears:0, stars:0, sats:0, worlds:0, hits:0, bosses:0, secrets:0, notes:0, written:0 };
+  let c = 0;
+  Object.keys(LB_TYPES).forEach(k => { const a = lbEntries(k); t.entries[k] = a.length; c += a.length * R[LB_RULE[k]]; if (k.startsWith("procedures")) t.dops += a.filter(e => e.dops === "Yes").length; });
+  const cips = allCips();
+  cips.forEach(x => { if (x.g.type === "level") t.stars += entrust(x.id); });
+  YEARS.forEach(yr => { let n2 = 0; cips.forEach(x => { const n = count(x.id, yr); t.evidence += n; if (n >= EVID_TARGET){ t.clears++; n2++; } if (x.g.type !== "level" && sat(x.id, yr)) t.sats++; }); if (n2 === cips.length) t.worlds++;
+    if (yearOpen(yr)){ const b = boss(yr); t.hits += b.met; if (b.defeated) t.bosses++; } });
+  t.secrets = SECRETS.filter(x => x.found()).length;
+  const ib = inbox(); t.notes = ib.length; t.written = ib.filter(n => n.done).length;
+  t.own = c + t.dops*R.dops + t.evidence*R.evidence + t.clears*R.clear + t.stars*R.star + t.sats*R.sat + t.worlds*R.world
+          + t.hits*R.hit + t.bosses*R.boss + t.secrets*R.secret + t.notes*R.note + t.written*R.written;
+  t.sce = parseInt(raw("pft_quest_sce_earned"), 10) || 0;   // shared wallet: SCE Quest publishes its lifetime coins here
+  t.coins = t.own + t.sce;
+  return t;
+}
+// Level curve sized so the last title lands around CCT
+const levelFor = xp => { let l = 1; while (50*l*(l+1) <= xp) l++; return l; };
+const floorFor = l => 50*(l-1)*l;
+const titleFor = l => TITLES[Math.min(l-1, TITLES.length-1)];
+
+// ── Sound: original chiptune blips (unlocked on first tap — required on iPhone) ──
+let AC = null;
+function unlockAudio(){ try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume(); } catch(e){} }
+function tone(f,t,d,type="square",vol=.07){ if (S.muted || !AC) return; try { const o=AC.createOscillator(), g=AC.createGain(); o.type=type; o.frequency.value=f;
+  g.gain.setValueAtTime(vol,AC.currentTime+t); g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+t+d); o.connect(g).connect(AC.destination); o.start(AC.currentTime+t); o.stop(AC.currentTime+t+d+.02); } catch(e){} }
+const SFX = {
+  coin(){ if (shop().eq.sound==="sd-bell"){ tone(1568,0,.25,"triangle",.09); tone(2093,.06,.35,"triangle",.07);} else { tone(1047,0,.05); tone(1319,.05,.05); tone(1568,.1,.16);} },
+  big(){ [523,659,784,1047].forEach((f,i)=>tone(f,i*.07,.09)); tone(1319,.3,.3); },
+  clear(){ [392,523,659,784,1047,1319].forEach((f,i)=>tone(f,i*.08,.1)); tone(1568,.5,.5,"square",.08); tone(784,.5,.5,"triangle",.06); },
+  star(){ [1175,1397,1760,2349].forEach((f,i)=>tone(f,i*.06,.12,"triangle",.08)); },
+  level(){ [659,0,659,784,988,1319].forEach((f,i)=>f&&tone(f,i*.09,.12)); tone(1568,.6,.45); },
+  buy(){ tone(220,0,.06,"sawtooth",.05); tone(880,.06,.08); tone(1760,.12,.2,"triangle"); },
+  tick(){ tone(1319,0,.04,"square",.05); },
+  down(){ tone(392,0,.08); tone(262,.08,.14); }, nope(){ tone(150,0,.15,"sawtooth",.05); },
+  hit(){ tone(120,0,.07,"sawtooth",.08); tone(90,.06,.1,"sawtooth",.07); tone(1047,.14,.08); },
+  secret(){ [784,740,622,440,415,659,831,1047].forEach((f,i)=>tone(f,i*.09,.1)); } };
+
+// ── FX ──
+let pt = [innerWidth/2, innerHeight/2];
+document.addEventListener("pointerdown", e => { pt = [e.clientX, e.clientY]; unlockAudio(); }, { capture:true, passive:true });
+function pop(txt){ const e=document.createElement("div"); e.className="pop"; e.textContent=txt; e.style.left=(pt[0]-12)+"px"; e.style.top=(pt[1]-24)+"px"; document.body.appendChild(e); setTimeout(()=>e.remove(),950); }
+function banner(big, small){
+  const b=document.createElement("div"); b.className="banner"; b.innerHTML=`<div>${big}${small?`<small>${small}</small>`:""}</div>`; document.body.appendChild(b); setTimeout(()=>b.remove(),1700);
+  const fire = shop().eq.fx==="fx-fire", n = fire ? 50 : 30, frag = document.createDocumentFragment(), made = [];
+  for (let i=0;i<n;i++){ const c=document.createElement("i"); c.className="conf"; c.style.background=["#ffc93c","#3fbf6a","#5cc8ff","#ff6b6b","#ffe066"][i%5];
+    if (fire){ c.style.left=(45+Math.random()*10)+"vw"; c.style.top="35vh"; c.style.animation="none"; const a=Math.random()*Math.PI*2, r=15+Math.random()*30;
+      c.animate([{transform:"translate(0,0)",opacity:1},{transform:`translate(${Math.cos(a)*r}vw,${Math.sin(a)*r}vh)`,opacity:0}],{duration:1200,easing:"steps(10)"}); }
+    else { c.style.left=(Math.random()*100)+"vw"; c.style.top="-2vh"; c.style.animationDelay=(Math.random()*.4)+"s"; }
+    frag.appendChild(c); made.push(c); }
+  document.body.appendChild(frag); setTimeout(()=>made.forEach(c=>c.remove()),1700);
+}
+
+// ── Avatar (original sprite) ──
+const SPRITE=["......aaaa......",".....hhhhhh.....","....hhhhhhhh....","....hssssssh....","....sesssses....","....ssssssss....",".....ssmmss.....","......ssss......","...cccuuuuccc...","..ccccuttucccc..","..cckcuuuuckcc..","..scccuttuccs...","...cccuuuuccc...","....pppppppp....","....ppp..ppp....","...bbbb..bbbb..."];
+function drawAvatar(cv){ const x=cv.getContext("2d"), eq=shop().eq; x.clearRect(0,0,16,16);
+  const scrubs=(SHOP.find(i=>i.id===eq.scrubs)||SHOP[0]).val, hat=(SHOP.find(i=>i.id===eq.hat)||{}).val;
+  const pal={h:"#2b1b14",s:"#8d5a3b",e:"#1a1020",m:"#5a2f22",c:"#f2f2f7",k:"#c9c9d6",u:scrubs,t:"#9aa3b8",p:scrubs,b:"#2a2440",a:hat||"#2b1b14"};
+  SPRITE.forEach((row,y)=>[...row].forEach((ch,xx)=>{ if(ch==="."||(ch==="a"&&!hat)) return; x.fillStyle=pal[ch]; x.fillRect(xx,y,1,1); })); }
+
+// ── Render (each part separately; only what changed is redrawn) ──
+const $ = id => document.getElementById(id);
+const esc = t => String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const DATEFMT = new Intl.DateTimeFormat("en-GB",{day:"numeric",month:"short",year:"numeric"});
+const fmtDate = d => isNaN(d) ? "?" : DATEFMT.format(d);   // one cached formatter: toLocaleDateString is slow on phones
+const today = () => { const t = new Date(); t.setHours(0,0,0,0); return t; };
+const viewYear = () => S.view || nowYear();
+
+function renderHUD(t){
+  t = t || tally(); const sh = shop(), lv = levelFor(t.own), lo = floorFor(lv), hi = floorFor(lv+1), yr = viewYear();   // level: ARCP coins only
+  document.body.className = (SHOP.find(i=>i.id===sh.eq.theme)||{}).val || "";
+  $("coins").textContent = Math.max(0, t.coins - sh.spent).toLocaleString();
+  $("ttl").textContent = `Lv ${lv} · ${titleFor(lv)}`;
+  $("xp").style.transform = `scaleX(${Math.min(1,(t.own-lo)/(hi-lo))})`;
+  $("cleared").textContent = `${clearedIn(yr)}/${allCips().length}`; $("clearedLbl").textContent = `Cleared ${yr}`;
+  $("stars").textContent = t.stars + allCips().filter(x => x.g.type!=="level" && sat(x.id, yr)).length;
+  $("cct").textContent = Math.max(0, Math.round((new Date(CCT_DATE) - today())/864e5)).toLocaleString();
+  $("mute").textContent = S.muted ? "♪ OFF" : "♪ ON";
+  $("lifetime").textContent = `ARCP Quest ${t.own.toLocaleString()} (your level here) + SCE Quest ${t.sce.toLocaleString()} = ${t.coins.toLocaleString()} lifetime · spent ${sh.spent.toLocaleString()} on items and treats`;
+  drawAvatar($("av"));
+}
+function renderMap(){
+  const now = nowYear(), view = viewYear(), total = allCips().length, td = today();
+  $("track").innerHTML = YEARS.map((y,i) => { const d = arcpDate(y), pct = Math.round(clearedIn(y)/total*100), days = Math.round((d - td)/864e5), bs = boss(y);
+    const cls = [y===now?"now":"", pct===100?"done":"", y===view?"view":""].join(" ");
+    return `<button class="node ${cls}" data-year="${y}">${y===view?'<canvas class="walker" width="16" height="16"></canvas>':""}<span class="plat"></span><span class="lbl">WORLD ${i+1} · ${y}</span><span class="sub">Boss: ARCP ${fmtDate(d)}${days>=0?` · ${days}d`:" · done"}</span><span class="pct">${pct}% CLEARED</span><span class="pct ${bs.defeated?"":"bhp"}">${bs.defeated?"BOSS DEFEATED":`BOSS HP ${bs.hp}/${bs.total}`}</span></button><span class="link"></span>`;
+  }).join("") + `<div class="node"><svg class="castle" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="12" height="10" fill="#8f8ab8"/><rect x="2" y="4" width="2" height="2" fill="#8f8ab8"/><rect x="6" y="4" width="4" height="2" fill="#8f8ab8"/><rect x="12" y="4" width="2" height="2" fill="#8f8ab8"/><rect x="6" y="11" width="4" height="5" fill="#14112b"/><rect x="7" y="1" width="1" height="4" fill="#f4f1ff"/><rect x="8" y="1" width="3" height="2" fill="#ff6b6b"/></svg><span class="plat" style="background:#5b5585"></span><span class="lbl">CCT CASTLE</span><span class="sub">${fmtDate(new Date(CCT_DATE))} (tentative)</span></div>`;
+  const w = $("track").querySelector("canvas.walker"); if (w) drawAvatar(w);
+  $("secrets").innerHTML = `<span class="lbl">SECRET EXITS ${SECRETS.filter(x=>x.found()).length}/${SECRETS.length}</span>` +
+    SECRETS.map(x => { const on = x.found(); return `<button class="pipe ${on?"on":""}" data-secret="${x.id}" aria-label="${on?esc(x.nm):"Undiscovered secret exit"}">${PIPE}<span>${on?esc(x.nm):"???"}</span></button>`; }).join("");
+}
+const PIPE = `<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="2" width="14" height="5" fill="#0b0920"/><rect x="2" y="3" width="12" height="3" fill="#3fbf6a"/><rect x="3" y="7" width="10" height="9" fill="#0b0920"/><rect x="4" y="7" width="8" height="9" fill="#2c8a4c"/><rect x="5" y="7" width="2" height="9" fill="#7be39a"/><rect x="3" y="3" width="2" height="2" fill="#a8f0bd"/></svg>`;
+const BOSS_SVG = `<svg class="bsvg" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="1" width="2" height="3" fill="#4a2590"/><rect x="10" y="1" width="2" height="3" fill="#4a2590"/><rect x="3" y="3" width="10" height="11" fill="#7a3fd1"/><rect x="2" y="5" width="1" height="7" fill="#7a3fd1"/><rect x="13" y="5" width="1" height="7" fill="#7a3fd1"/><rect x="5" y="5" width="2" height="2" fill="#fff"/><rect x="9" y="5" width="2" height="2" fill="#fff"/><rect x="6" y="6" width="1" height="1" fill="#14112b"/><rect x="10" y="6" width="1" height="1" fill="#14112b"/><rect x="4" y="4" width="3" height="1" fill="#14112b"/><rect x="9" y="4" width="3" height="1" fill="#14112b"/><rect x="5" y="9" width="6" height="2" fill="#14112b"/><rect x="6" y="9" width="1" height="1" fill="#fff"/><rect x="9" y="9" width="1" height="1" fill="#fff"/><rect x="3" y="14" width="3" height="2" fill="#4a2590"/><rect x="10" y="14" width="3" height="2" fill="#4a2590"/><rect x="13" y="7" width="3" height="5" fill="#c9a36a"/><rect x="14" y="8" width="1" height="1" fill="#f4f1ff"/><rect x="14" y="10" width="1" height="1" fill="#f4f1ff"/></svg>`;
+function toast(msg){ const old = document.querySelector(".toast"); if (old) old.remove(); const e = document.createElement("div"); e.className = "toast"; e.textContent = msg; document.body.appendChild(e); setTimeout(() => e.remove(), 2800); }
+function tileHTML(x, yr){
+  const st = state(x, yr), n = count(x.id, yr), min = S.gaps && (st==="clear"||st==="master");
+  let stars;
+  if (x.g.type === "level"){ const e = entrust(x.id), tg = target(x.id, yr); stars = `<span class="stars" title="Entrustment L${e} · ${yr} target L${tg}">${[1,2,3,4].map(k=>`<span class="${k<=e?"on":k===tg?"tgt":""}">${k<=e?"★":"☆"}</span>`).join("")}</span>`; }
+  else stars = `<span class="stars">${sat(x.id,yr)?'<span class="on">⚑ SAT</span>':'⚑ —'}</span>`;
+  return `<button class="lvl ${st} ${min?"min":""}" data-cip="${x.id}" aria-label="${esc(x.nm)}, ${st}"><span class="blk">${cipCode(x)}</span><span class="lnm">${esc(x.nm)}</span><span class="meta"><span class="pips">${[0,1,2].map(k=>`<i class="${k<n?"on":""}"></i>`).join("")}</span><span>${n}/${EVID_TARGET}</span>${stars}</span></button>`;
+}
+function renderStage(){
+  const yr = viewYear(), isBoss = S.stage === "BOSS", g = CIP_GROUPS.find(g => g.label === S.stage) || CIP_GROUPS[0], bs = boss(yr);
+  $("tabs").innerHTML = CIP_GROUPS.map(gr => { const done = gr.cips.filter((c,i)=>["clear","master"].includes(state({id:c[0],g:gr,i},yr))).length;
+    return `<button class="tab" role="tab" aria-selected="${!isBoss && gr.label===g.label}" data-stage="${esc(gr.label)}">${esc(gr.label.replace(/ CiPs$/,""))} ${done}/${gr.cips.length}</button>`; }).join("")
+    + `<button class="tab boss" role="tab" aria-selected="${isBoss}" data-stage="BOSS">BOSS ${bs.defeated?"✓":`HP ${bs.hp}`}</button>`;
+  $("legend").hidden = isBoss; $("gaps").checked = S.gaps;
+  if (isBoss){ $("grid").className = "bossv"; $("grid").innerHTML = bossHTML(yr, bs);
+    $("gridnote").textContent = `${yr} · these are the same numbers and ticks as the ARCP app's Requirements and Admin tabs, so changes show up in both. Items marked "ARCP app" are set there.`; return; }
+  $("grid").className = "grid";
+  $("grid").innerHTML = g.cips.map((c,i) => tileHTML({ id:c[0], nm:c[1], ev:c[2], g, i }, yr)).join("");
+  $("gridnote").textContent = `${yr} · tap a level to add evidence (+${rules().evidence}) or set entrustment (+${rules().star} per ★). Red ☆ = this year's target.`;
+}
+function bossHTML(yr, b){
+  const R = rules(), d = arcpDate(yr), days = Math.round((d - today())/864e5), open = yearOpen(yr);
+  const ctrl = i => i.kind === "num" ? `<span class="stp"><button class="sb" data-req="${i.id}" data-d="-1" aria-label="One fewer">−</button><b>${i.val}/${i.target}</b><button class="sb" data-req="${i.id}" data-d="1" aria-label="One more">+</button></span>`
+    : i.kind === "chk" ? `<button class="ck ${i.met?"on":""}" data-req="${i.id}" aria-label="${i.met?"Untick":"Tick"} ${esc(i.lbl)}">${i.met?"✓":""}</button>`
+    : `<a class="tag" href="ARCP.html">${i.met?"✓ DONE":"ARCP APP ↗"}</a>`;
+  const row = i => `<div class="req ${i.met?"met":""}"><div><div class="rl">${i.met?"✓ ":""}${esc(i.lbl)}</div><div class="note">${esc(i.note||"")}</div></div>${ctrl(i)}</div>`;
+  const groups = [["renal","RENAL"],["gim","GIM"],["admin","ADMIN & DOCUMENTS"]].map(([k,l]) => {
+    const all = b.items.filter(i => i.grp === k), show = S.gaps ? all.filter(i => !i.met) : all; if (!all.length) return "";
+    return `<div class="rgrp">${l} · ${all.filter(i=>i.met).length}/${all.length}</div>${show.length ? `<div class="rgrid">${show.map(row).join("")}</div>` : `<div class="note">All done.</div>`}`; }).join("");
+  return `<div class="bosshd ${b.defeated?"dead":""}">${BOSS_SVG}<div><div class="lbl">${b.defeated?"BOSS DEFEATED":"THE ARCP PANEL"} · ${yr}</div>
+    <div class="sub">${fmtDate(d)} · ${days>=0?`${days} days to go`:"done"}${b.outcome?` · Outcome ${esc(b.outcome)}`:""}</div>
+    <div class="hp" aria-label="Boss HP ${b.hp} of ${b.total}"><i style="transform:scaleX(${b.total ? b.hp/b.total : 0})"></i></div>
+    <div class="sub">HP ${b.hp}/${b.total} · each requirement met is a hit (+${R.hit}) · defeat it for +${R.boss}${open?"":" · coins count once this year starts"}</div></div></div>${groups}`;
+}
+function renderShop(t){
+  t = t || tally(); const sh = shop(), bal = Math.max(0, t.coins - sh.spent);
+  $("shop").innerHTML = SHOP.map(it => { const own = sh.owned.includes(it.id), eq = sh.eq[it.slot]===it.id;
+    const sw = (it.slot==="scrubs"||it.slot==="hat") ? `<span class="sw" style="background:${it.val||"transparent"}"></span>` : "";
+    return `<div class="item ${eq?"eq":""}"><span class="cat">${it.cat}</span><span class="inm">${it.nm}</span>${sw}${own
+      ? `<button class="btn ${eq?"alt":""}" data-equip="${it.id}" ${eq?"disabled":""}>${eq?"EQUIPPED":"EQUIP"}</button>`
+      : `<button class="btn" data-buy="${it.id}" ${bal<it.price?"disabled":""}><span class="coin"></span>${it.price}</button>`}</div>`; }).join("");
+  renderTreats();
+}
+function renderRules(){ const R = rules(), ed = !!S.editRules;
+  $("rules").innerHTML = RULE_DEFS.map(([k,l,d]) => `<tr><td>${esc(l)}${ed && R[k]!==d?` <span class="note">(default ${d})</span>`:""}</td><td>${ed
+    ? `<span class="stp"><button class="sb" data-rule="${k}" data-d="-1" aria-label="Lower">−</button><b>${R[k]}</b><button class="sb" data-rule="${k}" data-d="1" aria-label="Raise">+</button></span>` : `+${R[k]}`}</td></tr>`).join("");
+  $("rulesEdit").textContent = ed ? "DONE" : "TUNE"; $("rulesReset").hidden = !ed;
+}
+function renderInbox(){
+  const R = rules(), a = inbox().sort((x,y) => y.ts - x.ts), open = a.filter(n => !n.done), done = a.filter(n => n.done);
+  const tag = n => { const x = allCips().find(c => c.id === n.cip); return x ? ` · ${cipCode(x)} ${x.nm}` : ""; };
+  const row = n => `<div class="nt ${n.done?"done":""}"><div class="sub">${fmtDate(new Date(n.ts))} · ${esc(n.yr||"")}${esc(tag(n))}</div><div class="ntx">${esc(n.text)}</div><div class="nbtns">${n.done
+      ? `<button class="btn alt" data-note="${n.id}" data-op="undo">UNDO</button><button class="btn alt" data-note="${n.id}" data-op="copy">COPY</button>`
+      : `<button class="btn" data-note="${n.id}" data-op="done">WRITTEN UP ✓ +${R.written}</button><button class="btn alt" data-note="${n.id}" data-op="copy">COPY</button>`}<button class="btn alt" data-note="${n.id}" data-op="del">${S.confirmDel===n.id?"DELETE?":"✕"}</button></div></div>`;
+  $("inbox").innerHTML = (open.length ? open.map(row).join("") : `<p class="note">${a.length ? "Inbox zero. Everything is written up." : "No notes yet."}</p>`)
+    + (done.length ? `<details id="donel" ${S.showDone?"open":""}><summary class="note">Written up (${done.length})</summary>${done.map(row).join("")}</details>` : "");
+  $("addNote").textContent = `SAVE +${R.note}`;
+}
+$("ncip").innerHTML += CIP_GROUPS.map(g => `<optgroup label="${esc(g.label)}">${g.cips.map((c,i) => `<option value="${c[0]}">${c[0][0].toUpperCase()}-${i+1} ${esc(c[1])}</option>`).join("")}</optgroup>`).join("");
+$("inbox").addEventListener("toggle", e => { if (e.target.id === "donel") S.showDone = e.target.open; }, true);
+function publishOwn(t){ if (S.gotData && S.gotLb && raw("pft_quest_arcp_earned") !== String(t.own)) setRaw("pft_quest_arcp_earned", String(t.own)); }
+// ── Real-life treats (identical in ARCP Quest and SCE Quest; same arcpData keys, so a buy in one shows in the other) ──
+// pft_quest_treats: your treat list (defaults until you edit it) · pft_quest_claims: what you've bought · spending goes into pft_quest_shop.spent
+// Each app supplies TREATS_HOST = { balance(), addSpent(delta), write(key, value), after() }.
+const TREAT_SIZES = [["s","SMALL · every few days",40],["m","MEDIUM · every couple of weeks",250],["b","BIG · milestones",1000]];
+const TREATS_DEFAULT = [
+  {id:"t-coffee",ic:"☕",nm:"Fancy coffee",price:40,size:"s"},{id:"t-asahi",ic:"🍺",nm:"Pack of Asahi beer",price:50,size:"s"},
+  {id:"t-game",ic:"🎮",nm:"Hour of guilt-free gaming or chess",price:50,size:"s"},{id:"t-liein",ic:"🛌",nm:"Lie-in, no alarm",price:60,size:"s"},
+  {id:"t-film",ic:"🎬",nm:"Film night",price:150,size:"m"},{id:"t-off",ic:"🛋️",nm:"Evening off revision",price:200,size:"m"},
+  {id:"t-takeaway",ic:"🍕",nm:"Takeaway night",price:250,size:"m"},{id:"t-book",ic:"📚",nm:"New book",price:300,size:"m"},
+  {id:"t-mealout",ic:"🍽️",nm:"Meal out",price:800,size:"b"},{id:"t-dayout",ic:"🗺️",nm:"Day out",price:1000,size:"b"},
+  {id:"t-newgame",ic:"🕹️",nm:"New PS / Nintendo game",price:1200,size:"b"},{id:"t-spa",ic:"💆",nm:"Spa day",price:1500,size:"b"},
+  {id:"t-gig",ic:"🎟️",nm:"Concert or gig",price:1500,size:"b"},{id:"t-gadget",ic:"🎧",nm:"Gadget",price:2500,size:"b"},
+  {id:"t-weekend",ic:"🧳",nm:"Weekend away",price:3000,size:"b"}];
+const TQ = { edit:false, confirm:null };
+function treatList(){ try { const a = JSON.parse(raw("pft_quest_treats") || "null"); if (Array.isArray(a)) return a.filter(x => x && x.id); } catch(e){}
+  return TREATS_DEFAULT.map(x => Object.assign({}, x)); }
+function claimList(){ try { const a = JSON.parse(raw("pft_quest_claims") || "[]"); return Array.isArray(a) ? a.filter(x => x && x.id) : []; } catch(e){ return []; } }
+const saveTreats = a => TREATS_HOST.write("pft_quest_treats", JSON.stringify(a));
+const saveClaims = a => TREATS_HOST.write("pft_quest_claims", JSON.stringify(a));
+function renderTreats(){
+  const ae = document.activeElement; if (TQ.edit && ae && ae.tagName === "INPUT" && $("treats").contains(ae)) return;
+  const bal = TREATS_HOST.balance(), list = treatList(), cl = claimList();
+  const open = cl.filter(c => !c.done).sort((a,b) => b.ts - a.ts), done = cl.filter(c => c.done).sort((a,b) => (b.doneTs||0) - (a.doneTs||0));
+  let h = "";
+  if (open.length) h += `<div class="tsz">TO CLAIM · ${open.length}</div><div class="claims">${open.map(c => `<div class="claim"><span class="cnm">${esc(c.ic||"🎁")} ${esc(c.nm)}</span><span class="note">bought ${fmtDate(new Date(c.ts))}</span><span class="cbtns"><button class="btn" data-claim="${c.id}">ENJOYED IT ✓</button><button class="btn alt" data-unbuy="${c.id}">${TQ.confirm===c.id?`REFUND ${c.price}?`:"✕"}</button></span></div>`).join("")}</div>`;
+  TREAT_SIZES.forEach(([sz, lbl]) => {
+    const items = list.filter(t => t.size === sz).sort((a,b) => a.price - b.price); if (!items.length && !TQ.edit) return;
+    h += `<div class="tsz">${lbl}</div><div class="shop">${items.map(t => TQ.edit
+      ? `<div class="item tedit"><div class="trow"><input type="text" value="${esc(t.ic||"")}" data-tedit="${t.id}" data-f="ic" maxlength="4" aria-label="Icon" class="tic"><input type="text" value="${esc(t.nm)}" data-tedit="${t.id}" data-f="nm" maxlength="40" aria-label="Treat name"></div><div class="trow"><span class="coin"></span><input type="number" value="${t.price}" min="1" step="10" inputmode="numeric" data-tedit="${t.id}" data-f="price" aria-label="Price in coins"><button class="btn alt" data-tdel="${t.id}">${TQ.confirm===t.id?"DELETE?":"✕"}</button></div></div>`
+      : `<div class="item"><span class="inm">${esc(t.ic||"🎁")} ${esc(t.nm)}</span><button class="btn" data-treat="${t.id}" ${bal < t.price ? "disabled" : ""}><span class="coin"></span>${t.price}</button></div>`).join("")}${TQ.edit ? `<button class="item addt" data-tadd="${sz}">+ ADD TREAT</button>` : ""}</div>`; });
+  if (done.length) h += `<details><summary class="note">Enjoyed (${done.length}) · ${done.reduce((s,c) => s + (+c.price||0), 0).toLocaleString()} coins of treats so far</summary><div class="claims">${done.slice(0,40).map(c => `<div class="claim done"><span class="cnm">${esc(c.ic||"🎁")} ${esc(c.nm)}</span><span class="note">${fmtDate(new Date(c.doneTs||c.ts))} · ${c.price}</span></div>`).join("")}</div></details>`;
+  $("treats").innerHTML = h; $("treats").classList.toggle("editing", TQ.edit);
+  $("treatEdit").textContent = TQ.edit ? "DONE" : "EDIT";
+  $("treatNote").textContent = TQ.edit ? "Rename, reprice or remove. Changes save as you go and show in both games." : "Buy it here, then tick it off once you've actually had it. Coins come from both games.";
+}
+function treatsConfirm(id){ TQ.confirm = id; renderTreats(); setTimeout(() => { if (TQ.confirm === id){ TQ.confirm = null; renderTreats(); } }, 3000); }
+// returns true if the tap was a treats control
+function treatsClick(t){
+  const d = t.dataset;
+  if (t.id === "treatEdit"){ TQ.edit = !TQ.edit; TQ.confirm = null; SFX.tick(); renderTreats(); return true; }
+  if (d.treat){ const it = treatList().find(x => x.id === d.treat); if (!it) return true;
+    if (TREATS_HOST.balance() < it.price){ SFX.nope(); toast(`${it.price - TREATS_HOST.balance()} more coins needed`); return true; }
+    TREATS_HOST.addSpent(it.price);
+    saveClaims(claimList().concat([{ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), tid: it.id, ic: it.ic, nm: it.nm, price: it.price, ts: Date.now(), done: false }]));
+    SFX.buy(); pop("-" + it.price); toast(`${it.nm} is yours. Tick it off once you've had it.`); TREATS_HOST.after(); return true; }
+  if (d.claim){ const a = claimList(), c = a.find(x => x.id === d.claim); if (!c) return true;
+    c.done = true; c.doneTs = Date.now(); saveClaims(a); SFX.clear(); banner("TREAT TIME!", esc(c.nm)); TREATS_HOST.after(); return true; }
+  if (d.unbuy){ const a = claimList(), c = a.find(x => x.id === d.unbuy); if (!c) return true;
+    if (TQ.confirm !== c.id){ treatsConfirm(c.id); return true; }
+    TQ.confirm = null; TREATS_HOST.addSpent(-(+c.price||0)); saveClaims(a.filter(x => x.id !== c.id)); SFX.down(); toast(`Refunded ${c.price} coins`); TREATS_HOST.after(); return true; }
+  if (d.tadd){ const sz = TREAT_SIZES.find(s => s[0] === d.tadd) || TREAT_SIZES[0];
+    saveTreats(treatList().concat([{ id: "t-" + Date.now().toString(36), ic: "🎁", nm: "New treat", price: sz[2], size: sz[0] }])); SFX.tick(); renderTreats();
+    const inputs = $("treats").querySelectorAll(`[data-f="nm"]`); const last = [...inputs].find(i => i.value === "New treat"); if (last){ last.focus(); last.select(); } return true; }
+  if (d.tdel){ if (TQ.confirm !== d.tdel){ treatsConfirm(d.tdel); return true; }
+    TQ.confirm = null; saveTreats(treatList().filter(x => x.id !== d.tdel)); SFX.down(); renderTreats(); return true; }
+  return false;
+}
+document.addEventListener("change", e => {
+  const el = e.target; if (!el.dataset || !el.dataset.tedit) return;
+  const a = treatList(), it = a.find(x => x.id === el.dataset.tedit); if (!it) return;
+  if (el.dataset.f === "price"){ const v = parseInt(el.value, 10); if (!(v > 0)){ el.value = it.price; return; } it.price = v; }
+  else { const v = el.value.trim(); if (el.dataset.f === "nm" && !v){ el.value = it.nm; return; } it[el.dataset.f] = v || "🎁"; }
+  saveTreats(a); SFX.tick();
+});
+const TREATS_HOST = {
+  balance: () => Math.max(0, tally().coins - shop().spent),
+  addSpent: d => { const sh = shop(); sh.spent = Math.max(0, sh.spent + d); setRaw("pft_quest_shop", JSON.stringify(sh)); },
+  write: (k, v) => setRaw(k, v),
+  after: () => { const tt = tally(); renderHUD(tt); renderShop(tt); } };
+function renderAll(){ const t = tally(); renderHUD(t); renderMap(); renderStage(); renderShop(t); renderRules(); renderInbox(); renderBlocks(); publishOwn(t); if (!$("drawer").hidden && S.open) openLevel(S.open); }
+let rq = 0; const scheduleRender = () => { if (rq) return; rq = requestAnimationFrame(() => { rq = 0; renderAll(); }); };
+
+// ── Level drawer ──
+function openLevel(id){
+  const x = allCips().find(c => c.id === id); if (!x) return; S.open = id; S.form = null;
+  const yr = viewYear(), p = picks(id, yr), n = count(id, yr), st = state(x, yr), e = entrust(id), tg = target(id, yr);
+  const types = [...x.ev, ...Object.keys(p).filter(t => !x.ev.includes(t) && p[t] > 0)];
+  const d = $("drawer");
+  d.innerHTML = `<div class="din"><button class="btn alt" data-act="close" style="align-self:flex-end">✕ CLOSE</button>
+    <h2>${cipCode(x)} · ${esc(x.nm)}</h2>
+    <div class="note">${yr} · ${n}/${EVID_TARGET} evidence · ${({master:"MASTERED",clear:"CLEARED",prog:"IN PROGRESS",locked:"LOCKED"})[st]} · tap to add (+${rules().evidence})</div>
+    <div class="chips">${types.map(t=>`<button class="chip" data-ev="${esc(t)}">${esc(t)}${p[t]?` <b>${p[t]}</b><span class="minus" data-minus="1" aria-label="Remove one">−</span>`:""}</button>`).join("")}</div>
+    <div class="note">Typed "Other" evidence is added in the ARCP app's CiPs tab.</div>
+    ${x.g.type==="level"
+      ? `<div><div class="note">ES entrustment · ${yr} target L${tg} (+${rules().star} per ★)</div><div class="starbtns">${[1,2,3,4].map(k=>`<button data-star="${k}" class="${k<=e?"on":""}" aria-label="Level ${k}">★</button>`).join("")}</div></div>`
+      : `<div><button class="btn ${sat(id,yr)?"alt":""}" data-act="sat">${sat(id,yr)?"✓ SIGNED OFF · tap to undo":`MARK SATISFACTORY (+${rules().sat})`}</button></div>`}</div>`;
+  d.hidden = false;
+}
+
+// ── Actions: change data, then celebrate by comparing before/after ──
+function act(change){
+  const yr = viewYear(), b = tally(), bState = {}, bBoss = boss(yr); allCips().forEach(x => bState[x.id] = state(x, yr));
+  change();
+  const a = tally(), diff = a.coins - b.coins, aBoss = boss(yr), R = rules();
+  renderHUD(a); renderStage(); renderShop(a); renderMap(); renderInbox(); if (S.open && !$("drawer").hidden) openLevel(S.open);
+  if (diff > 0){ pop("+" + diff); aBoss.met > bBoss.met ? SFX.hit() : diff >= 5 ? SFX.big() : SFX.coin(); }
+  else if (diff < 0) SFX.down();
+  else if (aBoss.met > bBoss.met){ pop("HIT!"); SFX.hit(); }
+  let delay = 200; const cips = allCips();
+  const nowState = {}; cips.forEach(x => nowState[x.id] = state(x, yr));
+  if (cips.some(x => bState[x.id] !== "master" && nowState[x.id] === "master")) { setTimeout(()=>{ SFX.clear(); banner("MASTERED!","Entrustment at target"); }, delay); delay += 1700; }
+  else if (cips.some(x => ["locked","prog"].includes(bState[x.id]) && ["clear","master"].includes(nowState[x.id]))) { setTimeout(()=>{ SFX.clear(); banner("CLEAR!",`+${R.clear} bonus`); }, delay); delay += 1700; }
+  if (!bBoss.defeated && aBoss.defeated) { setTimeout(()=>{ SFX.level(); banner("BOSS DEFEATED!", `ARCP ${yr}${yearOpen(yr)?` · +${R.boss}`:""}`); }, delay); delay += 1700; }
+  if (a.secrets > b.secrets) { setTimeout(()=>{ SFX.secret(); banner("SECRET EXIT!", `+${R.secret}`); }, delay); delay += 1700; }
+  if (a.worlds > b.worlds) { setTimeout(()=>{ SFX.level(); banner("WORLD CLEAR!", `${yr} complete · +${R.world}`); }, delay); delay += 1700; }
+  if (levelFor(a.own) > levelFor(b.own)) setTimeout(()=>{ SFX.level(); banner("LEVEL UP!", `Lv ${levelFor(a.own)} · ${titleFor(levelFor(a.own))}`); }, delay);
+  publishOwn(a);
+  local.set("seen", snapshotOf(a));
+}
+
+// One delegated listener for every tap (no per-render rebinding)
+document.addEventListener("click", ev => {
+  const t = ev.target.closest("button, input"); if (!t) return;
+  if (treatsClick(t)) return;
+  const yr = viewYear(), id = S.open;
+  if (t.dataset.year){ S.view = t.dataset.year === nowYear() ? null : t.dataset.year; $("drawer").hidden = true; S.open = null; renderHUD(); renderMap(); renderStage(); return; }
+  if (t.dataset.stage){ S.stage = t.dataset.stage; renderStage(); return; }
+  if (t.dataset.cip){ openLevel(t.dataset.cip); return; }
+  if (t.dataset.log){ t.classList.remove("bump"); void t.offsetWidth; t.classList.add("bump"); SFX.tick(); openLog(t.dataset.log); return; }
+  if (t.dataset.ev){ const minus = ev.target.closest("[data-minus]"); act(() => { const p = picks(id, yr); p[t.dataset.ev] = Math.max(0, (parseInt(p[t.dataset.ev])||0) + (minus?-1:1)); setPicks(id, yr, p); }); return; }
+  if (t.dataset.star){ const v = +t.dataset.star, cur = entrust(id), nv = v === cur ? v - 1 : v; act(() => setRaw(`pft_cip_entrust_${id}`, nv ? String(nv) : "")); return; }
+  if (t.dataset.buy){ const it = SHOP.find(i=>i.id===t.dataset.buy), sh = shop(), bal = tally().coins - sh.spent; if (bal < it.price){ SFX.nope(); return; }
+    sh.spent += it.price; if (!sh.owned.includes(it.id)) sh.owned.push(it.id); sh.eq[it.slot] = it.id; setRaw("pft_quest_shop", JSON.stringify(sh)); SFX.buy(); pop("-"+it.price); const tt = tally(); renderHUD(tt); renderShop(tt); renderMap(); return; }
+  if (t.dataset.equip){ const it = SHOP.find(i=>i.id===t.dataset.equip), sh = shop(); sh.eq[it.slot] = it.id; setRaw("pft_quest_shop", JSON.stringify(sh)); SFX.coin(); const tt = tally(); renderHUD(tt); renderShop(tt); renderMap(); return; }
+  if (t.dataset.req){ const it = bossItems(yr).find(i => i.id === t.dataset.req); if (!it) return;
+    act(() => { if (it.kind === "num") setRaw(it.key, String(Math.max(0, it.val + (+t.dataset.d))));
+      else if (it.kind === "chk"){ const nv = String(!it.met); setRaw(it.key, nv); if (it.also) setRaw(it.also, nv); } }); return; }
+  if (t.dataset.secret){ const x = SECRETS.find(q => q.id === t.dataset.secret); if (!x) return; if (x.found()){ SFX.coin(); toast(`${x.nm} · ${x.info()}`); } else { SFX.nope(); toast(`Hint: ${x.hint}`); } return; }
+  if (t.dataset.rule){ const o = ruleOverrides(), R = rules(), k = t.dataset.rule, v = R[k], up = +t.dataset.d > 0, step = (up ? v >= 10 : v > 10) ? 5 : 1;
+    const def = RULE_DEFS.find(r => r[0] === k)[2], nv = Math.max(0, Math.min(500, v + (up ? step : -step)));
+    if (nv === def) delete o[k]; else o[k] = nv; setRaw("pft_quest_rules", JSON.stringify(o)); SFX.tick(); local.set("seen", snapshotOf(tally())); renderAll(); return; }
+  if (t.dataset.note){ const a = inbox(), n = a.find(q => q.id === t.dataset.note); if (!n) return;
+    switch (t.dataset.op){
+      case "copy": try { navigator.clipboard.writeText(n.text).then(() => toast("Copied. Paste it into your ePortfolio reflection."), () => toast("Couldn't copy. Select the text instead.")); } catch(e){ toast("Couldn't copy. Select the text instead."); } return;
+      case "del": if (S.confirmDel !== n.id){ S.confirmDel = n.id; renderInbox(); setTimeout(() => { if (S.confirmDel === n.id){ S.confirmDel = null; renderInbox(); } }, 3000); return; }
+        S.confirmDel = null; act(() => saveInbox(a.filter(q => q.id !== n.id))); return;
+      case "done": act(() => { n.done = true; n.doneTs = Date.now(); const x = allCips().find(c => c.id === n.cip);
+          if (x){ const yr2 = n.yr || nowYear(), ty = reflType(x), p = picks(x.id, yr2); p[ty] = (parseInt(p[ty])||0) + 1; setPicks(x.id, yr2, p); n.ev = ty; }
+          saveInbox(a); }); return;
+      case "undo": act(() => { n.done = false; delete n.doneTs; if (n.ev && n.cip){ const yr2 = n.yr || nowYear(), p = picks(n.cip, yr2); p[n.ev] = Math.max(0, (parseInt(p[n.ev])||0) - 1); setPicks(n.cip, yr2, p); } delete n.ev; saveInbox(a); }); return;
+    } return; }
+  switch (t.dataset.act){
+    case "note": $("inboxBox").scrollIntoView({ behavior:"smooth", block:"start" }); setTimeout(() => $("nt").focus(), 350); return;
+    case "addNote": { const txt = $("nt").value.trim(); if (!txt){ SFX.nope(); toast("Write a line or two first."); $("nt").focus(); return; }
+      const n = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), ts: Date.now(), text: txt, cip: $("ncip").value || "", yr: nowYear(), done:false };
+      act(() => saveInbox(inbox().concat([n]))); $("nt").value = ""; $("ncip").value = ""; toast("Saved to your inbox"); return; }
+    case "rulesEdit": S.editRules = !S.editRules; renderRules(); return;
+    case "rulesReset": setRaw("pft_quest_rules", "{}"); SFX.down(); local.set("seen", snapshotOf(tally())); renderAll(); return;
+    case "close": $("drawer").hidden = true; S.open = null; S.form = null; return;
+    case "saveLog": saveLog(); return;
+    case "sat": act(() => setRaw(`pft_cip_sat_${yr}_${id}`, String(!sat(id, yr)))); return;
+    case "mute": S.muted = !S.muted; local.set("muted", S.muted); $("mute").textContent = S.muted ? "♪ OFF" : "♪ ON"; return;
+    case "collect": runCollect(); return;
+  }
+});
+$("drawer").addEventListener("change", e => {   // quick-log form: "Other…" free text, CPD category follows type
+  const el = e.target; if (!S.form || !el.id || !el.id.startsWith("lf-")) return;
+  const o = $(el.id + "-other"); if (o) { o.hidden = !/^Other/.test(el.value); if (!o.hidden) o.focus(); }
+  if (el.id === "lf-type" && $("lf-category")) $("lf-category").value = cpdCategoryFor(el.value);
+});
+$("gaps").addEventListener("change", e => { S.gaps = e.target.checked; local.set("gaps", S.gaps); renderStage(); });
+
+// ── Welcome back: coins earned in the ARCP app since you last opened Quest ──
+const snapshotOf = t => JSON.parse(JSON.stringify(t));
+let pendingCollect = null;
+function checkWelcome(){
+  if (!(S.gotData && S.gotLb) || pendingCollect !== null) return;
+  const t = tally(), seen = local.get("seen", null);
+  if (seen && t.coins <= seen.coins){ pendingCollect = false; local.set("seen", snapshotOf(t)); return; }
+  const lines = [], R = rules();
+  if (!seen) lines.push(["Everything logged so far", t.coins]);
+  else {
+    Object.keys(LB_TYPES).forEach(k => { const d = (t.entries[k]||0) - ((seen.entries||{})[k]||0); if (d > 0) lines.push([`${d} × ${LB_TYPES[k]}`, d*R[LB_RULE[k]]]); });
+    const add = (lbl, cur, old, per) => { const d = cur - (old||0); if (d > 0) lines.push([`${d} × ${lbl}`, d*per]); };
+    add("DOPS signed", t.dops, seen.dops, R.dops); add("CiP evidence", t.evidence, seen.evidence, R.evidence); add("CiP CLEAR!", t.clears, seen.clears, R.clear);
+    add("★ entrustment", t.stars, seen.stars, R.star); add("Generic sign-off", t.sats, seen.sats, R.sat); add("WORLD CLEAR", t.worlds, seen.worlds, R.world);
+    add("ARCP requirement met", t.hits, seen.hits, R.hit); add("BOSS DEFEATED", t.bosses, seen.bosses, R.boss); add("SECRET EXIT", t.secrets, seen.secrets, R.secret);
+    add("Reflection note", t.notes, seen.notes, R.note); add("Written up", t.written, seen.written, R.written);
+    if (t.sce > (seen.sce || 0)) lines.push(["Coins from SCE Quest", t.sce - (seen.sce || 0)]);
+    const rest = (t.coins - seen.coins) - lines.reduce((s2,l) => s2 + l[1], 0);
+    if (rest) lines.push(["Coin values rebalanced", rest]);
+  }
+  pendingCollect = { from: seen ? seen.coins : 0, to: t.coins, ownFrom: seen ? (seen.own != null ? seen.own : seen.coins) : 0, ownTo: t.own, lines, first: !seen, t };
+  const c = $("collect");
+  c.innerHTML = `<div class="cbox"><div class="lbl" style="font-size:14px">${seen ? "WELCOME BACK, DR MAUGO" : "WELCOME TO ARCP QUEST"}</div>
+    <div class="note">${seen ? "Coins earned since your last visit" : "Your logbook and CiPs have already earned you coins"}</div>
+    <ul>${lines.slice(0,10).map(([l,v])=>`<li><span>${esc(l)}</span><b>${v<0?"−"+Math.abs(v):"+"+v}</b></li>`).join("")}</ul>
+    <div class="big" id="cnum">+0</div>
+    <button class="btn" data-act="collect">TAP TO COLLECT</button></div>`;
+  c.hidden = false;
+}
+function runCollect(){
+  const p = pendingCollect; if (!p) { $("collect").hidden = true; return; }
+  unlockAudio(); const gain = p.to - p.from, steps = Math.min(24, Math.max(6, Math.ceil(gain/10))), btn = $("collect").querySelector("[data-act=collect]");
+  btn.disabled = true; let i = 0;
+  const iv = setInterval(() => { i++; $("cnum").textContent = "+" + Math.round(gain * i/steps).toLocaleString(); SFX.tick();
+    if (i >= steps){ clearInterval(iv); SFX.big(); const before = levelFor(p.ownFrom), after = levelFor(p.ownTo);
+      setTimeout(() => { $("collect").hidden = true; renderAll(); if (after > before){ SFX.level(); banner("LEVEL UP!", `Lv ${after} · ${titleFor(after)}`); } }, 650);
+      local.set("seen", snapshotOf(p.t)); pendingCollect = false; } }, 70);
+}
+
+// ── Sync wiring ──
+window.addEventListener("q-data", e => { S.data = e.detail; S.gotData = true; local.set("cache_data", S.data); $("sync").textContent = "● live"; $("sync").className = "sync ok"; scheduleRender(); checkWelcome(); });
+window.addEventListener("q-logbook", e => { S.lb = e.detail; S.gotLb = true; local.set("cache_lb", S.lb); scheduleRender(); checkWelcome(); });
+window.addEventListener("q-offline", () => { $("sync").textContent = "● offline"; $("sync").className = "sync bad"; });
+renderAll();   // instant first paint from the cached snapshot
+</script>
+</body>
+</html>  color-scheme: dark;
   --night:#14112b; --panel:#211c45; --panel2:#2c2660; --ink:#f4f1ff; --mute:#a7a0d6;
   --coin:#ffc93c; --grass:#3fbf6a; --sky:#5cc8ff; --star:#ffe066; --lock:#5b5585; --alert:#ff6b6b; --brick:#c8673a; --edge:#0b0920;
   --pixel:'Silkscreen','Courier New',monospace; --body:'Pixelify Sans','Trebuchet MS',system-ui,sans-serif;
