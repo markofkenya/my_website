@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>SCE Quest</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="SCE Quest" />
+<meta name="theme-color" content="#14112b" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<!-- Same Firebase project as SCE.html and ARCP Quest.
+     Reads/writes:  sceData/topics/<st_key>   the SCE app's Topic Coverage ticks (star 1 is written back there too)
+                    sceData/quest/...         learning cards, own read flags, recall history (this app only)
+                    sceData/biopsyLog         pathology cases, same record format SCEtopics used
+     Reads:         sceConfig/topics          the topic list, if you have customised it in SCE.html's Admin tab
+                    arcpData                  shared avatar, shop and ARCP Quest's coin total
+     Writes:        arcpData/pft_quest_sce_earned   this game's lifetime coins, so ARCP Quest can add them to the wallet -->
+<script type="module">
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, update, push, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  const app = initializeApp({
+    apiKey:"AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0", authDomain:"task-monitor-bd7ee.firebaseapp.com",
+    databaseURL:"https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app", projectId:"task-monitor-bd7ee",
+    storageBucket:"task-monitor-bd7ee.firebasestorage.app", messagingSenderId:"544624731364", appId:"1:544624731364:web:419d52fa061c5c7b4f38f1" });
+  const db = getDatabase(app);
+  window.QFB = {
+    sce:   paths => update(ref(db, "sceData"), paths),                                    // multi-path update under sceData
+    arcp:  (key, val) => update(ref(db, "arcpData"), { [key]: { value: String(val), ts: Date.now() } }),
+    pushBx: rec => push(ref(db, "sceData/biopsyLog"), rec),
+    delBx:  id => remove(ref(db, "sceData/biopsyLog/" + id)) };
+  const fire = (name, path) => onValue(ref(db, path),
+    s => window.dispatchEvent(new CustomEvent(name, { detail: s.val() })),
+    () => window.dispatchEvent(new CustomEvent("q-offline")));
+  signInAnonymously(getAuth(app)).catch(e => console.warn("auth", e)).finally(() => {
+    fire("q-topics", "sceData/topics"); fire("q-quest", "sceData/quest"); fire("q-bx", "sceData/biopsyLog");
+    fire("q-arcp", "arcpData"); fire("q-cfg", "sceConfig/topics");
+  });
+</script>
+
+<style>
+/* One dark arcade screen, matching ARCP Quest: HUD, world path, levels for the chosen world, bonus stage, rules. */
+:root{
+  color-scheme: dark;
+  --night:#14112b; --panel:#211c45; --panel2:#2c2660; --ink:#f4f1ff; --mute:#a7a0d6;
+  --coin:#ffc93c; --grass:#3fbf6a; --sky:#5cc8ff; --star:#ffe066; --lock:#5b5585; --alert:#ff6b6b; --brick:#c8673a; --edge:#0b0920; --boo:#e9e6ff;
+  --pixel:'Silkscreen','Courier New',monospace; --body:'Pixelify Sans','Trebuchet MS',system-ui,sans-serif;
+}
+body.t-desert{--night:#2b1a12;--panel:#3d2618;--panel2:#523320;--brick:#d9a441}
+body.t-night{--night:#06141c;--panel:#0c2430;--panel2:#123544;--brick:#2e6f8e}
+body.t-snow{--night:#1a2238;--panel:#26324f;--panel2:#33426a;--brick:#cfe3ff}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{background:var(--night)}
+body{margin:0;background:var(--night);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.4;
+  padding:calc(10px + env(safe-area-inset-top,0px)) 16px calc(30px + env(safe-area-inset-bottom,0px));-webkit-text-size-adjust:100%}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;border-radius:0}
+button:focus-visible,a:focus-visible{outline:2px solid var(--coin);outline-offset:2px}
+.box{background:var(--panel);border:3px solid var(--edge);box-shadow:inset -3px -3px 0 rgba(0,0,0,.35);padding:12px}
+h3{font-family:var(--pixel);font-size:13px;margin:0 0 10px;color:var(--coin);letter-spacing:.04em}
+.note{font-size:12px;color:var(--mute)}
+a{color:var(--sky)}
+.rhead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap} .rhead h3{margin-bottom:6px}
+
+/* HUD */
+.hud{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
+.who{display:flex;gap:12px;align-items:center;min-width:0}
+canvas.av{width:60px;height:60px;image-rendering:pixelated;background:var(--panel2);border:3px solid var(--edge)}
+.nm{font-family:var(--pixel);font-size:15px}
+.ttl{color:var(--mute);font-size:13px}
+.xp{height:10px;background:var(--edge);margin-top:6px;width:min(200px,38vw)}
+.xp i{display:block;height:100%;background:var(--sky);transform-origin:left;transition:transform .35s steps(8)}
+.stats{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.stat{text-align:center}
+.stat > b{display:block;font-family:var(--pixel);font-size:19px;font-variant-numeric:tabular-nums}
+.stat > span{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em}
+.stat.haunt > b{color:var(--boo)}
+.coin{display:inline-block;width:13px;height:13px;background:var(--coin);border:2px solid #8a5a00;border-radius:50%;vertical-align:-1px;margin-right:4px}
+.hud .coin{animation:spin 1.2s steps(4) infinite}
+@keyframes spin{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.2)}}
+.side{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.sbtn{background:var(--panel2);border:3px solid var(--edge);padding:7px 10px;font-family:var(--pixel);font-size:10px;text-decoration:none;color:var(--ink);text-align:center}
+.sbtn.hunt{background:var(--boo);color:var(--night)}
+.sbtn.hunt:disabled{opacity:.45;cursor:default}
+.sync{font-size:11px;color:var(--mute);text-align:center}
+.sync.ok{color:var(--grass)} .sync.bad{color:var(--alert)}
+
+/* World path */
+.path{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.path > .note{position:sticky;left:0}
+.track{display:flex;align-items:flex-end;min-width:1080px;padding-top:58px}
+.node{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;background:none;border:none;padding:0;text-align:center;min-width:0}
+.plat{display:block;width:88%;height:18px;background:repeating-linear-gradient(90deg,var(--brick) 0 14px,rgba(0,0,0,.3) 14px 16px);border:3px solid var(--edge)}
+.node.some .plat{background:repeating-linear-gradient(90deg,var(--grass) 0 14px,#2c8a4c 14px 16px)}
+.node.done .plat{background:repeating-linear-gradient(90deg,var(--coin) 0 14px,#c99200 14px 16px)}
+.node.view .lbl{color:var(--coin)}
+.node.view .plat{outline:3px solid var(--coin);outline-offset:2px}
+.lbl{font-family:var(--pixel);font-size:10px;line-height:1.25}
+.sub{font-size:11px;color:var(--mute);line-height:1.2}
+.pct{font-family:var(--pixel);font-size:10px;color:var(--grass)}
+.gh{font-family:var(--pixel);font-size:10px;color:var(--boo)}
+canvas.walker{position:absolute;top:-50px;width:42px;height:42px;image-rendering:pixelated;animation:bob 1s steps(2) infinite}
+@keyframes bob{50%{transform:translateY(-3px)}}
+.castle{width:56px;height:56px;position:absolute;top:-56px}
+.link{flex:0 0 8px;height:6px;margin-bottom:62px;background:repeating-linear-gradient(90deg,var(--mute) 0 4px,transparent 4px 7px)}
+
+/* Levels */
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.wtitle{font-family:var(--pixel);font-size:14px;color:var(--coin)}
+.toggle{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mute)}
+.toggle input{width:20px;height:20px;accent-color:var(--coin)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--mute);margin:10px 0 4px}
+.legend i{display:inline-block;width:12px;height:12px;margin-right:5px;vertical-align:-1px;border:2px solid var(--edge)}
+.topic{margin-top:14px}
+.thead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;border-bottom:2px dotted rgba(167,160,214,.3);padding-bottom:4px;margin-bottom:8px}
+.tname{font-weight:600;font-size:14px}
+.tcnt{font-family:var(--pixel);font-size:10px;color:var(--mute);white-space:nowrap}
+.tcnt.done{color:var(--grass)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.lvl{position:relative;text-align:left;background:var(--panel2);border:3px solid var(--edge);padding:8px 8px 8px 48px;min-height:72px;display:flex;flex-direction:column;gap:4px;justify-content:space-between}
+.lvl:active{transform:translateY(1px)}
+@media (hover:hover) and (pointer:fine){ .lvl:hover{filter:brightness(1.12)} }
+.blk{position:absolute;left:7px;top:8px;width:32px;height:32px;display:grid;place-items:center;font-family:var(--pixel);font-size:9px;border:3px solid var(--edge);box-shadow:inset -3px -3px 0 rgba(0,0,0,.3),inset 3px 3px 0 rgba(255,255,255,.25)}
+.lvl.locked .blk{background:var(--lock)} .lvl.prog .blk{background:var(--sky);color:var(--night)}
+.lvl.clear .blk{background:var(--grass);color:var(--night)} .lvl.master .blk{background:var(--star);color:var(--night)}
+.lnm{font-size:13px;line-height:1.25;font-weight:600}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;color:var(--mute)}
+.stars{font-size:14px;letter-spacing:1px;color:var(--lock);white-space:nowrap} .stars .on{color:var(--star)}
+.lvl.haunted{border-color:#6a62b8}
+.lvl .boo{position:absolute;right:6px;top:-10px;width:26px;height:26px;animation:float 1.4s steps(2) infinite}
+@keyframes float{50%{transform:translateY(-4px)}}
+.lvl.min{min-height:0;padding:5px 10px 5px 38px;opacity:.55} .lvl.min .blk{width:22px;height:22px;font-size:8px;top:4px;left:6px}
+.lvl.min .meta{display:none} .lvl.min .lnm{font-size:12px;font-weight:400}
+
+/* Drawer */
+.drawer{position:fixed;left:0;right:0;bottom:0;max-height:86vh;overflow:auto;background:var(--panel);border-top:4px solid var(--edge);padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));z-index:50;box-shadow:0 -10px 0 rgba(0,0,0,.3);-webkit-overflow-scrolling:touch}
+.din{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.drawer h2{font-family:var(--pixel);font-size:15px;margin:0;line-height:1.35}
+.crumb{font-size:12px;color:var(--mute)}
+.step{background:var(--panel2);border:3px solid var(--edge);padding:10px;display:flex;flex-direction:column;gap:8px}
+.step.got{border-color:#2c8a4c}
+.shd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.shd b{font-family:var(--pixel);font-size:11px;color:var(--star)} .shd b.off{color:var(--lock)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--night);border:3px solid var(--edge);padding:6px 10px;font-size:13px;min-height:36px}
+.chip.on{background:var(--sky);color:var(--night)}
+.btn{background:var(--coin);color:var(--night);border:3px solid var(--edge);padding:9px 12px;font-family:var(--pixel);font-size:11px;box-shadow:inset -3px -3px 0 rgba(0,0,0,.25);min-height:40px}
+.btn.alt{background:var(--panel2);color:var(--ink)}
+.btn.boo{background:var(--boo)}
+.btn.good{background:var(--grass)} .btn.bad{background:var(--alert)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.brow{display:flex;gap:8px;flex-wrap:wrap}
+.brow .btn{flex:1}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:var(--mute)}
+textarea,select,.drawer input[type=text],.bx input[type=text]{font-family:var(--body);font-size:16px;color:var(--ink);background:var(--night);border:3px solid var(--edge);padding:8px;width:100%;border-radius:0}
+textarea{resize:vertical;min-height:58px}
+.qa{background:var(--night);border:3px solid var(--edge);padding:9px 10px}
+.qa .q{font-size:12px;color:var(--mute);margin-bottom:3px}
+.qa .a{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px}
+.qa .a.hide{color:transparent;text-shadow:0 0 9px rgba(244,241,255,.55);user-select:none}
+.huntbar{height:10px;background:var(--edge)} .huntbar i{display:block;height:100%;background:var(--boo);transform-origin:left;transition:transform .3s steps(6)}
+
+/* Bonus stage */
+.bxhead{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.pips{display:flex;gap:4px} .pips i{width:22px;height:22px;background:var(--edge);border:3px solid var(--edge)} .pips i.on{background:var(--coin)}
+.bx{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:10px}
+.bx .wide{grid-column:1/-1}
+.drop{border:3px dashed var(--lock);padding:10px;text-align:center;font-size:13px;color:var(--mute);cursor:pointer;background:var(--night)}
+.drop img{max-width:100%;max-height:160px;display:block;margin:6px auto 0}
+.cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:10px}
+.case{background:var(--panel2);border:3px solid var(--edge);display:flex;flex-direction:column}
+.case img{width:100%;height:120px;object-fit:cover;display:block;cursor:zoom-in;border-bottom:3px solid var(--edge);image-rendering:auto}
+.case .cb{padding:8px;display:flex;flex-direction:column;gap:4px;flex:1}
+.case .dx{font-weight:600}
+.case .ft{font-size:13px;color:var(--mute);white-space:pre-wrap;overflow-wrap:anywhere}
+.case .cf{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--mute);margin-top:auto}
+.lightbox{position:fixed;inset:0;background:rgba(11,9,32,.92);z-index:80;display:grid;place-items:center;padding:20px}
+.lightbox img{max-width:100%;max-height:90vh;border:3px solid var(--edge)}
+details summary{cursor:pointer;margin:8px 0 0}
+
+/* Shop (same look as ARCP Quest) */
+.shop{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.item{background:var(--panel2);border:3px solid var(--edge);padding:9px;display:flex;flex-direction:column;gap:6px;justify-content:space-between}
+.item.eq{outline:3px solid var(--coin);outline-offset:-3px}
+.cat{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em}
+.inm{font-weight:600}
+.sw{display:block;height:14px;border:2px solid var(--edge)}
+/* Treats (shared) */
+.tsz{font-family:var(--pixel);font-size:11px;color:var(--mute);margin:12px 0 6px}
+.claims{display:flex;flex-direction:column;gap:6px}
+.claim{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel2);border:3px solid var(--edge);padding:7px 10px}
+.claim .cnm{font-weight:600;flex:1;min-width:140px}
+.claim .cbtns{display:flex;gap:6px}
+.claim.done{opacity:.6}
+.item.addt{border-style:dashed;background:none;font-family:var(--pixel);font-size:11px;color:var(--mute);justify-content:center;min-height:70px}
+.item.tedit{gap:6px}
+#treats .item{justify-content:space-between}
+#treats.editing .shop{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.trow{display:flex;gap:6px;align-items:center}
+.item.tedit input{font-family:var(--body);font-size:16px;color:var(--ink);background:var(--night);border:3px solid var(--edge);padding:6px;width:100%;min-width:0;border-radius:0;min-height:40px}
+.item.tedit input.tic{width:3.2em;flex:none;text-align:center}
+.item.tedit .btn{flex:none;min-height:40px}
+/* Rules */
+.rules{width:100%;border-collapse:collapse;font-size:13px}
+.rules td{padding:5px 4px;border-bottom:2px dotted rgba(167,160,214,.3)}
+.rules td:last-child{text-align:right;font-family:var(--pixel);color:var(--coin);white-space:nowrap}
+
+/* FX */
+.pop{position:fixed;font-family:var(--pixel);font-size:17px;color:var(--coin);pointer-events:none;z-index:70;animation:popup .9s steps(9) forwards;text-shadow:2px 2px 0 var(--edge)}
+@keyframes popup{to{transform:translateY(-60px);opacity:0}}
+.banner{position:fixed;inset:0;display:grid;place-items:center;z-index:71;pointer-events:none}
+.banner div{font-family:var(--pixel);font-size:clamp(30px,9vw,68px);color:var(--star);text-shadow:4px 4px 0 var(--edge),-2px -2px 0 var(--edge);animation:zoom 1.6s steps(12) forwards;text-align:center}
+.banner small{display:block;font-size:clamp(12px,3vw,18px);color:var(--ink)}
+@keyframes zoom{0%{transform:scale(.3);opacity:0}20%{transform:scale(1.1);opacity:1}80%{opacity:1}100%{transform:scale(1);opacity:0}}
+.conf{position:fixed;width:8px;height:8px;z-index:70;pointer-events:none;animation:fall 1.4s linear forwards;will-change:transform}
+@keyframes fall{to{transform:translateY(70vh) rotate(360deg);opacity:0}}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel2);border:3px solid var(--edge);box-shadow:0 6px 0 rgba(0,0,0,.35);padding:10px 14px;z-index:72;width:max-content;max-width:min(420px,90vw);font-size:14px;text-align:center}
+
+@media (max-width:760px){
+  .hud{grid-template-columns:1fr auto} .stats{grid-column:1/-1;justify-content:space-between}
+  .side{grid-column:1/-1;flex-direction:row;flex-wrap:wrap} .side .sbtn{flex:1} .side .sync{flex-basis:100%}
+  .grid{grid-template-columns:1fr 1fr} }
+@media (max-width:420px){ .grid{grid-template-columns:1fr} .stats{gap:6px;flex-wrap:nowrap} .stat > b{font-size:15px} .stat > span{font-size:9px;letter-spacing:.04em} }
+@media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="box hud">
+    <div class="who">
+      <canvas class="av" id="av" width="16" height="16" aria-label="Your avatar"></canvas>
+      <div><div class="nm">DR MAUGO</div><div class="ttl" id="ttl">Loading…</div><div class="xp"><i id="xp" style="transform:scaleX(0)"></i></div></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b><span class="coin"></span><span id="coins">–</span></b><span>Coins</span></div>
+      <div class="stat"><b id="documented">–</b><span>Cards</span></div>
+      <div class="stat"><b id="stars">–</b><span>Stars</span></div>
+      <div class="stat haunt"><b id="ghosts">–</b><span>Ghosts</span></div>
+      <div class="stat"><b id="exam">–</b><span id="examLbl">To SCE</span></div>
+    </div>
+    <div class="side">
+      <button class="sbtn hunt" data-act="hunt" id="huntBtn">👻 HUNT</button>
+      <button class="sbtn" data-act="mute" id="mute">♪ ON</button>
+      <button class="sbtn" data-act="shop">🛒 SHOP</button>
+      <a class="sbtn" href="journey.html">ARCP ↗</a>
+      <div class="sync" id="sync">● connecting</div>
+    </div>
+  </header>
+
+  <section class="box path" aria-label="Worlds">
+    <div class="note">Ten worlds, one per KSAP category · tap a world to view its levels · the castle is exam day</div>
+    <div class="track" id="track"></div>
+  </section>
+
+  <section class="box" aria-label="Levels">
+    <div class="bar"><div class="wtitle" id="wtitle"></div><label class="toggle"><input type="checkbox" id="gaps"> Gaps only</label></div>
+    <div class="legend"><span><i style="background:var(--lock)"></i>Not started</span><span><i style="background:var(--sky)"></i>★ Read</span><span><i style="background:var(--grass)"></i>★★ Card written</span><span><i style="background:var(--star)"></i>★★★ Recalled</span><span>👻 Due for recall</span></div>
+    <p class="note" id="wnote" style="margin:4px 0 0"></p>
+    <div id="topics"></div>
+  </section>
+
+  <section class="box" aria-label="Bonus stage">
+    <div class="rhead"><h3>BONUS STAGE · PATHOLOGY</h3><a class="note" href="https://www.kidneypathology.com/English_version/Archives_cases.html" target="_blank" rel="noopener">Open Kidney Pathology ↗</a></div>
+    <div class="bxhead"><div class="pips" id="bxPips"></div><div class="note" id="bxMeta"></div></div>
+    <div class="bx">
+      <div class="field"><label for="bxCase">Case # (optional)</label><input type="text" id="bxCase" maxlength="40" placeholder="e.g. Case 12"></div>
+      <div class="field"><label for="bxDx">Diagnosis</label><input type="text" id="bxDx" maxlength="200" placeholder="e.g. IgA nephropathy, M1E1S0T0C0"></div>
+      <div class="field wide"><label for="bxFeat">Key features · what gave it away</label><textarea id="bxFeat" rows="2" placeholder="Mesangial hypercellularity, IgA-dominant on IF…"></textarea></div>
+      <div class="field wide"><div class="drop" id="bxDrop">Tap to add an image (optional)<img id="bxPrev" alt="" hidden></div><input type="file" id="bxFile" accept="image/*" hidden></div>
+      <div class="brow wide"><button class="btn" data-act="bxSave" id="bxSave">SAVE CASE +3</button><button class="btn alt" data-act="bxClear">CLEAR</button></div>
+    </div>
+    <div id="bxList"></div>
+  </section>
+
+  <section class="box" id="shopBox"><h3>ITEM SHOP</h3><p class="note" style="margin-top:0">Shared with ARCP Quest: one wallet, one look. Spending never lowers your level.</p><div class="shop" id="shop"></div></section>
+  <section class="box" id="treatsBox"><div class="rhead"><h3>TREATS</h3><button class="btn alt" id="treatEdit">EDIT</button></div><p class="note" id="treatNote" style="margin-top:0"></p><div id="treats"></div></section>
+
+  <section class="box">
+    <h3>HOW COINS ARE EARNED</h3>
+    <table class="rules" id="rules"></table>
+    <p class="note" id="lifetime"></p>
+  </section>
+</div>
+<div class="drawer" id="drawer" hidden></div>
+<div class="lightbox" id="lightbox" hidden><img id="lightboxImg" alt=""></div>
+
+<script>
+// Fallback copy of the SCE app's topic list (SCE.html TOPICS). If you have edited topics in SCE.html's Admin tab,
+// the live copy from sceConfig/topics is used instead.
+const TOPICS_FALLBACK = {"Sodium and Water Abnormalities":{"Hyponatremia":["Hypotonic — SIADH","Hypotonic — Hypervolemic hyponatremia","Hypotonic — Low solute intake","Hypotonic — Thiazide-induced","Hypotonic — Secondary adrenal insufficiency","Hypertonic hyponatremia","Isotonic hyponatremia (pseudohyponatremia)"],"Hypernatremia or Serum Hyperosmolality":["Osmotic diuresis — Urea","Osmotic diuresis — Glucose","Water diuresis — Central diabetes insipidus","Water diuresis — Nephrogenic diabetes insipidus","Physiologic saline diuresis","Hypodipsia","Extrarenal water loss"],"Salt Excess (Edema)":["Heart failure","Cirrhosis","Nephrotic syndrome","Chronic kidney disease"],"Salt Depletion":["Renal sodium losses — Postobstructive diuresis","Renal sodium losses — Post-AKI diuresis","Renal sodium losses — Diuretics","Renal sodium losses — Salt-wasting nephropathy","Renal sodium losses — Chemotherapy-induced","Extrarenal sodium losses"],"Polyuria":["Primary polydipsia","Iatrogenic polyuria"]},"Acid–Base and Potassium Disorders":{"Metabolic Acidosis (Normal AG)":["RTA — Distal (type 1)","RTA — Proximal (type 2)","RTA — Hyperkalemic (type 4)","Nonrenal causes of normal AG acidosis"],"Metabolic Acidosis (Elevated AG)":["Lactic acidosis","Ketoacidosis","Toxin-related acidosis","Uremic acidosis","Low anion gap (e.g., multiple myeloma)"],"Metabolic Alkalosis":["Normal/low BP — Renal origin","Normal/low BP — Chemotherapy-induced","Normal/low BP — Hypokalemia-associated","Normal/low BP — Post-hypercapnic","High BP — Adrenal etiologies","High BP — Malignant hypertension–associated"],"Respiratory Acid–Base Disturbances":["Respiratory acidosis","Respiratory alkalosis","Mixed acid–base disorders"],"Potassium Disturbances — Hyperkalemia":["Hyperkalemia — Pseudohyperkalemia","Hyperkalemia — Transcellular shifts","Hyperkalemia — Medication-induced","Hyperkalemia — Genetic abnormalities","Hyperkalemia — Postsurgical","Hyperkalemia — Peritoneal dialysis–related"],"Potassium Disturbances — Hypokalemia":["Hypokalemia — Pseudohypokalemia","Hypokalemia — Transcellular shifts","Hypokalemia — Renal losses","Hypokalemia — Nonrenal losses","Hypokalemia — Therapeutic hypothermia + barbiturate coma"]},"Calcium, Phosphorus, and Magnesium Disorders and Stones":{"Disorders of Calcium Metabolism — Hypercalcemia":["Primary hyperparathyroidism","Granulomatous diseases","Malignancy-related hypercalcemia","Familial hypocalciuric hypercalcemia (FHH)","Vitamin D toxicity","Medication- or vitamin-induced","Milk-alkali syndrome"],"Disorders of Calcium Metabolism — Hypocalcemia":["Hypoparathyroidism","Pseudohypoparathyroidism","Medication-induced hypocalcemia","Tissue deposition","Vitamin D deficiency"],"Disorders of Phosphate Metabolism — Hyperphosphatemia":["Decreased renal excretion (hyperphosphatemia)","Increased intake (hyperphosphatemia)","Tissue redistribution (hyperphosphatemia)","Genetic causes (hyperphosphatemia)"],"Disorders of Phosphate Metabolism — Hypophosphatemia":["Increased renal excretion (hypophosphatemia)","Decreased intake/GI absorption (hypophosphatemia)","Tissue redistribution (hypophosphatemia)"],"Disorders of Magnesium Metabolism":["Hypermagnesemia — Decreased renal excretion","Hypermagnesemia — Increased intake","Hypomagnesemia — Increased renal excretion","Hypomagnesemia — Decreased GI absorption"],"Nephrolithiasis — Calcium Stones":["Idiopathic hypercalciuria","Hypocitraturia","Hyperoxaluria","Primary hyperparathyroidism (calcium stones)","Distal RTA (calcium stones)","Medullary sponge kidney (calcium stones)","Hypercalciuria in hypoparathyroidism (calcium stones)"],"Nephrolithiasis — Uric Acid Stones":["Idiopathic uric acid stones","Post-ileostomy uric acid stones"],"Nephrolithiasis — Other Stones":["Struvite stones","Cystine stones","Drug-induced stones"]},"Chronic Kidney Disease":{"Kidney Function Parameters":["GFR (measured/estimated)","Proteinuria","Kidney Biopsy"],"Etiologies of CKD":["Diabetic kidney disease","Nondiabetic kidney disease","Chronic glomerulonephritis","Hypertensive nephropathy","Chronic interstitial nephritis","Genetic diseases"],"Progression of CKD":["Risk factors and progression of CKD"],"CKD Complications":["Hypertension in CKD","Fluid overload","Anemia and iron deficiency","Hyperkalemia (CKD complication)","Metabolic acidosis (CKD complication)","Protein-energy wasting","CKD-MBD: Hyperparathyroidism","CKD-MBD: Hyperphosphatemia"],"Stage 4 and 5 CKD":["Advanced uremic symptoms","Preparation for ESKD","Initiation of maintenance dialysis","Discontinuation of maintenance dialysis","PTH monitoring in advanced CKD"],"End-Stage Kidney Disease — Hemodialysis":["Adequacy and prescription (HD)","Dialyzers and dialysate (HD)","Vascular access (HD)","Water treatment (HD)","Hypertension on HD","Hypotension on HD","Interdialytic weight gain (HD)","Electrolyte abnormalities (HD)","Access complications — clotting/dysfunction/infection","Other HD complications — embolism/HIT/residual function loss/hypoalbuminemia"],"End-Stage Kidney Disease — Peritoneal Dialysis":["Adequacy and prescription (PD)","Dialysate (PD)","Catheters (PD)","Hypokalemia and hyperkalemia (PD)","Peritonitis and infections (PD)","Ultrafiltration failure (PD)","Other PD complications — hernia/AF/peripheral edema"],"End-Stage Kidney Disease — Home Hemodialysis":["Home hemodialysis (general)"],"End-Stage Kidney Disease — General Complications":["Anemia in ESKD","Cardiovascular disease in ESKD","Blood pressure abnormalities in ESKD","Other ESKD complications — hemolysis/hypoalbuminemia/thrombosis/calciphylaxis/uremic polyneuropathy"],"Mineral Bone Disease — Labs":["Hyperphosphatemia (labs)","Hyperparathyroidism (labs)","Calcium balance abnormalities (labs)"],"Mineral Bone Disease — Renal Osteodystrophy":["Osteitis fibrosa","Adynamic bone disease","Osteomalacia","Mixed uremic osteodystrophy","Low bone mass / Osteoporosis in CKD"],"Mineral Bone Disease — Extraosseous/Vascular Calcification":["Medial calcification","Calciphylaxis","Visceral organ calcification"],"Special Topics in CKD":["Epidemiology of CKD","Ethical considerations in CKD","Pregnancy and CKD","Dermatology in CKD","Environmental nephrotoxicity — Lead","Environmental nephrotoxicity — Organic solvents","Environmental nephrotoxicity — Cadmium","Environmental nephrotoxicity — Mercury","Obesity in CKD"]},"Hypertension":{"Essential Hypertension":["Isolated systolic hypertension","Severe hypertension","Resistant hypertension","White coat hypertension","Pseudohypertension","Masked hypertension","General essential hypertension"],"Secondary Causes — Renovascular":["Renal vascular disease — Atherosclerotic","Renal vascular disease — Dissection"],"Secondary Causes — Endocrine/Genetic":["Hyperaldosteronism — Adrenal adenoma","Hyperaldosteronism — Adrenal hyperplasia","Genetic — Liddle syndrome","Genetic — Dexamethasone-suppressible hyperaldosteronism","Genetic — Other (fibromuscular dysplasia context)"],"Secondary Causes — Miscellaneous":["Renin-secreting (juxtaglomerular) tumor","Apparent mineralocorticoid excess","Coarctation","Vasculitis and arteritis (secondary HTN)","Tuberous sclerosis","Sleep apnea","Drug-induced hypertension","Obstructive uropathy (secondary HTN)","Renal compression (Page kidney)","Cushing syndrome","CKD-related hypertension","Obesity-related hypertension","Hypothyroidism-related hypertension"],"End-Organ Damage":["Acute kidney injury (hypertensive)","CNS/ophthalmologic damage (hypertensive)","Cardiac — LVH/heart failure"],"Special Situations":["Pregnancy-associated hypertension","Stroke or subarachnoid bleeding with hypertension","Other special situations in hypertension"]},"Tubular, Interstitial, and Cystic Disorders":{"Renal Tubular Disorders and Fanconi":["Drug-induced Fanconi/tubular disorders","Crystal deposition tubular disorders","Genetic tubular disorders (Fanconi)"],"Acute Tubulointerstitial Nephritis":["AIN — Drug-induced","AIN — Immune-mediated","AIN — Infectious","AIN — Multifactorial"],"Chronic Tubulointerstitial Nephritis":["Chronic TIN — Drug-induced","Chronic TIN — Immune-mediated","Chronic TIN — Granulomatous","Chronic TIN — Toxins","Chronic TIN — Hemoglobinopathy","Chronic TIN — Recurrent UTI","Chronic TIN — Hypokalemic nephropathy","Chronic TIN — Medullary cystic kidney"],"Renal Cystic Disease":["ADPKD — Genetics","ADPKD — Renal manifestations","ADPKD — Nonrenal manifestations","ADPKD — ESKD progression","Drug-induced cystic disease","ARPKD / Acquired cystic kidney disease"],"Renal Mass":["Evaluation of renal mass"]},"Glomerular and Vascular Disorders":{"Nephritic / Vasculitic / Vasculopathy":["IgA nephropathy","IgA-associated vasculitis (Henoch–Schönlein)","ANCA-associated vasculitis","Anti-GBM disease","Lupus nephritis","Postinfectious GN","MPGN and C3 glomerulopathies","Cryoglobulinemic GN","Crescentic GN","Rapidly progressive GN (other)"],"Nephrotic / Heavy-Proteinuric":["Minimal change disease — Primary","Minimal change disease — Secondary","FSGS — Primary","FSGS — Secondary","FSGS — Genetic","Membranous nephropathy — Primary","Membranous nephropathy — Secondary","Paraprotein — AL amyloidosis","Paraprotein — AA amyloidosis","Paraprotein — LCDD / Myeloma","Paraprotein — Other paraprotein disorders","Fibrillary / Immunotactoid GN","Fabry disease","Biopsy complication (other)"],"Thin Basement Membrane / Alport":["Thin basement membrane nephropathy","Alport syndrome"],"Thrombotic Microangiopathies":["TMA — general","HUS — Shiga toxin–mediated","Complement-mediated TMA (aHUS)","Drug-associated complement-mediated TMA","Pregnancy-associated complement-mediated TMA"],"Scleroderma Renal Disease":["Scleroderma renal crisis/disease"]},"Kidney Transplantation":{"Pre-Transplantation — Candidate & Immunologic":["Transplant immunology","Detection of pre-transplant alloreactivity","Recipient eval — GFR listing","Recipient eval — Cancer","Recipient eval — Infection","Recipient eval — Cardiac","Recipient eval — Age","Recipient eval — Comorbidities","Recipient eval — Recurrent autoimmune disease"],"Pre-Transplantation — Living Donor & Allocation":["Living donor — Evaluation","Living donor — Risks","Living donor — Ethics","Organ allocation — Deceased donor wait list","Organ allocation — Shortage strategies","Organ allocation — Paired donation and chains"],"Transplantation":["Indications for transplant","Contraindications to transplant","Deceased donor — Types/Outcomes","Living donor — Types/Outcomes"],"Post-Transplantation — Early":["Immunosuppression — Induction","Immunosuppression — Maintenance","Perioperative management/complications","Early graft dysfunction"],"Post-Transplantation — Long-Term":["Long-term graft dysfunction","Long-term complications","Graft failure (long-term)","Rejection — Hyperacute","Rejection — T-cell","Rejection — Antibody-mediated","Fertility — Pregnancy","Fertility — Male fertility"],"Multiorgan / Extrarenal / Ethics":["Multiorgan and extrarenal transplantation","Ethics, society, and public policy (transplant)"]},"Pharmacology":{"Basic Pharmacology":["Pharmacokinetics and basic concepts","Renal handling of drugs","Principles of dialytic drug removal"],"Drug Selection in Kidney Disease":["Antibiotics — Vancomycin","Antibiotics — Aminoglycosides","Antibiotics — Cephalosporins and others","Antineoplastic agents (selection)","Antiviral agents (selection)","Other drugs — Metformin","Other drugs — Fentanyl"],"Nephrotoxicity — Antimicrobials":["Aminoglycosides — nephrotoxicity","Vancomycin — nephrotoxicity","Antiviral agents — nephrotoxicity","Antifungal agents — nephrotoxicity","Antiparasitic agents — nephrotoxicity","Additional antimicrobials — nephrotoxicity"],"Nephrotoxicity — Other Drug Classes":["NSAIDs — nephrotoxicity","Fentanyl (safety)","Gabapentin (renal dosing)","Tramadol (renal dosing)","Propofol considerations","RAAS blockade — ACEi/ARB/renin inhibitors","Aldosterone antagonists","Beta-blockers (renal dosing)","Calcium channel blockers (renal dosing)","Minoxidil","Interferon","Cisplatin","Methotrexate","VEGF inhibitors","Immune checkpoint inhibitors","Iodinated contrast","Lithium","Aristolochic acid","SGLT2 inhibitors","Cardiac glycosides","Bisphosphonates"],"Illicit Drugs":["Heroin and other IV drugs","Ecstasy (MDMA)","Cocaine"],"Drug Interactions & Non-renal Adverse Effects":["Drug–drug interactions","Adverse effects (non-nephrotoxic)"],"Dialysis & Toxic Substances":["Ethylene glycol — dialysis","Methanol — dialysis","Other alcohols — dialysis","Lithium — dialysis in toxicity","Salicylates — dialysis duration prescription"]},"Acute Kidney Injury and ICU Nephrology":{"Prerenal AKI — True Volume Depletion":["Renal fluid losses","Extrarenal fluid losses"],"Prerenal AKI — Effective Volume Depletion":["Heart failure","Cirrhosis","Nephrotic syndrome"],"Prerenal AKI — Drugs/Other":["NSAIDs","Calcineurin inhibitors","ACEi/ARB","Radiocontrast agents","Tenofovir","Cisplatin","Abdominal compartment syndrome"],"Intrinsic AKI — Vascular":["Systemic diseases and vasculitis","Atheroemboli","Renal vein thrombosis"],"Intrinsic AKI — Glomerular":["Drug-induced glomerular AKI","Infectious glomerular AKI","Other glomerular parenchymal AKI"],"Intrinsic AKI — Tubular":["Ischemic ATN","Nephrotoxic ATN"],"Intrinsic AKI — Interstitial/Systemic":["Interstitial — Drugs","Interstitial — Systemic disease","Interstitial — Malignancy (infiltrative)"],"Postrenal AKI":["Retroperitoneal/ureteral obstruction","Idiopathic retroperitoneal fibrosis","Malignancy-related obstruction","Crystals and stones","Intrarenal hemorrhage","Bladder/bladder outlet/BPH"],"Kidney Replacement Therapy (AKI)":["Indications — Solute accumulation","Indications — Hemodynamic","Indications — Intoxication","Indications — Tumor lysis syndrome","Techniques — Intermittent hemodialysis (IHD)","Techniques — Continuous KRT (CRRT)","Prescription — Dialysate/replacement fluids","Prescription — Anticoagulation","Complications — Hemodynamic","Complications — Disequilibrium/electrolyte issues"],"ICU Nephrology (General)":["Hemodynamic measures","Intravenous fluids and volume status","Ethics and palliative care"]}};
+const SHORT = {"Sodium and Water Abnormalities":"Na & Water","Acid–Base and Potassium Disorders":"K & Acid–Base",
+  "Calcium, Phosphorus, and Magnesium Disorders and Stones":"Ca PO₄ Mg & Stones","Chronic Kidney Disease":"CKD","Hypertension":"Hypertension",
+  "Tubular, Interstitial, and Cystic Disorders":"Tubular & Cystic","Glomerular and Vascular Disorders":"GN & Vascular",
+  "Kidney Transplantation":"Transplant","Pharmacology":"Pharmacology","Acute Kidney Injury and ICU Nephrology":"AKI & ICU"};
+const SOURCES = [["ohb","OHB"],["online","Online"],["ccn","CCN"],["kdigo","KDIGO"],["ksap","KSAP"],["prn","StudyPRN"]];
+const RECALL_DAYS = [3, 7, 21, 45, 90];     // gap before the next recall, by number of recalls in a row
+const MISS_DAYS = 1;                        // a missed recall comes back tomorrow
+const RULES = [["read","Subtopic read (★)",1],["card","Learning card written (★★)",5],["win","Ghost busted · correct recall (★★★)",3],
+  ["topic","Topic clear · every subtopic has a card",10],["world","World clear · every subtopic in a category has a card",50],
+  ["case","Pathology case logged",3],["week","Bonus stage clear · 3 cases in a week",10]];
+const R = Object.fromEntries(RULES.map(r => [r[0], r[2]]));
+// This game's own titles and level curve (SCE Slayer at about 4,000 coins: every subtopic carded and recalled once)
+const TITLES = ["Dipstick Dabbler","Cast Spotter","Electrolyte Apprentice","Acid–Base Untangler","Nephron Navigator","Biopsy Reader","Glomerular Guru","Transplant Tactician","KDIGO Sage","SCE Slayer"];
+// Shop items: same list as ARCP Quest (keep the two in step if you add items there)
+const SHOP = [
+  {id:"sc-teal",cat:"Scrubs",nm:"Teal scrubs",price:0,slot:"scrubs",val:"#2bb5a6"},{id:"sc-navy",cat:"Scrubs",nm:"Navy scrubs",price:60,slot:"scrubs",val:"#2a4aa8"},
+  {id:"sc-maroon",cat:"Scrubs",nm:"Maroon scrubs",price:80,slot:"scrubs",val:"#8c2c45"},{id:"sc-green",cat:"Scrubs",nm:"Theatre greens",price:100,slot:"scrubs",val:"#3c8a4a"},
+  {id:"hat-none",cat:"Headwear",nm:"No hat",price:0,slot:"hat",val:null},{id:"hat-cap",cat:"Headwear",nm:"Theatre cap",price:120,slot:"hat",val:"#5cc8ff"},
+  {id:"hat-band",cat:"Headwear",nm:"Red bandana",price:150,slot:"hat",val:"#e04848"},{id:"hat-crown",cat:"Headwear",nm:"CCT crown",price:1000,slot:"hat",val:"#ffd23c"},
+  {id:"th-grass",cat:"Map theme",nm:"Ward grassland",price:0,slot:"theme",val:""},{id:"th-desert",cat:"Map theme",nm:"Desert dunes",price:200,slot:"theme",val:"t-desert"},
+  {id:"th-night",cat:"Map theme",nm:"Night shift",price:250,slot:"theme",val:"t-night"},{id:"th-snow",cat:"Map theme",nm:"Snow peaks",price:300,slot:"theme",val:"t-snow"},
+  {id:"fx-confetti",cat:"Celebration",nm:"Confetti",price:0,slot:"fx",val:"confetti"},{id:"fx-fire",cat:"Celebration",nm:"Fireworks",price:400,slot:"fx",val:"fireworks"},
+  {id:"sd-chip",cat:"Coin sound",nm:"Chip blip",price:0,slot:"sound",val:"chip"},{id:"sd-bell",cat:"Coin sound",nm:"Bell ting",price:150,slot:"sound",val:"bell"}];
+const SHOP_DEFAULT = { spent:0, owned:["sc-teal","hat-none","th-grass","fx-confetti","sd-chip"], eq:{scrubs:"sc-teal",hat:"hat-none",theme:"th-grass",fx:"fx-confetti",sound:"sd-chip"} };
+
+
+// ── State (cached so the page opens instantly, refreshed live from Firebase) ──
+const local = { get(k,d){ try{ const v=localStorage.getItem("sce_quest_"+k); return v===null?d:JSON.parse(v);}catch(e){return d;} },
+                set(k,v){ try{ localStorage.setItem("sce_quest_"+k, JSON.stringify(v)); }catch(e){} } };
+const S = { topics: local.get("topics", {}), quest: local.get("quest", {}), bx: local.get("bx", {}), arcp: local.get("arcp", {}), cfg: local.get("cfg", null),
+            got: { topics:false, quest:false, bx:false, arcp:false }, view: local.get("view", 0), gaps: local.get("gaps", false), muted: local.get("muted", false),
+            open: null, hunt: null, img: null, confirm: null };
+const $ = id => document.getElementById(id);
+const esc = t => String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const DAY = 864e5, now = () => Date.now();
+const DATEFMT = new Intl.DateTimeFormat("en-GB",{day:"numeric",month:"short",year:"numeric"});
+const fmtDate = d => isNaN(d) ? "?" : DATEFMT.format(d);
+const startOfDay = () => { const t = new Date(); t.setHours(0,0,0,0); return t.getTime(); };
+
+// ── Taxonomy → worlds and levels ──
+const stKey = (c,t,s) => `st_${c}_${t}_${s}`.replace(/[^a-zA-Z0-9]/g,"_").slice(0,100);     // SCE.html's key (truncated)
+const qKey  = (c,t,s) => `q_${c}_${t}_${s}`.replace(/[^a-zA-Z0-9]/g,"_");                  // this app's key (full length, unique)
+let WORLDS = [], LEVELS = [], BYQK = {}, taxoSig = "";
+function buildTaxonomy(){
+  const T = (S.cfg && typeof S.cfg === "object" && Object.keys(S.cfg).length) ? S.cfg : TOPICS_FALLBACK, sig = JSON.stringify(T);
+  if (sig === taxoSig) return; taxoSig = sig;
+  WORLDS = []; LEVELS = []; BYQK = {};
+  Object.entries(T).forEach(([cat, topics], wi) => {
+    const w = { wi, cat, short: SHORT[cat] || cat.split(/[ ,]/)[0], topics: [], levels: [] }; let n = 0;
+    Object.entries(topics || {}).forEach(([topic, subs]) => {
+      const tp = { topic, levels: [] };
+      (Array.isArray(subs) ? subs : Object.values(subs || {})).forEach(sub => {
+        const L = { w, tp, cat, topic, sub, st: stKey(cat, topic, sub), qk: qKey(cat, topic, sub), code: `${wi+1}-${++n}` };
+        tp.levels.push(L); w.levels.push(L); LEVELS.push(L); BYQK[L.qk] = L; });
+      w.topics.push(tp); });
+    WORLDS.push(w); });
+  if (S.view >= WORLDS.length) S.view = 0;
+}
+
+// ── Per-level progress ──
+const Q = () => S.quest || {};
+const card = L => (Q().cards || {})[L.qk] || null;
+const recall = L => (Q().recall || {})[L.qk] || null;
+function isRead(L){ const own = (Q().read || {})[L.qk]; if (own === true || own === false) return own;
+  const d = (S.topics || {})[L.st] || {}; return !!(d.read || d.reviewed); }
+const hasCard = L => { const c = card(L); return !!(c && String(c.mech||"").trim()); };
+const recalled = L => ((recall(L) || {}).wins || 0) > 0;
+const starsOf = L => (isRead(L)?1:0) + (hasCard(L)?1:0) + (recalled(L)?1:0);
+function stateOf(L){ if (hasCard(L)) return recalled(L) ? "master" : "clear"; return isRead(L) ? "prog" : "locked"; }
+function dueAt(L){ if (!hasCard(L)) return null; const r = recall(L), c = card(L);
+  if (r && r.last){ if (r.ok === false) return r.last + MISS_DAYS*DAY; return r.last + RECALL_DAYS[Math.min(r.streak||0, RECALL_DAYS.length-1)]*DAY; }
+  return (c.ts || now()) + RECALL_DAYS[0]*DAY; }
+const isDue = L => { const d = dueAt(L); return d !== null && d <= now(); };
+const ghosts = (list = LEVELS) => list.filter(isDue).sort((a,b) => dueAt(a) - dueAt(b));
+const topicDone = tp => tp.levels.length > 0 && tp.levels.every(hasCard);
+const worldDone = w => w.levels.length > 0 && w.levels.every(hasCard);
+
+// ── Pathology bonus stage (same records as SCEtopics: {dx, feat, caseNo, img, ts, week}) ──
+function isoWeekKey(d){ const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = dt.getUTCDay() || 7; dt.setUTCDate(dt.getUTCDate() + 4 - day);
+  const y0 = new Date(Date.UTC(dt.getUTCFullYear(),0,1)); return dt.getUTCFullYear() + "-W" + String(Math.ceil((((dt - y0)/DAY) + 1)/7)).padStart(2,"0"); }
+const cases = () => Object.entries(S.bx || {}).filter(([,r]) => r && typeof r === "object").sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
+function bxWeeksCleared(){ const per = {}; cases().forEach(([,r]) => { const k = r.week || isoWeekKey(new Date(r.ts||0)); per[k] = (per[k]||0) + 1; }); return Object.values(per).filter(n => n >= 3).length; }
+
+// ── Coins: derived from data every time ──
+function tally(){
+  const t = { read:0, cards:0, wins:0, topics:0, worlds:0, cases:0, weeks:0, stars:0 };
+  LEVELS.forEach(L => { if (isRead(L)) t.read++; if (hasCard(L)) t.cards++; t.wins += (recall(L) || {}).wins || 0; t.stars += starsOf(L); });
+  WORLDS.forEach(w => { w.topics.forEach(tp => { if (topicDone(tp)) t.topics++; }); if (worldDone(w)) t.worlds++; });
+  t.cases = cases().length; t.weeks = bxWeeksCleared();
+  t.sce = t.read*R.read + t.cards*R.card + t.wins*R.win + t.topics*R.topic + t.worlds*R.world + t.cases*R.case + t.weeks*R.week;
+  return t;
+}
+// Shared wallet with ARCP Quest: lifetime = ARCP Quest's published total + this game's; spending lives in pft_quest_shop
+const raw = k => { const v = (S.arcp || {})[k]; if (v == null) return null; if (typeof v === "string") return v; if (typeof v === "object" && v.value !== "__reset__") return v.value ?? null; return null; };
+const arcpEarned = () => parseInt(raw("pft_quest_arcp_earned"), 10) || 0;
+function shop(){ try { const o = JSON.parse(raw("pft_quest_shop") || "null"); if (o && typeof o === "object") return { spent:+o.spent||0, owned:Array.isArray(o.owned)?o.owned:SHOP_DEFAULT.owned.slice(), eq:Object.assign({}, SHOP_DEFAULT.eq, o.eq||{}) }; } catch(e){}
+  return JSON.parse(JSON.stringify(SHOP_DEFAULT)); }
+function setArcp(k, val){ S.arcp = Object.assign({}, S.arcp, { [k]: { value:String(val), ts:now() } }); local.set("arcp", S.arcp); if (window.QFB) window.QFB.arcp(k, val); }
+const balance = t => Math.max(0, arcpEarned() + (t || tally()).sce - shop().spent);
+const levelFor = xp => { let l = 1; while (45*l*(l+1) <= xp) l++; return l; };
+const floorFor = l => 45*(l-1)*l;
+const titleFor = l => TITLES[Math.min(l-1, TITLES.length-1)];
+const allLoaded = () => S.got.topics && S.got.quest && S.got.bx && S.got.arcp;
+function publishEarned(t){   // only once every node has loaded, so a half-loaded total is never written
+  if (!allLoaded() || !window.QFB) return;
+  if (raw("pft_quest_sce_earned") !== String(t.sce)){ S.arcp = Object.assign({}, S.arcp, { pft_quest_sce_earned: { value:String(t.sce), ts:now() } }); window.QFB.arcp("pft_quest_sce_earned", t.sce); }
+}
+
+// ── Sound (same chiptune blips as ARCP Quest) ──
+let AC = null;
+function unlockAudio(){ try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume(); } catch(e){} }
+function tone(f,t,d,type="square",vol=.07){ if (S.muted || !AC) return; try { const o=AC.createOscillator(), g=AC.createGain(); o.type=type; o.frequency.value=f;
+  g.gain.setValueAtTime(vol,AC.currentTime+t); g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+t+d); o.connect(g).connect(AC.destination); o.start(AC.currentTime+t); o.stop(AC.currentTime+t+d+.02); } catch(e){} }
+const SFX = {
+  coin(){ if (shop().eq.sound==="sd-bell"){ tone(1568,0,.25,"triangle",.09); tone(2093,.06,.35,"triangle",.07);} else { tone(1047,0,.05); tone(1319,.05,.05); tone(1568,.1,.16);} },
+  big(){ [523,659,784,1047].forEach((f,i)=>tone(f,i*.07,.09)); tone(1319,.3,.3); },
+  clear(){ [392,523,659,784,1047,1319].forEach((f,i)=>tone(f,i*.08,.1)); tone(1568,.5,.5,"square",.08); tone(784,.5,.5,"triangle",.06); },
+  level(){ [659,0,659,784,988,1319].forEach((f,i)=>f&&tone(f,i*.09,.12)); tone(1568,.6,.45); },
+  tick(){ tone(1319,0,.04,"square",.05); }, down(){ tone(392,0,.08); tone(262,.08,.14); }, nope(){ tone(150,0,.15,"sawtooth",.05); },
+  boo(){ tone(220,0,.18,"triangle",.07); tone(185,.16,.22,"triangle",.06); },
+  bust(){ tone(880,0,.05); tone(1175,.05,.05); tone(1760,.1,.18,"triangle",.08); },
+  reveal(){ tone(660,0,.05,"triangle"); tone(990,.05,.08,"triangle"); },
+  buy(){ tone(220,0,.06,"sawtooth",.05); tone(880,.06,.08); tone(1760,.12,.2,"triangle"); } };
+
+// ── FX ──
+let pt = [innerWidth/2, innerHeight/2];
+document.addEventListener("pointerdown", e => { pt = [e.clientX, e.clientY]; unlockAudio(); }, { capture:true, passive:true });
+function pop(txt){ const e=document.createElement("div"); e.className="pop"; e.textContent=txt; e.style.left=(pt[0]-12)+"px"; e.style.top=(pt[1]-24)+"px"; document.body.appendChild(e); setTimeout(()=>e.remove(),950); }
+function banner(big, small){
+  const b=document.createElement("div"); b.className="banner"; b.innerHTML=`<div>${big}${small?`<small>${small}</small>`:""}</div>`; document.body.appendChild(b); setTimeout(()=>b.remove(),1700);
+  const fire = shop().eq.fx==="fx-fire", n = fire ? 50 : 30, frag = document.createDocumentFragment(), made = [];
+  for (let i=0;i<n;i++){ const c=document.createElement("i"); c.className="conf"; c.style.background=["#ffc93c","#3fbf6a","#5cc8ff","#ff6b6b","#ffe066"][i%5];
+    if (fire){ c.style.left=(45+Math.random()*10)+"vw"; c.style.top="35vh"; c.style.animation="none"; const a=Math.random()*Math.PI*2, r=15+Math.random()*30;
+      c.animate([{transform:"translate(0,0)",opacity:1},{transform:`translate(${Math.cos(a)*r}vw,${Math.sin(a)*r}vh)`,opacity:0}],{duration:1200,easing:"steps(10)"}); }
+    else { c.style.left=(Math.random()*100)+"vw"; c.style.top="-2vh"; c.style.animationDelay=(Math.random()*.4)+"s"; }
+    frag.appendChild(c); made.push(c); }
+  document.body.appendChild(frag); setTimeout(()=>made.forEach(c=>c.remove()),1700);
+}
+function toast(msg){ const old = document.querySelector(".toast"); if (old) old.remove(); const e = document.createElement("div"); e.className = "toast"; e.textContent = msg; document.body.appendChild(e); setTimeout(() => e.remove(), 2800); }
+
+// ── Sprites (avatar is the same as ARCP Quest's, wearing whatever you equipped there) ──
+const SPRITE=["......aaaa......",".....hhhhhh.....","....hhhhhhhh....","....hssssssh....","....sesssses....","....ssssssss....",".....ssmmss.....","......ssss......","...cccuuuuccc...","..ccccuttucccc..","..cckcuuuuckcc..","..scccuttuccs...","...cccuuuuccc...","....pppppppp....","....ppp..ppp....","...bbbb..bbbb..."];
+function drawAvatar(cv){ const x=cv.getContext("2d"), eq=shop().eq; x.clearRect(0,0,16,16);
+  const scrubs=(SHOP.find(i=>i.id===eq.scrubs)||SHOP[0]).val, hat=(SHOP.find(i=>i.id===eq.hat)||{}).val;
+  const pal={h:"#2b1b14",s:"#8d5a3b",e:"#1a1020",m:"#5a2f22",c:"#f2f2f7",k:"#c9c9d6",u:scrubs,t:"#9aa3b8",p:scrubs,b:"#2a2440",a:hat||"#2b1b14"};
+  SPRITE.forEach((row,y)=>[...row].forEach((ch,xx)=>{ if(ch==="."||(ch==="a"&&!hat)) return; x.fillStyle=pal[ch]; x.fillRect(xx,y,1,1); })); }
+const BOO = `<svg class="boo" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="2" width="8" height="1" fill="#0b0920"/><rect x="3" y="3" width="10" height="1" fill="#0b0920"/><rect x="2" y="4" width="12" height="9" fill="#0b0920"/><rect x="5" y="3" width="6" height="1" fill="#e9e6ff"/><rect x="4" y="4" width="8" height="1" fill="#e9e6ff"/><rect x="3" y="5" width="10" height="7" fill="#e9e6ff"/><rect x="2" y="13" width="2" height="1" fill="#0b0920"/><rect x="6" y="13" width="2" height="1" fill="#0b0920"/><rect x="10" y="13" width="2" height="1" fill="#0b0920"/><rect x="3" y="12" width="2" height="1" fill="#e9e6ff"/><rect x="7" y="12" width="2" height="1" fill="#e9e6ff"/><rect x="11" y="12" width="2" height="1" fill="#e9e6ff"/><rect x="5" y="6" width="2" height="2" fill="#0b0920"/><rect x="9" y="6" width="2" height="2" fill="#0b0920"/><rect x="6" y="9" width="4" height="1" fill="#ff6b6b"/></svg>`;
+const CASTLE = `<svg class="castle" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="12" height="10" fill="#8f8ab8"/><rect x="2" y="4" width="2" height="2" fill="#8f8ab8"/><rect x="6" y="4" width="4" height="2" fill="#8f8ab8"/><rect x="12" y="4" width="2" height="2" fill="#8f8ab8"/><rect x="6" y="11" width="4" height="5" fill="#14112b"/><rect x="7" y="1" width="1" height="3" fill="#f4f1ff"/><rect x="8" y="1" width="3" height="2" fill="#ff6b6b"/><rect x="3" y="8" width="2" height="2" fill="#14112b"/><rect x="11" y="8" width="2" height="2" fill="#14112b"/></svg>`;
+
+// ── Render ──
+const SCE_DATE = "2027-05-05";   // 5 May 2027 · a date set in the ARCP app takes over if you change it there
+function examDays(){ const d = raw("pft_eseneph_date") || SCE_DATE; if (!d) return null; const t = new Date(d); if (isNaN(t)) return null; return Math.round((t.getTime() - startOfDay())/DAY); }
+function renderHUD(t){
+  t = t || tally(); const sh = shop(), lv = levelFor(t.sce), lo = floorFor(lv), hi = floorFor(lv+1);   // level: this game's coins only
+  document.body.className = (SHOP.find(i=>i.id===sh.eq.theme)||{}).val || "";
+  $("coins").textContent = balance(t).toLocaleString();
+  $("ttl").textContent = `Lv ${lv} · ${titleFor(lv)}`;
+  $("xp").style.transform = `scaleX(${Math.min(1,(t.sce-lo)/(hi-lo))})`;
+  $("documented").textContent = `${t.cards}/${LEVELS.length}`;
+  $("stars").textContent = `${t.stars}`;
+  const g = ghosts().length; $("ghosts").textContent = g;
+  $("huntBtn").disabled = g === 0; $("huntBtn").textContent = g ? `👻 HUNT ${g}` : "👻 NO GHOSTS";
+  const ed = examDays(); $("exam").textContent = ed === null ? "?" : ed >= 0 ? ed.toLocaleString() : "DONE";
+  $("examLbl").textContent = ed === null ? "SCE date?" : "Days to SCE";
+  $("mute").textContent = S.muted ? "♪ OFF" : "♪ ON";
+  $("lifetime").textContent = `SCE Quest ${t.sce.toLocaleString()} (your level here) + ARCP Quest ${arcpEarned().toLocaleString()} = ${(t.sce + arcpEarned()).toLocaleString()} lifetime · spent ${sh.spent.toLocaleString()} on items and treats`;
+  drawAvatar($("av"));
+}
+function renderMap(){
+  const ed = examDays();
+  $("track").innerHTML = WORLDS.map((w,i) => {
+    const docd = w.levels.filter(hasCard).length, pct = w.levels.length ? Math.round(docd/w.levels.length*100) : 0, g = w.levels.filter(isDue).length;
+    const cls = [w.levels.some(L => starsOf(L) > 0) ? "some" : "", worldDone(w) ? "done" : "", i === S.view ? "view" : ""].join(" ");
+    return (i ? '<span class="link"></span>' : "") + `<button class="node ${cls}" data-world="${i}" aria-label="World ${i+1}, ${esc(w.cat)}, ${pct}% documented">${i===S.view?'<canvas class="walker" width="16" height="16"></canvas>':""}<span class="plat"></span><span class="lbl">W${i+1}</span><span class="sub">${esc(w.short)}</span><span class="pct">${pct}%</span><span class="gh">${g ? "👻" + g : "&nbsp;"}</span></button>`;
+  }).join("") + `<span class="link"></span><div class="node">${CASTLE}<span class="plat" style="visibility:hidden"></span><span class="lbl">SCE</span><span class="sub">${ed===null?"date?":ed>=0?ed+"d":"done"}</span><span class="pct">&nbsp;</span><span class="gh">&nbsp;</span></div>`;
+  const wk = $("track").querySelector("canvas.walker"); if (wk) drawAvatar(wk);
+  const v = $("track").querySelector(".node.view"), box = $("track").parentElement;   // keep the chosen world in view on a phone
+  if (v && box.scrollWidth > box.clientWidth) box.scrollLeft = Math.max(0, v.offsetLeft - box.clientWidth/2 + v.offsetWidth/2);
+}
+function tileHTML(L){
+  const st = stateOf(L), s = starsOf(L), due = isDue(L), min = S.gaps && st === "master" && !due;
+  const d = dueAt(L), next = d === null ? "" : due ? "recall due" : `recall in ${Math.max(1, Math.ceil((d - now())/DAY))}d`;
+  return `<button class="lvl ${st} ${due?"haunted":""} ${min?"min":""}" data-lvl="${L.qk}" aria-label="${esc(L.sub)}, ${s} of 3 stars${due?", due for recall":""}">${due?BOO:""}<span class="blk">${L.code}</span><span class="lnm">${esc(L.sub)}</span><span class="meta"><span class="stars">${[1,2,3].map(k=>`<span class="${k<=s?"on":""}">${k<=s?"★":"☆"}</span>`).join("")}</span><span>${next}</span></span></button>`;
+}
+function renderWorld(){
+  const w = WORLDS[S.view]; if (!w){ $("topics").innerHTML = ""; return; }
+  const docd = w.levels.filter(hasCard).length, g = w.levels.filter(isDue).length;
+  $("wtitle").textContent = `WORLD ${w.wi+1} · ${w.cat.toUpperCase()}`;
+  $("gaps").checked = S.gaps;
+  $("wnote").textContent = `${docd}/${w.levels.length} documented${g ? ` · ${g} ghost${g>1?"s":""} waiting` : ""} · tap a level to read, write its card or recall it`;
+  $("topics").innerHTML = w.topics.map(tp => {
+    const n = tp.levels.filter(hasCard).length, done = topicDone(tp);
+    return `<div class="topic"><div class="thead"><span class="tname">${esc(tp.topic)}</span><span class="tcnt ${done?"done":""}">${done?"CLEAR ✓":`${n}/${tp.levels.length}`}</span></div><div class="grid">${tp.levels.map(tileHTML).join("")}</div></div>`;
+  }).join("");
+}
+function renderBx(){
+  const all = cases(), wk = isoWeekKey(new Date()), n = all.filter(([,r]) => (r.week || isoWeekKey(new Date(r.ts||0))) === wk).length;
+  $("bxPips").innerHTML = [0,1,2].map(i => `<i class="${i<n?"on":""}"></i>`).join("");
+  $("bxMeta").textContent = `${Math.min(n,3)}/3 this week${n>=3?" · STAGE CLEAR":""} · ${all.length} case${all.length===1?"":"s"} logged · ${bxWeeksCleared()} week${bxWeeksCleared()===1?"":"s"} cleared`;
+  $("bxSave").disabled = !$("bxDx").value.trim();
+  const card = ([id,r]) => `<div class="case">${r.img?`<img src="${r.img}" alt="${esc(r.dx||"")}" data-zoom="${id}">`:""}<div class="cb"><div class="dx">${esc(r.dx||"Untitled")}</div>${r.feat?`<div class="ft">${esc(r.feat)}</div>`:""}<div class="cf"><span>${r.caseNo?esc(r.caseNo)+" · ":""}${fmtDate(new Date(r.ts||0))}</span><button class="btn alt" style="min-height:0;padding:4px 8px" data-bxdel="${id}">${S.confirm===id?"DELETE?":"✕"}</button></div></div></div>`;
+  $("bxList").innerHTML = all.length ? `<div class="cases">${all.slice(0,4).map(card).join("")}</div>` + (all.length > 4 ? `<details><summary class="note">All cases (${all.length})</summary><div class="cases">${all.slice(4).map(card).join("")}</div></details>` : "") : `<p class="note">No cases yet. Review one on Kidney Pathology and log it here.</p>`;
+}
+function renderShop(t){
+  const sh = shop(), bal = balance(t);
+  $("shop").innerHTML = SHOP.map(it => { const own = sh.owned.includes(it.id), eq = sh.eq[it.slot]===it.id;
+    const sw = (it.slot==="scrubs"||it.slot==="hat") ? `<span class="sw" style="background:${it.val||"transparent"}"></span>` : "";
+    return `<div class="item ${eq?"eq":""}"><span class="cat">${it.cat}</span><span class="inm">${it.nm}</span>${sw}${own
+      ? `<button class="btn ${eq?"alt":""}" data-equip="${it.id}" ${eq?"disabled":""}>${eq?"EQUIPPED":"EQUIP"}</button>`
+      : `<button class="btn" data-buy="${it.id}" ${bal<it.price?"disabled":""}><span class="coin"></span>${it.price}</button>`}</div>`; }).join("");
+  renderTreats();
+}
+// ── Real-life treats (identical in ARCP Quest and SCE Quest; same arcpData keys, so a buy in one shows in the other) ──
+// pft_quest_treats: your treat list (defaults until you edit it) · pft_quest_claims: what you've bought · spending goes into pft_quest_shop.spent
+// Each app supplies TREATS_HOST = { balance(), addSpent(delta), write(key, value), after() }.
+const TREAT_SIZES = [["s","SMALL · every few days",40],["m","MEDIUM · every couple of weeks",250],["b","BIG · milestones",1000]];
+const TREATS_DEFAULT = [
+  {id:"t-coffee",ic:"☕",nm:"Fancy coffee",price:40,size:"s"},{id:"t-asahi",ic:"🍺",nm:"Pack of Asahi beer",price:50,size:"s"},
+  {id:"t-game",ic:"🎮",nm:"Hour of guilt-free gaming or chess",price:50,size:"s"},{id:"t-liein",ic:"🛌",nm:"Lie-in, no alarm",price:60,size:"s"},
+  {id:"t-film",ic:"🎬",nm:"Film night",price:150,size:"m"},{id:"t-off",ic:"🛋️",nm:"Evening off revision",price:200,size:"m"},
+  {id:"t-takeaway",ic:"🍕",nm:"Takeaway night",price:250,size:"m"},{id:"t-book",ic:"📚",nm:"New book",price:300,size:"m"},
+  {id:"t-mealout",ic:"🍽️",nm:"Meal out",price:800,size:"b"},{id:"t-dayout",ic:"🗺️",nm:"Day out",price:1000,size:"b"},
+  {id:"t-newgame",ic:"🕹️",nm:"New PS / Nintendo game",price:1200,size:"b"},{id:"t-spa",ic:"💆",nm:"Spa day",price:1500,size:"b"},
+  {id:"t-gig",ic:"🎟️",nm:"Concert or gig",price:1500,size:"b"},{id:"t-gadget",ic:"🎧",nm:"Gadget",price:2500,size:"b"},
+  {id:"t-weekend",ic:"🧳",nm:"Weekend away",price:3000,size:"b"}];
+const TQ = { edit:false, confirm:null };
+function treatList(){ try { const a = JSON.parse(raw("pft_quest_treats") || "null"); if (Array.isArray(a)) return a.filter(x => x && x.id); } catch(e){}
+  return TREATS_DEFAULT.map(x => Object.assign({}, x)); }
+function claimList(){ try { const a = JSON.parse(raw("pft_quest_claims") || "[]"); return Array.isArray(a) ? a.filter(x => x && x.id) : []; } catch(e){ return []; } }
+const saveTreats = a => TREATS_HOST.write("pft_quest_treats", JSON.stringify(a));
+const saveClaims = a => TREATS_HOST.write("pft_quest_claims", JSON.stringify(a));
+function renderTreats(){
+  const ae = document.activeElement; if (TQ.edit && ae && ae.tagName === "INPUT" && $("treats").contains(ae)) return;
+  const bal = TREATS_HOST.balance(), list = treatList(), cl = claimList();
+  const open = cl.filter(c => !c.done).sort((a,b) => b.ts - a.ts), done = cl.filter(c => c.done).sort((a,b) => (b.doneTs||0) - (a.doneTs||0));
+  let h = "";
+  if (open.length) h += `<div class="tsz">TO CLAIM · ${open.length}</div><div class="claims">${open.map(c => `<div class="claim"><span class="cnm">${esc(c.ic||"🎁")} ${esc(c.nm)}</span><span class="note">bought ${fmtDate(new Date(c.ts))}</span><span class="cbtns"><button class="btn" data-claim="${c.id}">ENJOYED IT ✓</button><button class="btn alt" data-unbuy="${c.id}">${TQ.confirm===c.id?`REFUND ${c.price}?`:"✕"}</button></span></div>`).join("")}</div>`;
+  TREAT_SIZES.forEach(([sz, lbl]) => {
+    const items = list.filter(t => t.size === sz).sort((a,b) => a.price - b.price); if (!items.length && !TQ.edit) return;
+    h += `<div class="tsz">${lbl}</div><div class="shop">${items.map(t => TQ.edit
+      ? `<div class="item tedit"><div class="trow"><input type="text" value="${esc(t.ic||"")}" data-tedit="${t.id}" data-f="ic" maxlength="4" aria-label="Icon" class="tic"><input type="text" value="${esc(t.nm)}" data-tedit="${t.id}" data-f="nm" maxlength="40" aria-label="Treat name"></div><div class="trow"><span class="coin"></span><input type="number" value="${t.price}" min="1" step="10" inputmode="numeric" data-tedit="${t.id}" data-f="price" aria-label="Price in coins"><button class="btn alt" data-tdel="${t.id}">${TQ.confirm===t.id?"DELETE?":"✕"}</button></div></div>`
+      : `<div class="item"><span class="inm">${esc(t.ic||"🎁")} ${esc(t.nm)}</span><button class="btn" data-treat="${t.id}" ${bal < t.price ? "disabled" : ""}><span class="coin"></span>${t.price}</button></div>`).join("")}${TQ.edit ? `<button class="item addt" data-tadd="${sz}">+ ADD TREAT</button>` : ""}</div>`; });
+  if (done.length) h += `<details><summary class="note">Enjoyed (${done.length}) · ${done.reduce((s,c) => s + (+c.price||0), 0).toLocaleString()} coins of treats so far</summary><div class="claims">${done.slice(0,40).map(c => `<div class="claim done"><span class="cnm">${esc(c.ic||"🎁")} ${esc(c.nm)}</span><span class="note">${fmtDate(new Date(c.doneTs||c.ts))} · ${c.price}</span></div>`).join("")}</div></details>`;
+  $("treats").innerHTML = h; $("treats").classList.toggle("editing", TQ.edit);
+  $("treatEdit").textContent = TQ.edit ? "DONE" : "EDIT";
+  $("treatNote").textContent = TQ.edit ? "Rename, reprice or remove. Changes save as you go and show in both games." : "Buy it here, then tick it off once you've actually had it. Coins come from both games.";
+}
+function treatsConfirm(id){ TQ.confirm = id; renderTreats(); setTimeout(() => { if (TQ.confirm === id){ TQ.confirm = null; renderTreats(); } }, 3000); }
+// returns true if the tap was a treats control
+function treatsClick(t){
+  const d = t.dataset;
+  if (t.id === "treatEdit"){ TQ.edit = !TQ.edit; TQ.confirm = null; SFX.tick(); renderTreats(); return true; }
+  if (d.treat){ const it = treatList().find(x => x.id === d.treat); if (!it) return true;
+    if (TREATS_HOST.balance() < it.price){ SFX.nope(); toast(`${it.price - TREATS_HOST.balance()} more coins needed`); return true; }
+    TREATS_HOST.addSpent(it.price);
+    saveClaims(claimList().concat([{ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), tid: it.id, ic: it.ic, nm: it.nm, price: it.price, ts: Date.now(), done: false }]));
+    SFX.buy(); pop("-" + it.price); toast(`${it.nm} is yours. Tick it off once you've had it.`); TREATS_HOST.after(); return true; }
+  if (d.claim){ const a = claimList(), c = a.find(x => x.id === d.claim); if (!c) return true;
+    c.done = true; c.doneTs = Date.now(); saveClaims(a); SFX.clear(); banner("TREAT TIME!", esc(c.nm)); TREATS_HOST.after(); return true; }
+  if (d.unbuy){ const a = claimList(), c = a.find(x => x.id === d.unbuy); if (!c) return true;
+    if (TQ.confirm !== c.id){ treatsConfirm(c.id); return true; }
+    TQ.confirm = null; TREATS_HOST.addSpent(-(+c.price||0)); saveClaims(a.filter(x => x.id !== c.id)); SFX.down(); toast(`Refunded ${c.price} coins`); TREATS_HOST.after(); return true; }
+  if (d.tadd){ const sz = TREAT_SIZES.find(s => s[0] === d.tadd) || TREAT_SIZES[0];
+    saveTreats(treatList().concat([{ id: "t-" + Date.now().toString(36), ic: "🎁", nm: "New treat", price: sz[2], size: sz[0] }])); SFX.tick(); renderTreats();
+    const inputs = $("treats").querySelectorAll(`[data-f="nm"]`); const last = [...inputs].find(i => i.value === "New treat"); if (last){ last.focus(); last.select(); } return true; }
+  if (d.tdel){ if (TQ.confirm !== d.tdel){ treatsConfirm(d.tdel); return true; }
+    TQ.confirm = null; saveTreats(treatList().filter(x => x.id !== d.tdel)); SFX.down(); renderTreats(); return true; }
+  return false;
+}
+document.addEventListener("change", e => {
+  const el = e.target; if (!el.dataset || !el.dataset.tedit) return;
+  const a = treatList(), it = a.find(x => x.id === el.dataset.tedit); if (!it) return;
+  if (el.dataset.f === "price"){ const v = parseInt(el.value, 10); if (!(v > 0)){ el.value = it.price; return; } it.price = v; }
+  else { const v = el.value.trim(); if (el.dataset.f === "nm" && !v){ el.value = it.nm; return; } it[el.dataset.f] = v || "🎁"; }
+  saveTreats(a); SFX.tick();
+});
+const TREATS_HOST = {
+  balance: () => balance(),
+  addSpent: d => { const sh = shop(); sh.spent = Math.max(0, sh.spent + d); setArcp("pft_quest_shop", JSON.stringify(sh)); },
+  write: (k, v) => setArcp(k, v),
+  after: () => { const tt = tally(); renderHUD(tt); renderShop(tt); } };
+function renderRules(){ $("rules").innerHTML = RULES.map(([,l,v]) => `<tr><td>${esc(l)}</td><td>+${v}</td></tr>`).join(""); }
+function renderAll(){ buildTaxonomy(); const t = tally(); renderHUD(t); renderMap(); renderWorld(); renderBx(); renderShop(t); renderRules(); publishEarned(t);
+  if (!$("drawer").hidden){ if (S.open) openLevel(S.open, true); else if (S.hunt) renderHunt(); } }
+let rq = 0; const scheduleRender = () => { if (rq) return; rq = requestAnimationFrame(() => { rq = 0; renderAll(); }); };
+
+// ── Writes (optimistic: update local state, cache, then Firebase) ──
+function setQuest(path, val){   // path like "cards/<qk>" relative to sceData/quest
+  const parts = path.split("/"); let o = S.quest = Object.assign({}, S.quest || {});
+  for (let i=0;i<parts.length-1;i++){ o[parts[i]] = Object.assign({}, o[parts[i]] || {}); o = o[parts[i]]; }
+  if (val === null) delete o[parts[parts.length-1]]; else o[parts[parts.length-1]] = val;
+  local.set("quest", S.quest); return ["quest/" + path, val];
+}
+function setTopicFlag(L, val){   // star 1 is written back to the SCE app's Topic Coverage too
+  // SCE.html cuts keys at 100 characters, so a few subtopics share one tick. Pin each sibling's current state as its
+  // own flag first, so changing this one doesn't change the others; the shared tick stays on while any of them is read.
+  const pairs = [], sibs = LEVELS.filter(x => x.st === L.st && x !== L);
+  sibs.forEach(x => { const own = (Q().read || {})[x.qk]; if (own !== true && own !== false) pairs.push(setQuest("read/" + x.qk, isRead(x))); });
+  const shared = val || sibs.some(isRead);
+  const d = Object.assign({}, (S.topics||{})[L.st] || {}); d.read = shared; if (!shared) d.reviewed = false;
+  S.topics = Object.assign({}, S.topics, { [L.st]: d }); local.set("topics", S.topics);
+  pairs.push(["topics/" + L.st + "/read", shared]); if (!shared) pairs.push(["topics/" + L.st + "/reviewed", false]);
+  return pairs;
+}
+function write(pairs){ const paths = {}; pairs.forEach(([p,v]) => paths[p] = v); if (window.QFB) window.QFB.sce(paths).catch(e => toast("Save failed: " + e.message)); }
+
+// ── Actions: change, then celebrate by comparing before/after ──
+function act(change){
+  const b = tally(), bTopics = new Set(), bWorlds = new Set();
+  WORLDS.forEach(w => { if (worldDone(w)) bWorlds.add(w.wi); w.topics.forEach(tp => { if (topicDone(tp)) bTopics.add(w.wi + "|" + tp.topic); }); });
+  change();
+  const a = tally(), diff = a.sce - b.sce;
+  renderHUD(a); renderMap(); renderWorld(); renderBx(); renderShop(a); publishEarned(a);
+  if (diff > 0){ pop("+" + diff); diff >= 5 ? SFX.big() : SFX.coin(); } else if (diff < 0) SFX.down();
+  let delay = 250;
+  const newTopic = WORLDS.flatMap(w => w.topics.filter(tp => topicDone(tp) && !bTopics.has(w.wi + "|" + tp.topic)).map(tp => tp.topic));
+  const newWorld = WORLDS.filter(w => worldDone(w) && !bWorlds.has(w.wi));
+  if (newWorld.length){ setTimeout(() => { SFX.level(); banner("WORLD CLEAR!", `${esc(newWorld[0].short)} · +${R.world}`); }, delay); delay += 1700; }
+  else if (newTopic.length){ setTimeout(() => { SFX.clear(); banner("TOPIC CLEAR!", `${esc(newTopic[0])} · +${R.topic}`); }, delay); delay += 1700; }
+  if (a.weeks > b.weeks){ setTimeout(() => { SFX.clear(); banner("BONUS STAGE CLEAR!", `3 cases this week · +${R.week}`); }, delay); delay += 1700; }
+  if (levelFor(a.sce) > levelFor(b.sce)) setTimeout(() => { SFX.level(); banner("LEVEL UP!", `Lv ${levelFor(a.sce)} · ${titleFor(levelFor(a.sce))}`); }, delay);
+  local.set("seen", a.sce);
+  return { b, a };
+}
+
+// ── Level drawer: the three stars for one subtopic ──
+function openLevel(qk, keep){
+  const L = BYQK[qk]; if (!L) return; S.open = qk; S.hunt = null;
+  const c = card(L) || {}, r = recall(L) || {}, read = isRead(L), doc = hasCard(L), due = isDue(L), d = dueAt(L), src = c.src || {};
+  const drafts = keep ? { mech: $("cMech") && $("cMech").value, num: $("cNum") && $("cNum").value, trap: $("cTrap") && $("cTrap").value } : null;
+  const val = k => esc(drafts && drafts[k] != null ? drafts[k] : (c[k] || ""));
+  const st3 = !doc ? `<div class="note">Write the card first. Your first recall unlocks ${RECALL_DAYS[0]} days after that.</div>`
+    : due ? `<div class="note">👻 A ghost is haunting this level. Recall the card without looking to bust it.</div><div class="brow"><button class="btn boo" data-act="huntOne">RECALL NOW ▸ +${R.win}</button></div>`
+    : `<div class="note">${r.wins ? `${r.wins} correct recall${r.wins>1?"s":""}${r.streak?` · ${r.streak} in a row`:""} · ` : ""}next recall ${fmtDate(new Date(d))} (in ${Math.max(1, Math.ceil((d - now())/DAY))} days)</div>`;
+  const dr = $("drawer");
+  dr.innerHTML = `<div class="din"><button class="btn alt" data-act="close" style="align-self:flex-end">✕ CLOSE</button>
+    <h2>${L.code} · ${esc(L.sub)}</h2><div class="crumb">${esc(L.cat)} › ${esc(L.topic)}</div>
+    <div class="step ${read?"got":""}"><div class="shd"><b class="${read?"":"off"}">★ READ</b><button class="btn ${read?"alt":""}" data-act="read">${read?"✓ READ · tap to undo":`MARK READ +${R.read}`}</button></div>
+      <div class="note">Where did you read it? (optional)</div>
+      <div class="chips">${SOURCES.map(([k,l]) => `<button class="chip ${src[k]?"on":""}" data-src="${k}">${l}</button>`).join("")}</div></div>
+    <div class="step ${doc?"got":""}"><div class="shd"><b class="${doc?"":"off"}">★★ LEARNING CARD</b>${c.upd?`<span class="note">edited ${fmtDate(new Date(c.upd))}</span>`:""}</div>
+      <div class="field"><label for="cMech">The key mechanism, in one line (required)</label><textarea id="cMech" rows="2" maxlength="600" placeholder="Why it happens, not just what happens">${val("mech")}</textarea></div>
+      <div class="field"><label for="cNum">The number or threshold that matters</label><textarea id="cNum" rows="2" maxlength="600" placeholder="A target, cut-off, dose or guideline threshold">${val("num")}</textarea></div>
+      <div class="field"><label for="cTrap">The trap they set</label><textarea id="cTrap" rows="2" maxlength="600" placeholder="The tempting wrong answer, and why it's wrong">${val("trap")}</textarea></div>
+      <div class="brow"><button class="btn" data-act="saveCard">${doc?"SAVE CHANGES":`SAVE CARD +${R.card}`}</button>${doc?`<button class="btn alt" data-act="delCard">${S.confirm==="card"?"DELETE CARD?":"DELETE"}</button>`:""}</div></div>
+    <div class="step ${recalled(L)?"got":""}"><div class="shd"><b class="${recalled(L)?"":"off"}">★★★ RECALL</b></div>${st3}</div></div>`;
+  dr.hidden = false; if (!keep) dr.scrollTop = 0;
+}
+
+// ── Ghost hunt: due cards one at a time, answer hidden until you reveal ──
+function startHunt(list){ const q = list.map(L => L.qk); if (!q.length){ SFX.nope(); toast("No ghosts right now. Write more cards and they'll come back to haunt you."); return; }
+  S.hunt = { queue: q, i: 0, shown: false, won: 0, total: q.length }; S.open = null; renderHunt(); $("drawer").hidden = false; $("drawer").scrollTop = 0; SFX.boo(); }
+function renderHunt(){
+  const h = S.hunt, dr = $("drawer"); if (!h) return;
+  if (h.i >= h.queue.length){ dr.innerHTML = `<div class="din"><button class="btn alt" data-act="close" style="align-self:flex-end">✕ CLOSE</button><h2>HUNT OVER</h2><div class="note">${h.won}/${h.total} busted.${h.won < h.total ? ` Missed ones come back tomorrow.` : ""}</div><div class="brow"><button class="btn" data-act="close">BACK TO THE MAP</button></div></div>`; return; }
+  const L = BYQK[h.queue[h.i]]; if (!L){ h.i++; renderHunt(); return; }
+  const c = card(L) || {}, hide = h.shown ? "" : "hide";
+  const qa = (q, a) => a && String(a).trim() ? `<div class="qa"><div class="q">${q}</div><div class="a ${hide}" aria-hidden="${!h.shown}">${esc(a)}</div></div>` : "";
+  dr.innerHTML = `<div class="din"><button class="btn alt" data-act="close" style="align-self:flex-end">✕ CLOSE</button>
+    <h2>👻 GHOST HUNT · ${h.i+1}/${h.total}</h2><div class="huntbar"><i style="transform:scaleX(${h.i/h.total})"></i></div>
+    <div class="crumb">${esc(L.cat)} › ${esc(L.topic)}</div><h2>${esc(L.sub)}</h2>
+    <div class="note">${h.shown ? "Did your answer match?" : "Say the mechanism, the number and the trap out loud, then reveal."}</div>
+    ${qa("Mechanism", c.mech)}${qa("Number / threshold", c.num)}${qa("The trap", c.trap)}
+    <div class="brow">${h.shown ? `<button class="btn good" data-act="got">GOT IT ✓ +${R.win}</button><button class="btn bad" data-act="missed">MISSED ✗</button>` : `<button class="btn boo" data-act="reveal">REVEAL</button><button class="btn alt" data-act="skip">SKIP</button>`}</div></div>`;
+}
+function answer(ok){
+  const h = S.hunt, L = BYQK[h.queue[h.i]]; if (!L) return;
+  const r = Object.assign({ wins:0, misses:0, streak:0 }, recall(L) || {});
+  r.last = now(); r.ok = ok; if (ok){ r.wins++; r.streak++; h.won++; } else { r.misses++; r.streak = 0; }
+  act(() => write([setQuest("recall/" + L.qk, r)]));
+  if (ok){ SFX.bust(); pop("BOO! +" + R.win); } else { SFX.boo(); toast(`Back tomorrow. Tweak the card if it was unclear.`); }
+  h.i++; h.shown = false;
+  if (h.i >= h.queue.length && h.won === h.total && h.total > 1) setTimeout(() => { SFX.clear(); banner("ALL GHOSTS BUSTED!", `${h.total} recalled`); }, 400);
+  renderHunt();
+}
+
+// ── Pathology image (compressed in the browser, same as SCEtopics) ──
+function compressImage(file, cb){ const fr = new FileReader();
+  fr.onload = e => { const img = new Image(); img.onload = () => { const max = 900; let w = img.width, h = img.height;
+      if (w > max || h > max){ if (w >= h){ h = Math.round(h*max/w); w = max; } else { w = Math.round(w*max/h); h = max; } }
+      const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").drawImage(img, 0, 0, w, h); cb(c.toDataURL("image/jpeg", .7)); };
+    img.onerror = () => cb(null); img.src = e.target.result; };
+  fr.onerror = () => cb(null); fr.readAsDataURL(file); }
+function bxReset(){ ["bxCase","bxDx","bxFeat"].forEach(id => $(id).value = ""); $("bxFile").value = ""; $("bxPrev").hidden = true; S.img = null; renderBx(); }
+
+// ── One delegated listener for every tap ──
+document.addEventListener("click", ev => {
+  if (ev.target.closest("#lightbox")){ $("lightbox").hidden = true; return; }
+  if (ev.target.closest("#bxDrop")){ $("bxFile").click(); return; }
+  const z = ev.target.closest("[data-zoom]"); if (z){ $("lightboxImg").src = z.src; $("lightbox").hidden = false; return; }
+  const t = ev.target.closest("button"); if (!t) return;
+  if (treatsClick(t)) return;
+  const L = S.open ? BYQK[S.open] : null;
+  if (t.dataset.buy){ const it = SHOP.find(i => i.id === t.dataset.buy), sh = shop(); if (!it || balance() < it.price){ SFX.nope(); return; }
+    sh.spent += it.price; if (!sh.owned.includes(it.id)) sh.owned.push(it.id); sh.eq[it.slot] = it.id; setArcp("pft_quest_shop", JSON.stringify(sh));
+    SFX.buy(); pop("-" + it.price); const tt = tally(); renderHUD(tt); renderShop(tt); renderMap(); return; }
+  if (t.dataset.equip){ const it = SHOP.find(i => i.id === t.dataset.equip), sh = shop(); if (!it) return; sh.eq[it.slot] = it.id; setArcp("pft_quest_shop", JSON.stringify(sh));
+    SFX.coin(); const tt = tally(); renderHUD(tt); renderShop(tt); renderMap(); return; }
+  if (t.dataset.world){ S.view = +t.dataset.world; local.set("view", S.view); $("drawer").hidden = true; S.open = null; S.hunt = null; SFX.tick(); renderMap(); renderWorld(); return; }
+  if (t.dataset.lvl){ SFX.tick(); S.confirm = null; openLevel(t.dataset.lvl); return; }
+  if (t.dataset.src && L){ const c = Object.assign({}, card(L) || {}), src = Object.assign({}, c.src || {}); src[t.dataset.src] = !src[t.dataset.src];
+    if (!src[t.dataset.src]) delete src[t.dataset.src]; c.src = src; if (!c.ts) c.ts = now();
+    write([setQuest("cards/" + L.qk, c)]); SFX.tick(); openLevel(L.qk, true); return; }
+  if (t.dataset.bxdel){ const id = t.dataset.bxdel;
+    if (S.confirm !== id){ S.confirm = id; renderBx(); setTimeout(() => { if (S.confirm === id){ S.confirm = null; renderBx(); } }, 3000); return; }
+    S.confirm = null; act(() => { const bx = Object.assign({}, S.bx); delete bx[id]; S.bx = bx; local.set("bx", bx); if (window.QFB) window.QFB.delBx(id); }); return; }
+  switch (t.dataset.act){
+    case "close": $("drawer").hidden = true; S.open = null; S.hunt = null; S.confirm = null; renderWorld(); return;
+    case "shop": $("shopBox").scrollIntoView({ behavior:"smooth", block:"start" }); return;
+    case "mute": S.muted = !S.muted; local.set("muted", S.muted); $("mute").textContent = S.muted ? "♪ OFF" : "♪ ON"; return;
+    case "hunt": { const w = WORLDS[S.view], all = ghosts(), here = w ? all.filter(x => x.w === w) : [];   // this world's ghosts first
+      startHunt(here.concat(all.filter(x => !here.includes(x)))); return; }
+    case "huntOne": if (L) startHunt([L]); return;
+    case "read": if (!L) return; { const v = !isRead(L); act(() => { const sib = setTopicFlag(L, v); write([...sib, setQuest("read/" + L.qk, v)]); }); openLevel(L.qk, true); } return;
+    case "saveCard": { if (!L) return; const mech = $("cMech").value.trim(), num = $("cNum").value.trim(), trap = $("cTrap").value.trim();
+      if (!mech){ SFX.nope(); toast("Write the mechanism line first. That's what earns the star."); $("cMech").focus(); return; }
+      const first = !hasCard(L), c = Object.assign({}, card(L) || {}, { mech, num, trap, upd: now() }); if (first || !c.ts) c.ts = now();
+      act(() => { const pairs = [];
+        if (!isRead(L)) pairs.push(...setTopicFlag(L, true), setQuest("read/" + L.qk, true));   // writing it up means you read it
+        pairs.push(setQuest("cards/" + L.qk, c)); write(pairs); });
+      if (first) toast(`Card saved. First recall in ${RECALL_DAYS[0]} days.`); else { SFX.tick(); toast("Card updated"); }
+      openLevel(L.qk); return; }
+    case "delCard": if (!L) return;
+      if (S.confirm !== "card"){ S.confirm = "card"; openLevel(L.qk, true); setTimeout(() => { if (S.confirm === "card"){ S.confirm = null; if (S.open === L.qk) openLevel(L.qk, true); } }, 3000); return; }
+      S.confirm = null; act(() => write([setQuest("cards/" + L.qk, null), setQuest("recall/" + L.qk, null)])); openLevel(L.qk); return;
+    case "reveal": if (S.hunt){ S.hunt.shown = true; SFX.reveal(); renderHunt(); } return;
+    case "skip": if (S.hunt){ S.hunt.i++; S.hunt.shown = false; SFX.tick(); renderHunt(); } return;
+    case "got": if (S.hunt) answer(true); return;
+    case "missed": if (S.hunt) answer(false); return;
+    case "bxClear": bxReset(); return;
+    case "bxSave": { const dx = $("bxDx").value.trim(); if (!dx){ SFX.nope(); toast("Add the diagnosis first."); return; }
+      const rec = { dx, feat: $("bxFeat").value.trim(), caseNo: $("bxCase").value.trim() || null, img: S.img || null, ts: now(), week: isoWeekKey(new Date()) };
+      const tmp = "local-" + now();
+      act(() => { S.bx = Object.assign({}, S.bx, { [tmp]: rec }); });   // shown at once; replaced by the real record when Firebase echoes it back
+      if (window.QFB) window.QFB.pushBx(rec).catch(e => toast("Save failed: " + e.message));
+      bxReset(); toast("Case logged"); return; }
+  }
+});
+document.addEventListener("input", e => { if (e.target.id === "bxDx") $("bxSave").disabled = !e.target.value.trim(); });
+$("bxFile").addEventListener("change", () => { const f = $("bxFile").files[0]; if (!f) return; toast("Compressing image…");
+  compressImage(f, data => { if (!data){ toast("Couldn't read that image"); return; } S.img = data; $("bxPrev").src = data; $("bxPrev").hidden = false; }); });
+$("gaps").addEventListener("change", e => { S.gaps = e.target.checked; local.set("gaps", S.gaps); renderWorld(); });
+
+// ── Sync wiring ──
+function onNode(key, val){
+  S[key] = val || {}; S.got[key] = true; local.set(key, S[key]);
+  if (key === "bx"){ // drop optimistic "local-" records once the real ones arrive
+    const real = Object.values(S.bx).filter(r => r && r.ts).map(r => r.ts);
+    Object.keys(S.bx).forEach(k => { if (k.startsWith("local-") && real.filter(ts => ts === S.bx[k].ts).length > 1) delete S.bx[k]; }); }
+  $("sync").textContent = "● live"; $("sync").className = "sync ok";
+  scheduleRender(); welcome();
+}
+window.addEventListener("q-topics", e => onNode("topics", e.detail));
+window.addEventListener("q-quest",  e => onNode("quest", e.detail));
+window.addEventListener("q-bx",     e => onNode("bx", e.detail));
+window.addEventListener("q-arcp",   e => onNode("arcp", e.detail));
+window.addEventListener("q-cfg",    e => { S.cfg = e.detail || null; local.set("cfg", S.cfg); scheduleRender(); });
+window.addEventListener("q-offline", () => { $("sync").textContent = "● offline"; $("sync").className = "sync bad"; });
+let welcomed = false;
+function welcome(){   // coins from reading you ticked in the SCE app since you were last here
+  if (welcomed || !allLoaded()) return; welcomed = true; buildTaxonomy();
+  const t = tally(), seen = local.get("seen", null);
+  if (seen !== null && t.sce > seen){ setTimeout(() => { pop("+" + (t.sce - seen)); SFX.big(); toast(`Welcome back · +${t.sce - seen} coins since your last visit`); }, 500); }
+  local.set("seen", t.sce);
+}
+renderAll();   // instant first paint from the cached snapshot
+</script>
+</body>
+</html>
