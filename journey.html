@@ -84,7 +84,7 @@ canvas.av{width:60px;height:60px;image-rendering:pixelated;background:var(--pane
 .node.view .plat{outline:3px solid var(--coin);outline-offset:2px}
 .lbl{font-family:var(--pixel);font-size:12px}
 .sub{font-size:11px;color:var(--mute)}
-.pct{font-family:var(--pixel);font-size:10px;color:var(--grass)}
+.pct{font-family:var(--pixel);font-size:10px;color:var(--grass)} .pct.bhp{color:var(--alert);margin-top:-3px}
 canvas.walker{position:absolute;top:-50px;width:42px;height:42px;image-rendering:pixelated;animation:bob 1s steps(2) infinite}
 @keyframes bob{50%{transform:translateY(-3px)}}
 .castle{width:60px;height:60px;position:absolute;top:-58px}
@@ -94,6 +94,7 @@ canvas.walker{position:absolute;top:-50px;width:42px;height:42px;image-rendering
 .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
 .tab{background:var(--panel2);border:3px solid var(--edge);padding:7px 11px;font-family:var(--pixel);font-size:11px}
+@media (max-width:440px){ .tabs{gap:4px} .tab{padding:7px 7px;font-size:10px} }
 .tab[aria-selected="true"]{background:var(--sky);color:var(--night)}
 .toggle{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mute)}
 .toggle input{width:20px;height:20px;accent-color:var(--coin)}
@@ -158,6 +159,44 @@ canvas.walker{position:absolute;top:-50px;width:42px;height:42px;image-rendering
 @keyframes zoom{0%{transform:scale(.3);opacity:0}20%{transform:scale(1.1);opacity:1}80%{opacity:1}100%{transform:scale(1);opacity:0}}
 .conf{position:fixed;width:8px;height:8px;z-index:70;pointer-events:none;animation:fall 1.4s linear forwards;will-change:transform}
 @keyframes fall{to{transform:translateY(70vh) rotate(360deg);opacity:0}}
+/* Boss checklist */
+.tab.boss{background:#4a2470;color:var(--ink)} .tab.boss[aria-selected="true"]{background:var(--alert);color:var(--night)}
+.bossv{display:flex;flex-direction:column;gap:10px}
+.bosshd{display:flex;gap:14px;align-items:center;background:var(--panel2);border:3px solid var(--edge);padding:10px}
+.bsvg{width:72px;height:72px;flex:none;animation:bob 1s steps(2) infinite}
+.bosshd.dead .bsvg{filter:grayscale(1) opacity(.45);animation:none;transform:rotate(90deg)}
+.hp{height:12px;background:var(--edge);margin:6px 0 4px;width:min(260px,50vw)}
+.hp i{display:block;height:100%;background:var(--alert);transform-origin:left;transition:transform .35s steps(8)}
+.rgrp{font-family:var(--pixel);font-size:11px;color:var(--mute);margin:6px 0 0}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
+.req{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--panel2);border:3px solid var(--edge);padding:8px 10px}
+.req.met{opacity:.62} .req.met .rl{color:var(--grass)}
+.rl{font-size:14px;font-weight:600;line-height:1.25}
+.stp{display:inline-flex;align-items:center;gap:6px;flex:none}
+.stp b{font-family:var(--pixel);font-size:12px;min-width:40px;text-align:center;color:var(--ink)}
+.sb,.ck{width:36px;height:36px;flex:none;background:var(--night);border:3px solid var(--edge);font-family:var(--pixel);font-size:15px;padding:0}
+.ck{color:var(--night)} .ck.on{background:var(--grass)}
+.tag{flex:none;font-family:var(--pixel);font-size:10px;color:var(--mute);border:2px solid var(--lock);padding:3px 6px;text-decoration:none}
+.req.met .tag{color:var(--grass);border-color:var(--grass)}
+/* Secret exits */
+.secrets{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:2px dotted rgba(167,160,214,.3)}
+.secrets .lbl{margin-right:4px}
+.pipe{display:flex;align-items:center;gap:6px;background:var(--panel2);border:3px solid var(--edge);padding:4px 9px 4px 5px;font-size:13px}
+.pipe svg{width:22px;height:22px;filter:grayscale(1) brightness(.55)}
+.pipe.on{color:var(--coin);border-color:#8a5a00} .pipe.on svg{filter:none}
+.pipe:not(.on) span{color:var(--mute);font-family:var(--pixel);font-size:11px}
+/* Reflection inbox */
+textarea,select{font-family:var(--body);font-size:16px;color:var(--ink);background:var(--night);border:3px solid var(--edge);padding:8px;width:100%;border-radius:0}
+textarea{resize:vertical;min-height:76px}
+.nrow{display:flex;gap:8px;margin:8px 0 12px;align-items:stretch} .nrow select{flex:1;min-width:0}
+.nt{background:var(--panel2);border:3px solid var(--edge);padding:9px 10px;margin-bottom:8px}
+.nt.done{opacity:.6}
+.ntx{white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0 8px;font-size:14px}
+.nbtns{display:flex;gap:6px;flex-wrap:wrap}
+details summary{cursor:pointer;margin:6px 0}
+.rhead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px} .rhead h3{margin-bottom:6px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel2);border:3px solid var(--edge);box-shadow:0 6px 0 rgba(0,0,0,.35);padding:10px 14px;z-index:72;width:max-content;max-width:min(420px,90vw);font-size:14px;text-align:center}
+@media (max-width:760px){ .side{grid-column:1/-1;flex-direction:row;flex-wrap:wrap} .side .sbtn{flex:1} .side .sync{flex-basis:100%} .rgrid{grid-template-columns:1fr} }
 @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 </style>
 </head>
@@ -175,6 +214,7 @@ canvas.walker{position:absolute;top:-50px;width:42px;height:42px;image-rendering
       <div class="stat"><b id="cct">–</b><span>Days to CCT</span></div>
     </div>
     <div class="side">
+      <button class="sbtn" data-act="note">✎ NOTE</button>
       <button class="sbtn" data-act="mute" id="mute">♪ ON</button>
       <a class="sbtn" href="ARCP.html">LOG ↗</a>
       <div class="sync" id="sync">● connecting</div>
@@ -184,17 +224,26 @@ canvas.walker{position:absolute;top:-50px;width:42px;height:42px;image-rendering
   <section class="box path" aria-label="Training journey">
     <div class="note">Your road to CCT · tap a world to view it · ARCP dates come from the ARCP app's Admin tab</div>
     <div class="track" id="track"></div>
+    <div class="secrets" id="secrets"></div>
   </section>
 
   <section class="box">
     <div class="bar"><div class="tabs" role="tablist" id="tabs"></div><label class="toggle"><input type="checkbox" id="gaps"> Gaps only</label></div>
-    <div class="legend"><span><i style="background:var(--lock)"></i>Locked · 0</span><span><i style="background:var(--sky)"></i>In progress · 1–2</span><span><i style="background:var(--grass)"></i>Cleared · 3+</span><span><i style="background:var(--star)"></i>Mastered · ES at target</span></div>
+    <div class="legend" id="legend"><span><i style="background:var(--lock)"></i>Locked · 0</span><span><i style="background:var(--sky)"></i>In progress · 1–2</span><span><i style="background:var(--grass)"></i>Cleared · 3+</span><span><i style="background:var(--star)"></i>Mastered · ES at target</span></div>
     <div class="grid" id="grid"></div>
     <p class="note" id="gridnote"></p>
   </section>
 
+  <section class="box" id="inboxBox">
+    <h3>REFLECTION INBOX</h3>
+    <p class="note" style="margin-top:0">Jot it down now, write it up in the ePortfolio later. Tag a CiP and, once written up, it counts as Reflection evidence for that CiP.</p>
+    <textarea id="nt" rows="3" maxlength="1500" placeholder="What happened? What did you learn? What will you do differently?"></textarea>
+    <div class="nrow"><select id="ncip" aria-label="Tag a CiP"><option value="">No CiP tag</option></select><button class="btn" data-act="addNote" id="addNote">SAVE NOTE</button></div>
+    <div id="inbox"></div>
+  </section>
+
   <div class="cols">
-    <section class="box"><h3>HOW COINS ARE EARNED</h3><table class="rules" id="rules"></table><p class="note" id="lifetime"></p></section>
+    <section class="box"><div class="rhead"><h3>HOW COINS ARE EARNED</h3><span><button class="btn alt" data-act="rulesReset" id="rulesReset" hidden>RESET</button> <button class="btn alt" data-act="rulesEdit" id="rulesEdit">TUNE</button></span></div><table class="rules" id="rules"></table><p class="note" id="lifetime"></p></section>
     <section class="box"><h3>ITEM SHOP</h3><p class="note" style="margin-top:0">Spending never lowers your level.</p><div class="shop" id="shop"></div></section>
   </div>
 </div>
@@ -205,14 +254,26 @@ canvas.walker{position:absolute;top:-50px;width:42px;height:42px;image-rendering
 const CIP_GROUPS = [{"label": "GENERIC CiPs", "type": "sat", "cips": [["g1", "Function within NHS organisational & management systems", ["MCR", "MSF", "Active role in governance structures", "Management course", "End of placement reports"]], ["g2", "Deal with ethical and legal issues in clinical practice", ["MCR", "MSF", "CbD", "DOPS", "Mini-CEX", "ALS certificate", "EOL care & capacity assessment", "End of placement reports"]], ["g3", "Communicate effectively & share decision making", ["MCR", "MSF", "Patient survey", "End of placement reports"]], ["g4", "Patient safety & quality improvement", ["MCR", "MSF", "QIPAT", "End of placement reports"]], ["g5", "Research & managing data appropriately", ["MCR", "MSF", "GCP certificate", "Literature search / critical appraisal", "Use of clinical guidelines", "QIP / audit", "Evidence of research activity", "End of placement reports"]], ["g6", "Acting as a clinical teacher and clinical supervisor", ["MCR", "MSF", "Teaching observation (TO)", "Relevant teaching course", "End of placement reports"]]]}, {"label": "RENAL CiPs", "type": "level", "cips": [["r1", "Running a renal ward", ["MCR", "MSF", "CbD", "ACAT", "Mini-CEX", "Logbook of cases", "Reflections"]], ["r2", "Managing HD and PD programme", ["MCR", "MSF", "CbD", "Mini-CEX", "DOPS (line insertion)", "Logbook of cases", "Reflections"]], ["r3", "Running an acute renal referral service", ["MCR", "MSF", "CbD", "ACAT", "Logbook of cases", "Reflections"]], ["r4", "Managing patients with CKD stage 1–5", ["MCR", "MSF", "CbD", "Mini-CEX", "OPCAT / clinic letters", "Patient survey", "Logbook of cases"]], ["r5", "Understanding of subspecialty clinical services", ["MCR", "MSF", "CbD", "Evidence of subspecialty exposure", "Reflections"]], ["r6", "Managing renal transplant patients", ["MCR", "MSF", "CbD", "Mini-CEX", "Logbook of cases", "Reflections"]]]}, {"label": "GIM CiPs", "type": "level", "cips": [["m1", "Managing an acute unselected take", ["MCR", "MSF", "CbD", "ACAT", "Logbook of cases", "Simulation training with assessment"]], ["m2", "Managing acute care within a medical specialty service", ["MCR", "MSF", "CbD", "ACAT", "Logbook of cases", "Simulation training with assessment"]], ["m3", "Continuity of care — comorbidities & cognitive impairment", ["MCR", "MSF", "ACAT", "Mini-CEX", "DOPS"]], ["m4", "Outpatient / ambulatory / community — long-term conditions", ["MCR", "ACAT", "Mini-CEX", "Patient survey", "Clinic letters"]], ["m5", "Medical problems in other specialties & special cases", ["MCR", "ACAT", "CbD"]], ["m6", "Managing MDT including effective discharge planning", ["MCR", "MSF", "ACAT", "Discharge summaries"]], ["m7", "Effective resuscitation & managing the acutely deteriorating patient", ["MCR", "DOPS", "ACAT", "MSF", "ALS certificate", "Logbook of cases", "Reflection", "Simulation training with assessment"]], ["m8", "Managing end of life & applying palliative care skills", ["MCR", "MSF", "CbD", "Mini-CEX", "DOPS (syringe driver)", "EOL care e-learning", "Reflection", "Logbook of cases"]]]}];
 const CIP_TARGETS = {"m1": {"ST4": 3, "ST5": 3, "ST6": 3, "ST7": 4}, "m2": {"ST4": 2, "ST5": 3, "ST6": 3, "ST7": 4}, "m3": {"ST4": 3, "ST5": 3, "ST6": 3, "ST7": 4}, "m4": {"ST4": 3, "ST5": 3, "ST6": 3, "ST7": 4}, "m5": {"ST4": 3, "ST5": 3, "ST6": 3, "ST7": 4}, "m6": {"ST4": 3, "ST5": 3, "ST6": 3, "ST7": 4}, "m7": {"ST4": 4, "ST5": 4, "ST6": 4, "ST7": 4}, "m8": {"ST4": 3, "ST5": 3, "ST6": 3, "ST7": 4}, "r1": {"ST4": 2, "ST5": 2, "ST6": 3, "ST7": 4}, "r2": {"ST4": 2, "ST5": 2, "ST6": 3, "ST7": 4}, "r3": {"ST4": 2, "ST5": 2, "ST6": 3, "ST7": 4}, "r4": {"ST4": 2, "ST5": 2, "ST6": 3, "ST7": 4}, "r5": {"ST4": 2, "ST5": 2, "ST6": 3, "ST7": 4}, "r6": {"ST4": 2, "ST5": 2, "ST6": 3, "ST7": 4}};
 
+// Requirement definitions copied from the ARCP app (same keys, so ticks sync both ways)
+const REQS = {"gim_acats":{"label":"GIM ACATs","stream":"gim","type":"number","target":4,"unit":"ACATs","deadline":"annual","note":"GIM consultants, labelled GIM"},"gim_mcrs":{"label":"GIM MCRs","stream":"gim","type":"number","target":2,"unit":"MCRs","deadline":"annual","note":"GIM consultants only, labelled GIM"},"gim_sles":{"label":"GIM SLEs (miniCEX / CBD)","stream":"gim","type":"number","target":3,"unit":"SLEs","deadline":"annual","note":"Labelled GIM by GIM consultants"},"gim_msf_raters":{"label":"GIM MSF Raters","stream":"gim","type":"number","target":4,"unit":"raters","deadline":"annual","note":"4 GIM raters in MSF (part of 12 total)"},"gim_es_report":{"label":"GIM Educational Supervisor Report","stream":"gim","type":"checkbox","deadline":"annual","note":"1 per year — even without a GIM placement"},"gim_clinics":{"label":"GIM Clinics","stream":"gim","type":"number","target":20,"unit":"clinics","deadline":"ST7","cumulative":true,"note":"20 total by end of training"},"gim_cpd_hours":{"label":"IM Study Leave / CPD Hours","stream":"gim","type":"number","target":75,"unit":"hours","deadline":"ST7","cumulative":true,"note":"75hrs total, 20 in final year"},"gim_sim_hours":{"label":"Simulation Hours","stream":"gim","type":"number","target":12,"unit":"hours","deadline":"ST7","cumulative":true,"note":"12hrs total (GIMME/NOTES), 4 in final year"},"gim_acute_patients":{"label":"Acute GIM Patients","stream":"gim","type":"number","target":750,"unit":"patients","deadline":"ST7","cumulative":true,"note":"750 total, 100 in final year"},"gim_ward_cover":{"label":"IM Ward Cover","stream":"gim","type":"number","target":12,"unit":"months","deadline":"ST7","cumulative":true,"note":"12 months total IM ward cover"},"gim_teaching_obs":{"label":"Teaching Observation","stream":"gim","type":"checkbox","deadline":"ST7","sharedWith":"renal_teaching_obs","note":"Can be done in Renal — applies to GIM"},"gim_patient_survey":{"label":"Patient Survey","stream":"gim","type":"checkbox","deadline":"ST5","sharedWith":"renal_patient_survey_st5","note":"ST5 Renal survey counts as GIM — no separate GIM survey needed"},"gim_qip":{"label":"GIM QIP + QIPAT","stream":"gim","type":"checkbox","deadline":"ST7","note":"By end of ST7"},"renal_mcrs":{"label":"Renal MCRs","stream":"renal","type":"number","target":4,"unit":"MCRs","deadline":"annual","note":"Renal consultants, labelled renal"},"renal_msf_raters":{"label":"Renal MSF Raters","stream":"renal","type":"number","target":8,"unit":"raters","deadline":"annual","note":"8 renal raters + 4 GIM = 12 total (3 must be consultants)"},"renal_sles":{"label":"Renal SLEs (ACATs / CBD / miniCEX)","stream":"renal","type":"number","target":15,"unit":"SLEs","deadline":"annual","note":"Minimum 15 per year across all SLE types"},"renal_teaching_log":{"label":"Renal Teaching Hours Log","stream":"renal","type":"checkbox","deadline":"annual","note":"Log on spreadsheet in library"},"renal_teaching_involvement":{"label":"Evidence of Teaching Involvement","stream":"renal","type":"checkbox","deadline":"annual","note":"Required every year"},"renal_es_report":{"label":"Renal Educational Supervisor Report","stream":"renal","type":"checkbox","deadline":"annual","note":"1 per year"},"renal_temp_lines":{"label":"Temporary Line Competency","stream":"renal","type":"checkbox","deadline":"ST4","note":"Competent by end of ST4"},"renal_eseneph":{"label":"ESENeph Exam","stream":"renal","type":"eseneph","deadline":"ST6","note":"Held once a year — book early. Alert 1 year before due."},"renal_patient_survey_st5":{"label":"Patient Survey (ST5)","stream":"renal","type":"checkbox","deadline":"ST5","sharesTo":"gim_patient_survey","note":"Counts as the GIM Patient Survey — ticking this ticks GIM too"},"renal_qip":{"label":"Renal QIP + QIPAT","stream":"renal","type":"checkbox","deadline":"ST6","note":"By end of ST6"},"renal_teaching_obs":{"label":"Teaching Observation","stream":"renal","type":"checkbox","deadline":"ST6","sharesTo":"gim_teaching_obs","note":"Applies to GIM — ticking this ticks GIM too"},"renal_patient_survey_st7":{"label":"Patient Survey (ST7)","stream":"renal","type":"checkbox","deadline":"ST7","note":"Required again in ST7 for Renal curriculum (separate from ST5)"},"renal_mgmt_course":{"label":"Management & Leadership Course","stream":"renal","type":"checkbox","deadline":"ST7","note":"By end of ST7"}};
+const ADMIN_DOCS = [{"id":"doc_form_r","label":"Form R in Library","note":"Required each year"},{"id":"doc_cct_calc","label":"CCT Calculator in Library","note":"Update each year (especially if LTFT)"},{"id":"doc_firth","label":"Updated Firth Calculator","note":"Update every year"},{"id":"doc_renal_sot","label":"Renal Summary of Training in Library","note":"Procedures, clinics and renal teaching"},{"id":"doc_gim_sot","label":"GIM Summary of Training in Library","note":"Acute take, clinics, ward cover, teaching, simulation"},{"id":"doc_cpd_diary","label":"CPD Diary in Library","note":"Export from Logbook → Teaching CPD and upload"}];
+const DOPS_PROCEDURES = ["Advanced cardiopulmonary resuscitation (CPR)","Direct current (DC) cardioversion","Temporary cardiac pacing using an external device","Central venous cannulation (internal jugular or subclavian)","Access to circulation for resuscitation (femoral vein or intraosseous)","Pleural aspiration for fluid (diagnostic)","Pleural aspiration (pneumothorax)","Intercostal drain for pneumothorax","Intercostal drain for effusion","Nasogastric (NG) tube","Ascitic tap","Abdominal paracentesis","Lumbar puncture"];
 const YEARS = ["ST4","ST5","ST6","ST7"];
 const ARCP_DEFAULTS = { ST4:"2026-12-02", ST5:"2027-12-02", ST6:"2028-12-02", ST7:"2029-12-02" };
 const CCT_DATE = "2030-12-02";
 const EVID_TARGET = 3;
 const LB_TYPES = { clinics_gim:"GIM clinic", clinics_renal:"Renal clinic", procedures_gim:"GIM procedure", procedures_renal:"Renal procedure",
   cpd_gim:"GIM CPD", cpd_renal:"Renal CPD", simulation:"Simulation", teaching:"Teaching", acute_take:"Acute take", ward_cover:"Ward cover" };
-const RULES = [["Any logbook entry (clinic, procedure, CPD, teaching, sim, take, ward cover)",1],["DOPS signed (on a logged procedure)",5],["CiP evidence added",3],
-  ["CiP CLEAR! — reaches 3 evidence in a year",10],["Each ★ of ES entrustment (Renal / GIM CiPs)",15],["Generic CiP signed off satisfactory (per year)",30],["WORLD CLEAR — all 20 CiPs cleared in a year",100]];
+// Coin values: defaults below, tunable in the app (stored as pft_quest_rules, only the ones you change)
+const RULE_DEFS = [
+  ["clinic","Clinic logged (GIM or renal)",2], ["proc","Procedure logged",2], ["dops","DOPS signed on a logged procedure (bonus)",5],
+  ["cpd","CPD / study leave entry",2], ["teach","Teaching delivered",3], ["sim","Simulation session",3],
+  ["block","Acute take or ward-cover placement logged",10], ["evidence","CiP evidence added",3], ["clear","CiP CLEAR! (3 evidence in a year)",10],
+  ["star","Each ★ of ES entrustment (Renal / GIM)",15], ["sat","Generic CiP signed off satisfactory (per year)",30], ["world","WORLD CLEAR (all 20 CiPs in a year)",100],
+  ["hit","ARCP requirement met (boss hit)",5], ["boss","BOSS DEFEATED (every requirement for that ARCP)",75], ["secret","Secret exit found",100],
+  ["note","Reflection note captured",2], ["written","Reflection written up in ePortfolio",8]];
+const LB_RULE = { clinics_gim:"clinic", clinics_renal:"clinic", procedures_gim:"proc", procedures_renal:"proc", cpd_gim:"cpd", cpd_renal:"cpd",
+  teaching:"teach", simulation:"sim", acute_take:"block", ward_cover:"block" };
 const TITLES = ["Ward Rookie","Take Runner","Clinic Regular","Line Slinger","Firth Fighter","Referral Ranger","Dialysis Driver","Transplant Tamer","Registrar Elite","Consultant-in-Waiting","CCT Legend"];
 const SHOP = [
   {id:"sc-teal",cat:"Scrubs",nm:"Teal scrubs",price:0,slot:"scrubs",val:"#2bb5a6"},{id:"sc-navy",cat:"Scrubs",nm:"Navy scrubs",price:60,slot:"scrubs",val:"#2a4aa8"},
@@ -254,19 +315,65 @@ function state(x, yr){ const n = count(x.id, yr);
   return n >= EVID_TARGET ? (mastered ? "master" : "clear") : n ? "prog" : "locked"; }
 const clearedIn = yr => allCips().filter(x => ["clear","master"].includes(state(x, yr))).length;
 const nowYear = () => { const t = new Date(); t.setHours(0,0,0,0); return YEARS.find(y => arcpDate(y) >= t) || "ST7"; };
+const cipCode = x => `${x.id[0].toUpperCase()}-${x.i+1}`;
+function ruleOverrides(){ try { const o = JSON.parse(raw("pft_quest_rules") || "{}"); return (o && typeof o === "object") ? o : {}; } catch(e){ return {}; } }
+function rules(){ const o = ruleOverrides(), r = {}; RULE_DEFS.forEach(([k,,d]) => { const v = parseInt(o[k],10); r[k] = Number.isFinite(v) && v >= 0 ? v : d; }); return r; }
+
+// ── Boss: the ARCP for each year = every requirement the ARCP app tracks for that year ──
+const reqKey = (id, yr) => { const q = REQS[id]; if (q.cumulative) return `pft_cum_${id}`; if (q.deadline !== "annual") return `pft_milestone_${id}`; return `pft_${yr}_${id}`; };
+function bossItems(yr){
+  const items = [];
+  Object.keys(REQS).forEach(id => { const q = REQS[id];
+    if (!(q.deadline === "annual" || q.deadline === yr)) return;
+    if (q.sharedWith && REQS[q.sharedWith] && REQS[q.sharedWith].deadline === yr) return;   // one tick covers both — count it once
+    if (q.type === "eseneph"){ const d = raw("pft_eseneph_date"); items.push({ id, grp:q.stream, lbl:q.label, note: d ? `Exam date ${fmtDate(new Date(d))}` : "Set the exam date in the ARCP app", kind:"info", met: !!d && new Date(d) <= today() }); return; }
+    const key = reqKey(id, yr);
+    if (q.type === "checkbox"){ let v = raw(key) === "true"; if (!v && q.sharedWith) v = raw(reqKey(q.sharedWith, yr)) === "true";
+      items.push({ id, grp:q.stream, lbl:q.label, note:q.note, kind:"chk", key, also: q.sharesTo ? reqKey(q.sharesTo, yr) : null, met:v }); }
+    else { const v = parseInt(raw(key),10) || 0; items.push({ id, grp:q.stream, lbl:q.label, note:q.note, kind:"num", key, val:v, target:q.target, met: v >= q.target }); }
+  });
+  ADMIN_DOCS.forEach(d => { const key = `pft_admin_${yr}_${d.id}`; items.push({ id:d.id, grp:"admin", lbl:d.label, note:d.note, kind:"chk", key, met: raw(key) === "true" }); });
+  const als = raw("pft_als_expiry");
+  items.push({ id:"als", grp:"admin", lbl:"ALS certificate in date on ARCP day", note: als ? `Expires ${fmtDate(new Date(als))}` : "Set the expiry date in the ARCP app", kind:"info", met: !!als && new Date(als) >= arcpDate(yr) });
+  if (yr === "ST7"){ const done = DOPS_PROCEDURES.filter(p => raw(`pft_dops_${p.replace(/\s+/g,"_").toLowerCase()}`) === "true").length;
+    items.push({ id:"dops", grp:"gim", lbl:"GIM procedures signed off (DOPS)", note:`${done}/${DOPS_PROCEDURES.length} · tick in the ARCP app`, kind:"info", met: done === DOPS_PROCEDURES.length }); }
+  return items;
+}
+function boss(yr){ const items = bossItems(yr), met = items.filter(i => i.met).length, out = raw(`pft_arcp_outcome_${yr}`) || "";
+  return { items, met, total: items.length, hp: items.length - met, outcome: out, defeated: met === items.length || out === "1" || out === "6" }; }
+const yearOpen = yr => YEARS.indexOf(yr) <= YEARS.indexOf(nowYear());
+
+// ── Secret exits: hidden bonus levels found by doing the big one-off things ──
+const SECRETS = [
+  { id:"sce", nm:"ESENeph exam", hint:"A single exam day, due by the end of ST6. Book early.", found:()=>{ const d = raw("pft_eseneph_date"); return !!d && new Date(d) <= today(); }, info:()=>`Sat ${fmtDate(new Date(raw("pft_eseneph_date")))}` },
+  { id:"rqip", nm:"Renal QIP", hint:"Fix one thing on the renal unit and get a QIPAT. Due by ST6.", found:()=>raw("pft_milestone_renal_qip") === "true", info:()=>"Renal QIP + QIPAT ticked" },
+  { id:"gqip", nm:"GIM QIP", hint:"Fix one thing on the take and get a QIPAT. Due by ST7.", found:()=>raw("pft_milestone_gim_qip") === "true", info:()=>"GIM QIP + QIPAT ticked" },
+  { id:"als", nm:"ALS", hint:"Shock, compress, repeat. Add your certificate expiry in the ARCP app.", found:()=>!!raw("pft_als_expiry"),
+    info:()=>{ const d = new Date(raw("pft_als_expiry")), n = Math.round((d - today())/864e5); return n < 0 ? `EXPIRED ${fmtDate(d)}. Renew it!` : `Valid to ${fmtDate(d)}${n < 183 ? ". Renew soon" : ""}`; } }];
+
+// ── Reflection inbox (synced as pft_quest_inbox) ──
+function inbox(){ try { const a = JSON.parse(raw("pft_quest_inbox") || "[]"); return Array.isArray(a) ? a.filter(n => n && n.id) : []; } catch(e){ return []; } }
+const saveInbox = a => setRaw("pft_quest_inbox", JSON.stringify(a));
+const reflType = x => x.ev.find(e => /^reflections?$/i.test(e)) || "Reflection";
 
 // ── Coins: derived from data every time + a breakdown (for the welcome-back screen) ──
 function tally(){
-  const t = { entries:{}, dops:0, evidence:0, clears:0, stars:0, sats:0, worlds:0 };
-  Object.keys(LB_TYPES).forEach(k => { const a = lbEntries(k); t.entries[k] = a.length; if (k.startsWith("procedures")) t.dops += a.filter(e => e.dops === "Yes").length; });
+  const R = rules(), t = { entries:{}, dops:0, evidence:0, clears:0, stars:0, sats:0, worlds:0, hits:0, bosses:0, secrets:0, notes:0, written:0 };
+  let c = 0;
+  Object.keys(LB_TYPES).forEach(k => { const a = lbEntries(k); t.entries[k] = a.length; c += a.length * R[LB_RULE[k]]; if (k.startsWith("procedures")) t.dops += a.filter(e => e.dops === "Yes").length; });
   const cips = allCips();
   cips.forEach(x => { if (x.g.type === "level") t.stars += entrust(x.id); });
-  YEARS.forEach(yr => { let c = 0; cips.forEach(x => { const n = count(x.id, yr); t.evidence += n; if (n >= EVID_TARGET){ t.clears++; c++; } if (x.g.type !== "level" && sat(x.id, yr)) t.sats++; }); if (c === cips.length) t.worlds++; });
-  t.coins = Object.values(t.entries).reduce((a,b)=>a+b,0) + t.dops*4 + t.evidence*3 + t.clears*10 + t.stars*15 + t.sats*30 + t.worlds*100;
+  YEARS.forEach(yr => { let n2 = 0; cips.forEach(x => { const n = count(x.id, yr); t.evidence += n; if (n >= EVID_TARGET){ t.clears++; n2++; } if (x.g.type !== "level" && sat(x.id, yr)) t.sats++; }); if (n2 === cips.length) t.worlds++;
+    if (yearOpen(yr)){ const b = boss(yr); t.hits += b.met; if (b.defeated) t.bosses++; } });
+  t.secrets = SECRETS.filter(x => x.found()).length;
+  const ib = inbox(); t.notes = ib.length; t.written = ib.filter(n => n.done).length;
+  t.coins = c + t.dops*R.dops + t.evidence*R.evidence + t.clears*R.clear + t.stars*R.star + t.sats*R.sat + t.worlds*R.world
+          + t.hits*R.hit + t.bosses*R.boss + t.secrets*R.secret + t.notes*R.note + t.written*R.written;
   return t;
 }
-const levelFor = xp => { let l = 1; while (25*l*(l+1) <= xp) l++; return l; };
-const floorFor = l => 25*(l-1)*l;
+// Level curve sized so the last title lands around CCT
+const levelFor = xp => { let l = 1; while (50*l*(l+1) <= xp) l++; return l; };
+const floorFor = l => 50*(l-1)*l;
 const titleFor = l => TITLES[Math.min(l-1, TITLES.length-1)];
 
 // ── Sound: original chiptune blips (unlocked on first tap — required on iPhone) ──
@@ -282,7 +389,9 @@ const SFX = {
   level(){ [659,0,659,784,988,1319].forEach((f,i)=>f&&tone(f,i*.09,.12)); tone(1568,.6,.45); },
   buy(){ tone(220,0,.06,"sawtooth",.05); tone(880,.06,.08); tone(1760,.12,.2,"triangle"); },
   tick(){ tone(1319,0,.04,"square",.05); },
-  down(){ tone(392,0,.08); tone(262,.08,.14); }, nope(){ tone(150,0,.15,"sawtooth",.05); } };
+  down(){ tone(392,0,.08); tone(262,.08,.14); }, nope(){ tone(150,0,.15,"sawtooth",.05); },
+  hit(){ tone(120,0,.07,"sawtooth",.08); tone(90,.06,.1,"sawtooth",.07); tone(1047,.14,.08); },
+  secret(){ [784,740,622,440,415,659,831,1047].forEach((f,i)=>tone(f,i*.09,.1)); } };
 
 // ── FX ──
 let pt = [innerWidth/2, innerHeight/2];
@@ -309,7 +418,8 @@ function drawAvatar(cv){ const x=cv.getContext("2d"), eq=shop().eq; x.clearRect(
 // ── Render (each part separately; only what changed is redrawn) ──
 const $ = id => document.getElementById(id);
 const esc = t => String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-const fmtDate = d => d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+const DATEFMT = new Intl.DateTimeFormat("en-GB",{day:"numeric",month:"short",year:"numeric"});
+const fmtDate = d => isNaN(d) ? "?" : DATEFMT.format(d);   // one cached formatter: toLocaleDateString is slow on phones
 const today = () => { const t = new Date(); t.setHours(0,0,0,0); return t; };
 const viewYear = () => S.view || nowYear();
 
@@ -328,26 +438,49 @@ function renderHUD(t){
 }
 function renderMap(){
   const now = nowYear(), view = viewYear(), total = allCips().length, td = today();
-  $("track").innerHTML = YEARS.map((y,i) => { const d = arcpDate(y), pct = Math.round(clearedIn(y)/total*100), days = Math.round((d - td)/864e5);
+  $("track").innerHTML = YEARS.map((y,i) => { const d = arcpDate(y), pct = Math.round(clearedIn(y)/total*100), days = Math.round((d - td)/864e5), bs = boss(y);
     const cls = [y===now?"now":"", pct===100?"done":"", y===view?"view":""].join(" ");
-    return `<button class="node ${cls}" data-year="${y}">${y===view?'<canvas class="walker" width="16" height="16"></canvas>':""}<span class="plat"></span><span class="lbl">WORLD ${i+1} · ${y}</span><span class="sub">Boss: ARCP ${fmtDate(d)}${days>=0?` · ${days}d`:" · done"}</span><span class="pct">${pct}% CLEARED</span></button><span class="link"></span>`;
+    return `<button class="node ${cls}" data-year="${y}">${y===view?'<canvas class="walker" width="16" height="16"></canvas>':""}<span class="plat"></span><span class="lbl">WORLD ${i+1} · ${y}</span><span class="sub">Boss: ARCP ${fmtDate(d)}${days>=0?` · ${days}d`:" · done"}</span><span class="pct">${pct}% CLEARED</span><span class="pct ${bs.defeated?"":"bhp"}">${bs.defeated?"BOSS DEFEATED":`BOSS HP ${bs.hp}/${bs.total}`}</span></button><span class="link"></span>`;
   }).join("") + `<div class="node"><svg class="castle" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="12" height="10" fill="#8f8ab8"/><rect x="2" y="4" width="2" height="2" fill="#8f8ab8"/><rect x="6" y="4" width="4" height="2" fill="#8f8ab8"/><rect x="12" y="4" width="2" height="2" fill="#8f8ab8"/><rect x="6" y="11" width="4" height="5" fill="#14112b"/><rect x="7" y="1" width="1" height="4" fill="#f4f1ff"/><rect x="8" y="1" width="3" height="2" fill="#ff6b6b"/></svg><span class="plat" style="background:#5b5585"></span><span class="lbl">CCT CASTLE</span><span class="sub">${fmtDate(new Date(CCT_DATE))} (tentative)</span></div>`;
   const w = $("track").querySelector("canvas.walker"); if (w) drawAvatar(w);
+  $("secrets").innerHTML = `<span class="lbl">SECRET EXITS ${SECRETS.filter(x=>x.found()).length}/${SECRETS.length}</span>` +
+    SECRETS.map(x => { const on = x.found(); return `<button class="pipe ${on?"on":""}" data-secret="${x.id}" aria-label="${on?esc(x.nm):"Undiscovered secret exit"}">${PIPE}<span>${on?esc(x.nm):"???"}</span></button>`; }).join("");
 }
+const PIPE = `<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="2" width="14" height="5" fill="#0b0920"/><rect x="2" y="3" width="12" height="3" fill="#3fbf6a"/><rect x="3" y="7" width="10" height="9" fill="#0b0920"/><rect x="4" y="7" width="8" height="9" fill="#2c8a4c"/><rect x="5" y="7" width="2" height="9" fill="#7be39a"/><rect x="3" y="3" width="2" height="2" fill="#a8f0bd"/></svg>`;
+const BOSS_SVG = `<svg class="bsvg" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="1" width="2" height="3" fill="#4a2590"/><rect x="10" y="1" width="2" height="3" fill="#4a2590"/><rect x="3" y="3" width="10" height="11" fill="#7a3fd1"/><rect x="2" y="5" width="1" height="7" fill="#7a3fd1"/><rect x="13" y="5" width="1" height="7" fill="#7a3fd1"/><rect x="5" y="5" width="2" height="2" fill="#fff"/><rect x="9" y="5" width="2" height="2" fill="#fff"/><rect x="6" y="6" width="1" height="1" fill="#14112b"/><rect x="10" y="6" width="1" height="1" fill="#14112b"/><rect x="4" y="4" width="3" height="1" fill="#14112b"/><rect x="9" y="4" width="3" height="1" fill="#14112b"/><rect x="5" y="9" width="6" height="2" fill="#14112b"/><rect x="6" y="9" width="1" height="1" fill="#fff"/><rect x="9" y="9" width="1" height="1" fill="#fff"/><rect x="3" y="14" width="3" height="2" fill="#4a2590"/><rect x="10" y="14" width="3" height="2" fill="#4a2590"/><rect x="13" y="7" width="3" height="5" fill="#c9a36a"/><rect x="14" y="8" width="1" height="1" fill="#f4f1ff"/><rect x="14" y="10" width="1" height="1" fill="#f4f1ff"/></svg>`;
+function toast(msg){ const old = document.querySelector(".toast"); if (old) old.remove(); const e = document.createElement("div"); e.className = "toast"; e.textContent = msg; document.body.appendChild(e); setTimeout(() => e.remove(), 2800); }
 function tileHTML(x, yr){
-  const st = state(x, yr), n = count(x.id, yr), min = S.gaps && (st==="clear"||st==="master"), p = x.g.label[0];
+  const st = state(x, yr), n = count(x.id, yr), min = S.gaps && (st==="clear"||st==="master");
   let stars;
   if (x.g.type === "level"){ const e = entrust(x.id), tg = target(x.id, yr); stars = `<span class="stars" title="Entrustment L${e} · ${yr} target L${tg}">${[1,2,3,4].map(k=>`<span class="${k<=e?"on":k===tg?"tgt":""}">${k<=e?"★":"☆"}</span>`).join("")}</span>`; }
   else stars = `<span class="stars">${sat(x.id,yr)?'<span class="on">⚑ SAT</span>':'⚑ —'}</span>`;
-  return `<button class="lvl ${st} ${min?"min":""}" data-cip="${x.id}" aria-label="${esc(x.nm)}, ${st}"><span class="blk">${p==="G"?"G":p==="R"?"R":"M"}-${x.i+1}</span><span class="lnm">${esc(x.nm)}</span><span class="meta"><span class="pips">${[0,1,2].map(k=>`<i class="${k<n?"on":""}"></i>`).join("")}</span><span>${n}/${EVID_TARGET}</span>${stars}</span></button>`;
+  return `<button class="lvl ${st} ${min?"min":""}" data-cip="${x.id}" aria-label="${esc(x.nm)}, ${st}"><span class="blk">${cipCode(x)}</span><span class="lnm">${esc(x.nm)}</span><span class="meta"><span class="pips">${[0,1,2].map(k=>`<i class="${k<n?"on":""}"></i>`).join("")}</span><span>${n}/${EVID_TARGET}</span>${stars}</span></button>`;
 }
 function renderStage(){
-  const yr = viewYear(), g = CIP_GROUPS.find(g => g.label === S.stage) || CIP_GROUPS[0];
+  const yr = viewYear(), isBoss = S.stage === "BOSS", g = CIP_GROUPS.find(g => g.label === S.stage) || CIP_GROUPS[0], bs = boss(yr);
   $("tabs").innerHTML = CIP_GROUPS.map(gr => { const done = gr.cips.filter((c,i)=>["clear","master"].includes(state({id:c[0],g:gr,i},yr))).length;
-    return `<button class="tab" role="tab" aria-selected="${gr.label===g.label}" data-stage="${esc(gr.label)}">${esc(gr.label.replace(/ CiPs$/,""))} ${done}/${gr.cips.length}</button>`; }).join("");
+    return `<button class="tab" role="tab" aria-selected="${!isBoss && gr.label===g.label}" data-stage="${esc(gr.label)}">${esc(gr.label.replace(/ CiPs$/,""))} ${done}/${gr.cips.length}</button>`; }).join("")
+    + `<button class="tab boss" role="tab" aria-selected="${isBoss}" data-stage="BOSS">BOSS ${bs.defeated?"✓":`HP ${bs.hp}`}</button>`;
+  $("legend").hidden = isBoss; $("gaps").checked = S.gaps;
+  if (isBoss){ $("grid").className = "bossv"; $("grid").innerHTML = bossHTML(yr, bs);
+    $("gridnote").textContent = `${yr} · these are the same numbers and ticks as the ARCP app's Requirements and Admin tabs, so changes show up in both. Items marked "ARCP app" are set there.`; return; }
+  $("grid").className = "grid";
   $("grid").innerHTML = g.cips.map((c,i) => tileHTML({ id:c[0], nm:c[1], ev:c[2], g, i }, yr)).join("");
-  $("gridnote").textContent = `${yr} · tap a level to add evidence (+3) or set entrustment (+15 per ★). Red ☆ = this year's target.`;
-  $("gaps").checked = S.gaps;
+  $("gridnote").textContent = `${yr} · tap a level to add evidence (+${rules().evidence}) or set entrustment (+${rules().star} per ★). Red ☆ = this year's target.`;
+}
+function bossHTML(yr, b){
+  const R = rules(), d = arcpDate(yr), days = Math.round((d - today())/864e5), open = yearOpen(yr);
+  const ctrl = i => i.kind === "num" ? `<span class="stp"><button class="sb" data-req="${i.id}" data-d="-1" aria-label="One fewer">−</button><b>${i.val}/${i.target}</b><button class="sb" data-req="${i.id}" data-d="1" aria-label="One more">+</button></span>`
+    : i.kind === "chk" ? `<button class="ck ${i.met?"on":""}" data-req="${i.id}" aria-label="${i.met?"Untick":"Tick"} ${esc(i.lbl)}">${i.met?"✓":""}</button>`
+    : `<a class="tag" href="ARCP.html">${i.met?"✓ DONE":"ARCP APP ↗"}</a>`;
+  const row = i => `<div class="req ${i.met?"met":""}"><div><div class="rl">${i.met?"✓ ":""}${esc(i.lbl)}</div><div class="note">${esc(i.note||"")}</div></div>${ctrl(i)}</div>`;
+  const groups = [["renal","RENAL"],["gim","GIM"],["admin","ADMIN & DOCUMENTS"]].map(([k,l]) => {
+    const all = b.items.filter(i => i.grp === k), show = S.gaps ? all.filter(i => !i.met) : all; if (!all.length) return "";
+    return `<div class="rgrp">${l} · ${all.filter(i=>i.met).length}/${all.length}</div>${show.length ? `<div class="rgrid">${show.map(row).join("")}</div>` : `<div class="note">All done.</div>`}`; }).join("");
+  return `<div class="bosshd ${b.defeated?"dead":""}">${BOSS_SVG}<div><div class="lbl">${b.defeated?"BOSS DEFEATED":"THE ARCP PANEL"} · ${yr}</div>
+    <div class="sub">${fmtDate(d)} · ${days>=0?`${days} days to go`:"done"}${b.outcome?` · Outcome ${esc(b.outcome)}`:""}</div>
+    <div class="hp" aria-label="Boss HP ${b.hp} of ${b.total}"><i style="transform:scaleX(${b.total ? b.hp/b.total : 0})"></i></div>
+    <div class="sub">HP ${b.hp}/${b.total} · each requirement met is a hit (+${R.hit}) · defeat it for +${R.boss}${open?"":" · coins count once this year starts"}</div></div></div>${groups}`;
 }
 function renderShop(t){
   t = t || tally(); const sh = shop(), bal = Math.max(0, t.coins - sh.spent);
@@ -357,9 +490,25 @@ function renderShop(t){
       ? `<button class="btn ${eq?"alt":""}" data-equip="${it.id}" ${eq?"disabled":""}>${eq?"EQUIPPED":"EQUIP"}</button>`
       : `<button class="btn" data-buy="${it.id}" ${bal<it.price?"disabled":""}><span class="coin"></span>${it.price}</button>`}</div>`; }).join("");
 }
-function renderAll(){ const t = tally(); renderHUD(t); renderMap(); renderStage(); renderShop(t); if (!$("drawer").hidden && S.open) openLevel(S.open); }
+function renderRules(){ const R = rules(), ed = !!S.editRules;
+  $("rules").innerHTML = RULE_DEFS.map(([k,l,d]) => `<tr><td>${esc(l)}${ed && R[k]!==d?` <span class="note">(default ${d})</span>`:""}</td><td>${ed
+    ? `<span class="stp"><button class="sb" data-rule="${k}" data-d="-1" aria-label="Lower">−</button><b>${R[k]}</b><button class="sb" data-rule="${k}" data-d="1" aria-label="Raise">+</button></span>` : `+${R[k]}`}</td></tr>`).join("");
+  $("rulesEdit").textContent = ed ? "DONE" : "TUNE"; $("rulesReset").hidden = !ed;
+}
+function renderInbox(){
+  const R = rules(), a = inbox().sort((x,y) => y.ts - x.ts), open = a.filter(n => !n.done), done = a.filter(n => n.done);
+  const tag = n => { const x = allCips().find(c => c.id === n.cip); return x ? ` · ${cipCode(x)} ${x.nm}` : ""; };
+  const row = n => `<div class="nt ${n.done?"done":""}"><div class="sub">${fmtDate(new Date(n.ts))} · ${esc(n.yr||"")}${esc(tag(n))}</div><div class="ntx">${esc(n.text)}</div><div class="nbtns">${n.done
+      ? `<button class="btn alt" data-note="${n.id}" data-op="undo">UNDO</button><button class="btn alt" data-note="${n.id}" data-op="copy">COPY</button>`
+      : `<button class="btn" data-note="${n.id}" data-op="done">WRITTEN UP ✓ +${R.written}</button><button class="btn alt" data-note="${n.id}" data-op="copy">COPY</button>`}<button class="btn alt" data-note="${n.id}" data-op="del">${S.confirmDel===n.id?"DELETE?":"✕"}</button></div></div>`;
+  $("inbox").innerHTML = (open.length ? open.map(row).join("") : `<p class="note">${a.length ? "Inbox zero. Everything is written up." : "No notes yet."}</p>`)
+    + (done.length ? `<details id="donel" ${S.showDone?"open":""}><summary class="note">Written up (${done.length})</summary>${done.map(row).join("")}</details>` : "");
+  $("addNote").textContent = `SAVE +${R.note}`;
+}
+$("ncip").innerHTML += CIP_GROUPS.map(g => `<optgroup label="${esc(g.label)}">${g.cips.map((c,i) => `<option value="${c[0]}">${c[0][0].toUpperCase()}-${i+1} ${esc(c[1])}</option>`).join("")}</optgroup>`).join("");
+$("inbox").addEventListener("toggle", e => { if (e.target.id === "donel") S.showDone = e.target.open; }, true);
+function renderAll(){ const t = tally(); renderHUD(t); renderMap(); renderStage(); renderShop(t); renderRules(); renderInbox(); if (!$("drawer").hidden && S.open) openLevel(S.open); }
 let rq = 0; const scheduleRender = () => { if (rq) return; rq = requestAnimationFrame(() => { rq = 0; renderAll(); }); };
-$("rules").innerHTML = RULES.map(([t,v])=>`<tr><td>${t}</td><td>+${v}</td></tr>`).join("");
 
 // ── Level drawer ──
 function openLevel(id){
@@ -368,28 +517,32 @@ function openLevel(id){
   const types = [...x.ev, ...Object.keys(p).filter(t => !x.ev.includes(t) && p[t] > 0)];
   const d = $("drawer");
   d.innerHTML = `<div class="din"><button class="btn alt" data-act="close" style="align-self:flex-end">✕ CLOSE</button>
-    <h2>${x.g.label[0]==="G"?"G":x.g.label[0]==="R"?"R":"M"}-${x.i+1} · ${esc(x.nm)}</h2>
-    <div class="note">${yr} · ${n}/${EVID_TARGET} evidence · ${({master:"MASTERED",clear:"CLEARED",prog:"IN PROGRESS",locked:"LOCKED"})[st]} · tap to add (+3)</div>
+    <h2>${cipCode(x)} · ${esc(x.nm)}</h2>
+    <div class="note">${yr} · ${n}/${EVID_TARGET} evidence · ${({master:"MASTERED",clear:"CLEARED",prog:"IN PROGRESS",locked:"LOCKED"})[st]} · tap to add (+${rules().evidence})</div>
     <div class="chips">${types.map(t=>`<button class="chip" data-ev="${esc(t)}">${esc(t)}${p[t]?` <b>${p[t]}</b><span class="minus" data-minus="1" aria-label="Remove one">−</span>`:""}</button>`).join("")}</div>
     <div class="note">Typed "Other" evidence is added in the ARCP app's CiPs tab.</div>
     ${x.g.type==="level"
-      ? `<div><div class="note">ES entrustment · ${yr} target L${tg} (+15 per ★)</div><div class="starbtns">${[1,2,3,4].map(k=>`<button data-star="${k}" class="${k<=e?"on":""}" aria-label="Level ${k}">★</button>`).join("")}</div></div>`
-      : `<div><button class="btn ${sat(id,yr)?"alt":""}" data-act="sat">${sat(id,yr)?"✓ SIGNED OFF · tap to undo":"MARK SATISFACTORY (+30)"}</button></div>`}</div>`;
+      ? `<div><div class="note">ES entrustment · ${yr} target L${tg} (+${rules().star} per ★)</div><div class="starbtns">${[1,2,3,4].map(k=>`<button data-star="${k}" class="${k<=e?"on":""}" aria-label="Level ${k}">★</button>`).join("")}</div></div>`
+      : `<div><button class="btn ${sat(id,yr)?"alt":""}" data-act="sat">${sat(id,yr)?"✓ SIGNED OFF · tap to undo":`MARK SATISFACTORY (+${rules().sat})`}</button></div>`}</div>`;
   d.hidden = false;
 }
 
 // ── Actions: change data, then celebrate by comparing before/after ──
 function act(change){
-  const yr = viewYear(), b = tally(), bState = {}; allCips().forEach(x => bState[x.id] = state(x, yr));
+  const yr = viewYear(), b = tally(), bState = {}, bBoss = boss(yr); allCips().forEach(x => bState[x.id] = state(x, yr));
   change();
-  const a = tally(), diff = a.coins - b.coins;
-  renderHUD(a); renderStage(); renderShop(a); renderMap(); if (S.open && !$("drawer").hidden) openLevel(S.open);
-  if (diff > 0){ pop("+" + diff); diff >= 5 ? SFX.big() : SFX.coin(); } else if (diff < 0) SFX.down();
+  const a = tally(), diff = a.coins - b.coins, aBoss = boss(yr), R = rules();
+  renderHUD(a); renderStage(); renderShop(a); renderMap(); renderInbox(); if (S.open && !$("drawer").hidden) openLevel(S.open);
+  if (diff > 0){ pop("+" + diff); aBoss.met > bBoss.met ? SFX.hit() : diff >= 5 ? SFX.big() : SFX.coin(); }
+  else if (diff < 0) SFX.down();
+  else if (aBoss.met > bBoss.met){ pop("HIT!"); SFX.hit(); }
   let delay = 200; const cips = allCips();
   const nowState = {}; cips.forEach(x => nowState[x.id] = state(x, yr));
   if (cips.some(x => bState[x.id] !== "master" && nowState[x.id] === "master")) { setTimeout(()=>{ SFX.clear(); banner("MASTERED!","Entrustment at target"); }, delay); delay += 1700; }
-  else if (cips.some(x => ["locked","prog"].includes(bState[x.id]) && ["clear","master"].includes(nowState[x.id]))) { setTimeout(()=>{ SFX.clear(); banner("CLEAR!","+10 bonus"); }, delay); delay += 1700; }
-  if (a.worlds > b.worlds) { setTimeout(()=>{ SFX.level(); banner("WORLD CLEAR!", `${yr} complete · +100`); }, delay); delay += 1700; }
+  else if (cips.some(x => ["locked","prog"].includes(bState[x.id]) && ["clear","master"].includes(nowState[x.id]))) { setTimeout(()=>{ SFX.clear(); banner("CLEAR!",`+${R.clear} bonus`); }, delay); delay += 1700; }
+  if (!bBoss.defeated && aBoss.defeated) { setTimeout(()=>{ SFX.level(); banner("BOSS DEFEATED!", `ARCP ${yr}${yearOpen(yr)?` · +${R.boss}`:""}`); }, delay); delay += 1700; }
+  if (a.secrets > b.secrets) { setTimeout(()=>{ SFX.secret(); banner("SECRET EXIT!", `+${R.secret}`); }, delay); delay += 1700; }
+  if (a.worlds > b.worlds) { setTimeout(()=>{ SFX.level(); banner("WORLD CLEAR!", `${yr} complete · +${R.world}`); }, delay); delay += 1700; }
   if (levelFor(a.coins) > levelFor(b.coins)) setTimeout(()=>{ SFX.level(); banner("LEVEL UP!", `Lv ${levelFor(a.coins)} · ${titleFor(levelFor(a.coins))}`); }, delay);
   local.set("seen", snapshotOf(a));
 }
@@ -406,7 +559,30 @@ document.addEventListener("click", ev => {
   if (t.dataset.buy){ const it = SHOP.find(i=>i.id===t.dataset.buy), sh = shop(), bal = tally().coins - sh.spent; if (bal < it.price){ SFX.nope(); return; }
     sh.spent += it.price; if (!sh.owned.includes(it.id)) sh.owned.push(it.id); sh.eq[it.slot] = it.id; setRaw("pft_quest_shop", JSON.stringify(sh)); SFX.buy(); pop("-"+it.price); const tt = tally(); renderHUD(tt); renderShop(tt); renderMap(); return; }
   if (t.dataset.equip){ const it = SHOP.find(i=>i.id===t.dataset.equip), sh = shop(); sh.eq[it.slot] = it.id; setRaw("pft_quest_shop", JSON.stringify(sh)); SFX.coin(); const tt = tally(); renderHUD(tt); renderShop(tt); renderMap(); return; }
+  if (t.dataset.req){ const it = bossItems(yr).find(i => i.id === t.dataset.req); if (!it) return;
+    act(() => { if (it.kind === "num") setRaw(it.key, String(Math.max(0, it.val + (+t.dataset.d))));
+      else if (it.kind === "chk"){ const nv = String(!it.met); setRaw(it.key, nv); if (it.also) setRaw(it.also, nv); } }); return; }
+  if (t.dataset.secret){ const x = SECRETS.find(q => q.id === t.dataset.secret); if (!x) return; if (x.found()){ SFX.coin(); toast(`${x.nm} · ${x.info()}`); } else { SFX.nope(); toast(`Hint: ${x.hint}`); } return; }
+  if (t.dataset.rule){ const o = ruleOverrides(), R = rules(), k = t.dataset.rule, v = R[k], up = +t.dataset.d > 0, step = (up ? v >= 10 : v > 10) ? 5 : 1;
+    const def = RULE_DEFS.find(r => r[0] === k)[2], nv = Math.max(0, Math.min(500, v + (up ? step : -step)));
+    if (nv === def) delete o[k]; else o[k] = nv; setRaw("pft_quest_rules", JSON.stringify(o)); SFX.tick(); local.set("seen", snapshotOf(tally())); renderAll(); return; }
+  if (t.dataset.note){ const a = inbox(), n = a.find(q => q.id === t.dataset.note); if (!n) return;
+    switch (t.dataset.op){
+      case "copy": try { navigator.clipboard.writeText(n.text).then(() => toast("Copied. Paste it into your ePortfolio reflection."), () => toast("Couldn't copy. Select the text instead.")); } catch(e){ toast("Couldn't copy. Select the text instead."); } return;
+      case "del": if (S.confirmDel !== n.id){ S.confirmDel = n.id; renderInbox(); setTimeout(() => { if (S.confirmDel === n.id){ S.confirmDel = null; renderInbox(); } }, 3000); return; }
+        S.confirmDel = null; act(() => saveInbox(a.filter(q => q.id !== n.id))); return;
+      case "done": act(() => { n.done = true; n.doneTs = Date.now(); const x = allCips().find(c => c.id === n.cip);
+          if (x){ const yr2 = n.yr || nowYear(), ty = reflType(x), p = picks(x.id, yr2); p[ty] = (parseInt(p[ty])||0) + 1; setPicks(x.id, yr2, p); n.ev = ty; }
+          saveInbox(a); }); return;
+      case "undo": act(() => { n.done = false; delete n.doneTs; if (n.ev && n.cip){ const yr2 = n.yr || nowYear(), p = picks(n.cip, yr2); p[n.ev] = Math.max(0, (parseInt(p[n.ev])||0) - 1); setPicks(n.cip, yr2, p); } delete n.ev; saveInbox(a); }); return;
+    } return; }
   switch (t.dataset.act){
+    case "note": $("inboxBox").scrollIntoView({ behavior:"smooth", block:"start" }); setTimeout(() => $("nt").focus(), 350); return;
+    case "addNote": { const txt = $("nt").value.trim(); if (!txt){ SFX.nope(); toast("Write a line or two first."); $("nt").focus(); return; }
+      const n = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), ts: Date.now(), text: txt, cip: $("ncip").value || "", yr: nowYear(), done:false };
+      act(() => saveInbox(inbox().concat([n]))); $("nt").value = ""; $("ncip").value = ""; toast("Saved to your inbox"); return; }
+    case "rulesEdit": S.editRules = !S.editRules; renderRules(); return;
+    case "rulesReset": setRaw("pft_quest_rules", "{}"); SFX.down(); local.set("seen", snapshotOf(tally())); renderAll(); return;
     case "close": $("drawer").hidden = true; S.open = null; return;
     case "sat": act(() => setRaw(`pft_cip_sat_${yr}_${id}`, String(!sat(id, yr)))); return;
     case "mute": S.muted = !S.muted; local.set("muted", S.muted); $("mute").textContent = S.muted ? "♪ OFF" : "♪ ON"; return;
@@ -416,25 +592,29 @@ document.addEventListener("click", ev => {
 $("gaps").addEventListener("change", e => { S.gaps = e.target.checked; local.set("gaps", S.gaps); renderStage(); });
 
 // ── Welcome back: coins earned in the ARCP app since you last opened Quest ──
-const snapshotOf = t => ({ coins:t.coins, entries:t.entries, dops:t.dops, evidence:t.evidence, clears:t.clears, stars:t.stars, sats:t.sats, worlds:t.worlds });
+const snapshotOf = t => JSON.parse(JSON.stringify(t));
 let pendingCollect = null;
 function checkWelcome(){
   if (!(S.gotData && S.gotLb) || pendingCollect !== null) return;
   const t = tally(), seen = local.get("seen", null);
   if (seen && t.coins <= seen.coins){ pendingCollect = false; local.set("seen", snapshotOf(t)); return; }
-  const lines = [];
+  const lines = [], R = rules();
   if (!seen) lines.push(["Everything logged so far", t.coins]);
   else {
-    Object.keys(LB_TYPES).forEach(k => { const d = (t.entries[k]||0) - ((seen.entries||{})[k]||0); if (d > 0) lines.push([`${d} × ${LB_TYPES[k]}`, d]); });
+    Object.keys(LB_TYPES).forEach(k => { const d = (t.entries[k]||0) - ((seen.entries||{})[k]||0); if (d > 0) lines.push([`${d} × ${LB_TYPES[k]}`, d*R[LB_RULE[k]]]); });
     const add = (lbl, cur, old, per) => { const d = cur - (old||0); if (d > 0) lines.push([`${d} × ${lbl}`, d*per]); };
-    add("DOPS signed", t.dops, seen.dops, 4); add("CiP evidence", t.evidence, seen.evidence, 3); add("CiP CLEAR!", t.clears, seen.clears, 10);
-    add("★ entrustment", t.stars, seen.stars, 15); add("Generic sign-off", t.sats, seen.sats, 30); add("WORLD CLEAR", t.worlds, seen.worlds, 100);
+    add("DOPS signed", t.dops, seen.dops, R.dops); add("CiP evidence", t.evidence, seen.evidence, R.evidence); add("CiP CLEAR!", t.clears, seen.clears, R.clear);
+    add("★ entrustment", t.stars, seen.stars, R.star); add("Generic sign-off", t.sats, seen.sats, R.sat); add("WORLD CLEAR", t.worlds, seen.worlds, R.world);
+    add("ARCP requirement met", t.hits, seen.hits, R.hit); add("BOSS DEFEATED", t.bosses, seen.bosses, R.boss); add("SECRET EXIT", t.secrets, seen.secrets, R.secret);
+    add("Reflection note", t.notes, seen.notes, R.note); add("Written up", t.written, seen.written, R.written);
+    const rest = (t.coins - seen.coins) - lines.reduce((s2,l) => s2 + l[1], 0);
+    if (rest) lines.push(["Coin values rebalanced", rest]);
   }
   pendingCollect = { from: seen ? seen.coins : 0, to: t.coins, lines, first: !seen, t };
   const c = $("collect");
   c.innerHTML = `<div class="cbox"><div class="lbl" style="font-size:14px">${seen ? "WELCOME BACK, DR MAUGO" : "WELCOME TO ARCP QUEST"}</div>
     <div class="note">${seen ? "Coins earned in the ARCP app since your last visit" : "Your logbook and CiPs have already earned you coins"}</div>
-    <ul>${lines.slice(0,8).map(([l,v])=>`<li><span>${esc(l)}</span><b>+${v}</b></li>`).join("")}</ul>
+    <ul>${lines.slice(0,10).map(([l,v])=>`<li><span>${esc(l)}</span><b>${v<0?"−"+Math.abs(v):"+"+v}</b></li>`).join("")}</ul>
     <div class="big" id="cnum">+0</div>
     <button class="btn" data-act="collect">TAP TO COLLECT</button></div>`;
   c.hidden = false;
