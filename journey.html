@@ -11,8 +11,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-<!-- Same Firebase project as the ARCP app. Logbook is READ ONLY here; only CiP evidence,
-     entrustment, generic sign-off and the shop are written, in the ARCP app's own format. -->
+<!-- Same Firebase project as the ARCP app, written in the ARCP app's own formats. Logbook: Journey only ADDS
+     entries (same fields, id/createdAt/updatedAt); the ARCP app merges by entry id, so nothing is overwritten. -->
 <script type="module">
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -22,7 +22,8 @@
     databaseURL:"https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app", projectId:"task-monitor-bd7ee",
     storageBucket:"task-monitor-bd7ee.firebasestorage.app", messagingSenderId:"544624731364", appId:"1:544624731364:web:419d52fa061c5c7b4f38f1" });
   const db = getDatabase(app), dataRef = ref(db, "arcpData"), logbookRef = ref(db, "logbookData");
-  window.QFB = { write: (key, val) => update(dataRef, { [key]: { value: String(val), ts: Date.now() } }) };
+  window.QFB = { write: (key, val) => update(dataRef, { [key]: { value: String(val), ts: Date.now() } }),
+                 writeLb: payload => update(logbookRef, payload) };
   signInAnonymously(getAuth(app)).catch(e => console.warn("auth", e)).finally(() => {
     onValue(dataRef,    s => window.dispatchEvent(new CustomEvent("q-data", { detail: s.val() || {} })), e => window.dispatchEvent(new CustomEvent("q-offline")));
     onValue(logbookRef, s => window.dispatchEvent(new CustomEvent("q-logbook", { detail: s.val() || {} })), e => window.dispatchEvent(new CustomEvent("q-offline")));
@@ -197,6 +198,24 @@ details summary{cursor:pointer;margin:6px 0}
 .rhead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px} .rhead h3{margin-bottom:6px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel2);border:3px solid var(--edge);box-shadow:0 6px 0 rgba(0,0,0,.35);padding:10px 14px;z-index:72;width:max-content;max-width:min(420px,90vw);font-size:14px;text-align:center}
 @media (max-width:760px){ .side{grid-column:1/-1;flex-direction:row;flex-wrap:wrap} .side .sbtn{flex:1} .side .sync{flex-basis:100%} .rgrid{grid-template-columns:1fr} }
+/* Quick log (item blocks) */
+.blocks{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.qb{background:none;border:none;padding:4px 0;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--ink)}
+.qbk{width:48px;height:48px;display:grid;place-items:center;background:var(--coin);color:#8a5a00;font-family:var(--pixel);font-size:24px;border:3px solid var(--edge);box-shadow:inset -4px -4px 0 rgba(0,0,0,.25),inset 4px 4px 0 rgba(255,255,255,.45)}
+.qb.renal .qbk{background:#ff9f5a} .qb.both .qbk{background:#7be39a;color:#1d6b36}
+.qb.bump .qbk{animation:bump .28s steps(4)}
+@keyframes bump{50%{transform:translateY(-10px)}}
+.qbl{font-family:var(--pixel);font-size:10px;text-align:center;line-height:1.25}
+.qbc{font-size:11px;color:var(--coin)}
+.lform{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.lf{display:flex;flex-direction:column;gap:4px}
+.lf label{font-size:12px;color:var(--mute)}
+.lf.wide{grid-column:1/-1}
+.drawer input[type=text],.drawer input[type=number],.drawer input[type=date]{font-family:var(--body);font-size:16px;color:var(--ink);background:var(--night);border:3px solid var(--edge);padding:8px;width:100%;border-radius:0;min-height:44px;-webkit-appearance:none;appearance:none}
+.drawer select{min-height:44px}
+.lsave{position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom,0px));background:var(--panel);padding:10px 0 4px;display:flex;gap:8px}
+.lsave .btn{flex:1;font-size:13px;padding:12px}
+@media (max-width:760px){ .blocks{grid-template-columns:repeat(4,1fr);row-gap:12px} }
 @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 </style>
 </head>
@@ -220,6 +239,11 @@ details summary{cursor:pointer;margin:6px 0}
       <div class="sync" id="sync">● connecting</div>
     </div>
   </header>
+
+  <section class="box" aria-label="Quick log">
+    <div class="rhead"><h3>QUICK LOG</h3><span class="note" id="lastlog"></span></div>
+    <div class="blocks" id="blocks"></div>
+  </section>
 
   <section class="box path" aria-label="Training journey">
     <div class="note">Your road to CCT · tap a world to view it · ARCP dates come from the ARCP app's Admin tab</div>
@@ -258,6 +282,16 @@ const CIP_TARGETS = {"m1": {"ST4": 3, "ST5": 3, "ST6": 3, "ST7": 4}, "m2": {"ST4
 const REQS = {"gim_acats":{"label":"GIM ACATs","stream":"gim","type":"number","target":4,"unit":"ACATs","deadline":"annual","note":"GIM consultants, labelled GIM"},"gim_mcrs":{"label":"GIM MCRs","stream":"gim","type":"number","target":2,"unit":"MCRs","deadline":"annual","note":"GIM consultants only, labelled GIM"},"gim_sles":{"label":"GIM SLEs (miniCEX / CBD)","stream":"gim","type":"number","target":3,"unit":"SLEs","deadline":"annual","note":"Labelled GIM by GIM consultants"},"gim_msf_raters":{"label":"GIM MSF Raters","stream":"gim","type":"number","target":4,"unit":"raters","deadline":"annual","note":"4 GIM raters in MSF (part of 12 total)"},"gim_es_report":{"label":"GIM Educational Supervisor Report","stream":"gim","type":"checkbox","deadline":"annual","note":"1 per year — even without a GIM placement"},"gim_clinics":{"label":"GIM Clinics","stream":"gim","type":"number","target":20,"unit":"clinics","deadline":"ST7","cumulative":true,"note":"20 total by end of training"},"gim_cpd_hours":{"label":"IM Study Leave / CPD Hours","stream":"gim","type":"number","target":75,"unit":"hours","deadline":"ST7","cumulative":true,"note":"75hrs total, 20 in final year"},"gim_sim_hours":{"label":"Simulation Hours","stream":"gim","type":"number","target":12,"unit":"hours","deadline":"ST7","cumulative":true,"note":"12hrs total (GIMME/NOTES), 4 in final year"},"gim_acute_patients":{"label":"Acute GIM Patients","stream":"gim","type":"number","target":750,"unit":"patients","deadline":"ST7","cumulative":true,"note":"750 total, 100 in final year"},"gim_ward_cover":{"label":"IM Ward Cover","stream":"gim","type":"number","target":12,"unit":"months","deadline":"ST7","cumulative":true,"note":"12 months total IM ward cover"},"gim_teaching_obs":{"label":"Teaching Observation","stream":"gim","type":"checkbox","deadline":"ST7","sharedWith":"renal_teaching_obs","note":"Can be done in Renal — applies to GIM"},"gim_patient_survey":{"label":"Patient Survey","stream":"gim","type":"checkbox","deadline":"ST5","sharedWith":"renal_patient_survey_st5","note":"ST5 Renal survey counts as GIM — no separate GIM survey needed"},"gim_qip":{"label":"GIM QIP + QIPAT","stream":"gim","type":"checkbox","deadline":"ST7","note":"By end of ST7"},"renal_mcrs":{"label":"Renal MCRs","stream":"renal","type":"number","target":4,"unit":"MCRs","deadline":"annual","note":"Renal consultants, labelled renal"},"renal_msf_raters":{"label":"Renal MSF Raters","stream":"renal","type":"number","target":8,"unit":"raters","deadline":"annual","note":"8 renal raters + 4 GIM = 12 total (3 must be consultants)"},"renal_sles":{"label":"Renal SLEs (ACATs / CBD / miniCEX)","stream":"renal","type":"number","target":15,"unit":"SLEs","deadline":"annual","note":"Minimum 15 per year across all SLE types"},"renal_teaching_log":{"label":"Renal Teaching Hours Log","stream":"renal","type":"checkbox","deadline":"annual","note":"Log on spreadsheet in library"},"renal_teaching_involvement":{"label":"Evidence of Teaching Involvement","stream":"renal","type":"checkbox","deadline":"annual","note":"Required every year"},"renal_es_report":{"label":"Renal Educational Supervisor Report","stream":"renal","type":"checkbox","deadline":"annual","note":"1 per year"},"renal_temp_lines":{"label":"Temporary Line Competency","stream":"renal","type":"checkbox","deadline":"ST4","note":"Competent by end of ST4"},"renal_eseneph":{"label":"ESENeph Exam","stream":"renal","type":"eseneph","deadline":"ST6","note":"Held once a year — book early. Alert 1 year before due."},"renal_patient_survey_st5":{"label":"Patient Survey (ST5)","stream":"renal","type":"checkbox","deadline":"ST5","sharesTo":"gim_patient_survey","note":"Counts as the GIM Patient Survey — ticking this ticks GIM too"},"renal_qip":{"label":"Renal QIP + QIPAT","stream":"renal","type":"checkbox","deadline":"ST6","note":"By end of ST6"},"renal_teaching_obs":{"label":"Teaching Observation","stream":"renal","type":"checkbox","deadline":"ST6","sharesTo":"gim_teaching_obs","note":"Applies to GIM — ticking this ticks GIM too"},"renal_patient_survey_st7":{"label":"Patient Survey (ST7)","stream":"renal","type":"checkbox","deadline":"ST7","note":"Required again in ST7 for Renal curriculum (separate from ST5)"},"renal_mgmt_course":{"label":"Management & Leadership Course","stream":"renal","type":"checkbox","deadline":"ST7","note":"By end of ST7"}};
 const ADMIN_DOCS = [{"id":"doc_form_r","label":"Form R in Library","note":"Required each year"},{"id":"doc_cct_calc","label":"CCT Calculator in Library","note":"Update each year (especially if LTFT)"},{"id":"doc_firth","label":"Updated Firth Calculator","note":"Update every year"},{"id":"doc_renal_sot","label":"Renal Summary of Training in Library","note":"Procedures, clinics and renal teaching"},{"id":"doc_gim_sot","label":"GIM Summary of Training in Library","note":"Acute take, clinics, ward cover, teaching, simulation"},{"id":"doc_cpd_diary","label":"CPD Diary in Library","note":"Export from Logbook → Teaching CPD and upload"}];
 const DOPS_PROCEDURES = ["Advanced cardiopulmonary resuscitation (CPR)","Direct current (DC) cardioversion","Temporary cardiac pacing using an external device","Central venous cannulation (internal jugular or subclavian)","Access to circulation for resuscitation (femoral vein or intraosseous)","Pleural aspiration for fluid (diagnostic)","Pleural aspiration (pneumothorax)","Intercostal drain for pneumothorax","Intercostal drain for effusion","Nasogastric (NG) tube","Ascitic tap","Abdominal paracentesis","Lumbar puncture"];
+// Logbook option lists copied from the ARCP app's forms
+const LOGBOOK_PROCEDURES_RENAL = ["Temp HD catheter (femoral)","Temp HD catheter (jugular)","Tunnelled dialysis catheter","Tunnelled line removal","Native kidney biopsy","Transplant kidney biopsy"];
+const LOGBOOK_PROCEDURES_GIM = ["DC cardioversion","Temporary cardiac pacing (external device)","Central venous cannulation (IJ or subclavian)","Access to circulation — femoral / intraosseous","Pleural aspiration","Intercostal drain","Nasogastric (NG) tube","Ascitic tap","Abdominal paracentesis","Lumbar puncture"];
+const CLINIC_TYPES_GIM = ["GIM outpatient clinic","Medical SDEC","Community clinic","Other GIM clinic"];
+const CLINIC_TYPES_RENAL = ["General Nephrology clinic","HD clinic","Transplant clinic","HTN clinic","AKCC","Other renal clinic"];
+const CPD_DIARY_TYPES = ["Course / workshop","Conference","E-learning / online module","Journal club","Journal article","MDT meeting","M&M / clinical governance meeting","Grand round","Departmental teaching (attended)","Regional training day","Webinar","Audit / QI meeting","Simulation (attended)","Other"];
+const CPD_INTERNAL_DEFAULT = ["Journal club","Journal article","MDT meeting","M&M / clinical governance meeting","Grand round","Departmental teaching (attended)","Audit / QI meeting","Simulation (attended)"];
+const SIM_COURSE_TYPES = ["GIMME","NOTES","Other simulation course"];
+const TEACHING_TYPES = ["Bedside teaching","Tutorial / seminar","Grand round presentation","Journal club","Simulation facilitation","Medical student supervision","Foundation doctor supervision","Audit / QIP presentation","Other"];
+const LEGACY_GIM_COUNTED = ["Regional GIM training day","RCP / RSM / BMA approved course","Online CPD","Other external CPD"];
 const YEARS = ["ST4","ST5","ST6","ST7"];
 const ARCP_DEFAULTS = { ST4:"2026-12-02", ST5:"2027-12-02", ST6:"2028-12-02", ST7:"2029-12-02" };
 const CCT_DATE = "2030-12-02";
@@ -355,6 +389,88 @@ const SECRETS = [
 function inbox(){ try { const a = JSON.parse(raw("pft_quest_inbox") || "[]"); return Array.isArray(a) ? a.filter(n => n && n.id) : []; } catch(e){ return []; } }
 const saveInbox = a => setRaw("pft_quest_inbox", JSON.stringify(a));
 const reflType = x => x.ev.find(e => /^reflections?$/i.test(e)) || "Reflection";
+
+// ── Quick log: add-only logbook entries, same fields and format as the ARCP app's forms ──
+// Field: [id, label, kind, options?, default?]. kinds: date, select, other (select + "Other" free text), text, sup (text + past supervisors), number, area, year, cat (CPD category)
+const F_YEAR = ["year","Training year","year"];
+const LOG_BLOCKS = [
+  { type:"clinics_gim", nm:"GIM clinic", short:"GIM CLINIC", cls:"", fields:[["date","Date","date"],["type","Clinic type","other",CLINIC_TYPES_GIM],["hospital","Hospital","text",null,"Rotherham DGH"],["supervisor","Supervisor","sup"],["patients","Patients seen / observed","number"],F_YEAR,["notes","Notes","text"]] },
+  { type:"clinics_renal", nm:"Renal clinic", short:"RENAL CLINIC", cls:"renal", fields:[["date","Date","date"],["type","Clinic type","other",CLINIC_TYPES_RENAL],["hospital","Hospital","text",null,"Northern General Hospital"],["supervisor","Supervisor","sup"],["patients","Patients seen / observed","number"],F_YEAR,["notes","Notes","text"]] },
+  { type:"procedures_gim", nm:"GIM procedure", short:"GIM PROC", cls:"", fields:[["date","Date","date"],["type","Procedure","select",LOGBOOK_PROCEDURES_GIM],["supervisor","Supervisor","sup"],["dops","DOPS signed off","select",["No","Yes"]],F_YEAR,["notes","Notes","text"]] },
+  { type:"procedures_renal", nm:"Renal procedure", short:"RENAL PROC", cls:"renal", fields:[["date","Date","date"],["type","Procedure","select",LOGBOOK_PROCEDURES_RENAL],["supervisor","Supervisor","sup"],["dops","DOPS signed off","select",["No","Yes"]],F_YEAR,["notes","Notes","text"]] },
+  { type:"cpd_gim", nm:"GIM CPD", short:"GIM CPD", cls:"", fields:[["date","Date","date"],["type","CPD type","select",CPD_DIARY_TYPES],["category","Category","cat"],["title","Activity / title","text"],["provider","Provider / location","text"],["hours","Hours","number"],F_YEAR,["learning","Key learning points","text"],["reflection","Reflection: what will you do differently?","area"]] },
+  { type:"cpd_renal", nm:"Renal CPD", short:"RENAL CPD", cls:"renal", fields:[["date","Date","date"],["type","CPD type","select",CPD_DIARY_TYPES],["category","Category","cat"],["title","Activity / title","text"],["provider","Provider / location","text"],["hours","Hours","number"],F_YEAR,["learning","Key learning points","text"],["reflection","Reflection: what will you do differently?","area"]] },
+  { type:"teaching", nm:"Teaching", short:"TEACHING", cls:"both", fields:[["date","Date","date"],["type","Type","select",TEACHING_TYPES],["audience","Audience","text"],["topic","Topic","text"],["supervisor","Supervisor / observed by","sup"],["signoff","Sign-off","select",["Informal — not observed","Formally observed — signed off"]],F_YEAR,["notes","Notes","text"]] },
+  { type:"simulation", nm:"Simulation", short:"SIM", cls:"both", fields:[["date","Date","date"],["course","Course","other",SIM_COURSE_TYPES],["title","Session / title","text"],["hours","Hours","number"],["hospital","Hospital / venue","text"],F_YEAR,["notes","Notes / reflection","text"]] }];
+const REMEMBER = ["type","hospital","supervisor","course","provider","audience","category"];   // pre-filled from your last entry of that kind
+const cpdCategoryFor = t => CPD_INTERNAL_DEFAULT.includes(t) ? "Internal" : "External";
+const cpdIsOnline = e => e.type === "E-learning / online module" || e.type === "Online CPD";
+function cpdIsExternal(e){ if (CPD_INTERNAL_DEFAULT.includes(e.type)) return false; if (e.category) return e.category === "External"; if (LEGACY_GIM_COUNTED.includes(e.type)) return true; return cpdCategoryFor(e.type) === "External"; }
+const isoToday = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
+function pastSupervisors(){ const seen = new Map();
+  ["clinics_gim","clinics_renal","procedures_gim","procedures_renal","teaching"].forEach(k => lbEntries(k).forEach(e => { const n = (e.supervisor||"").trim(); if (n){ const ts = +e.createdAt || +e.id || 0; if (!seen.has(n) || seen.get(n) < ts) seen.set(n, ts); } }));
+  return [...seen.entries()].sort((a,b) => b[1]-a[1]).slice(0,40).map(x => x[0]); }
+function openLog(type){
+  const bt = LOG_BLOCKS.find(b => b.type === type); if (!bt) return; S.open = null; S.form = type;
+  const last = (local.get("lastvals", {})[type]) || {}, R = rules(), per = R[LB_RULE[type]];
+  const field = ([id, label, kind, opts, def]) => {
+    const v = last[id] != null && REMEMBER.includes(id) ? last[id] : (def || ""), nm = `id="lf-${id}" name="${id}"`;
+    let inp;
+    if (kind === "date") inp = `<input type="date" ${nm} value="${isoToday()}">`;
+    else if (kind === "year") inp = `<select ${nm}>${YEARS.map(y => `<option ${y===nowYear()?"selected":""}>${y}</option>`).join("")}</select>`;
+    else if (kind === "cat") inp = `<select ${nm}><option>External</option><option>Internal</option></select>`;
+    else if (kind === "select" || kind === "other"){ const known = opts.includes(v);
+      inp = `<select ${nm}>${opts.map(o => `<option ${(known ? o===v : false)?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+      if (kind === "other") inp += `<input type="text" id="lf-${id}-other" placeholder="Please specify" ${known || !v ? "hidden" : ""} value="${known ? "" : esc(v)}">`; }
+    else if (kind === "area") inp = `<textarea ${nm} rows="3"></textarea>`;
+    else if (kind === "number") inp = `<input type="number" ${nm} min="0" step="0.5" inputmode="decimal">`;
+    else inp = `<input type="text" ${nm} value="${esc(v)}" ${kind==="sup"?'list="lf-sups" autocomplete="off"':""}>`;
+    return `<div class="lf ${kind==="area"?"wide":""}"><label for="lf-${id}">${esc(label)}</label>${inp}</div>`; };
+  const d = $("drawer");
+  d.innerHTML = `<div class="din"><button class="btn alt" data-act="close" style="align-self:flex-end">✕ CLOSE</button>
+    <h2>LOG · ${esc(bt.nm.toUpperCase())}</h2><div class="note">+${per} coins${type.startsWith("procedures") ? ` · +${R.dops} more if DOPS signed` : ""} · saved straight to your ARCP logbook</div>
+    <div class="lform">${bt.fields.map(field).join("")}</div>
+    <datalist id="lf-sups">${pastSupervisors().map(n => `<option value="${esc(n)}"></option>`).join("")}</datalist>
+    <div class="lsave"><button class="btn" data-act="saveLog">LOG IT ▸ +${per}</button></div></div>`;
+  const other = bt.fields.find(f => f[2] === "other"); if (other && last[other[0]] && !other[3].includes(last[other[0]])) $(`lf-${other[0]}`).value = other[3].find(o => o.startsWith("Other")) || other[3][other[3].length-1];
+  if (bt.fields.some(f => f[2] === "cat")) $("lf-category").value = cpdCategoryFor($("lf-type").value);
+  d.hidden = false; d.scrollTop = 0;
+}
+function syncCumulative(type){   // mirror the ARCP app's running totals for the GIM requirements
+  const a = lbEntries(type), sum = arr => arr.reduce((t,e) => t + (parseFloat(e.hours)||0), 0);
+  if (type === "clinics_gim") setRaw("pft_cum_gim_clinics", String(a.length));
+  if (type === "simulation") setRaw("pft_cum_gim_sim_hours", String(Math.round(sum(a)*10)/10));
+  if (type === "cpd_gim") setRaw("pft_cum_gim_cpd_hours", String(Math.round(sum(a.filter(e => cpdIsExternal(e) && !cpdIsOnline(e))) + Math.min(sum(a.filter(cpdIsOnline)), 15))));
+}
+function saveLog(){
+  const bt = LOG_BLOCKS.find(b => b.type === S.form); if (!bt) return;
+  if (!S.gotLb){ SFX.nope(); toast("Still connecting to your logbook. Try again in a moment."); return; }
+  const entry = {};
+  bt.fields.forEach(([id,,kind]) => { const el = $(`lf-${id}`); let v = el ? el.value.trim() : "";
+    if (kind === "other" && /^Other/.test(v)){ const o = $(`lf-${id}-other`); if (o && o.value.trim()) v = o.value.trim(); }
+    entry[id] = v; });
+  if (!entry.date){ SFX.nope(); toast("Add a date first."); return; }
+  const lastAll = local.get("lastvals", {}); lastAll[bt.type] = {}; REMEMBER.forEach(k => { if (entry[k]) lastAll[bt.type][k] = entry[k]; }); local.set("lastvals", lastAll);
+  act(() => {
+    let arr = []; try { arr = JSON.parse(typeof S.lb[bt.type] === "string" ? S.lb[bt.type] : "[]") || []; } catch(e){ arr = []; }
+    let now = Date.now(); while (arr.some(e => e && String(e.id) === String(now))) now++;
+    arr.push(Object.assign({}, entry, { id:now, createdAt:now, updatedAt:now }));
+    const val = JSON.stringify(arr);
+    S.lb = Object.assign({}, S.lb, { [bt.type]: val, [bt.type + "_ts"]: now }); local.set("cache_lb", S.lb);
+    if (window.QFB && window.QFB.writeLb) window.QFB.writeLb({ [bt.type]: val, [bt.type + "_ts"]: now });
+    syncCumulative(bt.type);
+  });
+  const what = bt.nm + (entry.type && !/^cpd/.test(bt.type) ? ` · ${entry.type}` : entry.title ? ` · ${entry.title}` : "");
+  local.set("lastlog", { what, ts: Date.now() });
+  $("drawer").hidden = true; S.form = null; renderBlocks();
+  const blk = document.querySelector(`.qb[data-log="${bt.type}"]`); if (blk){ blk.classList.remove("bump"); void blk.offsetWidth; blk.classList.add("bump"); }
+  toast(`Logged: ${what}`);
+}
+function renderBlocks(){ const R = rules();
+  $("blocks").innerHTML = LOG_BLOCKS.map(b => `<button class="qb ${b.cls}" data-log="${b.type}" aria-label="Log a ${esc(b.nm)}"><span class="qbk" aria-hidden="true">?</span><span class="qbl">${b.short}</span><span class="qbc">+${R[LB_RULE[b.type]]}</span></button>`).join("");
+  const l = local.get("lastlog", null);
+  $("lastlog").textContent = l ? `Last: ${l.what} · ${fmtDate(new Date(l.ts))}` : "Tap a block to log";
+}
 
 // ── Coins: derived from data every time + a breakdown (for the welcome-back screen) ──
 function tally(){
@@ -507,12 +623,12 @@ function renderInbox(){
 }
 $("ncip").innerHTML += CIP_GROUPS.map(g => `<optgroup label="${esc(g.label)}">${g.cips.map((c,i) => `<option value="${c[0]}">${c[0][0].toUpperCase()}-${i+1} ${esc(c[1])}</option>`).join("")}</optgroup>`).join("");
 $("inbox").addEventListener("toggle", e => { if (e.target.id === "donel") S.showDone = e.target.open; }, true);
-function renderAll(){ const t = tally(); renderHUD(t); renderMap(); renderStage(); renderShop(t); renderRules(); renderInbox(); if (!$("drawer").hidden && S.open) openLevel(S.open); }
+function renderAll(){ const t = tally(); renderHUD(t); renderMap(); renderStage(); renderShop(t); renderRules(); renderInbox(); renderBlocks(); if (!$("drawer").hidden && S.open) openLevel(S.open); }
 let rq = 0; const scheduleRender = () => { if (rq) return; rq = requestAnimationFrame(() => { rq = 0; renderAll(); }); };
 
 // ── Level drawer ──
 function openLevel(id){
-  const x = allCips().find(c => c.id === id); if (!x) return; S.open = id;
+  const x = allCips().find(c => c.id === id); if (!x) return; S.open = id; S.form = null;
   const yr = viewYear(), p = picks(id, yr), n = count(id, yr), st = state(x, yr), e = entrust(id), tg = target(id, yr);
   const types = [...x.ev, ...Object.keys(p).filter(t => !x.ev.includes(t) && p[t] > 0)];
   const d = $("drawer");
@@ -554,6 +670,7 @@ document.addEventListener("click", ev => {
   if (t.dataset.year){ S.view = t.dataset.year === nowYear() ? null : t.dataset.year; $("drawer").hidden = true; S.open = null; renderHUD(); renderMap(); renderStage(); return; }
   if (t.dataset.stage){ S.stage = t.dataset.stage; renderStage(); return; }
   if (t.dataset.cip){ openLevel(t.dataset.cip); return; }
+  if (t.dataset.log){ t.classList.remove("bump"); void t.offsetWidth; t.classList.add("bump"); SFX.tick(); openLog(t.dataset.log); return; }
   if (t.dataset.ev){ const minus = ev.target.closest("[data-minus]"); act(() => { const p = picks(id, yr); p[t.dataset.ev] = Math.max(0, (parseInt(p[t.dataset.ev])||0) + (minus?-1:1)); setPicks(id, yr, p); }); return; }
   if (t.dataset.star){ const v = +t.dataset.star, cur = entrust(id), nv = v === cur ? v - 1 : v; act(() => setRaw(`pft_cip_entrust_${id}`, nv ? String(nv) : "")); return; }
   if (t.dataset.buy){ const it = SHOP.find(i=>i.id===t.dataset.buy), sh = shop(), bal = tally().coins - sh.spent; if (bal < it.price){ SFX.nope(); return; }
@@ -583,11 +700,17 @@ document.addEventListener("click", ev => {
       act(() => saveInbox(inbox().concat([n]))); $("nt").value = ""; $("ncip").value = ""; toast("Saved to your inbox"); return; }
     case "rulesEdit": S.editRules = !S.editRules; renderRules(); return;
     case "rulesReset": setRaw("pft_quest_rules", "{}"); SFX.down(); local.set("seen", snapshotOf(tally())); renderAll(); return;
-    case "close": $("drawer").hidden = true; S.open = null; return;
+    case "close": $("drawer").hidden = true; S.open = null; S.form = null; return;
+    case "saveLog": saveLog(); return;
     case "sat": act(() => setRaw(`pft_cip_sat_${yr}_${id}`, String(!sat(id, yr)))); return;
     case "mute": S.muted = !S.muted; local.set("muted", S.muted); $("mute").textContent = S.muted ? "♪ OFF" : "♪ ON"; return;
     case "collect": runCollect(); return;
   }
+});
+$("drawer").addEventListener("change", e => {   // quick-log form: "Other…" free text, CPD category follows type
+  const el = e.target; if (!S.form || !el.id || !el.id.startsWith("lf-")) return;
+  const o = $(el.id + "-other"); if (o) { o.hidden = !/^Other/.test(el.value); if (!o.hidden) o.focus(); }
+  if (el.id === "lf-type" && $("lf-category")) $("lf-category").value = cpdCategoryFor(el.value);
 });
 $("gaps").addEventListener("change", e => { S.gaps = e.target.checked; local.set("gaps", S.gaps); renderStage(); });
 
