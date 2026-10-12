@@ -340,7 +340,7 @@ const MISS_DAYS = 1;                        // a missed recall comes back tomorr
 // study methods. You can also dare him early: a win clears the whole subtopic, so topics you already know get cleared fast.
 const BOSS = { name:"COUNT GLOMERULA", pass:80, wakeDays:3, methods:[["feynman","Feynman"],["study2","Study² Protocol"],["review","Nephrology review"]] };
 const scoreLabel = n => n >= 85 ? "Expert" : n >= 70 ? "Confident" : n >= 60 ? "Somewhat Confident" : n >= 40 ? "Building Knowledge" : "Needs More Practice";
-const RULES = [["read","Subtopic read (★)",1],["q","Each question you write (★★)",1],["win","Ghost busted · correct recall",3],
+const RULES = [["read","Subtopic read (★)",1],["first","First question on a subtopic (★★)",5],["q","Each extra question",1],["win","Ghost busted · correct recall",3],
   ["boss","Count Glomerula defeated · 80% or more · clears the subtopic (👑)",20],
   ["topic","Topic clear · every subtopic has a question or a 👑",10],["world","World clear · every subtopic in a category cleared",50],
   ["case","Pathology case logged",3],["week","Bonus stage clear · 3 cases in a week",10]];
@@ -444,13 +444,13 @@ function bxWeeksCleared(){ const per = {}; cases().forEach(([,r]) => { const k =
 
 // ── Coins: derived from data every time ──
 function tally(){
-  const t = { read:0, cleared:0, qs:0, wins:0, bosses:0, awake:0, topics:0, worlds:0, cases:0, weeks:0, stars:0 };
+  const t = { read:0, cleared:0, sets:0, qs:0, wins:0, bosses:0, awake:0, topics:0, worlds:0, cases:0, weeks:0, stars:0 };
   LEVELS.forEach(L => { if (isRead(L)) t.read++; if (cleared(L)) t.cleared++; const qs = questions(L);
-    t.qs += qs.length; qs.forEach(q => t.wins += q.wins || 0);
+    if (qs.length) t.sets++; t.qs += qs.length; qs.forEach(q => t.wins += q.wins || 0);
     if (mastered(L)) t.bosses++; if (bossAwake(L)) t.awake++; t.stars += starsOf(L); });
   WORLDS.forEach(w => { w.topics.forEach(tp => { if (topicDone(tp)) t.topics++; }); if (worldDone(w)) t.worlds++; });
   t.cases = cases().length; t.weeks = bxWeeksCleared();
-  t.sce = t.read*R.read + t.qs*R.q + t.wins*R.win + t.bosses*R.boss + t.topics*R.topic + t.worlds*R.world + t.cases*R.case + t.weeks*R.week;
+  t.sce = t.read*R.read + t.sets*R.first + (t.qs - t.sets)*R.q + t.wins*R.win + t.bosses*R.boss + t.topics*R.topic + t.worlds*R.world + t.cases*R.case + t.weeks*R.week;
   return t;
 }
 // Shared wallet with ARCP Quest: lifetime = ARCP Quest's published total + this game's; spending lives in pft_quest_shop
@@ -724,7 +724,7 @@ function openLevel(qk, keep){
       ${qs.map(qRow).join("")}
       <div class="field"><label for="nq">${qs.length ? "Add another question" : "Write a question you'd want to be asked"}</label><textarea id="nq" rows="2" maxlength="600" placeholder="e.g. Na 118, euvolaemic, urine osmolality 520. Why does 0.9% saline make it worse?">${esc(keepVal("nq"))}</textarea></div>
       <div class="field"><label for="na">Answer</label><textarea id="na" rows="3" maxlength="2000" placeholder="What you'd want to say in the exam">${esc(keepVal("na"))}</textarea></div>
-      <div class="brow"><button class="btn" data-act="addQ">ADD QUESTION +${R.q}</button></div>
+      <div class="brow"><button class="btn" data-act="addQ">ADD QUESTION +${qs.length ? R.q : R.first}</button></div>
       <div class="note">Each question comes back as a ghost after ${RECALL_DAYS.join(", ")} days as you keep getting it right. A miss brings it back tomorrow.</div></div>
     <div class="step ${recalled(L)?"got":""}"><div class="shd"><b class="${recalled(L)?"":"off"}">★★★ RECALLED</b></div>
       <div class="note">${!qs.length ? "Add a question first. Its first recall unlocks " + RECALL_DAYS[0] + " days later." : `${qs.filter(q => q.wins > 0).length}/${qs.length} questions answered correctly at least once.`}</div>
