@@ -580,7 +580,10 @@
     ═══════════════════════════════════════════════ */
     @media (max-width: 640px) {
       .req-grid, .dops-grid { grid-template-columns: 1fr; }
-      .year-sel-wrap { display: none; }
+      /* Year selector stays on phones: full-width row under the header */
+      .year-sel-wrap { flex-basis: 100%; flex-direction: row; align-items: center; gap: 10px; padding: 10px 14px; border-left: none; border-top: 1px solid var(--bg5); }
+      .year-btns { flex: 1; gap: 6px; }
+      .year-btn  { flex: 1; min-height: 36px; padding: 6px 0; font-size: 13px; touch-action: manipulation; }
       #main { padding: 14px 14px 76px; }
     }
 
@@ -3803,7 +3806,8 @@ function sotOpen(title, stream, sectionsHtml){
 }
 
 // Procedures section (tally by procedure + full list) — shared by GIM and Renal summaries
-function sotProcSection(title, key){
+function sotProcSection(title, key, opts){
+  opts = opts || {};
   const yr=currentYear;
   const procs = getLbEntries(key).slice().sort(byDateAsc("date"));
   const tally = new Map();
@@ -3812,8 +3816,8 @@ function sotProcSection(title, key){
   const dopsTotal = procs.filter(e=>e.dops==="Yes").length;
   const body = (tallyRows.length ? `<h3>By procedure</h3>`+sotTable(["Procedure",`${yr}`,"All years","DOPS signed"], tallyRows, {num:[1,2,3], bold:[2], cls:"tally", total:{labelCol:0, valueCol:2, value:procs.length}}) : "")
     + (procs.length ? `<h3>All procedures</h3>` : "")
-    + sotTable(["Date","Procedure","Hospital","Supervisor","DOPS","Year"],
-        procs.map(e=>[sotDate(e.date), normProcName(e.type)||"", e.hospital||"", e.supervisor||"", e.dops==="Yes"?"\u2713 Yes":(e.dops||"No"), e.year||""]), {});
+    + sotTable(["Date","Procedure"].concat(opts.noHospital?[]:["Hospital"],["Supervisor","DOPS","Year"]),
+        procs.map(e=>[sotDate(e.date), normProcName(e.type)||""].concat(opts.noHospital?[]:[e.hospital||""],[e.supervisor||"", e.dops==="Yes"?"\u2713 Yes":(e.dops||"No"), e.year||""])), {});
   return sotSection(title,
     `${yr}: <strong>${procs.filter(e=>e.year===yr).length}</strong> \u00b7 All years: <strong>${procs.length}</strong> \u00b7 DOPS signed: ${dopsTotal}`,
     body, []);
@@ -3851,7 +3855,7 @@ function printGimSummary(){
     ["Note - minimum 20 GIM outpatient clinics before CCT, of which no more than 10 may be Medical SDEC."]));
 
   // 3 — GIM procedures
-  sections.push(sotProcSection("GIM procedures", "procedures_gim"));
+  sections.push(sotProcSection("GIM procedures", "procedures_gim", {noHospital:true}));
 
   // 4 — Ward cover
   const ward = getLbEntries("ward_cover").slice().sort(byDateAsc("start"));
@@ -3900,7 +3904,7 @@ function printRenalSummary(){
   const thisYr = arr => arr.filter(e=>e.year===yr).length;
 
   // 1 — Procedures: tally + list
-  sections.push(sotProcSection("Renal procedures", "procedures_renal"));
+  sections.push(sotProcSection("Renal procedures", "procedures_renal", {noHospital:true}));
 
   // 2 — Clinics
   const clinics = getLbEntries("clinics_renal").slice().sort(byDateAsc("date"));
