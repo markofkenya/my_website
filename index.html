@@ -702,7 +702,15 @@ function showDenied(u, err, why) {
     <strong>Reason:</strong> ${esc(why || (err ? (err.code || err.message) : "not on the allowlist"))}<br>
     Your user ID: <code>${esc(u.uid)}</code><br>
     To approve it: Firebase console → Realtime Database → Data → <code>allowedUsers / ${esc(u.uid)}</code> = <code>true</code> (boolean), then reload.<br>
+    Or skip the typing: download the file below, then in the console's Data tab open the ⋮ menu (top right) → <strong>Import JSON</strong> → choose the file. This replaces the whole database, which is fine while it holds nothing but the allowlist.<br>
+    <button class="btn" id="denied-dl" style="margin-right:8px">DOWNLOAD allowlist.json</button>
     <button class="btn" id="denied-out">SIGN OUT</button>`;
+  $("denied-dl").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify({ allowedUsers: { [u.uid]: true } }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "allowlist.json";
+    document.body.appendChild(a); a.click(); a.remove();
+  });
   $("denied-out").addEventListener("click", () => signOut(auth));
 }
 
