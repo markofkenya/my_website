@@ -202,7 +202,9 @@ textarea{resize:vertical;min-height:58px}
 .try{display:flex;gap:10px;align-items:center;font-size:13px;background:var(--night);border:3px solid var(--edge);padding:5px 8px}
 .try b{font-family:var(--pixel);font-size:12px;color:var(--alert)} .try.win b{color:var(--grass)} .try .note{flex:1}
 .lvl .crown{margin-left:4px}
-.lvl .vampt{position:absolute;right:6px;top:-12px;width:28px;height:28px;animation:float 1.4s steps(2) infinite} .lvl .vampt.two{right:36px}
+.lvl .vampt{position:absolute;right:6px;top:-12px;width:28px;height:28px;animation:float 1.4s steps(2) infinite;z-index:2} .lvl .vampt.two{right:36px}
+.vampt.zz,.vamp.zz{animation:none;filter:saturate(.6) brightness(.8)}
+.lvl .fails{position:absolute;right:4px;top:-14px;z-index:3;font-family:var(--pixel);font-size:9px;background:var(--alert);color:var(--night);padding:1px 3px;border:2px solid var(--edge)} .lvl .fails.two{right:34px}
 .bossfight.awake{border-color:var(--alert)}
 .lvl.crowned{border-color:var(--star)}
 
@@ -359,7 +361,7 @@ const MISS_DAYS = 1;                        // a missed recall comes back tomorr
 const BOSS = { name:"COUNT GLOMERULA", pass:80, wakeDays:2, methods:[["feynman","Feynman"],["study2","Study² Protocol"],["review","Nephrology review"]] };
 const scoreLabel = n => n >= 85 ? "Expert" : n >= 70 ? "Confident" : n >= 60 ? "Somewhat Confident" : n >= 40 ? "Building Knowledge" : "Needs More Practice";
 const RULES = [["read","Subtopic read (★)",5],["first","First question on a subtopic (★★)",5],["q","Each extra question",1],["win","Ghost busted · correct recall",3],
-  ["boss","Count Glomerula defeated · 80% or more · clears the subtopic (👑)",20],
+  ["boss","Count Glomerula defeated · 80% or more · clears the subtopic (👑)",20],["giant","Giant Count Glomerula defeated · after 3 or more fails (comeback bonus)",30],
   ["topic","Topic clear · every subtopic has a question or a 👑",10],["world","World clear · every subtopic in a category cleared",50],
   ["kb1","World boss · first KSAP pass on that world, 75% or more",75],["kb2","World boss · second KSAP pass, 80% or more",150],
   ["gates","SCE castle gates open · all ten world bosses slain on the second pass",250],["princess","Princess Nephra rescued · you passed the SCE",1000],
@@ -428,9 +430,20 @@ const bestScore = L => bossTries(L).reduce((m,a) => Math.max(m, +a.score||0), -1
 const mastered = L => bestScore(L) >= BOSS.pass;
 const cleared = L => hasQs(L) || mastered(L);          // a boss win clears a subtopic even with no questions
 const readAt = L => (Q().readTs || {})[L.qk] || null;
-const bossAwake = L => !mastered(L) && isRead(L) && !!readAt(L) && now() >= readAt(L) + BOSS.wakeDays*DAY;
+// Each failed attempt (under 80%) makes him grow and sends him back to sleep for 2 days, so a retry is never same-day.
+const bossFails = L => mastered(L) ? [] : bossTries(L).filter(a => +a.score < BOSS.pass);
+const lastFail = L => bossFails(L).reduce((m,a) => Math.max(m, a.ts||0), 0) || null;
+const GIANT = 3;   // fails before he turns giant; beating a giant pays the comeback bonus
+function giantWin(L){   // won, and he had beaten you GIANT or more times before your first winning attempt
+  if (!mastered(L)) return false; const tr = bossTries(L).slice().sort((a,b) => (a.ts||0) - (b.ts||0));
+  const i = tr.findIndex(a => +a.score >= BOSS.pass); return i >= GIANT && tr.slice(0, i).filter(a => +a.score < BOSS.pass).length >= GIANT; }
+const growth = L => [1, 1.5, 2, 2.5][Math.min(bossFails(L).length, 3)];   // size multiplier, capped after the third fail
+function wakeAt(L){ if (mastered(L)) return null; const w = [];
+  if (isRead(L) && readAt(L)) w.push(readAt(L) + BOSS.wakeDays*DAY); if (lastFail(L)) w.push(lastFail(L) + BOSS.wakeDays*DAY);
+  return w.length ? Math.max(...w) : null; }
+const bossAsleep = L => { const w = wakeAt(L); return w !== null && now() < w; };
+const bossAwake = L => !mastered(L) && isRead(L) && !!readAt(L) && !bossAsleep(L);
 // Once read, he sleeps for 2 days and can't be fought: a same-day viva tests short-term memory, not what you keep.
-const bossAsleep = L => !mastered(L) && isRead(L) && !!readAt(L) && now() < readAt(L) + BOSS.wakeDays*DAY;
 const starsOf = L => mastered(L) ? 3 : (isRead(L)?1:0) + (hasQs(L)?1:0) + (recalled(L)?1:0);
 function stateOf(L){ if (mastered(L)) return "master"; if (hasQs(L)) return recalled(L) ? "master" : "clear"; return isRead(L) ? "prog" : "locked"; }
 function qDue(q){ if (q.last){ if (q.ok === false) return q.last + MISS_DAYS*DAY; return q.last + RECALL_DAYS[Math.min(q.streak||0, RECALL_DAYS.length-1)]*DAY; }
@@ -519,15 +532,15 @@ function bxWeeksCleared(){ const per = {}; cases().forEach(([,r]) => { const k =
 
 // ── Coins: derived from data every time ──
 function tally(){
-  const t = { read:0, cleared:0, sets:0, qs:0, wins:0, bosses:0, awake:0, topics:0, worlds:0, cases:0, weeks:0, stars:0 };
+  const t = { giants:0, read:0, cleared:0, sets:0, qs:0, wins:0, bosses:0, awake:0, topics:0, worlds:0, cases:0, weeks:0, stars:0 };
   LEVELS.forEach(L => { if (isRead(L)) t.read++; if (cleared(L)) t.cleared++; const qs = questions(L);
     if (qs.length) t.sets++; t.qs += qs.length; qs.forEach(q => t.wins += q.wins || 0);
-    if (mastered(L)) t.bosses++; if (bossAwake(L)) t.awake++; t.stars += starsOf(L); });
+    if (mastered(L)){ t.bosses++; if (giantWin(L)) t.giants++; } if (bossAwake(L)) t.awake++; t.stars += starsOf(L); });
   WORLDS.forEach(w => { w.topics.forEach(tp => { if (topicDone(tp)) t.topics++; }); if (worldDone(w)) t.worlds++; });
   t.cases = cases().length; t.weeks = bxWeeksCleared();
   t.kb1 = 0; t.kb2 = 0; WORLDS.forEach(w => { if (!wbossOf(w)) return; if (kbSlain(w, 1)) t.kb1++; if (kbSlain(w, 2)) t.kb2++; });
   t.gates = gatesOpen() ? 1 : 0; t.princess = princessSaved() ? 1 : 0;
-  t.sce = t.kb1*R.kb1 + t.kb2*R.kb2 + t.gates*R.gates + t.princess*R.princess + t.read*R.read + t.sets*R.first + (t.qs - t.sets)*R.q + t.wins*R.win + t.bosses*R.boss + t.topics*R.topic + t.worlds*R.world + t.cases*R.case + t.weeks*R.week;
+  t.sce = t.kb1*R.kb1 + t.kb2*R.kb2 + t.gates*R.gates + t.princess*R.princess + t.read*R.read + t.sets*R.first + (t.qs - t.sets)*R.q + t.wins*R.win + (t.bosses - t.giants)*R.boss + t.giants*R.giant + t.topics*R.topic + t.worlds*R.world + t.cases*R.case + t.weeks*R.week;
   return t;
 }
 // Shared wallet with ARCP Quest: lifetime = ARCP Quest's published total + this game's; spending lives in pft_quest_shop
@@ -628,8 +641,9 @@ function renderMap(){
 }
 function tileHTML(L){
   const st = stateOf(L), s = starsOf(L), qs = questions(L), dq = dueQs(L).length, due = dq > 0, m = mastered(L), aw = bossAwake(L), min = S.gaps && st === "master" && !due && !aw;
-  const d = dueAt(L), sl = bossAsleep(L), next = due ? `${dq} due` : aw ? "🧛 boss awake" : !qs.length ? (sl ? `💤 boss in ${Math.max(1, Math.ceil((readAt(L) + BOSS.wakeDays*DAY - now())/DAY))}d` : "") : `${qs.length}Q · next ${Math.max(1, Math.ceil((d - now())/DAY))}d`;
-  return `<button class="lvl ${st} ${due?"haunted":""} ${m?"crowned":""} ${min?"min":""}" data-lvl="${L.qk}" aria-label="${esc(L.sub)}, ${s} of 3 stars${m?", boss beaten":""}${aw?", boss awake":""}${due?`, ${dq} due`:""}">${due?BOO:""}${aw?VAMP.replace('class="vamp"', `class="vampt${due?" two":""}"`):""}<span class="blk">${L.code}</span><span class="lnm">${esc(L.sub)}</span><span class="meta"><span class="stars">${[1,2,3].map(k=>`<span class="${k<=s?"on":""}">${k<=s?"★":"☆"}</span>`).join("")}${m?'<span class="crown">👑</span>':""}</span><span>${next}</span></span></button>`;
+  const fl = bossFails(L).length, vz = Math.round(28 * growth(L));
+  const d = dueAt(L), sl = bossAsleep(L), next = fl && sl && !due ? `💤 boss ×${fl} · ${Math.max(1, Math.ceil((wakeAt(L) - now())/DAY))}d` : due ? `${dq} due` : aw ? "🧛 boss awake" : !qs.length ? (sl ? `💤 boss in ${Math.max(1, Math.ceil((wakeAt(L) - now())/DAY))}d` : "") : `${qs.length}Q · next ${Math.max(1, Math.ceil((d - now())/DAY))}d`;
+  return `<button class="lvl ${st} ${due?"haunted":""} ${m?"crowned":""} ${min?"min":""}" data-lvl="${L.qk}"${fl && !m ? ` style="padding-right:${vz + 10}px"` : ""} aria-label="${esc(L.sub)}, ${s} of 3 stars${m?", boss beaten":""}${aw?", boss awake":""}${due?`, ${dq} due`:""}">${due?BOO:""}${aw || (fl && !m) ? VAMP.replace('class="vamp"', `class="vampt${due?" two":""}${sl?" zz":""}" style="width:${vz}px;height:${vz}px;top:${-Math.round(vz/2)+2}px"`) + (fl ? `<span class="fails${due?" two":""}">×${fl}</span>` : "") : ""}<span class="blk">${L.code}</span><span class="lnm">${esc(L.sub)}</span><span class="meta"><span class="stars">${[1,2,3].map(k=>`<span class="${k<=s?"on":""}">${k<=s?"★":"☆"}</span>`).join("")}${m?'<span class="crown">👑</span>':""}</span><span>${next}</span></span></button>`;
 }
 function renderWorld(){
   const w = WORLDS[S.view]; if (!w){ $("topics").innerHTML = ""; return; }
@@ -812,7 +826,8 @@ function act(change){
   if (diff > 0){ pop("+" + diff); diff >= 5 ? SFX.big() : SFX.coin(); } else if (diff < 0) SFX.down();
   let delay = 250;
   const newTopic = WORLDS.flatMap(w => w.topics.filter(tp => topicDone(tp) && !bTopics.has(w.wi + "|" + tp.topic)).map(tp => tp.topic));
-  if (a.bosses > b.bosses){ setTimeout(() => { SFX.level(); banner(`${BOSS.name}<br>DEFEATED!`, `👑 Subtopic cleared · +${R.boss}`); }, delay); delay += 1700; }
+  if (a.giants > b.giants){ setTimeout(() => { SFX.level(); banner(`GIANT ${BOSS.name}<br>DEFEATED!`, `👑 Comeback bonus · +${R.giant}`); }, delay); delay += 1700; }
+  else if (a.bosses > b.bosses){ setTimeout(() => { SFX.level(); banner(`${BOSS.name}<br>DEFEATED!`, `👑 Subtopic cleared · +${R.boss}`); }, delay); delay += 1700; }
   const newWorld = WORLDS.filter(w => worldDone(w) && !bWorlds.has(w.wi));
   if (newWorld.length){ setTimeout(() => { SFX.level(); banner("WORLD CLEAR!", `${esc(newWorld[0].short)} · +${R.world}`); }, delay); delay += 1700; }
   else if (newTopic.length){ setTimeout(() => { SFX.clear(); banner("TOPIC CLEAR!", `${esc(newTopic[0])} · +${R.topic}`); }, delay); delay += 1700; }
@@ -837,7 +852,8 @@ function openLevel(qk, keep){
   const hp = m ? 0 : Math.max(0, 1 - Math.max(0, best) / BOSS.pass), aw = bossAwake(L), ra = readAt(L);
   const bossMsg = m ? `Defeated with ${best}%. This subtopic is cleared and mastered.`
     : aw ? `🧛 He's awake. You read this ${Math.floor((now() - ra)/DAY)} days ago. Beat him with ${BOSS.pass}% or more in a Feynman explanation, a Study² Protocol viva or a Nephrology review.`
-    : bossAsleep(L) ? `💤 Asleep until ${fmtDate(new Date(ra + BOSS.wakeDays*DAY))}. You read this ${((d) => d === 0 ? "today" : d === 1 ? "yesterday" : d + " days ago")(Math.floor((now() - ra)/DAY))}, and a viva straight after reading only tests short-term memory. He wakes ${BOSS.wakeDays} days after reading; come back then.`
+    : bossAsleep(L) && lastFail(L) && lastFail(L) + BOSS.wakeDays*DAY >= wakeAt(L) ? `💤 He beat you ${bossFails(L).length === 1 ? "once" : bossFails(L).length + " times"} and grew${bossFails(L).length >= 3 ? " to giant size" : ""}. Now he's sleeping it off until ${fmtDate(new Date(wakeAt(L)))}. Go back over this subtopic, then come back for the rematch.`
+    : bossAsleep(L) ? `💤 Asleep until ${fmtDate(new Date(wakeAt(L)))}. You read this ${((d) => d === 0 ? "today" : d === 1 ? "yesterday" : d + " days ago")(Math.floor((now() - ra)/DAY))}, and a viva straight after reading only tests short-term memory. He wakes ${BOSS.wakeDays} days after reading; come back then.`
     : `Know this one already without reading? Dare him now. ${BOSS.pass}% or more clears the whole subtopic: read, stars and crown, no questions needed.`;
   const dr = $("drawer");
   dr.innerHTML = `<div class="din"><button class="btn alt" data-act="close" style="align-self:flex-end">✕ CLOSE</button>
@@ -854,8 +870,8 @@ function openLevel(qk, keep){
     <div class="step ${recalled(L)?"got":""}"><div class="shd"><b class="${recalled(L)?"":"off"}">★★★ RECALLED</b></div>
       <div class="note">${!qs.length ? "Add a question first. Its first recall unlocks " + RECALL_DAYS[0] + " days later." : `${qs.filter(q => q.wins > 0).length}/${qs.length} questions answered correctly at least once.`}</div>
       ${dq ? `<div class="brow"><button class="btn boo" data-act="huntOne">👻 RECALL ${dq} DUE NOW</button></div>` : ""}</div>
-    <div class="step bossfight ${m?"got":""} ${aw?"awake":""}"><div class="shd"><b class="${m?"":"off"}">👑 BOSS · ${BOSS.name}</b><span class="note">optional · +${R.boss}</span></div>
-      <div class="bossrow">${VAMP}<div><div class="note">${bossMsg}</div>
+    <div class="step bossfight ${m?"got":""} ${aw?"awake":""}"><div class="shd"><b class="${m?"":"off"}">👑 BOSS · ${BOSS.name}</b><span class="note">optional · +${bossFails(L).length >= GIANT || giantWin(L) ? R.giant + " comeback bonus" : R.boss}</span></div>
+      <div class="bossrow">${VAMP.replace('class="vamp"', `class="vamp${bossAsleep(L) ? " zz" : ""}" style="width:${Math.round(56*growth(L))}px;height:${Math.round(56*growth(L))}px"`)}<div><div class="note">${bossMsg}</div>
         <div class="hp" aria-label="Boss HP"><i style="transform:scaleX(${hp})"></i></div>${best >= 0 ? `<div class="note">Best ${best}% · ${scoreLabel(best)}</div>` : ""}</div></div>
       ${bossAsleep(L) ? "" : `<div class="bossin"><select id="bm" aria-label="Method">${BOSS.methods.map(([k,l]) => `<option value="${k}" ${keep && $("bm") && $("bm").value===k?"selected":""}>${l}</option>`).join("")}</select>
         <input type="number" id="bsc" min="0" max="100" step="1" inputmode="numeric" placeholder="Score %" aria-label="Score percent" value="${esc(keepVal("bsc"))}">
@@ -986,7 +1002,7 @@ document.addEventListener("click", ev => {
       act(() => { const pairs = [setQuest(`boss/${L.qk}/b${now().toString(36)}`, { m: mth, score: sc, ts: now() })];
         if (won && !isRead(L)) pairs.push(...setTopicFlag(L, true), setQuest("read/" + L.qk, true), setQuest("readTs/" + L.qk, now()));   // a win clears the subtopic
         write(pairs); });
-      if (!won){ SFX.boo(); toast(`${sc}% · ${scoreLabel(sc)}. He falls at ${BOSS.pass}% or more. Come back stronger.`); }
+      if (!won){ SFX.boo(); toast(`${sc}% · ${scoreLabel(sc)}. He falls at ${BOSS.pass}% or more. He grows, and sleeps ${BOSS.wakeDays} days before the rematch.`); }
       else if (was){ SFX.coin(); toast(`${sc}% · ${scoreLabel(sc)}. Logged.`); }
       openLevel(L.qk); return; }
     case "reveal": if (S.hunt){ S.hunt.shown = true; SFX.reveal(); renderHunt(); } return;
