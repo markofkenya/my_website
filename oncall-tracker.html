@@ -1,1706 +1,1110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>OCT // On-Call Tracker</title>
-
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-  <meta name="apple-mobile-web-app-title" content="OCT" />
-  <meta name="theme-color" content="#080808" />
-  <link rel="manifest" id="pwa-manifest" />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, push, onValue, update, remove, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-    // ── Same Firebase project as renal tracker ─────────────
-     const firebaseConfig = {
-        apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
-        authDomain: "task-monitor-bd7ee.firebaseapp.com",
-        databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "task-monitor-bd7ee",
-        storageBucket: "task-monitor-bd7ee.firebasestorage.app",
-        messagingSenderId: "544624731364",
-        appId: "1:544624731364:web:419d52fa061c5c7b4f38f1"
-};
-
-    const app = initializeApp(firebaseConfig);
-    const db  = getDatabase(app);
-   
-    // Different path from renalTasks — same project, separate data
-    const tasksRef = ref(db, "onCallTasks");
-    window._fb = { db, ref, push, onValue, update, remove, set, tasksRef };
-    window.dispatchEvent(new Event("firebase-ready"));
-  </script>
-
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:      #080808;
-      --bg2:     #0d0d0d;
-      --bg3:     #121212;
-      --bg4:     #181818;
-
-      /* Amber terminal — distinct from renal tracker's green */
-      --amber:   #ffb000;
-      --amber2:  #cc8c00;
-      --amber3:  #996800;
-      --amber4:  #664400;
-      --amber5:  #332200;
-
-      --red:     #ff3333;
-      --orange:  #ff6600;
-      --green:   #39ff14;
-      --blue:    #00bfff;
-      --dim:     #5a4a2a;
-      --dimmest: #1a1208;
-
-      --font: 'JetBrains Mono', 'Courier New', monospace;
-
-      /* Priority colours */
-      --p-emergency: #ff3333;
-      --p-urgent:    #ff6600;
-      --p-routine:   #ffb000;
-    }
-
-    html, body {
-      background: var(--bg);
-      color: var(--amber);
-      font-family: var(--font);
-      font-size: 13px;
-      min-height: 100vh;
-    }
-
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--amber4); }
-
-    /* ── Header ──────────────────────────────────────────── */
-    #header {
-      background: var(--bg2);
-      border-bottom: 2px solid var(--amber3);
-    }
-    .header-top {
-      display: flex; align-items: stretch;
-      border-bottom: 1px solid var(--amber5);
-    }
-    .header-logo {
-      padding: 14px 24px;
-      border-right: 1px solid var(--amber5);
-      display: flex; flex-direction: column; justify-content: center;
-    }
-    .logo-line1 {
-      font-size: 20px; font-weight: 700;
-      color: var(--amber); letter-spacing: 0.08em; line-height: 1;
-    }
-    .logo-line1 span { color: var(--amber3); }
-    .logo-line2 { font-size: 8px; color: var(--amber3); letter-spacing: 0.3em; margin-top: 4px; }
-    .logo-mode  { font-size: 9px; color: var(--amber2); letter-spacing: 0.15em; margin-top: 3px; }
-
-    .header-stats { display: flex; flex: 1; }
-    .stat-cell {
-      flex: 1; padding: 10px 16px;
-      border-right: 1px solid var(--amber5);
-      display: flex; flex-direction: column; justify-content: center;
-    }
-    .stat-cell:last-child { border-right: none; }
-    .stat-val {
-      font-size: 26px; font-weight: 700; line-height: 1; color: var(--amber);
-    }
-    .stat-val.emerg { color: var(--red); }
-    .stat-val.urg   { color: var(--orange); }
-    .stat-key { font-size: 8px; color: var(--amber3); letter-spacing: 0.2em; margin-top: 3px; }
-
-    .header-clock {
-      padding: 10px 20px; min-width: 170px;
-      border-left: 1px solid var(--amber5);
-      display: flex; flex-direction: column;
-      justify-content: center; align-items: flex-end;
-    }
-    .clock-time { font-size: 20px; font-weight: 700; color: var(--amber2); letter-spacing: 0.06em; }
-    .clock-date { font-size: 9px; color: var(--amber3); margin-top: 3px; letter-spacing: 0.08em; }
-    .shift-info { font-size: 8px; color: var(--amber4); margin-top: 5px; letter-spacing: 0.12em; }
-    .sync-live  { font-size: 8px; color: var(--amber2); margin-top: 3px; letter-spacing: 0.15em; display: none; }
-    .sync-dot   { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--amber2); margin-right: 4px; animation: blink 1.4s step-end infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-
-    /* Priority strip */
-    #priority-strip {
-      display: none;
-      padding: 5px 24px; font-size: 10px; font-weight: 700;
-      letter-spacing: 0.2em; text-shadow: none;
-    }
-    #priority-strip.show { display: block; animation: strobe 1.5s ease-in-out infinite; }
-    #priority-strip.emerg   { background: var(--red);    color: #fff; }
-    #priority-strip.urg     { background: var(--orange); color: #fff; }
-    @keyframes strobe { 0%,100%{opacity:1} 50%{opacity:0.7} }
-
-    /* ── Command bar ─────────────────────────────────────── */
-    #cmdbar {
-      background: var(--bg3); border-bottom: 1px solid var(--amber4);
-      padding: 0 24px; display: flex; align-items: stretch;
-    }
-    .cmd-prompt {
-      padding: 9px 10px 9px 0; color: var(--amber3); font-size: 11px;
-      border-right: 1px solid var(--amber5); display: flex; align-items: center;
-    }
-    .cmd-btn {
-      padding: 9px 13px; background: transparent; border: none;
-      border-right: 1px solid var(--amber5);
-      color: var(--amber3); font-family: var(--font);
-      font-size: 10px; letter-spacing: 0.1em; cursor: pointer; transition: all 0.1s;
-    }
-    .cmd-btn:hover  { background: var(--bg4); color: var(--amber); }
-    .cmd-btn.active { background: var(--amber5); color: var(--amber); }
-    .cmd-select {
-      padding: 9px 10px; background: transparent; border: none;
-      border-right: 1px solid var(--amber5);
-      color: var(--amber3); font-family: var(--font);
-      font-size: 10px; letter-spacing: 0.08em; cursor: pointer; outline: none;
-    }
-    .cmd-select option { background: var(--bg3); color: var(--amber); }
-    .cmd-right { margin-left: auto; display: flex; align-items: center; gap: 0; }
-    .btn-handover {
-      padding: 9px 16px; background: transparent;
-      border-left: 1px solid var(--amber5); border-right: 1px solid var(--amber5);
-      color: var(--amber3); font-family: var(--font);
-      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
-      cursor: pointer; transition: all 0.12s;
-    }
-    .btn-handover:hover { background: var(--amber5); color: var(--amber); }
-    .btn-new {
-      padding: 9px 18px; background: var(--amber4); border: none;
-      border-left: 1px solid var(--amber3);
-      color: var(--amber); font-family: var(--font);
-      font-size: 10px; font-weight: 700; letter-spacing: 0.15em;
-      cursor: pointer; transition: all 0.12s;
-    }
-    .btn-new:hover { background: var(--amber3); }
-    .cmd-search {
-      padding: 9px 10px;
-      background: transparent; border: none;
-      border-right: 1px solid var(--amber5);
-      border-left: 1px solid var(--amber5);
-      color: var(--amber); font-family: var(--font);
-      font-size: 10px; letter-spacing: 0.08em;
-      outline: none; width: 130px;
-      caret-color: var(--amber);
-      text-transform: uppercase;
-    }
-    .cmd-search::placeholder { color: var(--amber4); }
-    .cmd-search:focus { background: var(--bg4); }
-    .remind-grid { display: flex; gap: 6px; margin-top: 2px; }
-.remind-btn {
-  flex: 1; padding: 6px 4px; background: var(--bg);
-  border: 1px solid var(--amber5); color: var(--dim);
-  font-family: var(--font); font-size: 10px;
-  letter-spacing: 0.08em; cursor: pointer; transition: all 0.12s;
-  text-align: center;
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>OCT // On-Call Tracker</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="apple-mobile-web-app-title" content="OCT" />
+<meta name="theme-color" content="#090806" />
+<link rel="manifest" id="pwa-manifest" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#090806;--p1:#0e0c08;--p2:#13100a;--l1:#16120b;--l2:#1f190f;--l3:#2b2214;--l4:#3d3018;
+  --tx:#f0d9a8;--hi:#ffe9c2;--mid:#d9b46a;--lab:#c4a062;--dim:#9a8158;--deco:#7a5a1c;
+  --a:#ffb000;--a2:#ffc94d;--af:#3d2a00;--ae:#7a5a1c;
+  --red:#ff6b5f;--redE:#ff5a4f;--org:#ff8a33;--orgE:#ff7a1a;--grn:#7fe35e;
+  --teal:#5ee6d0;--tf:#051411;--te:#1d5a50;--tt:#b9f5ea;
+  --font:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --scan:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,.22) 2px 4px);
 }
-.remind-btn.sel { background: var(--amber5); border-color: var(--amber); color: var(--amber); font-weight: 700; }
+html,body{background:var(--bg);color:var(--tx);font-family:var(--font);font-size:13px;min-height:100vh}
+body{background-image:var(--scan);text-shadow:0 0 6px rgba(255,176,0,.22)}
+button,input,select,textarea{font:inherit;color:inherit;text-shadow:inherit}
+button{cursor:pointer}
+:focus-visible{outline:1px solid var(--a);outline-offset:2px}
+::placeholder{color:var(--dim)}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--ae)}
+.sr{position:absolute;left:0;top:0;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none!important}
 
-    /* ── Add / Edit drawer ───────────────────────────────── */
-    #add-drawer {
-      display: none; background: var(--bg2);
-      border-bottom: 2px solid var(--amber3);
-      animation: termSlide 0.15s ease;
-    }
-    #add-drawer.open { display: block; }
-    @keyframes termSlide { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.lbl{font-size:10px;letter-spacing:.2em;color:var(--lab);text-transform:uppercase}
+.lbl::before{content:"$ ";color:var(--deco)}
+.inp{background:var(--bg);border:1px solid var(--l4);color:var(--hi);font-size:14px;padding:10px 12px;border-radius:0;outline:none;width:100%;caret-color:var(--a)}
+.inp:focus{border-color:var(--a);box-shadow:0 0 8px rgba(255,176,0,.12)}
+.inp.caps{text-transform:uppercase}
+select.inp option{background:var(--bg)}
+textarea.inp{resize:vertical;min-height:110px;line-height:1.6}
+.btn{min-height:40px;padding:0 16px;background:transparent;border:1px solid var(--l4);color:var(--mid);font-size:11px;letter-spacing:.12em}
+.btn:hover{border-color:var(--a2);color:var(--hi)}
+.btn-pri{background:var(--af);border-color:var(--a);color:var(--a);font-weight:700;letter-spacing:.15em}
+.btn-pri:hover{background:#523800;color:var(--a)}
+.btn-pri:disabled{opacity:.5;cursor:wait}
+.btn-teal{border-color:var(--te);color:var(--teal)}
+.btn-danger:hover{border-color:var(--red);color:var(--red)}
+.box{width:16px;height:16px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--l4);color:var(--a);font-size:11px}
+.on>.box{border-color:var(--a);background:var(--af)}
+.check{display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--mid);font-size:12px;text-align:left;padding:4px 0}
 
-    .drawer-head {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 8px 24px; border-bottom: 1px solid var(--amber5);
-      background: var(--bg3);
-    }
-    .drawer-prompt { color: var(--amber3); font-size: 10px; letter-spacing: 0.15em; }
-    .drawer-prompt strong { color: var(--amber); }
-    .btn-esc {
-      background: none; border: 1px solid var(--amber4);
-      color: var(--amber3); font-family: var(--font);
-      font-size: 9px; padding: 3px 8px; cursor: pointer; letter-spacing: 0.1em; transition: all 0.1s;
-    }
-    .btn-esc:hover { border-color: var(--amber); color: var(--amber); }
+/* boot / auth */
+#boot{padding:90px 24px;text-align:center;color:var(--lab);letter-spacing:.15em;font-size:11px}
+.spin{width:20px;height:20px;margin:0 auto 14px;border:1px solid var(--ae);border-top-color:var(--a);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.auth-box{width:100%;max-width:420px;background:var(--p1);border:1px solid var(--l3)}
+.auth-head{padding:22px 24px 18px;border-bottom:1px solid var(--l2)}
+.logo{font-size:24px;font-weight:700;letter-spacing:.08em;color:var(--a);line-height:1}
+.logo span{color:var(--deco)}
+.logo-sub{font-size:10px;letter-spacing:.28em;color:var(--lab);margin-top:6px}
+.auth-body{padding:22px 24px;display:flex;flex-direction:column;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px}
+.auth-msg{font-size:11px;line-height:1.6;min-height:18px;color:var(--dim)}
+.auth-msg.err{color:var(--red)}.auth-msg.ok{color:var(--teal)}
+.auth-foot{padding:14px 24px;border-top:1px solid var(--l2);background:var(--p2);font-size:10px;color:var(--dim);line-height:1.7}
+.linkbtn{background:none;border:none;color:var(--lab);font-size:11px;text-decoration:underline;padding:4px 0;align-self:flex-start}
 
-    .drawer-body {
-      padding: 16px 24px;
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
-    }
-    .field { display: flex; flex-direction: column; gap: 4px; }
-    .field.s2 { grid-column: span 2; }
-    .field.s4 { grid-column: span 4; }
-    .lbl { font-size: 8px; color: var(--amber3); letter-spacing: 0.2em; text-transform: uppercase; }
-    .lbl::before { content: "$ "; color: var(--amber4); }
-    .inp {
-      background: var(--bg); border: 1px solid var(--amber4);
-      color: var(--amber); font-family: var(--font);
-      font-size: 12px; padding: 7px 10px; outline: none;
-      transition: border-color 0.12s; caret-color: var(--amber);
-      text-transform: uppercase;
-    }
-    .inp:focus { border-color: var(--amber); box-shadow: 0 0 8px rgba(255,176,0,0.1); }
-    .inp option { background: var(--bg); color: var(--amber); text-transform: none; }
-    .inp.no-caps { text-transform: none; }
-    textarea.inp { resize: vertical; min-height: 52px; text-transform: none; }
+/* header */
+#hdr{display:flex;flex-wrap:wrap;background:var(--p1);border-bottom:1px solid var(--l4)}
+.h-logo{padding:16px 24px;border-right:1px solid var(--l2);display:flex;flex-direction:column;justify-content:center;gap:4px}
+.h-sub{font-size:10px;color:var(--dim)}
+#stats{flex:999 1 560px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+.stat{padding:12px 18px;border-right:1px solid var(--l2);display:flex;flex-direction:column;justify-content:center;gap:4px}
+.stat-v{font-size:28px;font-weight:700;line-height:1;color:var(--a)}
+.stat-v.red{color:var(--red);text-shadow:0 0 8px rgba(255,90,79,.5)}
+.stat-v.org{color:var(--org)}
+.stat-v.hi{color:var(--hi)}
+.stat-v.teal{color:var(--teal);text-shadow:0 0 8px rgba(94,230,208,.35)}
+.stat-k{font-size:10px;letter-spacing:.18em;color:var(--lab)}
+.h-clock{padding:12px 24px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:5px;min-width:220px}
+#clock{font-size:20px;font-weight:700;letter-spacing:.06em;color:var(--a2)}
+#sync{font-size:10px;letter-spacing:.14em;color:var(--dim);display:flex;align-items:center;gap:6px}
+#sync .dot{width:6px;height:6px;border-radius:50%;background:var(--dim)}
+#sync.live{color:var(--a2)}#sync.live .dot{background:var(--a);box-shadow:0 0 6px var(--a)}
+#sync.off{color:var(--org)}#sync.off .dot{background:var(--org)}
+.h-user{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--dim)}
+#h-email{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lock-btn{min-height:28px;padding:0 10px;background:none;border:1px solid var(--l3);color:var(--lab);font-size:10px;letter-spacing:.12em}
+.lock-btn:hover{border-color:var(--a);color:var(--a)}
 
-    /* Priority selector buttons */
-    .priority-grid { display: flex; gap: 6px; }
-    .pri-btn {
-      flex: 1; padding: 8px 4px; background: var(--bg);
-      border: 1px solid var(--amber5); color: var(--dim);
-      font-family: var(--font); font-size: 10px; font-weight: 700;
-      letter-spacing: 0.1em; cursor: pointer; transition: all 0.12s;
-      text-align: center;
-    }
-    .pri-btn.sel-routine   { background: var(--amber5); border-color: var(--amber);  color: var(--amber); }
-    .pri-btn.sel-urgent    { background: #2a1500;       border-color: var(--orange); color: var(--orange); }
-    .pri-btn.sel-emergency { background: #2a0000;       border-color: var(--red);    color: var(--red); }
+/* strips */
+.strip{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:8px 24px;font-size:11px;letter-spacing:.08em}
+#alert{font-weight:700;letter-spacing:.16em}
+#alert.emerg{background:#1a0807;border-bottom:1px solid #5a1a14;color:var(--red);text-shadow:0 0 8px rgba(255,90,79,.45)}
+#alert.urg{background:#1a0d02;border-bottom:1px solid #5e3000;color:var(--org)}
+#toast{background:var(--tf);border-bottom:1px solid #13463d;color:var(--teal)}
+#toast.bad{background:#1a0807;border-color:#5a1a14;color:var(--red)}
+#toast strong{letter-spacing:.18em}
+#toast .btn{min-height:28px;margin-left:auto;border-color:var(--te);color:var(--teal);font-size:10px}
+#migrate{background:#140f02;border-bottom:1px solid #5e4300;color:var(--a)}
+#migrate .btn{min-height:30px;margin-left:auto;border-color:#5e4300;color:var(--a)}
+.panel-msg{max-width:720px;margin:60px auto;padding:24px;border:1px solid #5a1a14;background:#120707;color:var(--red);line-height:1.9;font-size:12px}
+.panel-msg code{color:var(--hi);background:var(--bg);padding:2px 6px;border:1px solid var(--l3);word-break:break-all}
+.panel-msg .btn{margin-top:14px}
 
-    /* Task type buttons */
-    .type-grid { display: flex; flex-wrap: wrap; gap: 5px; }
-    .type-btn {
-      padding: 4px 10px; background: var(--bg); border: 1px solid var(--amber5);
-      color: var(--dim); font-family: var(--font); font-size: 10px;
-      cursor: pointer; transition: all 0.1s;
-    }
-    .type-btn:hover { border-color: var(--amber3); color: var(--amber2); }
-    .type-btn.sel { background: var(--amber4); border-color: var(--amber); color: var(--amber); font-weight: 700; }
+/* command bar */
+#cmd{position:relative;display:flex;flex-wrap:wrap;align-items:stretch;background:var(--p2);border-bottom:1px solid var(--l3);padding:0 24px}
+.prompt{padding:0 14px 0 0;color:var(--dim);border-right:1px solid var(--l2);display:flex;align-items:center}
+.fbtn{min-height:44px;padding:0 15px;background:transparent;border:none;border-right:1px solid var(--l2);color:var(--lab);font-size:11px;letter-spacing:.08em;white-space:nowrap}
+.fbtn:hover{color:var(--hi);background:var(--p1)}
+.fbtn.on{background:#2a1d00;color:var(--a)}
+.csel{background:transparent;border:none;border-right:1px solid var(--l2);color:var(--lab);font-size:11px;padding:0 12px;min-height:44px;outline:none}
+.csel option{background:var(--p2);color:var(--hi)}
+.search{display:flex;align-items:center;gap:8px;padding:0 12px;border-right:1px solid var(--l2);color:var(--dim)}
+.search input{width:120px;background:transparent;border:none;color:var(--hi);font-size:11px;text-transform:uppercase;outline:none;min-height:44px}
+.cmd-r{margin-left:auto;display:flex}
+.ho-btn{padding:0 18px;background:none;border:none;border-left:1px solid var(--l2);color:var(--a2);font-size:11px;font-weight:700;letter-spacing:.12em}
+.ho-btn:hover{background:var(--p1)}
+.new-btn{padding:0 22px;background:var(--af);border:none;border-left:1px solid var(--ae);color:var(--a);font-size:11px;font-weight:700;letter-spacing:.15em}
+.new-btn:hover{background:#523800}
 
-    .drawer-foot {
-      padding: 10px 24px; border-top: 1px solid var(--amber5);
-      display: flex; justify-content: flex-end; gap: 8px; background: var(--bg3);
-    }
-    .btn-abort {
-      padding: 6px 16px; background: transparent;
-      border: 1px solid var(--amber4); color: var(--amber3);
-      font-family: var(--font); font-size: 9px; letter-spacing: 0.12em;
-      cursor: pointer; transition: all 0.1s;
-    }
-    .btn-abort:hover { border-color: var(--red); color: var(--red); }
-    .btn-exec {
-      padding: 6px 20px; background: var(--amber4); border: 1px solid var(--amber);
-      color: var(--amber); font-family: var(--font);
-      font-size: 10px; font-weight: 700; letter-spacing: 0.15em;
-      cursor: pointer; transition: all 0.12s;
-    }
-    .btn-exec:hover { background: var(--amber3); }
+/* editor */
+#drawer{background:var(--p1);border-bottom:2px solid var(--ae);animation:slide .15s ease}
+@keyframes slide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.d-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 24px;background:var(--p2);border-bottom:1px solid var(--l2);font-size:11px;color:var(--dim)}
+.d-head strong{color:var(--hi)}
+.d-body{max-width:1240px;margin:0 auto;padding:22px 24px;display:flex;flex-direction:column;gap:20px}
+.d-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.pris{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pris button{min-height:52px;background:transparent;border:1px solid var(--l3);color:var(--dim);font-size:12px;font-weight:700;letter-spacing:.14em}
+.pris button.on[data-p=routine]{background:#2a1d00;border-color:var(--a);color:var(--a2)}
+.pris button.on[data-p=urgent]{background:#2a1300;border-color:var(--orgE);color:var(--org)}
+.pris button.on[data-p=emergency]{background:#2a0805;border-color:var(--redE);color:var(--red)}
+.types{display:flex;flex-wrap:wrap;gap:6px}
+.types button{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 12px;background:transparent;border:1px solid var(--l4);color:var(--mid);font-size:11px}
+.types button i{width:8px;height:8px}
+.types button.on{background:#2a1d00;border-color:var(--a);color:var(--a);font-weight:700}
+.d-cols{display:flex;flex-wrap:wrap;gap:18px;align-items:stretch}
+.d-cols>*{flex:1 1 440px;min-width:0}
+.card{background:var(--p1);border:1px solid var(--l3);display:flex;flex-direction:column}
+.card-h{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--p2);border-bottom:1px solid var(--l3);font-size:11px}
+.card-h .t{font-weight:700;letter-spacing:.2em;color:var(--hi)}
+.card-h .r{margin-left:auto;color:var(--teal)}
+.card-b{padding:14px;display:flex;flex-direction:column;gap:14px}
+.rems{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border:1px solid var(--l3)}
+.rems button{min-height:44px;background:transparent;border:none;border-right:1px solid var(--l3);color:var(--mid);font-size:11px;font-weight:700}
+.rems button:last-child{border-right:none}
+.rems button.on{background:#0b2a24;color:var(--teal)}
+.at-row{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mid)}
+.at-row .inp{width:auto;padding:8px 10px}
+.preview{padding:10px 12px;background:var(--tf);border:1px solid #13463d;color:var(--tt);font-size:12px;line-height:1.6}
+.d-foot{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:10px;padding:12px 24px;background:var(--p2);border-top:1px solid var(--l2)}
+.d-foot .sum{margin-right:auto;font-size:11px;color:var(--dim)}
+.d-err{color:var(--red);font-size:11px}
 
-    /* ── Task table ──────────────────────────────────────── */
-    #task-table { width: 100%; border-collapse: collapse; display: none; }
-    #task-table.show { display: table; }
+/* list */
+.tablewrap{overflow-x:auto}
+.cols,.trow{display:grid;grid-template-columns:54px 112px 150px 120px minmax(0,1fr) 140px 176px;align-items:center}
+.cols{padding:8px 20px;background:var(--p1);border-bottom:1px solid var(--l4);font-size:10px;font-weight:700;letter-spacing:.2em;color:var(--lab);min-width:1100px}
+.cols .r{text-align:right}
+#rows{min-width:1100px}
+#loading{padding:60px 24px;text-align:center;color:var(--lab);font-size:11px;letter-spacing:.15em}
+.sect{display:flex;align-items:center;gap:12px;padding:18px 20px 8px;font-size:10px;font-weight:700;letter-spacing:.25em}
+.sect .c{color:var(--dim)}.sect .ln{flex:1;height:1px;background:var(--l2)}
+.s-emergency{color:var(--red)}.s-urgent{color:var(--org)}.s-routine{color:var(--a2)}.s-done{color:var(--dim)}
+.job{border-bottom:1px solid var(--l1);border-left:3px solid var(--l4);animation:rowIn .18s ease}
+@keyframes rowIn{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
+.job.p-emergency{border-left-color:var(--redE);background:rgba(255,90,79,.05)}
+.job.p-urgent{border-left-color:var(--orgE)}
+.job.open{background:#120f09}
+.job.done{opacity:.4;border-left-color:transparent;background:transparent}
+.trow{padding:10px 20px 10px 17px}
+.cb{width:24px;height:24px;display:flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--ae);background:transparent;color:var(--a);font-size:13px;transition:transform .15s}
+.cb.on{background:var(--af);border-color:var(--a);box-shadow:0 0 8px rgba(255,176,0,.4)}
+.cb:active{transform:scale(.85)}
+.pri{font-size:10px;font-weight:700;letter-spacing:.12em;padding:3px 7px;border:1px solid}
+.pri-emergency{color:var(--red);background:rgba(255,90,79,.13);border-color:rgba(255,90,79,.4)}
+.pri-urgent{color:var(--org);background:rgba(255,122,26,.1);border-color:rgba(255,122,26,.35)}
+.pri-routine{color:var(--a2);background:rgba(255,176,0,.07);border-color:rgba(255,176,0,.25)}
+.c-pt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.pt{color:var(--hi);font-weight:700;letter-spacing:.06em}
+.pt small{color:var(--dim);font-weight:400;font-size:13px}
+.loc{color:var(--dim);font-size:11px}
+.typ{font-size:10px;font-weight:700;letter-spacing:.1em;padding:3px 7px;border:1px solid;text-transform:uppercase}
+.c-task{text-align:left;background:none;border:none;padding:6px 16px 6px 0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tlabel{color:var(--hi);font-size:14px;font-weight:500}
+.done .tlabel{text-decoration:line-through}
+.thint{font-size:11px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.c-due{text-align:right}
+.due-m{font-size:16px;font-weight:700;color:var(--dim)}
+.due-m.set{color:var(--teal)}
+.due-m.hot{color:var(--a);text-shadow:0 0 8px rgba(255,176,0,.45)}
+.due-m.late{color:var(--red);text-shadow:0 0 8px rgba(255,90,79,.5)}
+.due-s{font-size:11px;color:var(--dim);margin-top:2px}
+.c-act{display:flex;justify-content:flex-end;align-items:center;gap:3px}
+.mpri{display:none}
+.sb{padding:4px 7px;background:none;border:1px solid var(--l3);color:var(--lab);font-size:10px}
+.sb:hover{border-color:var(--ae);color:var(--hi)}
+.sb.teal{color:var(--teal)}
+.sb.edit{color:var(--a2);letter-spacing:.08em}
+.sb.del{border-color:transparent;color:var(--dim);font-size:12px}
+.sb.del:hover{color:var(--red)}
+.xp{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:32px;padding:2px 24px 20px 456px}
+.xp-h{font-size:10px;letter-spacing:.2em;color:var(--lab);margin-bottom:8px;text-transform:uppercase}
+.xp-h::before{content:"$ ";color:var(--deco)}
+.notes{padding-left:12px;border-left:1px solid var(--l4);color:var(--mid);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.kv{display:grid;grid-template-columns:84px minmax(0,1fr);row-gap:7px;font-size:12px;align-content:start}
+.kv .k{color:var(--dim)}.kv .tv{color:var(--teal)}
+.xp-act{display:none}
+#empty{padding:60px 24px;text-align:center;color:var(--dim);font-size:11px;letter-spacing:.2em}
+#foot{position:sticky;bottom:0;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;padding:9px 24px;background:var(--p2);border-top:1px solid var(--l3);font-size:11px;color:var(--lab)}
+#foot .l{display:flex;flex-wrap:wrap;gap:22px}
+#foot strong{color:var(--hi)}#foot .tn{color:var(--teal)}
+#foot .btn{min-height:28px;font-size:10px}
+#mbar{display:none}
 
-    .tbl-head { background: var(--bg3); border-bottom: 2px solid var(--amber3); }
-    .tbl-head th {
-      padding: 6px 12px; font-size: 8px; font-weight: 700;
-      letter-spacing: 0.2em; color: var(--amber3); text-align: left; white-space: nowrap;
-    }
+/* handover */
+#handover{position:fixed;inset:0;z-index:150;overflow-y:auto;background:var(--bg);background-image:var(--scan)}
+.ho-head{position:sticky;top:0;z-index:2;display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;padding:12px 24px;background:var(--p1);border-bottom:1px solid var(--l4)}
+.ho-title{font-size:20px;font-weight:700;letter-spacing:.08em;color:var(--a)}
+.ho-meta{font-size:11px;color:var(--dim)}
+.ho-tools{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px}
+.ho-back{display:flex;align-items:center;gap:6px;min-height:40px;padding:0 10px;background:none;border:none;color:var(--lab);font-size:11px;letter-spacing:.1em}
+.ho-main{max-width:980px;margin:0 auto;padding:26px 24px 60px;display:flex;flex-direction:column;gap:22px}
+.ho-sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--l3);background:var(--p1)}
+.ho-sum div{padding:14px 16px;border-right:1px solid var(--l2)}
+.ho-sum b{display:block;font-size:26px;line-height:1}
+.ho-sum span{display:block;font-size:10px;letter-spacing:.18em;color:var(--lab);margin-top:6px}
+.ho-sec{display:flex;flex-direction:column;gap:10px}
+.ho-sec h3{display:flex;align-items:center;gap:12px;font-size:11px;font-weight:700;letter-spacing:.22em}
+.ho-sec h3 .c{color:var(--dim)}.ho-sec h3 .ln{flex:1;height:1px;background:var(--l3)}
+.ho-job{display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 20px;padding:14px 16px;background:var(--p1);border:1px solid var(--l2);border-left:3px solid var(--ae)}
+.ho-job.p-emergency{border-left-color:var(--redE)}.ho-job.p-urgent{border-left-color:var(--orgE)}
+.ho-job.done{opacity:.6;border-left-color:var(--l3)}
+.ho-job .who{grid-row:span 3;display:flex;flex-direction:column;gap:4px}
+.ho-job .who b{color:var(--hi);font-size:16px;letter-spacing:.06em}
+.ho-job .who span{color:var(--dim);font-size:11px}
+.ho-job .who em{font-style:normal;font-size:11px;margin-top:6px;color:var(--teal)}
+.ho-job .what{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--hi);font-size:14px}
+.ho-job.done .what .tx{text-decoration:line-through}
+.ho-job .nt{color:var(--mid);line-height:1.6;font-size:12px;white-space:pre-wrap}
+.ho-job .lg{font-size:11px;color:var(--dim)}
+.ho-note{padding:12px 14px;border:1px dashed var(--l3);color:var(--dim);font-size:11px;line-height:1.7}
 
-    .tbl-section td {
-      padding: 10px 12px 4px; font-size: 9px; font-weight: 700;
-      letter-spacing: 0.25em; color: var(--amber3); text-transform: uppercase;
-      border-bottom: 1px solid var(--amber5);
-    }
-    .tbl-section td::before { content: "── "; color: var(--amber5); }
-    .tbl-section td::after  { content: " " attr(data-count) " ────────────────────────────────"; color: var(--amber5); }
+/* mobile */
+@media (max-width:720px){
+  .h-logo{padding:12px 16px;border-right:none;flex:1}
+  .h-clock{min-width:0;padding:12px 16px}
+  #clock{font-size:16px}
+  #stats{order:3;flex-basis:100%;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--l2)}
+  #stats .stat:nth-child(4){display:none}
+  .stat{padding:10px 12px}.stat-v{font-size:22px}.stat-k{font-size:9px;letter-spacing:.14em}
+  .strip{padding:8px 16px}
+  #cmd{padding:0 12px;overflow-x:auto;flex-wrap:nowrap}
+  .prompt,.cmd-r{display:none}
+  .search input{width:90px}
+  .tablewrap{overflow:visible}
+  .cols{display:none}
+  #rows{min-width:0;padding:0 12px 12px}
+  .sect{padding:14px 4px 8px}
+  .job{border:1px solid var(--l2);border-left-width:3px;background:var(--p1);margin-bottom:8px}
+  .job.p-emergency{background:#140806}
+  .trow{grid-template-columns:44px minmax(0,1fr) auto;grid-template-areas:"cb pt due" "cb task task" "cb meta meta";padding:12px 12px 10px 4px;row-gap:4px}
+  .c-cb{grid-area:cb;align-self:start;display:flex;justify-content:center}
+  .c-pt{grid-area:pt;display:flex;gap:8px;align-items:baseline;min-width:0;flex-wrap:wrap}
+  .c-pri,.c-type,.c-act{display:none}
+  .c-task{grid-area:task;padding:2px 0}
+  .c-task .thint{display:none}
+  .c-due{grid-area:due;display:flex;flex-direction:column;align-items:flex-end}
+  .mpri{grid-area:meta;display:flex;align-items:center;gap:10px;font-size:10px;font-weight:700;letter-spacing:.1em}
+  .mpri .r{margin-left:auto;font-weight:400;color:var(--dim);letter-spacing:0}
+  .cb{width:30px;height:30px}
+  .xp{grid-template-columns:1fr;gap:16px;padding:4px 12px 14px 48px}
+  .xp-act{display:flex;flex-wrap:wrap;gap:6px}
+  .xp-act .sb{min-height:44px;padding:0 14px;font-size:11px}
+  .d-head,.d-foot{padding:10px 16px}
+  .d-body{padding:16px}
+  .d-grid{grid-template-columns:1fr 1fr}
+  .rems{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .rems button{border-bottom:1px solid var(--l3)}
+  .inp,.search input{font-size:16px}
+  #foot{position:static;padding:10px 16px}
+  #mbar{display:flex;gap:10px;position:fixed;left:0;right:0;bottom:0;z-index:50;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--p1);border-top:2px solid var(--ae)}
+  #mbar .btn{flex:1;min-height:50px;font-size:12px}
+  #mbar .btn-pri{flex:1.4;font-size:13px}
+  body.authed{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  .ho-head{padding:10px 16px}
+  .ho-tools{margin-left:0;width:100%}
+  .ho-tools .btn{flex:1;padding:0 8px}
+  .ho-main{padding:18px 12px 40px}
+  .ho-sum{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ho-job{grid-template-columns:1fr}
+  .ho-job .who{grid-row:auto;flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:8px}
+  .ho-job .who em{margin:0}
+}
 
-    .tbl-row {
-      border-bottom: 1px solid var(--dimmest);
-      transition: background 0.08s, opacity 0.7s ease;
-      animation: rowIn 0.18s ease;
-    }
-    @keyframes rowIn { from{opacity:0;transform:translateX(-4px)} to{opacity:1;transform:translateX(0)} }
-    .tbl-row.new-pulse {
-      animation: rowIn 0.18s ease, newPulse 1.8s ease-out 1;
-    }
-    @keyframes newPulse {
-      0%   { background: rgba(255,176,0,0.32); box-shadow: inset 3px 0 0 var(--amber); }
-      60%  { background: rgba(255,176,0,0.14); box-shadow: inset 3px 0 0 var(--amber2); }
-      100% { background: transparent;          box-shadow: inset 3px 0 0 transparent; }
-    }
-    .tbl-row:hover { background: var(--bg3); }
-    .tbl-row.done  {
-      opacity: 0.3;
-      animation: none;   /* mount already-dimmed; prevents flash on tab switch */
-    }
-    .tbl-row.no-anim { animation: none; }   /* existing row on re-render: suppress rowIn */
-    .tbl-row.done.just-completed {
-      animation: fadeToDone 0.7s ease forwards;   /* preserves fade-on-completion */
-    }
-    @keyframes fadeToDone { from{opacity:1} to{opacity:0.3} }
-    .tbl-row td    { padding: 8px 12px; vertical-align: middle; font-size: 12px; }
-
-    /* Checkbox */
-    .td-cb { width: 28px; }
-    .cb {
-      width: 16px; height: 16px; border: 1px solid var(--amber4);
-      background: transparent; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 9px; color: var(--amber);
-      transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
-    }
-    .cb.checked { background: var(--amber4); border-color: var(--amber); box-shadow: 0 0 8px rgba(255,176,0,0.35); }
-    .cb:active  { transform: scale(0.82); }
-
-    /* Priority cell */
-    .td-pri { width: 100px; }
-    .pri-badge {
-      font-size: 8px; font-weight: 700; letter-spacing: 0.12em;
-      padding: 2px 6px; text-transform: uppercase; display: inline-block;
-    }
-    .pri-emergency { color: var(--red);    background: rgba(255,51,51,0.12);  border: 1px solid rgba(255,51,51,0.35); }
-    .pri-urgent    { color: var(--orange); background: rgba(255,102,0,0.1);   border: 1px solid rgba(255,102,0,0.3); }
-    .pri-routine   { color: var(--amber);  background: rgba(255,176,0,0.07);  border: 1px solid rgba(255,176,0,0.2); }
-
-    /* Patient cell */
-    .td-patient { width: 80px; white-space: nowrap; }
-    .patient-str { color: var(--amber2); font-weight: 700; font-size: 11px; letter-spacing: 0.06em; }
-
-    /* Type cell */
-    .td-type { width: 100px; }
-    .type-pill {
-      font-size: 8px; font-weight: 700; letter-spacing: 0.1em;
-      padding: 2px 6px; border-left: 2px solid; text-transform: uppercase;
-    }
-
-    /* Task cell */
-    .td-task { min-width: 180px; cursor: pointer; }
-    .task-str { color: var(--amber); font-size: 12px; font-weight: 500; }
-    .task-notes {
-      display: none; margin-top: 5px; font-size: 10px; color: var(--dim);
-      padding-left: 10px; border-left: 1px solid var(--amber5); line-height: 1.5;
-    }
-    .tbl-row.expanded .task-notes { display: block; }
-
-    /* Time cell */
-    .td-time { width: 60px; text-align: right; white-space: nowrap; }
-    .time-str { font-size: 12px; font-weight: 700; color: var(--amber2); }
-    .time-age { font-size: 9px; color: var(--amber4); margin-top: 2px; }
-
-    /* Actions cell */
-    .td-actions { width: 110px; text-align: right; white-space: nowrap; }
-    .edt {
-      background: none; border: 1px solid var(--amber5);
-      color: var(--amber4); font-family: var(--font);
-      font-size: 9px; letter-spacing: 0.08em;
-      cursor: pointer; padding: 2px 6px; transition: all 0.1s;
-    }
-    .edt:hover { border-color: var(--amber2); color: var(--amber2); }
-    .dup {
-      background: none; border: 1px solid var(--amber5);
-      color: var(--amber4); font-family: var(--font);
-      font-size: 9px; letter-spacing: 0.08em;
-      cursor: pointer; padding: 2px 6px; transition: all 0.1s;
-    }
-    .dup:hover { border-color: var(--green); color: var(--green); }
-    .del {
-      background: none; border: none; color: var(--amber5);
-      font-family: var(--font); font-size: 11px; cursor: pointer;
-      transition: color 0.1s; padding: 2px 4px;
-    }
-    .del:hover { color: var(--red); }
-
-    /* Row priority left borders */
-    .tbl-row.p-emergency { border-left: 3px solid var(--red);    background: rgba(255,51,51,0.03); }
-    .tbl-row.p-urgent    { border-left: 3px solid var(--orange);  background: rgba(255,102,0,0.02); }
-    .tbl-row.p-routine   { border-left: 3px solid var(--amber4); }
-
-    /* ── Handover overlay ────────────────────────────────── */
-    #handover-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(8,8,8,0.96); z-index: 200;
-      align-items: center; justify-content: center;
-    }
-    #handover-overlay.show { display: flex; }
-    .handover-box {
-      background: var(--bg2); border: 1px solid var(--amber3);
-      border-top: 3px solid var(--amber); padding: 0;
-      max-width: 560px; width: 92%; max-height: 85vh;
-      display: flex; flex-direction: column;
-    }
-    .ho-head {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 20px; border-bottom: 1px solid var(--amber5);
-      background: var(--bg3);
-    }
-    .ho-title { font-size: 11px; font-weight: 700; color: var(--amber); letter-spacing: 0.2em; }
-    .ho-title::before { content: ">> "; color: var(--amber3); }
-    .btn-ho-close {
-      background: none; border: 1px solid var(--amber4); color: var(--amber3);
-      font-family: var(--font); font-size: 9px; padding: 3px 8px; cursor: pointer;
-    }
-    .btn-ho-close:hover { border-color: var(--amber); color: var(--amber); }
-    .ho-body {
-      flex: 1; overflow-y: auto; padding: 0;
-    }
-    .ho-text {
-      padding: 16px 20px; font-size: 11px; line-height: 1.9;
-      color: var(--amber2); white-space: pre-wrap; font-family: var(--font);
-      background: var(--bg);
-    }
-    .ho-foot {
-      padding: 12px 20px; border-top: 1px solid var(--amber5);
-      display: flex; gap: 8px; justify-content: flex-end; background: var(--bg3);
-    }
-    .btn-copy {
-      padding: 8px 22px; background: var(--amber4); border: 1px solid var(--amber);
-      color: var(--amber); font-family: var(--font);
-      font-size: 10px; font-weight: 700; letter-spacing: 0.15em; cursor: pointer;
-      transition: all 0.12s;
-    }
-    .btn-copy:hover   { background: var(--amber3); }
-    .btn-copy.copied  { background: #0a3204; border-color: var(--green); color: var(--green); }
-
-    /* ── Config overlay ──────────────────────────────────── */
-    #config-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(8,8,8,0.97); z-index: 300;
-      align-items: center; justify-content: center;
-    }
-    #config-overlay.show { display: flex; }
-    .config-box {
-      background: var(--bg2); border: 1px solid var(--amber3);
-      padding: 28px; max-width: 460px; width: 90%;
-    }
-    .config-title { font-size: 13px; font-weight: 700; color: var(--amber); letter-spacing: 0.15em; margin-bottom: 4px; }
-    .config-title::before { content: "// "; color: var(--amber4); }
-    .config-sub   { font-size: 10px; color: var(--amber3); margin-bottom: 18px; line-height: 1.7; }
-    .config-fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
-    .config-field  { display: flex; flex-direction: column; gap: 4px; }
-    .config-lbl    { font-size: 8px; color: var(--amber3); letter-spacing: 0.2em; }
-    .config-lbl::before { content: "$ "; color: var(--amber4); }
-    .config-inp {
-      background: var(--bg); border: 1px solid var(--amber4);
-      color: var(--amber); font-family: var(--font); font-size: 11px;
-      padding: 7px 10px; outline: none; transition: border-color 0.12s;
-    }
-    .config-inp:focus { border-color: var(--amber); }
-    .btn-connect {
-      width: 100%; padding: 10px; background: var(--amber4);
-      border: 1px solid var(--amber); color: var(--amber);
-      font-family: var(--font); font-size: 10px; font-weight: 700;
-      letter-spacing: 0.2em; cursor: pointer;
-    }
-    .btn-connect:hover { background: var(--amber3); }
-    .config-note { margin-top: 12px; font-size: 9px; color: var(--amber4); line-height: 1.8; }
-
-    /* ── Loading / empty / statusbar ─────────────────────── */
-    #loading {
-      padding: 50px 24px; text-align: center;
-      color: var(--amber3); font-size: 11px; letter-spacing: 0.15em;
-    }
-    .spinner {
-      width: 20px; height: 20px; margin: 0 auto 12px;
-      border: 1px solid var(--amber4); border-top-color: var(--amber);
-      border-radius: 50%; animation: spin 0.7s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    #empty {
-      display: none; padding: 50px 24px; text-align: center;
-      color: var(--amber4); font-size: 11px; letter-spacing: 0.2em;
-    }
-    #empty::before { content: "> "; }
-
-    #statusbar {
-      position: sticky; bottom: 0;
-      background: var(--bg3); border-top: 1px solid var(--amber4);
-      padding: 6px 24px; display: flex; justify-content: space-between; align-items: center;
-    }
-    .status-left { display: flex; gap: 20px; align-items: center; }
-    .status-item { font-size: 9px; color: var(--amber3); letter-spacing: 0.1em; }
-    .status-item strong { color: var(--amber); }
-    .btn-clr {
-      background: transparent; border: 1px solid var(--amber5);
-      color: var(--amber4); font-family: var(--font);
-      font-size: 9px; letter-spacing: 0.1em; padding: 3px 10px; cursor: pointer; transition: all 0.1s;
-    }
-    .btn-clr:hover { border-color: var(--red); color: var(--red); }
-
-    /* Mobile bottom bar: hidden by default, shown only on mobile */
-    #mobile-bar { display: none; }
-
-    /* ── Responsive ──────────────────────────────────────── */
-    @media (max-width: 680px) {
-      .header-clock { display: none; }
-      .header-stats .stat-cell:nth-child(n+4) { display: none; }
-      .drawer-body { grid-template-columns: 1fr 1fr; }
-      .field.s4 { grid-column: span 2; }
-
-      /* Top NEW_JOB/HANDOVER move to the bottom bar */
-      .cmd-right .btn-handover,
-      .cmd-right .btn-new { display: none; }
-      .cmd-right { flex: 1; min-width: 0; }
-      .cmd-search { width: 100%; flex: 1; }
-
-      /* ── Table → card layout ──────────────────────────── */
-      #task-table, #task-table > tbody { display: block; width: 100%; }
-      #task-table > thead { display: none; }
-
-      /* Section separator restyled for card flow */
-      .tbl-section { display: block; }
-      .tbl-section td {
-        display: block; padding: 14px 14px 4px;
-        font-size: 9px; border-bottom: none;
-      }
-      .tbl-section td::after { content: ""; }
-
-      /* Each row becomes a card.
-         Content stacks vertically. Footer row has time on the left and
-         edit/dup/del on the right. Checkbox is absolutely positioned
-         top-right (where it was) — padding-right reserves space for it. */
-      .tbl-row {
-        display: grid;
-        grid-template-areas:
-          "pri      pri"
-          "patient  patient"
-          "task     task"
-          "time     actions";
-        grid-template-columns: auto 1fr;
-        align-items: center;
-        gap: 6px 10px;
-        margin: 8px 12px;
-        padding: 14px 60px 12px 14px;   /* right pad reserves space for the absolute checkbox */
-        background: var(--bg2);
-        border: 1px solid var(--amber5);
-        border-left: 4px solid var(--amber);
-        position: relative;
-      }
-      .tbl-row.p-emergency { border-left-color: var(--red); }
-      .tbl-row.p-urgent    { border-left-color: var(--orange); }
-      .tbl-row.p-routine   { border-left-color: var(--amber); }
-      .tbl-row:hover { background: var(--bg2); }   /* no hover state on touch */
-
-      .tbl-row td {
-        display: block; padding: 0;
-        border: none; vertical-align: top;
-        width: auto !important; min-width: 0;
-        white-space: normal;
-      }
-      .td-type { display: none; }   /* type pill takes too much width on phone */
-
-      /* Checkbox: large tap target, top-right corner — same place it was */
-      .td-cb {
-        position: absolute; top: 14px; right: 12px;
-        margin: 0;
-      }
-      .cb {
-        width: 36px; height: 36px; font-size: 18px;
-      }
-
-      .td-pri     { grid-area: pri; }
-      .td-patient { grid-area: patient; margin-bottom: 0; }
-      .td-task    { grid-area: task;    margin-bottom: 0; }
-      .td-time    { grid-area: time;    margin-bottom: 0; text-align: left !important;
-                    font-size: 11px; color: var(--amber4); align-self: center; }
-      .td-actions { grid-area: actions; margin-top: 0;    text-align: right !important;
-                    align-self: center; white-space: nowrap; }
-
-      .patient-str { font-size: 14px; }
-      .task-str    { font-size: 14px; line-height: 1.4; }
-      .task-notes  { font-size: 11px; }
-      .edt, .dup, .del {
-        padding: 6px 11px; font-size: 11px;
-      }
-
-      /* Statusbar: no longer sticky on mobile (bottom bar takes that slot) */
-      #statusbar {
-        position: static;
-        flex-wrap: wrap; gap: 8px;
-      }
-
-      /* ── Sticky bottom action bar ─────────────────────── */
-      #mobile-bar {
-        display: flex; gap: 10px;
-        position: fixed; left: 0; right: 0; bottom: 0;
-        background: var(--bg2);
-        border-top: 2px solid var(--amber3);
-        padding: 10px 12px;
-        padding-bottom: calc(10px + env(safe-area-inset-bottom));
-        z-index: 100;
-      }
-      .mbar-btn {
-        flex: 1; padding: 14px 12px;
-        font-family: var(--font); font-size: 12px;
-        font-weight: 700; letter-spacing: 0.12em;
-        cursor: pointer;
-      }
-      .mbar-secondary {
-        background: transparent;
-        border: 1px solid var(--amber4);
-        color: var(--amber3);
-      }
-      .mbar-primary {
-        background: var(--amber4);
-        border: 1px solid var(--amber);
-        color: var(--amber);
-        flex: 1.4;   /* primary gets slightly more weight */
-      }
-      .mbar-primary:active { background: var(--amber3); }
-
-      /* Push body content above the bar so nothing hides behind it */
-      body {
-        padding-bottom: calc(72px + env(safe-area-inset-bottom));
-      }
-    }
-  </style>
+/* print: handover only, light */
+@media print{
+  body{background:#fff!important;color:#000!important;text-shadow:none!important;padding:0!important}
+  body>*:not(#app),#app>*:not(#handover){display:none!important}
+  #handover{position:static;background:#fff;overflow:visible}
+  .ho-head{position:static;background:#fff;border-bottom:2px solid #000}
+  .ho-tools,.ho-back,.ho-note{display:none!important}
+  .ho-title,.ho-meta,.ho-sum span,.ho-job *{color:#000!important}
+  .ho-sum,.ho-job{background:#fff;border-color:#999}
+  .ho-sum b{color:#000!important}
+  .ho-job{break-inside:avoid}
+  .ho-sec h3{color:#000!important}
+}
+</style>
 </head>
 <body>
 
+<div id="boot"><div class="spin"></div>AUTHENTICATING…</div>
 
-<!-- Handover overlay -->
-<div id="handover-overlay">
-  <div class="handover-box">
+<main id="auth" hidden>
+  <form class="auth-box" id="auth-form" novalidate>
+    <div class="auth-head">
+      <div class="logo">OCT<span>//</span>02</div>
+      <div class="logo-sub">ON-CALL TRACKER · SIGN IN</div>
+    </div>
+    <div class="auth-body">
+      <div class="field"><label class="lbl" for="a-email">email</label><input class="inp" id="a-email" type="email" autocomplete="username" autocapitalize="off" spellcheck="false" /></div>
+      <div class="field"><label class="lbl" for="a-pass">password</label><input class="inp" id="a-pass" type="password" autocomplete="current-password" /></div>
+      <button type="button" class="check on" id="a-remember" aria-pressed="true"><span class="box" aria-hidden="true">✓</span>Remember this device</button>
+      <div class="auth-msg" id="a-msg" role="status" aria-live="polite"></div>
+      <button type="submit" class="btn btn-pri" id="a-submit">SIGN IN ▸</button>
+      <button type="button" class="linkbtn" id="a-reset">forgot password</button>
+    </div>
+    <div class="auth-foot">Same account as RTM. On a shared ward PC, untick "remember" and press LOCK when you leave: that also wipes the offline copy on this device.</div>
+  </form>
+</main>
+
+<div id="app" hidden>
+  <header id="hdr">
+    <div class="h-logo">
+      <div class="logo">OCT<span>//</span>02</div>
+      <div class="logo-sub">ON-CALL TRACKER</div>
+      <div class="h-sub" id="shift-t">GIM + RENAL</div>
+    </div>
+    <div id="stats">
+      <div class="stat"><div class="stat-v" id="st-emerg">0</div><div class="stat-k">EMERGENCY</div></div>
+      <div class="stat"><div class="stat-v" id="st-urg">0</div><div class="stat-k">URGENT</div></div>
+      <div class="stat"><div class="stat-v" id="st-pend">0</div><div class="stat-k">PENDING</div></div>
+      <div class="stat"><div class="stat-v hi" id="st-done">0</div><div class="stat-k">DONE</div></div>
+      <div class="stat"><div class="stat-v teal" id="st-next">--:--</div><div class="stat-k">NEXT DUE</div></div>
+    </div>
+    <div class="h-clock">
+      <div id="clock">00:00:00</div>
+      <div id="sync"><span class="dot" aria-hidden="true"></span><span id="sync-t">CONNECTING</span></div>
+      <div class="h-user"><span id="h-email"></span><button class="lock-btn" id="lock-btn" title="Sign out and wipe the offline copy">LOCK</button></div>
+    </div>
+  </header>
+
+  <div id="denied" class="panel-msg" hidden></div>
+
+  <div id="main-ui">
+    <div id="migrate" class="strip" hidden><strong>!! LEGACY DATA</strong><span id="mig-t"></span><button class="btn" id="mig-btn">MIGRATE ▸</button></div>
+    <div id="alert" class="strip" role="status" hidden></div>
+    <div id="toast" class="strip" role="status" hidden><strong id="toast-k"></strong><span id="toast-t"></span><button class="btn" id="toast-undo" hidden>UNDO</button></div>
+
+    <nav id="cmd" aria-label="Filters">
+      <span class="prompt">oct&gt;</span>
+      <span id="filters" style="display:flex">
+        <button class="fbtn on" data-f="active">--active</button>
+        <button class="fbtn" data-f="done">--done</button>
+        <button class="fbtn" data-f="all">--all</button>
+      </span>
+      <label><span class="sr">Priority</span>
+        <select class="csel" id="pri-filter"><option value="all">--priority=all</option><option value="emergency">--priority=emergency</option><option value="urgent">--priority=urgent</option><option value="routine">--priority=routine</option></select>
+      </label>
+      <label><span class="sr">Type</span>
+        <select class="csel" id="type-filter"><option value="all">--type=all</option></select>
+      </label>
+      <label class="search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <span class="sr">Search patient</span><input id="search" placeholder="patient /" maxlength="8" />
+      </label>
+      <div class="cmd-r">
+        <button class="ho-btn" data-ho>HANDOVER ▸▸</button>
+        <button class="new-btn" data-new>NEW_JOB +</button>
+      </div>
+    </nav>
+
+    <section id="drawer" hidden aria-label="Job editor">
+      <div class="d-head">
+        <span>oct&gt; <strong id="d-mode">job.create</strong> --interactive</span>
+        <span style="margin-left:auto">enter saves · esc closes</span>
+        <button class="btn" id="d-esc" style="min-height:30px;font-size:10px">ESC</button>
+      </div>
+      <div class="d-body">
+        <div class="d-grid">
+          <div class="field"><label class="lbl" for="f-patient">patient_id *</label><input class="inp caps" id="f-patient" maxlength="8" placeholder="JD" autocomplete="off" /></div>
+          <div class="field"><label class="lbl" for="f-age">age</label><input class="inp" id="f-age" maxlength="3" inputmode="numeric" placeholder="67" autocomplete="off" /></div>
+          <div class="field"><label class="lbl" for="f-loc">location</label><input class="inp" id="f-loc" maxlength="40" placeholder="Ward 5B" autocomplete="off" /></div>
+          <div class="field"><label class="lbl" for="f-time">time_in</label><input class="inp" id="f-time" type="time" /></div>
+        </div>
+        <div class="field"><span class="lbl">priority *</span>
+          <div class="pris" role="group" aria-label="Priority">
+            <button data-p="routine">ROUTINE</button><button data-p="urgent">▲ URGENT</button><button data-p="emergency">!! EMERGENCY</button>
+          </div>
+        </div>
+        <div class="field"><span class="lbl">job_type *</span><div class="types" id="types"></div></div>
+        <div class="field"><label class="lbl" for="f-task">task *</label><input class="inp" id="f-task" maxlength="300" placeholder="describe the job…" style="font-size:15px;padding:12px" /></div>
+        <div class="d-cols">
+          <div class="field"><label class="lbl" for="f-notes">notes</label><textarea class="inp" id="f-notes" maxlength="2000" placeholder="// background, relevant history, actions so far…"></textarea></div>
+          <div class="card">
+            <div class="card-h">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5ee6d0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3L2 6M19 3l3 3"/></svg>
+              <span class="t">REMIND</span><span class="r" id="rem-txt">off</span>
+            </div>
+            <div class="card-b">
+              <div class="rems" role="group" aria-label="Remind in">
+                <button data-r="0">NONE</button><button data-r="15">15m</button><button data-r="30">30m</button><button data-r="60">1h</button><button data-r="90">90m</button><button data-r="120">2h</button>
+              </div>
+              <label class="at-row">or at a set time <input class="inp" id="f-at" type="time" /></label>
+              <div class="preview" id="rem-prev"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="d-foot">
+        <span class="sum" id="d-sum"></span>
+        <span class="d-err" id="d-err" role="alert"></span>
+        <button class="btn btn-danger" id="d-abort">ABORT</button>
+        <button class="btn btn-pri" id="d-exec">EXECUTE ▸</button>
+      </div>
+    </section>
+
+    <div class="tablewrap">
+      <div class="cols"><span></span><span>PRIORITY</span><span>PATIENT</span><span>TYPE</span><span>JOB</span><span class="r">DUE</span><span class="r">ACTIONS</span></div>
+      <div id="loading"><div class="spin"></div>SYNCING…</div>
+      <div id="rows"></div>
+    </div>
+    <div id="empty" hidden>&gt; no jobs on the list</div>
+
+    <footer id="foot">
+      <div class="l">
+        <span><strong id="ft-pend">0</strong> pending</span>
+        <span><strong id="ft-done">0</strong> done</span>
+        <span><strong class="tn" id="ft-rem">0</strong> reminders set</span>
+        <span style="color:var(--dim)" id="ft-sync">db: locked</span>
+      </div>
+      <button class="btn btn-danger" id="end-shift">END_SHIFT</button>
+    </footer>
+  </div>
+
+  <div id="mbar"><button class="btn" data-ho>HANDOVER ▸▸</button><button class="btn btn-pri" data-new>+ NEW_JOB</button></div>
+
+  <section id="handover" hidden aria-label="Handover">
     <div class="ho-head">
-      <span class="ho-title">HANDOVER_EXPORT</span>
-      <button class="btn-ho-close" onclick="closeHandover()">ESC</button>
-    </div>
-    <div class="ho-body">
-      <div class="ho-text" id="ho-text"></div>
-    </div>
-    <div class="ho-foot">
-  <button class="btn-ho-close" onclick="closeHandover()">CLOSE</button>
-  <button class="btn-copy" id="email-btn" onclick="emailHandover()">EMAIL ▸</button>
-  <button class="btn-copy" id="copy-btn" onclick="copyHandover()">COPY TO CLIPBOARD ▸</button>
-    </div>
-  </div>
-</div>
-
-<!-- Header -->
-<div id="header">
-  <div class="header-top">
-    <div class="header-logo">
-      <div class="logo-line1">OCT<span>//</span>01</div>
-      <div class="logo-line2">ON-CALL TRACKER</div>
-      <div class="logo-mode" id="shift-type-display">GIM + RENAL</div>
-    </div>
-    <div class="header-stats">
-      <div class="stat-cell">
-        <div class="stat-val emerg" id="stat-emerg">0</div>
-        <div class="stat-key">EMERGENCY</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-val urg" id="stat-urg">0</div>
-        <div class="stat-key">URGENT</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-val" id="stat-pend">0</div>
-        <div class="stat-key">PENDING</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-val" id="stat-done">0</div>
-        <div class="stat-key">DONE</div>
+      <button class="ho-back" id="ho-close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>jobs</button>
+      <span class="ho-title">HANDOVER</span>
+      <span class="ho-meta" id="ho-meta"></span>
+      <div class="ho-tools">
+        <button class="btn check on" id="ho-done" aria-pressed="true" style="padding:0 14px;border:1px solid var(--l4)"><span class="box" aria-hidden="true">✓</span>include completed</button>
+        <button class="btn" id="ho-print">PRINT</button>
+        <button class="btn btn-teal" id="ho-email">EMAIL ▸</button>
+        <button class="btn btn-pri" id="ho-copy">COPY ▸</button>
       </div>
     </div>
-    <div class="header-clock">
-      <div class="clock-time" id="clock">00:00:00</div>
-      <div class="clock-date" id="clock-date"></div>
-      <div class="shift-info" id="shift-duration"></div>
-      <div class="sync-live" id="sync-live"><span class="sync-dot"></span>LIVE</div>
-    </div>
-  </div>
+    <div class="ho-main" id="ho-main"></div>
+  </section>
 </div>
 
-<!-- Priority strip -->
-<div id="priority-strip"></div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail,
+         setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, push, onValue, update, set, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-<!-- Command bar -->
-<div id="cmdbar">
-  <span class="cmd-prompt">oct&gt;</span>
-  <div id="status-filters">
-    <button class="cmd-btn active" data-filter="active">--active</button>
-    <button class="cmd-btn" data-filter="completed">--done</button>
-    <button class="cmd-btn" data-filter="all">--all</button>
-  </div>
-  <select class="cmd-select" id="pri-filter">
-    <option value="all">--priority=all</option>
-    <option value="emergency">--priority=emergency</option>
-    <option value="urgent">--priority=urgent</option>
-    <option value="routine">--priority=routine</option>
-  </select>
-  <select class="cmd-select" id="type-filter">
-    <option value="all">--type=all</option>
-    <option value="handover">--type=handover</option>
-    <option value="referral-in">--type=referral-in</option>
-    <option value="referral-out">--type=referral-out</option>
-    <option value="review">--type=review</option>
-    <option value="bloods">--type=bloods</option>
-    <option value="imaging">--type=imaging</option>
-    <option value="procedure">--type=procedure</option>
-    <option value="escalation">--type=escalation</option>
-    <option value="other">--type=other</option>
-  </select>
-  <div class="cmd-right">
-    <input class="cmd-search" id="patient-search"
-      placeholder="search patient..."
-      oninput="render()"
-      maxlength="8" />
-    <button class="btn-handover" onclick="openHandover()">HANDOVER ▸▸</button>
-    <button class="btn-new" onclick="openDrawer()">NEW_JOB +</button>
-  </div>
-</div>
-
-<!-- Add / Edit drawer -->
-<div id="add-drawer">
-  <div class="drawer-head">
-    <span class="drawer-prompt">oct&gt; <strong id="drawer-mode-label">job.create</strong> --interactive</span>
-    <button class="btn-esc" onclick="closeDrawer()">ESC</button>
-  </div>
-  <div class="drawer-body">
-    <!-- Row 1 -->
-    <div class="field">
-      <label class="lbl">patient_id *</label>
-      <input class="inp" id="f-patient" placeholder="JD" maxlength="8" />
-    </div>
-        <div class="field">
-      <label class="lbl">age</label>
-      <input class="inp" id="f-age" placeholder="67" type="number" min="0" max="120" maxlength="3" />
-    </div>
-    <div class="field">
-      <label class="lbl">location</label>
-      <input class="inp no-caps" id="f-location" placeholder="Ward 5B" maxlength="20" />
-    </div>
-    <div class="field">
-      <label class="lbl">time_in</label>
-      <input class="inp" id="f-time" type="time" />
-    </div>
-    <!-- Row 2 — priority -->
-    <div class="field s4">
-      <label class="lbl">priority *</label>
-      <div class="priority-grid">
-        <button class="pri-btn sel-routine" data-p="routine"    onclick="setPriority('routine')">ROUTINE</button>
-        <button class="pri-btn"             data-p="urgent"     onclick="setPriority('urgent')">URGENT</button>
-        <button class="pri-btn"             data-p="emergency"  onclick="setPriority('emergency')">!! EMERGENCY</button>
-      </div>
-    </div>
-    <!-- Row 3 — task type -->
-    <div class="field s4">
-      <label class="lbl">job_type *</label>
-      <div class="type-grid" id="type-grid"></div>
-    </div>
-    <!-- Row 4 — task description -->
-    <div class="field s4">
-      <label class="lbl">task_description *</label>
-      <input class="inp no-caps" id="f-task" placeholder="describe the job..." />
-    </div>
-    <!-- Row 5 — notes -->
-    <div class="field s4">
-      <label class="lbl">notes</label>
-      <textarea class="inp no-caps" id="f-notes" placeholder="// background, relevant history, actions taken so far..."></textarea>
-    </div>
-   <!-- Row 6 — reminder -->
-<!-- Row 6 — reminder -->
-    <div class="field s2">
-      <label class="lbl">remind_in</label>
-      <div class="remind-grid">
-        <button class="remind-btn" data-r="0"   onclick="setRemind(0)">NONE</button>
-        <button class="remind-btn" data-r="15"  onclick="setRemind(15)">15m</button>
-        <button class="remind-btn" data-r="30"  onclick="setRemind(30)">30m</button>
-        <button class="remind-btn" data-r="60"  onclick="setRemind(60)">1hr</button>
-        <button class="remind-btn" data-r="90"  onclick="setRemind(90)">90m</button>
-        <button class="remind-btn" data-r="120" onclick="setRemind(120)">2hr</button>
-      </div>
-    </div>
-    <div class="field s2">
-      <label class="lbl">remind_at (specific time)</label>
-      <input class="inp" id="f-remind-at" type="time"
-        placeholder="e.g. 14:30"
-        oninput="setRemindAt(this.value)" />
-      <div style="font-size:9px;color:var(--amber4);margin-top:3px;letter-spacing:0.08em;">
-        // overrides remind_in if set
-      </div>
-    </div>
-</div>
-  <div class="drawer-foot">
-    <button class="btn-abort" onclick="closeDrawer()">ABORT</button>
-    <button class="btn-exec" id="drawer-exec-btn" onclick="saveJob()">EXECUTE ▸</button>
-  </div>
-</div>
-
-<!-- Task table -->
-<div id="loading"><div class="spinner"></div>CONNECTING TO FIREBASE...</div>
-<table id="task-table">
-  <thead>
-    <tr class="tbl-head">
-      <th></th>
-      <th>PRIORITY</th>
-      <th>PATIENT</th>
-      <th>TYPE</th>
-      <th>JOB</th>
-      <th style="text-align:right">TIME</th>
-      <th style="text-align:right">ACTIONS</th>
-    </tr>
-  </thead>
-  <tbody id="task-body"></tbody>
-</table>
-<div id="empty">no jobs on the list</div>
-
-<!-- Status bar -->
-<div id="statusbar">
-  <div class="status-left">
-    <span class="status-item"><strong id="sb-pend">0</strong> pending</span>
-    <span class="status-item"><strong id="sb-done">0</strong> done</span>
-    <span class="status-item" id="sb-sync" style="color:var(--amber4)">db: --</span>
-  </div>
-  <button class="btn-clr" onclick="clearShift()">END_SHIFT</button>
-</div>
-
-<!-- Mobile sticky action bar -->
-<div id="mobile-bar">
-  <button class="mbar-btn mbar-secondary" onclick="openHandover()">HANDOVER ▸▸</button>
-  <button class="mbar-btn mbar-primary"   onclick="openDrawer()">+ NEW_JOB</button>
-</div>
-
-<script>
-// ── Constants ────────────────────────────────────────────────
-const JOB_TYPES = [
-  { label:"Handover",     key:"handover",     color:"#ffb000" },
-  { label:"Referral In",  key:"referral-in",  color:"#00bfff" },
-  { label:"Referral Out", key:"referral-out", color:"#bf7fff" },
-  { label:"Review",       key:"review",       color:"#39ff14" },
-  { label:"Bloods",       key:"bloods",       color:"#ff9944" },
-  { label:"Imaging",      key:"imaging",      color:"#ff9944" },
-  { label:"Procedure",    key:"procedure",    color:"#ff6600" },
-  { label:"Escalation",   key:"escalation",   color:"#ff3333" },
-  { label:"Other",        key:"other",        color:"#5a4a2a" },
-];
+// Same project as RTM (renaltasks, europe-west1). The web config is public by design;
+// the database rules are what protect the data.
+const firebaseConfig = {
+  apiKey: "AIzaSyBdaE2x33NFZZLtHh8ssu_hx4PhiIesV4Y",
+  authDomain: "renaltasks.firebaseapp.com",
+  databaseURL: "https://renaltasks-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "renaltasks",
+  storageBucket: "renaltasks.firebasestorage.app",
+  messagingSenderId: "775458018686",
+  appId: "1:775458018686:web:6759d76ea79711107b8f2f"
+};
+// Old shared project: used once to pull jobs from the open /onCallTasks path.
+// After migrating and removing onCallTasks from that project's rules, this block can go.
+const LEGACY_CONFIG = {
+  apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
+  authDomain: "task-monitor-bd7ee.firebaseapp.com",
+  databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "task-monitor-bd7ee",
+  appId: "1:544624731364:web:419d52fa061c5c7b4f38f1"
+};
+// Apps Script web app (reminders + handover email). Redeploy as a new version of the same deployment to keep this URL.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxQNlt-BhB6dNuvksNHsyJCb5LwTHYdRz4HX8UZ4QVQml2RZgyVfJKVqdF4zE0Q-Hw/exec";
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getDatabase(fbApp);
+const legacyDb = getDatabase(initializeApp(LEGACY_CONFIG, "legacy"));
+
+// ── Helpers ─────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+const pad2 = n => String(n).padStart(2, "0");
+const hhmm = ms => { const d = new Date(ms); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+const nowHHMM = () => hhmm(Date.now());
+const rel = ms => { const m = Math.round((ms - Date.now()) / 60000); if (m < 0) return `${-m}m overdue`; if (m === 0) return "now"; return m < 60 ? `in ${m}m` : `in ${Math.floor(m / 60)}h ${m % 60}m`; };
+const agoTxt = t => { if (!/^\d{2}:\d{2}$/.test(t || "")) return ""; const [h, m] = t.split(":").map(Number); const d = new Date(); d.setHours(h, m, 0, 0); let diff = Math.round((Date.now() - d) / 60000); if (diff < 0) diff += 1440; return diff < 60 ? `${diff}m ago` : `${Math.floor(diff / 60)}h ${diff % 60}m ago`; };
+const atToMs = t => { const [h, m] = t.split(":").map(Number); const d = new Date(); d.setHours(h, m, 0, 0); if (d.getTime() < Date.now() - 60000) d.setDate(d.getDate() + 1); return d.getTime(); };
+
+const JOB_TYPES = [
+  { key: "handover", label: "Handover", c: "#ffc94d", b: "#5e4300" },
+  { key: "referral-in", label: "Referral in", c: "#4aa8ff", b: "#1d3f63" },
+  { key: "referral-out", label: "Referral out", c: "#c49bff", b: "#46306b" },
+  { key: "review", label: "Review", c: "#7fe35e", b: "#28531c" },
+  { key: "bloods", label: "Bloods", c: "#ff9f55", b: "#6b3d17" },
+  { key: "imaging", label: "Imaging", c: "#ff9f55", b: "#6b3d17" },
+  { key: "procedure", label: "Procedure", c: "#ff8a33", b: "#6b3300" },
+  { key: "escalation", label: "Escalation", c: "#ff6b5f", b: "#5a1a14" },
+  { key: "other", label: "Other", c: "#d9b46a", b: "#3d3018" },
+];
+const typeOf = k => JOB_TYPES.find(t => t.key === k) || JOB_TYPES[JOB_TYPES.length - 1];
 const PRI_ORDER = { emergency: 0, urgent: 1, routine: 2 };
-const IMMINENT_MS = 15 * 60 * 1000;   // flash strip when something is due within this window (or overdue)
+const PRI_LABEL = { emergency: "!! EMERG", urgent: "▲ URGENT", routine: "ROUTINE" };
+const HOT_MS = 15 * 60000;
 
-// ── Offline cache + write queue ──────────────────────────────
-// Tasks are cached in localStorage so the UI works on cold start when offline.
-// Writes are queued in localStorage; the queue survives page reloads and is
-// flushed to Firebase whenever the connection comes back.
-const LS_CACHE = "oct_tasks_cache";
-const LS_QUEUE = "oct_pending_ops";
-let fbConnected = false;
-let flushInFlight = false;
+// ── State ───────────────────────────────────────────────
+let user = null, base = null, jobs = {}, loaded = false, unsubs = [], legacy = null, fbConnected = false, flushing = false;
+let filterStatus = "active", filterPri = "all", filterType = "all", openId = null;
+let editingId = null, ed = null, toastTimer = null, toastUndo = null, remember = true, hoIncDone = true;
 
-function lsLoad(key, fallback) {
-  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
-  catch(e) { return fallback; }
-}
-function lsSave(key, val) {
-  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
-}
+// ── Per-user offline cache + write queue (wiped on LOCK) ─
+const K = k => `oct:${user.uid}:${k}`;
+const lsGet = (k, f) => { try { const v = localStorage.getItem(K(k)); return v ? JSON.parse(v) : f; } catch (e) { return f; } };
+const lsSet = (k, v) => { try { localStorage.setItem(K(k), JSON.stringify(v)); } catch (e) {} };
+const lsDel = k => { try { localStorage.removeItem(K(k)); } catch (e) {} };
+const getQ = () => lsGet("queue", []);
+const setQ = q => lsSet("queue", q);
+const saveCache = () => lsSet("cache", jobs);
 
-const saveCache = () => lsSave(LS_CACHE, tasks);
-const getQueue  = () => lsLoad(LS_QUEUE, []);
-const setQueueLS = (q) => lsSave(LS_QUEUE, q);
-
-function generateLocalId() {
-  return "loc_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,7);
-}
-
-const isOnline = () => navigator.onLine && fbConnected;
-
-function updateSyncStatus() {
-  const el = document.getElementById("sb-sync");
-  if (!el) return;
-  const qLen = getQueue().length;
-  if (!isOnline()) {
-    el.textContent = qLen ? `db: offline · ${qLen} queued` : "db: offline";
-    el.style.color = "var(--orange)";
-    const live = document.getElementById("sync-live");
-    if (live) live.style.display = "none";
-  } else if (qLen) {
-    el.textContent = `db: syncing · ${qLen} pending`;
-    el.style.color = "var(--amber2)";
-  } else {
-    el.textContent = "db: connected";
-    el.style.color = "var(--amber3)";
-    const live = document.getElementById("sync-live");
-    if (live) live.style.display = "block";
-  }
-}
-
-// Apply an op to local `tasks` state (optimistic update). Used by both
-// queuedWrite (immediate apply) and the onValue handler (replaying queue
-// on top of fresh Firebase data so optimistic changes don't disappear).
-function applyOpLocally(op) {
-  const m = op.path.match(/^onCallTasks\/(.+)$/);
-  if (m) {
-    const id = m[1];
-    if (op.type === "remove") delete tasks[id];
-    else if (op.type === "update") tasks[id] = { ...(tasks[id] || {}), ...op.data };
-    else if (op.type === "set")    tasks[id] = op.data;
-  } else if (op.path === "onCallTasks" && op.type === "set" && op.data === null) {
-    tasks = {};
-  }
-}
-
-// Queue + apply optimistically + try to flush
-function queuedWrite(op) {
-  applyOpLocally(op);
-  saveCache();
-  render();
-  const q = getQueue();
-  q.push(op);
-  setQueueLS(q);
-  updateSyncStatus();
-  flushQueue();
-}
-
-async function flushQueue() {
-  if (flushInFlight || !isOnline() || !window._fb) return;
-  flushInFlight = true;
-  try {
-    const { db, ref, set, update, remove } = window._fb;
-    let q = getQueue();
-    while (q.length) {
-      const op = q[0];
-      try {
-        const fbRef = ref(db, op.path);
-        if      (op.type === "set")    await set(fbRef, op.data);
-        else if (op.type === "update") await update(fbRef, op.data);
-        else if (op.type === "remove") await remove(fbRef);
-        q.shift();
-        setQueueLS(q);
-        updateSyncStatus();
-      } catch (err) {
-        console.warn("[OCT] sync failed, will retry:", op, err);
-        break;
-      }
-    }
-  } finally {
-    flushInFlight = false;
-    updateSyncStatus();
-  }
-}
-
-// Browser-level online/offline events
-window.addEventListener("online",  () => { updateSyncStatus(); flushQueue(); });
-window.addEventListener("offline", () => { updateSyncStatus(); });
-
-// ── State ────────────────────────────────────────────────────
-let tasks = {}, filterStatus="active", filterPri="all", filterType="all";
-let selPriority  = "routine";
-let selType      = JOB_TYPES[0];
-let selRemind    = 0;
-let selRemindAt  = null; 
-let editingId    = null;
-let shiftStart   = Date.now();
-let knownTaskIds = null;   // null until first render; tracks IDs to detect newly added tasks
-let knownDoneStates = {};  // { [id]: completedBool } from last render; used to detect just-completed transitions
-// ── Helpers ──────────────────────────────────────────────────
-const nowTimeStr = () => new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
-const esc        = s  => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-const fmtTime    = s  => s || "--:--";
-const typeObj    = k  => JOB_TYPES.find(t=>t.key===k) || JOB_TYPES[JOB_TYPES.length-1];
-
-// Age: prefer new `age` field, fall back to legacy `dobYear` for old records
-function getAge(t) {
-  if (t.age) return parseInt(t.age);
-  if (t.dobYear) return new Date().getFullYear() - parseInt(t.dobYear);
-  return null;
-}
-
-function timeAgo(timeStr) {
-  if (!timeStr) return "";
-  const [h,m] = timeStr.split(":").map(Number);
-  const now = new Date();
-  const then = new Date();
-  then.setHours(h, m, 0, 0);
-  const diff = Math.round((now - then) / 60000);
-  if (diff < 0)   return "";
-  if (diff < 60)  return `${diff}m ago`;
-  return `${Math.floor(diff/60)}h ${diff%60}m`;
-}
-
-// ── Clock ────────────────────────────────────────────────────
-function tickClock() {
-  const now = new Date();
-  document.getElementById("clock").textContent =
-    now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
-  document.getElementById("clock-date").textContent =
-    now.toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short"}).toUpperCase();
-  // Shift duration
-  const mins = Math.floor((Date.now() - shiftStart) / 60000);
-  const h = Math.floor(mins/60), m = mins%60;
-  document.getElementById("shift-duration").textContent =
-    `shift: ${h}h ${m}m`;
-}
-tickClock();
-setInterval(tickClock, 1000);
-
-
-// ── Firebase ─────────────────────────────────────────────────
-// Hydrate from localStorage immediately so the UI works offline on cold start.
-const cachedTasks = lsLoad(LS_CACHE, null);
-if (cachedTasks && Object.keys(cachedTasks).length) {
-  tasks = cachedTasks;
-  // Replay any queue on top so optimistic-but-not-yet-synced changes show
-  for (const op of getQueue()) applyOpLocally(op);
-  render();
-  document.getElementById("loading").style.display = "none";
-  document.getElementById("task-table").classList.add("show");
-}
-updateSyncStatus();
-
-function initFirebase() {
-  const { onValue, tasksRef, ref, db } = window._fb;
-
-  // Track Firebase's own connection state separately from navigator.onLine.
-  // navigator.onLine can lie (captive portals, partial connectivity).
-  onValue(ref(db, ".info/connected"), snap => {
-    fbConnected = snap.val() === true;
-    updateSyncStatus();
-    if (fbConnected) flushQueue();
-  });
-
-  onValue(tasksRef, snap => {
-    // Firebase is source of truth on the read side. Replace local state
-    // with whatever Firebase says, then layer any not-yet-flushed queued
-    // ops on top so optimistic changes don't disappear mid-flight.
-    tasks = snap.val() || {};
-    for (const op of getQueue()) applyOpLocally(op);
-    saveCache();
-    render();
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("task-table").classList.add("show");
-    updateSyncStatus();
-  });
-}
-
-if (window._fb) {
-  initFirebase();
-} else {
-  window.addEventListener("firebase-ready", initFirebase);
-}
-// ── Type grid ────────────────────────────────────────────────
-function buildTypeGrid() {
-  const grid = document.getElementById("type-grid");
-  grid.innerHTML = "";
-  JOB_TYPES.forEach(t => {
-    const b = document.createElement("button");
-    b.className = "type-btn" + (t.key===selType.key?" sel":"");
-    b.textContent = t.label;
-    b.onclick = () => { selType = t; buildTypeGrid(); };
-    grid.appendChild(b);
-  });
-}
-
-// ── Priority selector ────────────────────────────────────────
-function setPriority(p) {
-  selPriority = p;
-  document.querySelectorAll(".pri-btn").forEach(b => {
-    const bp = b.dataset.p;
-    b.className = "pri-btn" + (bp===p ? ` sel-${bp}` : "");
-  });
-}
-// -set reminder-----
-function setRemind(mins) {
-  selRemind   = mins;
-  selRemindAt = null;
-  document.querySelectorAll(".remind-btn").forEach(b => {
-    b.classList.toggle("sel", parseInt(b.dataset.r) === mins);
-  });
-  // Clear the time picker if a relative time is chosen
-  document.getElementById("f-remind-at").value = "";
-}
-
-function setRemindAt(timeStr) {
-  selRemindAt = timeStr || null;
-  // If a specific time is set, deselect the relative buttons
-  if (selRemindAt) {
-    selRemind = 0;
-    document.querySelectorAll(".remind-btn").forEach(b => b.classList.remove("sel"));
-    document.querySelector(".remind-btn[data-r='0']").classList.add("sel");
-  }
-}
-
-// ── Drawer ───────────────────────────────────────────────────
-function openDrawer(taskId) {
-  editingId = taskId || null;
-  const task = editingId ? tasks[editingId] : null;
-
-  document.getElementById("drawer-mode-label").textContent = task ? "job.edit" : "job.create";
-  document.getElementById("drawer-exec-btn").textContent   = task ? "UPDATE ▸" : "EXECUTE ▸";
-
-  if (task) {
-    document.getElementById("f-patient").value  = task.patient  || "";
-    document.getElementById("f-age").value      = task.age || (task.dobYear ? (new Date().getFullYear() - parseInt(task.dobYear)) : "");
-    document.getElementById("f-location").value = task.location || "";
-    document.getElementById("f-time").value     = task.timeIn   || "";
-    document.getElementById("f-task").value     = task.task     || "";
-    document.getElementById("f-notes").value    = task.notes    || "";
-    // Pre-fill reminder time if it was a specific time
-    if (task.remindAt && !task.reminded) {
-      const d = new Date(task.remindAt);
-      const hh = String(d.getHours()).padStart(2,"0");
-      const mm = String(d.getMinutes()).padStart(2,"0");
-      document.getElementById("f-remind-at").value = `${hh}:${mm}`;
-      selRemindAt = `${hh}:${mm}`;
-    } else {
-      document.getElementById("f-remind-at").value = "";
-      selRemindAt = null;
-    }
-    selPriority = task.priority || "routine";
-    selType = typeObj(task.type);
-    setPriority(selPriority);
-  } else {
-        ["f-patient","f-age","f-location","f-task","f-notes"].forEach(id=>document.getElementById(id).value="");
-
-    document.getElementById("f-time").value   = nowTimeStr();
-    selPriority = "routine";
-    selType = JOB_TYPES[0];
-    setPriority("routine");
-
-    selRemind   = 0;
-    selRemindAt = null;
-    setRemind(0);
-    document.getElementById("f-remind-at").value = "";
-  }
-  buildTypeGrid();
-  document.getElementById("add-drawer").classList.add("open");
-  document.getElementById("f-patient").focus();
-}
-function closeDrawer() {
-  document.getElementById("add-drawer").classList.remove("open");
-  editingId = null;
-  selRemind   = 0;
-  selRemindAt = null;
-}
-
-// ── Save job ─────────────────────────────────────────────────
-function saveJob() {
-  const patient = document.getElementById("f-patient").value.trim().toUpperCase();
-  const task    = document.getElementById("f-task").value.trim();
-  if (!patient || !task) {
-    if (!patient) document.getElementById("f-patient").focus();
-    else          document.getElementById("f-task").focus();
+function applyOp(op) {
+  if (!op.path) {
+    if (op.type === "set" && op.data == null) jobs = {};
+    else if (op.type === "update") Object.entries(op.data).forEach(([k, v]) => applyOp({ type: v === null ? "remove" : "set", path: k, data: v }));
     return;
   }
-
-  // Calculate absolute reminder time if set
-// Specific time takes priority over relative offset
-  let remindAt = null;
-  if (selRemindAt) {
-    // Convert "HH:MM" to today's epoch ms
-    const [h, m] = selRemindAt.split(":").map(Number);
-    const t = new Date();
-    t.setHours(h, m, 0, 0);
-    // If the time has already passed today, assume they mean tomorrow
-    if (t.getTime() < Date.now()) t.setDate(t.getDate() + 1);
-    remindAt = t.getTime();
-  } else if (selRemind > 0) {
-    remindAt = Date.now() + (selRemind * 60 * 1000);
+  const [id, field] = op.path.split("/");
+  if (field) {
+    if (!jobs[id]) return;
+    if (op.type === "remove" || op.data === null) delete jobs[id][field]; else jobs[id][field] = op.data;
+    return;
   }
+  if (op.type === "remove") delete jobs[id];
+  else if (op.type === "set") jobs[id] = JSON.parse(JSON.stringify(op.data));
+  else if (op.type === "update" && jobs[id]) Object.entries(op.data).forEach(([k, v]) => { if (v === null) delete jobs[id][k]; else jobs[id][k] = v; });
+}
 
-  const payload = {
-    patient,
-    age:      document.getElementById("f-age").value || "",
-    location: document.getElementById("f-location").value.trim(),
-    timeIn:   document.getElementById("f-time").value,
-    priority: selPriority,
-    type:     selType.key,
-    task,
-    notes:    document.getElementById("f-notes").value.trim(),
-    remindAt,          // epoch ms, null if no reminder
-    reminded: false,   // flipped to true once Apps Script fires it
+function write(op) {
+  applyOp(op); saveCache(); render();
+  const q = getQ(); q.push(op); setQ(q);
+  syncStatus(); flush();
+}
+
+async function flush() {
+  if (flushing || !fbConnected || !user) return;
+  flushing = true;
+  try {
+    let q = getQ();
+    while (q.length && user) {
+      const op = q[0];
+      const r = ref(db, op.path ? `${base}/${op.path}` : base);
+      try {
+        if (op.type === "set") await set(r, op.data);
+        else if (op.type === "update") await update(r, op.data);
+        else if (op.type === "remove") await set(r, null);
+        q.shift(); setQ(q);
+      } catch (e) {
+        if (e && e.code === "PERMISSION_DENIED") {
+          q.shift(); setQ(q);
+          showToast("WRITE REJECTED", "the database rules refused one change; it has been dropped", true);
+        } else break;
+      }
+    }
+  } finally { flushing = false; syncStatus(); }
+}
+
+function syncStatus() {
+  if (!user) return;
+  const n = getQ().length;
+  const el = $("sync");
+  el.classList.toggle("live", fbConnected && !n);
+  el.classList.toggle("off", !fbConnected);
+  $("sync-t").textContent = !fbConnected ? (n ? `OFFLINE · ${n} queued` : "OFFLINE") : n ? `SYNCING · ${n}` : "LIVE · europe-west1";
+  $("ft-sync").textContent = `db: locked · offline queue ${n}`;
+}
+window.addEventListener("online", () => { syncStatus(); flush(); });
+setInterval(() => { if (user && getQ().length) flush(); }, 30000);
+
+// ── Clock & shift timer ─────────────────────────────────
+function tick() {
+  $("clock").textContent = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  if (user) {
+    const mins = Math.floor((Date.now() - lsGet("shift", Date.now())) / 60000);
+    $("shift-t").textContent = `GIM + RENAL · shift ${Math.floor(mins / 60)}h ${mins % 60}m`;
+  }
+}
+tick(); setInterval(tick, 1000);
+setInterval(() => { if (user && loaded) render(); }, 30000);
+
+// ── Auth ────────────────────────────────────────────────
+const authMsg = (t, c = "") => { $("a-msg").textContent = t; $("a-msg").className = "auth-msg " + c; };
+const authErr = e => ({
+  "auth/invalid-credential": "ACCESS DENIED · wrong email or password",
+  "auth/wrong-password": "ACCESS DENIED · wrong email or password",
+  "auth/user-not-found": "ACCESS DENIED · wrong email or password",
+  "auth/invalid-email": "That email address isn't valid",
+  "auth/too-many-requests": "LOCKED · too many attempts, try again later",
+  "auth/network-request-failed": "NETWORK ERROR · check your connection",
+}[e && e.code] || "ERROR · " + ((e && (e.code || e.message)) || "unknown"));
+
+$("a-remember").addEventListener("click", () => {
+  remember = !remember;
+  const b = $("a-remember"); b.classList.toggle("on", remember); b.setAttribute("aria-pressed", remember);
+  b.querySelector(".box").textContent = remember ? "✓" : "";
+});
+$("auth-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = $("a-email").value.trim(), pass = $("a-pass").value;
+  if (!email || !pass) { authMsg("Enter email and password", "err"); return; }
+  $("a-submit").disabled = true; authMsg("authenticating…");
+  try {
+    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+    await signInWithEmailAndPassword(auth, email, pass);
+    authMsg("");
+  } catch (err) { authMsg(authErr(err), "err"); }
+  finally { $("a-submit").disabled = false; }
+});
+$("a-reset").addEventListener("click", async () => {
+  const email = $("a-email").value.trim();
+  if (!email) { authMsg("Type your email above first", "err"); return; }
+  try { await sendPasswordResetEmail(auth, email); } catch (e) { if (e.code === "auth/invalid-email") { authMsg(authErr(e), "err"); return; } }
+  authMsg("If that account exists, a reset link is on its way.", "ok");
+});
+
+$("lock-btn").addEventListener("click", () => {
+  const n = user ? getQ().length : 0;
+  if (n && !confirm(`${n} change${n > 1 ? "s haven't" : " hasn't"} synced yet and will be lost. Lock anyway?`)) return;
+  if (user) { lsDel("cache"); lsDel("queue"); }
+  signOut(auth);
+});
+
+onAuthStateChanged(auth, u => { $("boot").hidden = true; if (u) startSession(u); else endSession(); });
+
+function endSession() {
+  unsubs.forEach(f => f()); unsubs = [];
+  user = null; base = null; jobs = {}; loaded = false; legacy = null; openId = null; fbConnected = false;
+  closeDrawer(); closeHandover();
+  $("toast").hidden = true; $("migrate").hidden = true; $("rows").innerHTML = "";
+  $("app").hidden = true; $("auth").hidden = false;
+  document.body.classList.remove("authed");
+  $("a-pass").value = "";
+}
+
+function startSession(u) {
+  user = u; base = `users/${u.uid}/oncall`;
+  $("auth").hidden = true; $("app").hidden = false; $("denied").hidden = true; $("main-ui").hidden = false;
+  document.body.classList.add("authed");
+  $("h-email").textContent = u.email || "";
+  if (!localStorage.getItem(K("shift"))) lsSet("shift", Date.now());
+
+  // Offline-first: show this account's cached copy straight away, with unsynced changes replayed on top.
+  const cached = lsGet("cache", null);
+  if (cached) { jobs = cached; getQ().forEach(applyOp); loaded = true; $("loading").hidden = true; render(); }
+
+  unsubs.push(onValue(ref(db, ".info/connected"), s => { fbConnected = s.val() === true; syncStatus(); if (fbConnected) flush(); }));
+  unsubs.push(onValue(ref(db, base), snap => {
+    jobs = snap.val() || {};
+    getQ().forEach(applyOp);
+    saveCache();
+    loaded = true; $("loading").hidden = true;
+    if (openId && !jobs[openId]) openId = null;
+    render(); syncStatus();
+  }, err => diagnoseDenied(u, err)));
+  // offline with nothing cached yet: show an empty, usable list rather than a spinner
+  setTimeout(() => { if (user === u && !loaded && !fbConnected) { loaded = true; $("loading").hidden = true; render(); } }, 5000);
+  checkLegacy();
+}
+
+async function diagnoseDenied(u, err) {
+  let why = "";
+  try {
+    const v = (await get(ref(db, `allowedUsers/${u.uid}`))).val();
+    why = v === null ? "No entry found for this user ID under allowedUsers."
+      : v !== true ? `The allowedUsers entry is ${JSON.stringify(v)} (${typeof v}); it must be the boolean true.`
+      : "You're on the allowlist, but the on-call rules aren't published yet: paste the updated database.rules.json and Publish.";
+  } catch (e) {
+    why = "The database refused to read the allowlist. Publish the updated database.rules.json in the renaltasks project.";
+  }
+  lsDel("cache"); lsDel("queue"); jobs = {};
+  $("main-ui").hidden = true;
+  const p = $("denied"); p.hidden = false;
+  p.innerHTML = `<strong>!! ACCESS DENIED</strong><br>Signed in as <code>${esc(u.email)}</code> to project <code>${esc(firebaseConfig.projectId)}</code>.<br>
+    <strong>Reason:</strong> ${esc(why)}<br>Your user ID: <code>${esc(u.uid)}</code><br>
+    <button class="btn" id="denied-out">SIGN OUT</button>`;
+  $("denied-out").addEventListener("click", () => signOut(auth));
+}
+
+// ── Legacy migration (old shared project, open /onCallTasks) ─
+async function checkLegacy() {
+  try {
+    const v = (await get(ref(legacyDb, "onCallTasks"))).val();
+    if (v && typeof v === "object" && Object.keys(v).length) {
+      legacy = v;
+      const n = Object.keys(v).length;
+      $("mig-t").textContent = `${n} job${n > 1 ? "s" : ""} still in the old shared project (unlocked) · move them into your locked account`;
+      $("migrate").hidden = false;
+    }
+  } catch (e) { /* locked or gone */ }
+}
+function fromLegacy(t) {
+  t = t || {};
+  const s = (v, n) => String(v ?? "").trim().slice(0, n);
+  const age = t.age ? s(t.age, 3) : (t.dobYear ? String(new Date().getFullYear() - parseInt(t.dobYear, 10)).slice(0, 3) : "");
+  const o = {
+    patient: s(t.patient, 8).toUpperCase() || "??",
+    age: /^\d{0,3}$/.test(age) ? age : "",
+    location: s(t.location, 40),
+    timeIn: /^\d{2}:\d{2}$/.test(t.timeIn || "") ? t.timeIn : "",
+    priority: PRI_ORDER[t.priority] !== undefined ? t.priority : "routine",
+    type: JOB_TYPES.some(x => x.key === t.type) ? t.type : "other",
+    task: s(t.task, 300) || "Job",
+    notes: s(t.notes, 2000),
+    completed: !!t.completed,
+    createdAt: typeof t.createdAt === "number" ? t.createdAt : Date.now(),
   };
+  if (typeof t.completedAt === "number") o.completedAt = t.completedAt;
+  if (typeof t.remindAt === "number" && !t.reminded) { o.dueAt = t.remindAt; o.remindAt = t.remindAt; o.pings = 0; }
+  return o;
+}
+$("mig-btn").addEventListener("click", async () => {
+  if (!legacy) return;
+  const keys = Object.keys(legacy), copy = {}, wipe = {};
+  keys.forEach(k => { copy[k] = fromLegacy(legacy[k]); wipe[k] = null; });
+  $("mig-btn").disabled = true;
+  try { await update(ref(db, base), copy); }
+  catch (e) { showToast("MIGRATION FAILED", (e && e.code) || String(e), true); $("mig-btn").disabled = false; return; }
+  legacy = null; $("migrate").hidden = true;
+  try {
+    await update(ref(legacyDb, "onCallTasks"), wipe);
+    showToast("MIGRATED", `${keys.length} jobs moved into your locked account · old copies deleted. Now remove onCallTasks from the old project's rules.`);
+  } catch (e) {
+    showToast("COPIED", `${keys.length} jobs copied safely, but the old copies couldn't be deleted. Delete onCallTasks in the old project's console.`, true);
+  }
+  $("mig-btn").disabled = false;
+});
 
+// ── Toast ───────────────────────────────────────────────
+function showToast(k, t, bad = false, undo = null) {
+  $("toast-k").textContent = k; $("toast-t").textContent = t;
+  $("toast").classList.toggle("bad", bad);
+  $("toast-undo").hidden = !undo; toastUndo = undo;
+  $("toast").hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { $("toast").hidden = true; toastUndo = null; }, undo ? 10000 : 7000);
+}
+$("toast-undo").addEventListener("click", () => { const f = toastUndo; toastUndo = null; $("toast").hidden = true; if (f) f(); });
 
+// ── Mutations ───────────────────────────────────────────
+function toggleDone(id) {
+  const j = jobs[id]; if (!j) return;
+  write({ type: "update", path: id, data: j.completed ? { completed: false, completedAt: null } : { completed: true, completedAt: Date.now() } });
+}
+function snooze(id) {
+  const j = jobs[id]; if (!j) return;
+  const due = Math.max(Date.now(), j.dueAt || Date.now()) + HOT_MS;
+  write({ type: "update", path: id, data: { dueAt: due, remindAt: due, pings: 0 } });
+}
+function delJob(id) {
+  const j = jobs[id]; if (!j) return;
+  const copy = JSON.parse(JSON.stringify(j));
+  write({ type: "remove", path: id });
+  showToast("DELETED", `${j.patient} · ${j.task}`, false, () => write({ type: "set", path: id, data: copy }));
+}
+$("end-shift").addEventListener("click", endShift);
+function endShift() {
+  const n = Object.keys(jobs).length;
+  if (!confirm(`END_SHIFT: clear all ${n} job${n === 1 ? "" : "s"} and restart the shift timer? This can't be undone. Copy or email the handover first.`)) return;
+  write({ type: "set", path: "", data: null });
+  lsSet("shift", Date.now());
+}
+
+// ── Render ──────────────────────────────────────────────
+function render() {
+  if (!user || !loaded) return;
+  const now = Date.now();
+  const all = Object.entries(jobs).filter(([, j]) => j && typeof j === "object").map(([id, j]) => Object.assign({}, j, { id }));
+  const pending = all.filter(j => !j.completed);
+  const doneN = all.length - pending.length;
+  const emerg = pending.filter(j => j.priority === "emergency").sort(byDue);
+  const urg = pending.filter(j => j.priority === "urgent");
+  const withDue = pending.filter(j => j.dueAt).sort(byDue);
+
+  const sv = (id, v, cls) => { const e = $(id); e.textContent = v; if (cls !== undefined) e.className = "stat-v" + (cls ? " " + cls : ""); };
+  sv("st-emerg", emerg.length, emerg.length ? "red" : "");
+  sv("st-urg", urg.length, urg.length ? "org" : "");
+  sv("st-pend", pending.length, "");
+  sv("st-done", doneN);
+  sv("st-next", withDue.length ? hhmm(withDue[0].dueAt) : "--:--");
+  $("ft-pend").textContent = pending.length; $("ft-done").textContent = doneN; $("ft-rem").textContent = withDue.length;
+
+  const al = $("alert");
+  const hotUrg = urg.filter(j => j.dueAt && j.dueAt - now <= HOT_MS).sort(byDue);
+  if (emerg.length) {
+    const e = emerg[0];
+    al.className = "strip emerg"; al.hidden = false;
+    al.textContent = `!!  ${emerg.length} EMERGENCY · ${e.patient}${e.location ? " · " + e.location : ""}${e.dueAt ? " · DUE " + hhmm(e.dueAt) + " (" + rel(e.dueAt) + ")" : ""}`;
+  } else if (hotUrg.length) {
+    const e = hotUrg[0];
+    al.className = "strip urg"; al.hidden = false;
+    al.textContent = `▲  URGENT DUE · ${e.patient}${e.location ? " · " + e.location : ""} · ${hhmm(e.dueAt)} (${rel(e.dueAt)})`;
+  } else al.hidden = true;
+
+  // live emergencies are always pinned, whatever the filters
+  const pinnedIds = new Set(emerg.map(j => j.id));
+  let vis = all.filter(j => !pinnedIds.has(j.id));
+  if (filterStatus === "active") vis = vis.filter(j => !j.completed);
+  if (filterStatus === "done") vis = vis.filter(j => j.completed);
+  if (filterPri !== "all") vis = vis.filter(j => j.priority === filterPri);
+  if (filterType !== "all") vis = vis.filter(j => j.type === filterType);
+  const q = $("search").value.trim().toUpperCase();
+  if (q) vis = vis.filter(j => String(j.patient || "").toUpperCase().includes(q));
+
+  const groups = [
+    { key: "emergency", label: "EMERGENCY · PINNED", items: emerg },
+    { key: "urgent", label: "URGENT", items: vis.filter(j => !j.completed && j.priority === "urgent").sort(byDue) },
+    { key: "routine", label: "ROUTINE", items: vis.filter(j => !j.completed && (j.priority || "routine") === "routine").sort(byDue) },
+    { key: "done", label: "DONE THIS SHIFT", items: vis.filter(j => j.completed).sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0)) },
+  ].filter(g => g.items.length);
+
+  $("rows").innerHTML = groups.map(g =>
+    `<div class="sect s-${g.key}"><span>── ${g.label}</span><span class="c">${g.items.length}</span><span class="ln" aria-hidden="true"></span></div>` +
+    g.items.map(rowHtml).join("")).join("");
+  $("empty").hidden = groups.length > 0;
+  if (!$("handover").hidden) renderHandover();
+}
+function byDue(a, b) { return (a.dueAt || 9e15) - (b.dueAt || 9e15) || String(a.timeIn || "").localeCompare(String(b.timeIn || "")); }
+
+function dueInfo(j) {
+  if (j.completed) return { main: "done", sub: j.completedAt ? "at " + hhmm(j.completedAt) : "completed", cls: "" };
+  if (!j.dueAt) return { main: "--:--", sub: "no reminder", cls: "" };
+  const d = j.dueAt - Date.now();
+  return { main: hhmm(j.dueAt), sub: rel(j.dueAt), cls: d < -60000 ? "late" : d <= HOT_MS ? "hot" : "set" };
+}
+
+function rowHtml(j) {
+  const p = PRI_ORDER[j.priority] !== undefined ? j.priority : "routine";
+  const t = typeOf(j.type), open = openId === j.id, done = !!j.completed, du = dueInfo(j);
+  const hint = j.notes ? j.notes.split(/[.\n]/)[0] : (j.location || "no notes");
+  const acts = `<button class="sb teal" data-act="snz">+15m</button><button class="sb edit" data-act="edit">EDIT</button><button class="sb" data-act="dup">DUP</button>`;
+  return `<div class="job p-${p}${done ? " done" : ""}${open ? " open" : ""}" data-id="${esc(j.id)}">
+  <div class="trow">
+    <div class="c-cb"><button class="cb${done ? " on" : ""}" data-act="done" aria-label="${done ? "Reopen" : "Complete"} ${esc(j.patient)} ${esc(j.task)}">${done ? "✓" : ""}</button></div>
+    <div class="c-pri"><span class="pri pri-${p}">${PRI_LABEL[p]}</span></div>
+    <div class="c-pt"><span class="pt">${esc(j.patient)}${j.age ? ` <small>· ${esc(j.age)}</small>` : ""}</span><span class="loc">${esc(j.location || "")}</span></div>
+    <div class="c-type"><span class="typ" style="color:${t.c};border-color:${t.b}">${esc(t.label)}</span></div>
+    <button class="c-task" data-act="open" aria-expanded="${open}">
+      <span class="tlabel">${esc(j.task)}</span>
+      <span class="thint">${open ? "▾" : "▸"} logged ${esc(j.timeIn || "--:--")} · ${esc(hint)}</span>
+    </button>
+    <div class="c-due"><div class="due-m ${du.cls}">${du.main}</div><div class="due-s">${esc(du.sub)}</div></div>
+    <div class="c-act">${done ? "" : acts}<button class="sb del" data-act="del" aria-label="Delete job">✕</button></div>
+    <div class="mpri"><span class="pri-${p}" style="border:none;background:none">${PRI_LABEL[p]}</span><span style="color:${t.c}">${esc(t.label.toUpperCase())}</span><span class="r">logged ${esc(j.timeIn || "--:--")}</span></div>
+  </div>
+  ${open ? `<div class="xp">
+    <div><div class="xp-h">notes</div><div class="notes">// ${esc(j.notes || "no notes")}</div></div>
+    <div class="kv">
+      <span class="k">due</span><span class="tv">${j.dueAt ? esc(hhmm(j.dueAt) + " · " + rel(j.dueAt)) : "no reminder"}</span>
+      ${j.dueAt && !done ? `<span class="k">next ping</span><span>${esc(hhmm(j.remindAt || j.dueAt))}${j.pings ? ` · ${j.pings} sent` : ""}</span>` : ""}
+      <span class="k">logged</span><span>${esc(j.timeIn || "--:--")}${j.timeIn ? " · " + esc(agoTxt(j.timeIn)) : ""}</span>
+      <span class="k">location</span><span>${esc(j.location || "--")}</span>
+      <div class="xp-act" style="grid-column:1/-1;margin-top:8px">${done ? "" : acts}<button class="sb del" data-act="del" style="border-color:var(--l3)">DELETE</button></div>
+    </div>
+  </div>` : ""}
+</div>`;
+}
+
+$("rows").addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const id = b.closest(".job").dataset.id;
+  switch (b.dataset.act) {
+    case "done": toggleDone(id); break;
+    case "open": openId = openId === id ? null : id; render(); break;
+    case "snz": snooze(id); break;
+    case "edit": openDrawer(id); break;
+    case "dup": openDrawer(null, id); break;
+    case "del": delJob(id); break;
+  }
+});
+$("filters").addEventListener("click", e => {
+  const b = e.target.closest("[data-f]"); if (!b) return;
+  filterStatus = b.dataset.f;
+  document.querySelectorAll("#filters .fbtn").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); });
+  render();
+});
+$("type-filter").innerHTML += JOB_TYPES.map(t => `<option value="${t.key}">--type=${t.key}</option>`).join("");
+$("pri-filter").addEventListener("change", e => { filterPri = e.target.value; render(); });
+$("type-filter").addEventListener("change", e => { filterType = e.target.value; render(); });
+$("search").addEventListener("input", render);
+document.querySelectorAll("[data-new]").forEach(b => b.addEventListener("click", () => openDrawer()));
+document.querySelectorAll("[data-ho]").forEach(b => b.addEventListener("click", openHandover));
+
+// ── Editor ──────────────────────────────────────────────
+function openDrawer(id, dupFrom) {
+  editingId = id || null;
+  const j = id ? jobs[id] : dupFrom ? jobs[dupFrom] : null;
+  $("d-mode").textContent = id ? "job.edit" : dupFrom ? "job.duplicate" : "job.create";
+  $("d-exec").textContent = id ? "UPDATE ▸" : "EXECUTE ▸";
+  $("d-err").textContent = "";
+  $("f-patient").value = j ? j.patient || "" : "";
+  $("f-age").value = j ? j.age || "" : "";
+  $("f-loc").value = j ? j.location || "" : "";
+  $("f-time").value = id && j ? j.timeIn || "" : nowHHMM();
+  $("f-task").value = id && j ? j.task || "" : "";
+  $("f-notes").value = id && j ? j.notes || "" : "";
+  ed = { pri: j ? j.priority || "routine" : "routine", type: j ? j.type || "handover" : "handover", rem: 0, at: "", origDue: id && j ? j.dueAt || null : null };
+  if (id && j && j.dueAt && !j.completed) ed.at = hhmm(j.dueAt);
+  $("f-at").value = ed.at;
+  renderEditor();
+  $("drawer").hidden = false;
+  $("drawer").scrollIntoView({ behavior: "smooth", block: "start" });
+  setTimeout(() => (dupFrom ? $("f-task") : $("f-patient")).focus({ preventScroll: true }), 50);
+}
+function closeDrawer() { $("drawer").hidden = true; editingId = null; ed = null; }
+
+function dueFromEd() {
+  if (ed.at) return atToMs(ed.at);
+  if (ed.rem) return Date.now() + ed.rem * 60000;
+  return null;
+}
+function renderEditor() {
+  document.querySelectorAll(".pris button").forEach(b => { const on = b.dataset.p === ed.pri; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+  $("types").innerHTML = JOB_TYPES.map(t => `<button data-t="${t.key}" class="${t.key === ed.type ? "on" : ""}" aria-pressed="${t.key === ed.type}"><i style="background:${t.c}"></i>${esc(t.label)}</button>`).join("");
+  document.querySelectorAll(".rems button").forEach(b => { const on = !ed.at && +b.dataset.r === ed.rem; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+  const due = dueFromEd();
+  $("rem-txt").textContent = due ? "at " + hhmm(due) : "off";
+  $("rem-prev").textContent = due
+    ? `→ Due ${hhmm(due)} (${rel(due)}). The row turns amber 15 minutes before, the header counts down, and Pushover pings you at ${hhmm(due)}, then every ${ed.pri === "emergency" ? "15 minutes" : ed.pri === "urgent" ? "30 minutes" : "2 hours"} until it's done.`
+    : "→ No reminder. The job sorts by priority and time logged.";
+  $("d-sum").textContent = `${ed.pri} · ${typeOf(ed.type).label.toLowerCase()}${due ? " · due " + hhmm(due) : ""}`;
+}
+$("drawer").addEventListener("click", e => {
+  if (!ed) return;
+  const p = e.target.closest(".pris button"), t = e.target.closest(".types button"), r = e.target.closest(".rems button");
+  if (p) { ed.pri = p.dataset.p; renderEditor(); }
+  if (t) { ed.type = t.dataset.t; renderEditor(); }
+  if (r) { ed.rem = +r.dataset.r; ed.at = ""; $("f-at").value = ""; renderEditor(); }
+});
+$("f-at").addEventListener("input", e => { if (!ed) return; ed.at = e.target.value; if (ed.at) ed.rem = 0; renderEditor(); });
+$("d-esc").addEventListener("click", closeDrawer);
+$("d-abort").addEventListener("click", closeDrawer);
+$("d-exec").addEventListener("click", saveJob);
+
+function saveJob() {
+  const err = m => { $("d-err").textContent = m; };
+  const patient = $("f-patient").value.trim().toUpperCase();
+  const task = $("f-task").value.trim();
+  if (!patient) { err("patient_id required"); $("f-patient").focus(); return; }
+  if (!task) { err("task required"); $("f-task").focus(); return; }
+  const age = $("f-age").value.trim();
+  if (age && !/^\d{1,3}$/.test(age)) { err("age should be a number"); $("f-age").focus(); return; }
+  const due = dueFromEd();
+  const payload = {
+    patient: patient.slice(0, 8), age, location: $("f-loc").value.trim().slice(0, 40),
+    timeIn: $("f-time").value || "", priority: ed.pri, type: ed.type,
+    task: task.slice(0, 300), notes: $("f-notes").value.trim().slice(0, 2000),
+  };
   if (editingId) {
-    queuedWrite({ type: "update", path: `onCallTasks/${editingId}`, data: payload });
+    const j = jobs[editingId];
+    const sameDue = due && ed.origDue && ed.at === hhmm(ed.origDue);
+    if (!due) Object.assign(payload, { dueAt: null, remindAt: null, pings: null });
+    else if (!sameDue) Object.assign(payload, { dueAt: due, remindAt: due, pings: 0 });
+    if (j) write({ type: "update", path: editingId, data: payload });
   } else {
-    const id = generateLocalId();
-    queuedWrite({
-      type: "set",
-      path: `onCallTasks/${id}`,
-      data: { ...payload, completed: false, createdAt: Date.now(), completedAt: null }
-    });
+    const id = push(ref(db, base)).key;
+    const data = Object.assign(payload, { completed: false, createdAt: Date.now() });
+    if (due) Object.assign(data, { dueAt: due, remindAt: due, pings: 0 });
+    write({ type: "set", path: id, data });
   }
   closeDrawer();
 }
 
-// ── Mutations ────────────────────────────────────────────────
-function toggleDone(id) {
-  const t = tasks[id]; if (!t) return;
-  queuedWrite({
-    type: "update",
-    path: `onCallTasks/${id}`,
-    data: {
-      completed: !t.completed,
-      completedAt: !t.completed ? Date.now() : null,
-    }
-  });
-  const el = document.querySelector(`#tr-${id} .cb`);
-  if (el) { el.style.transform="scale(1.35)"; setTimeout(()=>el.style.transform="",180); }
+// ── Handover ────────────────────────────────────────────
+function hoData() {
+  const all = Object.values(jobs).filter(j => j && typeof j === "object");
+  const pending = all.filter(j => !j.completed);
+  const by = p => pending.filter(j => (j.priority || "routine") === p).sort(byDue);
+  return { pending, emerg: by("emergency"), urg: by("urgent"), rout: by("routine"),
+    done: all.filter(j => j.completed).sort((a, b) => (a.completedAt || 0) - (b.completedAt || 0)) };
 }
-function deleteJob(id) {
-  queuedWrite({ type: "remove", path: `onCallTasks/${id}` });
-}
-function toggleExpand(id) {
-  document.getElementById("tr-"+id)?.classList.toggle("expanded");
-}
-  function duplicateJob(id) {
-  const t = tasks[id]; if (!t) return;
-  // Open drawer pre-filled with patient details, cleared task/notes/reminder
-  editingId = null;
-  const task = { ...t };
+function openHandover() { hoIncDone = true; syncHoToggle(); renderHandover(); $("handover").hidden = false; $("handover").scrollTop = 0; resetHoBtns(); }
+function closeHandover() { $("handover").hidden = true; }
+function syncHoToggle() { const b = $("ho-done"); b.classList.toggle("on", hoIncDone); b.setAttribute("aria-pressed", hoIncDone); b.querySelector(".box").textContent = hoIncDone ? "✓" : ""; }
+function resetHoBtns() { $("ho-copy").textContent = "COPY ▸"; $("ho-email").textContent = "EMAIL ▸"; $("ho-email").disabled = false; }
 
-  document.getElementById("drawer-mode-label").textContent = "job.create";
-  document.getElementById("drawer-exec-btn").textContent   = "EXECUTE ▸";
-
-  document.getElementById("f-patient").value  = task.patient  || "";
-    document.getElementById("f-age").value      = task.age || (task.dobYear ? (new Date().getFullYear() - parseInt(task.dobYear)) : "");
-  
-
-  document.getElementById("f-location").value = task.location || "";
-  document.getElementById("f-time").value     = nowTimeStr();
-  document.getElementById("f-task").value     = "";
-  document.getElementById("f-notes").value    = "";
-  document.getElementById("f-remind-at").value = "";
-
-  selPriority = task.priority || "routine";
-  selType     = typeObj(task.type);
-  selRemind   = 0;
-  selRemindAt = null;
-
-  setPriority(selPriority);
-  buildTypeGrid();
-  setRemind(0);
-
-  document.getElementById("add-drawer").classList.add("open");
-  document.getElementById("f-task").focus();
-}
-function clearShift() {
-  if (!confirm("END_SHIFT: clear all tasks? This cannot be undone.")) return;
-  queuedWrite({ type: "set", path: "onCallTasks", data: null });
+function renderHandover() {
+  const d = hoData(), now = new Date();
+  const shiftStart = lsGet("shift", Date.now());
+  $("ho-meta").textContent = `${now.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" }).toUpperCase()} · generated ${hhmm(now)} · shift ${hhmm(shiftStart)}–now`;
+  const card = (j, done) => {
+    const p = j.priority || "routine", t = typeOf(j.type);
+    const when = done ? "completed" + (j.completedAt ? " " + hhmm(j.completedAt) : "") : j.dueAt ? `DUE ${hhmm(j.dueAt)} · ${rel(j.dueAt)}` : "no due time";
+    return `<article class="ho-job p-${p}${done ? " done" : ""}">
+      <div class="who"><b>${esc(j.patient)}</b><span>${esc([j.age, j.location].filter(Boolean).join(" · "))}</span><em style="${done ? "color:var(--dim)" : ""}">${esc(when)}</em></div>
+      <div class="what"><span style="font-size:10px;font-weight:700;letter-spacing:.1em;color:${t.c}">${esc(t.label.toUpperCase())}</span><span class="tx">${esc(j.task)}</span></div>
+      ${j.notes ? `<div class="nt">${esc(j.notes)}</div>` : ""}
+      <div class="lg">logged ${esc(j.timeIn || "--:--")}${done && j.completedAt ? " · done " + hhmm(j.completedAt) : ""}</div>
+    </article>`;
+  };
+  const sec = (label, color, list, done) => !list.length ? "" :
+    `<section class="ho-sec"><h3 style="color:${color}"><span>${label}</span><span class="c">${list.length}</span><span class="ln" aria-hidden="true"></span></h3>${list.map(j => card(j, done)).join("")}</section>`;
+  $("ho-main").innerHTML = `
+    <div class="ho-sum">
+      <div><b style="color:var(--a)">${d.pending.length}</b><span>OUTSTANDING</span></div>
+      <div><b style="color:var(--red)">${d.emerg.length}</b><span>EMERGENCY</span></div>
+      <div><b style="color:var(--org)">${d.urg.length}</b><span>URGENT</span></div>
+      <div><b style="color:var(--hi)">${d.done.length}</b><span>COMPLETED</span></div>
+    </div>
+    ${sec("!! EMERGENCY", "var(--red)", d.emerg, false)}
+    ${sec("▲ URGENT", "var(--org)", d.urg, false)}
+    ${sec("ROUTINE", "var(--a2)", d.rout, false)}
+    ${hoIncDone ? sec("✓ COMPLETED THIS SHIFT", "var(--dim)", d.done, true) : ""}
+    ${!d.pending.length && !(hoIncDone && d.done.length) ? `<div class="ho-note">// no jobs recorded this shift</div>` : ""}
+    <p class="ho-note">Copy gives plain text that pastes cleanly into Teams, email or a handover sheet. Email sends the formatted handover to your NHS address via your reminder script.</p>`;
 }
 
-// ── Handover export ──────────────────────────────────────────
-function openHandover() {
-  const all = Object.values(tasks);
-  const now = new Date();
-  const dateStr = now.toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).toUpperCase();
-  const timeStr = now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
-  const D = "═".repeat(52);
-  const d = "─".repeat(52);
-  const PRI_ICON = { emergency:"!!", urgent:"▲ ", routine:"── " };
-
-  let out = "";
-  out += `${D}\n`;
-  out += `  OCT // ON-CALL HANDOVER\n`;
-  out += `  ${dateStr}\n`;
-  out += `  Generated :: ${timeStr}\n`;
-  out += `${D}\n\n`;
-
-  const pending   = all.filter(t=>!t.completed).sort((a,b)=>PRI_ORDER[a.priority]-PRI_ORDER[b.priority]);
-  const completed = all.filter(t=> t.completed).sort((a,b)=>(a.timeIn||"").localeCompare(b.timeIn||""));
-
-  if (pending.length) {
-    out += `  OUTSTANDING JOBS (${pending.length})\n`;
-    out += `${d}\n`;
-    pending.forEach((t, i) => {
-      const icon    = PRI_ICON[t.priority] || "── ";
-      const pri     = (t.priority||"routine").toUpperCase();
-      const age     = getAge(t);
-      const patient = `${t.patient||"?"}${age?" (age "+age+")":""}`;
-      const type    = (t.type||"other").toUpperCase();
-      const time    = t.timeIn || "??:??";
-      const dueStr = t.remindAt ? String(new Date(t.remindAt).getHours()).padStart(2,"0")+":"+String(new Date(t.remindAt).getMinutes()).padStart(2,"0") : time;
-      out += `\n  ${icon} [${pri}] ${patient} :: ${type} :: @${dueStr}\n`;
-
-      out += `     TASK   : ${t.task}\n`;
-      if (t.location) out += `     WARD   : ${t.location}\n`;
-      if (t.notes)    out += `     NOTES  : ${t.notes}\n`;
-      if (i < pending.length - 1) out += `  ${" ".repeat(50)}\n`;
+function handoverText() {
+  const d = hoData(), now = new Date();
+  const L = [];
+  L.push(`ON-CALL HANDOVER · ${now.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" })} ${hhmm(now)}`);
+  const bits = [d.emerg.length && `${d.emerg.length} emergency`, d.urg.length && `${d.urg.length} urgent`, d.rout.length && `${d.rout.length} routine`].filter(Boolean);
+  L.push(`Outstanding: ${d.pending.length}${bits.length ? " (" + bits.join(", ") + ")" : ""} · Completed: ${d.done.length}`);
+  const block = (title, list, done) => {
+    if (!list.length) return;
+    L.push("", title);
+    list.forEach(j => {
+      const who = `${j.patient}${j.age ? " (" + j.age + ")" : ""}${j.location ? " · " + j.location : ""}`;
+      const when = done ? (j.completedAt ? "done " + hhmm(j.completedAt) : "done") : j.dueAt ? "due " + hhmm(j.dueAt) : "logged " + (j.timeIn || "--:--");
+      L.push(`• ${who} · ${typeOf(j.type).label} · ${when}`);
+      L.push(`  ${j.task}`);
+      if (j.notes) L.push(`  Notes: ${j.notes.replace(/\n+/g, " ")}`);
     });
-    out += `\n${d}\n\n`;
-  }
-
-  if (completed.length) {
-    out += `  COMPLETED JOBS (${completed.length})\n`;
-    out += `${d}\n`;
-    completed.forEach(t => {
-      const age     = getAge(t);
-      const patient = `${t.patient||"?"}${age?" (age "+age+")":""}`;
-
-      const type    = (t.type||"other").toUpperCase();
-      const time    = t.timeIn || "??:??";
-      const dueStr = t.remindAt ? String(new Date(t.remindAt).getHours()).padStart(2,"0")+":"+String(new Date(t.remindAt).getMinutes()).padStart(2,"0") : time;
-      const cIcon = "✓ ";
-      const cPri  = (t.priority||"routine").toUpperCase();
-      out += `\n  ${cIcon} [${cPri}] ${patient} :: ${type} :: @${dueStr}\n`;
-      out += `     TASK   : ${t.task}\n`;
-      if (t.notes) out += `     NOTES  : ${t.notes}\n`;
-  
-    });
-    out += `\n${d}\n\n`;
-  }
-
-  if (!pending.length && !completed.length) {
-    out += `  // no jobs recorded this shift\n\n`;
-  }
-
-  const pendingCt   = pending.length;
-  const emergCt     = pending.filter(t=>t.priority==="emergency").length;
-  const urgCt       = pending.filter(t=>t.priority==="urgent").length;
-  const routineCt   = pending.filter(t=>t.priority==="routine").length;
-
-  out += `${D}\n`;
-  out += `  SUMMARY\n`;
-  out += `  Outstanding : ${pendingCt}`;
-  if (emergCt)   out += `  (!! ${emergCt} emergency)`;
-  if (urgCt)     out += `  (▲ ${urgCt} urgent)`;
-  if (routineCt) out += `  (── ${routineCt} routine)`;
-  out += `\n`;
-  out += `  Completed   : ${completed.length}\n`;
-  out += `${D}\n`;
-  out += `  OCT v1.0 // on-call tracker // ${dateStr}\n`;
-  out += `${D}`;
-
-  document.getElementById("ho-text").textContent = out;
-  document.getElementById("copy-btn").textContent = "COPY TO CLIPBOARD ▸";
-  document.getElementById("copy-btn").classList.remove("copied");
-  document.getElementById("handover-overlay").classList.add("show");
-}
-function closeHandover() {
-  document.getElementById("handover-overlay").classList.remove("show");
-}
-function copyHandover() {
-  const text = document.getElementById("ho-text").textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.getElementById("copy-btn");
-    btn.textContent = "✓ COPIED";
-    btn.classList.add("copied");
-    setTimeout(() => {
-      btn.textContent = "COPY TO CLIPBOARD ▸";
-      btn.classList.remove("copied");
-    }, 2500);
-  });
+  };
+  block("!! EMERGENCY", d.emerg, false);
+  block("▲ URGENT", d.urg, false);
+  block("ROUTINE", d.rout, false);
+  if (hoIncDone) block("✓ COMPLETED", d.done, true);
+  return L.join("\n");
 }
 
-function emailHandover() {
-  const btn  = document.getElementById("email-btn");
-  const text = document.getElementById("ho-text").textContent;
-  btn.textContent = "SENDING...";
-  btn.style.opacity = "0.6";
-
-  fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "handover",
-      text: text,
-      date: new Date().toLocaleDateString("en-GB", { weekday:"long", day:"2-digit", month:"long", year:"numeric" }),
-      time: new Date().toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" }),
-    }),
-  }).then(() => {
-    btn.textContent = "✓ SENT";
-    btn.style.borderColor = "var(--green)";
-    btn.style.color = "var(--green)";
-    btn.style.opacity = "1";
-    setTimeout(() => {
-      btn.textContent = "EMAIL ▸";
-      btn.style.borderColor = "";
-      btn.style.color = "";
-    }, 3000);
-  }).catch(() => {
-    btn.textContent = "✗ FAILED";
-    btn.style.color = "var(--red)";
-    setTimeout(() => { btn.textContent = "EMAIL ▸"; btn.style.color = ""; }, 3000);
-  });
-}
-
-
-// ── Priority strip ───────────────────────────────────────────
-// Strip appears AND strobes together — visibility still tied to imminence
-// (a pending job within IMMINENT_MS of its remindAt, or overdue), but the
-// text is the old outstanding-count format. Hidden entirely when nothing
-// urgent enough is outstanding, or when nothing is imminent.
-function updatePriorityStrip() {
-  const strip = document.getElementById("priority-strip");
-  if (!strip) return;
-
-  const pending = Object.values(tasks).filter(t => !t.completed);
-  const emergCt = pending.filter(t => t.priority === "emergency").length;
-  const urgCt   = pending.filter(t => t.priority === "urgent").length;
-
-  // Nothing emerg/urgent outstanding → strip not relevant
-  if (emergCt === 0 && urgCt === 0) {
-    strip.className = "";
-    strip.textContent = "";
-    return;
-  }
-
-  // Outstanding exists, but show strip only if at least one pending
-  // job is imminent (or overdue)
-  const now = Date.now();
-  const imminent = pending.some(t => t.remindAt && (t.remindAt - now) <= IMMINENT_MS);
-  if (!imminent) {
-    strip.className = "";
-    return;
-  }
-
-  if (emergCt > 0) {
-    strip.textContent = `!! ${emergCt} EMERGENCY JOB${emergCt > 1 ? "S" : ""} OUTSTANDING !!`;
-    strip.className = "show emerg";
-  } else {
-    strip.textContent = `▲ ${urgCt} URGENT JOB${urgCt > 1 ? "S" : ""} OUTSTANDING`;
-    strip.className = "show urg";
-  }
-}
-
-// Re-check imminence on a timer so the flash kicks in without needing a data event.
-setInterval(updatePriorityStrip, 30000);
-
-// Retry pending writes periodically (covers cases where neither the online
-// event nor a Firebase .info/connected change has prodded us)
-setInterval(() => { if (getQueue().length) flushQueue(); }, 30000);
-
-// ── Render ───────────────────────────────────────────────────
-function render() {
-  const tbody = document.getElementById("task-body");
-  const empty = document.getElementById("empty");
-
-  // Detect what changed since last render. Drives animation classes on rows:
-  //   - first render        → everything fades in normally via rowIn
-  //   - existing unchanged  → suppress rowIn (no flash on re-render)
-  //   - new                 → new-pulse animation
-  //   - just-completed      → fadeToDone animation (active→done transition)
-  const isInitialRender = knownTaskIds === null;
-  const currentIds = new Set(Object.keys(tasks));
-  const newIds = isInitialRender
-    ? new Set()
-    : new Set([...currentIds].filter(id => !knownTaskIds.has(id)));
-  const justCompletedIds = new Set();
-  if (!isInitialRender) {
-    for (const id of currentIds) {
-      if (tasks[id].completed && knownDoneStates[id] === false) justCompletedIds.add(id);
-    }
-  }
-  knownTaskIds = currentIds;
-  knownDoneStates = {};
-  for (const id of currentIds) knownDoneStates[id] = !!tasks[id].completed;
-
-  // ALL outstanding emergencies are pinned at the top regardless of filters.
-  // This is a safety property — you can't accidentally hide a live emergency.
-  const allTasks = Object.entries(tasks).map(([id,t])=>({id,...t}));
-  const pinned = allTasks
-    .filter(t => t.priority === "emergency" && !t.completed)
-    .sort((a,b) => (a.timeIn||"").localeCompare(b.timeIn||""));
-  const pinnedIds = new Set(pinned.map(t => t.id));
-
-  // Apply filters to the rest
-  let arr = allTasks.filter(t => !pinnedIds.has(t.id));
-  if (filterStatus==="active")    arr=arr.filter(t=>!t.completed);
-  if (filterStatus==="completed") arr=arr.filter(t=> t.completed);
-  if (filterPri!=="all")          arr=arr.filter(t=>t.priority===filterPri);
-  if (filterType!=="all")         arr=arr.filter(t=>t.type===filterType);
-  const search = document.getElementById("patient-search").value.trim().toUpperCase();
-  if (search) arr = arr.filter(t => (t.patient||"").toUpperCase().includes(search));
-
-  // Sort: emergency first, then urgent, then routine; within each by time
-  arr.sort((a,b) => {
-    const pd = (PRI_ORDER[a.priority]||2) - (PRI_ORDER[b.priority]||2);
-    if (pd !== 0) return pd;
-    return (a.timeIn||"").localeCompare(b.timeIn||"");
-  });
-
-  // Stats
-  const all       = Object.values(tasks);
-  const pending   = all.filter(t=>!t.completed);
-  const emergCt   = pending.filter(t=>t.priority==="emergency").length;
-  const urgCt     = pending.filter(t=>t.priority==="urgent").length;
-  const doneCt    = all.filter(t=>t.completed).length;
-
-  document.getElementById("stat-emerg").textContent = emergCt;
-  document.getElementById("stat-urg").textContent   = urgCt;
-  document.getElementById("stat-pend").textContent  = pending.length;
-  document.getElementById("stat-done").textContent  = doneCt;
-  document.getElementById("sb-pend").textContent    = pending.length;
-  document.getElementById("sb-done").textContent    = doneCt;
-
-  // Priority strip — see updatePriorityStrip() for flashing logic
-  updatePriorityStrip();
-
-  tbody.innerHTML = "";
-  if (pinned.length === 0 && arr.length === 0) { empty.style.display = "block"; return; }
-  empty.style.display = "none";
-
-  // Build display groups
-  const groups = [];
-  if (pinned.length) {
-    groups.push({ label:"EMERGENCY · PINNED", items: pinned });
-  }
-  if (filterStatus === "active") {
-    const urg = arr.filter(t => t.priority === "urgent");
-    const rou = arr.filter(t => t.priority === "routine");
-    if (urg.length) groups.push({ label:"URGENT",  items: urg });
-    if (rou.length) groups.push({ label:"ROUTINE", items: rou });
-  } else if (arr.length) {
-    groups.push({ label: null, items: arr });
-  }
-
-  groups.forEach(g => {
-    if (g.label) {
-      const sep = document.createElement("tr");
-      sep.className = "tbl-section";
-      sep.innerHTML = `<td colspan="7" data-count="${g.items.length}">${g.label}</td>`;
-      tbody.appendChild(sep);
-    }
-    g.items.forEach(task => {
-      const isNew           = newIds.has(task.id);
-      const isJustCompleted = justCompletedIds.has(task.id);
-      const isExisting      = !isInitialRender && !isNew;
-      tbody.appendChild(buildRow(task, isNew, isJustCompleted, isExisting));
-    });
-  });
-}
-
-function buildRow(task, isNew, isJustCompleted, isExisting) {
-  const t    = typeObj(task.type);
-  const pri  = task.priority || "routine";
-
-  const cls = ["tbl-row", `p-${pri}`];
-  if (task.completed)      cls.push("done");
-  if (isNew)               cls.push("new-pulse");
-  if (isJustCompleted)     cls.push("just-completed");
-  else if (isExisting)     cls.push("no-anim");
-
-  const tr = document.createElement("tr");
-  tr.className = cls.join(" ");
-  tr.id = "tr-"+task.id;
-
-  tr.innerHTML = `
-    <td class="td-cb">
-      <button class="cb${task.completed?" checked":""}" onclick="toggleDone('${task.id}')">
-        ${task.completed?"✓":""}
-      </button>
-    </td>
-    <td class="td-pri">
-      <span class="pri-badge pri-${pri}">${pri.toUpperCase()}</span>
-    </td>
-    <td class="td-patient">
-      <div class="patient-str">${esc(task.patient||"?")}</div>
-      ${(()=>{ const a = getAge(task); return a ? `<div style="font-size:9px;color:var(--amber4)">age ${a}</div>` : ""; })()}
-      ${task.location?`<div style="font-size:9px;color:var(--amber4)">${esc(task.location)}</div>`:""}
-      ${task.oncall?`<div style="font-size:9px;color:var(--amber4)">${esc(task.oncall)}</div>`:""}
-    </td>
-
-    <td class="td-type">
-      <span class="type-pill" style="border-color:${t.color};color:${t.color}">${t.label}</span>
-    </td>
-    <td class="td-task" onclick="toggleExpand('${task.id}')">
-      <div class="task-str">${esc(task.task||"")}</div>
-      ${task.notes?`<div class="task-notes">// ${esc(task.notes)}</div>`:""}
-    </td>
-    <td class="td-time">
-      ${task.remindAt?(()=>{
-        const due = new Date(task.remindAt);
-        const now = new Date();
-        const overdue = !task.reminded && now > due;
-        const hh = String(due.getHours()).padStart(2,"0");
-        const mm = String(due.getMinutes()).padStart(2,"0");
-        return `<div class="time-str" style="color:${overdue?'#ff4444':'var(--amber4)'}">DUE ${hh}:${mm}${overdue?'!!':''}</div>`;
-      })():`<div class="time-str">${fmtTime(task.timeIn)}</div>`}
-      
-    </td>
-
-    <td class="td-actions">
-      ${!task.completed?`
-        <button class="edt" onclick="openDrawer('${task.id}')">EDIT</button>
-        <button class="dup" onclick="duplicateJob('${task.id}')">DUP</button>`:""}
-      <button class="del" onclick="deleteJob('${task.id}')">✕</button>
-    </td>`;
-  return tr;
-}
-
-// Refresh time-ago every minute
-setInterval(() => {
-  Object.keys(tasks).forEach(id => {
-    const el = document.getElementById("age-"+id);
-    if (el && tasks[id]) el.textContent = timeAgo(tasks[id].timeIn);
-  });
-}, 60000);
-
-// ── Controls ─────────────────────────────────────────────────
-document.getElementById("status-filters").addEventListener("click", e => {
-  if (!e.target.dataset.filter) return;
-  filterStatus = e.target.dataset.filter;
-  document.querySelectorAll(".cmd-btn[data-filter]").forEach(b =>
-    b.classList.toggle("active", b.dataset.filter===filterStatus));
-  render();
+$("ho-close").addEventListener("click", closeHandover);
+$("ho-done").addEventListener("click", () => { hoIncDone = !hoIncDone; syncHoToggle(); renderHandover(); });
+$("ho-print").addEventListener("click", () => window.print());
+$("ho-copy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(handoverText()); $("ho-copy").textContent = "✓ COPIED"; }
+  catch (e) { $("ho-copy").textContent = "COPY FAILED"; }
+  setTimeout(() => { $("ho-copy").textContent = "COPY ▸"; }, 2500);
 });
-document.getElementById("pri-filter").addEventListener("change",  e=>{filterPri=e.target.value; render();});
-document.getElementById("type-filter").addEventListener("change", e=>{filterType=e.target.value; render();});
-
-window.addEventListener('keydown', (e) => {
-  // Escape works even from inputs/textareas — it's how you bail out
-  if (e.key === 'Escape') {
-    if (document.getElementById('handover-overlay').classList.contains('show')) {
-      e.preventDefault();
-      closeHandover();
-      return;
-    }
-    if (document.getElementById('add-drawer').classList.contains('open')) {
-      e.preventDefault();
-      closeDrawer();
-      return;
-    }
+$("ho-email").addEventListener("click", async () => {
+  const b = $("ho-email");
+  if (getQ().length) { showToast("NOT SYNCED", "some changes haven't reached the database yet; the email would miss them. Try again once online.", true); return; }
+  b.disabled = true; b.textContent = "SENDING…";
+  try {
+    const idToken = await user.getIdToken();
+    const res = await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "handover", includeDone: hoIncDone, idToken }) });
+    const out = await res.json();
+    if (out.ok) b.textContent = "✓ SENT";
+    else { b.textContent = "✗ FAILED"; showToast("EMAIL FAILED", out.error === "unauthorised" ? "the script didn't accept your sign-in: check CONFIG.uid in the script" : (out.error || "unknown error"), true); }
+  } catch (e) {
+    b.textContent = "✗ FAILED";
+    showToast("EMAIL FAILED", "couldn't reach the reminder script (is the new version deployed?)", true);
   }
-
-  // Enter inside the drawer saves the job — except inside the textarea
-  // (where Enter is the normal newline) and on buttons (where Enter clicks them)
-  if (e.key === 'Enter'
-      && document.getElementById('add-drawer').classList.contains('open')
-      && e.target.tagName !== 'TEXTAREA'
-      && e.target.tagName !== 'BUTTON') {
-    e.preventDefault();
-    saveJob();
-    return;
-  }
-
-  // The shortcuts below should NOT fire while typing in a field
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-  switch (e.key.toLowerCase()) {
-    case 'n':
-      e.preventDefault();
-      openDrawer();
-      break;
-
-    case 'h':
-      e.preventDefault();
-      openHandover();
-      break;
-
-    case 'e':
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
-        clearShift();
-      }
-      break;
-
-    case '/':
-      e.preventDefault();
-      document.getElementById('patient-search').focus(); 
-      break;
-  }
+  setTimeout(resetHoBtns, 3500);
 });
 
-// ── PWA ──────────────────────────────────────────────────────
-const mf = {
-  name:"OCT On-Call Tracker", short_name:"OCT",
-  start_url:"./", display:"standalone",
-  background_color:"#080808", theme_color:"#080808",
-  icons:[{
-    src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23080808'/><text y='65' x='50' text-anchor='middle' font-size='38' font-family='monospace' fill='%23ffb000'>OCT</text></svg>",
-    sizes:"192x192", type:"image/svg+xml"
-  }]
-};
-document.getElementById("pwa-manifest").href = URL.createObjectURL(
-  new Blob([JSON.stringify(mf)], {type:"application/json"})
-);
+// ── Keyboard ────────────────────────────────────────────
+window.addEventListener("keydown", e => {
+  if (!user || $("app").hidden) return;
+  if (e.key === "Escape") {
+    if (!$("handover").hidden) { e.preventDefault(); closeHandover(); return; }
+    if (!$("drawer").hidden) { e.preventDefault(); closeDrawer(); return; }
+  }
+  if (e.key === "Enter" && !$("drawer").hidden && e.target.closest("#drawer") && e.target.tagName !== "TEXTAREA" && e.target.tagName !== "BUTTON") {
+    e.preventDefault(); saveJob(); return;
+  }
+  if (["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === "n") { e.preventDefault(); openDrawer(); }
+  else if (k === "h") { e.preventDefault(); openHandover(); }
+  else if (k === "/") { e.preventDefault(); $("search").focus(); }
+});
+
+// ── PWA manifest ────────────────────────────────────────
+const mf = { name: "OCT On-Call Tracker", short_name: "OCT", start_url: "./", display: "standalone", background_color: "#090806", theme_color: "#090806",
+  icons: [{ src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23090806'/><text y='62' x='50' text-anchor='middle' font-size='38' font-family='monospace' font-weight='bold' fill='%23ffb000'>OCT</text></svg>", sizes: "192x192", type: "image/svg+xml" }] };
+$("pwa-manifest").href = URL.createObjectURL(new Blob([JSON.stringify(mf)], { type: "application/json" }));
 </script>
 </body>
 </html>
