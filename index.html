@@ -1,1100 +1,1171 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>RTM // Renal Task Monitor</title>
-
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-  <meta name="apple-mobile-web-app-title" content="RTM" />
-  <meta name="theme-color" content="#080c08" />
-  <link rel="manifest" id="pwa-manifest" />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
-
-  <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
-    authDomain: "task-monitor-bd7ee.firebaseapp.com",
-    databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "task-monitor-bd7ee",
-    storageBucket: "task-monitor-bd7ee.firebasestorage.app",
-    messagingSenderId: "544624731364",
-    appId: "1:544624731364:web:419d52fa061c5c7b4f38f1"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db       = getDatabase(app);
-  const tasksRef = ref(db, "renalTasks");
-
-    window._fb = { db, ref, push, onValue, update, remove, tasksRef };
-    window.dispatchEvent(new Event("firebase-ready"));
-
-</script>
-
-
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:       #080c08;
-      --bg2:      #0c100c;
-      --bg3:      #111811;
-      --bg4:      #161e16;
-
-      --green:    #39ff14;   /* phosphor */
-      --green2:   #28c40e;
-      --green3:   #1a8a0a;
-      --green4:   #0f5206;
-      --green5:   #0a3204;
-
-      --amber:    #ffb000;
-      --red:      #ff3333;
-      --dim:      #4a6a4a;
-      --dimmer:   #2a3a2a;
-      --dimmest:  #182018;
-
-      --font: 'JetBrains Mono', 'Courier New', monospace;
-      --scanline: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.08) 2px,
-        rgba(0,0,0,0.08) 4px
-      );
-    }
-
-    html, body {
-      background: var(--bg);
-      color: var(--green);
-      font-family: var(--font);
-      font-size: 13px;
-      min-height: 100vh;
-      /* Subtle CRT scanline overlay */
-      background-image: var(--scanline);
-    }
-
-    /* Phosphor glow on text */
-    body { text-shadow: 0 0 6px rgba(57,255,20,0.25); }
-
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--green4); }
-
-    /* ── Boot header ─────────────────────────────────────── */
-    #header {
-      border-bottom: 1px solid var(--green3);
-      background: var(--bg2);
-      padding: 0;
-    }
-
-    .header-top {
-      display: flex; align-items: stretch;
-      border-bottom: 1px solid var(--green5);
-    }
-
-    .header-logo {
-      padding: 16px 24px;
-      border-right: 1px solid var(--green5);
-      display: flex; flex-direction: column; justify-content: center;
-    }
-    .logo-line1 {
-      font-size: 22px; font-weight: 700;
-      color: var(--green); letter-spacing: 0.08em;
-      line-height: 1;
-    }
-    .logo-line1 span { color: var(--green3); }
-    .logo-line2 {
-      font-size: 8px; font-weight: 400;
-      color: var(--green3); letter-spacing: 0.3em;
-      margin-top: 5px;
-    }
-    .logo-version {
-      font-size: 8px; color: var(--green4);
-      margin-top: 2px; letter-spacing: 0.1em;
-    }
-
-    .header-stats {
-      display: flex; flex: 1;
-    }
-    .stat-cell {
-      flex: 1; padding: 12px 20px;
-      border-right: 1px solid var(--green5);
-      display: flex; flex-direction: column; justify-content: center;
-    }
-    .stat-cell:last-child { border-right: none; }
-    .stat-val {
-      font-size: 28px; font-weight: 700; line-height: 1;
-      color: var(--green);
-    }
-    .stat-val.red    { color: var(--red);   text-shadow: 0 0 10px rgba(255,51,51,0.5); }
-    .stat-val.amber  { color: var(--amber); text-shadow: 0 0 10px rgba(255,176,0,0.4); }
-    .stat-key {
-      font-size: 8px; color: var(--green3);
-      letter-spacing: 0.2em; margin-top: 3px; text-transform: uppercase;
-    }
-
-    .header-clock {
-      padding: 12px 20px;
-      display: flex; flex-direction: column;
-      justify-content: center; align-items: flex-end;
-      min-width: 180px; border-left: 1px solid var(--green5);
-    }
-    .clock-time {
-      font-size: 20px; font-weight: 700; letter-spacing: 0.06em;
-      color: var(--green2);
-    }
-    .clock-date { font-size: 9px; color: var(--green3); margin-top: 3px; letter-spacing: 0.1em; }
-    .sync-status { font-size: 8px; color: var(--green4); margin-top: 6px; letter-spacing: 0.15em; }
-    .sync-status.live { color: var(--green2); }
-    .sync-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--green2); margin-right: 4px; animation: blink 1.4s step-end infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-
-    /* Alert strip */
-    #alert-strip {
-      display: none;
-      padding: 6px 24px;
-      background: var(--red);
-      color: #fff;
-      font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
-      text-shadow: none;
-      animation: strobe 1.5s ease-in-out infinite;
-    }
-    #alert-strip.show { display: block; }
-    @keyframes strobe { 0%,100%{opacity:1} 50%{opacity:0.7} }
-
-    /* ── Command bar ─────────────────────────────────────── */
-    #cmdbar {
-      background: var(--bg3);
-      border-bottom: 1px solid var(--green4);
-      padding: 0 24px;
-      display: flex; align-items: stretch; gap: 0;
-    }
-    .cmd-prompt {
-      padding: 9px 12px 9px 0;
-      color: var(--green3); font-size: 11px;
-      border-right: 1px solid var(--green5);
-      display: flex; align-items: center;
-    }
-    .cmd-btn {
-      padding: 9px 14px;
-      background: transparent; border: none;
-      border-right: 1px solid var(--green5);
-      color: var(--green3); font-family: var(--font);
-      font-size: 10px; letter-spacing: 0.1em;
-      cursor: pointer; transition: all 0.1s; white-space: nowrap;
-    }
-    .cmd-btn:hover { background: var(--bg4); color: var(--green); }
-    .cmd-btn.active { background: var(--green5); color: var(--green); }
-    .cmd-select {
-      padding: 9px 12px;
-      background: transparent; border: none;
-      border-right: 1px solid var(--green5);
-      color: var(--green3); font-family: var(--font);
-      font-size: 10px; letter-spacing: 0.08em;
-      cursor: pointer; outline: none;
-    }
-    .cmd-select option { background: var(--bg3); color: var(--green); }
-    .cmd-right { margin-left: auto; display: flex; align-items: center; }
-    .btn-new {
-      padding: 9px 20px;
-      background: var(--green4); border: none;
-      border-left: 1px solid var(--green3);
-      color: var(--green); font-family: var(--font);
-      font-size: 10px; font-weight: 700; letter-spacing: 0.15em;
-      cursor: pointer; transition: all 0.12s;
-    }
-    .btn-new:hover { background: var(--green3); }
-
-    /* ── Add drawer ──────────────────────────────────────── */
-    #add-drawer {
-      display: none;
-      background: var(--bg2);
-      border-bottom: 2px solid var(--green3);
-      animation: termSlide 0.15s ease;
-    }
-    #add-drawer.open { display: block; }
-    @keyframes termSlide { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
-
-    .drawer-head {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 8px 24px; border-bottom: 1px solid var(--green5);
-      background: var(--bg3);
-    }
-    .drawer-prompt {
-      color: var(--green3); font-size: 10px; letter-spacing: 0.15em;
-    }
-    .drawer-prompt strong { color: var(--green); }
-    .btn-esc {
-      background: none; border: 1px solid var(--green4);
-      color: var(--green3); font-family: var(--font);
-      font-size: 9px; padding: 3px 8px; cursor: pointer;
-      letter-spacing: 0.1em; transition: all 0.1s;
-    }
-    .btn-esc:hover { border-color: var(--green); color: var(--green); }
-
-    .drawer-body {
-      padding: 16px 24px;
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
-    }
-    .field { display: flex; flex-direction: column; gap: 4px; }
-    .field.s2 { grid-column: span 2; }
-    .field.s4 { grid-column: span 4; }
-    .lbl {
-      font-size: 8px; color: var(--green3);
-      letter-spacing: 0.2em; text-transform: uppercase;
-    }
-    .lbl::before { content: "$ "; color: var(--green4); }
-    .inp {
-      background: var(--bg);
-      border: 1px solid var(--green4);
-      color: var(--green); font-family: var(--font);
-      font-size: 12px; padding: 7px 10px; outline: none;
-      transition: border-color 0.12s; border-radius: 0;
-      caret-color: var(--green);
-    }
-    .inp:focus { border-color: var(--green); box-shadow: 0 0 8px rgba(57,255,20,0.1); }
-    .inp option { background: var(--bg); color: var(--green); }
-    textarea.inp { resize: vertical; min-height: 50px; }
-
-    .tmpl-grid { display: flex; flex-wrap: wrap; gap: 4px; }
-    .tmpl-btn {
-      padding: 3px 9px;
-      background: var(--bg); border: 1px solid var(--green5);
-      color: var(--dim); font-family: var(--font);
-      font-size: 10px; cursor: pointer; transition: all 0.1s;
-    }
-    .tmpl-btn:hover { border-color: var(--green3); color: var(--green2); }
-    .tmpl-btn.sel {
-      background: var(--green4); border-color: var(--green);
-      color: var(--green); font-weight: 700;
-    }
-
-    .drawer-foot {
-      padding: 10px 24px; border-top: 1px solid var(--green5);
-      display: flex; justify-content: flex-end; gap: 8px;
-      background: var(--bg3);
-    }
-    .btn-abort {
-      padding: 6px 16px; background: transparent;
-      border: 1px solid var(--green4); color: var(--green3);
-      font-family: var(--font); font-size: 9px; letter-spacing: 0.12em;
-      cursor: pointer; transition: all 0.1s;
-    }
-    .btn-abort:hover { border-color: var(--red); color: var(--red); }
-    .btn-exec {
-      padding: 6px 20px;
-      background: var(--green4); border: 1px solid var(--green);
-      color: var(--green); font-family: var(--font);
-      font-size: 10px; font-weight: 700; letter-spacing: 0.15em;
-      cursor: pointer; transition: all 0.12s;
-    }
-    .btn-exec:hover { background: var(--green3); }
-
-    /* ── Task table ──────────────────────────────────────── */
-    #task-table {
-      width: 100%;
-      border-collapse: collapse;
-      display: none;
-    }
-    #task-table.show { display: table; }
-
-    /* Table header row */
-    .tbl-head {
-      background: var(--bg3);
-      border-bottom: 2px solid var(--green3);
-    }
-    .tbl-head th {
-      padding: 6px 12px;
-      font-size: 8px; font-weight: 700; letter-spacing: 0.2em;
-      color: var(--green3); text-align: left;
-      white-space: nowrap;
-    }
-    .tbl-head th:first-child { width: 28px; }
-
-    /* Section separator rows */
-    .tbl-section td {
-      padding: 12px 12px 4px;
-      font-size: 9px; font-weight: 700; letter-spacing: 0.25em;
-      color: var(--green3); text-transform: uppercase;
-      border-bottom: 1px solid var(--green5);
-    }
-    .tbl-section td::before { content: "── "; color: var(--green5); }
-    .tbl-section td::after  { content: " " attr(data-count) " ────────────────────────────────────────────"; color: var(--green5); }
-
-    /* Data rows */
-    .tbl-row {
-      border-bottom: 1px solid var(--dimmest);
-      transition: background 0.08s;
-      animation: rowIn 0.18s ease;
-    }
-    @keyframes rowIn { from{opacity:0;transform:translateX(-4px)} to{opacity:1;transform:translateX(0)} }
-    .tbl-row:hover { background: var(--bg3); }
-    .tbl-row.done { opacity: 0.3; }
-    .tbl-row.overdue { background: rgba(255,51,51,0.04); }
-    .tbl-row.overdue:hover { background: rgba(255,51,51,0.08); }
-
-    .tbl-row td {
-      padding: 8px 12px;
-      vertical-align: middle;
-      font-size: 12px;
-    }
-
-    /* Checkbox cell */
-    .td-cb { width: 28px; }
-    .cb {
-  width: 16px; height: 16px;
-  border: 1px solid var(--green4);
-  background: transparent; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9px; color: var(--green);
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>RTM // Renal Task Monitor</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="apple-mobile-web-app-title" content="RTM" />
+<meta name="theme-color" content="#060906" />
+<link rel="manifest" id="pwa-manifest" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060906;--p1:#0a0f0a;--p2:#0e150e;--l1:#111b11;--l2:#172417;--l3:#1f331f;--l4:#2a4a2a;
+  --tx:#b6eea4;--hi:#d6ffc8;--mid:#9ccf8c;--lab:#7fbf6e;--dim:#6b8f6b;--deco:#3f7a32;
+  --g:#39ff14;--g2:#7fe35e;--gf:#0f3d06;--ge:#2a7a14;
+  --red:#ff6b6b;--amb:#ffb000;--yel:#ffe066;--teal:#5ee6d0;--tf:#051411;--te:#1d5a50;--tt:#b9f5ea;
+  --font:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --scan:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,.22) 2px 4px);
 }
-.cb.checked {
-  background: var(--green4);
-  border-color: var(--green);
-  box-shadow: 0 0 8px rgba(57,255,20,0.4);
+html,body{background:var(--bg);color:var(--tx);font-family:var(--font);font-size:13px;min-height:100vh}
+body{background-image:var(--scan);text-shadow:0 0 6px rgba(57,255,20,.25)}
+button,input,select,textarea{font:inherit;color:inherit;text-shadow:inherit}
+button{cursor:pointer}
+:focus-visible{outline:1px solid var(--g);outline-offset:2px}
+::placeholder{color:var(--dim)}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--ge)}
+.sr{position:absolute;left:0;top:0;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none!important}
+
+.lbl{font-size:10px;letter-spacing:.2em;color:var(--lab);text-transform:uppercase}
+.lbl::before{content:"$ ";color:var(--deco)}
+.inp{background:var(--bg);border:1px solid var(--l4);color:var(--hi);font-size:14px;padding:10px 12px;border-radius:0;outline:none;width:100%;caret-color:var(--g)}
+.inp:focus{border-color:var(--g);box-shadow:0 0 8px rgba(57,255,20,.12)}
+select.inp option{background:var(--bg)}
+textarea.inp{resize:vertical;min-height:70px}
+.btn{min-height:40px;padding:0 16px;background:transparent;border:1px solid var(--l4);color:var(--mid);font-size:11px;letter-spacing:.12em}
+.btn:hover{border-color:var(--g2);color:var(--hi)}
+.btn-pri{background:var(--gf);border-color:var(--g);color:var(--g);font-weight:700;letter-spacing:.15em}
+.btn-pri:hover{background:#155a09;color:var(--g)}
+.btn-pri:disabled{opacity:.5;cursor:wait}
+.btn-danger:hover{border-color:var(--red);color:var(--red)}
+.pill{min-height:40px;padding:0 14px;background:transparent;border:1px solid var(--l4);color:var(--mid);font-size:11px}
+.pill.on{background:var(--gf);border-color:var(--g);color:var(--g)}
+.box{width:16px;height:16px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--l4);color:var(--g);font-size:11px}
+.on>.box,.box.on{border-color:var(--g);background:var(--gf)}
+.check{display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--mid);font-size:12px;text-align:left;padding:4px 0}
+
+/* ── Boot / auth ─────────────────────────── */
+#boot{padding:90px 24px;text-align:center;color:var(--lab);letter-spacing:.15em;font-size:11px}
+.spin{width:20px;height:20px;margin:0 auto 14px;border:1px solid var(--ge);border-top-color:var(--g);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.auth-box{width:100%;max-width:420px;background:var(--p1);border:1px solid var(--l3)}
+.auth-head{padding:22px 24px 18px;border-bottom:1px solid var(--l2)}
+.logo{font-size:24px;font-weight:700;letter-spacing:.08em;color:var(--g);line-height:1}
+.logo span{color:var(--deco)}
+.logo-sub{font-size:10px;letter-spacing:.28em;color:var(--lab);margin-top:6px}
+.auth-body{padding:22px 24px;display:flex;flex-direction:column;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px}
+.auth-msg{font-size:11px;letter-spacing:.04em;line-height:1.6;min-height:18px;color:var(--dim)}
+.auth-msg.err{color:var(--red)}.auth-msg.ok{color:var(--teal)}
+.auth-foot{padding:14px 24px;border-top:1px solid var(--l2);background:var(--p2);font-size:10px;color:var(--dim);line-height:1.7}
+.linkbtn{background:none;border:none;color:var(--lab);font-size:11px;text-decoration:underline;padding:4px 0;align-self:flex-start}
+.linkbtn:hover{color:var(--hi)}
+
+/* ── Header ──────────────────────────────── */
+#hdr{display:flex;flex-wrap:wrap;background:var(--p1);border-bottom:1px solid var(--l3)}
+.h-logo{padding:16px 24px;border-right:1px solid var(--l2);display:flex;flex-direction:column;justify-content:center;gap:4px}
+.h-ver{font-size:10px;color:var(--dim)}
+#stats{flex:999 1 520px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+.stat{padding:12px 18px;border-right:1px solid var(--l2);display:flex;flex-direction:column;justify-content:center;gap:4px}
+.stat-v{font-size:28px;font-weight:700;line-height:1;color:var(--g)}
+.stat-v.red{color:var(--red);text-shadow:0 0 8px rgba(255,92,92,.5)}
+.stat-v.amb{color:var(--amb);text-shadow:0 0 8px rgba(255,176,0,.4)}
+.stat-v.teal{color:var(--teal);text-shadow:0 0 8px rgba(94,230,208,.35)}
+.stat-v.hi{color:var(--hi)}
+.stat-k{font-size:10px;letter-spacing:.18em;color:var(--lab)}
+.h-clock{padding:12px 24px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:5px;min-width:220px}
+#clock{font-size:20px;font-weight:700;letter-spacing:.06em;color:var(--g2)}
+#clock-date{font-size:10px;letter-spacing:.1em;color:var(--lab)}
+#sync{font-size:10px;letter-spacing:.14em;color:var(--dim);display:flex;align-items:center;gap:6px}
+#sync .dot{width:6px;height:6px;border-radius:50%;background:var(--dim)}
+#sync.live{color:var(--g2)}
+#sync.live .dot{background:var(--g);box-shadow:0 0 6px var(--g)}
+.h-user{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--dim)}
+#h-email{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lock-btn{min-height:28px;padding:0 10px;background:none;border:1px solid var(--l3);color:var(--lab);font-size:10px;letter-spacing:.12em}
+.lock-btn:hover{border-color:var(--amb);color:var(--amb)}
+
+/* ── Strips ──────────────────────────────── */
+.strip{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:8px 24px;font-size:11px;letter-spacing:.08em}
+#alert{background:#170808;border-bottom:1px solid #4a1414;color:var(--red);font-weight:700;letter-spacing:.18em;text-shadow:0 0 8px rgba(255,92,92,.45)}
+#toast{background:var(--tf);border-bottom:1px solid #13463d;color:var(--teal);text-shadow:0 0 8px rgba(94,230,208,.35)}
+#toast.bad{background:#170808;border-color:#4a1414;color:var(--red)}
+#toast strong{letter-spacing:.18em}
+#toast .btn{min-height:28px;margin-left:auto;border-color:var(--te);color:var(--teal);font-size:10px}
+#migrate{background:#140f02;border-bottom:1px solid #5e4300;color:var(--amb)}
+#migrate .btn{min-height:30px;margin-left:auto;border-color:#5e4300;color:var(--amb)}
+.panel-msg{max-width:720px;margin:60px auto;padding:24px;border:1px solid #4a1414;background:#120707;color:var(--red);line-height:1.9;font-size:12px}
+.panel-msg code{color:var(--hi);background:var(--bg);padding:2px 6px;border:1px solid var(--l3);word-break:break-all}
+.panel-msg .btn{margin-top:14px}
+
+/* ── Command bar ─────────────────────────── */
+#cmd{position:relative;display:flex;flex-wrap:wrap;align-items:stretch;background:var(--p2);border-bottom:1px solid var(--l3);padding:0 24px}
+.prompt{padding:0 14px 0 0;color:var(--dim);border-right:1px solid var(--l2);display:flex;align-items:center}
+.fbtn{min-height:44px;padding:0 15px;background:transparent;border:none;border-right:1px solid var(--l2);color:var(--lab);font-size:11px;letter-spacing:.08em;white-space:nowrap}
+.fbtn:hover{color:var(--hi);background:var(--p1)}
+.fbtn.on{background:#0f2a08;color:var(--g)}
+.csel{background:transparent;border:none;border-right:1px solid var(--l2);color:var(--lab);font-size:11px;padding:0 12px;min-height:44px;outline:none}
+.csel option{background:var(--p2);color:var(--hi)}
+.new-btn{margin-left:auto;padding:0 22px;background:var(--gf);border:none;border-left:1px solid var(--ge);color:var(--g);font-size:11px;font-weight:700;letter-spacing:.15em}
+.new-btn:hover{background:#155a09}
+
+/* ── Editor drawer ───────────────────────── */
+#drawer{background:var(--p1);border-bottom:2px solid var(--ge);animation:slide .15s ease}
+@keyframes slide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.d-head{display:flex;align-items:center;justify-content:space-between;padding:10px 24px;background:var(--p2);border-bottom:1px solid var(--l2);font-size:11px;color:var(--dim)}
+.d-head strong{color:var(--hi)}
+.d-body{max-width:1240px;margin:0 auto;padding:22px 24px;display:flex;flex-direction:column;gap:22px}
+.d-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.tmpls{display:flex;flex-wrap:wrap;gap:6px}
+.tmpl{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 11px;background:transparent;border:1px solid var(--l4);color:var(--mid);font-size:11px}
+.tmpl small{font-size:10px;color:var(--dim)}
+.tmpl:hover{border-color:var(--ge);color:var(--hi)}
+.tmpl.on{background:var(--gf);border-color:var(--g);color:var(--g);font-weight:700}
+.tmpl.on small{color:var(--teal);font-weight:400}
+.d-cols{display:flex;flex-wrap:wrap;gap:18px;align-items:stretch}
+.card{flex:1 1 440px;min-width:0;background:var(--bg);border:1px solid var(--l3);display:flex;flex-direction:column}
+.card-h{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--p2);border-bottom:1px solid var(--l3);font-size:11px}
+.card-h .t{font-weight:700;letter-spacing:.2em;color:var(--hi)}
+.card-h .r{margin-left:auto;color:var(--teal)}
+.card-h .m{color:var(--dim)}
+.step-ed{display:flex;align-items:center;gap:10px;min-height:46px;padding:0 10px;border-bottom:1px dashed var(--l2)}
+.step-ed .n{font-size:10px;color:var(--dim);width:20px;flex:none}
+.step-ed .plus{color:var(--g);width:20px;flex:none}
+.step-ed input{flex:1;min-width:0;background:transparent;border:none;color:var(--hi);font-size:13px;padding:8px 0;outline:none}
+.icon-x{width:32px;height:32px;flex:none;background:none;border:1px solid transparent;color:var(--dim)}
+.icon-x:hover{color:var(--red);border-color:#4a1414}
+.add-btn{padding:6px 12px;background:var(--gf);border:1px solid var(--ge);color:var(--g);font-size:10px;font-weight:700;letter-spacing:.12em}
+.card-f{margin-top:auto;padding:12px 14px;border-top:1px solid var(--l3);display:flex;flex-direction:column;gap:6px}
+.card-b{padding:14px;display:flex;flex-direction:column;gap:16px}
+.seg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--l3)}
+.seg button{min-height:44px;background:transparent;border:none;border-right:1px solid var(--l3);color:var(--mid);font-size:11px;font-weight:700;letter-spacing:.08em}
+.seg button:last-child{border-right:none}
+.seg button.on{background:#0b2a24;color:var(--teal)}
+.sub-k{font-size:10px;letter-spacing:.2em;color:var(--lab);margin-bottom:8px}
+.days{display:flex;gap:6px;flex-wrap:wrap}
+.days button{width:44px;height:44px;background:transparent;border:1px solid var(--l4);color:var(--mid);font-weight:700}
+.days button.on{background:#0b2a24;border-color:var(--teal);color:var(--teal)}
+.stepper{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--mid)}
+.stepper button{width:44px;height:44px;background:none;border:1px solid var(--l4);font-size:16px;color:var(--tx)}
+.stepper .v{min-width:44px;text-align:center;font-size:20px;font-weight:700;color:var(--teal)}
+.row-opts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.row-opts .inp{width:auto;min-height:40px;padding:6px 10px;font-size:12px}
+.row-opts .inp.num{width:70px}
+.preview{padding:12px 14px;background:var(--tf);border:1px solid #13463d}
+.preview .k{font-size:10px;letter-spacing:.2em;color:var(--teal);margin-bottom:10px}
+.preview .ds{display:flex;flex-wrap:wrap;gap:8px}
+.preview .ds span{padding:5px 9px;border:1px solid var(--te);color:var(--tt);font-size:12px}
+.oneoff{padding:14px;border:1px dashed var(--l3);color:var(--dim);font-size:12px}
+.d-foot{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:10px;padding:12px 24px;background:var(--p2);border-top:1px solid var(--l2)}
+.d-foot .sum{margin-right:auto;font-size:11px;color:var(--dim)}
+.d-err{color:var(--red);font-size:11px}
+
+/* ── Task list ───────────────────────────── */
+.tablewrap{overflow-x:auto}
+.cols,.trow{display:grid;grid-template-columns:54px 96px 112px minmax(0,1fr) 150px 96px 96px 196px;align-items:center}
+.cols{padding:8px 20px;background:var(--p1);border-bottom:1px solid var(--l4);font-size:10px;font-weight:700;letter-spacing:.2em;color:var(--lab);min-width:1100px}
+.cols .r{text-align:right}
+#rows{min-width:1100px}
+#loading{padding:60px 24px;text-align:center;color:var(--lab);font-size:11px;letter-spacing:.15em}
+.sect{display:flex;align-items:center;gap:12px;padding:18px 20px 8px;font-size:10px;font-weight:700;letter-spacing:.25em}
+.sect .c{color:var(--dim)}.sect .ln{flex:1;height:1px;background:var(--l2)}
+.s-OVERDUE{color:var(--red)}.s-TODAY{color:var(--amb)}.s-THIS_WEEK{color:var(--g2)}.s-UPCOMING{color:var(--lab)}.s-COMPLETED{color:var(--dim)}
+.task{border-bottom:1px solid var(--l1);border-left:2px solid transparent;animation:rowIn .18s ease}
+@keyframes rowIn{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
+.task.u-overdue{border-left-color:#ff5c5c;background:rgba(255,92,92,.035)}
+.task.u-today{border-left-color:var(--amb)}
+.task.open{background:#0b130b}
+.task.done{opacity:.4;border-left-color:transparent;background:transparent}
+.trow{padding:10px 20px 10px 18px}
+.cb{width:24px;height:24px;display:flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--ge);background:transparent;color:var(--g);font-size:13px;transition:transform .15s,box-shadow .2s,background .2s}
+.cb.ready{border-color:var(--g);box-shadow:0 0 8px rgba(57,255,20,.4)}
+.cb.on{background:var(--gf);border-color:var(--g);box-shadow:0 0 8px rgba(57,255,20,.4)}
+.cb:active{transform:scale(.85)}
+.pt{color:var(--hi);font-weight:700;letter-spacing:.06em}
+.dob{color:var(--dim);font-size:11px}
+.mcat{display:none}
+.cat{font-size:10px;font-weight:700;letter-spacing:.12em;padding:3px 7px;border:1px solid;text-transform:uppercase}
+.cat-referral{color:#4aa8ff;border-color:#1d3f63}.cat-results{color:#c49bff;border-color:#46306b}.cat-procedure{color:#ff9f55;border-color:#6b3d17}
+.cat-admin{color:var(--g2);border-color:#28531c}.cat-clinical{color:var(--amb);border-color:#5e4300}.cat-custom{color:var(--mid);border-color:#2a3f2a}
+.c-task{text-align:left;background:none;border:none;padding:6px 16px 6px 0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tline{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tlabel{color:var(--hi);font-size:14px;font-weight:500}
+.done .tlabel{text-decoration:line-through}
+.thint{font-size:11px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.rchip{display:inline-flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.1em;color:var(--teal);border:1px solid var(--te);padding:2px 6px}
+.steps{display:flex;align-items:center;gap:10px}
+.segs{display:flex;gap:3px}
+.segs i{width:10px;height:10px;border:1px solid var(--l4)}
+.segs i.on{background:var(--g);border-color:var(--g);box-shadow:0 0 5px rgba(57,255,20,.5)}
+.steps .n{font-size:12px;color:var(--mid)}
+.steps .n.all{color:var(--g)}
+.nil{color:var(--dim)}
+.flag{font-size:10px;font-weight:700;letter-spacing:.12em;padding:3px 7px;border:1px solid}
+.f-overdue{color:var(--red);background:rgba(255,92,92,.12);border-color:rgba(255,92,92,.35)}
+.f-today{color:var(--amb);background:rgba(255,176,0,.1);border-color:rgba(255,176,0,.3)}
+.f-urgent{color:var(--yel);background:rgba(255,224,102,.07);border-color:rgba(255,224,102,.22)}
+.f-soon{color:var(--g2);background:rgba(57,255,20,.05);border-color:rgba(57,255,20,.18)}
+.f-ok,.f-done{color:var(--dim);border-color:var(--l3)}
+.c-due{text-align:right}
+.due-m{font-size:16px;font-weight:700;letter-spacing:.04em;color:var(--dim)}
+.due-s{font-size:11px;color:var(--dim);margin-top:2px}
+.u-overdue .due-m{color:var(--red);text-shadow:0 0 8px rgba(255,92,92,.5)}
+.u-today .due-m{color:var(--amb);text-shadow:0 0 8px rgba(255,176,0,.4)}
+.u-urgent .due-m{color:var(--yel)}.u-soon .due-m{color:var(--g2)}
+.c-act{display:flex;justify-content:flex-end;align-items:center;gap:3px}
+.sb{padding:4px 7px;background:none;border:1px solid var(--l3);color:var(--lab);font-size:10px}
+.sb:hover{border-color:var(--ge);color:var(--hi)}
+.sb.edit{color:var(--amb);margin-left:4px;letter-spacing:.08em}
+.sb.edit:hover{border-color:var(--amb)}
+.sb.teal{color:var(--teal);border-color:var(--te)}
+.sb.del{border-color:transparent;color:var(--dim);font-size:12px}
+.sb.del:hover{color:var(--red)}
+.xp{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:32px;padding:4px 24px 24px 282px}
+.xp-side{display:flex;flex-direction:column;gap:18px}
+.xp-h{font-size:10px;letter-spacing:.2em;color:var(--lab);margin-bottom:8px;text-transform:uppercase}
+.xp-h::before{content:"$ ";color:var(--deco)}
+.chk{border-top:1px solid var(--l2)}
+.sub{display:flex;align-items:center;gap:12px;width:100%;min-height:42px;padding:0 10px;background:none;border:none;border-bottom:1px dashed var(--l2);text-align:left}
+.sub .lab{color:var(--hi)}
+.sub.on .lab{color:var(--dim);text-decoration:line-through}
+.sub .num{margin-left:auto;font-size:10px;color:var(--dim)}
+.addrow{display:flex;align-items:center;gap:12px;min-height:42px;padding:0 10px;color:var(--dim)}
+.addrow input{flex:1;background:transparent;border:none;color:var(--tx);font-size:13px;outline:none}
+.notes{padding-left:12px;border-left:1px solid var(--l3);color:var(--mid);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.kv{display:grid;grid-template-columns:76px minmax(0,1fr);row-gap:7px;font-size:12px}
+.kv .k{color:var(--dim)}.kv .tv{color:var(--teal)}
+.hist{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.hist i{width:8px;height:14px;border:1px solid var(--te)}
+.hist i.on{background:var(--teal);border-color:var(--teal)}
+.hist i.late{border-color:var(--amb);background:rgba(255,176,0,.25)}
+.hist small{color:var(--dim);font-size:11px;margin-left:6px}
+.xp-act{display:none}
+#empty{padding:60px 24px;text-align:center;color:var(--dim);font-size:11px;letter-spacing:.2em}
+
+#foot{position:sticky;bottom:0;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;padding:9px 24px;background:var(--p2);border-top:1px solid var(--l3);font-size:11px;color:var(--lab)}
+#foot .l{display:flex;flex-wrap:wrap;gap:22px}
+#foot strong{color:var(--hi)}#foot .tn{color:var(--teal)}
+#foot .btn{min-height:28px;font-size:10px}
+#mbar{display:none}
+
+/* ── Mobile ──────────────────────────────── */
+@media (max-width:720px){
+  .h-logo{padding:12px 16px;border-right:none;flex:1}
+  .h-ver{display:none}
+  .h-clock{min-width:0;padding:12px 16px}
+  #clock{font-size:16px}#clock-date{display:none}
+  #stats{order:3;flex-basis:100%;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--l2)}
+  #stats .stat:nth-child(4){display:none}
+  .stat{padding:10px 12px}.stat-v{font-size:22px}.stat-k{font-size:9px;letter-spacing:.14em}
+  .strip{padding:8px 16px}
+  #cmd{padding:0 12px;overflow-x:auto;flex-wrap:nowrap}
+  .prompt,.new-btn{display:none}
+  .tablewrap{overflow:visible}
+  .cols{display:none}
+  #rows{min-width:0;padding:0 12px 12px}
+  .sect{padding:14px 4px 8px}
+  .task{border:1px solid var(--l2);border-left-width:2px;background:var(--p1);margin-bottom:8px}
+  .task.u-overdue{background:#0d0909}
+  .trow{grid-template-columns:44px minmax(0,1fr) auto;grid-template-areas:"cb pt due" "cb task task" "cb steps steps";padding:12px 12px 10px 4px;row-gap:4px}
+  .c-cb{grid-area:cb;align-self:start;display:flex;justify-content:center}
+  .c-pt{grid-area:pt;display:flex;gap:8px;align-items:baseline;min-width:0}
+  .mcat{display:inline;font-size:10px;letter-spacing:.1em;text-transform:uppercase;border:none;padding:0}
+  .c-cat,.c-flag,.c-act{display:none}
+  .c-task{grid-area:task;padding:2px 0}
+  .c-steps{grid-area:steps}
+  .c-due{grid-area:due;display:flex;gap:8px;align-items:baseline}
+  .due-s{margin:0}
+  .cb{width:30px;height:30px}
+  .xp{grid-template-columns:1fr;gap:18px;padding:4px 12px 14px 48px}
+  .sub{min-height:48px}
+  .xp-act{display:flex;flex-wrap:wrap;gap:6px}
+  .xp-act .sb{min-height:44px;padding:0 14px;font-size:11px}
+  .d-head,.d-foot{padding:10px 16px}
+  .d-body{padding:16px}
+  .d-grid{grid-template-columns:1fr 1fr}
+  .seg{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .seg button{border-bottom:1px solid var(--l3)}
+  .inp,.step-ed input,.addrow input,.row-opts .inp{font-size:16px}
+  #foot{position:static;padding:10px 16px}
+  #mbar{display:block;position:fixed;left:0;right:0;bottom:0;z-index:50;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--p1);border-top:2px solid var(--ge)}
+  #mbar button{width:100%;min-height:50px;font-size:13px}
+  body.authed{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 }
-.cb:active {
-  transform: scale(0.82);
-}
-
-    /* Patient cell */
-    .td-patient { width: 90px; white-space: nowrap; }
-    .patient-str {
-      color: var(--green2); font-weight: 700; font-size: 11px;
-      letter-spacing: 0.06em;
-    }
-    .dob-str { color: var(--green4); font-size: 10px; }
-
-    /* Category cell */
-    .td-cat { width: 100px; }
-    .cat-pill {
-      font-size: 8px; font-weight: 700; letter-spacing: 0.12em;
-      padding: 2px 6px; border-left: 2px solid;
-      text-transform: uppercase;
-    }
-
-    /* Task cell */
-    .td-task { min-width: 200px; cursor: pointer; }
-    .task-str { color: var(--green); font-size: 12px; font-weight: 500; }
-    .task-notes {
-      display: none; margin-top: 5px;
-      font-size: 10px; color: var(--dim);
-      padding-left: 10px; border-left: 1px solid var(--green5);
-      line-height: 1.5;
-    }
-    .tbl-row.expanded .task-notes { display: block; }
-
-    /* Due cell */
-    .td-due { width: 90px; text-align: right; white-space: nowrap; }
-    .due-main { font-size: 14px; font-weight: 700; letter-spacing: 0.04em; }
-    .due-sub  { font-size: 9px; color: var(--green4); margin-top: 2px; }
-
-    /* Flag cell */
-    .td-flag { width: 72px; text-align: center; }
-    .flag {
-      font-size: 8px; font-weight: 700; letter-spacing: 0.12em;
-      padding: 2px 6px; display: inline-block;
-    }
-    .flag-overdue { color: var(--red);   background: rgba(255,51,51,0.12);  border: 1px solid rgba(255,51,51,0.3); }
-    .flag-today   { color: var(--amber); background: rgba(255,176,0,0.1);   border: 1px solid rgba(255,176,0,0.25); }
-    .flag-urgent  { color: #ffe066;      background: rgba(255,220,0,0.07);  border: 1px solid rgba(255,220,0,0.2); }
-    .flag-soon    { color: var(--green2);background: rgba(57,255,20,0.05);  border: 1px solid rgba(57,255,20,0.15); }
-    .flag-ok      { color: var(--dim);   background: transparent; border: 1px solid transparent; }
-
-    /* Actions cell */
-    .td-actions { width: 130px; text-align: right; white-space: nowrap; }
-    .snz-group { display: inline-flex; gap: 2px; margin-right: 4px; }
-    .snz {
-      padding: 2px 6px; background: transparent;
-      border: 1px solid var(--green5); color: var(--dim);
-      font-family: var(--font); font-size: 9px; cursor: pointer;
-      transition: all 0.1s;
-    }
-    .snz:hover { border-color: var(--green3); color: var(--green2); }
-    .edt {
-      background: none; border: 1px solid var(--green5);
-      color: var(--green4); font-family: var(--font);
-      font-size: 9px; letter-spacing: 0.08em;
-      cursor: pointer; padding: 2px 6px; transition: all 0.1s;
-    }
-    .edt:hover { border-color: var(--amber); color: var(--amber); }
-    .del {
-      background: none; border: none; color: var(--green5);
-      font-family: var(--font); font-size: 11px; cursor: pointer;
-      transition: color 0.1s; padding: 2px 4px;
-    }
-    .del:hover { color: var(--red); }
-
-    /* Urgency row colours */
-    .urg-overdue .due-main { color: var(--red); text-shadow: 0 0 8px rgba(255,51,51,0.5); }
-    .urg-today   .due-main { color: var(--amber); text-shadow: 0 0 8px rgba(255,176,0,0.4); }
-    .urg-urgent  .due-main { color: #ffe066; }
-    .urg-soon    .due-main { color: var(--green2); }
-    .urg-ok      .due-main { color: var(--dim); }
-
-    /* Cat colours */
-    .cat-referral  { border-color: #00bfff; color: #00bfff; }
-    .cat-results   { border-color: #bf7fff; color: #bf7fff; }
-    .cat-procedure { border-color: #ff9944; color: #ff9944; }
-    .cat-admin     { border-color: var(--green2); color: var(--green2); }
-    .cat-clinical  { border-color: var(--amber); color: var(--amber); }
-    .cat-custom    { border-color: var(--dim); color: var(--dim); }
-
-    /* ── Loading / empty ─────────────────────────────────── */
-    #loading {
-      padding: 50px 24px; text-align: center;
-      color: var(--green3); font-size: 11px; letter-spacing: 0.15em;
-    }
-    .spinner {
-      width: 20px; height: 20px; margin: 0 auto 12px;
-      border: 1px solid var(--green4); border-top-color: var(--green);
-      border-radius: 50%; animation: spin 0.7s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    #empty {
-      display: none; padding: 50px 24px; text-align: center;
-      color: var(--green4); font-size: 11px; letter-spacing: 0.2em;
-    }
-    #empty::before { content: "> "; }
-
-    /* ── Status bar ──────────────────────────────────────── */
-    #statusbar {
-      position: sticky; bottom: 0;
-      background: var(--bg3);
-      border-top: 1px solid var(--green4);
-      padding: 6px 24px;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .status-left { display: flex; gap: 20px; align-items: center; }
-    .status-item {
-      font-size: 9px; color: var(--green3); letter-spacing: 0.1em;
-    }
-    .status-item strong { color: var(--green); }
-    .btn-clr {
-      background: transparent; border: 1px solid var(--green5);
-      color: var(--green4); font-family: var(--font);
-      font-size: 9px; letter-spacing: 0.1em; padding: 3px 10px;
-      cursor: pointer; transition: all 0.1s;
-    }
-    .btn-clr:hover { border-color: var(--red); color: var(--red); }
-
-    /* ── Config overlay ──────────────────────────────────── */
-    #config-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(8,12,8,0.97); z-index: 200;
-      align-items: center; justify-content: center;
-    }
-    #config-overlay.show { display: flex; }
-    .config-box {
-      background: var(--bg2); border: 1px solid var(--green3);
-      padding: 28px; max-width: 460px; width: 90%;
-    }
-    .config-title {
-      font-size: 14px; font-weight: 700; color: var(--green);
-      letter-spacing: 0.15em; margin-bottom: 4px;
-    }
-    .config-title::before { content: "// "; color: var(--green4); }
-    .config-sub { font-size: 10px; color: var(--green3); margin-bottom: 20px; line-height: 1.7; }
-    .config-fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
-    .config-field { display: flex; flex-direction: column; gap: 4px; }
-    .config-lbl { font-size: 8px; color: var(--green3); letter-spacing: 0.2em; }
-    .config-lbl::before { content: "$ "; color: var(--green4); }
-    .config-inp {
-      background: var(--bg); border: 1px solid var(--green4);
-      color: var(--green); font-family: var(--font); font-size: 11px;
-      padding: 7px 10px; outline: none; transition: border-color 0.12s;
-      caret-color: var(--green);
-    }
-    .config-inp:focus { border-color: var(--green); }
-    .btn-connect {
-      width: 100%; padding: 10px;
-      background: var(--green4); border: 1px solid var(--green);
-      color: var(--green); font-family: var(--font);
-      font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
-      cursor: pointer; transition: all 0.12s;
-    }
-    .btn-connect:hover { background: var(--green3); }
-    .config-note { margin-top: 12px; font-size: 9px; color: var(--green4); line-height: 1.8; }
-
-    /* Mobile bottom bar: hidden on desktop, shown only at narrow widths */
-    #mobile-bar { display: none; }
-
-    /* ── Responsive ──────────────────────────────────────── */
-    @media (max-width: 680px) {
-      .header-clock, .td-actions .snz-group { display: none; }
-      .header-stats .stat-cell:nth-child(n+4) { display: none; }
-      .drawer-body { grid-template-columns: 1fr 1fr; }
-      .field.s4 { grid-column: span 2; }
-      .td-cat, .td-flag { display: none; }
-      #header, #cmdbar, #task-table, #statusbar, #add-drawer { font-size: 11px; }
-
-      /* Top NEW_TASK moves to the sticky bottom bar */
-      .cmd-right { display: none; }
-
-      /* ── Sticky bottom action bar ─────────────────────── */
-      #mobile-bar {
-        display: flex;
-        position: fixed; left: 0; right: 0; bottom: 0;
-        background: var(--bg2);
-        border-top: 2px solid var(--green3);
-        padding: 8px 12px env(safe-area-inset-bottom, 0);
-        z-index: 100;
-      }
-      .mbar-primary {
-        flex: 1; padding: 14px 12px;
-        background: var(--green4);
-        border: 1px solid var(--green);
-        color: var(--green);
-        font-family: var(--font);
-        font-size: 13px; font-weight: 700; letter-spacing: 0.15em;
-        cursor: pointer;
-      }
-      .mbar-primary:active { background: var(--green3); }
-
-      /* Push body content above the bar so statusbar isn't hidden */
-      body {
-        padding-bottom: calc(60px + env(safe-area-inset-bottom));
-      }
-
-      /* iOS Safari auto-zooms into any input with font-size < 16px.
-         Bumping form fields to 16px on mobile prevents the unwanted zoom. */
-      .inp, textarea.inp, select.inp { font-size: 16px; }
-    }
-  </style>
+</style>
 </head>
 <body>
 
-<!-- Config overlay -->
-<div id="config-overlay">
-  <div class="config-box">
-    <div class="config-title">FIREBASE_INIT</div>
-    <div class="config-sub">
-      Enter your Firebase Realtime Database credentials.<br>
-      Stored in localStorage — never transmitted elsewhere.
+<div id="boot"><div class="spin"></div>AUTHENTICATING…</div>
+
+<!-- ── Sign in ─────────────────────────────── -->
+<main id="auth" hidden>
+  <form class="auth-box" id="auth-form" novalidate>
+    <div class="auth-head">
+      <div class="logo">RTM<span>//</span>02</div>
+      <div class="logo-sub">RENAL TASK MONITOR · SIGN IN</div>
     </div>
-    <div class="config-fields">
-      <div class="config-field">
-        <label class="config-lbl">DATABASE_URL</label>
-        <input class="config-inp" id="cfg-dburl" placeholder="https://your-project-default-rtdb.firebaseio.com" />
+    <div class="auth-body">
+      <div class="field">
+        <label class="lbl" for="a-email">email</label>
+        <input class="inp" id="a-email" type="email" autocomplete="username" autocapitalize="off" spellcheck="false" required />
       </div>
-      <div class="config-field">
-        <label class="config-lbl">API_KEY</label>
-        <input class="config-inp" id="cfg-apikey" placeholder="AIza..." />
+      <div class="field">
+        <label class="lbl" for="a-pass">password</label>
+        <input class="inp" id="a-pass" type="password" autocomplete="current-password" required />
       </div>
-      <div class="config-field">
-        <label class="config-lbl">PROJECT_ID</label>
-        <input class="config-inp" id="cfg-projectid" placeholder="your-project-id" />
-      </div>
-      <div class="config-field">
-        <label class="config-lbl">APP_ID</label>
-        <input class="config-inp" id="cfg-appid" placeholder="1:123456:web:abc..." />
-      </div>
+      <button type="button" class="check on" id="a-remember" aria-pressed="true"><span class="box" aria-hidden="true">✓</span>Remember this device</button>
+      <div class="auth-msg" id="a-msg" role="status" aria-live="polite"></div>
+      <button type="submit" class="btn btn-pri" id="a-submit">SIGN IN ▸</button>
+      <button type="button" class="linkbtn" id="a-reset">forgot password</button>
     </div>
-    <button class="btn-connect" onclick="saveConfig()">CONNECT ▸</button>
-    <div class="config-note">
-      Firebase Console → Project Settings → Your apps → Config.<br>
-      Enable Realtime Database. Set rules to allow read/write.
+    <div class="auth-foot">On a shared ward PC, untick "remember" so the session ends when the tab closes. Accounts are added by the admin in Firebase; there is no public sign-up.</div>
+  </form>
+</main>
+
+<!-- ── App ─────────────────────────────────── -->
+<div id="app" hidden>
+  <header id="hdr">
+    <div class="h-logo">
+      <div class="logo">RTM<span>//</span>02</div>
+      <div class="logo-sub">RENAL TASK MONITOR</div>
+      <div class="h-ver">v3.0 · recurring · steps · auth</div>
     </div>
+    <div id="stats">
+      <div class="stat"><div class="stat-v" id="st-overdue">0</div><div class="stat-k">OVERDUE</div></div>
+      <div class="stat"><div class="stat-v" id="st-today">0</div><div class="stat-k">TODAY</div></div>
+      <div class="stat"><div class="stat-v" id="st-active">0</div><div class="stat-k">ACTIVE</div></div>
+      <div class="stat"><div class="stat-v hi" id="st-steps">0</div><div class="stat-k">STEPS OPEN</div></div>
+      <div class="stat"><div class="stat-v teal" id="st-series">0</div><div class="stat-k">SERIES</div></div>
+    </div>
+    <div class="h-clock">
+      <div id="clock">00:00:00</div>
+      <div id="clock-date"></div>
+      <div id="sync"><span class="dot" aria-hidden="true"></span><span id="sync-t">CONNECTING</span></div>
+      <div class="h-user"><span id="h-email"></span><button class="lock-btn" id="lock-btn" title="Sign out">LOCK</button></div>
+    </div>
+  </header>
+
+  <div id="denied" class="panel-msg" hidden></div>
+
+  <div id="main-ui" hidden>
+    <div id="migrate" class="strip" hidden><strong>!! LEGACY DATA</strong><span id="mig-t"></span><button class="btn" id="mig-btn">MIGRATE ▸</button></div>
+    <div id="alert" class="strip" role="status" hidden></div>
+    <div id="toast" class="strip" role="status" hidden>
+      <svg id="toast-ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+      <strong id="toast-k"></strong><span id="toast-t"></span>
+      <button class="btn" id="toast-undo">UNDO</button>
+    </div>
+
+    <nav id="cmd" aria-label="Filters">
+      <span class="prompt">rtm&gt;</span>
+      <span id="filters" style="display:flex">
+        <button class="fbtn on" data-f="active">--active</button>
+        <button class="fbtn" data-f="recurring">--recurring</button>
+        <button class="fbtn" data-f="done">--done</button>
+        <button class="fbtn" data-f="all">--all</button>
+      </span>
+      <label><span class="sr">Type</span>
+        <select class="csel" id="cat-filter">
+          <option value="all">--type=all</option><option value="referral">--type=referral</option><option value="results">--type=results</option>
+          <option value="procedure">--type=procedure</option><option value="admin">--type=admin</option><option value="clinical">--type=clinical</option><option value="custom">--type=custom</option>
+        </select>
+      </label>
+      <label><span class="sr">Sort</span>
+        <select class="csel" id="sort-sel">
+          <option value="dueDate">--sort=due</option><option value="patient">--sort=patient</option><option value="category">--sort=type</option><option value="steps">--sort=steps</option>
+        </select>
+      </label>
+      <button class="new-btn" data-new>NEW_TASK +</button>
+    </nav>
+
+    <section id="drawer" hidden aria-label="Task editor">
+      <div class="d-head">
+        <span>rtm&gt; <strong id="d-mode">task.create</strong> --interactive</span>
+        <button class="btn" id="d-esc" style="min-height:30px;font-size:10px">ESC</button>
+      </div>
+      <div class="d-body">
+        <div class="d-grid">
+          <div class="field"><label class="lbl" for="f-initials">patient_id *</label><input class="inp" id="f-initials" maxlength="6" placeholder="JD" autocomplete="off" style="text-transform:uppercase" /></div>
+          <div class="field"><label class="lbl" for="f-dob">dob_year</label><input class="inp" id="f-dob" maxlength="4" inputmode="numeric" placeholder="1958" autocomplete="off" /></div>
+          <div class="field"><label class="lbl" for="f-due">due_date</label><input class="inp" id="f-due" type="date" /></div>
+          <div class="field"><label class="lbl" for="f-cat">category</label>
+            <select class="inp" id="f-cat"><option value="referral">referral</option><option value="results">results</option><option value="procedure">procedure</option><option value="admin">admin</option><option value="clinical">clinical</option><option value="custom">custom</option></select>
+          </div>
+        </div>
+        <div class="field">
+          <span class="lbl">task_type</span>
+          <div class="tmpls" id="tmpls"></div>
+        </div>
+        <div class="field" id="custom-field" hidden><label class="lbl" for="f-custom">custom_label</label><input class="inp" id="f-custom" maxlength="120" placeholder="describe task…" /></div>
+        <div class="d-cols">
+          <div class="card">
+            <div class="card-h"><span class="t">$ STEPS</span><span class="m" id="ed-stepcount"></span></div>
+            <div id="ed-steps"></div>
+            <div class="step-ed" style="border-bottom:none">
+              <span class="plus" aria-hidden="true">+</span>
+              <label style="flex:1;display:flex"><span class="sr">New step</span><input id="ed-newstep" placeholder="add step… (enter)" maxlength="120" /></label>
+              <button class="add-btn" data-ed="addstep">ADD</button>
+            </div>
+            <div class="card-f" id="ed-opts"></div>
+          </div>
+          <div class="card">
+            <div class="card-h">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5ee6d0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+              <span class="t">REPEAT</span><span class="r" id="ed-rule"></span>
+            </div>
+            <div class="card-b" id="ed-repeat"></div>
+          </div>
+        </div>
+        <div class="field"><label class="lbl" for="f-notes">notes</label><textarea class="inp" id="f-notes" maxlength="2000" placeholder="// optional clinical context"></textarea></div>
+      </div>
+      <div class="d-foot">
+        <span class="sum" id="ed-sum"></span>
+        <span class="d-err" id="d-err" role="alert"></span>
+        <button class="btn btn-danger" id="d-abort">ABORT</button>
+        <button class="btn btn-pri" id="d-exec">EXECUTE ▸</button>
+      </div>
+    </section>
+
+    <div class="tablewrap">
+      <div class="cols"><span></span><span>PATIENT</span><span>TYPE</span><span>TASK</span><span>STEPS</span><span>FLAG</span><span class="r">DUE</span><span class="r">ACTIONS</span></div>
+      <div id="loading"><div class="spin"></div>SYNCING…</div>
+      <div id="rows"></div>
+    </div>
+    <div id="empty" hidden>&gt; no tasks match current filter</div>
+
+    <footer id="foot">
+      <div class="l">
+        <span><strong id="ft-active">0</strong> active</span>
+        <span><strong id="ft-steps">0</strong> steps open</span>
+        <span><strong class="tn" id="ft-series">0</strong> series</span>
+        <span style="color:var(--dim)">db: locked · per-user</span>
+      </div>
+      <button class="btn btn-danger" id="clear-done">CLEAR_DONE</button>
+    </footer>
   </div>
+
+  <div id="mbar"><button class="btn btn-pri" data-new>+ NEW_TASK</button></div>
 </div>
 
-<!-- Header -->
-<div id="header">
-  <div class="header-top">
-    <div class="header-logo">
-      <div class="logo-line1">RTM<span>//</span>01</div>
-      <div class="logo-line2">RENAL TASK MONITOR</div>
-      <div class="logo-version">v2.0 · firebase sync</div>
-    </div>
-    <div class="header-stats" id="header-stats">
-      <div class="stat-cell">
-        <div class="stat-val" id="stat-overdue">0</div>
-        <div class="stat-key">OVERDUE</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-val" id="stat-today">0</div>
-        <div class="stat-key">TODAY</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-val" id="stat-active">0</div>
-        <div class="stat-key">ACTIVE</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-val" id="stat-total">0</div>
-        <div class="stat-key">TOTAL</div>
-      </div>
-    </div>
-    <div class="header-clock">
-      <div class="clock-time" id="clock">00:00</div>
-      <div class="clock-date" id="clock-date"></div>
-      <div class="sync-status" id="sync-status">● OFFLINE</div>
-    </div>
-  </div>
-</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail,
+         setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, push, onValue, update, set, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-<!-- Alert strip -->
-<div id="alert-strip"></div>
+// The web config is public by design; the database rules are what protect the data.
+// RTM's own project (europe-west1).
+const firebaseConfig = {
+  apiKey: "AIzaSyBdaE2x33NFZZLtHh8ssu_hx4PhiIesV4Y",
+  authDomain: "renaltasks.firebaseapp.com",
+  databaseURL: "https://renaltasks-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "renaltasks",
+  storageBucket: "renaltasks.firebasestorage.app",
+  messagingSenderId: "775458018686",
+  appId: "1:775458018686:web:6759d76ea79711107b8f2f"
+};
+// Old shared project, used only to pull tasks from the open /renalTasks path once.
+// After migrating and removing renalTasks from that project's rules, this can be deleted.
+const LEGACY_CONFIG = {
+  apiKey: "AIzaSyAhv0PJy95vqXdzOQkCqbg1FuXfiqHTnI0",
+  authDomain: "task-monitor-bd7ee.firebaseapp.com",
+  databaseURL: "https://task-monitor-bd7ee-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "task-monitor-bd7ee",
+  appId: "1:544624731364:web:419d52fa061c5c7b4f38f1"
+};
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getDatabase(fbApp);
+const legacyDb = getDatabase(initializeApp(LEGACY_CONFIG, "legacy"));
 
-<!-- Command bar -->
-<div id="cmdbar">
-  <span class="cmd-prompt">rtm&gt;</span>
-  <div id="status-filters">
-    <button class="cmd-btn active" data-filter="active">--active</button>
-    <button class="cmd-btn" data-filter="completed">--done</button>
-    <button class="cmd-btn" data-filter="all">--all</button>
-  </div>
-  <select class="cmd-select" id="cat-filter">
-    <option value="all">--type=all</option>
-    <option value="referral">--type=referral</option>
-    <option value="results">--type=results</option>
-    <option value="procedure">--type=procedure</option>
-    <option value="admin">--type=admin</option>
-    <option value="clinical">--type=clinical</option>
-    <option value="custom">--type=custom</option>
-  </select>
-  <select class="cmd-select" id="sort-select">
-    <option value="dueDate">--sort=due</option>
-    <option value="patient">--sort=patient</option>
-    <option value="category">--sort=type</option>
-  </select>
-  <div class="cmd-right">
-    <button class="btn-new" onclick="openDrawer()">NEW_TASK +</button>
-  </div>
-</div>
+// ── Helpers ─────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+const pad2 = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const parse = s => { if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null; const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const today0 = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const todayStr = () => ymd(today0());
+const plusDays = n => ymd(addDays(today0(), n));
+const daysUntil = s => { const d = parse(s); return d ? Math.round((d - today0()) / 86400000) : 0; };
+const fmtDate = s => { const d = parse(s); return d ? d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }) : "--"; };
+const fmtShort = d => d.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short" });
+const urgLevel = d => d < 0 ? "overdue" : d === 0 ? "today" : d <= 2 ? "urgent" : d <= 5 ? "soon" : "ok";
+const sectionOf = d => d < 0 ? "OVERDUE" : d === 0 ? "TODAY" : d <= 5 ? "THIS_WEEK" : "UPCOMING";
+const dueTxt = d => d < 0 ? `-${-d}d` : d === 0 ? "today" : `+${d}d`;
+const ordinal = n => n + (["th","st","nd","rd"][(n % 100 - 20) % 10] || ["th","st","nd","rd"][n % 100] || "th");
+const ICON_RECUR = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>`;
 
-<!-- Add / Edit drawer -->
-<div id="add-drawer">
-  <div class="drawer-head">
-    <span class="drawer-prompt">rtm&gt; <strong id="drawer-mode-label">task.create</strong> --interactive</span>
-    <button class="btn-esc" onclick="closeDrawer()">ESC</button>
-  </div>
-  <div class="drawer-body">
-    <div class="field">
-      <label class="lbl">patient_id *</label>
-      <input class="inp" id="f-initials" placeholder="JD" maxlength="6" style="text-transform:uppercase" />
-    </div>
-    <div class="field">
-      <label class="lbl">dob_year</label>
-      <input class="inp" id="f-dobyear" placeholder="1958" type="number" />
-    </div>
-    <div class="field">
-      <label class="lbl">due_date</label>
-      <input class="inp" id="f-due" type="date" />
-    </div>
-    <div class="field">
-      <label class="lbl">category</label>
-      <select class="inp" id="f-category">
-        <option value="referral">referral</option>
-        <option value="results">results</option>
-        <option value="procedure">procedure</option>
-        <option value="admin">admin</option>
-        <option value="clinical">clinical</option>
-        <option value="custom">custom</option>
-      </select>
-    </div>
-    <div class="field s4">
-      <label class="lbl">task_type</label>
-      <div class="tmpl-grid" id="tmpl-grid"></div>
-    </div>
-    <div class="field s4" id="custom-field" style="display:none">
-      <label class="lbl">custom_label</label>
-      <input class="inp" id="f-custom" placeholder="describe task..." />
-    </div>
-    <div class="field s4">
-      <label class="lbl">notes</label>
-      <textarea class="inp" id="f-notes" placeholder="// optional clinical context"></textarea>
-    </div>
-  </div>
-  <div class="drawer-foot">
-    <button class="btn-abort" onclick="closeDrawer()">ABORT</button>
-    <button class="btn-exec" id="drawer-exec-btn" onclick="saveTask()">EXECUTE ▸</button>
-  </div>
-</div>
-
-<!-- Task table -->
-<div id="loading"><div class="spinner"></div>CONNECTING TO FIREBASE...</div>
-<table id="task-table">
-  <thead>
-    <tr class="tbl-head">
-      <th></th>
-      <th>PATIENT</th>
-      <th>TYPE</th>
-      <th>TASK</th>
-      <th>FLAG</th>
-      <th style="text-align:right">DUE</th>
-      <th style="text-align:right">ACTIONS</th>
-    </tr>
-  </thead>
-  <tbody id="task-body"></tbody>
-</table>
-<div id="empty">no tasks match current filter</div>
-
-<!-- Status bar -->
-<div id="statusbar">
-  <div class="status-left">
-    <span class="status-item"><strong id="sb-active">0</strong> active</span>
-    <span class="status-item"><strong id="sb-total">0</strong> total</span>
-    <span class="status-item" id="sb-sync" style="color:var(--green4)">db: --</span>
-  </div>
-  <button class="btn-clr" onclick="clearCompleted()">CLEAR_DONE</button>
-</div>
-
-<!-- Mobile sticky new-task bar -->
-<div id="mobile-bar">
-  <button class="mbar-primary" onclick="openDrawer()">+ NEW_TASK</button>
-</div>
-
-<script>
-// ── Data ─────────────────────────────────────────────────────
+// ── Templates & repeat rules ────────────────────────────
+const CATS = ["referral","results","procedure","admin","clinical","custom"];
 const TEMPLATES = [
-  { label:"Urgent referral",          cat:"referral",  days:1 },
-  { label:"Routine referral",         cat:"referral",  days:7 },
-  { label:"Blood results review",     cat:"results",   days:2 },
-  { label:"24hr urine chase",         cat:"results",   days:3 },
-  { label:"Renal biopsy booking",     cat:"procedure", days:5 },
-  { label:"Transplant MDT referral",  cat:"referral",  days:3 },
-  { label:"GP letter",                cat:"admin",     days:5 },
-  { label:"Clinic letter",            cat:"admin",     days:2 },
-  { label:"Medication change",        cat:"admin",     days:1 },
-  { label:"eGFR trend review",        cat:"results",   days:7 },
-  { label:"Proteinuria follow-up",    cat:"results",   days:5 },
-  { label:"Immunosuppression review", cat:"clinical",  days:3 },
-  { label:"AKI alert chase",          cat:"results",   days:1 },
-  { label:"Dialysis access referral", cat:"referral",  days:3 },
-  { label:"Custom task",              cat:"custom",    days:3 },
+  { label: "Urgent referral", cat: "referral", days: 1, steps: [] },
+  { label: "Routine referral", cat: "referral", days: 7, steps: [] },
+  { label: "Blood results review", cat: "results", days: 2, steps: ["Review on ICE", "Action abnormal results"] },
+  { label: "24hr urine chase", cat: "results", days: 3, steps: [] },
+  { label: "Renal biopsy booking", cat: "procedure", days: 5, steps: ["Consent discussed", "Clotting screen + FBC sent", "Anticoagulant plan confirmed", "Book slot with IR", "Post-biopsy obs bed on ward"] },
+  { label: "Transplant MDT referral", cat: "referral", days: 3, steps: [] },
+  { label: "Tacrolimus level review", cat: "results", days: 7, steps: ["Check trough level", "Compare to target range", "Dose change letter if needed"], repeat: { mode: "weekly", days: [1] } },
+  { label: "BK viraemia screen", cat: "results", days: 28, steps: [], repeat: { mode: "monthly" } },
+  { label: "Immunosuppression review", cat: "clinical", days: 3, steps: ["Review tolerance", "Check FBC", "Update drug chart", "Patient phone call"], repeat: { mode: "every", n: 14 } },
+  { label: "GP letter", cat: "admin", days: 5, steps: [] },
+  { label: "Clinic letter", cat: "admin", days: 2, steps: [] },
+  { label: "Medication change", cat: "admin", days: 1, steps: [] },
+  { label: "eGFR trend review", cat: "results", days: 7, steps: [], repeat: { mode: "every", n: 28 } },
+  { label: "Proteinuria follow-up", cat: "results", days: 5, steps: [] },
+  { label: "Immunosuppression bloods", cat: "results", days: 7, steps: ["Request bloods", "Review results"], repeat: { mode: "every", n: 7 } },
+  { label: "AKI alert chase", cat: "results", days: 1, steps: ["Repeat U&E", "Fluid balance review"], repeat: { mode: "daily", basis: "done" } },
+  { label: "Dialysis access referral", cat: "referral", days: 3, steps: ["Vein mapping request", "Vascular surgery referral", "Inform dialysis unit"] },
+  { label: "Custom task", cat: "custom", days: 0, steps: [] },
 ];
-
-const CAT_CLASS = {
-  referral:"cat-referral", results:"cat-results",
-  procedure:"cat-procedure", admin:"cat-admin",
-  clinical:"cat-clinical", custom:"cat-custom",
+const CUSTOM = TEMPLATES[TEMPLATES.length - 1];
+const DEFAULT_REPEAT = { mode: "none", days: [1], n: 14, basis: "due", end: "never", count: 6, until: "", resetSteps: true, requireAll: false };
+const listOf = x => Array.isArray(x) ? x : (x && typeof x === "object" ? Object.values(x) : []);
+const normRepeat = r => { const o = Object.assign({}, DEFAULT_REPEAT, r || {}); o.days = listOf(r && r.days).map(Number); if (!o.days.length && !(r && r.days)) o.days = [1]; return o; };
+const normSteps = s => listOf(s).filter(Boolean).map(x => typeof x === "string" ? { t: x, d: false } : { t: String(x.t || ""), d: !!x.d });
+const isRecurring = t => !!(t.repeat && t.repeat.mode && t.repeat.mode !== "none");
+const DAY_ABBR = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+const DAY_FULL = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const WEEK = [1,2,3,4,5,6,0];
+const sortDays = ds => WEEK.filter(d => ds.includes(d));
+const chipText = r => r.mode === "daily" ? "DAILY" : r.mode === "weekly" ? "WKLY·" + (sortDays(r.days).map(d => DAY_ABBR[d]).join(" ") || "?")
+  : r.mode === "every" ? `EVERY ${r.n}D` : r.mode === "monthly" ? "MONTHLY" : "";
+const ruleText = (r, due) => {
+  if (r.mode === "daily") return "Every day";
+  if (r.mode === "weekly") return "Weekly · " + (sortDays(r.days).map(d => DAY_ABBR[d]).join(" ") || "pick days");
+  if (r.mode === "every") return `Every ${r.n} days`;
+  if (r.mode === "monthly") { const d = parse(due); return "Monthly · on the " + ordinal(r.dom || (d ? d.getDate() : 1)); }
+  return "Off";
 };
-const CAT_LABEL = {
-  referral:"Referral", results:"Results",
-  procedure:"Procedure", admin:"Admin",
-  clinical:"Clinical", custom:"Custom",
-};
+const endText = r => r.end === "after" ? `after ${r.count} occurrences` : r.end === "date" ? `on ${fmtDate(r.until)}` : "never";
 
-let tasks = {}, filterStatus="active", filterCat="all", sortBy="dueDate";
-let selTmpl = TEMPLATES[0];
-let editingId = null; // null = new task, string = editing existing task id
-
-// ── Helpers ──────────────────────────────────────────────────
-const todayStr  = ()  => new Date().toISOString().split("T")[0];
-const plusDays  = n   => { const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().split("T")[0]; };
-const fmtDate   = s   => { if(!s) return "--"; return new Date(s).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"2-digit"}); };
-const daysUntil = s   => { const t=new Date(); t.setHours(0,0,0,0); const d=new Date(s); d.setHours(0,0,0,0); return Math.round((d-t)/86400000); };
-const urgLevel  = d   => d<0?"overdue":d===0?"today":d<=2?"urgent":d<=5?"soon":"ok";
-const esc       = s   => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-
-// ── Clock ────────────────────────────────────────────────────
-function tickClock() {
-  const now = new Date();
-  document.getElementById("clock").textContent =
-    now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
-  document.getElementById("clock-date").textContent =
-    now.toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short",year:"numeric"}).toUpperCase();
-}
-tickClock();
-setInterval(tickClock, 1000);
-
-// ── Config ───────────────────────────────────────────────────
-function loadConfig() { try { return JSON.parse(localStorage.getItem("renalTaskConfig")||"null"); } catch { return null; } }
-function saveConfig() {
-  const cfg = {
-    databaseURL: document.getElementById("cfg-dburl").value.trim(),
-    apiKey:      document.getElementById("cfg-apikey").value.trim(),
-    projectId:   document.getElementById("cfg-projectid").value.trim(),
-    appId:       document.getElementById("cfg-appid").value.trim(),
-  };
-  if (!cfg.databaseURL||!cfg.apiKey) { alert("DATABASE_URL and API_KEY required."); return; }
-  localStorage.setItem("renalTaskConfig", JSON.stringify(cfg));
-  location.reload();
-}
-
-// ── Template grid ────────────────────────────────────────────
-function buildTmplGrid() {
-  const grid = document.getElementById("tmpl-grid");
-  grid.innerHTML = "";
-  TEMPLATES.forEach(t => {
-    const b = document.createElement("button");
-    b.className = "tmpl-btn"+(t.label===selTmpl.label?" sel":"");
-    b.textContent = t.label;
-    b.onclick = () => {
-      selTmpl = t;
-      document.getElementById("f-due").value = t.label === "Custom task" ? todayStr() : plusDays(t.days);
-      document.getElementById("f-category").value = t.cat;
-      document.getElementById("custom-field").style.display = t.label==="Custom task"?"flex":"none";
-      buildTmplGrid();
-    };
-    grid.appendChild(b);
-  });
-}
-
-// ── Drawer ───────────────────────────────────────────────────
-function openDrawer(taskId) {
-  editingId = taskId || null;
-  const task = editingId ? tasks[editingId] : null;
-
-  // Set drawer mode label and button text
-  document.getElementById("drawer-mode-label").textContent = task ? "task.edit" : "task.create";
-  document.getElementById("drawer-exec-btn").textContent   = task ? "UPDATE ▸" : "EXECUTE ▸";
-
-  if (task) {
-    // Pre-fill fields from existing task
-    document.getElementById("f-initials").value = task.patientInitials || "";
-    document.getElementById("f-dobyear").value  = task.dobYear || "";
-    document.getElementById("f-due").value      = task.dueDate || "";
-    document.getElementById("f-category").value = task.category || "custom";
-    document.getElementById("f-notes").value    = task.notes || "";
-
-    // Match template or fall back to custom
-    const matched = TEMPLATES.find(t => t.label === task.label);
-    selTmpl = matched || TEMPLATES[TEMPLATES.length - 1]; // last = "Custom task"
-    if (!matched) {
-      document.getElementById("f-custom").value = task.label;
-      document.getElementById("custom-field").style.display = "flex";
-    } else {
-      document.getElementById("f-custom").value = "";
-      document.getElementById("custom-field").style.display = "none";
-    }
-  } else {
-    // New task defaults
-    selTmpl = TEMPLATES[0];
-    ["f-initials","f-dobyear","f-notes","f-custom"].forEach(id=>document.getElementById(id).value="");
-    document.getElementById("f-due").value      = plusDays(selTmpl.days);
-    document.getElementById("f-category").value = selTmpl.cat;
-    document.getElementById("custom-field").style.display = "none";
+function stepRule(r, d) {
+  if (r.mode === "daily") return addDays(d, 1);
+  if (r.mode === "every") return addDays(d, Math.max(1, +r.n || 1));
+  if (r.mode === "monthly") {
+    const dom = r.dom || d.getDate();
+    const x = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    const last = new Date(x.getFullYear(), x.getMonth() + 1, 0).getDate();
+    x.setDate(Math.min(dom, last));
+    return x;
   }
-
-  buildTmplGrid();
-  document.getElementById("add-drawer").classList.add("open");
-  document.getElementById("f-initials").focus();
-}
-function closeDrawer() {
-  document.getElementById("add-drawer").classList.remove("open");
-  editingId = null;
-}
-
-// ── Save task (handles both create and edit) ──────────────────
-function saveTask() {
-  const initials = document.getElementById("f-initials").value.trim().toUpperCase();
-  if (!initials) { document.getElementById("f-initials").focus(); return; }
-
-  const label = selTmpl.label === "Custom task"
-    ? (document.getElementById("f-custom").value.trim() || "Custom task")
-    : selTmpl.label;
-
-  const payload = {
-    patientInitials: initials,
-    dobYear:   document.getElementById("f-dobyear").value || "",
-    label,
-    category:  document.getElementById("f-category").value,
-    dueDate:   document.getElementById("f-due").value,
-    notes:     document.getElementById("f-notes").value.trim(),
-  };
-
-  if (editingId) {
-    // Update existing task — preserve completed status and timestamps
-    const { db, ref, update } = window._fb;
-    update(ref(db, `renalTasks/${editingId}`), payload);
-  } else {
-    // Create new task
-    window._fb.push(window._fb.tasksRef, {
-      ...payload,
-      completed: false, createdAt: Date.now(), completedAt: null,
-    });
+  if (r.mode === "weekly") {
+    const ds = r.days && r.days.length ? r.days : [d.getDay()];
+    for (let i = 1; i <= 7; i++) { const x = addDays(d, i); if (ds.includes(x.getDay())) return x; }
   }
+  return null;
+}
+
+function computeNext(t) {
+  const r = normRepeat(t.repeat);
+  if (r.mode === "none") return null;
+  const t0 = today0();
+  let next = stepRule(r, r.basis === "done" ? t0 : (parse(t.dueDate) || t0));
+  if (r.basis !== "done") { let g = 0; while (next && next < t0 && g++ < 1000) next = stepRule(r, next); }
+  const idx = (t.series && t.series.index) || 1;
+  if (r.end === "after" && idx >= Math.max(1, +r.count || 1)) return null;
+  if (r.end === "date" && r.until && parse(r.until) && next > parse(r.until)) return null;
+  return next;
+}
+
+// ── State ───────────────────────────────────────────────
+let user = null, base = null, tasks = {}, loaded = false, unsubs = [], legacy = null;
+let filterStatus = "active", filterCat = "all", sortBy = "dueDate", openId = null;
+let editingId = null, ed = null, toastTimer = null, toastUndo = null, focusAddStep = false, remember = true;
+
+const tRef = (id, sub) => ref(db, `${base}/${id}${sub ? "/" + sub : ""}`);
+const writeErr = e => showToast("WRITE FAILED", e && e.code === "PERMISSION_DENIED" ? "permission denied · the database rules rejected this change" : String((e && e.message) || e), true);
+
+// ── Clock ───────────────────────────────────────────────
+function tick() {
+  const n = new Date();
+  $("clock").textContent = n.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  $("clock-date").textContent = n.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
+}
+tick(); setInterval(tick, 1000);
+// Re-render at midnight so overdue/today buckets stay right on a screen left open overnight.
+let lastDay = todayStr();
+setInterval(() => { if (todayStr() !== lastDay) { lastDay = todayStr(); render(); } }, 60000);
+
+// ── Auth ────────────────────────────────────────────────
+const authMsg = (t, cls = "") => { $("a-msg").textContent = t; $("a-msg").className = "auth-msg " + cls; };
+const authErr = e => ({
+  "auth/invalid-credential": "ACCESS DENIED · wrong email or password",
+  "auth/wrong-password": "ACCESS DENIED · wrong email or password",
+  "auth/user-not-found": "ACCESS DENIED · wrong email or password",
+  "auth/invalid-email": "That email address isn't valid",
+  "auth/user-disabled": "This account has been disabled",
+  "auth/too-many-requests": "LOCKED · too many attempts, try again later",
+  "auth/network-request-failed": "NETWORK ERROR · check your connection",
+}[e && e.code] || "ERROR · " + ((e && (e.code || e.message)) || "unknown"));
+
+$("a-remember").addEventListener("click", () => {
+  remember = !remember;
+  const b = $("a-remember");
+  b.classList.toggle("on", remember); b.setAttribute("aria-pressed", remember);
+  b.querySelector(".box").textContent = remember ? "✓" : "";
+});
+
+$("auth-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = $("a-email").value.trim(), pass = $("a-pass").value;
+  if (!email || !pass) { authMsg("Enter email and password", "err"); return; }
+  $("a-submit").disabled = true; authMsg("authenticating…");
+  try {
+    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+    await signInWithEmailAndPassword(auth, email, pass);
+    authMsg("");
+  } catch (err) { authMsg(authErr(err), "err"); }
+  finally { $("a-submit").disabled = false; }
+});
+
+$("a-reset").addEventListener("click", async () => {
+  const email = $("a-email").value.trim();
+  if (!email) { authMsg("Type your email above first", "err"); return; }
+  try { await sendPasswordResetEmail(auth, email); } catch (e) { if (e.code === "auth/invalid-email") { authMsg(authErr(e), "err"); return; } }
+  authMsg("If that account exists, a reset link is on its way.", "ok");
+});
+
+$("lock-btn").addEventListener("click", () => signOut(auth));
+
+onAuthStateChanged(auth, u => {
+  $("boot").hidden = true;
+  if (u) startSession(u); else endSession();
+});
+
+function endSession() {
+  unsubs.forEach(f => f()); unsubs = [];
+  user = null; base = null; tasks = {}; loaded = false; legacy = null; openId = null;
   closeDrawer();
+  $("toast").hidden = true; $("migrate").hidden = true;
+  $("app").hidden = true; $("auth").hidden = false;
+  document.body.classList.remove("authed");
+  $("a-pass").value = "";
 }
 
-// ── Mutations ────────────────────────────────────────────────
-  function toggleDone(id) {
-  const t=tasks[id]; if(!t) return;
-  const {db,ref,update}=window._fb;
-  update(ref(db,`renalTasks/${id}`),{completed:!t.completed,completedAt:!t.completed?Date.now():null});
-  // Flash animation
-  const el = document.querySelector(`#tr-${id} .cb`);
-  if (el) {
-    el.style.transform = "scale(1.35)";
-    setTimeout(() => el.style.transform = "", 180);
-  }
+async function startSession(u) {
+  user = u; base = `users/${u.uid}/tasks`;
+  $("auth").hidden = true; $("app").hidden = false;
+  document.body.classList.add("authed");
+  $("h-email").textContent = u.email || "";
+  $("main-ui").hidden = true; $("denied").hidden = true;
+
+  let allowed = false;
+  try { allowed = (await get(ref(db, `allowedUsers/${u.uid}`))).val() === true; } catch (e) { allowed = false; }
+  if (user !== u) return;
+  if (!allowed) { showDenied(u); return; }
+
+  $("main-ui").hidden = false;
+  $("loading").hidden = false;
+  unsubs.push(onValue(ref(db, base), snap => {
+    const raw = snap.val() || {};
+    tasks = {};
+    Object.entries(raw).forEach(([id, t]) => {
+      if (!t || typeof t !== "object") return;
+      tasks[id] = Object.assign({}, t, { steps: normSteps(t.steps), repeat: t.repeat ? normRepeat(t.repeat) : null });
+    });
+    loaded = true; $("loading").hidden = true;
+    if (openId && !tasks[openId]) openId = null;
+    render();
+  }, err => showDenied(u, err)));
+  unsubs.push(onValue(ref(db, ".info/connected"), s => {
+    const live = s.val() === true;
+    $("sync").classList.toggle("live", live);
+    $("sync-t").textContent = live ? "LIVE · europe-west1" : "OFFLINE · changes queued";
+  }));
+  checkLegacy();
 }
-function snooze(id,days) {
-  const {db,ref,update}=window._fb;
-  update(ref(db,`renalTasks/${id}`),{dueDate:plusDays(days)});
+
+function showDenied(u, err) {
+  $("main-ui").hidden = true;
+  const p = $("denied");
+  p.hidden = false;
+  p.innerHTML = `<strong>!! ACCESS DENIED</strong><br>
+    Signed in as <code>${esc(u.email)}</code>, but this account isn't on the allowlist${err ? " (" + esc(err.code || err.message) + ")" : ""}.<br>
+    To approve it: Firebase console → Realtime Database → Data → add <code>allowedUsers / ${esc(u.uid)}</code> with the value <code>true</code> (boolean), then reload.<br>
+    <button class="btn" id="denied-out">SIGN OUT</button>`;
+  $("denied-out").addEventListener("click", () => signOut(auth));
+}
+
+// ── Legacy migration (old open /renalTasks path) ────────
+async function checkLegacy() {
+  try {
+    const v = (await get(ref(legacyDb, "renalTasks"))).val();
+    if (v && typeof v === "object" && Object.keys(v).length) {
+      legacy = v;
+      const n = Object.keys(v).length;
+      $("mig-t").textContent = `${n} task${n > 1 ? "s" : ""} still in the old shared project (unlocked) · move them into your locked account`;
+      $("migrate").hidden = false;
+    }
+  } catch (e) { /* path locked or gone: nothing to migrate */ }
+}
+
+function fromLegacy(t) {
+  t = t || {};
+  return {
+    patientInitials: (String(t.patientInitials || "").trim().toUpperCase().slice(0, 6)) || "??",
+    dobYear: String(t.dobYear || "").slice(0, 4),
+    label: (String(t.label || "").slice(0, 120)) || "Task",
+    category: CATS.includes(t.category) ? t.category : "custom",
+    dueDate: parse(t.dueDate) ? t.dueDate : todayStr(),
+    notes: String(t.notes || "").slice(0, 2000),
+    completed: !!t.completed,
+    createdAt: typeof t.createdAt === "number" ? t.createdAt : Date.now(),
+    completedAt: typeof t.completedAt === "number" ? t.completedAt : null,
+  };
+}
+
+$("mig-btn").addEventListener("click", async () => {
+  if (!legacy) return;
+  const keys = Object.keys(legacy);
+  const copy = {}, wipe = {};
+  keys.forEach(k => { copy[k] = fromLegacy(legacy[k]); wipe[k] = null; });
+  $("mig-btn").disabled = true;
+  try {
+    // 1. copy into the new locked project first
+    await update(ref(db, base), copy);
+  } catch (e) { writeErr(e); $("mig-btn").disabled = false; return; }
+  legacy = null; $("migrate").hidden = true;
+  try {
+    // 2. only then remove from the old shared project
+    await update(ref(legacyDb, "renalTasks"), wipe);
+    showToast("MIGRATED", `${keys.length} tasks moved into your locked account · old copies deleted. Now remove renalTasks from the old project's rules.`);
+  } catch (e) {
+    showToast("COPIED", `${keys.length} tasks copied safely, but the old copies couldn't be deleted (${e.code || e.message}). Delete renalTasks in the old project's console.`, true);
+  }
+  $("mig-btn").disabled = false;
+});
+
+// ── Toast ───────────────────────────────────────────────
+function showToast(k, t, bad = false, undo = null, icon = false) {
+  $("toast-k").textContent = k; $("toast-t").textContent = t;
+  $("toast").classList.toggle("bad", bad);
+  $("toast-ic").style.display = icon ? "" : "none";
+  $("toast-undo").hidden = !undo; toastUndo = undo;
+  $("toast").hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { $("toast").hidden = true; toastUndo = null; }, undo ? 12000 : 7000);
+}
+$("toast-undo").addEventListener("click", () => { const f = toastUndo; toastUndo = null; $("toast").hidden = true; if (f) f(); });
+
+// ── Mutations ───────────────────────────────────────────
+function toggleDone(id) {
+  const t = tasks[id]; if (!t) return;
+  if (t.completed) { update(tRef(id), { completed: false, completedAt: null }).catch(writeErr); return; }
+  const open = t.steps.filter(s => !s.d).length;
+  const r = normRepeat(t.repeat);
+  if (r.requireAll && open) {
+    showToast("BLOCKED", `${open} step${open > 1 ? "s" : ""} still open · this task needs every step ticked first`, true);
+    openId = id; render(); return;
+  }
+  const upd = { [`${id}/completed`]: true, [`${id}/completedAt`]: Date.now() };
+  let roll = null;
+  if (isRecurring(t)) {
+    const next = computeNext(t);
+    if (next) {
+      const key = push(ref(db, base)).key;
+      const s = t.series || {};
+      const onTime = daysUntil(t.dueDate) >= 0 ? 1 : 0;
+      const nt = {
+        patientInitials: t.patientInitials, dobYear: t.dobYear || "", label: t.label, category: t.category || "custom",
+        dueDate: ymd(next), notes: t.notes || "", completed: false, createdAt: Date.now(),
+        steps: r.resetSteps ? t.steps.map(x => ({ t: x.t, d: false })) : t.steps,
+        repeat: r,
+        series: { id: s.id || id, index: (s.index || 1) + 1, since: s.since || t.dueDate, hist: listOf(s.hist).concat([onTime]).slice(-8) },
+      };
+      upd[key] = nt;
+      roll = { oldId: id, newId: key, due: nt.dueDate };
+    }
+  }
+  const btn = document.querySelector(`.task[data-id="${CSS.escape(id)}"] .cb`);
+  if (btn) { btn.style.transform = "scale(1.35)"; setTimeout(() => btn.style.transform = "", 180); }
+  update(ref(db, base), upd).then(() => {
+    if (roll) {
+      showToast("SERIES ROLLED",
+        `${t.patientInitials} · ${t.label} → next due ${fmtDate(roll.due)} (${dueTxt(daysUntil(roll.due))})${r.resetSteps && t.steps.length ? " · steps reset" : ""}`,
+        false,
+        () => update(ref(db, base), { [`${roll.oldId}/completed`]: false, [`${roll.oldId}/completedAt`]: null, [roll.newId]: null }).catch(writeErr),
+        true);
+    } else if (isRecurring(t)) {
+      showToast("SERIES ENDED", `${t.patientInitials} · ${t.label} · no further occurrences`, false, null, true);
+    }
+  }).catch(writeErr);
+}
+
+function toggleStep(id, i) {
+  const t = tasks[id]; if (!t || !t.steps[i]) return;
+  update(tRef(id), { [`steps/${i}/d`]: !t.steps[i].d }).catch(writeErr);
+}
+function addStep(id, text) {
+  const t = tasks[id]; if (!t) return;
+  focusAddStep = true;
+  set(tRef(id, "steps"), t.steps.concat([{ t: text.slice(0, 120), d: false }])).catch(writeErr);
+}
+function snooze(id, n) {
+  const t = tasks[id]; if (!t) return;
+  const cur = parse(t.dueDate) || today0();
+  const from = cur < today0() ? today0() : cur;
+  update(tRef(id), { dueDate: ymd(addDays(from, n)) }).catch(writeErr);
 }
 function deleteTask(id) {
-  const {db,ref,remove}=window._fb;
-  remove(ref(db,`renalTasks/${id}`));
+  const t = tasks[id]; if (!t) return;
+  if (!confirm(`Delete ${t.patientInitials} · ${t.label}?`)) return;
+  set(tRef(id), null).catch(writeErr);
 }
-function clearCompleted() {
-  if(!confirm("CLEAR_DONE: remove all completed tasks?")) return;
-  const {db,ref,remove}=window._fb;
-  Object.entries(tasks).forEach(([id,t])=>{ if(t.completed) remove(ref(db,`renalTasks/${id}`)); });
-}
-function toggleExpand(id) {
-  document.getElementById("tr-"+id)?.classList.toggle("expanded");
-}
+$("clear-done").addEventListener("click", () => {
+  const ids = Object.keys(tasks).filter(id => tasks[id].completed);
+  if (!ids.length) return;
+  if (!confirm(`CLEAR_DONE: remove ${ids.length} completed task${ids.length > 1 ? "s" : ""}?`)) return;
+  const upd = {}; ids.forEach(id => upd[id] = null);
+  update(ref(db, base), upd).catch(writeErr);
+});
 
-// ── Render ───────────────────────────────────────────────────
+// ── Render ──────────────────────────────────────────────
 function render() {
-  const tbody = document.getElementById("task-body");
-  const empty = document.getElementById("empty");
+  if (!user || !loaded) return;
+  const arr = Object.entries(tasks).map(([id, t]) => Object.assign({}, t, { id, _d: daysUntil(t.dueDate), _open: t.steps.filter(s => !s.d).length }));
+  const active = arr.filter(t => !t.completed);
+  const overdue = active.filter(t => t._d < 0).sort((a, b) => a._d - b._d);
+  const todayN = active.filter(t => t._d === 0).length;
+  const steps = active.reduce((n, t) => n + t._open, 0);
+  const series = active.filter(isRecurring).length;
 
-  let arr = Object.entries(tasks).map(([id,t])=>({id,...t}));
-  if (filterStatus==="active")    arr=arr.filter(t=>!t.completed);
-  if (filterStatus==="completed") arr=arr.filter(t=> t.completed);
-  if (filterCat!=="all")          arr=arr.filter(t=>t.category===filterCat);
-  arr.sort((a,b)=>{
-    if(sortBy==="dueDate")  return new Date(a.dueDate)-new Date(b.dueDate);
-    if(sortBy==="patient")  return (a.patientInitials||"").localeCompare(b.patientInitials||"");
-    if(sortBy==="category") return (a.category||"").localeCompare(b.category||"");
-    return 0;
-  });
+  const sv = (id, v, cls) => { const el = $(id); el.textContent = v; if (cls !== undefined) el.className = "stat-v" + (cls ? " " + cls : ""); };
+  sv("st-overdue", overdue.length, overdue.length ? "red" : "");
+  sv("st-today", todayN, todayN ? "amb" : "");
+  sv("st-active", active.length, "");
+  sv("st-steps", steps);
+  sv("st-series", series);
+  $("ft-active").textContent = active.length; $("ft-steps").textContent = steps; $("ft-series").textContent = series;
 
-  // Stats
-  const allArr    = Object.values(tasks);
-  const active    = allArr.filter(t=>!t.completed);
-  const overdueCt = active.filter(t=>daysUntil(t.dueDate)<0).length;
-  const todayCt   = active.filter(t=>daysUntil(t.dueDate)===0).length;
+  const al = $("alert");
+  if (overdue.length) { al.hidden = false; al.textContent = `!!  ${overdue.length} OVERDUE · OLDEST ${overdue[0].patientInitials} ${dueTxt(overdue[0]._d)}`; }
+  else al.hidden = true;
 
-  const sv = (id,val,cls) => {
-    const el=document.getElementById(id); el.textContent=val;
-    el.className="stat-val"+(cls?" "+cls:"");
-  };
-  sv("stat-overdue", overdueCt, overdueCt>0?"red":"");
-  sv("stat-today",   todayCt,   todayCt>0?"amber":"");
-  sv("stat-active",  active.length, "");
-  sv("stat-total",   allArr.length, "");
-  document.getElementById("sb-active").textContent = active.length;
-  document.getElementById("sb-total").textContent  = allArr.length;
+  let vis = filterStatus === "active" ? active : filterStatus === "done" ? arr.filter(t => t.completed)
+    : filterStatus === "recurring" ? active.filter(isRecurring) : arr;
+  if (filterCat !== "all") vis = vis.filter(t => (t.category || "custom") === filterCat);
+  const cmp = {
+    dueDate: (a, b) => a._d - b._d,
+    patient: (a, b) => String(a.patientInitials).localeCompare(String(b.patientInitials)) || a._d - b._d,
+    category: (a, b) => String(a.category).localeCompare(String(b.category)) || a._d - b._d,
+    steps: (a, b) => b._open - a._open || a._d - b._d,
+  }[sortBy];
+  vis.sort(cmp);
 
-  const strip = document.getElementById("alert-strip");
-  if (overdueCt>0) {
-    strip.classList.add("show");
-    strip.textContent = `!! ALERT: ${overdueCt} OVERDUE TASK${overdueCt>1?"S":""} !!`;
-  } else { strip.classList.remove("show"); }
+  const groups = ["OVERDUE", "TODAY", "THIS_WEEK", "UPCOMING", "COMPLETED"]
+    .map(label => ({ label, items: vis.filter(t => (t.completed ? "COMPLETED" : sectionOf(t._d)) === label) }))
+    .filter(g => g.items.length);
 
-  tbody.innerHTML = "";
-  if (arr.length===0) { empty.style.display="block"; return; }
-  empty.style.display="none";
+  // keep a half-typed step across live re-renders
+  const addInp = document.querySelector(".add-step");
+  const pending = addInp && !focusAddStep ? addInp.value : "";
+  const hadFocus = addInp && document.activeElement === addInp;
 
-  // Group sections for active view
-  const groups = filterStatus==="active"
-    ? [
-        { label:"OVERDUE",   count_label:"", items:arr.filter(t=>daysUntil(t.dueDate)<0) },
-        { label:"TODAY",     count_label:"", items:arr.filter(t=>daysUntil(t.dueDate)===0) },
-        { label:"THIS_WEEK", count_label:"", items:arr.filter(t=>{ const d=daysUntil(t.dueDate); return d>0&&d<=5; }) },
-        { label:"UPCOMING",  count_label:"", items:arr.filter(t=>daysUntil(t.dueDate)>5) },
-      ].filter(g=>g.items.length)
-    : [{ label:null, items:arr }];
+  $("rows").innerHTML = groups.map(g =>
+    `<div class="sect s-${g.label}"><span>── ${g.label}</span><span class="c">${g.items.length}</span><span class="ln" aria-hidden="true"></span></div>` +
+    g.items.map(rowHtml).join("")).join("");
+  $("empty").hidden = vis.length > 0;
 
-  groups.forEach(g => {
-    if (g.label) {
-      const sep = document.createElement("tr");
-      sep.className = "tbl-section";
-      sep.innerHTML = `<td colspan="7" data-count="${g.items.length}">${g.label}</td>`;
-      tbody.appendChild(sep);
-    }
-    g.items.forEach(task => tbody.appendChild(buildRow(task)));
-  });
+  const ni = document.querySelector(".add-step");
+  if (ni) { ni.value = pending; if (hadFocus || focusAddStep) ni.focus(); }
+  focusAddStep = false;
 }
 
-function buildRow(task) {
-  const days = daysUntil(task.dueDate);
-  const ulvl = task.completed?"ok":urgLevel(days);
-  const catCls = CAT_CLASS[task.category]||"cat-custom";
-  const catLbl = CAT_LABEL[task.category]||"Custom";
-
-  const dueText = task.completed ? "done"
-    : days<0  ? `-${Math.abs(days)}d`
-    : days===0 ? "today"
-    : `+${days}d`;
-
-  const flagHtml = task.completed ? ""
-    : ulvl==="ok" ? `<span class="flag flag-ok">--</span>`
-    : `<span class="flag flag-${ulvl}">${ulvl.toUpperCase()}</span>`;
-
-  const tr = document.createElement("tr");
-  tr.className = `tbl-row urg-${ulvl}${task.completed?" done":""}${ulvl==="overdue"?" overdue":""}`;
-  tr.id = "tr-"+task.id;
-
-  tr.innerHTML = `
-    <td class="td-cb">
-      <button class="cb${task.completed?" checked":""}" onclick="toggleDone('${task.id}')">
-        ${task.completed?"✓":""}
-      </button>
-    </td>
-    <td class="td-patient">
-      <div class="patient-str">${esc(task.patientInitials)}</div>
-      ${task.dobYear?`<div class="dob-str">${task.dobYear}</div>`:""}
-    </td>
-    <td class="td-cat">
-      <span class="cat-pill ${catCls}">${catLbl}</span>
-    </td>
-    <td class="td-task" onclick="toggleExpand('${task.id}')">
-      <div class="task-str">${esc(task.label)}</div>
-      ${task.notes?`<div class="task-notes">// ${esc(task.notes)}</div>`:""}
-    </td>
-    <td class="td-flag">${flagHtml}</td>
-    <td class="td-due">
-      <div class="due-main">${dueText}</div>
-      <div class="due-sub">${fmtDate(task.dueDate)}</div>
-    </td>
-    <td class="td-actions">
-      ${!task.completed?`
-        <span class="snz-group">
-          <button class="snz" onclick="snooze('${task.id}',1)">+1d</button>
-          <button class="snz" onclick="snooze('${task.id}',2)">+2d</button>
-          <button class="snz" onclick="snooze('${task.id}',5)">+5d</button>
-        </span>
-        <button class="edt" onclick="openDrawer('${task.id}')">EDIT</button>`:""}
-      <button class="del" onclick="deleteTask('${task.id}')">✕</button>
-    </td>`;
-  return tr;
+function rowHtml(t) {
+  const d = t._d, done = !!t.completed, u = done ? "ok" : urgLevel(d), open = openId === t.id;
+  const steps = t.steps, n = steps.length, nd = n - t._open, all = n > 0 && nd === n;
+  const rec = isRecurring(t), r = rec ? normRepeat(t.repeat) : null;
+  const cat = CATS.includes(t.category) ? t.category : "custom";
+  const flag = done ? `<span class="flag f-done">DONE</span>` : u === "ok" ? `<span class="flag f-ok">--</span>` : `<span class="flag f-${u}">${u.toUpperCase()}</span>`;
+  const firstOpen = steps.find(s => !s.d);
+  const hint = n ? (all ? "all steps done · ready to close" : `${t._open} open · ${firstOpen.t}`)
+    : (t.notes ? t.notes.split("\n")[0] : rec ? ruleText(r, t.dueDate) : "no steps");
+  const acts = `<button class="sb" data-act="snz" data-n="1">+1d</button><button class="sb" data-act="snz" data-n="2">+2d</button><button class="sb" data-act="snz" data-n="5">+5d</button><button class="sb edit" data-act="edit">EDIT</button>`;
+  return `<div class="task u-${u}${done ? " done" : ""}${open ? " open" : ""}" data-id="${esc(t.id)}">
+  <div class="trow">
+    <div class="c-cb"><button class="cb${done ? " on" : ""}${all && !done ? " ready" : ""}" data-act="complete" aria-label="${done ? "Reopen" : "Complete"} ${esc(t.patientInitials)} ${esc(t.label)}">${done ? "✓" : ""}</button></div>
+    <div class="c-pt"><div class="pt">${esc(t.patientInitials)}</div><div class="dob">${esc(t.dobYear || "")}</div><span class="mcat cat-${cat}">${cat}</span></div>
+    <div class="c-cat"><span class="cat cat-${cat}">${cat}</span></div>
+    <button class="c-task" data-act="expand" aria-expanded="${open}">
+      <span class="tline"><span class="tlabel">${esc(t.label)}</span>${rec ? `<span class="rchip">${ICON_RECUR}${esc(chipText(r))}</span>` : ""}</span>
+      <span class="thint">${open ? "▾" : "▸"} ${esc(hint)}</span>
+    </button>
+    <div class="c-steps">${n ? `<div class="steps"><span class="segs" aria-hidden="true">${steps.slice(0, 12).map(s => `<i class="${s.d ? "on" : ""}"></i>`).join("")}</span><span class="n${all ? " all" : ""}">${nd}/${n}</span></div>` : `<span class="nil">--</span>`}</div>
+    <div class="c-flag">${flag}</div>
+    <div class="c-due"><div class="due-m">${done ? "done" : dueTxt(d)}</div><div class="due-s">${fmtDate(t.dueDate)}</div></div>
+    <div class="c-act">${done ? "" : acts}<button class="sb del" data-act="del" aria-label="Delete task">✕</button></div>
+  </div>
+  ${open ? xpHtml(t, r, acts) : ""}
+</div>`;
 }
-  
-window.addEventListener("firebase-ready", () => {
-  const { onValue, tasksRef } = window._fb;
 
-  onValue(tasksRef, snap => {
-    tasks = snap.val() || {};
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("task-table").classList.add("show");
+function xpHtml(t, r, acts) {
+  const steps = t.steps;
+  const list = steps.map((s, i) =>
+    `<button class="sub${s.d ? " on" : ""}" data-act="step" data-i="${i}" aria-pressed="${s.d}"><span class="box${s.d ? " on" : ""}" aria-hidden="true">${s.d ? "✓" : ""}</span><span class="lab">${esc(s.t)}</span><span class="num">${pad2(i + 1)}</span></button>`).join("");
+  let rep;
+  if (r) {
+    const next = t.completed ? null : computeNext(t);
+    const s = t.series || {};
+    const hist = listOf(s.hist);
+    rep = `<div class="kv">
+      <span class="k">rule</span><span class="tv">${esc(ruleText(r, t.dueDate))}</span>
+      <span class="k">basis</span><span>${r.basis === "done" ? "next from completion date" : "next from due date"}</span>
+      <span class="k">next</span><span>${next ? esc(fmtShort(next)) + " · created on complete" : (t.completed ? "--" : "series ends with this one")}</span>
+      <span class="k">ends</span><span>${esc(endText(r))}</span>
+      <span class="k">series</span><span>#${s.index || 1}${s.since ? " · since " + esc(fmtDate(s.since)) : ""}</span>
+      <span class="k">history</span><span class="hist">${hist.map(h => `<i class="${h ? "on" : "late"}" title="${h ? "on time" : "late"}"></i>`).join("")}${t.completed ? "" : "<i></i>"}<small>${hist.length ? `${hist.filter(Boolean).length}/${hist.length} on time` : "first in series"}</small></span>
+    </div>`;
+  } else {
+    rep = `<div class="row-opts" style="font-size:12px"><span style="color:var(--dim)">one-off</span><button class="sb teal" data-act="edit">make recurring ▸</button></div>`;
+  }
+  return `<div class="xp">
+    <div>
+      <div class="xp-h">steps · ${steps.length - t._open}/${steps.length}</div>
+      <div class="chk">${list}<label class="addrow"><span aria-hidden="true" style="width:16px;text-align:center">+</span><span class="sr">Add step</span><input class="add-step" placeholder="add step… (enter)" maxlength="120" /></label></div>
+    </div>
+    <div class="xp-side">
+      ${t.notes ? `<div><div class="xp-h">notes</div><div class="notes">// ${esc(t.notes)}</div></div>` : ""}
+      <div><div class="xp-h">repeat</div>${rep}</div>
+      <div class="xp-act">${t.completed ? "" : acts}<button class="sb del" data-act="del" style="border-color:var(--l3)">DELETE</button></div>
+    </div>
+  </div>`;
+}
 
-    document.getElementById("sync-status").innerHTML = '<span class="sync-dot"></span>LIVE';
-    document.getElementById("sync-status").classList.add("live");
-
-    render();
-  });
-
-
-// ── Controls ─────────────────────────────────────────────────
-document.getElementById("status-filters").addEventListener("click",e=>{
-  if(!e.target.dataset.filter) return;
-  filterStatus=e.target.dataset.filter;
-  document.querySelectorAll(".cmd-btn[data-filter]").forEach(b=>
-    b.classList.toggle("active",b.dataset.filter===filterStatus));
+// ── List events ─────────────────────────────────────────
+$("rows").addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const row = b.closest(".task"); if (!row) return;
+  const id = row.dataset.id;
+  switch (b.dataset.act) {
+    case "complete": toggleDone(id); break;
+    case "expand": openId = openId === id ? null : id; render(); break;
+    case "step": toggleStep(id, +b.dataset.i); break;
+    case "snz": snooze(id, +b.dataset.n); break;
+    case "edit": openDrawer(id); break;
+    case "del": deleteTask(id); break;
+  }
+});
+$("rows").addEventListener("keydown", e => {
+  if (e.key !== "Enter" || !e.target.matches(".add-step")) return;
+  e.preventDefault();
+  const v = e.target.value.trim(); if (!v) return;
+  addStep(e.target.closest(".task").dataset.id, v);
+});
+$("filters").addEventListener("click", e => {
+  const b = e.target.closest("[data-f]"); if (!b) return;
+  filterStatus = b.dataset.f;
+  document.querySelectorAll("#filters .fbtn").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); });
   render();
 });
-document.getElementById("cat-filter").addEventListener("change",e=>{filterCat=e.target.value;render();});
-document.getElementById("sort-select").addEventListener("change",e=>{sortBy=e.target.value;render();});
+$("cat-filter").addEventListener("change", e => { filterCat = e.target.value; render(); });
+$("sort-sel").addEventListener("change", e => { sortBy = e.target.value; render(); });
+document.querySelectorAll("[data-new]").forEach(b => b.addEventListener("click", () => openDrawer()));
 
-// ── PWA ──────────────────────────────────────────────────────
-const mf = {name:"RTM Renal Tasks",short_name:"RTM",start_url:"./",display:"standalone",
-  background_color:"#080c08",theme_color:"#080c08",
-  icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23080c08'/><text y='65' x='50' text-anchor='middle' font-size='42' font-family='monospace' fill='%2339ff14'>RTM</text></svg>",sizes:"192x192",type:"image/svg+xml"}]};
-document.getElementById("pwa-manifest").href=URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:"application/json"}));
+// ── Editor ──────────────────────────────────────────────
+function openDrawer(id) {
+  editingId = id || null;
+  const t = id ? tasks[id] : null;
+  $("d-mode").textContent = t ? "task.edit" : "task.create";
+  $("d-exec").textContent = t ? "UPDATE ▸" : "EXECUTE ▸";
+  $("d-err").textContent = "";
+  if (t) {
+    $("f-initials").value = t.patientInitials || "";
+    $("f-dob").value = t.dobYear || "";
+    $("f-due").value = t.dueDate || todayStr();
+    $("f-cat").value = CATS.includes(t.category) ? t.category : "custom";
+    $("f-notes").value = t.notes || "";
+    const m = TEMPLATES.find(x => x.label === t.label);
+    ed = { tmpl: m ? m.label : CUSTOM.label, steps: t.steps.map(s => ({ t: s.t, d: s.d })), repeat: normRepeat(t.repeat) };
+    $("f-custom").value = m ? "" : t.label;
+  } else {
+    ["f-initials", "f-dob", "f-notes", "f-custom"].forEach(k => $(k).value = "");
+    ed = { tmpl: "", steps: [], repeat: normRepeat() };
+    applyTemplate(TEMPLATES[0]);
+  }
+  renderEditor();
+  $("drawer").hidden = false;
+  $("drawer").scrollIntoView({ behavior: "smooth", block: "start" });
+  setTimeout(() => $("f-initials").focus({ preventScroll: true }), 50);
+}
+function closeDrawer() { $("drawer").hidden = true; editingId = null; ed = null; }
+function applyTemplate(tp) {
+  ed.tmpl = tp.label;
+  ed.steps = tp.steps.map(t => ({ t, d: false }));
+  ed.repeat = normRepeat(tp.repeat);
+  let due = tp === CUSTOM ? today0() : addDays(today0(), tp.days);
+  if (ed.repeat.mode === "weekly" && ed.repeat.days.length) {
+    // first occurrence lands on the next matching weekday (today counts)
+    due = today0();
+    for (let i = 0; i < 7 && !ed.repeat.days.includes(due.getDay()); i++) due = addDays(due, 1);
+  }
+  $("f-due").value = ymd(due);
+  $("f-cat").value = tp.cat;
+}
 
-}); 
+function renderEditor() { renderTmpls(); renderSteps(); renderRepeat(); }
+
+function renderTmpls() {
+  $("tmpls").innerHTML = TEMPLATES.map((tp, i) => {
+    const meta = [tp.steps.length ? tp.steps.length + " steps" : "", tp.repeat ? "↻" : ""].filter(Boolean).join(" · ");
+    const on = tp.label === ed.tmpl;
+    return `<button class="tmpl${on ? " on" : ""}" data-ed="tmpl" data-i="${i}" aria-pressed="${on}">${esc(tp.label)}${meta ? `<small>${meta}</small>` : ""}</button>`;
+  }).join("");
+  $("custom-field").hidden = ed.tmpl !== CUSTOM.label;
+}
+
+function renderSteps() {
+  $("ed-steps").innerHTML = ed.steps.map((s, i) =>
+    `<div class="step-ed"><span class="n">${pad2(i + 1)}</span><label style="flex:1;min-width:0;display:flex"><span class="sr">Step ${i + 1}</span><input class="step-input" data-i="${i}" value="${esc(s.t)}" maxlength="120" /></label><button class="icon-x" data-ed="rmstep" data-i="${i}" aria-label="Remove step ${i + 1}">✕</button></div>`).join("");
+  $("ed-stepcount").textContent = ed.steps.length ? `${ed.steps.length} step${ed.steps.length > 1 ? "s" : ""}` : "none · optional checklist";
+  const r = ed.repeat;
+  const opt = (k, label) => `<button class="check${r[k] ? " on" : ""}" data-ed="opt" data-k="${k}" aria-pressed="${r[k]}"><span class="box" aria-hidden="true">${r[k] ? "✓" : ""}</span>${label}</button>`;
+  $("ed-opts").innerHTML = opt("resetSteps", "Reset steps on each new occurrence") + opt("requireAll", "Require all steps before completing");
+  renderSummary();
+}
+
+function renderRepeat() {
+  const r = ed.repeat;
+  const modes = [["none", "NONE"], ["daily", "DAILY"], ["weekly", "WEEKLY"], ["every", "EVERY N"], ["monthly", "MONTHLY"]];
+  let h = `<div class="seg" role="group" aria-label="Repeat frequency">${modes.map(([m, l]) => `<button class="${r.mode === m ? "on" : ""}" data-ed="mode" data-m="${m}" aria-pressed="${r.mode === m}">${l}</button>`).join("")}</div>`;
+  if (r.mode === "weekly") {
+    h += `<div><div class="sub-k">ON</div><div class="days">${WEEK.map(d => `<button class="${r.days.includes(d) ? "on" : ""}" data-ed="day" data-d="${d}" aria-pressed="${r.days.includes(d)}" aria-label="${DAY_FULL[d]}">${DAY_ABBR[d][0]}</button>`).join("")}</div></div>`;
+  }
+  if (r.mode === "every") {
+    h += `<div class="stepper">every<button data-ed="ndown" aria-label="Fewer days">−</button><span class="v">${r.n}</span><button data-ed="nup" aria-label="More days">+</button>days</div>`;
+  }
+  if (r.mode !== "none") {
+    h += `<div><div class="sub-k">SCHEDULE NEXT</div><div class="row-opts">
+        <button class="pill${r.basis === "due" ? " on" : ""}" data-ed="basis" data-b="due">from due date</button>
+        <button class="pill${r.basis === "done" ? " on" : ""}" data-ed="basis" data-b="done">from completion date</button></div></div>
+      <div><div class="sub-k">ENDS</div><div class="row-opts">
+        <button class="pill${r.end === "never" ? " on" : ""}" data-ed="end" data-e="never">never</button>
+        <button class="pill${r.end === "after" ? " on" : ""}" data-ed="end" data-e="after">after</button>
+        ${r.end === "after" ? `<label><span class="sr">Occurrences</span><input class="inp num" id="ed-count" type="number" min="1" max="99" value="${esc(r.count)}" /></label><span style="font-size:11px;color:var(--mid)">times</span>` : ""}
+        <button class="pill${r.end === "date" ? " on" : ""}" data-ed="end" data-e="date">on date</button>
+        ${r.end === "date" ? `<label><span class="sr">End date</span><input class="inp" id="ed-until" type="date" value="${esc(r.until)}" /></label>` : ""}
+      </div></div>
+      <div class="preview"><div class="k">OCCURRENCES</div><div class="ds" id="ed-preview"></div></div>`;
+  } else {
+    h += `<div class="oneoff">one-off task · no further occurrences will be created</div>`;
+  }
+  $("ed-repeat").innerHTML = h;
+  renderPreview();
+}
+
+function occurrences() {
+  const r = ed.repeat;
+  const first = parse($("f-due").value) || today0();
+  const rr = Object.assign({}, r, { dom: first.getDate() });
+  const max = r.end === "after" ? Math.min(6, Math.max(1, +r.count || 1)) : 6;
+  const until = r.end === "date" ? parse(r.until) : null;
+  const out = [first]; let d = first, g = 0;
+  while (out.length < max && g++ < 400) { d = stepRule(rr, d); if (!d || (until && d > until)) break; out.push(d); }
+  return out;
+}
+
+function renderPreview() {
+  const r = ed.repeat;
+  const p = $("ed-preview");
+  if (p) {
+    const occ = occurrences();
+    const more = !(r.end === "after" && occ.length >= r.count) && !(r.end === "date" && occ.length < 6);
+    p.innerHTML = occ.map(d => `<span>${esc(fmtShort(d))}</span>`).join("") + (more ? `<span style="border-style:dashed">…</span>` : "");
+  }
+  $("ed-rule").textContent = r.mode === "none" ? "off" : ruleText(Object.assign({}, r, { dom: (parse($("f-due").value) || today0()).getDate() }), $("f-due").value);
+  renderSummary();
+}
+
+function renderSummary() {
+  if (!ed) return;
+  const r = ed.repeat, n = ed.steps.filter(s => s.t.trim()).length;
+  $("ed-sum").textContent = r.mode === "none" ? `one-off · ${n} step${n === 1 ? "" : "s"}`
+    : `series · ${chipText(r).toLowerCase()} · ${n} step${n === 1 ? "" : "s"}${r.resetSteps && n ? " reset each time" : ""}`;
+}
+
+$("drawer").addEventListener("click", e => {
+  const b = e.target.closest("[data-ed]"); if (!b || !ed) return;
+  const r = ed.repeat;
+  switch (b.dataset.ed) {
+    case "tmpl": applyTemplate(TEMPLATES[+b.dataset.i]); renderEditor(); break;
+    case "rmstep": ed.steps.splice(+b.dataset.i, 1); renderSteps(); break;
+    case "addstep": addEdStep(); break;
+    case "opt": r[b.dataset.k] = !r[b.dataset.k]; renderSteps(); break;
+    case "mode": r.mode = b.dataset.m; renderRepeat(); break;
+    case "day": { const d = +b.dataset.d; r.days = r.days.includes(d) ? r.days.filter(x => x !== d) : r.days.concat([d]); renderRepeat(); break; }
+    case "ndown": r.n = Math.max(2, r.n - 1); renderRepeat(); break;
+    case "nup": r.n = Math.min(365, r.n + 1); renderRepeat(); break;
+    case "basis": r.basis = b.dataset.b; renderRepeat(); break;
+    case "end": r.end = b.dataset.e; if (r.end === "date" && !r.until) r.until = plusDays(90); renderRepeat(); break;
+  }
+});
+$("drawer").addEventListener("input", e => {
+  if (!ed) return;
+  if (e.target.matches(".step-input")) { ed.steps[+e.target.dataset.i].t = e.target.value; renderSummary(); }
+  else if (e.target.id === "ed-count") { ed.repeat.count = Math.max(1, Math.min(99, +e.target.value || 1)); renderPreview(); }
+  else if (e.target.id === "ed-until") { ed.repeat.until = e.target.value; renderPreview(); }
+  else if (e.target.id === "f-due") { renderPreview(); }
+});
+$("ed-newstep").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addEdStep(); } });
+function addEdStep() {
+  const v = $("ed-newstep").value.trim(); if (!v) { $("ed-newstep").focus(); return; }
+  ed.steps.push({ t: v, d: false }); $("ed-newstep").value = ""; renderSteps(); $("ed-newstep").focus();
+}
+$("d-esc").addEventListener("click", closeDrawer);
+$("d-abort").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("drawer").hidden) closeDrawer(); });
+
+$("d-exec").addEventListener("click", async () => {
+  const err = m => { $("d-err").textContent = m; };
+  const initials = $("f-initials").value.trim().toUpperCase();
+  if (!initials) { err("patient_id required"); $("f-initials").focus(); return; }
+  const due = $("f-due").value;
+  if (!parse(due)) { err("due date required"); $("f-due").focus(); return; }
+  const dob = $("f-dob").value.trim();
+  if (dob && !/^\d{4}$/.test(dob)) { err("dob_year should be 4 digits"); $("f-dob").focus(); return; }
+  const label = ed.tmpl === CUSTOM.label ? ($("f-custom").value.trim() || "Custom task") : ed.tmpl;
+  const steps = ed.steps.map(s => ({ t: s.t.trim().slice(0, 120), d: !!s.d })).filter(s => s.t);
+  const r = Object.assign({}, ed.repeat);
+  if (r.mode === "weekly" && !r.days.length) { err("pick at least one weekday"); return; }
+  if (r.mode !== "none" && r.end === "date" && !parse(r.until)) { err("pick an end date"); return; }
+  r.dom = parse(due).getDate();
+  r.count = Math.max(1, +r.count || 1);
+  const payload = {
+    patientInitials: initials.slice(0, 6), dobYear: dob, label: label.slice(0, 120),
+    category: $("f-cat").value, dueDate: due, notes: $("f-notes").value.trim().slice(0, 2000),
+    steps, repeat: r,
+  };
+  $("d-exec").disabled = true;
+  try {
+    if (editingId) {
+      const t = tasks[editingId];
+      if (r.mode !== "none" && !(t && t.series)) payload.series = { id: editingId, index: 1, since: due, hist: [] };
+      await update(tRef(editingId), payload);
+    } else {
+      const key = push(ref(db, base)).key;
+      if (r.mode !== "none") payload.series = { id: key, index: 1, since: due, hist: [] };
+      if (steps.length) openId = key;
+      await set(tRef(key), Object.assign(payload, { completed: false, createdAt: Date.now() }));
+    }
+    closeDrawer();
+  } catch (e) { err(e && e.code === "PERMISSION_DENIED" ? "rejected by database rules" : String((e && e.message) || e)); }
+  finally { $("d-exec").disabled = false; }
+});
+
+// ── PWA manifest ────────────────────────────────────────
+const mf = { name: "RTM Renal Tasks", short_name: "RTM", start_url: "./", display: "standalone",
+  background_color: "#060906", theme_color: "#060906",
+  icons: [{ src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23060906'/><text y='62' x='50' text-anchor='middle' font-size='40' font-family='monospace' font-weight='bold' fill='%2339ff14'>RTM</text></svg>", sizes: "192x192", type: "image/svg+xml" }] };
+$("pwa-manifest").href = URL.createObjectURL(new Blob([JSON.stringify(mf)], { type: "application/json" }));
 </script>
 </body>
 </html>
