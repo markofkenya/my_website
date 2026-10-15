@@ -658,10 +658,19 @@ async function startSession(u) {
   $("h-email").textContent = u.email || "";
   $("main-ui").hidden = true; $("denied").hidden = true;
 
-  let allowed = false;
-  try { allowed = (await get(ref(db, `allowedUsers/${u.uid}`))).val() === true; } catch (e) { allowed = false; }
+  let allowed = false, why = "";
+  try {
+    const v = (await get(ref(db, `allowedUsers/${u.uid}`))).val();
+    allowed = v === true;
+    if (v === null) why = "No entry found for this user ID under allowedUsers.";
+    else if (!allowed) why = `An entry exists but its value is ${JSON.stringify(v)} (${typeof v}); it must be the boolean true, without quotes.`;
+  } catch (e) {
+    why = (e && /permission/i.test(e.code + e.message))
+      ? "The database refused to read the allowlist. The new rules probably haven't been published yet: Realtime Database → Rules → paste database.rules.json → Publish."
+      : "Couldn't read the allowlist: " + ((e && (e.code || e.message)) || "unknown error");
+  }
   if (user !== u) return;
-  if (!allowed) { showDenied(u); return; }
+  if (!allowed) { showDenied(u, null, why); return; }
 
   $("main-ui").hidden = false;
   $("loading").hidden = false;
@@ -684,13 +693,15 @@ async function startSession(u) {
   checkLegacy();
 }
 
-function showDenied(u, err) {
+function showDenied(u, err, why) {
   $("main-ui").hidden = true;
   const p = $("denied");
   p.hidden = false;
   p.innerHTML = `<strong>!! ACCESS DENIED</strong><br>
-    Signed in as <code>${esc(u.email)}</code>, but this account isn't on the allowlist${err ? " (" + esc(err.code || err.message) + ")" : ""}.<br>
-    To approve it: Firebase console → Realtime Database → Data → add <code>allowedUsers / ${esc(u.uid)}</code> with the value <code>true</code> (boolean), then reload.<br>
+    Signed in as <code>${esc(u.email)}</code> to project <code>${esc(firebaseConfig.projectId)}</code>.<br>
+    <strong>Reason:</strong> ${esc(why || (err ? (err.code || err.message) : "not on the allowlist"))}<br>
+    Your user ID: <code>${esc(u.uid)}</code><br>
+    To approve it: Firebase console → Realtime Database → Data → <code>allowedUsers / ${esc(u.uid)}</code> = <code>true</code> (boolean), then reload.<br>
     <button class="btn" id="denied-out">SIGN OUT</button>`;
   $("denied-out").addEventListener("click", () => signOut(auth));
 }
