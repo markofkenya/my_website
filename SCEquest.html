@@ -356,12 +356,12 @@ const SHORT = {"Sodium and Water Abnormalities":"Na & Water","Acid–Base and Po
 const SOURCES = [["ohb","OHB"],["online","Online"],["ccn","CCN"],["kdigo","KDIGO"],["ksap","KSAP"],["prn","StudyPRN"]];
 const RECALL_DAYS = [3, 7, 21, 45, 90];     // gap before the next recall, by number of recalls in a row
 const MISS_DAYS = 1;                        // a missed recall comes back tomorrow
-// The optional boss on every subtopic. He wakes 2 days after you read it; beat him with 80% or more from one of your own
+// The optional boss on every subtopic. He wakes 2 days after you read it; beat him with 75% or more from one of your own
 // study methods. You can also dare him early: a win clears the whole subtopic, so topics you already know get cleared fast.
-const BOSS = { name:"COUNT GLOMERULA", pass:80, wakeDays:2, methods:[["feynman","Feynman"],["study2","Study² Protocol"],["review","Nephrology review"]] };
+const BOSS = { name:"COUNT GLOMERULA", pass:75, wakeDays:2, methods:[["feynman","Feynman"],["study2","Study² Protocol"],["review","Nephrology review"]] };
 const scoreLabel = n => n >= 85 ? "Expert" : n >= 70 ? "Confident" : n >= 60 ? "Somewhat Confident" : n >= 40 ? "Building Knowledge" : "Needs More Practice";
 const RULES = [["read","Subtopic read (★)",5],["first","First question on a subtopic (★★)",5],["q","Each extra question",1],["win","Ghost busted · correct recall",3],
-  ["boss","Count Glomerula defeated · 80% or more · clears the subtopic (👑)",20],["giant","Giant Count Glomerula defeated · after 3 or more fails (comeback bonus)",30],
+  ["boss","Count Glomerula defeated · 75% or more · clears the subtopic (👑)",20],["giant","Giant Count Glomerula defeated · after 3 or more fails (comeback bonus)",30],
   ["topic","Topic clear · every subtopic has a question or a 👑",10],["world","World clear · every subtopic in a category cleared",50],
   ["kb1","World boss · first KSAP pass on that world, 75% or more",75],["kb2","World boss · second KSAP pass, 80% or more",150],
   ["gates","SCE castle gates open · all ten world bosses slain on the second pass",250],["princess","Princess Nephra rescued · you passed the SCE",1000],
@@ -430,7 +430,7 @@ const bestScore = L => bossTries(L).reduce((m,a) => Math.max(m, +a.score||0), -1
 const mastered = L => bestScore(L) >= BOSS.pass;
 const cleared = L => hasQs(L) || mastered(L);          // a boss win clears a subtopic even with no questions
 const readAt = L => (Q().readTs || {})[L.qk] || null;
-// Each failed attempt (under 80%) makes him grow and sends him back to sleep for 2 days, so a retry is never same-day.
+// Each failed attempt (under 75%) makes him grow and sends him back to sleep for 2 days, so a retry is never same-day.
 const bossFails = L => mastered(L) ? [] : bossTries(L).filter(a => +a.score < BOSS.pass);
 const lastFail = L => bossFails(L).reduce((m,a) => Math.max(m, a.ts||0), 0) || null;
 const GIANT = 3;   // fails before he turns giant; beating a giant pays the comeback bonus
