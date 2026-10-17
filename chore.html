@@ -521,6 +521,9 @@ body.focus .check.checked{background:var(--primary);border-color:var(--primary);
 .btn.tiny{border-radius:999px}
 .btn.primary,.btn.primary:hover,body.focus .btn.primary{background:var(--ink);border-color:var(--ink);color:var(--ink-fg)}
 .btn.primary:hover{opacity:.88}
+.btn.action{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600;box-shadow:0 8px 20px -12px rgba(47,122,80,.7)}
+.btn.action:hover{background:var(--primary2);border-color:var(--primary2);color:#fff}
+body.focus .btn.action,body.focus .btn.action:hover{color:#14201A}
 .btn.danger{border-color:color-mix(in srgb,var(--red) 45%,transparent)}
 .btn.good{border-color:color-mix(in srgb,var(--green) 45%,transparent)}
 .input{border-radius:12px;background:var(--bg3);border-color:var(--line);color:var(--text);padding:12px 14px}
@@ -984,6 +987,21 @@ function setReqVal(id, req, val){
   }
   saveState(); updateReadiness();
 }
+// Live update while typing: commits after a short pause, refreshes the header and this card in place (keeps focus)
+function liveReq(id, req, el){
+  clearTimeout(window.__lrT);
+  window.__lrT=setTimeout(()=>{
+    if(!el.isConnected) return;
+    setReqVal(id, req, el.value);
+    const card=el.closest('.card'); if(!card || req.type==='checkbox') return;
+    const v=getReqVal(id,req), t=req.target||1, pct=Math.min(100,Math.round(v/t*100)), st=reqStatus(id,req);
+    const col=st==='met'?'var(--green)':st==='partial'?'var(--amber)':'var(--red)';
+    const fill=card.querySelector('.progress-row .fill'); if(fill){ fill.style.width=pct+'%'; fill.style.background=col; }
+    const cnt=card.querySelector('.progress-row .count'); if(cnt){ cnt.textContent=`${v} / ${req.target}`; cnt.className='count '+st; }
+    card.classList.remove('met','partial','unmet'); card.classList.add(st);
+  }, 300);
+}
+window.liveReq=liveReq;
 function deadlinePast(d){ return d !== "annual" && YEARS.indexOf(d) < yrIndex(); }
 function deadlineFuture(d){ return d !== "annual" && YEARS.indexOf(d) > yrIndex(); }
 function reqStatus(id, req){ const v=getReqVal(id,req); if(req.type==='checkbox'){ if(deadlineFuture(req.deadline) && !v) return 'na'; return v ? 'met' : deadlinePast(req.deadline) ? 'unmet' : 'partial'; } return v >= req.target ? 'met' : v>0 ? 'partial' : 'unmet'; }
@@ -1898,7 +1916,7 @@ function makeReqCard(id, req, stream){
     return `<div class="${cardClass}"><div class="card-title">${safe(req.label)} ${badge}</div><div class="check-row"><button ${disabled} class="check ${v?'checked':''}" onclick="setReqVal('${id}', ${JSON.stringify(req).replace(/"/g,'&quot;')}, ${!v}); render();">${v?'✓':''}</button><span class="hint">${v?'Complete':'Not yet done'}</span></div><div class="deadline ${dc}">${deadlineText(req)} · ${safe(req.note||'')}</div>${disabledNote}</div>`;
   }
   const pct=Math.min(100, Math.round((v/(req.target||1))*100));
-  return `<div class="${cardClass}"><div class="card-title">${safe(req.label)} ${badge} ${req.cumulative?'<span class="hint">(cumulative)</span>':''}</div><div class="progress-row"><div class="track"><div class="fill" style="width:${pct}%;background:${status==='met'?'var(--green)':status==='partial'?'var(--amber)':status==='na'?'var(--dim)':'var(--red)'}"></div></div><span class="count ${status}">${v} / ${req.target}</span></div><div class="card-controls"><input ${disabled} class="input num" type="number" min="0" value="${v}" onfocus="this.select()" onblur="setReqVal('${id}', ${JSON.stringify(req).replace(/"/g,'&quot;')}, this.value); render();" onkeydown="if(event.key==='Enter'){this.blur()}"><span class="hint">${safe(req.unit||'')}</span></div><div class="deadline ${dc}">${deadlineText(req)} · ${safe(req.note||'')}</div>${disabledNote}</div>`;
+  return `<div class="${cardClass}"><div class="card-title">${safe(req.label)} ${badge} ${req.cumulative?'<span class="hint">(cumulative)</span>':''}</div><div class="progress-row"><div class="track"><div class="fill" style="width:${pct}%;background:${status==='met'?'var(--green)':status==='partial'?'var(--amber)':status==='na'?'var(--dim)':'var(--red)'}"></div></div><span class="count ${status}">${v} / ${req.target}</span></div><div class="card-controls"><input ${disabled} class="input num" type="number" min="0" value="${v}" onfocus="this.select()" oninput="liveReq('${id}', ${JSON.stringify(req).replace(/"/g,'&quot;')}, this)" onblur="clearTimeout(window.__lrT); setReqVal('${id}', ${JSON.stringify(req).replace(/"/g,'&quot;')}, this.value); render();" onkeydown="if(event.key==='Enter'){this.blur()}"><span class="hint">${safe(req.unit||'')}</span></div><div class="deadline ${dc}">${deadlineText(req)} · ${safe(req.note||'')}</div>${disabledNote}</div>`;
 }
 function section(title,note,cards){ return `<section class="section"><div class="sec-head"><span class="sec-title">${title}</span><span class="sec-rule"></span><span class="sec-note">${note||''}</span></div><div class="grid">${cards.join('')}</div></section>`; }
 function renderSpecialty(){
@@ -1973,7 +1991,7 @@ function hideHospital(h){ deleteHospital(h); }
 function restoreDeaneryHospitals(){ state.deletedHospitals=[]; state.hiddenHospitals=[]; saveState(); renderAdmin(); }
 
 function optionsHtml(list, selected=''){ return list.map(x=>`<option value="${safe(x)}" ${selected===x?'selected':''}>${safe(x)}</option>`).join(''); }
-function renderLogbook(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','Teaching/CPD'],['simulation','Simulation'],['teaching','Teaching done']]; document.getElementById('main').innerHTML=`<div class="subtabs">${subs.map(([id,l])=>`<button class="subtab ${logSubTab===id?'active':''}" onclick="logSubTab='${id}';renderLogbook()">${l}</button>`).join('')}</div><div class="row" style="justify-content:flex-end;margin-bottom:12px"><button class="btn small primary" onclick="showPrintStylePicker()">⎙ Print Logbook Report</button></div><div id="log-content"></div>`; if(logSubTab==='clinics') renderLogClinics(); if(logSubTab==='procedures') renderLogProcedures(); if(logSubTab==='cpd') renderLogCPD(); if(logSubTab==='simulation') renderSimpleLog('simulation','Simulation session', ['date','course','title','hours','hospital','year','notes'], ['Course','Title','Hours','Hospital','Year','Notes'], null); if(logSubTab==='teaching') renderSimpleLog('teaching','Teaching session', ['date','type','topic','audience','supervisor','signoff','year','notes'], ['Type','Topic','Audience','Observed by','Sign-off','Year','Notes'], ['Bedside teaching','Tutorial / seminar','Grand round presentation','Journal club','Simulation facilitation','Medical student supervision','Other']); }
+function renderLogbook(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','Teaching/CPD'],['simulation','Simulation'],['teaching','Teaching done']]; document.getElementById('main').innerHTML=`<div class="subtabs">${subs.map(([id,l])=>`<button class="subtab ${logSubTab===id?'active':''}" onclick="logSubTab='${id}';renderLogbook()">${l}</button>`).join('')}</div><div class="row" style="justify-content:flex-end;margin-bottom:12px"><button class="btn small action" onclick="showPrintStylePicker()">⎙ Print Logbook Report</button></div><div id="log-content"></div>`; if(logSubTab==='clinics') renderLogClinics(); if(logSubTab==='procedures') renderLogProcedures(); if(logSubTab==='cpd') renderLogCPD(); if(logSubTab==='simulation') renderSimpleLog('simulation','Simulation session', ['date','course','title','hours','hospital','year','notes'], ['Course','Title','Hours','Hospital','Year','Notes'], null); if(logSubTab==='teaching') renderSimpleLog('teaching','Teaching session', ['date','type','topic','audience','supervisor','signoff','year','notes'], ['Type','Topic','Audience','Observed by','Sign-off','Year','Notes'], ['Bedside teaching','Tutorial / seminar','Grand round presentation','Journal club','Simulation facilitation','Medical student supervision','Other']); }
 function formPanel(title, html, onsubmit){ return `<div class="panel"><div class="sec-head"><span class="sec-title">${title}</span><span class="sec-rule"></span></div><div class="form-grid">${html}<div class="field full"><button class="btn primary" onclick="${onsubmit}">ADD ENTRY ▸</button></div></div></div>`; }
 function hospitalField(id='hospital'){ const list=hospitalOptions(); return `<div class="field"><label>Hospital</label><input class="input" id="${id}" list="${id}-list" placeholder="Start typing or add manually"><datalist id="${id}-list">${list.map(h=>`<option value="${safe(h)}">`).join('')}</datalist></div>`; }
 function table(k, cols, mapper){ const arr=entries(k).slice().sort((a,b)=>(b.date||b.start||'').localeCompare(a.date||a.start||'')); return tableFromArray(k, arr, cols, mapper); }
@@ -3255,7 +3273,7 @@ function bulkImportPanel(){
         <div class="field"><label>Import destination</label><select class="input" id="bulk-type" onchange="bulkImportTemplate()">${opts}</select></div>
         <div class="field"><label>CSV helper</label><button class="btn" onclick="bulkImportTemplate()">Show template</button></div>
         <div class="field full"><label>Paste CSV</label><textarea class="input" id="bulk-csv" rows="8" style="min-height:150px;resize:vertical;" placeholder="${safe(sample)}"></textarea></div>
-        <div class="field full"><div class="row"><button class="btn primary" onclick="previewBulkImport()">Preview rows</button><button class="btn good" onclick="runBulkImport()">Import into logbook</button><button class="btn" onclick="showPrintStylePicker()">Print report</button></div><div class="hint" style="margin-top:8px">Tip: keep the header row. Imported rows are appended, not overwritten. Each row gets a createdAt timestamp, so your 24-hour edit rule still works.</div></div>
+        <div class="field full"><div class="row"><button class="btn primary" onclick="previewBulkImport()">Preview rows</button><button class="btn good" onclick="runBulkImport()">Import into logbook</button><button class="btn action" onclick="showPrintStylePicker()">Print report</button></div><div class="hint" style="margin-top:8px">Tip: keep the header row. Imported rows are appended, not overwritten. Each row gets a createdAt timestamp, so your 24-hour edit rule still works.</div></div>
       </div>
       <div id="bulk-preview" style="margin-top:14px"></div>
     </div></section>`;
@@ -4397,6 +4415,18 @@ function renderRoadmap(){
         <span class="z-due">${safe(deadlineText(r))}</span>
       </button>`;
     });
+  const dopsRow=(label,st,tab,due)=>{
+    if(!st||!st.total||st.met>=st.total) return null;
+    const pct=Math.round(st.met/st.total*100), dot=pct>0?'var(--amber)':'var(--red)';
+    const streamColor=tab==='gim'?'var(--gim)':'var(--primary)', streamLabel=tab==='gim'?'GIM':safe(sp.short);
+    return `<button class="z-row" onclick="setTab('${tab}')">
+        <span class="z-row-l"><span class="z-dot" style="background:${dot}"></span><span class="z-row-t">${safe(label)}</span><span class="z-stream" style="color:${streamColor}">${streamLabel}</span></span>
+        <span class="z-row-m"><span class="z-bar"><div style="width:${pct}%;background:${dot}"></div></span><span class="z-count">${st.met} / ${st.total} signed</span></span>
+        <span class="z-due">${safe(due)}</span>
+      </button>`;
+  };
+  [dopsRow((specDopsStats().label||(sp.short+' DOPS')),specDopsStats(),'specialty','From logbook DOPS'),
+   dopsRow('GIM DOPS procedures',gimDopsStats(),'gim','Tick off on GIM tab')].filter(Boolean).forEach(r=>openRows.push(r));
   const hero=`<div class="z-hero">
     <div class="z-eyebrow">${todayStr} · ${safe(sp.label)} · ${safe(currentYear)}</div>
     <h1 class="z-h1">Hello, ${safe(firstName)}.<br>You’re ${yearPct}% through</h1>
@@ -4541,8 +4571,8 @@ function renderLogbookV2(){
       <h1 class="z-h2" style="text-align:left">${totalCount} entries <span class="z-script" style="font-size:1.15em">this year</span></h1>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button class="btn" onclick="showPrintStylePicker()">\u2398 Print Logbook Report</button>
-      <button class="btn" onclick="exportCpdDiary()">\u2398 Print CPD Diary</button>
+      <button class="btn action" onclick="showPrintStylePicker()">\u2398 Print Logbook Report</button>
+      <button class="btn action" onclick="exportCpdDiary()">\u2398 Print CPD Diary</button>
       <button class="btn small" onclick="exportLogbook()">\u21E9 Export Excel (.xlsx)</button>
       <button class="btn primary" onclick="openLogbookForm('${filterKey==='all'?'clinics':filterKey}')">+ New entry</button>
     </div>
