@@ -453,11 +453,13 @@ a{color:var(--primary)}
 .brand-mark .bm-arc{stroke:var(--text)!important;stroke-width:8}
 .brand-mark .bm-dot{fill:var(--primary)!important;stroke:none!important;r:9.5px}
 .brand-main{font-family:var(--z-serif);font-weight:400;font-size:40px;line-height:1;letter-spacing:-.025em;text-transform:none;color:var(--text);align-items:baseline}
-.brand-main span{font-family:var(--z-script);font-weight:600;font-size:58px;line-height:.6;color:var(--primary);margin-left:3px}
+.brand-main{overflow:visible}
+.brand-main span{font-family:var(--z-script);font-weight:600;font-size:58px;line-height:.6;color:var(--primary);margin-left:3px;display:inline-block;padding:.1em .15em 0 0;margin-right:-.15em;overflow:visible}
 .brand-sub{font-size:10px;letter-spacing:.14em;color:var(--dim);margin-top:8px}
 .gate-title > span > span{font-family:var(--z-script);font-size:1.4em;font-weight:600;color:var(--primary)!important}
 #o1-splash .o1-word{font-family:var(--z-serif)!important;font-weight:400!important;text-transform:none!important;letter-spacing:-.025em!important;color:var(--text)!important;font-size:46px!important}
-#o1-splash .o1-word b{font-family:var(--z-script);font-weight:600!important;font-size:1.45em;color:var(--primary)!important}
+#o1-splash .o1-word{overflow:visible!important;padding:.2em .25em 0}
+#o1-splash .o1-word b{font-family:var(--z-script);font-weight:600!important;font-size:1.45em;color:var(--primary)!important;display:inline-block;line-height:1;padding:.12em .18em 0 .04em;margin:-.12em -.18em 0 0;overflow:visible}
 #o1-splash .o1-mark{color:var(--text)!important}
 #o1-splash circle{fill:var(--primary)!important}
 .metric{border:0!important;padding:4px 0!important;min-width:0!important;width:auto!important}
@@ -650,6 +652,13 @@ body.focus #gate,body.focus #auth-gate{background:rgba(15,26,20,.94)}
 .arcp-step-when{font-size:13px;opacity:.85;margin-top:auto}
 .arcp-step-when.late{color:#F2B8A6;opacity:1;font-weight:600}
 .arcp-step.done .arcp-step-when.late{color:inherit}
+.arcp-step.lock .arcp-step-btn{background:#7A2E1C;color:#FBEDE7}
+.arcp-step.lock.done .arcp-step-btn{background:#3A1A12;color:#F2D4C8}
+.arcp-step.lock .arcp-tick{background:rgba(255,255,255,.2);color:#fff}
+.arcp-steps{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))!important}
+.arcp-arcpdate{display:flex;align-items:center;gap:10px}
+.arcp-arcpdate span{font-family:var(--z-script);font-size:24px;color:#C9EBD2}
+.arcp-arcpdate .input{background:#fff!important;color:#262424!important;border:0;padding:8px 12px;width:auto}
 .arcp-step-date{background:#fff!important;color:#262424!important;padding:8px 10px!important;font-size:14px}
 .arcp-mat-note{margin-top:18px;font-size:13px;color:#C9EBD2}
 .arcp-sec-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--text)}
@@ -1951,7 +1960,8 @@ const ARCP_STEPS=[
   {id:'mcr',     title:'Chase MCRs',                weeks:6},
   {id:'es',      title:'ES meeting & report',       weeks:4},
   {id:'uploads', title:'Form R + uploads complete', weeks:2},
-  {id:'panel',   title:'ARCP panel',                weeks:0}
+  {id:'lock',    title:'Portfolio locked for review', fixed:true},
+  {id:'panel',   title:'ARCP panel',                fixed:true}
 ];
 let arcpEditDates=false, arcpFirthOpen=false;
 function arcpData(){
@@ -1964,7 +1974,8 @@ function arcpPanelDate(){ const d=new Date(state.arcpDates?.[currentYear]||ARCP_
 function arcpIso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function arcpToday(){ return arcpIso(new Date()); }
 function arcpFmt(iso,opts){ if(!iso) return ''; return new Date(iso).toLocaleDateString('en-GB',opts||{day:'numeric',month:'short'}); }
-function arcpStepDate(s){ const y=arcpData(); if(s.id==='panel') return arcpIso(arcpPanelDate()); const o=y.steps[s.id]?.date; if(o) return o; const d=arcpPanelDate(); d.setDate(d.getDate()-s.weeks*7); return arcpIso(d); }
+function arcpLockDate(){ const d=arcpPanelDate(); d.setDate(d.getDate()-14); return d; }
+function arcpStepDate(s){ if(s.id==='panel') return arcpIso(arcpPanelDate()); if(s.id==='lock') return arcpIso(arcpLockDate()); const d=arcpLockDate(); d.setDate(d.getDate()-s.weeks*7); return arcpIso(d); }
 function arcpAllDocs(){ return [...ARCP_DOCS, ...arcpData().custom.map(c=>({...c, custom:true}))]; }
 function arcpDocState(id){ return arcpData().docs[id]||{status:'todo'}; }
 function arcpMarkReady(id){ const y=arcpData(); const cur=y.docs[id]||{}; y.docs[id]={...cur, readyAt:arcpToday(), status: cur.status==='up'?'up':'ready'}; saveState(); }
@@ -2003,8 +2014,8 @@ function renderArcp(){
   const days=Math.round((panel-today)/86400000);
   const docs=arcpAllDocs(); const upCount=docs.filter(d=>arcpDocState(d.id).status==='up').length;
   const ev=arcpEvidence(); const evMet=ev.reduce((a,s)=>a+s.met,0), evTot=ev.reduce((a,s)=>a+s.items.length,0);
-  const steps=ARCP_STEPS.map(s=>({...s, date:arcpStepDate(s), done:!!y.steps[s.id]?.done}));
-  const nextStep=steps.find(s=>!s.done && s.id!=='panel') || steps[steps.length-1];
+  const steps=ARCP_STEPS.map(s=>{ const date=arcpStepDate(s); const done=s.fixed? new Date(date)<=today : !!y.steps[s.id]?.done; return {...s, date, done}; });
+  const nextStep=steps.find(s=>!s.done) || steps[steps.length-1];
   const panelLong=panel.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const sub = days>1?`in ${days} days`:days===1?'tomorrow':days===0?'today':'panel done';
 
@@ -2023,20 +2034,23 @@ function renderArcp(){
     const isNext=s===nextStep && !s.done;
     const past=new Date(s.date)<today;
     const cls=s.done?'done':isNext?'next':'todo';
-    const label=s.id==='panel'?'PANEL':`${s.weeks} WEEKS OUT`;
-    const when=s.id==='panel'?arcpFmt(s.date,{weekday:'short',day:'numeric',month:'short',year:'numeric'}):(s.done?'Done':(past?'Overdue · ':'By ')+arcpFmt(s.date,{weekday:'short',day:'numeric',month:'short'}));
-    const dateEdit=arcpEditDates && s.id!=='panel'?`<input class="input arcp-step-date" type="date" value="${s.date}" onclick="event.stopPropagation()" onchange="arcpSetStepDate('${s.id}',this.value)" aria-label="${safe(s.title)} date">`:'';
-    return `<li class="arcp-step ${cls}"><button class="arcp-step-btn" ${s.id==='panel'?'disabled':''} onclick="arcpToggleStep('${s.id}')" aria-pressed="${s.done}">
-      <span class="arcp-step-top"><span>${label}</span><span class="arcp-tick">${s.done?'✓':isNext?'•':''}</span></span>
+    const label=s.id==='panel'?'ARCP PANEL':s.id==='lock'?'PORTFOLIO LOCK':arcpFmt(s.date,{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
+    const dDays=Math.round((new Date(s.date)-today)/86400000);
+    const when=s.id==='panel'?arcpFmt(s.date,{weekday:'short',day:'numeric',month:'short',year:'numeric'})
+      : s.id==='lock' ? (s.done?'Locked · no new evidence':`${arcpFmt(s.date,{weekday:'short',day:'numeric',month:'short'})} · ${dDays===1?'1 day':dDays+' days'} left to add evidence`)
+      : (s.done?'Done':past?'Overdue':dDays===0?'Today':dDays===1?'Tomorrow':`In ${dDays} days`);
+    const dateEdit='';
+    return `<li class="arcp-step ${cls} ${s.id==='lock'?'lock':''}"><button class="arcp-step-btn" ${s.fixed?'disabled':''} onclick="arcpToggleStep('${s.id}')" aria-pressed="${s.done}">
+      <span class="arcp-step-top"><span>${label}</span><span class="arcp-tick">${s.id==='lock'?'<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.5" width="8" height="5.5" rx="1.2" fill="currentColor"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>':s.done?'✓':isNext?'•':''}</span></span>
       <span class="arcp-step-title">${safe(s.title)}</span>
-      <span class="arcp-step-when ${past&&!s.done&&s.id!=='panel'?'late':''}">${safe(when)}</span>
+      <span class="arcp-step-when ${past&&!s.done&&!s.fixed?'late':''}">${safe(when)}</span>
     </button>${dateEdit}</li>`;
   }).join('');
   const countdown=`<section class="z-mat" style="margin-bottom:0">
     <div class="arcp-mat-head"><h2 class="z-mat-h" style="margin:0">Countdown to panel</h2>
-      <button class="arcp-link" onclick="arcpEditDates=!arcpEditDates;render()">${arcpEditDates?'Done editing dates':'Edit dates'}</button></div>
+      <label class="arcp-arcpdate"><span>ARCP date</span><input class="input" type="date" value="${arcpIso(panel)}" onchange="if(this.value){state.arcpDates[currentYear]=this.value;saveState();render();}"></label></div>
     <ol class="arcp-steps">${stepCards}</ol>
-    <div class="arcp-mat-note">Dates work back from your panel date in Admin & Docs. Tap a step to tick it off.</div>
+    <div class="arcp-mat-note">Every date works back from your ARCP date: the portfolio locks 2 weeks before the panel, and each step before that is spaced from the lock. Tap a step to tick it off.</div>
   </section>`;
 
   const docRows=docs.map(d=>{
