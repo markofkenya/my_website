@@ -656,9 +656,10 @@ body.focus #boot-loader path{stroke:var(--text)}
 .arcp-step-when{font-size:13px;opacity:.85;margin-top:auto}
 .arcp-step-when.late{color:#F2B8A6;opacity:1;font-weight:600}
 .arcp-step.done .arcp-step-when.late{color:inherit}
-.arcp-step.lock .arcp-step-btn{background:#7A2E1C;color:#FBEDE7}
-.arcp-step.lock.done .arcp-step-btn{background:#3A1A12;color:#F2D4C8}
-.arcp-step.lock .arcp-tick{background:rgba(255,255,255,.2);color:#fff}
+.arcp-step.lock .arcp-step-btn{background:#F6E6DF;color:#7A2E1C}
+.arcp-step.lock .arcp-tick{background:#7A2E1C;color:#fff}
+.arcp-step.lock.done .arcp-step-btn{background:#7A2E1C;color:#FBEDE7}
+.arcp-step.lock.done .arcp-tick{background:rgba(255,255,255,.2);color:#fff}
 .arcp-steps{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))!important}
 .arcp-arcpdate{display:flex;align-items:center;gap:10px}
 .arcp-arcpdate span{font-family:var(--z-script);font-size:24px;color:#C9EBD2}
@@ -1964,7 +1965,7 @@ const ARCP_STEPS=[
   {id:'msf',     title:'Send MSF requests',         weeks:8},
   {id:'mcr',     title:'Chase MCRs',                weeks:6},
   {id:'es',      title:'ES meeting & report',       weeks:4},
-  {id:'uploads', title:'Form R + uploads complete', weeks:2},
+  {id:'uploads', title:'Form R + uploads complete', weeks:1},
   {id:'lock',    title:'Portfolio locked for review', fixed:true},
   {id:'panel',   title:'ARCP panel',                fixed:true}
 ];
@@ -2039,15 +2040,16 @@ function renderArcp(){
     const isNext=s===nextStep && !s.done;
     const past=new Date(s.date)<today;
     const cls=s.done?'done':isNext?'next':'todo';
-    const label=s.id==='panel'?'ARCP PANEL':s.id==='lock'?'PORTFOLIO LOCK':arcpFmt(s.date,{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
+    const wOut=Math.round((panel-new Date(s.date))/(7*86400000));
+    const label=s.id==='panel'?'ARCP PANEL':s.id==='lock'?'PORTFOLIO LOCK':`${wOut} ${wOut===1?'WEEK':'WEEKS'} OUT`;
     const dDays=Math.round((new Date(s.date)-today)/86400000);
     const when=s.id==='panel'?arcpFmt(s.date,{weekday:'short',day:'numeric',month:'short',year:'numeric'})
       : s.id==='lock' ? (s.done?'Locked · no new evidence':`${arcpFmt(s.date,{weekday:'short',day:'numeric',month:'short'})} · ${dDays===1?'1 day':dDays+' days'} left to add evidence`)
-      : (s.done?'Done':past?'Overdue':dDays===0?'Today':dDays===1?'Tomorrow':`In ${dDays} days`);
+      : (s.done?'Done':(past?'Overdue · ':'By ')+arcpFmt(s.date,{weekday:'short',day:'numeric',month:'short'}));
     const dateEdit='';
     return `<li class="arcp-step ${cls} ${s.id==='lock'?'lock':''}"><button class="arcp-step-btn" ${s.fixed?'disabled':''} onclick="arcpToggleStep('${s.id}')" aria-pressed="${s.done}">
-      <span class="arcp-step-top"><span>${label}</span><span class="arcp-tick">${s.id==='lock'?'<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.5" width="8" height="5.5" rx="1.2" fill="currentColor"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>':s.done?'✓':isNext?'•':''}</span></span>
-      <span class="arcp-step-title">${safe(s.title)}</span>
+      <span class="arcp-step-top"><span>${label}</span><span class="arcp-tick">${s.id==='lock'?(s.done?'<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.5" width="8" height="5.5" rx="1.2" fill="currentColor"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" stroke="currentColor" stroke-width="1.4" fill="none"/></svg>':'<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.5" width="8" height="5.5" rx="1.2" fill="currentColor"/><path d="M4 5.5V3.6a2 2 0 0 1 3.9-.6" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>'):s.done?'✓':isNext?'•':''}</span></span>
+      <span class="arcp-step-title">${safe(s.id==='lock'&&!s.done?'Portfolio locks for review':s.title)}</span>
       <span class="arcp-step-when ${past&&!s.done&&!s.fixed?'late':''}">${safe(when)}</span>
     </button>${dateEdit}</li>`;
   }).join('');
@@ -2055,14 +2057,14 @@ function renderArcp(){
     <div class="arcp-mat-head"><h2 class="z-mat-h" style="margin:0">Countdown to panel</h2>
       <label class="arcp-arcpdate"><span>ARCP date</span><input class="input" type="date" value="${arcpIso(panel)}" onchange="if(this.value){state.arcpDates[currentYear]=this.value;saveState();render();}"></label></div>
     <ol class="arcp-steps">${stepCards}</ol>
-    <div class="arcp-mat-note">Every date works back from your ARCP date: the portfolio locks 2 weeks before the panel, and each step before that is spaced from the lock. Tap a step to tick it off.</div>
+    <div class="arcp-mat-note">Every date works back from your ARCP date: the portfolio locks 2 weeks before the panel, and each step before that works back from the lock. Tap a step to tick it off.</div>
   </section>`;
 
   const docRows=docs.map(d=>{
     const st=arcpDocState(d.id);
     const pill=st.status==='up'?['Uploaded','up']:st.status==='ready'?['Ready to upload','ready']:['Not started','todo'];
     const meta=st.status==='up'?`Uploaded ${arcpFmt(st.upAt)}`:st.status==='ready'?`Generated ${arcpFmt(st.readyAt)}`:'Annual';
-    const gen=d.gen?`<button class="btn action" onclick="arcpGenerate('${d.id}')">${d.gen==='firth'?(arcpFirthOpen?'Close':'Build'):'Generate'}</button>`:'';
+    const gen=d.gen?`<button class="btn action" onclick="arcpGenerate('${d.id}')">Generate</button>`:'';
     const rm=d.custom?`<button class="btn small" onclick="arcpRemoveDoc('${d.id}')" aria-label="Remove ${safe(d.name)}">×</button>`:'';
     return `<div class="arcp-doc">
       <span class="arcp-pill ${pill[1]}">${pill[0]}</span>
@@ -2088,7 +2090,7 @@ function renderArcp(){
   const lastSec=`<section class="z-sec arcp-last" style="padding-top:88px">
     <div class="card"><h3 class="arcp-h3">For my ES meeting</h3>
       <label class="hint" for="arcp-notes">Points to raise · gaps to explain</label>
-      <textarea id="arcp-notes" class="input" rows="6" oninput="arcpSetNotes(this.value)" placeholder="e.g. Temporary line competency — DOPS booked for next HD list">${safe(y.notes)}</textarea></div>
+      <textarea id="arcp-notes" class="input" rows="6" oninput="arcpSetNotes(this.value)">${safe(y.notes)}</textarea></div>
     <div class="card arcp-outcome"><h3 class="arcp-h3">After the panel</h3>
       <p>Record the outcome here or on the Renal / GIM tabs. Outcomes 1, 2, 6 and 8 lock ${safe(currentYear)}.</p>
       ${renderOutcomeSelector()}</div>
