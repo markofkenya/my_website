@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Outcome1 — Portfolio Tracker</title>
 <meta name="theme-color" content="#F7F4F2" />
+<script>try{if(localStorage.getItem('arcp_v2_dark')==='1'){document.documentElement.classList.add('dark-boot');document.querySelector('meta[name="theme-color"]').setAttribute('content','#0F1A14');}}catch(e){}</script>
+<style>html.dark-boot,html.dark-boot body{background:#0F1A14}</style>
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <meta name="apple-mobile-web-app-title" content="Outcome1" />
@@ -555,6 +557,8 @@ body.focus #gate,body.focus #auth-gate{background:rgba(15,26,20,.94)}
 .gate-card{border-radius:28px;border-color:var(--card-line);box-shadow:0 40px 90px -40px rgba(27,44,34,.5)}
 .gate-title{font-family:var(--z-serif);font-weight:400}
 #o1-splash{background:var(--bg)!important}
+body.focus #boot-loader{background:var(--bg)!important;color:var(--text)!important}
+body.focus #boot-loader path{stroke:var(--text)}
 #o1-splash .o1-sub{font-family:var(--font-mono);color:var(--dim)}
 .beta-banner{max-width:1176px;margin:10px auto 0;width:calc(100% - 32px);border-radius:999px;border:1px solid color-mix(in srgb,var(--amber) 35%,transparent);background:var(--amber-soft);font-weight:600;padding:10px 20px}
 
@@ -715,6 +719,7 @@ body.focus #gate,body.focus #auth-gate{background:rgba(15,26,20,.94)}
 </style>
 </head>
 <body>
+<script>try{if(localStorage.getItem('arcp_v2_dark')==='1')document.body.classList.add('focus');}catch(e){}</script>
 <div id="o1-splash">
   <svg class="o1-mark" viewBox="0 0 78 78" fill="none" aria-hidden="true"><path class="o1-arc" d="M 14 56 A 28 28 0 1 1 64 38" stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round"/><circle class="o1-arc" cx="64" cy="38" r="7" fill="#2F7A50"/></svg>
   <div class="o1-word">Outcome<b>1</b></div>
@@ -1106,7 +1111,7 @@ function setOutcome(y, v){ state.years[y] = state.years[y] || {}; state.years[y]
 function setTheme(){
   /* Direction B Dark: lock --primary to design token; do not override at runtime.
      Per-specialty colour application via state.profile.theme is intentionally retired. */
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', document.body.classList.contains('focus')?'#0F1A14':'#F7F4F2');
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', document.body.classList.contains('focus')?'#0F1A14':'#F7F4F2'); document.documentElement.classList.toggle('dark-boot', document.body.classList.contains('focus'));
 }
 function safe(s){ return String(s??"").replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function fmtDate(d){ if(!d) return "—"; const p=String(d).split('-'); return p.length===3 ? `${p[2]}/${p[1]}/${p[0]}` : d; }
