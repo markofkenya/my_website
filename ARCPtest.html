@@ -2064,7 +2064,7 @@ function renderArcp(){
     <div class="arcp-mat-head"><h2 class="z-mat-h" style="margin:0">Countdown to panel</h2>
       <label class="arcp-arcpdate"><span>ARCP date</span><input class="input" type="date" value="${arcpIso(panel)}" onchange="if(this.value){state.arcpDates[currentYear]=this.value;saveState();render();}"></label></div>
     <ol class="arcp-steps">${stepCards}</ol>
-    <div class="arcp-mat-note">Every date works back from your ARCP date: the portfolio locks 2 weeks before the panel, and each step before that works back from the lock. Tap a step to tick it off.</div>
+    <div class="arcp-mat-note">Your JRCPTB portfolio locks 2 weeks before the ARCP panel. Tap a step to tick it off.</div>
   </section>`;
 
   const docRows=docs.map(d=>{
