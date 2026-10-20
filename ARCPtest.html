@@ -13,7 +13,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20180%20180%22%3E%3Crect%20width%3D%22180%22%20height%3D%22180%22%20rx%3D%2240%22%20fill%3D%22%232F6B4C%22/%3E%3Cg%20stroke%3D%22%23fff%22%20stroke-opacity%3D%22.13%22%20stroke-width%3D%221.5%22%3E%3Cpath%20d%3D%22M18%200V180M0%2018H180%22/%3E%3Cpath%20d%3D%22M36%200V180M0%2036H180%22/%3E%3Cpath%20d%3D%22M54%200V180M0%2054H180%22/%3E%3Cpath%20d%3D%22M72%200V180M0%2072H180%22/%3E%3Cpath%20d%3D%22M90%200V180M0%2090H180%22/%3E%3Cpath%20d%3D%22M108%200V180M0%20108H180%22/%3E%3Cpath%20d%3D%22M126%200V180M0%20126H180%22/%3E%3Cpath%20d%3D%22M144%200V180M0%20144H180%22/%3E%3Cpath%20d%3D%22M162%200V180M0%20162H180%22/%3E%3C/g%3E%3Cg%20transform%3D%22translate%2836%2036%29%20scale%281.385%29%22%3E%3Cpath%20d%3D%22M14%2056A28%2028%200%201%201%2064%2038%22%20stroke%3D%22%23fff%22%20stroke-width%3D%229%22%20fill%3D%22none%22%20stroke-linecap%3D%22round%22/%3E%3Ccircle%20cx%3D%2264%22%20cy%3D%2238%22%20r%3D%229.5%22%20fill%3D%22%23C9EBD2%22/%3E%3C/g%3E%3C/svg%3E" />
 <link rel="icon" type="image/png" sizes="192x192" href="outcome2.png" />
 <link rel="icon" type="image/png" sizes="512x512" href="outcome3.png" />
-<link rel="apple-touch-icon" href="outocme1.png"/>
+<link rel="apple-touch-icon" sizes="180x180" href="outcome1.png?v=3" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=DM+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet" />
@@ -452,6 +452,8 @@ a{color:var(--primary)}
 .topbar{background:transparent!important;border-bottom:0!important}
 .top-row{max-width:1240px;margin:0 auto;padding:20px 32px 4px;align-items:center!important;gap:10px 32px}
 .brand{border:0!important;padding:0!important;min-width:0!important;margin-right:auto;gap:14px}
+.brand{cursor:pointer;border-radius:12px}
+.brand:focus-visible{outline:3px solid var(--primary);outline-offset:6px}
 .brand-mark svg{width:54px;height:54px}
 .brand-mark .bm-arc{stroke:var(--text)!important;stroke-width:8}
 .brand-mark .bm-dot{fill:var(--primary)!important;stroke:none!important;r:9.5px}
@@ -808,7 +810,7 @@ body.focus #boot-loader path{stroke:var(--text)}
 <div id="app">
   <header class="topbar">
     <div class="top-row">
-      <div class="brand">
+      <div class="brand" role="link" tabindex="0" aria-label="Outcome1, go to Roadmap" title="Roadmap" onclick="setTab('roadmap');window.scrollTo({top:0,behavior:'smooth'})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
         <span class="brand-mark"><svg width="34" height="34" viewBox="0 0 78 78" aria-hidden="true"><path class="bm-arc" d="M 14 56 A 28 28 0 1 1 64 38" stroke="#2F6B4C" stroke-width="6" fill="none" stroke-linecap="round"/><circle class="bm-dot" cx="64" cy="38" r="7" fill="#2F7A50"/></svg></span>
         <div>
           <div class="brand-main">Outcome<span>1</span></div>
