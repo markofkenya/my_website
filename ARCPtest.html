@@ -1037,8 +1037,43 @@ const DEANERY_COLORS = {"East of England":"#6b8cff","South West — Peninsula":"
 
 function blankState(){ return { profile:null, years:{}, req:{}, logbook:{}, hospitals:[], hiddenHospitals:[], deletedHospitals:[], als:"", arcpDates:{...ARCP_DEFAULTS} }; }
 let state = loadState();
+// ── Per-field sync timestamps ─────────────────────────────────────────────
+// Logbook entries already merge per entry. Everything else (Renal/GIM values, DOPS ticks,
+// outcomes, ARCP prep, dates) used to be "whole state, newest device wins", so a stale device
+// could overwrite ticks made elsewhere. Each req key and each top-level field now carries its
+// own change time, and devices merge key by key: the most recent change to each item wins.
+const SYNC_SKIP=new Set(['logbook','tombstones','req','reqTs','fieldTs']);
+let __syncSnap=null;
+function syncSnapshot(){ const f={}; Object.keys(state||{}).forEach(k=>{ if(!SYNC_SKIP.has(k)) f[k]=JSON.stringify(state[k]); }); __syncSnap={req:JSON.parse(JSON.stringify(state?.req||{})), fields:f}; }
+function stampChanges(){
+  if(!state) return; if(!__syncSnap){ syncSnapshot(); return; }
+  const now=Date.now(); state.reqTs=state.reqTs||{}; state.fieldTs=state.fieldTs||{};
+  const req=state.req||{}, old=__syncSnap.req;
+  new Set([...Object.keys(req),...Object.keys(old)]).forEach(k=>{ if(k.startsWith('cum.')) return; if(JSON.stringify(req[k])!==JSON.stringify(old[k])) state.reqTs[k]=now; });
+  new Set([...Object.keys(state),...Object.keys(__syncSnap.fields)]).forEach(k=>{ if(SYNC_SKIP.has(k)) return; if(JSON.stringify(state[k])!==__syncSnap.fields[k]) state.fieldTs[k]=now; });
+  // Firebase drops null, empty objects and empty arrays; compare like-for-like so a device never re-pushes forever
+function fbNorm(v){ if(v===null||v===undefined) return undefined; if(Array.isArray(v)){ const a=v.map(fbNorm).filter(x=>x!==undefined); return a.length?a:undefined; } if(typeof v==='object'){ const o={}; Object.keys(v).forEach(k=>{ const n=fbNorm(v[k]); if(n!==undefined) o[k]=n; }); return Object.keys(o).length?o:undefined; } return v; }
+syncSnapshot();
+}
+function mergeByTs(local, remote, lts, rts, preferRemote, skip){
+  const out={}, ts={};
+  new Set([...Object.keys(local||{}),...Object.keys(remote||{})]).forEach(k=>{
+    if(skip && skip(k)) return;
+    const lt=Number((lts||{})[k])||0, rt=Number((rts||{})[k])||0;
+    const useRemote = rt>lt ? true : lt>rt ? false : preferRemote;
+    const v = useRemote ? (remote||{})[k] : (local||{})[k];
+    if(v!==undefined) out[k]=v;
+    const t=Math.max(lt,rt); if(t) ts[k]=t;
+  });
+  return {out, ts};
+}
+function sortedJSON(o){ if(o===null||typeof o!=='object') return JSON.stringify(o); if(Array.isArray(o)) return '['+o.map(sortedJSON).join(',')+']'; return '{'+Object.keys(o).sort().map(k=>JSON.stringify(k)+':'+sortedJSON(o[k])).join(',')+'}'; }
+// Firebase drops null, empty objects and empty arrays; compare like-for-like so a device never re-pushes forever
+function fbNorm(v){ if(v===null||v===undefined) return undefined; if(Array.isArray(v)){ const a=v.map(fbNorm).filter(x=>x!==undefined); return a.length?a:undefined; } if(typeof v==='object'){ const o={}; Object.keys(v).forEach(k=>{ const n=fbNorm(v[k]); if(n!==undefined) o[k]=n; }); return Object.keys(o).length?o:undefined; } return v; }
+syncSnapshot();
 function loadState(){ try { return Object.assign(blankState(), JSON.parse(localStorage.getItem(STATE_KEY)||"{}")); } catch { return blankState(); } }
 function saveState(push=true){
+  try{ stampChanges(); }catch(e){ console.warn('[Outcome1] stamp failed', e); }
   localStorage.setItem(STATE_KEY, JSON.stringify(state));
   // Bump the local "remote sync" timestamp so the Firebase round-trip from this save doesn't
   // trigger a stale-feeling re-render (the round-trip will have updatedAt <= this value).
@@ -1048,7 +1083,7 @@ function fbSave(){
   if(suppressRemote) return;
   if(!remoteReady){ pendingPush = true; return; }  // never clobber the cloud before first sync
   if(!window.ARCP_FB?.online || !window.ARCP_FB.userRoot) return;
-  const payload={ state: encodeStateForFirebase(state), updatedAt:Date.now(), version:"2.2-modular-logbook" };
+  const payload={ state: JSON.parse(JSON.stringify(encodeStateForFirebase(state))), updatedAt:Date.now(), version:"2.3-keyed-sync" };
   window.ARCP_FB.update(window.ARCP_FB.userRoot, payload).catch(err=>{
     console.error('[Outcome1] Firebase save failed:', err?.message || err);
     // Surface to UI: turn the live indicator amber and add a tooltip
@@ -1062,8 +1097,8 @@ function fbSave(){
 const FB_KEY_DOT_TOKEN = '__';
 function encodeReqKeys(reqObj){ if(!reqObj || typeof reqObj!=='object') return reqObj; const out={}; for(const k of Object.keys(reqObj)){ out[k.replace(/\./g, FB_KEY_DOT_TOKEN)] = reqObj[k]; } return out; }
 function decodeReqKeys(reqObj){ if(!reqObj || typeof reqObj!=='object') return reqObj; const out={}; for(const k of Object.keys(reqObj)){ out[k.split(FB_KEY_DOT_TOKEN).join('.')] = reqObj[k]; } return out; }
-function encodeStateForFirebase(s){ if(!s) return s; return { ...s, req: encodeReqKeys(s.req||{}) }; }
-function decodeStateFromFirebase(s){ if(!s) return s; return { ...s, req: decodeReqKeys(s.req||{}) }; }
+function encodeStateForFirebase(s){ if(!s) return s; return { ...s, req: encodeReqKeys(s.req||{}), reqTs: encodeReqKeys(s.reqTs||{}) }; }
+function decodeStateFromFirebase(s){ if(!s) return s; return { ...s, req: decodeReqKeys(s.req||{}), reqTs: decodeReqKeys(s.reqTs||{}) }; }
 function getSpecKey(){ return state.profile?.specialty || "renal"; }
 function specCfg(){ const key=getSpecKey(); const t=SPECIALTY_THEMES[key] || {}; return SPECIALTIES[key] || { label:t.label || SPECIALTY_OPTIONS[key] || "Specialty", short:t.short || SPECIALTY_OPTIONS[key] || "Specialty", color:t.color || "#a78bfa", color2:t.color2 || "#7c5fd4", icon:t.icon || "◈", reqs:null, logbook:{clinics:["Specialty clinic","Other"], procedures:["Specialty procedure","Other"], cpd:["Specialty study day","Other"]} }; }
 function specReqs(){
@@ -3456,10 +3491,13 @@ function reconcileRemote(remoteRaw, remoteTs){
   const localTs = JSON.parse(localStorage.getItem('arcp_v2_remote_ts')||'0');
   const tombs   = mergeTombstones(state?.tombstones, remote?.tombstones);
   const logbook = mergeLogbooks(state?.logbook, remote?.logbook, tombs);
-  const base    = (remoteTs>localTs) ? remote : state;   // non-logbook fields: newest wins, as before
+  const preferRemote = remoteTs>localTs;   // tie-break for items neither side has stamped yet
+  const R = mergeByTs(state?.req, remote?.req, state?.reqTs, remote?.reqTs, preferRemote);
+  const F = mergeByTs(state, remote, state?.fieldTs, remote?.fieldTs, preferRemote, k=>SYNC_SKIP.has(k));
   const before  = JSON.stringify(state);
   suppressRemote=true;
-  state = Object.assign(blankState(), base, { logbook, tombstones: tombs });
+  state = Object.assign(blankState(), F.out, { req:R.out, reqTs:R.ts, fieldTs:F.ts, logbook, tombstones: tombs });
+  syncSnapshot();
   localStorage.setItem(STATE_KEY, JSON.stringify(state));
   localStorage.setItem('arcp_v2_remote_ts', String(Math.max(remoteTs||0, localTs)));
   suppressRemote=false;
@@ -3468,7 +3506,11 @@ function reconcileRemote(remoteRaw, remoteTs){
   remoteReady = true;
   // Push back up if local contributed entries the cloud lacks, or a save was queued pre-sync
   const remoteNorm = JSON.stringify(mergeLogbooks(remote?.logbook, remote?.logbook, tombs));
-  if(pendingPush || (firstReconcile && JSON.stringify(logbook)!==remoteNorm)){ pendingPush=false; saveState(); }
+  const noCum = o=>{ const x={}; Object.keys(o||{}).forEach(k=>{ if(!k.startsWith('cum.')) x[k]=o[k]; }); return x; };
+  const fieldsOf = o=>{ const x={}; Object.keys(o||{}).forEach(k=>{ if(!SYNC_SKIP.has(k)) x[k]=o[k]; }); return x; };
+  const reqDiffers = sortedJSON(fbNorm(noCum(state.req))) !== sortedJSON(fbNorm(noCum(remote?.req)));
+  const fieldsDiffer = sortedJSON(fbNorm(fieldsOf(state))) !== sortedJSON(fbNorm(fieldsOf(remote)));
+  if(pendingPush || reqDiffers || fieldsDiffer || (firstReconcile && JSON.stringify(logbook)!==remoteNorm)){ pendingPush=false; saveState(); }
   if(changed) render();
 }
 window.addEventListener('firebase-load', e=>{ if(!e.detail?.state) return; try{ reconcileRemote(e.detail.state, e.detail.updatedAt||0); }catch(err){ console.error('[Outcome1] reconcile failed:', err); } });
@@ -3982,10 +4024,22 @@ function specDopsStats(){
 function gimDopsStats(){
   return {met:GIM_DOPS_PROCEDURES.filter(p=>!!state.req['dops.'+p]).length,total:GIM_DOPS_PROCEDURES.length,label:'GIM DOPS'};
 }
+// Count-based requirements earn partial credit (9/15 SLEs = 0.6); checkboxes stay all-or-nothing;
+// each DOPS counts as one item. The met / total counts shown alongside stay whole numbers.
+function reqFraction(id, r){
+  const st=reqStatus(id,r);
+  if(st==='met') return 1;
+  if(st==='na' || r.type==='checkbox') return 0;
+  const t=Number(r.target)||0; if(t<=0) return 0;
+  return Math.max(0, Math.min(Number(getReqVal(id,r))||0, t)/t);
+}
 function calcReqsWithExtra(reqs, extra){
   const base=calcReqs(reqs);
+  const arr=Object.entries(reqs).filter(([id,r])=>r.deadline==='annual'||yrIndex(r.deadline)<=yrIndex());
+  const frac=arr.reduce((a,[id,r])=>a+reqFraction(id,r),0);
   const met=base.met+(extra?.met||0), total=base.total+(extra?.total||0);
-  return {met,total,open:Math.max(0,total-met),pct:total?Math.round(met/total*100):0,base,extra};
+  const pct=total?Math.round((frac+(extra?.met||0))/total*100):0;
+  return {met,total,open:Math.max(0,total-met),pct,base,extra};
 }
 function renderHeader(){
   const sp=specCfg();
