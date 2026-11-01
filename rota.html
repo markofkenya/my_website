@@ -695,6 +695,10 @@
   .locum-sync{font-size:12px;color:var(--ink-faint);min-height:18px;margin-top:8px}.locum-sync.err{color:var(--warn)}
   .locum-list{display:flex;flex-direction:column;gap:10px;padding-bottom:30px}
   .locum-item{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px}
+  .locum-item.needs{border-color:#d99b23;box-shadow:inset 4px 0 0 #d99b23}
+  .locum-needs{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:10px;padding:9px 11px;border-radius:10px;background:rgba(217,155,35,.12);font-size:12.5px;color:#e3b24f;font-weight:600}
+  .btn.locum-advance{padding:6px 12px;font-size:12.5px;background:#2f9e63;color:#fff;border:none;box-shadow:0 1px 0 #25794d}
+  .btn.locum-advance:hover{background:#37ab6d}
   .locum-item-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
   .locum-item-title{font-weight:700;color:var(--ink)}.locum-item-sub{font-size:12px;color:var(--ink-soft);margin-top:3px}
   .locum-item-pay{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--ink);white-space:nowrap}
@@ -3647,11 +3651,16 @@ function renderLocum(){
   list.innerHTML=locumShifts.slice().sort((a,b)=>a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime)).map(s=>{
     const ref=s.bookingReference?` · Ref ${escapeHtml(s.bookingReference)}`:"";
     const sch=lcSchedule(s,new Date());
+    const needs=locumNeedsUpdate(s,new Date());
+    const needsHtml = !needs ? "" : s.status==="booked"
+      ? `<div class="locum-needs"><span>Shift has finished but is still marked Booked</span><button class="btn locum-advance" type="button" data-action="advance" data-next="worked">Mark worked</button></div>`
+      : `<div class="locum-needs"><span>Worked — timesheet not yet submitted</span><button class="btn locum-advance" type="button" data-action="advance" data-next="timesheet_submitted">Timesheet submitted</button></div>`;
     const over=(s.status!=="paid" && sch.payDate<iso(new Date()))?` · <span class="lc-over">overdue</span>`:"";
     const payInfo = `${sch.slipped?`<span class="lc-slip">Missed ${lcShort(iso(sch.missedCutoff))} cut-off → </span>`:""}${lcMonthName(sch.payroll)} payroll · ${s.status==="paid"?"paid":"pays"} ${escapeHtml(lcShort(sch.payDate))}${over}`;
-    return `<article class="locum-item" data-id="${s.id}"><div class="locum-item-top"><div><div class="locum-item-title">${escapeHtml(s.organisation)}</div><div class="locum-item-sub">${escapeHtml(prettyDate(s.date))} · ${s.startTime}–${s.endTime} · ${LOCUM_ROUTE_LABELS[s.paymentRoute]}${ref}</div><div class="locum-item-sub">${payInfo} · ${locumPayLine(s)}</div></div><div class="locum-item-pay">${locumMoney.format(s.expectedGross)}${locumTaxPct()!=null?`<div class="locum-net">≈ ${locumMoney.format(locumNet(s.expectedGross))} net</div>`:""}</div></div><div class="locum-item-actions"><select class="locum-status" data-action="status" aria-label="Payment status">${window.LocumTracker.STATUSES.filter((st,i,all)=>st===s.status||all[all.indexOf(s.status)+1]===st).map(st=>`<option value="${st}" ${st===s.status?"selected":""}>${LOCUM_STATUS_LABELS[st]}</option>`).join("")}</select><button class="btn ghost" type="button" data-action="calendar">Add to calendar</button><button class="btn ghost" type="button" data-action="edit">Edit</button><button class="btn ghost danger-ghost" type="button" data-action="delete">Delete</button></div></article>`;
+    return `<article class="locum-item ${needs?"needs":""}" data-id="${s.id}"><div class="locum-item-top"><div><div class="locum-item-title">${escapeHtml(s.organisation)}</div><div class="locum-item-sub">${escapeHtml(prettyDate(s.date))} · ${s.startTime}–${s.endTime} · ${LOCUM_ROUTE_LABELS[s.paymentRoute]}${ref}</div><div class="locum-item-sub">${payInfo} · ${locumPayLine(s)}</div></div><div class="locum-item-pay">${locumMoney.format(s.expectedGross)}${locumTaxPct()!=null?`<div class="locum-net">≈ ${locumMoney.format(locumNet(s.expectedGross))} net</div>`:""}</div></div>${needsHtml}<div class="locum-item-actions"><select class="locum-status" data-action="status" aria-label="Payment status">${window.LocumTracker.STATUSES.filter((st,i,all)=>st===s.status||all[all.indexOf(s.status)+1]===st).map(st=>`<option value="${st}" ${st===s.status?"selected":""}>${LOCUM_STATUS_LABELS[st]}</option>`).join("")}</select><button class="btn ghost" type="button" data-action="calendar">Add to calendar</button><button class="btn ghost" type="button" data-action="edit">Edit</button><button class="btn ghost danger-ghost" type="button" data-action="delete">Delete</button></div></article>`;
   }).join("");
   list.querySelectorAll("[data-action=status]").forEach(el=>el.onchange=()=>updateLocumStatus(el.closest("[data-id]").dataset.id,el.value));
+  list.querySelectorAll("[data-action=advance]").forEach(el=>el.onclick=()=>updateLocumStatus(el.closest("[data-id]").dataset.id,el.dataset.next));
   list.querySelectorAll("[data-action=calendar]").forEach(el=>el.onclick=()=>exportLocumIcs(el.closest("[data-id]").dataset.id));
   list.querySelectorAll("[data-action=edit]").forEach(el=>el.onclick=()=>editLocumShift(el.closest("[data-id]").dataset.id));
   list.querySelectorAll("[data-action=delete]").forEach(el=>el.onclick=()=>deleteLocumShift(el.closest("[data-id]").dataset.id));
@@ -3746,11 +3755,20 @@ function lcRenderAlerts(){
     if(s.status!=="paid" && sch.payDate<today) overdue++;
   });
   const parts=[];
+  const stale=locumShifts.filter(s=>s.status==="booked"&&locumShiftEnded(s,now)).length;
+  if(stale) parts.push(`<span class="la-due">${stale} finished shift${stale===1?" is":"s are"} still marked Booked</span>`);
   Object.keys(due).sort().forEach(k=>{ const n=due[k].length; parts.push(`<span class="la-due">${n} shift${n===1?"":"s"} need${n===1?"s":""} a timesheet by ${lcShort(iso(lcCutoff(k)))}, 09:00 for ${lcMonthName(k)} payroll</span>`); });
   if(missed) parts.push(`<span class="la-warn">${missed} shift${missed===1?"":"s"} missed a payroll cut-off and moved to a later month</span>`);
   if(overdue) parts.push(`<span class="la-warn">${overdue} overdue payment${overdue===1?"":"s"}</span>`);
   el.innerHTML = parts.length ? parts.join(" · ") : "No timesheet deadlines this week and no overdue payments.";
 }
+function locumShiftEnded(s,now){
+  if(!s||!s.date) return false;
+  const end=new Date(s.date+"T"+(s.endTime||"23:59")+":00");
+  if(String(s.endTime||"")<=String(s.startTime||"")) end.setDate(end.getDate()+1);   // finishes next day
+  return (now||new Date())>=end;
+}
+function locumNeedsUpdate(s,now){ return (s.status==="booked"||s.status==="worked") && locumShiftEnded(s,now); }
 const LOCUM_WEEKLY_CAP=20;
 function locumHoursWorked(s){
   const p=(t)=>{ const [h,m]=String(t||"0:0").split(":").map(Number); return h*60+(m||0); };
@@ -3759,9 +3777,10 @@ function locumHoursWorked(s){
 }
 function locumWeekMonday(ds){ const d=new Date(ds+"T00:00:00"); const back=(d.getDay()+6)%7; d.setDate(d.getDate()-back); return leaveISO(d); }
 function locumVisaReport(){
-  if(!locumShifts.length){ setLocumSync("No locum shifts to report yet.",true); return; }
+  const visaShifts=locumShifts.filter(s=>s.paymentRoute==="agency_paye");   // NHS staff bank hours are excluded
+  if(!visaShifts.length){ setLocumSync("No agency shifts to report yet — NHS bank shifts are not included in this report.",true); return; }
   const weeks={};
-  locumShifts.forEach(s=>{ const wk=locumWeekMonday(s.date); (weeks[wk]=weeks[wk]||[]).push(s); });
+  visaShifts.forEach(s=>{ const wk=locumWeekMonday(s.date); (weeks[wk]=weeks[wk]||[]).push(s); });
   const weekKeys=Object.keys(weeks).sort();
   const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   const shortDate=ds=>{ const d=new Date(ds+"T00:00:00"); return `${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)} ${d.getFullYear()}`; };
@@ -3808,7 +3827,7 @@ function locumVisaReport(){
     <div class="summary">
       <div class="cell"><div class="k">Total hours worked</div><div class="v">${grandHours.toFixed(2)}</div></div>
       <div class="cell"><div class="k">Weeks recorded</div><div class="v">${weekKeys.length}</div></div>
-      <div class="cell"><div class="k">Locum shifts</div><div class="v">${locumShifts.length}</div></div>
+      <div class="cell"><div class="k">Locum shifts</div><div class="v">${visaShifts.length}</div></div>
       <div class="cell"><div class="k">Weeks over 20h</div><div class="v ${over?"warn":"good"}">${over}</div></div>
     </div>
     <div class="meta">
