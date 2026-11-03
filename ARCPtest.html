@@ -724,6 +724,41 @@ body.focus #boot-loader path{stroke:var(--text)}
   .arcp-h2{font-size:34px}
 }
 
+/* ── Teaching feedback modal ── */
+#fb-modal{position:fixed;inset:0;z-index:1500;background:rgba(27,26,25,.45);display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:40px 16px}
+.fb-sheet{width:min(760px,100%);background:var(--bg);border-radius:28px;padding:28px;box-shadow:0 40px 90px -30px rgba(0,0,0,.5)}
+.fb-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:8px}
+.fb-title{font-family:var(--z-serif);font-weight:400;font-size:36px;line-height:1.1;letter-spacing:-.02em;margin:8px 0 4px;color:var(--text)}
+.fb-head .dock-btn{width:44px;height:44px;font-size:22px;flex:none}
+.fb-sec{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+.fb-sec-title{display:flex;align-items:center;gap:10px;font-family:var(--z-serif);font-size:24px;color:var(--text);margin-bottom:14px}
+.fb-sec-title span{width:28px;height:28px;border-radius:50%;display:inline-grid;place-items:center;background:var(--mat);color:#fff;font:600 13px var(--font)}
+.fb-sec-title em{font:400 12px var(--font-mono);font-style:normal;color:var(--dim)}
+.fb-count{margin-left:auto;font-family:var(--z-serif);font-weight:400;font-size:32px;color:var(--primary)}
+.fb-share{display:grid;grid-template-columns:168px minmax(0,1fr);gap:20px;align-items:start}
+.fb-qr{width:168px;height:168px;background:#fff;border-radius:16px;padding:10px;border:1px solid var(--card-line)}
+.fb-qr svg{width:100%;height:100%;display:block}
+.fb-share-side .input{font-size:13px}
+.fb-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.fb-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 6px 6px 12px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);font:400 13px var(--font-mono);color:var(--text)}
+.fb-chip button{width:24px;height:24px;border-radius:50%;border:0;background:var(--bg4);color:var(--text);cursor:pointer;font-size:14px;line-height:1}
+.fb-warn{margin-top:12px;padding:12px 16px;border-radius:14px;background:var(--amber-soft);color:var(--text);font-size:14px;line-height:1.5}
+.fb-empty{padding:16px;border:1px dashed var(--line-strong);border-radius:14px;color:var(--dim);font-size:14px;text-align:center}
+.fb-resp{background:var(--bg2);border:1px solid var(--card-line);border-radius:16px;padding:16px;margin-bottom:10px}
+.fb-resp-head{font:500 10px var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.fb-qa+.fb-qa{margin-top:10px}
+.fb-q{font:500 12px var(--font);color:var(--dim)}
+.fb-a{font-size:15px;color:var(--text);white-space:pre-wrap}
+#fb-qr-full{position:fixed;inset:0;z-index:1600;background:#F7F4F2;display:flex;align-items:center;justify-content:center;padding:24px}
+.fb-full-inner{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;color:#262424}
+.fb-full-eyebrow{font:500 12px var(--font-mono);letter-spacing:.16em;text-transform:uppercase;color:#6E6762}
+.fb-full-title{font-family:var(--z-serif);font-size:clamp(28px,5vw,48px);line-height:1.1;max-width:900px}
+.fb-qr-big{width:min(70vh,80vw);height:min(70vh,80vw);background:#fff;padding:16px;border-radius:24px}
+.fb-qr-big svg{width:100%;height:100%;display:block}
+.fb-full-hint{font-family:var(--z-script);font-size:30px;color:#2F7A50}
+#fb-qr-full .btn{color:#262424;border-color:#D2CAC0}
+@media (max-width:640px){.fb-sheet{padding:20px;border-radius:22px}.fb-share{grid-template-columns:1fr}.fb-qr{margin:0 auto}.fb-title{font-size:28px}#fb-modal{padding:12px}}
+
 @media print{#app .tabs,.dock-btn{display:none!important}}
 @media (prefers-reduced-motion:reduce){.z-card,.dock-btn{transition:none}}
 </style>
@@ -2041,7 +2076,8 @@ function arcpAddDoc(){ const n=prompt('Document name'); if(!n||!n.trim()) return
 function arcpRemoveDoc(id){ const y=arcpData(); if(!confirm('Remove this document from the list?')) return; y.custom=y.custom.filter(c=>c.id!==id); delete y.docs[id]; saveState(); render(); }
 function arcpToggleStep(id){ const y=arcpData(); const cur=y.steps[id]||{}; y.steps[id]={...cur, done:!cur.done}; saveState(); render(); }
 function arcpSetStepDate(id,v){ const y=arcpData(); const cur=y.steps[id]||{}; y.steps[id]={...cur, date:v||null}; saveState(); render(); }
-function arcpSetNotes(v){ clearTimeout(window.__arcpNotesT); window.__arcpNotesT=setTimeout(()=>{ arcpData().notes=v; saveState(); },400); }
+function arcpSetNotes(v){ arcpData().notes=v; localStorage.setItem(STATE_KEY, JSON.stringify(state)); clearTimeout(window.__arcpNotesT); window.__arcpNotesT=setTimeout(()=>saveState(),1200); }
+function arcpFlushNotes(v){ clearTimeout(window.__arcpNotesT); arcpData().notes=v; saveState(); const s=document.getElementById('arcp-notes-saved'); if(s){ s.textContent='Saved'; } }
 
 function arcpEvidence(){
   const thisYear=r=>r.deadline==='annual'||r.deadline===currentYear;
@@ -2134,7 +2170,7 @@ function renderArcp(){
   const lastSec=`<section class="z-sec arcp-last" style="padding-top:88px">
     <div class="card"><h3 class="arcp-h3">For my ES meeting</h3>
       <label class="hint" for="arcp-notes">Points to raise · gaps to explain</label>
-      <textarea id="arcp-notes" class="input" rows="6" oninput="arcpSetNotes(this.value)">${safe(y.notes)}</textarea></div>
+      <textarea id="arcp-notes" class="input" rows="6" oninput="arcpSetNotes(this.value);const t=document.getElementById('arcp-notes-saved');if(t)t.textContent='Saving…'" onblur="arcpFlushNotes(this.value)">${safe(y.notes)}</textarea><div id="arcp-notes-saved" class="hint" style="margin-top:6px">${y.notes?'Saved':'Saves automatically and syncs to your other devices'}</div></div>
     <div class="card arcp-outcome"><h3 class="arcp-h3">After the panel</h3>
       <p>Record the outcome here or on the Renal / GIM tabs. Outcomes 1, 2, 6 and 8 lock ${safe(currentYear)}.</p>
       ${renderOutcomeSelector()}</div>
@@ -2214,7 +2250,182 @@ function downloadFirthXlsx(){
     arcpMarkReady('firth'); render();
   }catch(err){ console.error('[Firth] export failed',err); alert('Could not build the Firth calculator: '+(err.message||err)); }
 }
-window.renderArcp=renderArcp; window.arcpGenerate=arcpGenerate; window.arcpToggleUploaded=arcpToggleUploaded; window.arcpAddDoc=arcpAddDoc; window.arcpRemoveDoc=arcpRemoveDoc; window.arcpToggleStep=arcpToggleStep; window.arcpSetStepDate=arcpSetStepDate; window.arcpSetNotes=arcpSetNotes; window.setFirth=setFirth; window.downloadFirthXlsx=downloadFirthXlsx;
+window.renderArcp=renderArcp; window.arcpGenerate=arcpGenerate; window.arcpToggleUploaded=arcpToggleUploaded; window.arcpAddDoc=arcpAddDoc; window.arcpRemoveDoc=arcpRemoveDoc; window.arcpToggleStep=arcpToggleStep; window.arcpSetStepDate=arcpSetStepDate; window.arcpSetNotes=arcpSetNotes; window.setFirth=setFirth; window.arcpFlushNotes=arcpFlushNotes; window.downloadFirthXlsx=downloadFirthXlsx;
+
+
+// ─── TEACHING FEEDBACK (JRCPTB "Evaluation form for teaching and presentations") ─────────
+// Each "Teaching done" entry can open a feedback session: a public link + QR that attendees fill
+// on their phone (feedback.html, no login). Answers are stored in Firebase under arcpFeedback/<id>,
+// readable only by you, and summarised as a printable PDF for the portfolio.
+const FB_QUESTIONS=[
+  {k:'setting',   q:'Session setting, facilities etc'},
+  {k:'objectives',q:'Were the objectives of the session identified and were these met?'},
+  {k:'delivery',  q:'Was the delivery effective and clear? If handouts were used, were these useful?'},
+  {k:'useful',    q:'What aspects of the session were useful i.e. were there learning and change of practice points?'},
+  {k:'other',     q:'Any other comments?'}
+];
+let fbState={entryId:null, responses:null, emails:[], loading:false, err:''};
+function fbEntry(id){ return entries('teaching').find(e=>String(e.id)===String(id)); }
+function fbBaseUrl(){ const u=new URL(location.href); u.search=''; u.hash=''; u.pathname=u.pathname.replace(/[^\/]*$/,''); return u.toString(); }
+function fbLink(sid){ return fbBaseUrl()+'feedback.html?s='+encodeURIComponent(sid); }
+function fbNewId(){ const a=new Uint8Array(12); crypto.getRandomValues(a); return Array.from(a,b=>b.toString(36).padStart(2,'0')).join('').slice(0,20); }
+function fbRef(path){ return window.ARCP_FB.ref(window.ARCP_FB.db, path); }
+function fbOnline(){ return !!(window.ARCP_FB?.online && window.ARCP_FB.user && window.ARCP_FB.db); }
+function fbSessionMeta(e){
+  return { owner: window.ARCP_FB.user.uid, presenter: state.profile?.name||'', topic: e.topic||e.type||'Teaching session',
+    date: e.date||'', type: e.type||'', audience: e.audience||'', open: e.feedbackOpen!==false, createdAt: e.feedbackCreatedAt||Date.now() };
+}
+async function fbEnsureSession(e){
+  if(e.feedbackId) return e.feedbackId;
+  if(!fbOnline()) throw new Error('You need to be online and signed in to create a feedback link.');
+  const sid=fbNewId();
+  e.feedbackId=sid; e.feedbackCreatedAt=Date.now(); e.feedbackOpen=true; e.updatedAt=Date.now();
+  await window.ARCP_FB.update(fbRef('arcpFeedback/'+sid+'/meta'), fbSessionMeta(e));
+  saveEntries('teaching', entries('teaching'));
+  return sid;
+}
+async function fbSyncMeta(e){ if(!e.feedbackId||!fbOnline()) return; await window.ARCP_FB.update(fbRef('arcpFeedback/'+e.feedbackId+'/meta'), fbSessionMeta(e)); }
+async function fbLoadResponses(){
+  const e=fbEntry(fbState.entryId); if(!e?.feedbackId||!fbOnline()) return;
+  fbState.loading=true; fbRenderModal();
+  try{
+    const snap=await window.ARCP_FB.get(fbRef('arcpFeedback/'+e.feedbackId+'/responses'));
+    const v=snap.val()||{};
+    fbState.responses=Object.entries(v).map(([id,r])=>({id,...r})).sort((a,b)=>(a.ts||0)-(b.ts||0));
+    if(e.feedbackCount!==fbState.responses.length){ e.feedbackCount=fbState.responses.length; e.updatedAt=Date.now(); saveEntries('teaching', entries('teaching')); }
+    fbState.err='';
+  }catch(err){ fbState.err=fbErrText(err); }
+  fbState.loading=false; fbRenderModal();
+}
+function fbErrText(err){ const m=String(err?.message||err||''); return /permission/i.test(m) ? 'Firebase refused this. The feedback rules have not been added to your database yet (one-time setup).' : m; }
+
+async function openFeedback(entryId){
+  const e=fbEntry(entryId); if(!e) return;
+  fbState={entryId, responses:null, emails:(e.feedbackEmails||[]).slice(), loading:false, err:''};
+  fbRenderModal();
+  try{ await fbEnsureSession(e); await fbSyncMeta(e); }catch(err){ fbState.err=fbErrText(err); }
+  fbRenderModal(); fbLoadResponses();
+}
+function closeFeedback(){ document.getElementById('fb-modal')?.remove(); document.getElementById('fb-qr-full')?.remove(); fbState.entryId=null; if(currentTab==='logbook'||currentTab==='logbook-form') render(); }
+
+function fbLoadQrLib(){ return new Promise((res,rej)=>{ if(window.qrcode) return res(); const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'; s.onload=()=>res(); s.onerror=()=>rej(new Error('QR library failed to load')); document.head.appendChild(s); }); }
+async function fbQrSvg(text, cell){ await fbLoadQrLib(); const q=window.qrcode(0,'M'); q.addData(text); q.make(); return q.createSvgTag({cellSize:cell||5, margin:2, scalable:true}); }
+async function fbPaintQr(){ const e=fbEntry(fbState.entryId); const box=document.getElementById('fb-qr'); if(!box||!e?.feedbackId) return; try{ box.innerHTML=await fbQrSvg(fbLink(e.feedbackId),5); }catch(err){ box.innerHTML='<div class="hint">QR code unavailable offline. Use the link instead.</div>'; } }
+async function fbShowQrFull(){
+  const e=fbEntry(fbState.entryId); if(!e?.feedbackId) return;
+  const d=document.createElement('div'); d.id='fb-qr-full'; d.setAttribute('role','dialog'); d.setAttribute('aria-label','Feedback QR code');
+  d.innerHTML=`<div class="fb-full-inner"><div class="fb-full-eyebrow">Teaching feedback</div><div class="fb-full-title">${safe(e.topic||e.type||'Teaching session')}</div><div id="fb-qr-big" class="fb-qr-big"></div><div class="fb-full-hint">Scan with your phone camera · takes 2 minutes</div><button class="btn" onclick="document.getElementById('fb-qr-full').remove()">Close</button></div>`;
+  document.body.appendChild(d);
+  try{ document.getElementById('fb-qr-big').innerHTML=await fbQrSvg(fbLink(e.feedbackId),10); }catch(err){ document.getElementById('fb-qr-big').textContent=fbLink(e.feedbackId); }
+}
+function fbCopy(text, btn){ (navigator.clipboard?.writeText(text)||Promise.reject()).then(()=>{ if(btn){ const t=btn.textContent; btn.textContent='Copied ✓'; setTimeout(()=>btn.textContent=t,1500); } }).catch(()=>prompt('Copy this:', text)); }
+async function fbToggleOpen(){ const e=fbEntry(fbState.entryId); if(!e) return; e.feedbackOpen=e.feedbackOpen===false; e.updatedAt=Date.now(); saveEntries('teaching', entries('teaching')); try{ await fbSyncMeta(e); }catch(err){ fbState.err=fbErrText(err); } fbRenderModal(); }
+
+// Emails: paste anything (attendance list, Outlook "To" line) and every address is pulled out
+function fbParseEmails(text){ return Array.from(new Set((String(text).match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi)||[]).map(s=>s.toLowerCase().replace(/^[.-]+|[.-]+$/g,'')))); }
+function fbAddEmails(text){ const add=fbParseEmails(text); const set=new Set(fbState.emails); add.forEach(a=>set.add(a)); fbState.emails=[...set]; fbSaveEmails(); fbRenderModal(); setTimeout(()=>document.getElementById('fb-paste')?.focus(),0); }
+function fbRemoveEmail(a){ fbState.emails=fbState.emails.filter(x=>x!==a); fbSaveEmails(); fbRenderModal(); }
+function fbSaveEmails(){ const e=fbEntry(fbState.entryId); if(!e) return; e.feedbackEmails=fbState.emails.slice(); e.updatedAt=Date.now(); saveEntries('teaching', entries('teaching')); }
+function fbMailto(){
+  const e=fbEntry(fbState.entryId); if(!e?.feedbackId) return;
+  const name=state.profile?.name||'';
+  const subject=`Feedback request: ${e.topic||e.type||'teaching session'}${e.date?' ('+fmtDate(e.date)+')':''}`;
+  const body=`Hello,\n\nThank you for attending ${e.topic?'"'+e.topic+'"':'my teaching session'}${e.date?' on '+fmtDate(e.date):''}. I would be grateful if you could take two minutes to complete the evaluation form:\n\n${fbLink(e.feedbackId)}\n\nIt is anonymous and helps me improve future sessions.\n\nMany thanks,\n${name}`;
+  const url=`mailto:?bcc=${encodeURIComponent(fbState.emails.join(','))}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  if(url.length>1900 && !confirm(`That is a long recipient list (${fbState.emails.length} addresses). Some email apps cut long links short. Open anyway? (You can also use "Copy addresses" and paste them into BCC.)`)) return;
+  location.href=url;
+  const ent=fbEntry(fbState.entryId); if(ent){ ent.feedbackSentAt=Date.now(); ent.updatedAt=Date.now(); saveEntries('teaching', entries('teaching')); }
+}
+
+function fbRenderModal(){
+  const e=fbEntry(fbState.entryId); if(!e) return;
+  let m=document.getElementById('fb-modal');
+  const active=document.activeElement?.id;
+  if(!m){ m=document.createElement('div'); m.id='fb-modal'; m.setAttribute('role','dialog'); m.setAttribute('aria-modal','true'); m.setAttribute('aria-label','Teaching feedback'); m.addEventListener('click',ev=>{ if(ev.target===m) closeFeedback(); }); document.body.appendChild(m); }
+  const link=e.feedbackId?fbLink(e.feedbackId):'';
+  const fileWarn=location.protocol==='file:'?`<div class="fb-warn">You opened the app from a file on this computer, so this link only works once the app and <b>feedback.html</b> are on your GitHub site. Open the app from there to share it.</div>`:'';
+  const resp=fbState.responses;
+  const respHtml = fbState.loading && !resp ? '<div class="hint">Loading responses…</div>'
+    : !resp ? '' : !resp.length ? '<div class="fb-empty">No responses yet. They appear here as people submit.</div>'
+    : resp.slice().reverse().map((r,i)=>`<div class="fb-resp"><div class="fb-resp-head">Response ${resp.length-i}${r.ts?` · ${new Date(r.ts).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`:''}</div>${FB_QUESTIONS.filter(q=>r[q.k]).map(q=>`<div class="fb-qa"><div class="fb-q">${safe(q.q)}</div><div class="fb-a">${safe(r[q.k])}</div></div>`).join('')}</div>`).join('');
+  m.innerHTML=`<div class="fb-sheet">
+    <div class="fb-head"><div><div class="z-eyebrow" style="text-align:left">Teaching feedback · ${safe(fmtDate(e.date))}</div><h2 class="fb-title">${safe(e.topic||e.type||'Teaching session')}</h2>${e.audience?`<div class="hint">${safe(e.audience)}</div>`:''}</div>
+      <button class="dock-btn dock-menu" onclick="closeFeedback()" aria-label="Close">×</button></div>
+    ${fbState.err?`<div class="fb-warn">${safe(fbState.err)}</div>`:''}
+    ${fileWarn}
+    <section class="fb-sec"><div class="fb-sec-title"><span>1</span>Share the link</div>
+      ${link?`<div class="fb-share">
+        <div id="fb-qr" class="fb-qr" aria-label="QR code for the feedback link"></div>
+        <div class="fb-share-side">
+          <div class="row" style="flex-wrap:nowrap;gap:8px"><input class="input" readonly value="${safe(link)}" aria-label="Feedback link" onclick="this.select()"><button class="btn" onclick="fbCopy('${safe(link)}',this)">Copy</button></div>
+          <div class="row" style="gap:8px;margin-top:10px"><button class="btn action" onclick="fbShowQrFull()">Show QR full screen</button>
+            <button class="btn ${e.feedbackOpen===false?'':'good'}" onclick="fbToggleOpen()" aria-pressed="${e.feedbackOpen!==false}">${e.feedbackOpen===false?'Closed · reopen':'Accepting responses'}</button></div>
+          <div class="hint" style="margin-top:10px">Put the QR on your last slide, or send the link. Answers are anonymous and only you can read them.</div>
+        </div></div>`:`<div class="hint">${fbState.err?'':'Creating your link…'}</div>`}
+    </section>
+    <section class="fb-sec"><div class="fb-sec-title"><span>2</span>Email it <em>optional</em></div>
+      <label class="hint" for="fb-paste">Paste email addresses — an attendance list, an Outlook To: line, anything. Addresses are picked out automatically.</label>
+      <textarea id="fb-paste" class="input" rows="3" placeholder="name@nhs.net; Dr A Smith &lt;a.smith@nhs.net&gt; …" onpaste="setTimeout(()=>fbAddEmails(this.value),0)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();fbAddEmails(this.value)}"></textarea>
+      <div class="row" style="gap:8px;margin-top:8px"><button class="btn" onclick="fbAddEmails(document.getElementById('fb-paste').value)">Add</button>
+        ${fbState.emails.length?`<button class="btn" onclick="fbCopy('${fbState.emails.join(', ')}',this)">Copy addresses</button><button class="btn small danger" onclick="fbState.emails=[];fbSaveEmails();fbRenderModal()">Clear all</button>`:''}</div>
+      ${fbState.emails.length?`<div class="fb-chips">${fbState.emails.map(a=>`<span class="fb-chip">${safe(a)}<button onclick="fbRemoveEmail('${safe(a)}')" aria-label="Remove ${safe(a)}">×</button></span>`).join('')}</div>`:''}
+      <div class="row" style="justify-content:space-between;margin-top:12px;gap:8px"><span class="hint">${fbState.emails.length} recipient${fbState.emails.length===1?'':'s'} · sent as BCC from your own email${e.feedbackSentAt?` · last opened ${new Date(e.feedbackSentAt).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`:''}</span>
+        <button class="btn action" ${fbState.emails.length&&link?'':'disabled'} onclick="fbMailto()">Open in email app</button></div>
+    </section>
+    <section class="fb-sec"><div class="fb-sec-title"><span>3</span>Responses <b class="fb-count">${resp?resp.length:'—'}</b></div>
+      <div class="row" style="gap:8px;margin-bottom:12px"><button class="btn" onclick="fbLoadResponses()">${fbState.loading?'Refreshing…':'Refresh'}</button>
+        <button class="btn action" ${resp&&resp.length?'':'disabled'} onclick="fbPrintSummary()">⎘ Summary PDF</button></div>
+      ${respHtml}
+    </section>
+  </div>`;
+  if(link) fbPaintQr();
+  if(active==='fb-paste') document.getElementById('fb-paste')?.focus();
+}
+
+function fbPrintSummary(){
+  const e=fbEntry(fbState.entryId); const resp=fbState.responses||[]; if(!e||!resp.length) return;
+  const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const gen=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+  const qs=FB_QUESTIONS.map((q,i)=>{ const ans=resp.map(r=>r[q.k]).filter(a=>a&&String(a).trim());
+    return `<section class="q"><h2><span>${i+1}</span>${esc(q.q)}</h2>${ans.length?ans.map(a=>`<blockquote>${esc(a)}</blockquote>`).join(''):'<p class="none">No comments.</p>'}<div class="n">${ans.length} of ${resp.length} responded</div></section>`; }).join('');
+  const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Teaching feedback — ${esc(e.topic||'')}</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=DM+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hanken Grotesk',-apple-system,'Segoe UI',sans-serif;color:#262424;background:#F7F4F2;font-size:10.5pt;line-height:1.55;padding:24px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{max-width:800px;margin:0 auto}
+.toolbar{text-align:right}.toolbar button{font:500 13px 'Hanken Grotesk',sans-serif;background:#1B1A19;color:#F7F4F2;border:0;padding:11px 20px;border-radius:999px;cursor:pointer}
+.hd{text-align:center;padding:32px 0 26px}
+.ec{font:500 9.5px 'DM Mono',monospace;letter-spacing:.2em;text-transform:uppercase;color:#6E6762;margin-bottom:14px}
+h1{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:44px;letter-spacing:-.02em;line-height:1}
+h1 span{display:block;font-family:'Caveat',cursive;font-weight:600;font-size:56px;line-height:.95;color:#2F7A50}
+.info{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border:1px solid #E8E2DA;border-radius:18px;padding:16px 6px;margin-bottom:16px}
+.info>div{padding:0 14px;border-right:1px solid #E3DDD5;min-width:0}.info>div:last-child{border-right:0}
+.info dt{font:500 8px 'DM Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#6E6762;margin-bottom:5px}
+.info dd{font-family:'Newsreader',Georgia,serif;font-size:13pt;line-height:1.2;overflow-wrap:anywhere}
+.stat{display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:18px;background-color:#2F6B4C;background-image:linear-gradient(rgba(255,255,255,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.09) 1px,transparent 1px);background-size:22px 22px;color:#fff;margin-bottom:30px}
+.stat b{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:40px;line-height:1;background:#fff;color:#262424;border-radius:12px;padding:8px 16px}
+.stat span{font-size:11pt;color:#E2F1E6}
+.q{margin-bottom:26px;break-inside:auto}
+.q h2{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:17pt;line-height:1.2;padding-bottom:8px;border-bottom:1px solid #262424;margin-bottom:10px;display:flex;gap:10px;break-after:avoid}
+.q h2 span{font-family:'Caveat',cursive;font-weight:600;color:#2F7A50;font-size:22pt;line-height:.9}
+blockquote{background:#fff;border:1px solid #E8E2DA;border-radius:12px;padding:10px 14px;margin-bottom:8px;break-inside:avoid;white-space:pre-wrap}
+.none{color:#6E6762;font-style:italic}
+.n{font:400 9px 'DM Mono',monospace;color:#6E6762;margin-top:4px}
+.ft{display:flex;justify-content:space-between;font:400 8.5px 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#6E6762;border-top:1px solid #262424;padding-top:12px;margin-top:30px}
+@media print{.toolbar{display:none}body{background:#fff;padding:0}@page{margin:12mm}}
+</style></head><body><div class="page">
+<div class="toolbar"><button onclick="window.print()">⎘ Print / Save as PDF</button></div>
+<div class="hd"><div class="ec">Evaluation form for teaching and presentations · summary</div><h1>Teaching<span>feedback</span></h1></div>
+<dl class="info"><div><dt>Presenter</dt><dd>${esc(state.profile?.name||'')}</dd></div><div><dt>Session</dt><dd>${esc(e.topic||e.type||'')}</dd></div><div><dt>Date</dt><dd>${esc(fmtDate(e.date))}</dd></div><div><dt>Audience</dt><dd>${esc(e.audience||'—')}</dd></div></dl>
+<div class="stat"><b>${resp.length}</b><span>${resp.length===1?'response':'responses'} collected anonymously via the JRCPTB evaluation form questions${e.type?' · '+esc(e.type):''}</span></div>
+${qs}
+<div class="ft"><span>Teaching feedback summary · ${esc(state.profile?.name||'')}</span><span>Generated ${gen}</span></div>
+</div></body></html>`;
+  const w=window.open('','_blank'); if(!w){ alert('Please allow pop-ups to open the summary.'); return; }
+  w.document.write(html); w.document.close();
+}
+window.openFeedback=openFeedback; window.closeFeedback=closeFeedback; window.fbShowQrFull=fbShowQrFull; window.fbCopy=fbCopy; window.fbToggleOpen=fbToggleOpen; window.fbAddEmails=fbAddEmails; window.fbRemoveEmail=fbRemoveEmail; window.fbMailto=fbMailto; window.fbLoadResponses=fbLoadResponses; window.fbPrintSummary=fbPrintSummary; window.fbSaveEmails=fbSaveEmails; window.fbRenderModal=fbRenderModal;
 
 function render(){ if(!state.profile){ initOnboarding(); return; } syncLogbookTargets(); setTheme(); document.getElementById('app').classList.add('ready'); document.getElementById('gate').classList.remove('show'); renderHeader(); renderTabs(); const trialExpired = renderBetaTrial(); if(trialExpired){ updateReadiness(); return; } if(currentTab==='today') renderToday(); if(currentTab==='roadmap') renderRoadmap(); if(currentTab==='specialty') renderSpecialty(); if(currentTab==='gim') renderGIM(); if(currentTab==='logbook') renderLogbookV2(); if(currentTab==='logbook-form') renderLogbookFormWrap(); if(currentTab==='admin') renderAdmin(); if(currentTab==='overview') renderOverview(); if(currentTab==='arcp') renderArcp(); updateReadiness(); forceLiveStatus(); maybeAutoRevealWrapped(); }
 
@@ -2379,7 +2590,7 @@ function inCurrentYear(e){
 }
 function tableFiltered(k, filterFn, cols, mapper){ const arr=entries(k).filter(filterFn).filter(inCurrentYear).slice().sort((a,b)=>(b.date||b.start||'').localeCompare(a.date||a.start||'')); return tableFromArray(k, arr, cols, mapper); }
 function canEditEntry(e){ return Date.now() - Number(e.createdAt || e.id || 0) <= 7776000000; }
-function tableFromArray(k, arr, cols, mapper){ if(!arr.length) return `<div class="hint">// no entries yet</div>`; return `<div class="table-wrap"><table class="table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}<th></th></tr></thead><tbody>${arr.map(e=>`<tr>${mapper(e).map(x=>`<td>${safe(x)}</td>`).join('')}<td><div class="row" style="gap:4px;justify-content:flex-end">${canEditEntry(e)?`<button class="btn tiny" title="Edit available for 24h after adding" onclick="editEntry('${k}',${e.id})">Edit</button>`:`<span class="hint" title="Editing window has passed">locked</span>`}<button class="btn tiny danger" onclick="deleteEntry('${k}',${e.id})">✕</button></div></td></tr>`).join('')}</tbody></table></div>`; }
+function tableFromArray(k, arr, cols, mapper){ if(!arr.length) return `<div class="hint">// no entries yet</div>`; return `<div class="table-wrap"><table class="table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}<th></th></tr></thead><tbody>${arr.map(e=>`<tr>${mapper(e).map(x=>`<td>${safe(x)}</td>`).join('')}<td><div class="row" style="gap:4px;justify-content:flex-end">${k==='teaching'?`<button class="btn tiny action" onclick="openFeedback(${e.id})">Feedback${e.feedbackCount?' \u00b7 '+e.feedbackCount:''}</button>`:''}${canEditEntry(e)?`<button class="btn tiny" title="Edit available for 24h after adding" onclick="editEntry('${k}',${e.id})">Edit</button>`:`<span class="hint" title="Editing window has passed">locked</span>`}<button class="btn tiny danger" onclick="deleteEntry('${k}',${e.id})">✕</button></div></td></tr>`).join('')}</tbody></table></div>`; }
 function addEntry(k, data){ if(yearLocked()) return alert('This year is locked. Unlock it before editing.'); const now=Date.now(); const arr=entries(k); arr.push({...data,id:now,createdAt:now,updatedAt:now,year:data.year||currentYear}); saveEntries(k,arr); render(); }
 function deleteEntry(k,id){ if(yearLocked()) return alert('This year is locked. Unlock it before editing.'); if(!confirm('Delete this entry?')) return; state.tombstones=state.tombstones||{}; state.tombstones[k]=state.tombstones[k]||{}; state.tombstones[k][String(id)]=Date.now(); saveEntries(k, entries(k).filter(e=>e.id!==id)); render(); }
 function editEntry(k,id){ if(yearLocked()) return alert('This year is locked. Unlock it before editing.'); const arr=entries(k); const idx=arr.findIndex(e=>e.id===id); if(idx<0) return; const e=arr[idx]; if(!canEditEntry(e)) return alert('Editing is only available for 24 hours after adding an item.'); const editable=Object.keys(e).filter(x=>!['id','createdAt','updatedAt'].includes(x)); for(const field of editable){ const current=e[field]??''; const next=prompt(`Edit ${field}`, current); if(next===null) return; e[field]=next; } e.updatedAt=Date.now(); arr[idx]=e; saveEntries(k,arr); render(); }
@@ -2777,7 +2988,7 @@ function saveCpdEdit(id){
 }
 function saveCPD(scope='spec'){ const prefix=`cpd-${scope}`; const cert=(window._cpdPendingCert&&window._cpdPendingCert[scope])||null; addEntry('cpd',{scope,type:val(`${prefix}-type`),category:val(`${prefix}-category`),date:val(`${prefix}-date`),title:val(`${prefix}-title`),provider:val(`${prefix}-provider`),hours:val(`${prefix}-hours`),year:val(`${prefix}-year`),learning:val(`${prefix}-learning`),reflection:val(`${prefix}-reflection`),cert}); if(window._cpdPendingCert) delete window._cpdPendingCert[scope]; }
 function renderSimpleLog(k,title,fields,cols,types){ const html=fields.map(f=>{ if(f==='date')return `<div class="field"><label>Date</label><input class="input" id="sl-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>`; if(f==='hospital')return hospitalField('sl-hospital'); if(f==='year')return `<div class="field"><label>Year</label><select class="input" id="sl-year">${YEARS.map(y=>`<option ${y===currentYear?'selected':''}>${y}</option>`).join('')}</select></div>`; if((f==='type'||f==='course') && Array.isArray(types))return `<div class="field"><label>${f}</label><select class="input" id="sl-${f}">${optionsHtml(types)}</select></div>`; return `<div class="field"><label>${f}</label><input class="input" id="sl-${f}" ${f==='hours'?'type="number" step="0.5" min="0"':''}></div>`; }).join(''); const arr=entries(k).filter(inCurrentYear); document.getElementById('log-content').innerHTML=formPanel(`Add ${title}`,html,`saveSimple('${k}','${fields.join('|')}')`)+section(`${title} log`,`${arr.length} entries`,[`<div class="card" style="grid-column:1/-1">${table(k, cols, e=>fields.slice(1).map(f=>f==='date'?fmtDate(e[f]):e[f]))}</div>`]); }
-function saveSimple(k,fieldStr){ const data={}; fieldStr.split('|').forEach(f=>{ data[f]=val('sl-'+f); }); addEntry(k,data); if(data.hospital)addHospitalIfNew(data.hospital); }
+function saveSimple(k,fieldStr){ const data={}; fieldStr.split('|').forEach(f=>{ data[f]=val('sl-'+f); }); const before=entries(k).length; addEntry(k,data); if(data.hospital)addHospitalIfNew(data.hospital); if(k==='teaching'){ const arr=entries('teaching'); if(arr.length>before){ const last=arr[arr.length-1]; setTimeout(()=>{ if(confirm('Teaching saved. Collect feedback for this session now? (QR code / link / email)')) openFeedback(last.id); },80); } } }
 function renderAcute(targetId){ const total=entries('acute').reduce((a,e)=>a+Number(e.estimated||0),0); const html=`${hospitalField('acute-hospital')}<div class="field"><label>Start</label><input class="input" id="acute-start" type="date" onchange="calcAcute()"></div><div class="field"><label>End</label><input class="input" id="acute-end" type="date" onchange="calcAcute()"></div><div class="field"><label>Takes / month</label><input class="input" id="acute-takes" type="number" oninput="calcAcute()"></div><div class="field"><label>Patients / take</label><input class="input" id="acute-patients" type="number" oninput="calcAcute()"></div><div class="field"><label>Estimated patients</label><input class="input" id="acute-estimated" readonly></div><div class="field"><label>Supervisor</label><input class="input" id="acute-supervisor"></div>`; const target=document.getElementById(targetId||'log-content'); if(!target) return; target.innerHTML=`<div class="summary-grid"><div class="summary"><div class="big blue">${Math.round(total)}</div><div class="hint">/ 750 estimated patients</div></div></div>`+formPanel('Add acute take placement',html,'saveAcute()')+section('Acute take log','Firth-style estimate', [`<div class="card" style="grid-column:1/-1">${table('acute',['Hospital','Start','End','Months','Takes/mo','Pts/take','Estimated','Year','Supervisor'], e=>[e.hospital,fmtDate(e.start),fmtDate(e.end),e.months,e.takes,e.patients,e.estimated,e.year,e.supervisor])}</div>`]); }
 function calcAcute(){ const s=val('acute-start'), e=val('acute-end'); const months=monthsBetween(s,e); const est=Math.round(months*Number(val('acute-takes')||0)*Number(val('acute-patients')||0)); document.getElementById('acute-estimated').value=est||''; }
 function saveAcute(){ const s=val('acute-start'), e=val('acute-end'); addEntry('acute',{hospital:val('acute-hospital'),start:s,end:e,months:monthsBetween(s,e),takes:val('acute-takes'),patients:val('acute-patients'),estimated:val('acute-estimated'),supervisor:val('acute-supervisor')}); addHospitalIfNew(val('acute-hospital')); }
@@ -3501,7 +3712,7 @@ function reconcileRemote(remoteRaw, remoteTs){
   localStorage.setItem(STATE_KEY, JSON.stringify(state));
   localStorage.setItem('arcp_v2_remote_ts', String(Math.max(remoteTs||0, localTs)));
   suppressRemote=false;
-  const changed = JSON.stringify(state)!==before;
+  const changed = sortedJSON(JSON.parse(before))!==sortedJSON(state);
   const firstReconcile = !remoteReady;
   remoteReady = true;
   // Push back up if local contributed entries the cloud lacks, or a save was queued pre-sync
@@ -3511,7 +3722,16 @@ function reconcileRemote(remoteRaw, remoteTs){
   const reqDiffers = sortedJSON(fbNorm(noCum(state.req))) !== sortedJSON(fbNorm(noCum(remote?.req)));
   const fieldsDiffer = sortedJSON(fbNorm(fieldsOf(state))) !== sortedJSON(fbNorm(fieldsOf(remote)));
   if(pendingPush || reqDiffers || fieldsDiffer || (firstReconcile && JSON.stringify(logbook)!==remoteNorm)){ pendingPush=false; saveState(); }
-  if(changed) render();
+  if(changed) renderWhenIdle();
+}
+// If a text box in the page has focus, wait until the user leaves it before re-rendering,
+// otherwise a sync arriving mid-typing would replace the box and kick the cursor out.
+function renderWhenIdle(){
+  const a=document.activeElement;
+  const typing=a && a.closest && a.closest('#main') && (a.tagName==='TEXTAREA' || (a.tagName==='INPUT' && !['checkbox','radio','button'].includes(a.type)));
+  if(!typing){ render(); return; }
+  if(window.__renderPending) return; window.__renderPending=true;
+  a.addEventListener('blur', ()=>{ window.__renderPending=false; setTimeout(()=>{ const n=document.activeElement; if(!(n && n.closest && n.closest('#main') && (n.tagName==='TEXTAREA'||n.tagName==='INPUT'))) render(); else renderWhenIdle(); },50); }, {once:true});
 }
 window.addEventListener('firebase-load', e=>{ if(!e.detail?.state) return; try{ reconcileRemote(e.detail.state, e.detail.updatedAt||0); }catch(err){ console.error('[Outcome1] reconcile failed:', err); } });
 window.addEventListener('firebase-no-data', ()=>{ remoteReady=true; const has=(state?.logbook && Object.values(state.logbook).some(a=>Array.isArray(a)&&a.length)); if(pendingPush || has){ pendingPush=false; saveState(); } });
@@ -4990,7 +5210,7 @@ function renderLogbookV2(){
     return `<div class="lb-row lb-row-data" style="display:grid;grid-template-columns:90px 160px 1fr 150px 150px;padding:13px 22px;${i===filtered.length-1||i===79?'':'border-bottom:1px solid var(--line)'};align-items:center;font-size:13px">
       <span class="lb-cell lb-cell-date o-mono" style="color:var(--dim);font-size:11px;letter-spacing:.06em;font-family:var(--font-mono)">${dateStr}</span>
       <span class="lb-cell lb-cell-type" style="display:inline-flex;gap:5px;flex-wrap:wrap"><span style="${typePillStyle}">${e._kind.slice(0,4)}</span>${scopePill}</span>
-      <span class="lb-cell lb-cell-item" style="color:var(--text);font-weight:500">${safe(item)}</span>
+      <span class="lb-cell lb-cell-item" style="color:var(--text);font-weight:500">${safe(item)}${e._kind==='teaching'?` <button class="btn tiny action" style="margin-left:6px" onclick="openFeedback(${e.id})">Feedback${e.feedbackCount?' \u00b7 '+e.feedbackCount:''}</button>`:''}</span>
       <span class="lb-cell lb-cell-hospital" style="color:var(--dim);font-size:12px">${safe(e.hospital||'—')}</span>
       <span class="lb-cell lb-cell-supervisor" style="color:var(--dim);font-size:12px">${safe(e.supervisor||'—')}</span>
     </div>`;
