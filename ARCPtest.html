@@ -760,6 +760,24 @@ body.focus #boot-loader path{stroke:var(--text)}
 #fb-qr-full .btn{color:#262424;border-color:#D2CAC0}
 @media (max-width:640px){.fb-sheet{padding:20px;border-radius:22px}.fb-share{grid-template-columns:1fr}.fb-qr{margin:0 auto}.fb-title{font-size:28px}#fb-modal{padding:12px}}
 
+/* ── Collapsible logbook forms ── */
+.form-collapse{padding:0;overflow:hidden}
+.form-summary{list-style:none;display:flex;align-items:center;gap:14px;padding:20px 24px;cursor:pointer;user-select:none}
+.form-summary::-webkit-details-marker{display:none}
+.form-summary:hover{background:var(--bg3)}
+.form-summary:focus-visible{outline:3px solid var(--primary);outline-offset:-3px}
+.form-title{font-family:var(--z-serif);font-size:28px;line-height:1.1;color:var(--text);letter-spacing:-.01em}
+.form-hint{font:400 12px var(--font-mono);color:var(--dim);margin-left:auto}
+.form-plus{width:40px;height:40px;flex:none;border-radius:50%;background:var(--mat);position:relative;transition:transform .2s ease,background .2s}
+.form-collapse:not([open]) .form-plus{margin-left:0}
+.form-collapse[open] .form-plus{transform:rotate(45deg);background:var(--ink)}
+.form-plus::before,.form-plus::after{content:"";position:absolute;left:50%;top:50%;background:#fff;border-radius:2px;transform:translate(-50%,-50%)}
+.form-plus::before{width:16px;height:2px}.form-plus::after{width:2px;height:16px}
+body.focus .form-collapse[open] .form-plus::before,body.focus .form-collapse[open] .form-plus::after{background:var(--ink-fg)}
+.form-collapse>.form-grid{padding:4px 24px 24px;border-top:1px solid var(--line);padding-top:20px}
+.form-actions{flex-direction:row!important;justify-content:flex-end;gap:10px!important}
+@media (max-width:760px){.form-summary{padding:16px}.form-title{font-size:22px}.form-collapse>.form-grid{padding:16px}.form-hint{display:none}.form-plus{margin-left:auto}}
+
 @media print{#app .tabs,.dock-btn{display:none!important}}
 @media (prefers-reduced-motion:reduce){.z-card,.dock-btn{transition:none}}
 </style>
@@ -2629,12 +2647,31 @@ setInterval(()=>{ if(document.visibilityState==='visible' && (currentTab==='logb
 
 window.openFeedback=openFeedback; window.closeFeedback=closeFeedback; window.fbShowQrFull=fbShowQrFull; window.fbCopy=fbCopy; window.fbToggleOpen=fbToggleOpen; window.fbAddEmails=fbAddEmails; window.fbRemoveEmail=fbRemoveEmail; window.fbMailto=fbMailto; window.fbLoadResponses=fbLoadResponses; window.fbPrintSummary=fbPrintSummary; window.fbSetStyle=fbSetStyle; window.fbRefreshCounts=fbRefreshCounts; window.fbSaveEmails=fbSaveEmails; window.fbRenderModal=fbRenderModal;
 
+// Desktop: print the report straight from a hidden frame inside the app, so there is no separate
+// tab for the browser to blank out when saving as PDF. Touch devices still get the report in a new tab.
 function openReportDoc(html){
-  const url=URL.createObjectURL(new Blob([html],{type:'text/html'}));
-  const w=window.open(url,'_blank');
-  if(!w){ alert('Please allow pop-ups for this site to open the report.'); }
-  setTimeout(()=>URL.revokeObjectURL(url), 60*60*1000);
-  return w;
+  const touch=window.matchMedia && window.matchMedia('(hover: none)').matches;
+  if(touch){
+    const url=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+    const w=window.open(url,'_blank');
+    if(!w){ alert('Please allow pop-ups for this site to open the report.'); }
+    setTimeout(()=>URL.revokeObjectURL(url), 60*60*1000);
+    return w;
+  }
+  document.getElementById('report-print-frame')?.remove();
+  const f=document.createElement('iframe');
+  f.id='report-print-frame'; f.title='Report for printing'; f.setAttribute('aria-hidden','true'); f.tabIndex=-1;
+  f.style.cssText='position:fixed;left:0;top:0;width:820px;height:1160px;border:0;opacity:0;pointer-events:none;z-index:-1';
+  f.onload=async()=>{
+    const w=f.contentWindow; if(!w) return;
+    try{ await Promise.race([w.document.fonts?.ready, new Promise(r=>setTimeout(r,2500))]); }catch(e){}
+    await new Promise(r=>setTimeout(r,200));
+    try{ w.focus(); w.print(); }catch(err){ console.error('[Outcome1] print failed', err); alert('Could not open the print dialog: '+(err.message||err)); }
+    setTimeout(()=>{ if(document.getElementById('report-print-frame')===f) f.remove(); }, 10*60*1000);
+  };
+  document.body.appendChild(f);
+  f.srcdoc=html;
+  return f;
 }
 window.openReportDoc=openReportDoc;
 function render(){ if(!state.profile){ initOnboarding(); return; } syncLogbookTargets(); setTheme(); document.getElementById('app').classList.add('ready'); document.getElementById('gate').classList.remove('show'); renderHeader(); renderTabs(); const trialExpired = renderBetaTrial(); if(trialExpired){ updateReadiness(); return; } if(currentTab==='today') renderToday(); if(currentTab==='roadmap') renderRoadmap(); if(currentTab==='specialty') renderSpecialty(); if(currentTab==='gim') renderGIM(); if(currentTab==='logbook'){ renderLogbookV2(); try{ fbRefreshCounts(); }catch(e){} } if(currentTab==='logbook-form') renderLogbookFormWrap(); if(currentTab==='admin') renderAdmin(); if(currentTab==='overview') renderOverview(); if(currentTab==='arcp') renderArcp(); updateReadiness(); forceLiveStatus(); maybeAutoRevealWrapped(); }
@@ -2785,7 +2822,10 @@ function restoreDeaneryHospitals(){ state.deletedHospitals=[]; state.hiddenHospi
 
 function optionsHtml(list, selected=''){ return list.map(x=>`<option value="${safe(x)}" ${selected===x?'selected':''}>${safe(x)}</option>`).join(''); }
 function renderLogbook(){ if(yearLocked()){ document.getElementById('main').innerHTML=renderLockedBlock(); return; } const subs=[['clinics','Clinics'],['procedures','Procedures'],['cpd','Teaching/CPD'],['simulation','Simulation'],['teaching','Teaching done']]; document.getElementById('main').innerHTML=`<div class="subtabs">${subs.map(([id,l])=>`<button class="subtab ${logSubTab===id?'active':''}" onclick="logSubTab='${id}';renderLogbook()">${l}</button>`).join('')}</div><div class="row" style="justify-content:flex-end;margin-bottom:12px"><button class="btn small action" onclick="showPrintStylePicker()">⎙ Print Logbook Report</button></div><div id="log-content"></div>`; if(logSubTab==='clinics') renderLogClinics(); if(logSubTab==='procedures') renderLogProcedures(); if(logSubTab==='cpd') renderLogCPD(); if(logSubTab==='simulation') renderSimpleLog('simulation','Simulation session', ['date','course','title','hours','hospital','year','notes'], ['Course','Title','Hours','Hospital','Year','Notes'], null); if(logSubTab==='teaching') renderSimpleLog('teaching','Teaching session', ['date','type','topic','audience','supervisor','signoff','year','notes'], ['Type','Topic','Audience','Observed by','Sign-off','Year','Notes'], ['Bedside teaching','Tutorial / seminar','Grand round presentation','Journal club','Simulation facilitation','Medical student supervision','Other']); }
-function formPanel(title, html, onsubmit){ return `<div class="panel"><div class="sec-head"><span class="sec-title">${title}</span><span class="sec-rule"></span></div><div class="form-grid">${html}<div class="field full"><button class="btn primary" onclick="${onsubmit}">ADD ENTRY ▸</button></div></div></div>`; }
+const __openForms=new Set();
+function formPanel(title, html, onsubmit){ const id='fp-'+String(title).replace(/[^a-z0-9]+/gi,'-').toLowerCase(); const open=__openForms.has(id); return `<details class="panel form-collapse" id="${id}" ${open?'open':''} ontoggle="formToggled(this)"><summary class="form-summary"><span class="form-title">${title}</span><span class="form-hint">${open?'':'Tap to add'}</span><span class="form-plus" aria-hidden="true"></span></summary><div class="form-grid">${html}<div class="field full form-actions"><button class="btn" type="button" onclick="this.closest('details').open=false">Cancel</button><button class="btn primary" onclick="__openForms.delete('${id}');${onsubmit}">ADD ENTRY ▸</button></div></div></details>`; }
+function formToggled(d){ if(d.open){ __openForms.add(d.id); const h=d.querySelector('.form-hint'); if(h) h.textContent=''; setTimeout(()=>{ const f=d.querySelector('input:not([type=hidden]):not([readonly]),select,textarea'); if(f && window.matchMedia('(hover:hover)').matches) f.focus({preventScroll:true}); },60); } else { __openForms.delete(d.id); const h=d.querySelector('.form-hint'); if(h) h.textContent='Tap to add'; } }
+window.formToggled=formToggled;
 function hospitalField(id='hospital'){ const list=hospitalOptions(); return `<div class="field"><label>Hospital</label><input class="input" id="${id}" list="${id}-list" placeholder="Start typing or add manually"><datalist id="${id}-list">${list.map(h=>`<option value="${safe(h)}">`).join('')}</datalist></div>`; }
 function table(k, cols, mapper){ const arr=entries(k).slice().sort((a,b)=>(b.date||b.start||'').localeCompare(a.date||a.start||'')); return tableFromArray(k, arr, cols, mapper); }
 const YEAR_TO_CAL = { ST4:2026, ST5:2027, ST6:2028, ST7:2029 };
