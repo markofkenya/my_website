@@ -2605,8 +2605,7 @@ function fbPrintSummary(style){
   const e=fbEntry(fbState.entryId); const resp=fbState.responses||[]; if(!e||!resp.length) return;
   style=style||'jrcptb';
   const html = style==='jrcptb'?fbHtmlJrcptb(e,resp) : style==='official'?fbHtmlOfficial(e,resp) : style==='individual'?fbHtmlIndividual(e,resp) : style==='table'?fbHtmlTable(e,resp) : fbHtmlEditorial(e,resp);
-  const w=window.open('','_blank'); if(!w){ alert('Please allow pop-ups to open the summary.'); return; }
-  w.document.write(html); w.document.close();
+  openReportDoc(html);
 }
 
 // ── Response counts refresh automatically (no need to open each session) ──
@@ -2630,6 +2629,14 @@ setInterval(()=>{ if(document.visibilityState==='visible' && (currentTab==='logb
 
 window.openFeedback=openFeedback; window.closeFeedback=closeFeedback; window.fbShowQrFull=fbShowQrFull; window.fbCopy=fbCopy; window.fbToggleOpen=fbToggleOpen; window.fbAddEmails=fbAddEmails; window.fbRemoveEmail=fbRemoveEmail; window.fbMailto=fbMailto; window.fbLoadResponses=fbLoadResponses; window.fbPrintSummary=fbPrintSummary; window.fbSetStyle=fbSetStyle; window.fbRefreshCounts=fbRefreshCounts; window.fbSaveEmails=fbSaveEmails; window.fbRenderModal=fbRenderModal;
 
+function openReportDoc(html){
+  const url=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  const w=window.open(url,'_blank');
+  if(!w){ alert('Please allow pop-ups for this site to open the report.'); }
+  setTimeout(()=>URL.revokeObjectURL(url), 60*60*1000);
+  return w;
+}
+window.openReportDoc=openReportDoc;
 function render(){ if(!state.profile){ initOnboarding(); return; } syncLogbookTargets(); setTheme(); document.getElementById('app').classList.add('ready'); document.getElementById('gate').classList.remove('show'); renderHeader(); renderTabs(); const trialExpired = renderBetaTrial(); if(trialExpired){ updateReadiness(); return; } if(currentTab==='today') renderToday(); if(currentTab==='roadmap') renderRoadmap(); if(currentTab==='specialty') renderSpecialty(); if(currentTab==='gim') renderGIM(); if(currentTab==='logbook'){ renderLogbookV2(); try{ fbRefreshCounts(); }catch(e){} } if(currentTab==='logbook-form') renderLogbookFormWrap(); if(currentTab==='admin') renderAdmin(); if(currentTab==='overview') renderOverview(); if(currentTab==='arcp') renderArcp(); updateReadiness(); forceLiveStatus(); maybeAutoRevealWrapped(); }
 
 function betaTrialInfo(){
@@ -2812,7 +2819,7 @@ function renderLogClinics(){
   const sdecCount = gimEntries.filter(e=>String(e.type||'').toLowerCase().includes('sdec')).length;
   const sdecCls = sdecCount>SDEC_CAP ? 'red' : sdecCount>=SDEC_CAP ? 'amber' : 'blue';
   document.getElementById('log-content').innerHTML=
-    logSummaryCards([{value:specEntries.length,label:`${sp.short} clinics · log only`,cls:'primary'},{value:specPatients,label:`${sp.short} clinic patients`,cls:'primary'},{value:gimEntries.length,label:`GIM clinics · cumulative (target 20)`,cls:'blue'},{value:`${sdecCount} / ${SDEC_CAP}`,label:`Medical SDEC · max 10 of 20`,cls:sdecCls}])+
+    logSummaryCards([{value:specEntries.length,label:`${sp.short} clinics · log only`,cls:'primary'},{value:specPatients,label:`${sp.short} clinic patients`,cls:'primary'},{value:gimEntries.length,label:`GIM clinics · cumulative (target 20)`,cls:'blue'},{value:sdecCount,label:`Medical SDEC · max ${SDEC_CAP} count`,cls:sdecCls}])+
     formPanel(`Add ${sp.short} clinic`,specForm,"saveClinic('spec')")+
     section(`${sp.short} clinics`,`${specEntries.length} entries`, [`<div class="card" style="grid-column:1/-1">${tableFiltered('clinics',e=>e.scope!=='gim',['Date','Clinic type','Hospital','Supervisor','Patients','Year','Notes'], e=>[fmtDate(e.date),e.type,e.hospital,e.supervisor,e.patients,e.year,e.notes])}</div>`])+
     formPanel('Add GIM clinic',gimForm,"saveClinic('gim')")+
@@ -2891,7 +2898,7 @@ function renderLogCPD(){
   document.getElementById('log-content').innerHTML=
     logSummaryCards([
       {value:totalHours,label:'CPD hours · this year',cls:'primary'},
-      {value:`${externalHrs} / ${internalHrs}`,label:'External / Internal hours',cls:'blue'},
+      {value:externalHrs,label:'External CPD hours',cls:'blue'},{value:internalHrs,label:'Internal CPD hours',cls:'blue'},
       {value:gimHours,label:'GIM external CPD · cumulative target',cls:'green'}
     ])+
     `<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap"><button class="btn small primary" onclick="exportCpdDiary()">⎙ CPD Diary report</button><button class="btn small" onclick="exportCpdData()">⬇ Export data (JSON)</button><button class="btn small" onclick="importCpdDiary()">⬆ Import CPD (JSON)</button></div>`+
@@ -3018,9 +3025,7 @@ function exportCpdDiary(){
   </div>
   </body></html>`;
 
-  const win = window.open('', '_blank');
-  if(!win){ alert('Please allow popups to view the CPD diary report.'); return; }
-  win.document.write(html); win.document.close();
+  openReportDoc(html);
 }
 function importCpdDiary(){
   const inp = document.createElement('input');
@@ -3611,7 +3616,7 @@ function printReport(style){
   ];
   const figuresHtml = figures.map(f=>`<div class="figure ${f.gim?'gim':''}"><span class="num">${safe(f.n)}</span><span class="lab">${f.lab}</span></div>`).join('');
 
-  const win=window.open('','_blank_'+Date.now());
+
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Logbook Report \u2014 ${safe(traineeName)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3679,7 +3684,7 @@ function printReport(style){
   </footer>
 </div>
 </body></html>`;
-  win.document.write(html); win.document.close();
+  openReportDoc(html);
 }
 
 // Formal report helpers — used only by printReport
