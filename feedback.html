@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Teaching feedback</title>
+<meta name="theme-color" content="#F7F4F2" />
+<meta name="robots" content="noindex" />
+<link rel="icon" type="image/png" href="outcome2.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=DM+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet" />
+<style>
+:root{--bg:#F7F4F2;--card:#FFFFFF;--line:#E3DDD5;--text:#262424;--text2:#3A3634;--dim:#6E6762;--green:#2F7A50;--mat:#2F6B4C;--ink:#1B1A19;--red:#B04A2F}
+@media (prefers-color-scheme: dark){:root{--bg:#0F1A14;--card:#16241C;--line:#2A3D31;--text:#F3EFE8;--text2:#D6D1C7;--dim:#A3AEA6;--green:#9FD8AE;--mat:#24543A;--ink:#F3EFE8;--red:#EC9680}}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:'Hanken Grotesk',-apple-system,'Segoe UI',sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+main{max-width:640px;margin:0 auto;padding:32px 16px 64px}
+.eyebrow{font:500 11px 'DM Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);text-align:center}
+h1{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:44px;line-height:1.02;letter-spacing:-.02em;text-align:center;margin-top:16px}
+h1 span{display:block;font-family:'Caveat',cursive;font-weight:600;font-size:56px;line-height:.95;color:var(--green)}
+.session{margin:28px 0 20px;padding:16px;border-radius:22px;background-color:var(--mat);background-image:linear-gradient(rgba(255,255,255,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.09) 1px,transparent 1px);background-size:24px 24px}
+.session dl{background:#fff;color:#262424;border-radius:16px;padding:16px 18px;display:grid;gap:12px}
+.session dt{font:500 10px 'DM Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#6E6762}
+.session dd{font-family:'Newsreader',Georgia,serif;font-size:21px;line-height:1.2}
+.guide{font-size:14px;color:var(--text2);margin-bottom:24px}
+label.q{display:block;font-family:'Newsreader',Georgia,serif;font-size:21px;line-height:1.25;margin:24px 0 10px}
+label.q b{font-family:'Caveat',cursive;font-weight:600;color:var(--green);font-size:26px;margin-right:6px}
+textarea{width:100%;min-height:96px;font:400 16px 'Hanken Grotesk',sans-serif;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;resize:vertical}
+textarea:focus{outline:3px solid color-mix(in srgb,var(--green) 35%,transparent);border-color:var(--green)}
+button{font:600 16px 'Hanken Grotesk',sans-serif;border:0;border-radius:999px;padding:16px 24px;cursor:pointer;background:var(--green);color:#fff;width:100%;margin-top:28px;min-height:52px}
+button:disabled{opacity:.55;cursor:default}
+.note{font:400 12px 'DM Mono',monospace;color:var(--dim);text-align:center;margin-top:12px}
+.msg{margin-top:40px;text-align:center;padding:32px 20px;background:var(--card);border:1px solid var(--line);border-radius:22px}
+.msg h2{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:32px;margin-bottom:8px}
+.err{color:var(--red);font-size:14px;margin-top:12px;text-align:center}
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Evaluation form for teaching and presentations</div>
+  <h1>Session<span>feedback</span></h1>
+  <div id="content"><p class="note" style="margin-top:32px">Loading…</p></div>
+</main>
+<script>
+const DB='https://gimtrack-dfecb-default-rtdb.europe-west1.firebasedatabase.app';
+const QUESTIONS=[
+  ['setting','Session setting, facilities etc'],
+  ['objectives','Were the objectives of the session identified and were these met?'],
+  ['delivery','Was the delivery effective and clear? If handouts were used, were these useful?'],
+  ['useful','What aspects of the session were useful i.e. were there learning and change of practice points?'],
+  ['other','Any other comments?']
+];
+const sid=new URLSearchParams(location.search).get('s')||'';
+const box=document.getElementById('content');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=d=>{ if(!d) return ''; const p=String(d).split('-'); return p.length===3?new Date(+p[0],+p[1]-1,+p[2]).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):d; };
+function message(title,text){ box.innerHTML=`<div class="msg"><h2>${esc(title)}</h2><p>${esc(text)}</p></div>`; }
+async function start(){
+  if(!/^[a-z0-9]{8,40}$/i.test(sid)) return message('Link not recognised','Please check the link or QR code you were given.');
+  let meta=null;
+  try{ const r=await fetch(`${DB}/arcpFeedback/${sid}/meta.json`); meta=r.ok?await r.json():null; }catch(e){}
+  if(!meta) return message('Feedback not available','This feedback link has expired or could not be loaded. Please try again later.');
+  if(meta.open===false) return message('Feedback closed','The presenter is no longer collecting feedback for this session. Thank you anyway.');
+  let done=false; try{ done=localStorage.getItem('fb_done_'+sid)==='1'; }catch(e){}
+  if(done) return message('Thank you','You have already sent feedback for this session from this device.');
+  box.innerHTML=`
+    <div class="session"><dl>
+      <div><dt>Presenter / teacher</dt><dd>${esc(meta.presenter||'')}</dd></div>
+      <div><dt>Session topic or title</dt><dd>${esc(meta.topic||'')}</dd></div>
+      <div><dt>Date</dt><dd>${esc(fmt(meta.date))}</dd></div>
+    </dl></div>
+    <p class="guide">Please take the time to give constructive feedback. It helps the presenter and the teaching organisation improve future events. Your answers are anonymous.</p>
+    <form id="f" novalidate>
+      ${QUESTIONS.map(([k,q],i)=>`<label class="q" for="q-${k}"><b>${i+1}</b>${esc(q)}</label><textarea id="q-${k}" name="${k}" maxlength="3000"></textarea>`).join('')}
+      <button type="submit" id="send">Send feedback</button>
+      <div id="err" class="err" role="alert"></div>
+      <p class="note">Anonymous · only the presenter can read responses</p>
+    </form>`;
+  document.getElementById('f').addEventListener('submit', submit);
+}
+async function submit(ev){
+  ev.preventDefault();
+  const btn=document.getElementById('send'), err=document.getElementById('err');
+  const body={ts:Date.now()}; let any=false;
+  QUESTIONS.forEach(([k])=>{ const v=document.getElementById('q-'+k).value.trim(); if(v){ body[k]=v.slice(0,3000); any=true; } });
+  if(!any){ err.textContent='Please answer at least one question.'; return; }
+  btn.disabled=true; btn.textContent='Sending…'; err.textContent='';
+  try{
+    const r=await fetch(`${DB}/arcpFeedback/${sid}/responses.json`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok) throw new Error(r.status===401||r.status===403?'closed':'http '+r.status);
+    try{ localStorage.setItem('fb_done_'+sid,'1'); }catch(e){}
+    message('Thank you','Your feedback has been sent.');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){
+    btn.disabled=false; btn.textContent='Send feedback';
+    err.textContent = e.message==='closed' ? 'Feedback for this session has closed.' : 'Could not send. Check your connection and try again.';
+  }
+}
+start();
+</script>
+</body>
+</html>
