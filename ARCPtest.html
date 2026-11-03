@@ -739,6 +739,7 @@ body.focus #boot-loader path{stroke:var(--text)}
 .fb-qr{width:168px;height:168px;background:#fff;border-radius:16px;padding:10px;border:1px solid var(--card-line)}
 .fb-qr svg{width:100%;height:100%;display:block}
 .fb-share-side .input{font-size:13px}
+.fb-style{display:flex;align-items:center;gap:8px}.fb-style .input{width:auto;padding:8px 12px}
 .fb-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .fb-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 6px 6px 12px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);font:400 13px var(--font-mono);color:var(--text)}
 .fb-chip button{width:24px;height:24px;border-radius:50%;border:0;background:var(--bg4);color:var(--text);cursor:pointer;font-size:14px;line-height:1}
@@ -2382,8 +2383,7 @@ function fbRenderModal(){
   if(active==='fb-paste') document.getElementById('fb-paste')?.focus();
 }
 
-function fbPrintSummary(){
-  const e=fbEntry(fbState.entryId); const resp=fbState.responses||[]; if(!e||!resp.length) return;
+function fbHtmlEditorial(e, resp){
   const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const gen=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
   const qs=FB_QUESTIONS.map((q,i)=>{ const ans=resp.map(r=>r[q.k]).filter(a=>a&&String(a).trim());
@@ -2422,12 +2422,126 @@ blockquote{background:#fff;border:1px solid #E8E2DA;border-radius:12px;padding:1
 ${qs}
 <div class="ft"><span>Teaching feedback summary · ${esc(state.profile?.name||'')}</span><span>Generated ${gen}</span></div>
 </div></body></html>`;
+  return html;
+}
+
+// ── Summary PDF styles ──
+const FB_STYLES=[['editorial','Editorial summary'],['official','JRCPTB form (combined)'],['individual','One form per respondent'],['table','Response grid']];
+function fbGetStyle(){ try{ return localStorage.getItem('fb_pdf_style')||'editorial'; }catch(e){ return 'editorial'; } }
+function fbSetStyle(v){ try{ localStorage.setItem('fb_pdf_style',v); }catch(e){} }
+const fbEsc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function fbDocShell(title, css, body){
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${fbEsc(title)}</title><style>${css}
+.toolbar{text-align:right;margin-bottom:16px}.toolbar button{font:600 13px Arial,Helvetica,sans-serif;background:#1B1A19;color:#fff;border:0;padding:10px 18px;border-radius:999px;cursor:pointer}
+@media print{.toolbar{display:none}}</style></head><body>${body}</body></html>`;
+}
+// 1. Official JRCPTB layout: the original form, every answer listed under its question
+function fbHtmlOfficial(e, resp){
+  const gen=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+  const rows=FB_QUESTIONS.map(q=>{ const ans=resp.map(r=>r[q.k]).filter(a=>a&&String(a).trim());
+    return `<tr><th>${fbEsc(q.q)}</th></tr><tr><td>${ans.length?`<ul>${ans.map(a=>`<li>${fbEsc(a)}</li>`).join('')}</ul>`:'<span class="none">No comments</span>'}</td></tr>`; }).join('');
+  const css=`*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:10.5pt;line-height:1.45;margin:0;padding:28px}
+.page{max-width:760px;margin:0 auto}
+h1{font-size:17pt;text-align:center;margin:0 0 14px}
+h2{font-size:11pt;margin:18px 0 6px}
+.guide{font-size:9.5pt;border:1px solid #000;padding:8px 10px}
+table{width:100%;border-collapse:collapse;margin-top:6px}
+th,td{border:1px solid #000;padding:7px 9px;text-align:left;vertical-align:top}
+.det th{width:34%;background:#f2f2f2;font-weight:bold}
+.ev th{background:#d9d9d9;font-weight:bold}
+.ev td{min-height:40px}
+ul{margin:0;padding-left:18px}li{margin:2px 0;white-space:pre-wrap}
+.none{color:#555;font-style:italic}
+.meta{font-size:9pt;margin-top:10px}
+.ft{font-size:8.5pt;color:#444;margin-top:18px;display:flex;justify-content:space-between}
+@page{margin:14mm}@media print{body{padding:0}}`;
+  return fbDocShell('Evaluation form — '+(e.topic||''), css, `<div class="page"><div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div>
+<h1>Evaluation Form for teaching and presentations</h1>
+<div class="guide"><b>Guidance notes.</b> This form is for use by the audience. Responses below were collected anonymously and are combined from all attendees who completed the form.</div>
+<h2>Detail of event</h2>
+<table class="det"><tr><th>Name of presenter/teacher:</th><td>${fbEsc(state.profile?.name||'')}</td></tr><tr><th>Session topic or title:</th><td>${fbEsc(e.topic||e.type||'')}</td></tr><tr><th>Date:</th><td>${fbEsc(fmtDate(e.date))}</td></tr></table>
+<h2>EVALUATION — ${resp.length} ${resp.length===1?'response':'responses'}</h2>
+<table class="ev">${rows}</table>
+<div class="meta">${e.audience?'Audience: '+fbEsc(e.audience)+' · ':''}${e.type?'Session type: '+fbEsc(e.type):''}</div>
+<div class="ft"><span>Collected electronically via Outcome1</span><span>Generated ${gen}</span></div></div>`);
+}
+// 2. One copy of the form per respondent, each on its own page
+function fbHtmlIndividual(e, resp){
+  const pages=resp.map((r,i)=>`<section class="sheet"><div class="top"><h1>Evaluation Form for teaching and presentations</h1><span class="no">Response ${i+1} of ${resp.length}</span></div>
+<table class="det"><tr><th>Name of presenter/teacher:</th><td>${fbEsc(state.profile?.name||'')}</td></tr><tr><th>Session topic or title:</th><td>${fbEsc(e.topic||e.type||'')}</td></tr><tr><th>Date:</th><td>${fbEsc(fmtDate(e.date))}</td></tr></table>
+<h2>EVALUATION — please comment below</h2>
+<table class="ev">${FB_QUESTIONS.map(q=>`<tr><th>${fbEsc(q.q)}</th></tr><tr><td>${r[q.k]?fbEsc(r[q.k]):'<span class="none">—</span>'}</td></tr>`).join('')}</table>
+<div class="ft">Submitted ${r.ts?new Date(r.ts).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):''} · anonymous</div></section>`).join('');
+  const css=`*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#eee;font-size:10.5pt;line-height:1.45;margin:0;padding:24px}
+.sheet{max-width:760px;margin:0 auto 24px;background:#fff;padding:28px 32px;box-shadow:0 2px 12px rgba(0,0,0,.12);break-after:page}
+.sheet:last-child{break-after:auto}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:14px}
+h1{font-size:15pt;margin:0}.no{font-size:9pt;color:#444;white-space:nowrap}
+h2{font-size:11pt;margin:18px 0 6px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #000;padding:7px 9px;text-align:left;vertical-align:top}
+.det th{width:34%;background:#f2f2f2}
+.ev th{background:#d9d9d9}.ev td{height:62px;white-space:pre-wrap}
+.none{color:#777}
+.ft{font-size:8.5pt;color:#444;margin-top:12px}
+@page{margin:14mm}@media print{body{background:#fff;padding:0}.sheet{box-shadow:none;padding:0;margin:0}}`;
+  return fbDocShell('Evaluation forms — '+(e.topic||''), css, `<div class="toolbar" style="max-width:760px;margin:0 auto 16px"><button onclick="window.print()">Print / Save as PDF</button></div>${pages}`);
+}
+// 3. Grid: respondents down, questions across (landscape)
+function fbHtmlTable(e, resp){
+  const gen=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+  const short=['Setting & facilities','Objectives identified & met','Delivery & handouts','Useful / change of practice','Other comments'];
+  const css=`*{box-sizing:border-box}body{font-family:'Hanken Grotesk',Arial,Helvetica,sans-serif;color:#262424;background:#F7F4F2;font-size:9.5pt;line-height:1.4;margin:0;padding:24px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.hd{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;border-bottom:2px solid #262424;padding-bottom:12px;margin-bottom:14px}
+h1{font-family:Georgia,serif;font-weight:400;font-size:24pt;margin:0;letter-spacing:-.01em}
+.sub{font:400 9pt ui-monospace,Menlo,monospace;color:#6E6762;margin-top:4px}
+.pill{background:#2F6B4C;color:#fff;border-radius:999px;padding:8px 14px;font-weight:600;white-space:nowrap}
+table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid #E3DDD5;border-radius:12px;overflow:hidden;table-layout:fixed}
+th{background:#1B2C22;color:#F7F4F2;text-align:left;padding:9px 10px;font-size:8.5pt;font-weight:600;vertical-align:bottom}
+th:first-child,td:first-child{width:44px;text-align:center}
+td{padding:9px 10px;border-top:1px solid #E3DDD5;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere}
+tr:nth-child(even) td{background:#FBFAF8}
+td.n{font:600 9pt ui-monospace,Menlo,monospace;color:#2F7A50}
+.empty{color:#B5ADA5}
+.ft{display:flex;justify-content:space-between;font:400 8pt ui-monospace,Menlo,monospace;color:#6E6762;margin-top:12px}
+@page{size:A4 landscape;margin:10mm}@media print{body{background:#fff;padding:0}}`;
+  return fbDocShell('Feedback grid — '+(e.topic||''), css, `<div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div>
+<div class="hd"><div><h1>${fbEsc(e.topic||e.type||'Teaching session')}</h1><div class="sub">${fbEsc(state.profile?.name||'')} · ${fbEsc(fmtDate(e.date))}${e.audience?' · '+fbEsc(e.audience):''}</div></div><span class="pill">${resp.length} ${resp.length===1?'response':'responses'}</span></div>
+<table><thead><tr><th>#</th>${short.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>
+${resp.map((r,i)=>`<tr><td class="n">${i+1}</td>${FB_QUESTIONS.map(q=>`<td>${r[q.k]?fbEsc(r[q.k]):'<span class="empty">—</span>'}</td>`).join('')}</tr>`).join('')}
+</tbody></table>
+<div class="ft"><span>Evaluation form for teaching and presentations · response grid</span><span>Generated ${gen}</span></div>`);
+}
+function fbPrintSummary(style){
+  const e=fbEntry(fbState.entryId); const resp=fbState.responses||[]; if(!e||!resp.length) return;
+  style=style||'official';
+  const html = style==='official'?fbHtmlOfficial(e,resp) : style==='individual'?fbHtmlIndividual(e,resp) : style==='table'?fbHtmlTable(e,resp) : fbHtmlEditorial(e,resp);
   const w=window.open('','_blank'); if(!w){ alert('Please allow pop-ups to open the summary.'); return; }
   w.document.write(html); w.document.close();
 }
-window.openFeedback=openFeedback; window.closeFeedback=closeFeedback; window.fbShowQrFull=fbShowQrFull; window.fbCopy=fbCopy; window.fbToggleOpen=fbToggleOpen; window.fbAddEmails=fbAddEmails; window.fbRemoveEmail=fbRemoveEmail; window.fbMailto=fbMailto; window.fbLoadResponses=fbLoadResponses; window.fbPrintSummary=fbPrintSummary; window.fbSaveEmails=fbSaveEmails; window.fbRenderModal=fbRenderModal;
 
-function render(){ if(!state.profile){ initOnboarding(); return; } syncLogbookTargets(); setTheme(); document.getElementById('app').classList.add('ready'); document.getElementById('gate').classList.remove('show'); renderHeader(); renderTabs(); const trialExpired = renderBetaTrial(); if(trialExpired){ updateReadiness(); return; } if(currentTab==='today') renderToday(); if(currentTab==='roadmap') renderRoadmap(); if(currentTab==='specialty') renderSpecialty(); if(currentTab==='gim') renderGIM(); if(currentTab==='logbook') renderLogbookV2(); if(currentTab==='logbook-form') renderLogbookFormWrap(); if(currentTab==='admin') renderAdmin(); if(currentTab==='overview') renderOverview(); if(currentTab==='arcp') renderArcp(); updateReadiness(); forceLiveStatus(); maybeAutoRevealWrapped(); }
+// ── Response counts refresh automatically (no need to open each session) ──
+let __fbCountsAt=0, __fbCountsBusy=false;
+async function fbRefreshCounts(force){
+  if(__fbCountsBusy || !fbOnline() || typeof remoteReady!=='undefined' && !remoteReady) return;
+  if(!force && Date.now()-__fbCountsAt<30000) return;
+  const list=entries('teaching').filter(e=>e.feedbackId); if(!list.length) return;
+  __fbCountsBusy=true; __fbCountsAt=Date.now(); let changed=false;
+  try{
+    await Promise.all(list.map(async e=>{
+      try{ const snap=await window.ARCP_FB.get(fbRef('arcpFeedback/'+e.feedbackId+'/responses')); const n=Object.keys(snap.val()||{}).length;
+        if(e.feedbackCount!==n){ e.feedbackCount=n; e.updatedAt=Date.now(); changed=true; } }catch(err){}
+    }));
+    if(changed){ saveEntries('teaching', entries('teaching')); if(!document.getElementById('fb-modal') && (currentTab==='logbook'||currentTab==='logbook-form')) (typeof renderWhenIdle==='function'?renderWhenIdle:render)(); }
+  }finally{ __fbCountsBusy=false; }
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') fbRefreshCounts(); });
+window.addEventListener('firebase-load',()=>setTimeout(()=>fbRefreshCounts(),1500));
+setInterval(()=>{ if(document.visibilityState==='visible' && (currentTab==='logbook'||currentTab==='logbook-form')) fbRefreshCounts(); },60000);
+
+window.openFeedback=openFeedback; window.closeFeedback=closeFeedback; window.fbShowQrFull=fbShowQrFull; window.fbCopy=fbCopy; window.fbToggleOpen=fbToggleOpen; window.fbAddEmails=fbAddEmails; window.fbRemoveEmail=fbRemoveEmail; window.fbMailto=fbMailto; window.fbLoadResponses=fbLoadResponses; window.fbPrintSummary=fbPrintSummary; window.fbSetStyle=fbSetStyle; window.fbRefreshCounts=fbRefreshCounts; window.fbSaveEmails=fbSaveEmails; window.fbRenderModal=fbRenderModal;
+
+function render(){ if(!state.profile){ initOnboarding(); return; } syncLogbookTargets(); setTheme(); document.getElementById('app').classList.add('ready'); document.getElementById('gate').classList.remove('show'); renderHeader(); renderTabs(); const trialExpired = renderBetaTrial(); if(trialExpired){ updateReadiness(); return; } if(currentTab==='today') renderToday(); if(currentTab==='roadmap') renderRoadmap(); if(currentTab==='specialty') renderSpecialty(); if(currentTab==='gim') renderGIM(); if(currentTab==='logbook'){ renderLogbookV2(); try{ fbRefreshCounts(); }catch(e){} } if(currentTab==='logbook-form') renderLogbookFormWrap(); if(currentTab==='admin') renderAdmin(); if(currentTab==='overview') renderOverview(); if(currentTab==='arcp') renderArcp(); updateReadiness(); forceLiveStatus(); maybeAutoRevealWrapped(); }
 
 function betaTrialInfo(){
   // Owner exemption: the developer account is never gated by the trial.
