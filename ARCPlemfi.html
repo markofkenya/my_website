@@ -936,6 +936,17 @@ body.w-detail #main{padding-top:0!important}
 .w-card .r{text-align:right}
 .w-card b{display:block;font:800 31px/1.05 var(--font);letter-spacing:-.035em}
 .w-card small{display:block;font:500 15px/1.3 var(--font);margin-top:7px;letter-spacing:-.005em}
+.w-lrow,.w-rrow{display:flex;align-items:center;gap:10px}
+.w-lrow{flex-wrap:wrap;row-gap:6px}
+.w-rrow{justify-content:flex-end;flex-wrap:wrap;row-gap:6px}
+.w-card.dark .l{flex-shrink:0}
+.w-card.dark .w-lrow{flex-wrap:nowrap}
+.w-cpill{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;border:2px solid #1E1E1E;background:rgba(255,255,255,.45);color:#1E1E1E;font:700 14px/1 var(--font);letter-spacing:-.005em;white-space:nowrap;flex:none}
+.w-cpill.done{background:#1E1E1E;color:#D3F69C}
+.w-cpill.warn{background:#EE9F98;color:#1E1E1E}
+.w-card.dark .w-cpill{background:transparent;color:#F4F3EE;border-color:rgba(244,243,238,.55)}
+.w-card.dark .w-cpill.warn{background:#EE9F98;color:#1E1E1E;border-color:#EE9F98}
+.w-ring{width:11px;height:11px;border-radius:50%;border:2px solid currentColor;flex:none}
 .w-front{cursor:default;display:block;padding:24px 24px 26px}
 .w-front:hover{transform:none}
 .w-qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -1032,6 +1043,8 @@ div.w-row{cursor:default}
   .w-card{padding:18px 20px 56px;border-radius:30px;margin-top:-36px}
   .w-card b,.w-qt{font-size:27px}
   .w-card small{font-size:14px}
+  .w-cpill{height:27px;padding:0 10px;font-size:13px}
+  .w-lrow,.w-rrow{gap:8px}
   .w-front{padding:20px 20px 22px}
   .w-qlabel{font-size:16px;margin:20px 0 8px}
   .w-sel{font-size:17px;padding:11px 40px 11px 16px;background-position:right 13px center}
@@ -5760,6 +5773,421 @@ window.updateReadiness=updateReadiness; window.renderGIM=renderGIM; window.rende
 try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',e); }
 
 </script>
+<script id="wallet-reports">
+/* ═══ Outcome1 · Reports ported from the ARCP app (Nov 2026)
+   Specialty and GIM "Summary of Training", combined Logbook Report, CPD Diary.
+   Read-only: they only read state.logbook and open a printable document. ═══ */
+(function(){
+  const E = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const isGim = e => e.scope==='gim';
+  const lb = (k, scope) => entries(k).filter(e => scope==='gim' ? isGim(e) : scope==='spec' ? !isGim(e) : true).slice();
+  const asc = k => (a,b)=>String(a[k]||'').localeCompare(String(b[k]||''));
+  const desc = k => (a,b)=>String(b[k]||'').localeCompare(String(a[k]||''));
+  const H = arr => arr.reduce((a,e)=>a+(parseFloat(e.hours)||0),0);
+  const r1 = n => Math.round((Number(n)||0)*10)/10;
+  const isOnline = e => e.type==='E-learning / online module' || e.type==='Online CPD';
+  const prof = () => state.profile||{};
+  const who = () => prof().name || 'Trainee';
+  const cctTxt = () => prof().cctDate ? new Date(prof().cctDate).toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : 'Dec 2030';
+  const isThisYear = e => inCurrentYear(e);
+  const safeUrl = u => /^https?:\/\//i.test(String(u||'')) ? E(u) : '';
+
+  // ── Summary of Training (A4 landscape, JRCPTB-style tables) ──
+  const sotDate = d => { if(!d) return ''; const p=String(d).split('-'); return p.length===3 ? `${p[2]}/${p[1]}/${p[0].slice(2)}` : d; };
+  const sotNum = (v,dp) => { const n=parseFloat(v); if(!isFinite(n)) return ''; const f=Math.pow(10,dp||0); return Math.round(n*f)/f; };
+  function sotTable(head, rows, opts){
+    opts=opts||{}; const num=opts.num||[], bold=opts.bold||[], raw=opts.raw||[];
+    if(!rows.length) return `<div class="empty">No entries logged.</div>`;
+    const cell=(c,i)=>`<td${num.includes(i)?' class="num"':''}${bold.includes(i)?' style="font-weight:700"':''}>${raw.includes(i)?c:E(c)}</td>`;
+    const colgroup=opts.cols?`<colgroup>${opts.cols.map(w=>`<col style="width:${w}">`).join('')}</colgroup>`:'';
+    let html=`<table${opts.cls?` class="${opts.cls}"`:''}>${colgroup}<thead><tr>${head.map((h,i)=>`<th${num.includes(i)?' class="num"':''}>${E(h)}</th>`).join('')}</tr></thead><tbody>`;
+    html+=rows.map(r=>`<tr>${r.map(cell).join('')}</tr>`).join('');
+    if(opts.total){ const t=opts.total; html+=`<tr class="total">${head.map((_,i)=> i===t.labelCol?`<td class="num">${E(t.label||'Total')}</td>` : i===t.valueCol?`<td class="num tv">${E(t.value)}</td>` : '<td></td>').join('')}</tr>`; }
+    return html+`</tbody></table>`;
+  }
+  const sotSection = (title, summaryHtml, bodyHtml, notes) =>
+    `<section class="sheet"><h2>${E(title)}</h2>${summaryHtml?`<div class="summary">${summaryHtml}</div>`:''}${bodyHtml}${notes&&notes.length?`<ul class="notes">${notes.map(n=>`<li>${E(n)}</li>`).join('')}</ul>`:''}</section>`;
+  function sotOpen(title, stream, sectionsHtml){
+    const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+    const accent=stream==='spec'?'#5b21b6':'#003087', tint=stream==='spec'?'#ece6f8':'#dfe6f3';
+    const streamLabel=stream==='spec'?specCfg().label:'General Internal Medicine';
+    const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${E(title)} — ${E(who())}</title>
+<style>
+  @page{size:A4 landscape;margin:12mm}
+  *{box-sizing:border-box}
+  body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0;background:#eee;font-size:9.5pt}
+  .page{background:#fff;max-width:297mm;margin:16px auto;padding:14mm 12mm;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+  .toolbar{max-width:297mm;margin:16px auto 0;display:flex;gap:8px;justify-content:flex-end;padding:0 8px}
+  .toolbar button{font:600 10pt Arial;padding:8px 16px;border:none;border-radius:3px;cursor:pointer;background:${accent};color:#fff}
+  header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-bottom:2.5px solid ${accent};padding-bottom:8px;margin-bottom:6px}
+  h1{font-size:14pt;margin:0;color:${accent}}
+  .who{font-size:9pt;color:#444;text-align:right;line-height:1.5}
+  h2{font-size:10.5pt;margin:18px 0 6px;color:${accent}}
+  .kicker{font-size:12pt;font-weight:700;color:${accent};margin:20px 0 -8px;padding-bottom:4px;border-bottom:1px solid ${accent};text-transform:uppercase;letter-spacing:.06em;break-after:avoid}
+  h3{font-size:9pt;margin:10px 0 4px;color:#333;text-transform:uppercase;letter-spacing:.06em}
+  .summary{font-size:9pt;color:#222;background:#f6f7fa;border-left:3px solid ${accent};padding:6px 10px;margin:0 0 8px}
+  .summary strong{color:${accent}}
+  .summary .warn{color:#b42318;font-weight:700}
+  table{width:100%;border-collapse:collapse;table-layout:auto}
+  th{background:${tint};border:1px solid #9aa3b8;padding:5px;font-size:7.8pt;text-align:left;vertical-align:bottom;font-weight:700;line-height:1.25}
+  td{border:1px solid #c3c9d6;padding:4px 5px;font-size:8.8pt;vertical-align:top;overflow-wrap:anywhere}
+  .num{text-align:right;white-space:nowrap}
+  th.num{white-space:normal}
+  tr.total td{border:none;font-weight:700;padding-top:6px}
+  tr.total td.tv{border:1px solid #9aa3b8;background:#f4f6fb}
+  table.fixed{table-layout:fixed}
+  table.fixed td,table.fixed th{overflow-wrap:break-word;word-break:normal}
+  table.tally{width:auto;min-width:55%;margin-bottom:10px}
+  table.tally tr.total td{border-top:1.5px solid #333}
+  .empty{font-style:italic;color:#888;padding:6px 0}
+  .notes{margin:6px 0 0;padding:0;list-style:none;font-size:8pt;color:#444;line-height:1.5}
+  .sheet{break-inside:auto}
+  h2,h3,.summary{break-after:avoid}
+  tr{break-inside:avoid}
+  thead{display:table-header-group}
+  footer{margin-top:18px;font-size:7.5pt;color:#888;display:flex;justify-content:space-between}
+  @media screen and (max-width:700px){.page{padding:16px 12px;margin:8px}.scroll{overflow-x:auto}}
+  @media print{body{background:#fff}.toolbar{display:none}.page{box-shadow:none;margin:0;padding:0;max-width:none}}
+</style></head><body>
+<div class="toolbar"><button onclick="window.print()">⎙ Print / Save as PDF</button></div>
+<div class="page">
+  <header>
+    <h1>${E(title)}</h1>
+    <div class="who"><b>${E(who())}</b> · ${E(streamLabel)}<br>Current training year: ${E(currentYear)} · Generated ${E(today)}</div>
+  </header>
+  ${sectionsHtml}
+  <footer><span>${E(title)}</span><span>${E(who())}</span></footer>
+</div></body></html>`;
+    openReportDoc(html);
+  }
+  function sotProcSection(title, scope){
+    const yr=currentYear;
+    const procs=lb('procedures',scope).sort(asc('date'));
+    const tally=new Map();
+    procs.forEach(e=>{ const n=normProcName((e.type||'Other').trim())||'Other'; const r=tally.get(n)||{n:0,d:0,y:0}; r.n++; if(e.dops==='Yes') r.d++; if(isThisYear(e)) r.y++; tally.set(n,r); });
+    const tallyRows=[...tally.entries()].sort((a,b)=>b[1].n-a[1].n||a[0].localeCompare(b[0])).map(([n,r])=>[n, r.y, r.n, r.d||'—']);
+    const dopsTotal=procs.filter(e=>e.dops==='Yes').length;
+    const body=(tallyRows.length?`<h3>By procedure</h3>`+sotTable(['Procedure',yr,'All years','DOPS signed'], tallyRows, {num:[1,2,3], bold:[2], cls:'tally', total:{labelCol:0, valueCol:2, value:procs.length}}):'')
+      +(procs.length?`<h3>All procedures</h3>`:'')
+      +sotTable(['Date','Procedure','Supervisor','DOPS','Year'], procs.map(e=>[sotDate(e.date), normProcName(e.type)||'', e.supervisor||'', e.dops==='Yes'?'✓ Yes':(e.dops||'No'), e.year||'']), {});
+    return sotSection(title, `${E(yr)}: <strong>${procs.filter(isThisYear).length}</strong> · All years: <strong>${procs.length}</strong> · DOPS signed: ${dopsTotal}`, body, []);
+  }
+
+  window.printGimSummary = function(){
+    const S=[];
+    // Acute take — the same WTE-adjusted rows as the Firth calculator on the ARCP screen
+    const fr=firthRows();
+    const acuteRows=fr.map(r=>[r.hospital, sotDate(r.start), sotDate(r.end), sotNum(r.post,1), sotNum(r.take,1), sotNum(r.takes,1), sotNum(r.pts,1), r.est, r.es||'']);
+    const acuteTotal=fr.reduce((a,r)=>a+(Number(r.est)||0),0);
+    S.push(`<div class="kicker">Firth Calculator</div>`+sotSection('Summary calculation of acute medical take and general medical experience',
+      `Estimated total: <strong>${acuteTotal}</strong> / 750 patients${acuteTotal>=750?' ✓':''} · ${fr.length} placement${fr.length===1?'':'s'}`,
+      `<div class="scroll">${sotTable(['Hospital name','Start Date (DD/MM/YY)','End Date (DD/MM/YY)','WTE months in post (1)','WTE months on take rota (1)','Average number of take shifts per WTE month','Average number of take patients seen by you each shift (2)','Estimated number of patients seen by you on acute take','Name of educational supervisor who can verify estimates'],
+        acuteRows, {num:[3,4,5,6,7], bold:[7], cls:'fixed', cols:['17%','8%','8%','8%','8%','10%','11%','11%','19%'], total:{labelCol:6, valueCol:7, value:acuteTotal}})}</div>`,
+      ['Note - minimum 750 patients seen before CCT.',
+       'Note - (1) Whole time equivalent months: calendar months in post × WTE (1 = full time, 0.8 = 80% LTFT).',
+       "Note - (2) 'Seen by' means having sufficient involvement for this to be recorded in the patient's notes"]));
+
+    // Ward cover
+    const ward=entries('ward').slice().sort(asc('start'));
+    const wardTotal=r1(ward.reduce((a,e)=>a+(parseFloat(e.months)||0),0));
+    S.push(sotSection('GIM ward cover', `Total: <strong>${wardTotal}</strong> / 12 months${wardTotal>=12?' ✓':''} · ${ward.length} placement${ward.length===1?'':'s'}`,
+      sotTable(['Hospital','Start Date (DD/MM/YY)','End Date (DD/MM/YY)','Months','Year','Supervisor'], ward.map(e=>[e.hospital||'', sotDate(e.start), sotDate(e.end), sotNum(e.months,1), e.year||'', e.supervisor||'']), {num:[3], total:{labelCol:2, valueCol:3, value:wardTotal}}),
+      ['Note - 12 months of GIM ward cover required by CCT.']));
+
+    // GIM clinics (target 20, max 10 SDEC)
+    const clinics=lb('clinics','gim').sort(asc('date'));
+    const CAP=10, sdec=clinics.filter(e=>(e.type||'').toLowerCase().includes('sdec')).length;
+    const counted=clinics.length-Math.max(0,sdec-CAP);
+    S.push(sotSection('GIM outpatient clinics',
+      `Counted towards target: <strong>${counted}</strong> / 20${counted>=20?' ✓':''} · ${clinics.length} logged · Medical SDEC: ${sdec} (max ${CAP} count)${sdec>CAP?` · <span class="warn">${sdec-CAP} SDEC over the cap, not counted</span>`:''}`,
+      sotTable(['#','Date','Clinic type','Hospital','Supervisor','Patients','Year'], clinics.map((e,i)=>[i+1, sotDate(e.date), e.type||'', e.hospital||'', e.supervisor||'', e.patients||'', e.year||'']), {num:[0,5]}),
+      ['Note - minimum 20 GIM outpatient clinics before CCT, of which no more than 10 may be Medical SDEC.']));
+
+    // GIM teaching (external CPD; online capped at 15h)
+    const cpd=lb('cpd','gim').sort(asc('date'));
+    const onlineHrs=H(cpd.filter(isOnline)), onlineCapped=Math.min(onlineHrs,15);
+    const extHrs=H(cpd.filter(e=>cpdIsExternal(e)&&!isOnline(e))), countedCpd=extHrs+onlineCapped;
+    const lab=e=>isOnline(e)?'Online':cpdIsExternal(e)?'External':'Internal';
+    S.push(sotSection('GIM teaching',
+      `Total external GIM hours: <strong>${countedCpd.toFixed(1)}h</strong> / 100h${countedCpd>=100?' ✓':''} · External: ${extHrs.toFixed(1)}h · Online: ${onlineCapped.toFixed(1)}h / 15h max${onlineHrs>15?` (${onlineHrs.toFixed(1)}h logged)`:''}`,
+      sotTable(['Date','Type','Title / Event','Counts as','Hours','Year'], cpd.map(e=>[sotDate(e.date), e.type||'', e.title||'', lab(e), e.hours?sotNum(e.hours,1):'', e.year||'']), {num:[4]}),
+      ['Note - 100 hours of external GIM CPD by CCT; online/e-learning counts up to 15 hours. Internal teaching (grand rounds, departmental) is listed but not counted.']));
+
+    // GIM procedures
+    S.push(sotProcSection('GIM procedures','gim'));
+
+    // Simulation
+    const sim=entries('simulation').slice().sort(asc('date'));
+    const simTotal=H(sim), simSt7=H(sim.filter(e=>e.year==='ST7'));
+    S.push(sotSection('Simulation', `Total: <strong>${simTotal.toFixed(1)}h</strong> / 12h${simTotal>=12?' ✓':''} · ST7: ${simSt7.toFixed(1)}h / 4h minimum`,
+      sotTable(['Date','Course','Title / Session','Hospital / Venue','Hours','Year'], sim.map(e=>[sotDate(e.date), e.course||'', e.title||'', e.hospital||'', e.hours?sotNum(e.hours,1):'', e.year||'']), {num:[4], total:{labelCol:3, valueCol:4, value:simTotal.toFixed(1)}}),
+      ['Note - 12 hours of simulation by CCT, at least 4 hours of which in ST7.']));
+
+    sotOpen('GIM — Summary of Training', 'gim', S.join(''));
+  };
+
+  window.printSpecSummary = function(){
+    const sp=specCfg(), yr=currentYear, S=[];
+    S.push(sotProcSection(`${sp.short} procedures`,'spec'));
+
+    const clinics=lb('clinics','spec').sort(asc('date'));
+    const pts=clinics.reduce((a,e)=>a+(parseInt(e.patients,10)||0),0);
+    const types={}; clinics.forEach(e=>{ const t=e.type||'Other'; types[t]=(types[t]||0)+1; });
+    const typeLine=Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`${E(t)} ×${n}`).join(' · ');
+    S.push(sotSection(`${sp.short} clinics`, `${E(yr)}: <strong>${clinics.filter(isThisYear).length}</strong> · All years: <strong>${clinics.length}</strong> · ${pts} patients${typeLine?`<br>${typeLine}`:''}`,
+      sotTable(['#','Date','Clinic type','Hospital','Supervisor','Patients','Year'], clinics.map((e,i)=>[i+1, sotDate(e.date), e.type||'', e.hospital||'', e.supervisor||'', e.patients||'', e.year||'']), {num:[0,5], total:{label:'Patients', labelCol:4, valueCol:5, value:pts}}), []));
+
+    const cpd=lb('cpd','spec').sort(asc('date'));
+    const hrsAll=H(cpd), hrsYr=H(cpd.filter(isThisYear));
+    S.push(sotSection(`${sp.short} teaching`, `${E(yr)}: <strong>${hrsYr.toFixed(1)}h</strong> · All years: <strong>${hrsAll.toFixed(1)}h</strong> · ${cpd.length} session${cpd.length===1?'':'s'}`,
+      sotTable(['Date','Type','Title / Event','Hours','Year'], cpd.map(e=>[sotDate(e.date), e.type||'', e.title||'', e.hours?sotNum(e.hours,1):'', e.year||'']), {num:[3], total:{labelCol:2, valueCol:3, value:hrsAll.toFixed(1)}}), []));
+
+    const tp=entries('teaching').slice().sort(asc('date'));
+    const tpSigned=tp.filter(e=>/signed off|^yes/i.test(String(e.signoff||''))).length;
+    const tpObserved=tp.filter(e=>String(e.supervisor||'').trim()).length;
+    S.push(sotSection('Teaching participation', `${E(yr)}: <strong>${tp.filter(isThisYear).length}</strong> · All years: <strong>${tp.length}</strong> session${tp.length===1?'':'s'} · Observed: ${tpObserved} · Signed off: ${tpSigned}`,
+      sotTable(['Date','Type','Topic','Audience','Observed by','Sign-off','Year'], tp.map(e=>[sotDate(e.date), e.type||'', e.topic||'', e.audience||'', e.supervisor||'', e.signoff||'', e.year||'']), {}), []));
+
+    sotOpen(`${sp.short} — Summary of Training`, 'spec', S.join(''));
+  };
+
+  // ── Combined Logbook Report (specialty + GIM, A4 portrait) ──
+  window.wLogbookReport = function(){
+    const sp=specCfg(), yr=currentYear, SPC='#7c3aed';
+    const fmt=d=>{ if(!d) return '—'; const p=String(d).split('-'); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:E(d); };
+    const gimClinics=lb('clinics','gim').sort(desc('date'));
+    const specClinics=lb('clinics','spec').filter(isThisYear).sort(desc('date'));
+    const specProcs=lb('procedures','spec').filter(isThisYear).sort(desc('date'));
+    const gimProcs=lb('procedures','gim').filter(isThisYear).sort(desc('date'));
+    const specCpd=lb('cpd','spec').filter(isThisYear).sort(desc('date'));
+    const gimCpd=lb('cpd','gim').sort(desc('date'));
+    const teaching=entries('teaching').filter(isThisYear).slice().sort(desc('date'));
+    const sim=entries('simulation').slice().sort(desc('date'));
+    const acute=entries('acute').slice().sort(desc('start'));
+    const ward=entries('ward').slice().sort(desc('start'));
+    const fr=firthRows(); const frById=new Map(fr.map(r=>[String(r.id),r]));
+    const totalSim=H(sim), st7Sim=H(sim.filter(e=>e.year==='ST7'));
+    const totalAcute=acute.reduce((a,e)=>a+(parseFloat(e.estimated)||0),0);
+    const totalWard=r1(ward.reduce((a,e)=>a+(parseFloat(e.months)||0),0));
+    const onlineHrs=H(gimCpd.filter(isOnline)), onlineCapped=Math.min(onlineHrs,15);
+    const extHrs=H(gimCpd.filter(e=>cpdIsExternal(e)&&!isOnline(e))), countedTotal=extHrs+onlineCapped;
+    const specCpdHrs=H(specCpd), gimAllHrs=H(gimCpd);
+    const sdecN=gimClinics.filter(e=>(e.type||'').toLowerCase().includes('sdec')).length;
+    const specPts=specClinics.reduce((a,e)=>a+(parseInt(e.patients,10)||0),0);
+    const dops=e=>e.dops==='Yes'?'<span class="dops-yes">✓ Yes</span>':'No';
+
+    // rows hold pre-escaped HTML
+    const tbl=(heads,rows,ac)=>{
+      if(!rows.length) return `<p class="empty-note">No entries logged</p>`;
+      return `<table><thead style="--ac:${ac}"><tr>${heads.map(h=>`<th>${E(h)}</th>`).join('')}</tr></thead><tbody>${rows.map((r,i)=>`<tr class="${i%2===0?'even':'odd'}">${r.map(c=>`<td>${c===''||c==null?'—':c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    };
+    const secHead=(t,s)=>`<div class="section-head"><h2 class="${s==='gim'?'gim':s==='spec'?'renal':''}">${E(t)}</h2><div class="rule"></div></div>`;
+    const badge=(t,c)=>`<span class="stream-badge ${c}">${E(t)}</span>`;
+    const subHead=(b,n)=>`<div class="sub-head">${b} <span class="badge-note">${n}</span></div>`;
+    const bySpec=(()=>{ const m={}; specProcs.forEach(e=>{ const t=normProcName((e.type||'Other').trim()); m[t]=(m[t]||0)+1; }); const line=Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`${E(t)} ×${n}`).join(' · '); return line?`<div class="cpd-summary renal" style="margin-bottom:8px"><strong>By type:</strong> &nbsp;${line}</div>`:''; })();
+    const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
+    const fullDate=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+
+    const html=`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"><title>Logbook Report — ${E(yr)} — ${E(who())}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,sans-serif;font-size:10.5pt;color:#111;background:#e0e4ee;padding:20px}
+  .page{background:#fff;max-width:210mm;margin:0 auto;box-shadow:0 2px 12px rgba(0,0,0,.18);overflow:hidden}
+  .doc-header{background:linear-gradient(135deg,#003087,#005EB8);color:#fff;padding:20px 24px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  .doc-header h1{font-size:15pt;font-weight:700;color:#fff;letter-spacing:.02em}
+  .doc-header .subtitle{font-size:8.5pt;color:rgba(255,255,255,.75);margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
+  .doc-meta{text-align:right;font-size:8.5pt;color:rgba(255,255,255,.8);line-height:1.7}
+  .doc-meta strong{color:#fff}
+  .page-inner{padding:16px 20px}
+  .info-box{display:grid;grid-template-columns:1.4fr 1.6fr 1fr 1fr;border:1px solid #ccd6e8;margin-bottom:16px}
+  .info-cell{padding:7px 11px;border-right:1px solid #ccd6e8}
+  .info-cell:last-child{border-right:none}
+  .info-cell .lbl{font-size:7pt;text-transform:uppercase;letter-spacing:.1em;color:#666;margin-bottom:2px}
+  .info-cell .val{font-size:10.5pt;font-weight:700;color:#003087;overflow-wrap:anywhere}
+  .summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+  .sum-box{border:1px solid #ddd;border-top:3px solid var(--c);padding:7px 10px;text-align:center}
+  .sum-box .num{font-size:18pt;font-weight:700;color:var(--c);line-height:1}
+  .sum-box .key{font-size:7pt;text-transform:uppercase;letter-spacing:.1em;color:#666;margin-top:3px}
+  .section-head{display:flex;align-items:center;gap:10px;margin:16px 0 7px;page-break-after:avoid}
+  .section-head h2{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:#fff;background:#003087;padding:4px 12px;white-space:nowrap}
+  .section-head h2.gim{background:#005EB8}
+  .section-head h2.renal{background:${SPC}}
+  .section-head .rule{flex:1;height:2px;background:#e8eef8}
+  .sub-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+  .stream-badge{font-size:7pt;font-weight:700;padding:2px 6px;border-radius:2px;letter-spacing:.08em;text-transform:uppercase}
+  .badge-gim{background:#005EB8;color:#fff}
+  .badge-renal{background:${SPC};color:#fff}
+  .badge-note{font-size:7.5pt;color:#666;font-style:italic}
+  .empty-note{font-style:italic;color:#999;font-size:8.5pt;padding:6px 0;margin-bottom:12px}
+  table{width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:12px;page-break-inside:auto}
+  thead tr{background:var(--ac,#003087);color:#fff}
+  thead th{padding:5px 7px;text-align:left;font-size:7.5pt;letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+  tr.even{background:#f5f8ff}
+  tr.odd{background:#fff}
+  td{padding:4px 7px;border-bottom:1px solid #e8eef8;vertical-align:top;overflow-wrap:anywhere}
+  .dops-yes{color:#166534;font-weight:700}
+  .cpd-summary{background:#f0f4ff;border:1px solid #ccd6e8;border-left:3px solid #003087;padding:7px 11px;margin-bottom:9px;font-size:8.5pt;color:#333}
+  .cpd-summary.renal{border-left-color:${SPC};background:#f8f5ff}
+  .doc-footer{margin-top:14px;padding-top:8px;border-top:1px solid #ccd6e8;display:flex;justify-content:space-between;gap:12px;font-size:7pt;color:#888}
+  .no-print{text-align:right;padding:10px 16px;background:#f0f4ff;border-bottom:1px solid #ccd6e8}
+  .no-print button{background:#003087;color:#fff;border:none;padding:8px 20px;font-size:10pt;cursor:pointer;border-radius:3px}
+  @media screen and (max-width:640px){body{padding:8px}.info-box{grid-template-columns:1fr 1fr}.info-cell:nth-child(2){border-right:none}.info-cell:nth-child(-n+2){border-bottom:1px solid #ccd6e8}.summary-strip{grid-template-columns:repeat(2,1fr)}.page-inner{padding:12px}.tw{overflow-x:auto}}
+  @media print{body{background:#fff;padding:0}.page{box-shadow:none;max-width:100%}.section-head{page-break-after:avoid}tr{page-break-inside:avoid}.no-print{display:none}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}
+</style></head><body>
+<div class="page">
+  <div class="no-print"><button onclick="window.print()">⎙ Print / Save as PDF</button></div>
+  <div class="doc-header">
+    <div><h1>Logbook Report</h1><div class="subtitle">${E(sp.label)} &amp; General Internal Medicine · Dual CCT Training</div></div>
+    <div class="doc-meta"><div><strong>Generated:</strong> ${today}</div><div><strong>Training Year:</strong> ${E(yr)}</div><div><strong>Trainee:</strong> ${E(who())}</div></div>
+  </div>
+  <div class="page-inner">
+  <div class="info-box">
+    <div class="info-cell"><div class="lbl">Programme</div><div class="val">${E(sp.label)} + GIM</div></div>
+    <div class="info-cell"><div class="lbl">Training No.</div><div class="val">${E(prof().trainingNumber||'—')}</div></div>
+    <div class="info-cell"><div class="lbl">Current Year</div><div class="val">${E(yr)}</div></div>
+    <div class="info-cell"><div class="lbl">CCT Date</div><div class="val">${E(cctTxt())}</div></div>
+  </div>
+  <div class="summary-strip">
+    <div class="sum-box" style="--c:#005EB8"><div class="num">${gimClinics.length}</div><div class="key">GIM Clinics (total)</div></div>
+    <div class="sum-box" style="--c:${SPC}"><div class="num">${specClinics.length}</div><div class="key">${E(sp.short)} Clinics (${E(yr)})</div></div>
+    <div class="sum-box" style="--c:#166534"><div class="num">${specProcs.length+gimProcs.length}</div><div class="key">Procedures (${E(yr)})</div></div>
+    <div class="sum-box" style="--c:#005EB8"><div class="num">${Math.round(gimAllHrs+specCpdHrs)}h</div><div class="key">Teaching — GIM + ${E(sp.short)}</div></div>
+    <div class="sum-box" style="--c:#0e7490"><div class="num">${Math.round(totalSim)}h</div><div class="key">Simulation (total)</div></div>
+    <div class="sum-box" style="--c:#b45309"><div class="num">${Math.round(totalAcute)}</div><div class="key">Acute Take patients (est.)</div></div>
+    <div class="sum-box" style="--c:${SPC}"><div class="num">${totalWard}</div><div class="key">Ward Cover (months)</div></div>
+  </div>
+
+  ${secHead('Clinics','both')}
+  ${subHead(badge(sp.short,'badge-renal'), `${specClinics.length} entries · ${specPts} patients · ${E(yr)}`)}
+  <div class="tw">${tbl(['Date','Type','Hospital','Supervisor','Patients','Notes'], specClinics.map(e=>[fmt(e.date),E(e.type),E(e.hospital),E(e.supervisor),e.patients?E(e.patients)+' pts':'—',E(e.notes)]), SPC)}</div>
+  ${subHead(badge('GIM','badge-gim'), `${gimClinics.length} total entries · all years · cumulative target 20 · max 10 may be Medical SDEC (${sdecN} SDEC logged)`)}
+  <div class="tw">${tbl(['Date','Type','Hospital','Supervisor','Patients','Year','Notes'], gimClinics.map(e=>[fmt(e.date),E(e.type),E(e.hospital),E(e.supervisor),e.patients?E(e.patients)+' pts':'—',E(e.year)||'—',E(e.notes)]), '#005EB8')}</div>
+
+  ${secHead('Procedures','both')}
+  ${subHead(badge(sp.short,'badge-renal'), `${specProcs.length} entries · ${E(yr)}`)}
+  ${bySpec}
+  <div class="tw">${tbl(['Date','Procedure','Supervisor','DOPS','Notes'], specProcs.map(e=>[fmt(e.date),E(normProcName(e.type)),E(e.supervisor),dops(e),E(e.notes)]), SPC)}</div>
+  ${subHead(badge('GIM','badge-gim'), `${gimProcs.length} entries · ${E(yr)}`)}
+  <div class="tw">${tbl(['Date','Procedure','Supervisor','DOPS','Notes'], gimProcs.map(e=>[fmt(e.date),E(normProcName(e.type)),E(e.supervisor),dops(e),E(e.notes)]), '#005EB8')}</div>
+
+  ${secHead('Teaching','both')}
+  <div class="cpd-summary"><strong>GIM Teaching Summary:</strong> &nbsp; Total External GIM hours: <strong style="color:#005EB8">${countedTotal.toFixed(1)}h</strong> / 100h &nbsp;·&nbsp; External: <strong>${extHrs.toFixed(1)}h</strong> &nbsp;·&nbsp; Online: <strong>${onlineCapped.toFixed(1)}h</strong> / 15h max</div>
+  ${subHead(badge('GIM','badge-gim'), `${gimCpd.length} total entries · all years · cumulative target 100h`)}
+  <div class="tw">${tbl(['Date','Type','Title / Event','Hours','Year','Notes'], gimCpd.map(e=>[fmt(e.date),E(e.type),E(e.title),e.hours?E(e.hours)+'h':'—',E(e.year)||'—',E(e.notes)]), '#005EB8')}</div>
+  <div class="cpd-summary renal"><strong>${E(sp.short)} Teaching Summary:</strong> &nbsp; Total: <strong style="color:${SPC}">${specCpdHrs.toFixed(1)}h</strong> in ${E(yr)}</div>
+  ${subHead(badge(sp.short,'badge-renal'), `${specCpd.length} entries · ${E(yr)}`)}
+  <div class="tw">${tbl(['Date','Type','Title / Event','Hours','Notes'], specCpd.map(e=>[fmt(e.date),E(e.type),E(e.title),e.hours?E(e.hours)+'h':'—',E(e.notes)]), SPC)}</div>
+
+  ${secHead('Simulation','gim')}
+  <div class="cpd-summary"><strong>Simulation Summary:</strong> &nbsp; Total: <strong style="color:#0e7490">${totalSim.toFixed(1)}h</strong> / 12h &nbsp;·&nbsp; ST7: <strong>${st7Sim.toFixed(1)}h</strong> / 4h min</div>
+  ${subHead(badge('GIM','badge-gim'), `${sim.length} total entries · all years · cumulative target 12h`)}
+  <div class="tw">${tbl(['Date','Course','Title / Session','Hours','Hospital / Venue','Year','Notes'], sim.map(e=>[fmt(e.date),E(e.course),E(e.title),e.hours?E(e.hours)+'h':'—',E(e.hospital),E(e.year)||'—',E(e.notes)]), '#0e7490')}</div>
+
+  ${secHead('Teaching Participation','both')}
+  ${subHead('', `${teaching.length} sessions · ${E(yr)}`)}
+  <div class="tw">${tbl(['Date','Type','Topic','Audience','Observed by','Sign-off','Notes'], teaching.map(e=>[fmt(e.date),E(e.type),E(e.topic),E(e.audience),E(e.supervisor)||'—',E(e.signoff),E(e.notes)]), '#92400e')}</div>
+
+  ${secHead('Acute Take (Firth Calculator)','gim')}
+  <div class="cpd-summary"><strong>Acute Take Summary:</strong> &nbsp; Estimated total: <strong style="color:#005EB8">${Math.round(totalAcute)}</strong> / 750 patients</div>
+  ${subHead(badge('GIM','badge-gim'), `${acute.length} placements · all years`)}
+  <div class="tw">${tbl(['Hospital','Start','End','WTE months','Takes/mo','Pts/Take','Est. Patients','Year','Supervisor'], acute.map(e=>{ const r=frById.get(String(e.id)); const wte=r?r.wte:1; const m=r?r.post:(parseFloat(e.months)||0); return [E(e.hospital),fmt(e.start),fmt(e.end),m?`${m}mo${wte<1?` (${wte} WTE)`:''}`:'—',E(e.takes)||'—',E(e.patients)||'—',`<strong>${Math.round(parseFloat(e.estimated)||0)}</strong>`,E(e.year)||'—',E(e.supervisor)||'—']; }), '#005EB8')}</div>
+
+  ${secHead('Ward Cover','gim')}
+  <div class="cpd-summary"><strong>Ward Cover Summary:</strong> &nbsp; Total: <strong style="color:#005EB8">${totalWard}</strong> / 12 months</div>
+  ${subHead(badge('GIM','badge-gim'), `${ward.length} placements · all years`)}
+  <div class="tw">${tbl(['Hospital','Start','End','Months','Year','Supervisor'], ward.map(e=>[E(e.hospital),fmt(e.start),fmt(e.end),e.months?E(e.months)+'mo':'—',E(e.year)||'—',E(e.supervisor)||'—']), '#005EB8')}</div>
+
+  <div class="doc-footer"><span>ARCP Logbook · ${E(who())}</span><span>Generated ${fullDate} · Confidential</span></div>
+  </div>
+</div></body></html>`;
+    openReportDoc(html);
+  };
+
+  // ── CPD Diary (reflective record, all training years) ──
+  window.exportCpdDiary = function(){
+    const sp=specCfg();
+    const all=entries('cpd').map(e=>Object.assign({stream:isGim(e)?'GIM':sp.short},e)).sort(asc('date'));
+    const fmt=d=>{ if(!d) return '—'; const p=String(d).split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d; };
+    const total=r1(H(all)), ext=r1(H(all.filter(e=>(e.category||cpdCategoryFor(e.type))==='External')));
+    const intl=r1(total-ext), gimExt=r1(H(all.filter(e=>isGim(e)&&cpdIsExternal(e))));
+    const gen=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+    const byYear={}; all.forEach(e=>{ const y=e.year||'Unassigned'; (byYear[y]=byYear[y]||[]).push(e); });
+    const entryBlock=e=>{
+      const cat=e.category||cpdCategoryFor(e.type), url=safeUrl(e.cert&&e.cert.url);
+      return `<div class="entry">
+      <div class="entry-head"><div class="entry-title">${E(e.title)||E(e.type)||'CPD activity'}</div>
+        <div class="badges"><span class="badge str ${e.stream==='GIM'?'gim':'ren'}">${E(e.stream)}</span><span class="badge ${cat==='Internal'?'int':'ext'}">${E(cat)}</span></div></div>
+      <div class="entry-meta">${E(fmt(e.date))} · ${E(e.type)}${e.provider?' · '+E(e.provider):''} · <strong>${E(e.hours)||0} h</strong></div>
+      ${e.learning?`<div class="entry-field"><span class="lbl">Key learning</span>${E(e.learning)}</div>`:''}
+      ${e.reflection?`<div class="entry-field"><span class="lbl">Reflection</span>${E(e.reflection)}</div>`:''}
+      ${e.notes?`<div class="entry-field"><span class="lbl">Notes</span>${E(e.notes)}</div>`:''}
+      ${url?`<div class="entry-field"><span class="lbl">Evidence</span><a href="${url}">${E(e.cert.name)||'Certificate attached'}</a></div>`:''}
+    </div>`;
+    };
+    const yearsHtml=Object.keys(byYear).sort().map(y=>`
+    <h2 class="yr">${E(y)} <span class="yr-n">${byYear[y].length} entr${byYear[y].length===1?'y':'ies'} · ${r1(H(byYear[y]))} h</span></h2>
+    ${byYear[y].map(entryBlock).join('')}`).join('');
+    const deanery=prof().deanery||'';
+    const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CPD Diary — ${E(who())}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Newsreader',Georgia,serif;color:#1a1a1a;background:#f5f3ee;font-size:11pt;line-height:1.55;padding:24px}
+    .page{max-width:780px;margin:0 auto;background:#fff;padding:0 0 40px;box-shadow:0 2px 20px rgba(0,0,0,.08)}
+    .toolbar{padding:16px 36px 0;text-align:right}
+    .toolbar button{font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;background:#1a1a1a;color:#fff;border:none;padding:9px 16px;border-radius:4px;cursor:pointer}
+    .hd{padding:26px 36px 18px;border-bottom:2px solid #1a1a1a}
+    .hd .ec{font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#9a8f6a;margin-bottom:12px}
+    .hd h1{font-size:30px;font-weight:600;letter-spacing:-.01em}
+    .hd .sub{font-size:12px;color:#6b6657;margin-top:4px}
+    .stats{display:flex;border-bottom:1px solid #e2ddd0;padding:14px 36px}
+    .stats div{flex:1}
+    .stats .k{font-family:'Spline Sans Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:#9a8f6a;margin-bottom:3px}
+    .stats .v{font-size:18px;font-weight:600}
+    .body{padding:8px 36px}
+    h2.yr{font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin:24px 0 12px;padding-bottom:5px;border-bottom:1px solid #c9bfa6;display:flex;justify-content:space-between;align-items:baseline}
+    h2.yr .yr-n{font-family:'Newsreader',serif;font-size:10pt;color:#9a8f6a;text-transform:none;letter-spacing:0}
+    .entry{padding:12px 0;border-bottom:1px solid #eee7d8;break-inside:avoid}
+    .entry-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+    .entry-title{font-size:13pt;font-weight:600}
+    .badges{display:flex;gap:5px;flex-shrink:0}
+    .badge{font-family:'Spline Sans Mono',monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:20px;white-space:nowrap}
+    .badge.int{background:#eef6ee;color:#2e7d32}.badge.ext{background:#eef2fb;color:#1d4ed8}
+    .badge.str.gim{background:#eef2fb;color:#3730a3}.badge.str.ren{background:#fdeef4;color:#9d174d}
+    .entry-meta{font-family:'Spline Sans Mono',monospace;font-size:9.5px;color:#6b6657;margin-top:3px}
+    .entry-field{font-size:11pt;margin-top:7px;padding-left:12px;border-left:2px solid #e2ddd0}
+    .entry-field .lbl{display:block;font-family:'Spline Sans Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#9a8f6a;margin-bottom:2px}
+    .entry-field a{color:#1d4ed8}
+    .ft{padding:10px 36px 0;font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#9a8f6a;display:flex;justify-content:space-between;gap:12px}
+    @media screen and (max-width:640px){body{padding:8px}.toolbar,.hd,.body,.ft{padding-left:16px;padding-right:16px}.stats{flex-wrap:wrap;gap:10px 0;padding:14px 16px}.stats div{flex:1 1 33%}.entry-head{flex-wrap:wrap}}
+    @media print{.toolbar{display:none}body{background:#fff;padding:0}.page{box-shadow:none}.badge{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style></head><body>
+  <div class="page">
+    <div class="toolbar"><button onclick="window.print()">⎙ Print / Save as PDF</button></div>
+    <div class="hd">
+      <div class="ec">Continuing Professional Development · Reflective Record</div>
+      <h1>CPD Diary</h1>
+      <div class="sub">${E(who())} · ${E(sp.label)} · GIM${deanery?' · '+E(deanery):''}</div>
+    </div>
+    <div class="stats">
+      <div><div class="k">Total hours</div><div class="v">${total} h</div></div>
+      <div><div class="k">External</div><div class="v">${ext} h</div></div>
+      <div><div class="k">Internal</div><div class="v">${intl} h</div></div>
+      <div><div class="k">GIM external</div><div class="v">${gimExt} h</div></div>
+      <div><div class="k">Entries</div><div class="v">${all.length}</div></div>
+    </div>
+    <div class="body">${all.length?yearsHtml:'<p style="padding:30px 0;color:#9a8f6a;font-style:italic">No CPD entries logged yet.</p>'}</div>
+    <div class="ft"><span>CPD Diary · Reflective record for appraisal</span><span>Generated ${gen}</span></div>
+  </div>
+  </body></html>`;
+    openReportDoc(html);
+  };
+
+  // Every "Logbook report" entry point (Logbook, ARCP prep, Account) now opens the combined report
+  window.showPrintStylePicker = function(){ window.wLogbookReport(); };
+})();
+</script>
 <script id="wallet-layer">
 /* ═══ Outcome1 · Wallet layer — card-stack home, colour-matched module screens.
    Reuses every existing render/save function; only navigation and presentation change. ═══ */
@@ -5790,7 +6218,8 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     flag:'<path d="M5 21V4M5 4h12l-2 4 2 4H5"/>', moon:'<path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/>',
     user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>',
     reset:'<path d="M4 12a8 8 0 108-8M4 4v5h5"/>', door:'<path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10"/>',
-    list:'<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>'
+    list:'<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>',
+    file:'<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>'
   };
   const I = (name, s=22) => `<svg class="w-i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[name]||''}</svg>`;
   const ring = (pct) => {
@@ -5922,6 +6351,23 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
   const append = html => main().insertAdjacentHTML('beforeend', html);
 
   // ── HOME: the card stack ──
+  // Reminder pills on the home stack: ALS expiry year (ARCP card) and SCE pass (specialty card)
+  function alsPill(){
+    const v=state.als;
+    if(!v) return `<span class="w-cpill" title="Add your ALS expiry date in Account">ALS not set</span>`;
+    const d=new Date(v); if(isNaN(d)) return '';
+    const days=Math.round((d-today0())/DAY);
+    const long=d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    if(days<0) return `<span class="w-cpill warn" title="ALS expired ${long}">ALS expired</span>`;
+    return `<span class="w-cpill ${days<=90?'warn':''}" title="ALS valid to ${long}">ALS ${d.getFullYear()}</span>`;
+  }
+  function scePill(){
+    const req=specReqs().spec_sce; if(!req) return '';
+    if(getReqVal('spec_sce',req)) return `<span class="w-cpill done" title="${safe(req.label)} passed">${I('check',14)}SCE</span>`;
+    const sd=state.sceDate?new Date(state.sceDate):null;
+    const when=sd&&!isNaN(sd)?sd.toLocaleDateString('en-GB',{month:'short',year:'2-digit'}):'';
+    return `<span class="w-cpill todo" title="${safe(req.label)} not passed yet${when?' · sitting '+when:''}"><span class="w-ring"></span>SCE${when?' '+when:''}</span>`;
+  }
   function qlLoad(){ try{ return JSON.parse(localStorage.getItem('w_quicklog')||'{}'); }catch(e){ return {}; } }
   function renderHome(){
     const sp=specCfg();
@@ -5930,7 +6376,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     const p=panelInfo();
     const cpdH=hrs(yearEntries('cpd')), gimExt=gimExternalCpdHours();
     const logN=KINDS.reduce((a,k)=>a+yearEntries(k).length,0);
-    const card=(tab,c,l,lsub,r,rsub,dark)=>`<button class="w-card ${dark?'dark':''}" style="--c:${c}" onclick="${tab==='logbook'?"wGoLog('all')":`setTab('${tab}')`}"><span class="l"><b>${l}</b>${lsub?`<small>${lsub}</small>`:''}</span><span class="r"><b>${r}</b><small>${rsub}</small></span></button>`;
+    const card=(tab,c,l,lsub,r,rsub,dark,lp,rp)=>`<button class="w-card ${dark?'dark':''}" style="--c:${c}" onclick="${tab==='logbook'?"wGoLog('all')":`setTab('${tab}')`}"><span class="l"><span class="w-lrow"><b>${l}</b>${lp||''}</span>${lsub?`<small>${lsub}</small>`:''}</span><span class="r"><span class="w-rrow"><b>${r}</b>${rp||''}</span><small>${rsub}</small></span></button>`;
     const ql=qlLoad(), qt=KINDS.includes(ql.type)?ql.type:'clinics', qs=ql.scope==='gim'?'gim':'spec';
     const tOpts=[['clinics','Clinic'],['procedures','Procedure'],['cpd','CPD session'],['simulation','Simulation'],['teaching','Teaching session']].map(([v,l])=>`<option value="${v}" ${v===qt?'selected':''}>${l}</option>`).join('');
     const front=`<div class="w-card w-front" style="--c:var(--c-quick)">
@@ -5942,8 +6388,8 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
       <button class="w-go" onclick="wQuickGo()">Log entry</button>
     </div>`;
     const stack=
-      card('arcp','var(--c-arcp)','ARCP',`${currentYear} · ${yearPct()}% through`, p.days>=0?`${p.days} day${p.days===1?'':'s'}`:'Done', p.lockTxt, true)+
-      card('specialty','var(--c-spec)',safe(sp.short),'',`${spec.pct}%`,`${spec.met} of ${spec.total} met`)+
+      card('arcp','var(--c-arcp)','ARCP',`${currentYear} · ${yearPct()}% through`, p.days>=0?`${p.days} day${p.days===1?'':'s'}`:'Done', p.lockTxt, true, alsPill())+
+      card('specialty','var(--c-spec)',safe(sp.short),'',`${spec.pct}%`,`${spec.met} of ${spec.total} met`, false, '', scePill())+
       card('gim','var(--c-gim)','GIM','',`${gim.pct}%`,`${gim.met} of ${gim.total} met`)+
       card('cpd','var(--c-cpd)','CPD','',`${cpdH}h`,`GIM external ${gimExt} of 100h`)+
       card('logbook','var(--c-log)','Logbook','',`${logN}`,`entries in ${currentYear}`)+
@@ -6035,7 +6481,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     prepend(head({ title:sp.short, color:'var(--c-spec)', kicker:`${currentYear} · ${sp.label}`, big:String(r.pct), unit:'%',
       sub:`${r.met} of ${r.total} requirements met${r.open?` · ${r.open} still open`:''}`,
       tab:{label:'Add evidence', right:`${r.open} open`, on:"wQuick('procedures','spec')"},
-      acts:[['clinic','Clinic',"wQuick('clinics','spec')"],['proc','Procedure',"wQuick('procedures','spec')"],['book','CPD',"wQuick('cpd','spec')"],['print','Report','showPrintStylePicker()']],
+      acts:[['clinic','Clinic',"wQuick('clinics','spec')"],['proc','Procedure',"wQuick('procedures','spec')"],['book','CPD',"wQuick('cpd','spec')"],['file','Summary','printSpecSummary()']],
       right:{icon:'sliders',label:'Profile and specialty',on:'openSettings()'} }));
     if(!yearLocked()) append(feedSection('Activity', feed(e=>e.scope==='spec'&&inCurrentYear(e)), `${sp.short} entries in ${currentYear}`));
   }
@@ -6046,7 +6492,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     prepend(head({ title:'GIM', color:'var(--c-gim)', kicker:`${currentYear} · General Internal Medicine`, big:String(r.pct), unit:'%',
       sub:`${r.met} of ${r.total} requirements met · DOPS ${d.met} of ${d.total}`,
       tab:{label:'Add evidence', right:`${r.open} open`, on:"wQuick('procedures','gim')"},
-      acts:[['clinic','Clinic',"wQuick('clinics','gim')"],['proc','Procedure',"wQuick('procedures','gim')"],['check','DOPS',"wScroll('w-dops')"],['print','Report','showPrintStylePicker()']],
+      acts:[['clinic','Clinic',"wQuick('clinics','gim')"],['proc','Procedure',"wQuick('procedures','gim')"],['book','CPD',"wQuick('cpd','gim')"],['file','Summary','printGimSummary()']],
       right:{icon:'sliders',label:'Profile and specialty',on:'openSettings()'} }));
     if(!yearLocked()) append(feedSection('Activity', feed(e=>e.scope==='gim'&&inCurrentYear(e)), `GIM entries in ${currentYear}`));
   }
@@ -6067,7 +6513,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     const hd=head({ title:'Logbook', color:'var(--c-log)', kicker:`${currentYear} · All entries`, big:String(n), unit:'',
       sub:`${c} clinic${c===1?'':'s'} · ${p} procedure${p===1?'':'s'} · ${t} teaching`,
       tab:{label:'New entry', right:'5 types', on:"openLogbookForm(logSubTab&&logSubTab!=='all'?logSubTab:'clinics')"},
-      acts:[['plus','Add',"openLogbookForm(logSubTab&&logSubTab!=='all'?logSubTab:'clinics')"],['print','Report','showPrintStylePicker()'],['dl','Excel','exportLogbook()'],['chart','Insights',"wScroll('w-insights')"]] });
+      acts:[['plus','Add',"openLogbookForm(logSubTab&&logSubTab!=='all'?logSubTab:'clinics')"],['print','Report','showPrintStylePicker()'],['book','CPD diary','exportCpdDiary()'],['dl','Excel','exportLogbook()']] });
     if(yearLocked()){ O.lbv2(); prepend(hd); return; }
     O.lbv2();
     const first=main().firstElementChild; if(first && first.querySelector('button[onclick="exportLogbook()"]')) first.remove();
