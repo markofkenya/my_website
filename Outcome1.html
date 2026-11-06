@@ -7,11 +7,15 @@
 <meta name="theme-color" content="#F7F4F2" />
 <script>try{if(localStorage.getItem('arcp_v2_dark')==='1'){document.documentElement.classList.add('dark-boot');document.querySelector('meta[name="theme-color"]').setAttribute('content','#121212');}}catch(e){}</script>
 <style>html.dark-boot,html.dark-boot body{background:#121212}</style>
+<script>try{if(localStorage.getItem('arcp_v2_session')){var o1s=JSON.parse(localStorage.getItem('arcp_v2_state')||'null');if(o1s&&o1s.profile)document.documentElement.classList.add('o1-trusted');}}catch(e){}</script>
+<style>html.o1-trusted #boot-loader,html.o1-trusted #auth-gate{display:none!important}</style>
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <meta name="apple-mobile-web-app-title" content="Outcome1" />
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%2240%2046%20432%20432%22%3E%3Crect%20x%3D%2240%22%20y%3D%2246%22%20width%3D%22432%22%20height%3D%22432%22%20rx%3D%2296%22%20fill%3D%22%231E1E1E%22%2F%3E%3Crect%20x%3D%22148%22%20y%3D%22104%22%20width%3D%22216%22%20height%3D%22284%22%20rx%3D%2248%22%20fill%3D%22%23C8BFF1%22%20stroke%3D%22%231E1E1E%22%20stroke-width%3D%2211%22%20transform%3D%22rotate%28-24%20256%20420%29%22%2F%3E%3Crect%20x%3D%22148%22%20y%3D%22104%22%20width%3D%22216%22%20height%3D%22284%22%20rx%3D%2248%22%20fill%3D%22%23EE9F98%22%20stroke%3D%22%231E1E1E%22%20stroke-width%3D%2211%22%20transform%3D%22rotate%2824%20256%20420%29%22%2F%3E%3Crect%20x%3D%22148%22%20y%3D%22104%22%20width%3D%22216%22%20height%3D%22284%22%20rx%3D%2248%22%20fill%3D%22%23F4B683%22%20stroke%3D%22%231E1E1E%22%20stroke-width%3D%2211%22%20transform%3D%22rotate%28-12%20256%20420%29%22%2F%3E%3Crect%20x%3D%22148%22%20y%3D%22104%22%20width%3D%22216%22%20height%3D%22284%22%20rx%3D%2248%22%20fill%3D%22%23A3EEF2%22%20stroke%3D%22%231E1E1E%22%20stroke-width%3D%2211%22%20transform%3D%22rotate%2812%20256%20420%29%22%2F%3E%3Cg%20transform%3D%22translate%28-4%208%29%20rotate%283%20256%20420%29%22%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%22148%22%20y%3D%22104%22%20width%3D%22216%22%20height%3D%22284%22%20rx%3D%2248%22%20fill%3D%22%23D3F69C%22%20stroke%3D%22%231E1E1E%22%20stroke-width%3D%2211%22%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M214%20196%20L268%20158%20V334%22%20fill%3D%22none%22%20stroke%3D%22%231E1E1E%22%20stroke-width%3D%2254%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M326%20150%20q3.5%2022%2025%2025%20q-21.5%203.5%20-25%2025%20q-3.5%20-21.5%20-25%20-25%20q21.5%20-3%2025%20-25z%22%20fill%3D%22%231E1E1E%22%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M318%20226%20q2%2012%2014%2014%20q-12%202%20-14%2014%20q-2%20-12%20-14%20-14%20q12%20-2%2014%20-14z%22%20fill%3D%22%231E1E1E%22%2F%3E%0A%20%20%20%20%3C%2Fg%3E%3C%2Fsvg%3E" />
-<link rel="apple-touch-icon" href="outcome2.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="outcome2.png?v=4" />
+<link rel="icon" type="image/png" sizes="512x512" href="outcome3.png?v=4" />
+<link rel="apple-touch-icon" sizes="180x180" href="outcome1.png?v=4" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=DM+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet" />
@@ -960,6 +964,9 @@ button.w-cpill:focus-visible{outline:3px solid currentColor;outline-offset:2px}
 @keyframes wFlash{0%,100%{box-shadow:0 0 0 0 transparent}18%,60%{box-shadow:0 0 0 4px var(--c-quick),0 0 0 6px var(--line-ink)}}
 .w-flash{animation:wFlash 1.8s ease;border-radius:18px}
 input[type="date"]:not(:disabled){cursor:pointer}
+/* ESENeph date: keep the whole date visible on narrow screens; Clear drops below if needed */
+.sce-date .row{flex-wrap:wrap!important;row-gap:8px}
+#sce-date-input{min-width:158px;flex:1 1 158px}
 
 /* choice sheet (summary scope) */
 .w-ask{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;animation:wAskIn .16s ease}
@@ -991,6 +998,7 @@ input[type="date"]:not(:disabled){cursor:pointer}
 .w-go:hover{background:#000}
 .w-foot{text-align:center;margin:22px 0 4px;font-size:13px;color:var(--dim)}
 .w-foot b{color:var(--green);font-weight:600}
+.w-foot b.w-wait{color:var(--dim)}
 
 /* ── lists (activity, still to close, requirements) ── */
 .w-h2{font:800 28px/1.1 var(--font);letter-spacing:-.03em;margin:0 0 14px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;color:var(--text)}
@@ -4399,14 +4407,18 @@ window.authReset=authReset;
 window.signOutUser=signOutUser;
 
 window.addEventListener('firebase-signed-out', ()=>{
+  // Firebase says nobody is signed in: stop trusting this device and show the sign-in screen
+  try{ localStorage.removeItem('arcp_v2_session'); }catch(err){}
+  document.documentElement.classList.remove('o1-trusted');
   authShow();
 });
 window.addEventListener('firebase-signed-in', e=>{
+  try{ localStorage.setItem('arcp_v2_session', e.detail?.uid||'1'); }catch(err){}
   authHide();
   // Existing onboarding gate / app boot will take over from here
 });
 // On page load, give Firebase a moment to restore session; if no auth state by 1.5s, show the gate.
-setTimeout(()=>{ if(!window.ARCP_FB?.user){ authShow(); } }, 1500);
+setTimeout(()=>{ if(!window.ARCP_FB?.user && !document.documentElement.classList.contains('o1-trusted')){ authShow(); } }, 1500);
 // Wire Enter key on auth fields to trigger submit
 setTimeout(()=>{
   ['auth-email','auth-password'].forEach(id=>{
@@ -6599,7 +6611,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     O.spec();
     prepend(head({ title:sp.short, color:'var(--c-spec)', kicker:`${currentYear} · ${sp.label}`, big:String(r.pct), unit:'%',
       sub:`${r.met} of ${r.total} requirements met${r.open?` · ${r.open} still open`:''}`,
-      tab:{label:'Add evidence', right:`${r.open} open`, on:"wQuick('procedures','spec')"},
+      tab:{label:'Add evidence', on:"wQuick('procedures','spec')"},
       acts:[['clinic','Clinic',"wQuick('clinics','spec')"],['proc','Procedure',"wQuick('procedures','spec')"],['book','CPD',"wQuick('cpd','spec')"],['file','Summary',"wSummary('spec')"]],
       right:{icon:'sliders',label:'Profile and specialty',on:'openSettings()'} }));
     if(!yearLocked()) append(feedSection('Activity', feed(e=>e.scope==='spec'&&inCurrentYear(e)), `${sp.short} entries in ${currentYear}`));
@@ -6610,7 +6622,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     const dops=main().querySelector('.dops-grid'); if(dops){ const s=dops.closest('section'); if(s) s.id='w-dops'; }
     prepend(head({ title:'GIM', color:'var(--c-gim)', kicker:`${currentYear} · General Internal Medicine`, big:String(r.pct), unit:'%',
       sub:`${r.met} of ${r.total} requirements met · DOPS ${d.met} of ${d.total}`,
-      tab:{label:'Add evidence', right:`${r.open} open`, on:"wQuick('procedures','gim')"},
+      tab:{label:'Add evidence', on:"wQuick('procedures','gim')"},
       acts:[['clinic','Clinic',"wQuick('clinics','gim')"],['proc','Procedure',"wQuick('procedures','gim')"],['book','CPD',"wQuick('cpd','gim')"],['file','Summary',"wSummary('gim')"]],
       right:{icon:'sliders',label:'Profile and specialty',on:'openSettings()'} }));
     if(!yearLocked()) append(feedSection('Activity', feed(e=>e.scope==='gim'&&inCurrentYear(e)), `GIM entries in ${currentYear}`));
@@ -6759,6 +6771,15 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     if(e.offsetX > el.clientWidth-34) return;   // the calendar icon opens it by itself
     try{ el.showPicker(); }catch(err){}
   }, true);
+
+  // Returning device: the app opens from local data while Firebase signs in behind it
+  if(document.documentElement.classList.contains('o1-trusted')) document.getElementById('auth-gate')?.classList.remove('show');
+  window.forceLiveStatus = function(){
+    const live=!!window.ARCP_FB?.user, txt=live?'● Live':'● Connecting…';
+    const s=document.getElementById('sync'); if(s){ s.textContent=txt; s.style.color=live?'var(--green)':'var(--dim)'; }
+    const f=document.querySelector('.w-foot b'); if(f){ f.textContent=txt; f.classList.toggle('w-wait',!live); }
+  };
+  ['firebase-signed-in','firebase-signed-out'].forEach(ev=>window.addEventListener(ev, ()=>setTimeout(()=>window.forceLiveStatus(),0)));
 
   currentTab=normTab(currentTab);
   try{ render(); }catch(e){ console.error('[Outcome1] wallet render failed', e); }
