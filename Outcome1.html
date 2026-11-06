@@ -1175,6 +1175,23 @@ body.focus .w-cele .w-go:not(.alt){background:#F4F3EE;color:#121212}
 .w-toast{white-space:nowrap}
 #wrapped-overlay .wr-brand{right:58px;text-shadow:0 1px 3px rgba(0,0,0,.25)}
 #w-cele:focus{outline:none}
+/* Wrapped list (Home ✦ sheet and Logbook › Insights) */
+.w-ask-card{max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain}
+.w-ask-opts.many .w-ask-opt:nth-child(5n+1){background:var(--c-spec)}.w-ask-opts.many .w-ask-opt:nth-child(5n+2){background:var(--c-gim)}
+.w-ask-opts.many .w-ask-opt:nth-child(5n+3){background:var(--c-cpd)}.w-ask-opts.many .w-ask-opt:nth-child(5n+4){background:var(--c-log)}
+.w-ask-opts.many .w-ask-opt:nth-child(5n){background:var(--c-quick)}
+.w-wrpast{margin:34px 0 8px}
+.w-wrpast-h{display:flex;align-items:baseline;gap:8px;font:800 24px/1.1 var(--font);letter-spacing:-.03em;color:var(--text);margin-bottom:14px}
+.w-wrpast-h .w-i{align-self:center}
+.w-wrpast-h small{margin-left:auto;font:500 14px var(--font);color:var(--dim);letter-spacing:0}
+.w-wrchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.w-wrchip{all:unset;box-sizing:border-box;cursor:pointer;display:block;background:var(--c);color:#1E1E1E;border:2px solid var(--line-ink);border-radius:22px;padding:14px 16px;transition:transform .15s ease}
+.w-wrchip:hover{transform:translateY(-3px)}
+.w-wrchip:focus-visible{outline:3px solid var(--text);outline-offset:3px}
+.w-wrchip b{display:block;font:800 18px/1.15 var(--font);letter-spacing:-.02em}
+.w-wrchip span{display:block;font:500 13.5px/1.3 var(--font);margin-top:4px}
+.w-ywr{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:0}
+body.focus .w-ywr{background:#F4F3EE;color:#121212}
 .w-toast.out{opacity:0;transform:translate(-50%,10px);transition:.4s ease}
 body.focus .w-toast{background:#F4F3EE;color:#121212}
 body.focus .w-toast .w-i{color:#121212}
@@ -6589,7 +6606,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
         <button class="w-avatar" onclick="setTab('admin')" aria-label="Account and settings" title="Account and settings">${safe(initials())}</button>
         <div class="w-topr">
           <select class="w-pill" aria-label="Training year" onchange="setYear(this.value)">${YEARS.map(y=>`<option value="${y}" ${y===currentYear?'selected':''}>${y}${yearLocked(y)?' ✓':''}</option>`).join('')}</select>
-          <button class="w-circ" onclick="wWrapped()" aria-label="Monthly Wrapped" title="Monthly Wrapped">${I('spark',22)}</button>
+          <button class="w-circ" onclick="wWrapped()" aria-label="Your Wrapped" title="Your Wrapped">${I('spark',22)}</button>
           <button class="w-circ" onclick="toggleFocus();render()" aria-label="Switch light or dark" title="Switch light or dark">${I('moon',21)}</button>
           <button class="w-circ" onclick="openSettings()" aria-label="Profile and specialty" title="Profile and specialty">${I('sliders',22)}</button>
         </div>
@@ -6657,7 +6674,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     const wrap=document.createElement('div'); wrap.id='w-ask'; wrap.className='w-ask';
     wrap.innerHTML=`<div class="w-ask-card" role="dialog" aria-modal="true" aria-labelledby="w-ask-t">
       <div class="w-ask-t" id="w-ask-t">${o.title}</div>${o.sub?`<div class="w-ask-s">${o.sub}</div>`:''}
-      <div class="w-ask-opts">${o.options.map((x,i)=>`<button class="w-ask-opt" data-i="${i}"><span><b>${x.label}</b>${x.sub?`<small>${x.sub}</small>`:''}</span>${I('chev',20)}</button>`).join('')}</div>
+      <div class="w-ask-opts ${o.many?'many':''}">${o.options.map((x,i)=>`<button class="w-ask-opt" data-i="${i}"><span><b>${x.label}</b>${x.sub?`<small>${x.sub}</small>`:''}</span>${I('chev',20)}</button>`).join('')}</div>
       <button class="w-ask-x" data-x="1">Cancel</button></div>`;
     const close=()=>{ wrap.remove(); document.removeEventListener('keydown',onKey,true); try{ prev&&prev.focus&&prev.focus({preventScroll:true}); }catch(e){} };
     const onKey=e=>{
@@ -6680,11 +6697,34 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
       {label:`This year · ${safe(currentYear)}`, sub:`Only what you logged in ${safe(currentYear)}`, on:()=>run('year')},
       {label:'All years', sub:`Everything since ${safe(YEARS[0])}, with totals towards CCT`, on:()=>run('all')} ]});
   };
+  // Every finished month that has logbook entries has a Wrapped. The list is worked out from the
+  // logbook itself, so it can't be lost or overwritten by another device's copy of the profile.
+  const WR_KINDS=['clinics','procedures','teaching','cpd','simulation'];   // what the monthly Wrapped counts
+  function wrappedMonths(){
+    const now=new Date(), cur=now.getFullYear()*100+now.getMonth()+1, count={};
+    WR_KINDS.forEach(k=>entries(k).forEach(e=>{ const m=/^(\d{4})-(\d{2})/.exec(String(e.date||'')); if(!m) return; const key=(+m[1])*100+(+m[2]); if(key<cur) count[key]=(count[key]||0)+1; }));
+    return Object.keys(count).map(Number).sort((a,b)=>b-a).map(k=>{
+      const y=Math.floor(k/100), mo=k%100; let persona='';
+      try{ persona=(WrappedEngine.derivePersonality(WrappedEngine.gatherStats(state,y,mo))||{}).name||''; }catch(e){}
+      return { y, m:mo, n:count[k], label:new Date(y,mo-1,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'}), persona };
+    });
+  }
+  window.wrappedArchiveHTML = function(){
+    const list=wrappedMonths(); if(!list.length) return '';
+    const cols=['var(--c-spec)','var(--c-gim)','var(--c-cpd)','var(--c-log)','var(--c-quick)'];
+    return `<div class="w-wrpast"><div class="w-wrpast-h">${I('reset',16)}<span>Past Wrapped</span><small>${list.length} month${list.length===1?'':'s'}</small></div><div class="w-wrchips">${
+      list.map((w,i)=>`<button class="w-wrchip" style="--c:${cols[i%cols.length]}" onclick="openWrapped(${w.y},${w.m})"><b>${w.label}</b><span>${w.n} entr${w.n===1?'y':'ies'}${w.persona?' · '+safe(w.persona):''}</span></button>`).join('')}</div></div>`;
+  };
   window.wWrapped = function(){
     try{
-      const lc=lastCompletedMonth(), s=WrappedEngine.gatherStats(state, lc.year, lc.month);
-      if(!s.totalEntries){ alert('Your Wrapped unlocks once last month has some logbook entries.'); return; }
-      openWrapped(lc.year, lc.month);
+      const months=wrappedMonths();
+      const years=YEARS.filter(y=>{ const o=outcome(y); return OC_META[o] && !['3','4','5'].includes(o); });
+      const opts=[];
+      if(years.some(y=>outcome(y)==='6')) opts.push({label:'Your training Wrapped', sub:`${YEARS[0]} to ${YEARS[YEARS.length-1]}, start to finish`, on:()=>wYearWrapped('all')});
+      years.slice().reverse().forEach(y=>opts.push({label:`${y} Wrapped`, sub:`The whole year · Outcome ${outcome(y)}`, on:()=>wYearWrapped(y)}));
+      months.forEach(w=>opts.push({label:w.label, sub:`${w.n} entr${w.n===1?'y':'ies'}${w.persona?' · '+safe(w.persona):''}`, on:()=>openWrapped(w.y,w.m)}));
+      if(!opts.length){ alert('Your Wrapped unlocks once a finished month has some logbook entries.'); return; }
+      wAsk({ title:'Your Wrapped', sub:'Relive any month, or a whole signed-off year.', options:opts, many:true });
     }catch(e){ console.error('[Outcome1] Wrapped failed', e); }
   };
 
@@ -7051,10 +7091,14 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
       sub:`${c} clinic${c===1?'':'s'} · ${p} procedure${p===1?'':'s'} · ${t} teaching`,
       tab:{label:'New entry', right:'5 types', on:"openLogbookForm(logSubTab&&logSubTab!=='all'?logSubTab:'clinics')"},
       acts:[['plus','Add',"openLogbookForm(logSubTab&&logSubTab!=='all'?logSubTab:'clinics')"],['print','Report','showPrintStylePicker()'],['chart','Insights',"wScroll('w-insights')"],['dl','Excel','exportLogbook()']] });
-    if(yearLocked()){ O.lbv2(); prepend(hd); return; }
     O.lbv2();
     const first=main().firstElementChild; if(first && first.querySelector('button[onclick="exportLogbook()"]')) first.remove();
     const list=main().innerHTML;
+    if(yearLocked()){   // the old Insights screen is blank for a locked year, so offer the Wrapped instead
+      const oc=outcome(), yw=OC_META[oc] && !['3','4','5'].includes(oc);
+      main().innerHTML = hd + list + `<section id="w-insights" class="section" style="margin-top:56px"><div class="sec-head"><span class="sec-title">Insights</span><span class="sec-note">${currentYear} · signed off</span></div>${yw?`<button class="w-go w-ywr" onclick="wYearWrapped('${currentYear}')">${I('spark',20)}<span>See your ${currentYear} Wrapped</span></button>`:''}${wrappedArchiveHTML()}</section>`;
+      return;
+    }
     O.ov();
     const tmp=document.createElement('div'); tmp.innerHTML=main().innerHTML;
     const heroTitle=tmp.querySelector('.act-hero > div:first-child'); if(heroTitle) heroTitle.remove();
