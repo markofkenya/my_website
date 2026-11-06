@@ -21,7 +21,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=DM+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet" />
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, reauthenticateWithCredential, EmailAuthProvider, verifyBeforeUpdateEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getDatabase, ref, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
@@ -70,6 +70,15 @@
       location.reload();
     },
     resetPassword: (email) => sendPasswordResetEmail(auth, email),
+    // Confirm the current password, then email a link to the new address. The address only changes once
+    // that link is clicked, and it stays the same account (same uid), so the logbook and settings are untouched.
+    changeEmail: async (password, newEmail) => {
+      const u = auth.currentUser;
+      if (!u) throw Object.assign(new Error('Not signed in'), { code: 'auth/no-current-user' });
+      await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, password));
+      await verifyBeforeUpdateEmail(u, newEmail);
+    },
+    currentEmail: () => auth.currentUser?.email || '',
     errMsg: authErrMsg
   };
 
@@ -1181,9 +1190,21 @@ body.focus .w-cele .w-go:not(.alt){background:#F4F3EE;color:#121212}
 .w-ask-opts.many .w-ask-opt:nth-child(5n+3){background:var(--c-cpd)}.w-ask-opts.many .w-ask-opt:nth-child(5n+4){background:var(--c-log)}
 .w-ask-opts.many .w-ask-opt:nth-child(5n){background:var(--c-quick)}
 .w-wrpast{margin:34px 0 8px}
-.w-wrpast-h{display:flex;align-items:baseline;gap:8px;font:800 24px/1.1 var(--font);letter-spacing:-.03em;color:var(--text);margin-bottom:14px}
-.w-wrpast-h .w-i{align-self:center}
+.w-wrpast-h{all:unset;box-sizing:border-box;cursor:pointer;width:100%;display:flex;align-items:center;gap:10px;font:800 24px/1.1 var(--font);letter-spacing:-.03em;color:var(--text);padding:16px 20px;border-radius:24px;background:var(--bg2)}
+.w-wrpast-h:focus-visible{outline:3px solid var(--text);outline-offset:3px}
 .w-wrpast-h small{margin-left:auto;font:500 14px var(--font);color:var(--dim);letter-spacing:0}
+.w-wrpast-h .w-i:last-child{transition:transform .2s ease;color:var(--dim)}
+.w-wrpast.open .w-wrpast-h .w-i:last-child{transform:rotate(90deg)}
+.w-wrpast .w-wrchips{margin-top:12px}
+.w-wrpast .w-wrchips[hidden]{display:none}
+.w-wrpast-h span{white-space:nowrap}
+.w-wrpast-h small{text-align:right;line-height:1.25}
+@media (max-width:600px){.w-wrpast-h{font-size:21px;padding:15px 16px;gap:8px}}
+.w-wrchip.yr{background:#1E1E1E;color:#F4F3EE}
+.w-wrchip.yr b{display:flex;align-items:center;gap:7px}
+.w-wrchip.yr .w-i{color:var(--c-quick)}
+body.focus .w-wrchip.yr{background:#F4F3EE;color:#121212}
+body.focus .w-wrchip.yr .w-i{color:#121212}
 .w-wrchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
 .w-wrchip{all:unset;box-sizing:border-box;cursor:pointer;display:block;background:var(--c);color:#1E1E1E;border:2px solid var(--line-ink);border-radius:22px;padding:14px 16px;transition:transform .15s ease}
 .w-wrchip:hover{transform:translateY(-3px)}
@@ -1192,6 +1213,14 @@ body.focus .w-cele .w-go:not(.alt){background:#F4F3EE;color:#121212}
 .w-wrchip span{display:block;font:500 13.5px/1.3 var(--font);margin-top:4px}
 .w-ywr{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:0}
 body.focus .w-ywr{background:#F4F3EE;color:#121212}
+/* change sign-in email */
+.w-em-form{margin-top:18px;text-align:left}
+.w-em-form .w-go{margin-top:6px}
+.w-em-form .w-go:disabled{opacity:.6;cursor:default}
+body.focus .w-em-form .w-go{background:#F4F3EE;color:#121212}
+.w-em-msg{font:500 15px/1.45 var(--font);color:#8a2a22;background:#F9DCD8;border:2px solid var(--line-ink);border-radius:16px;padding:12px 14px;margin:0 0 14px}
+.w-em-msg.good{display:flex;gap:10px;align-items:flex-start;color:#1E1E1E;background:var(--c-quick)}
+.w-em-msg.good .w-i{flex:none;margin-top:2px}
 .w-toast.out{opacity:0;transform:translate(-50%,10px);transition:.4s ease}
 body.focus .w-toast{background:#F4F3EE;color:#121212}
 body.focus .w-toast .w-i{color:#121212}
@@ -6606,7 +6635,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
         <button class="w-avatar" onclick="setTab('admin')" aria-label="Account and settings" title="Account and settings">${safe(initials())}</button>
         <div class="w-topr">
           <select class="w-pill" aria-label="Training year" onchange="setYear(this.value)">${YEARS.map(y=>`<option value="${y}" ${y===currentYear?'selected':''}>${y}${yearLocked(y)?' ✓':''}</option>`).join('')}</select>
-          <button class="w-circ" onclick="wWrapped()" aria-label="Your Wrapped" title="Your Wrapped">${I('spark',22)}</button>
+          <button class="w-circ" onclick="wWrapped()" aria-label="Last month’s Wrapped" title="Last month’s Wrapped">${I('spark',22)}</button>
           <button class="w-circ" onclick="toggleFocus();render()" aria-label="Switch light or dark" title="Switch light or dark">${I('moon',21)}</button>
           <button class="w-circ" onclick="openSettings()" aria-label="Profile and specialty" title="Profile and specialty">${I('sliders',22)}</button>
         </div>
@@ -6709,22 +6738,34 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
       return { y, m:mo, n:count[k], label:new Date(y,mo-1,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'}), persona };
     });
   }
-  window.wrappedArchiveHTML = function(){
-    const list=wrappedMonths(); if(!list.length) return '';
-    const cols=['var(--c-spec)','var(--c-gim)','var(--c-cpd)','var(--c-log)','var(--c-quick)'];
-    return `<div class="w-wrpast"><div class="w-wrpast-h">${I('reset',16)}<span>Past Wrapped</span><small>${list.length} month${list.length===1?'':'s'}</small></div><div class="w-wrchips">${
-      list.map((w,i)=>`<button class="w-wrchip" style="--c:${cols[i%cols.length]}" onclick="openWrapped(${w.y},${w.m})"><b>${w.label}</b><span>${w.n} entr${w.n===1?'y':'ies'}${w.persona?' · '+safe(w.persona):''}</span></button>`).join('')}</div></div>`;
+  // Past Wrapped: signed-off years plus every earlier month, folded away until you open it.
+  // Last month isn't repeated here: it has the ✦ button on Home and its own banner in Insights.
+  let wrPastOpen=false; try{ wrPastOpen=localStorage.getItem('w_wrpast_open')==='1'; }catch(e){}
+  window.wToggleWrPast = function(btn){
+    wrPastOpen=!wrPastOpen; try{ localStorage.setItem('w_wrpast_open', wrPastOpen?'1':'0'); }catch(e){}
+    const box=btn.closest('.w-wrpast'); if(!box) return;
+    box.classList.toggle('open', wrPastOpen); btn.setAttribute('aria-expanded', String(wrPastOpen));
+    const list=box.querySelector('.w-wrchips'); if(list) list.hidden=!wrPastOpen;
   };
+  window.wrappedArchiveHTML = function(){
+    const lc=lastCompletedMonth();
+    const months=wrappedMonths().filter(w=>!(w.y===lc.year && w.m===lc.month));
+    const years=YEARS.filter(y=>{ const o=outcome(y); return OC_META[o] && !['3','4','5'].includes(o); }).reverse();
+    const chips=[];
+    if(years.some(y=>outcome(y)==='6')) chips.push(`<button class="w-wrchip yr" onclick="wYearWrapped('all')"><b>${I('spark',16)}Training Wrapped</b><span>${YEARS[0]} to ${YEARS[YEARS.length-1]}</span></button>`);
+    years.forEach(y=>chips.push(`<button class="w-wrchip yr" onclick="wYearWrapped('${y}')"><b>${I('spark',16)}${y} Wrapped</b><span>Whole year · Outcome ${outcome(y)}</span></button>`));
+    const cols=['var(--c-spec)','var(--c-gim)','var(--c-cpd)','var(--c-log)','var(--c-quick)'];
+    months.forEach((w,i)=>chips.push(`<button class="w-wrchip" style="--c:${cols[i%cols.length]}" onclick="openWrapped(${w.y},${w.m})"><b>${w.label}</b><span>${w.n} entr${w.n===1?'y':'ies'}${w.persona?' · '+safe(w.persona):''}</span></button>`));
+    if(!chips.length) return '';
+    const bits=[years.length?`${years.length+(years.some(y=>outcome(y)==='6')?1:0)} year${years.length>1?'s':''}`:'', months.length?`${months.length} month${months.length===1?'':'s'}`:''].filter(Boolean).join(' · ');
+    return `<div class="w-wrpast ${wrPastOpen?'open':''}"><button class="w-wrpast-h" aria-expanded="${wrPastOpen}" onclick="wToggleWrPast(this)">${I('reset',16)}<span>Past Wrapped</span><small>${bits}</small>${I('chev',20)}</button><div class="w-wrchips" ${wrPastOpen?'':'hidden'}>${chips.join('')}</div></div>`;
+  };
+  // ✦ on Home: last month's Wrapped, as before
   window.wWrapped = function(){
     try{
-      const months=wrappedMonths();
-      const years=YEARS.filter(y=>{ const o=outcome(y); return OC_META[o] && !['3','4','5'].includes(o); });
-      const opts=[];
-      if(years.some(y=>outcome(y)==='6')) opts.push({label:'Your training Wrapped', sub:`${YEARS[0]} to ${YEARS[YEARS.length-1]}, start to finish`, on:()=>wYearWrapped('all')});
-      years.slice().reverse().forEach(y=>opts.push({label:`${y} Wrapped`, sub:`The whole year · Outcome ${outcome(y)}`, on:()=>wYearWrapped(y)}));
-      months.forEach(w=>opts.push({label:w.label, sub:`${w.n} entr${w.n===1?'y':'ies'}${w.persona?' · '+safe(w.persona):''}`, on:()=>openWrapped(w.y,w.m)}));
-      if(!opts.length){ alert('Your Wrapped unlocks once a finished month has some logbook entries.'); return; }
-      wAsk({ title:'Your Wrapped', sub:'Relive any month, or a whole signed-off year.', options:opts, many:true });
+      const lc=lastCompletedMonth(), s=WrappedEngine.gatherStats(state, lc.year, lc.month);
+      if(!s.totalEntries){ alert('Last month has no logbook entries yet. Earlier months are in Logbook › Insights › Past Wrapped.'); return; }
+      openWrapped(lc.year, lc.month);
     }catch(e){ console.error('[Outcome1] Wrapped failed', e); }
   };
 
@@ -7051,6 +7092,55 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     return blocks.join('');
   }
 
+  // ── Change the sign-in email (same account, so nothing is lost) ──
+  window.wChangeEmail = function(){
+    const cur=window.ARCP_FB?.user?.email||'';
+    if(!cur || !window.ARCP_AUTH?.changeEmail){ alert('Connect to the internet and sign in first, then try again.'); return; }
+    document.getElementById('w-ask')?.remove();
+    const prev=document.activeElement;
+    const wrap=document.createElement('div'); wrap.id='w-ask'; wrap.className='w-ask';
+    wrap.innerHTML=`<div class="w-ask-card" role="dialog" aria-modal="true" aria-labelledby="w-em-t">
+      <div class="w-ask-t" id="w-em-t">Change sign-in email</div>
+      <div class="w-ask-s">Same account, same data. You’re signed in as <b>${safe(cur)}</b>.</div>
+      <form class="w-em-form" novalidate>
+        <div class="w-cele-field"><label for="w-em-new">New email</label><input id="w-em-new" type="email" autocomplete="email" inputmode="email" placeholder="you@nhs.net"></div>
+        <div class="w-cele-field"><label for="w-em-pw">Current password</label><input id="w-em-pw" type="password" autocomplete="current-password"><small>To confirm it’s you. Your password stays the same.</small></div>
+        <div class="w-em-msg" role="alert" hidden></div>
+        <button class="w-go" type="submit">Send confirmation link</button>
+      </form>
+      <button class="w-ask-x" data-x="1">Cancel</button></div>`;
+    const close=()=>{ wrap.remove(); document.removeEventListener('keydown',onKey,true); try{ prev&&prev.focus&&prev.focus({preventScroll:true}); }catch(e){} };
+    const onKey=e=>{ if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); close(); } };
+    const msg=(t,good)=>{ const m=wrap.querySelector('.w-em-msg'); m.hidden=false; m.className='w-em-msg'+(good?' good':''); m.innerHTML=t; };
+    wrap.addEventListener('click',e=>{ if(e.target===wrap||e.target.closest('[data-x]')) close(); });
+    wrap.querySelector('form').addEventListener('submit', async e=>{
+      e.preventDefault();
+      const ne=wrap.querySelector('#w-em-new').value.trim(), pw=wrap.querySelector('#w-em-pw').value, btn=wrap.querySelector('button[type=submit]');
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ne)) return msg('Type the new email in full, like name@nhs.net.');
+      if(ne.toLowerCase()===cur.toLowerCase()) return msg('That’s already your sign-in email.');
+      if(!pw) return msg('Type your current password to confirm it’s you.');
+      btn.disabled=true; btn.textContent='Sending…';
+      try{
+        await window.ARCP_AUTH.changeEmail(pw, ne);
+        wrap.querySelector('form').innerHTML=`<div class="w-em-msg good">${I('check',20)}<div><b>Check ${safe(ne)}</b><br>We’ve sent a confirmation link there (look in spam too). Click it and your sign-in email changes.<br><br>Then sign in with <b>${safe(ne)}</b> and your usual password. Your logbook, settings and Wrapped all stay with this account.</div></div><button class="w-go" type="button" data-x="1">Done</button>`;
+        wrap.querySelector('.w-ask-x')?.remove();
+      }catch(err){
+        const c=err?.code||'';
+        const t = c==='auth/invalid-credential'||c==='auth/wrong-password'||c==='auth/invalid-login-credentials' ? 'That password isn’t right.'
+          : c==='auth/email-already-in-use' ? 'Another account already uses that email.'
+          : c==='auth/invalid-email' ? 'That email address doesn’t look right.'
+          : c==='auth/too-many-requests' ? 'Too many tries. Wait a few minutes and try again.'
+          : c==='auth/network-request-failed' ? 'No connection. Check your signal and try again.'
+          : c==='auth/operation-not-allowed' ? 'Email changes are switched off for this app in Firebase. Contact the app maintainer.'
+          : (window.ARCP_AUTH.errMsg?window.ARCP_AUTH.errMsg(err):(err?.message||'Something went wrong.'));
+        msg(safe(t)); btn.disabled=false; btn.textContent='Send confirmation link';
+      }
+    });
+    document.addEventListener('keydown',onKey,true);
+    document.body.appendChild(wrap);
+    wrap.querySelector('#w-em-new').focus();
+  };
+
   // ── MODULE SCREENS ──
   function renderSpecScreen(){
     const sp=specCfg(), r=calcReqsWithExtra(specReqs(),specDopsStats());
@@ -7096,7 +7186,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     const list=main().innerHTML;
     if(yearLocked()){   // the old Insights screen is blank for a locked year, so offer the Wrapped instead
       const oc=outcome(), yw=OC_META[oc] && !['3','4','5'].includes(oc);
-      main().innerHTML = hd + list + `<section id="w-insights" class="section" style="margin-top:56px"><div class="sec-head"><span class="sec-title">Insights</span><span class="sec-note">${currentYear} · signed off</span></div>${yw?`<button class="w-go w-ywr" onclick="wYearWrapped('${currentYear}')">${I('spark',20)}<span>See your ${currentYear} Wrapped</span></button>`:''}${wrappedArchiveHTML()}</section>`;
+      main().innerHTML = hd + list + `<section id="w-insights" class="section" style="margin-top:56px"><div class="sec-head"><span class="sec-title">Insights</span><span class="sec-note">${currentYear} · signed off</span></div>${yw?`<button class="w-go w-ywr" onclick="wYearWrapped('${currentYear}')">${I('spark',20)}<span>See your ${currentYear} Wrapped</span></button>`:''}<div style="margin-top:18px">${(()=>{ try{ return wrappedButtonHTML(); }catch(e){ return ''; } })()}</div>${wrappedArchiveHTML()}</section>`;
       return;
     }
     O.ov();
@@ -7141,6 +7231,10 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
       sub:`${safe(sp.label)} + GIM · ${safe(pr.deanery||'')}${pr.baseHospital?' · '+safe(pr.baseHospital):''}`,
       acts:[['sliders','Profile','openSettings()'],['moon',dark?'Light':'Dark','toggleFocus();render()'],['dl','Excel','exportLogbook()'],['print','Report','showPrintStylePicker()']] }));
     const row=(ic,t,s,on,btn,danger)=>`<div class="w-row"><span class="w-tile">${I(ic,22)}</span><span class="w-row-m"><span class="w-row-t">${t}</span><span class="w-row-s">${s}</span></span><span class="w-row-r"><button class="btn small ${danger?'danger':''}" onclick="${on}">${btn}</button></span></div>`;
+    const signEmail=window.ARCP_FB?.user?.email||'';
+    append(`<section class="section"><div class="sec-head"><span class="sec-title">Sign-in</span></div><div class="w-list">
+      ${row('user','Sign-in email', signEmail?safe(signEmail):'Not connected yet', 'wChangeEmail()', 'Change')}
+    </div></section>`);
     append(`<section class="section"><div class="sec-head"><span class="sec-title">App</span></div><div class="w-list">
       ${row('moon','Appearance',dark?'Dark mode':'Light mode','toggleFocus();render()',dark?'Use light':'Use dark')}
       ${row('sliders','Profile and specialty',`${safe(sp.label)} · ${safe(currentYear)}`,'openSettings()','Edit')}
