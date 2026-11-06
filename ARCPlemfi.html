@@ -930,6 +930,11 @@ body.w-detail #main{padding-top:0!important}
 .w-stack{display:flex;flex-direction:column;max-width:600px;width:100%;margin:0 auto}
 .w-card{all:unset;box-sizing:border-box;cursor:pointer;position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;background:var(--c);color:var(--on-c);border:2px solid var(--line-ink);border-radius:34px;padding:22px 24px 60px;margin-top:-38px;box-shadow:0 -14px 28px -24px rgba(0,0,0,.55);transition:transform .22s cubic-bezier(.2,.8,.2,1)}
 .w-card:first-child{margin-top:0}
+/* each card is its own layer, so text inside never pokes through the card stacked over it */
+.w-stack>.w-card{isolation:isolate}
+.w-cardlink{all:unset;position:absolute;inset:0;border-radius:inherit;cursor:pointer;z-index:1}
+.w-card>.l,.w-card>.r{position:relative;z-index:2;pointer-events:none}
+.w-card:has(.w-cardlink:focus-visible){outline:3px solid var(--text);outline-offset:3px}
 .w-card:hover{transform:translateY(-6px)}
 .w-card.dark{color:#F4F3EE}
 .w-card .l,.w-card .r{display:block;min-width:0}
@@ -942,11 +947,39 @@ body.w-detail #main{padding-top:0!important}
 .w-card.dark .l{flex-shrink:0}
 .w-card.dark .w-lrow{flex-wrap:nowrap}
 .w-cpill{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;border:2px solid #1E1E1E;background:rgba(255,255,255,.45);color:#1E1E1E;font:700 14px/1 var(--font);letter-spacing:-.005em;white-space:nowrap;flex:none}
+button.w-cpill{-webkit-appearance:none;appearance:none;margin:0;cursor:pointer;pointer-events:auto;position:relative;z-index:3;transition:transform .15s ease,background-color .15s ease}
+button.w-cpill:hover{transform:scale(1.06)}
+button.w-cpill:active{transform:scale(.97)}
+button.w-cpill:focus-visible{outline:3px solid currentColor;outline-offset:2px}
 .w-cpill.done{background:#1E1E1E;color:#D3F69C}
 .w-cpill.warn{background:#EE9F98;color:#1E1E1E}
 .w-card.dark .w-cpill{background:transparent;color:#F4F3EE;border-color:rgba(244,243,238,.55)}
 .w-card.dark .w-cpill.warn{background:#EE9F98;color:#1E1E1E;border-color:#EE9F98}
 .w-ring{width:11px;height:11px;border-radius:50%;border:2px solid currentColor;flex:none}
+@media (hover:hover){.w-card:not(.dark) button.w-cpill:not(.done):not(.warn):hover{background:rgba(255,255,255,.8)}.w-card.dark button.w-cpill:not(.warn):hover{background:rgba(244,243,238,.14)}}
+
+/* field highlight when a home pill jumps to it */
+@keyframes wFlash{0%,100%{box-shadow:0 0 0 0 transparent}18%,60%{box-shadow:0 0 0 4px var(--c-quick),0 0 0 6px var(--line-ink)}}
+.w-flash{animation:wFlash 1.8s ease;border-radius:18px}
+input[type="date"]:not(:disabled){cursor:pointer}
+
+/* choice sheet (summary scope) */
+.w-ask{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;animation:wAskIn .16s ease}
+.w-ask-card{width:100%;max-width:420px;background:var(--bg2);color:var(--text);border:2px solid var(--line-ink);border-radius:28px;padding:22px 20px 14px;box-shadow:0 24px 60px -20px rgba(0,0,0,.5)}
+.w-ask-t{font:800 24px/1.1 var(--font);letter-spacing:-.03em}
+.w-ask-s{font:500 15px/1.35 var(--font);color:var(--dim);margin-top:6px}
+.w-ask-opts{display:grid;gap:10px;margin-top:16px}
+.w-ask-opt{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:20px;border:2px solid var(--line-ink);background:var(--c-spec);color:#1E1E1E}
+.w-ask-opt+.w-ask-opt{background:var(--c-quick)}
+.w-ask-opt b{display:block;font:800 18px/1.15 var(--font);letter-spacing:-.02em}
+.w-ask-opt small{display:block;font:500 13.5px/1.3 var(--font);margin-top:3px;color:#3A3836}
+.w-ask-opt svg{flex:none}
+.w-ask-opt:hover{transform:translateY(-2px)}
+.w-ask-opt:focus-visible,.w-ask-x:focus-visible{outline:3px solid var(--text);outline-offset:3px}
+.w-ask-x{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;text-align:center;padding:12px;margin-top:6px;font:700 15px/1 var(--font);color:var(--dim);border-radius:14px}
+.w-ask-x:hover{color:var(--text)}
+@keyframes wAskIn{from{opacity:0}to{opacity:1}}
+@media (max-width:600px){.w-ask{align-items:flex-end;padding:12px 12px max(12px,env(safe-area-inset-bottom))}.w-ask-card{max-width:none}}
 .w-front{cursor:default;display:block;padding:24px 24px 26px}
 .w-front:hover{transform:none}
 .w-qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -5792,6 +5825,40 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
   const isThisYear = e => inCurrentYear(e);
   const safeUrl = u => /^https?:\/\//i.test(String(u||'')) ? E(u) : '';
 
+  // Printing. Zero page margins stop Chrome adding its own date/time header and URL footer;
+  // the body padding is cloned onto every printed page so each page still has a 12mm margin.
+  const PRINT_FIX = '<style id="o1-print-fix">@page{margin:0!important}@media print{html{margin:0!important;padding:0!important;background:#fff!important}body{margin:0!important;padding:12mm!important;-webkit-box-decoration-break:clone;box-decoration-break:clone;background:#fff!important}}</style>';
+  const withPrintFix = html => /<\/head>/i.test(html) ? html.replace(/<\/head>/i, PRINT_FIX+'</head>') : PRINT_FIX+html;
+  window.openReportDoc = function(html){
+    html = withPrintFix(String(html||''));
+    const touch = window.matchMedia && window.matchMedia('(hover: none)').matches;
+    if(touch){
+      const url=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+      const w=window.open(url,'_blank');
+      if(!w) alert('Please allow pop-ups for this site to open the report.');
+      setTimeout(()=>URL.revokeObjectURL(url), 60*60*1000);
+      return w;
+    }
+    document.getElementById('report-print-frame')?.remove();
+    const f=document.createElement('iframe');
+    f.id='report-print-frame'; f.title='Report for printing'; f.setAttribute('aria-hidden','true'); f.tabIndex=-1;
+    f.style.cssText='position:fixed;left:0;top:0;width:820px;height:1160px;border:0;opacity:0;pointer-events:none;z-index:-1';
+    let printed=false;
+    f.onload=async()=>{
+      const w=f.contentWindow, d=w&&w.document;
+      // The frame first loads an empty page; only print once the report itself has loaded
+      if(printed || !d || !d.body || !d.body.childElementCount) return;
+      printed=true;
+      try{ await Promise.race([d.fonts?.ready, new Promise(r=>setTimeout(r,2500))]); }catch(e){}
+      await new Promise(r=>setTimeout(r,200));
+      try{ w.focus(); w.print(); }catch(err){ console.error('[Outcome1] print failed', err); alert('Could not open the print dialog: '+(err.message||err)); }
+      setTimeout(()=>{ if(document.getElementById('report-print-frame')===f) f.remove(); }, 10*60*1000);
+    };
+    f.srcdoc=html;
+    document.body.appendChild(f);
+    return f;
+  };
+
   // ── Summary of Training (A4 landscape, JRCPTB-style tables) ──
   const sotDate = d => { if(!d) return ''; const p=String(d).split('-'); return p.length===3 ? `${p[2]}/${p[1]}/${p[0].slice(2)}` : d; };
   const sotNum = (v,dp) => { const n=parseFloat(v); if(!isFinite(n)) return ''; const f=Math.pow(10,dp||0); return Math.round(n*f)/f; };
@@ -5807,11 +5874,11 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
   }
   const sotSection = (title, summaryHtml, bodyHtml, notes) =>
     `<section class="sheet"><h2>${E(title)}</h2>${summaryHtml?`<div class="summary">${summaryHtml}</div>`:''}${bodyHtml}${notes&&notes.length?`<ul class="notes">${notes.map(n=>`<li>${E(n)}</li>`).join('')}</ul>`:''}</section>`;
-  function sotOpen(title, stream, sectionsHtml){
+  function sotOpen(title, stream, sectionsHtml, mode){
     const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
     const accent=stream==='spec'?'#5b21b6':'#003087', tint=stream==='spec'?'#ece6f8':'#dfe6f3';
     const streamLabel=stream==='spec'?specCfg().label:'General Internal Medicine';
-    const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${E(title)} — ${E(who())}</title>
+    const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${E(title)}${mode==='year'?' ('+E(currentYear)+')':''} — ${E(who())}</title>
 <style>
   @page{size:A4 landscape;margin:12mm}
   *{box-sizing:border-box}
@@ -5852,35 +5919,41 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
 <div class="toolbar"><button onclick="window.print()">⎙ Print / Save as PDF</button></div>
 <div class="page">
   <header>
-    <h1>${E(title)}</h1>
-    <div class="who"><b>${E(who())}</b> · ${E(streamLabel)}<br>Current training year: ${E(currentYear)} · Generated ${E(today)}</div>
+    <h1>${E(title)}${mode==='year'?' · '+E(currentYear):''}</h1>
+    <div class="who"><b>${E(who())}</b> · ${E(streamLabel)}<br>${mode==='year'?`Entries from ${E(currentYear)} only`:'Entries from all training years'} · Generated ${E(today)}</div>
   </header>
   ${sectionsHtml}
   <footer><span>${E(title)}</span><span>${E(who())}</span></footer>
 </div></body></html>`;
     openReportDoc(html);
   }
-  function sotProcSection(title, scope){
-    const yr=currentYear;
-    const procs=lb('procedures',scope).sort(asc('date'));
+  function sotProcSection(title, scope, mode){
+    const yr=currentYear, yrOnly=mode==='year';
+    const procs=lb('procedures',scope).filter(e=>!yrOnly||isThisYear(e)).sort(asc('date'));
     const tally=new Map();
     procs.forEach(e=>{ const n=normProcName((e.type||'Other').trim())||'Other'; const r=tally.get(n)||{n:0,d:0,y:0}; r.n++; if(e.dops==='Yes') r.d++; if(isThisYear(e)) r.y++; tally.set(n,r); });
-    const tallyRows=[...tally.entries()].sort((a,b)=>b[1].n-a[1].n||a[0].localeCompare(b[0])).map(([n,r])=>[n, r.y, r.n, r.d||'—']);
+    const tallySorted=[...tally.entries()].sort((a,b)=>b[1].n-a[1].n||a[0].localeCompare(b[0]));
+    const tallyRows=yrOnly ? tallySorted.map(([n,r])=>[n, r.n, r.d||'—']) : tallySorted.map(([n,r])=>[n, r.y, r.n, r.d||'—']);
     const dopsTotal=procs.filter(e=>e.dops==='Yes').length;
-    const body=(tallyRows.length?`<h3>By procedure</h3>`+sotTable(['Procedure',yr,'All years','DOPS signed'], tallyRows, {num:[1,2,3], bold:[2], cls:'tally', total:{labelCol:0, valueCol:2, value:procs.length}}):'')
+    const tallyTable=yrOnly
+      ? sotTable(['Procedure',yr,'DOPS signed'], tallyRows, {num:[1,2], bold:[1], cls:'tally', total:{labelCol:0, valueCol:1, value:procs.length}})
+      : sotTable(['Procedure',yr,'All years','DOPS signed'], tallyRows, {num:[1,2,3], bold:[2], cls:'tally', total:{labelCol:0, valueCol:2, value:procs.length}});
+    const body=(tallyRows.length?`<h3>By procedure</h3>`+tallyTable:'')
       +(procs.length?`<h3>All procedures</h3>`:'')
       +sotTable(['Date','Procedure','Supervisor','DOPS','Year'], procs.map(e=>[sotDate(e.date), normProcName(e.type)||'', e.supervisor||'', e.dops==='Yes'?'✓ Yes':(e.dops||'No'), e.year||'']), {});
-    return sotSection(title, `${E(yr)}: <strong>${procs.filter(isThisYear).length}</strong> · All years: <strong>${procs.length}</strong> · DOPS signed: ${dopsTotal}`, body, []);
+    return sotSection(title, yrOnly ? `${E(yr)}: <strong>${procs.length}</strong> · DOPS signed: ${dopsTotal}` : `${E(yr)}: <strong>${procs.filter(isThisYear).length}</strong> · All years: <strong>${procs.length}</strong> · DOPS signed: ${dopsTotal}`, body, []);
   }
 
-  window.printGimSummary = function(){
-    const S=[];
+  window.printGimSummary = function(mode){
+    mode = mode==='year' ? 'year' : 'all';
+    const S=[], yr=currentYear, yrOnly=mode==='year', keep=e=>!yrOnly||isThisYear(e);
+    const lead = (val, target) => yrOnly ? `${E(yr)}: <strong>${val}</strong> · ${target} needed by CCT across training` : null;
     // Acute take — the same WTE-adjusted rows as the Firth calculator on the ARCP screen
-    const fr=firthRows();
+    const fr=firthRows().filter(r=>keep(r.e));
     const acuteRows=fr.map(r=>[r.hospital, sotDate(r.start), sotDate(r.end), sotNum(r.post,1), sotNum(r.take,1), sotNum(r.takes,1), sotNum(r.pts,1), r.est, r.es||'']);
     const acuteTotal=fr.reduce((a,r)=>a+(Number(r.est)||0),0);
     S.push(`<div class="kicker">Firth Calculator</div>`+sotSection('Summary calculation of acute medical take and general medical experience',
-      `Estimated total: <strong>${acuteTotal}</strong> / 750 patients${acuteTotal>=750?' ✓':''} · ${fr.length} placement${fr.length===1?'':'s'}`,
+      (lead(`${acuteTotal} patients`,'750')||`Estimated total: <strong>${acuteTotal}</strong> / 750 patients${acuteTotal>=750?' ✓':''}`)+` · ${fr.length} placement${fr.length===1?'':'s'}`,
       `<div class="scroll">${sotTable(['Hospital name','Start Date (DD/MM/YY)','End Date (DD/MM/YY)','WTE months in post (1)','WTE months on take rota (1)','Average number of take shifts per WTE month','Average number of take patients seen by you each shift (2)','Estimated number of patients seen by you on acute take','Name of educational supervisor who can verify estimates'],
         acuteRows, {num:[3,4,5,6,7], bold:[7], cls:'fixed', cols:['17%','8%','8%','8%','8%','10%','11%','11%','19%'], total:{labelCol:6, valueCol:7, value:acuteTotal}})}</div>`,
       ['Note - minimum 750 patients seen before CCT.',
@@ -5888,67 +5961,68 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
        "Note - (2) 'Seen by' means having sufficient involvement for this to be recorded in the patient's notes"]));
 
     // Ward cover
-    const ward=entries('ward').slice().sort(asc('start'));
+    const ward=entries('ward').filter(keep).sort(asc('start'));
     const wardTotal=r1(ward.reduce((a,e)=>a+(parseFloat(e.months)||0),0));
-    S.push(sotSection('GIM ward cover', `Total: <strong>${wardTotal}</strong> / 12 months${wardTotal>=12?' ✓':''} · ${ward.length} placement${ward.length===1?'':'s'}`,
+    S.push(sotSection('GIM ward cover', (lead(`${wardTotal} months`,'12 months')||`Total: <strong>${wardTotal}</strong> / 12 months${wardTotal>=12?' ✓':''}`)+` · ${ward.length} placement${ward.length===1?'':'s'}`,
       sotTable(['Hospital','Start Date (DD/MM/YY)','End Date (DD/MM/YY)','Months','Year','Supervisor'], ward.map(e=>[e.hospital||'', sotDate(e.start), sotDate(e.end), sotNum(e.months,1), e.year||'', e.supervisor||'']), {num:[3], total:{labelCol:2, valueCol:3, value:wardTotal}}),
       ['Note - 12 months of GIM ward cover required by CCT.']));
 
     // GIM clinics (target 20, max 10 SDEC)
-    const clinics=lb('clinics','gim').sort(asc('date'));
+    const clinics=lb('clinics','gim').filter(keep).sort(asc('date'));
     const CAP=10, sdec=clinics.filter(e=>(e.type||'').toLowerCase().includes('sdec')).length;
     const counted=clinics.length-Math.max(0,sdec-CAP);
     S.push(sotSection('GIM outpatient clinics',
-      `Counted towards target: <strong>${counted}</strong> / 20${counted>=20?' ✓':''} · ${clinics.length} logged · Medical SDEC: ${sdec} (max ${CAP} count)${sdec>CAP?` · <span class="warn">${sdec-CAP} SDEC over the cap, not counted</span>`:''}`,
+      yrOnly ? `${lead(`${clinics.length} clinics`,'20 clinics')} · Medical SDEC: ${sdec} (max ${CAP} count overall)` : `Counted towards target: <strong>${counted}</strong> / 20${counted>=20?' ✓':''} · ${clinics.length} logged · Medical SDEC: ${sdec} (max ${CAP} count)${sdec>CAP?` · <span class="warn">${sdec-CAP} SDEC over the cap, not counted</span>`:''}`,
       sotTable(['#','Date','Clinic type','Hospital','Supervisor','Patients','Year'], clinics.map((e,i)=>[i+1, sotDate(e.date), e.type||'', e.hospital||'', e.supervisor||'', e.patients||'', e.year||'']), {num:[0,5]}),
       ['Note - minimum 20 GIM outpatient clinics before CCT, of which no more than 10 may be Medical SDEC.']));
 
     // GIM teaching (external CPD; online capped at 15h)
-    const cpd=lb('cpd','gim').sort(asc('date'));
+    const cpd=lb('cpd','gim').filter(keep).sort(asc('date'));
     const onlineHrs=H(cpd.filter(isOnline)), onlineCapped=Math.min(onlineHrs,15);
     const extHrs=H(cpd.filter(e=>cpdIsExternal(e)&&!isOnline(e))), countedCpd=extHrs+onlineCapped;
     const lab=e=>isOnline(e)?'Online':cpdIsExternal(e)?'External':'Internal';
     S.push(sotSection('GIM teaching',
-      `Total external GIM hours: <strong>${countedCpd.toFixed(1)}h</strong> / 100h${countedCpd>=100?' ✓':''} · External: ${extHrs.toFixed(1)}h · Online: ${onlineCapped.toFixed(1)}h / 15h max${onlineHrs>15?` (${onlineHrs.toFixed(1)}h logged)`:''}`,
+      `${yrOnly?`${E(yr)} external GIM hours: <strong>${countedCpd.toFixed(1)}h</strong> · 100h needed by CCT`:`Total external GIM hours: <strong>${countedCpd.toFixed(1)}h</strong> / 100h${countedCpd>=100?' ✓':''}`} · External: ${extHrs.toFixed(1)}h · Online: ${onlineCapped.toFixed(1)}h / 15h max${onlineHrs>15?` (${onlineHrs.toFixed(1)}h logged)`:''}`,
       sotTable(['Date','Type','Title / Event','Counts as','Hours','Year'], cpd.map(e=>[sotDate(e.date), e.type||'', e.title||'', lab(e), e.hours?sotNum(e.hours,1):'', e.year||'']), {num:[4]}),
       ['Note - 100 hours of external GIM CPD by CCT; online/e-learning counts up to 15 hours. Internal teaching (grand rounds, departmental) is listed but not counted.']));
 
     // GIM procedures
-    S.push(sotProcSection('GIM procedures','gim'));
+    S.push(sotProcSection('GIM procedures','gim',mode));
 
     // Simulation
-    const sim=entries('simulation').slice().sort(asc('date'));
+    const sim=entries('simulation').filter(keep).sort(asc('date'));
     const simTotal=H(sim), simSt7=H(sim.filter(e=>e.year==='ST7'));
-    S.push(sotSection('Simulation', `Total: <strong>${simTotal.toFixed(1)}h</strong> / 12h${simTotal>=12?' ✓':''} · ST7: ${simSt7.toFixed(1)}h / 4h minimum`,
+    S.push(sotSection('Simulation', yrOnly ? lead(`${simTotal.toFixed(1)}h`,'12h (4h in ST7)') : `Total: <strong>${simTotal.toFixed(1)}h</strong> / 12h${simTotal>=12?' ✓':''} · ST7: ${simSt7.toFixed(1)}h / 4h minimum`,
       sotTable(['Date','Course','Title / Session','Hospital / Venue','Hours','Year'], sim.map(e=>[sotDate(e.date), e.course||'', e.title||'', e.hospital||'', e.hours?sotNum(e.hours,1):'', e.year||'']), {num:[4], total:{labelCol:3, valueCol:4, value:simTotal.toFixed(1)}}),
       ['Note - 12 hours of simulation by CCT, at least 4 hours of which in ST7.']));
 
-    sotOpen('GIM — Summary of Training', 'gim', S.join(''));
+    sotOpen('GIM — Summary of Training', 'gim', S.join(''), mode);
   };
 
-  window.printSpecSummary = function(){
-    const sp=specCfg(), yr=currentYear, S=[];
-    S.push(sotProcSection(`${sp.short} procedures`,'spec'));
+  window.printSpecSummary = function(mode){
+    mode = mode==='year' ? 'year' : 'all';
+    const sp=specCfg(), yr=currentYear, S=[], yrOnly=mode==='year', keep=e=>!yrOnly||isThisYear(e);
+    S.push(sotProcSection(`${sp.short} procedures`,'spec',mode));
 
-    const clinics=lb('clinics','spec').sort(asc('date'));
+    const clinics=lb('clinics','spec').filter(keep).sort(asc('date'));
     const pts=clinics.reduce((a,e)=>a+(parseInt(e.patients,10)||0),0);
     const types={}; clinics.forEach(e=>{ const t=e.type||'Other'; types[t]=(types[t]||0)+1; });
     const typeLine=Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`${E(t)} ×${n}`).join(' · ');
-    S.push(sotSection(`${sp.short} clinics`, `${E(yr)}: <strong>${clinics.filter(isThisYear).length}</strong> · All years: <strong>${clinics.length}</strong> · ${pts} patients${typeLine?`<br>${typeLine}`:''}`,
+    S.push(sotSection(`${sp.short} clinics`, `${E(yr)}: <strong>${clinics.filter(isThisYear).length}</strong>${yrOnly?' clinics':` · All years: <strong>${clinics.length}</strong>`} · ${pts} patients${typeLine?`<br>${typeLine}`:''}`,
       sotTable(['#','Date','Clinic type','Hospital','Supervisor','Patients','Year'], clinics.map((e,i)=>[i+1, sotDate(e.date), e.type||'', e.hospital||'', e.supervisor||'', e.patients||'', e.year||'']), {num:[0,5], total:{label:'Patients', labelCol:4, valueCol:5, value:pts}}), []));
 
-    const cpd=lb('cpd','spec').sort(asc('date'));
+    const cpd=lb('cpd','spec').filter(keep).sort(asc('date'));
     const hrsAll=H(cpd), hrsYr=H(cpd.filter(isThisYear));
-    S.push(sotSection(`${sp.short} teaching`, `${E(yr)}: <strong>${hrsYr.toFixed(1)}h</strong> · All years: <strong>${hrsAll.toFixed(1)}h</strong> · ${cpd.length} session${cpd.length===1?'':'s'}`,
+    S.push(sotSection(`${sp.short} teaching`, `${E(yr)}: <strong>${hrsYr.toFixed(1)}h</strong>${yrOnly?'':` · All years: <strong>${hrsAll.toFixed(1)}h</strong>`} · ${cpd.length} session${cpd.length===1?'':'s'}`,
       sotTable(['Date','Type','Title / Event','Hours','Year'], cpd.map(e=>[sotDate(e.date), e.type||'', e.title||'', e.hours?sotNum(e.hours,1):'', e.year||'']), {num:[3], total:{labelCol:2, valueCol:3, value:hrsAll.toFixed(1)}}), []));
 
-    const tp=entries('teaching').slice().sort(asc('date'));
+    const tp=entries('teaching').filter(keep).sort(asc('date'));
     const tpSigned=tp.filter(e=>/signed off|^yes/i.test(String(e.signoff||''))).length;
     const tpObserved=tp.filter(e=>String(e.supervisor||'').trim()).length;
-    S.push(sotSection('Teaching participation', `${E(yr)}: <strong>${tp.filter(isThisYear).length}</strong> · All years: <strong>${tp.length}</strong> session${tp.length===1?'':'s'} · Observed: ${tpObserved} · Signed off: ${tpSigned}`,
+    S.push(sotSection('Teaching participation', `${E(yr)}: <strong>${tp.filter(isThisYear).length}</strong>${yrOnly?` session${tp.length===1?'':'s'}`:` · All years: <strong>${tp.length}</strong> session${tp.length===1?'':'s'}`} · Observed: ${tpObserved} · Signed off: ${tpSigned}`,
       sotTable(['Date','Type','Topic','Audience','Observed by','Sign-off','Year'], tp.map(e=>[sotDate(e.date), e.type||'', e.topic||'', e.audience||'', e.supervisor||'', e.signoff||'', e.year||'']), {}), []));
 
-    sotOpen(`${sp.short} — Summary of Training`, 'spec', S.join(''));
+    sotOpen(`${sp.short} — Summary of Training`, 'spec', S.join(''), mode);
   };
 
   // ── Combined Logbook Report (specialty + GIM, A4 portrait) ──
@@ -6103,10 +6177,10 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     openReportDoc(html);
   };
 
-  // ── CPD Diary (reflective record, all training years) ──
+  // ── CPD Diary (reflective record, current training year only) ──
   window.exportCpdDiary = function(){
     const sp=specCfg();
-    const all=entries('cpd').map(e=>Object.assign({stream:isGim(e)?'GIM':sp.short},e)).sort(asc('date'));
+    const all=entries('cpd').filter(isThisYear).map(e=>Object.assign({stream:isGim(e)?'GIM':sp.short},e)).sort(asc('date'));
     const fmt=d=>{ if(!d) return '—'; const p=String(d).split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d; };
     const total=r1(H(all)), ext=r1(H(all.filter(e=>(e.category||cpdCategoryFor(e.type))==='External')));
     const intl=r1(total-ext), gimExt=r1(H(all.filter(e=>isGim(e)&&cpdIsExternal(e))));
@@ -6128,7 +6202,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     <h2 class="yr">${E(y)} <span class="yr-n">${byYear[y].length} entr${byYear[y].length===1?'y':'ies'} · ${r1(H(byYear[y]))} h</span></h2>
     ${byYear[y].map(entryBlock).join('')}`).join('');
     const deanery=prof().deanery||'';
-    const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CPD Diary — ${E(who())}</title>
+    const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CPD Diary ${E(currentYear)} — ${E(who())}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
@@ -6167,7 +6241,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     <div class="toolbar"><button onclick="window.print()">⎙ Print / Save as PDF</button></div>
     <div class="hd">
       <div class="ec">Continuing Professional Development · Reflective Record</div>
-      <h1>CPD Diary</h1>
+      <h1>CPD Diary · ${E(currentYear)}</h1>
       <div class="sub">${E(who())} · ${E(sp.label)} · GIM${deanery?' · '+E(deanery):''}</div>
     </div>
     <div class="stats">
@@ -6177,7 +6251,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
       <div><div class="k">GIM external</div><div class="v">${gimExt} h</div></div>
       <div><div class="k">Entries</div><div class="v">${all.length}</div></div>
     </div>
-    <div class="body">${all.length?yearsHtml:'<p style="padding:30px 0;color:#9a8f6a;font-style:italic">No CPD entries logged yet.</p>'}</div>
+    <div class="body">${all.length?yearsHtml:`<p style="padding:30px 0;color:#9a8f6a;font-style:italic">No CPD entries logged in ${E(currentYear)} yet.</p>`}</div>
     <div class="ft"><span>CPD Diary · Reflective record for appraisal</span><span>Generated ${gen}</span></div>
   </div>
   </body></html>`;
@@ -6354,19 +6428,19 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
   // Reminder pills on the home stack: ALS expiry year (ARCP card) and SCE pass (specialty card)
   function alsPill(){
     const v=state.als;
-    if(!v) return `<span class="w-cpill" title="Add your ALS expiry date in Account">ALS not set</span>`;
+    if(!v) return `<button class="w-cpill" onclick="wGoAls()" title="Add your ALS expiry date">ALS not set</button>`;
     const d=new Date(v); if(isNaN(d)) return '';
     const days=Math.round((d-today0())/DAY);
     const long=d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
-    if(days<0) return `<span class="w-cpill warn" title="ALS expired ${long}">ALS expired</span>`;
-    return `<span class="w-cpill ${days<=90?'warn':''}" title="ALS valid to ${long}">ALS ${d.getFullYear()}</span>`;
+    if(days<0) return `<button class="w-cpill warn" onclick="wGoAls()" title="ALS expired ${long} · update the date">ALS expired</button>`;
+    return `<button class="w-cpill ${days<=90?'warn':''}" onclick="wGoAls()" title="ALS valid to ${long} · open ALS date">ALS ${d.getFullYear()}</button>`;
   }
   function scePill(){
     const req=specReqs().spec_sce; if(!req) return '';
-    if(getReqVal('spec_sce',req)) return `<span class="w-cpill done" title="${safe(req.label)} passed">${I('check',14)}SCE</span>`;
+    if(getReqVal('spec_sce',req)) return `<button class="w-cpill done" onclick="wGoSce()" title="${safe(req.label)} passed · open">${I('check',14)}SCE</button>`;
     const sd=state.sceDate?new Date(state.sceDate):null;
     const when=sd&&!isNaN(sd)?sd.toLocaleDateString('en-GB',{month:'short',year:'2-digit'}):'';
-    return `<span class="w-cpill todo" title="${safe(req.label)} not passed yet${when?' · sitting '+when:''}"><span class="w-ring"></span>SCE${when?' '+when:''}</span>`;
+    return `<button class="w-cpill todo" onclick="wGoSce()" title="${safe(req.label)} not passed yet${when?' · sitting '+when:''} · open"><span class="w-ring"></span>SCE${when?' '+when:''}</button>`;
   }
   function qlLoad(){ try{ return JSON.parse(localStorage.getItem('w_quicklog')||'{}'); }catch(e){ return {}; } }
   function renderHome(){
@@ -6376,7 +6450,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     const p=panelInfo();
     const cpdH=hrs(yearEntries('cpd')), gimExt=gimExternalCpdHours();
     const logN=KINDS.reduce((a,k)=>a+yearEntries(k).length,0);
-    const card=(tab,c,l,lsub,r,rsub,dark,lp,rp)=>`<button class="w-card ${dark?'dark':''}" style="--c:${c}" onclick="${tab==='logbook'?"wGoLog('all')":`setTab('${tab}')`}"><span class="l"><span class="w-lrow"><b>${l}</b>${lp||''}</span>${lsub?`<small>${lsub}</small>`:''}</span><span class="r"><span class="w-rrow"><b>${r}</b>${rp||''}</span><small>${rsub}</small></span></button>`;
+    const card=(tab,c,l,lsub,r,rsub,dark,lp,rp)=>`<div class="w-card ${dark?'dark':''}" style="--c:${c}"><button class="w-cardlink" aria-label="Open ${l}" onclick="${tab==='logbook'?"wGoLog('all')":`setTab('${tab}')`}"></button><span class="l"><span class="w-lrow"><b>${l}</b>${lp||''}</span>${lsub?`<small>${lsub}</small>`:''}</span><span class="r"><span class="w-rrow"><b>${r}</b>${rp||''}</span><small>${rsub}</small></span></div>`;
     const ql=qlLoad(), qt=KINDS.includes(ql.type)?ql.type:'clinics', qs=ql.scope==='gim'?'gim':'spec';
     const tOpts=[['clinics','Clinic'],['procedures','Procedure'],['cpd','CPD session'],['simulation','Simulation'],['teaching','Teaching session']].map(([v,l])=>`<option value="${v}" ${v===qt?'selected':''}>${l}</option>`).join('');
     const front=`<div class="w-card w-front" style="--c:var(--c-quick)">
@@ -6389,7 +6463,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     </div>`;
     const stack=
       card('arcp','var(--c-arcp)','ARCP',`${currentYear} · ${yearPct()}% through`, p.days>=0?`${p.days} day${p.days===1?'':'s'}`:'Done', p.lockTxt, true, alsPill())+
-      card('specialty','var(--c-spec)',safe(sp.short),'',`${spec.pct}%`,`${spec.met} of ${spec.total} met`, false, '', scePill())+
+      card('specialty','var(--c-spec)',safe(sp.short),'',`${spec.pct}%`,`${spec.met} of ${spec.total} met`, false, scePill())+
       card('gim','var(--c-gim)','GIM','',`${gim.pct}%`,`${gim.met} of ${gim.total} met`)+
       card('cpd','var(--c-cpd)','CPD','',`${cpdH}h`,`GIM external ${gimExt} of 100h`)+
       card('logbook','var(--c-log)','Logbook','',`${logN}`,`entries in ${currentYear}`)+
@@ -6466,6 +6540,53 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
   window.wAdminTo = function(id){ setTab('admin'); setTimeout(()=>{ const el=document.getElementById(id); if(el) (el.closest('section')||el).scrollIntoView({behavior:'smooth',block:'start'}); },60); };
   window.wHome = function(){ setTab('home'); };
   window.wScroll = function(id){ const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); };
+  // Pills on the home stack open the field they remind you about
+  function flashField(input, box){
+    if(!input) return;
+    const tgt=box||input;
+    tgt.scrollIntoView({behavior:'smooth',block:'center'});
+    tgt.classList.remove('w-flash'); void tgt.offsetWidth; tgt.classList.add('w-flash');
+    setTimeout(()=>tgt.classList.remove('w-flash'),1900);
+    try{ input.focus({preventScroll:true}); }catch(e){}
+  }
+  window.wGoAls = function(){
+    setTab('admin');
+    setTimeout(()=>{ const i=document.querySelector('#main input[type="date"][onchange*="state.als"]'); flashField(i, i&&i.closest('.field')); },80);
+  };
+  window.wGoSce = function(){
+    setTab('specialty');
+    setTimeout(()=>{ const i=document.getElementById('sce-date-input'); flashField(i, i&&i.closest('.w-req')); },80);
+  };
+  // Small choice sheet (used for the summary scope)
+  window.wAsk = function(o){
+    document.getElementById('w-ask')?.remove();
+    const prev=document.activeElement;
+    const wrap=document.createElement('div'); wrap.id='w-ask'; wrap.className='w-ask';
+    wrap.innerHTML=`<div class="w-ask-card" role="dialog" aria-modal="true" aria-labelledby="w-ask-t">
+      <div class="w-ask-t" id="w-ask-t">${o.title}</div>${o.sub?`<div class="w-ask-s">${o.sub}</div>`:''}
+      <div class="w-ask-opts">${o.options.map((x,i)=>`<button class="w-ask-opt" data-i="${i}"><span><b>${x.label}</b>${x.sub?`<small>${x.sub}</small>`:''}</span>${I('chev',20)}</button>`).join('')}</div>
+      <button class="w-ask-x" data-x="1">Cancel</button></div>`;
+    const close=()=>{ wrap.remove(); document.removeEventListener('keydown',onKey,true); try{ prev&&prev.focus&&prev.focus({preventScroll:true}); }catch(e){} };
+    const onKey=e=>{
+      if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); close(); return; }
+      if(e.key==='Tab'){ const f=[...wrap.querySelectorAll('button')]; const i=f.indexOf(document.activeElement); e.preventDefault(); f[(i+(e.shiftKey?-1:1)+f.length)%f.length].focus(); }
+    };
+    wrap.addEventListener('click',e=>{
+      if(e.target===wrap||e.target.closest('[data-x]')){ close(); return; }
+      const b=e.target.closest('.w-ask-opt'); if(!b) return;
+      const x=o.options[+b.dataset.i]; close(); x.on();
+    });
+    document.addEventListener('keydown',onKey,true);
+    document.body.appendChild(wrap);
+    wrap.querySelector('.w-ask-opt')?.focus();
+  };
+  window.wSummary = function(kind){
+    const gim=kind==='gim', name=gim?'GIM':specCfg().short;
+    const run=m=>gim?window.printGimSummary(m):window.printSpecSummary(m);
+    wAsk({ title:`${safe(name)} summary`, sub:'Which entries should it cover?', options:[
+      {label:`This year · ${safe(currentYear)}`, sub:`Only what you logged in ${safe(currentYear)}`, on:()=>run('year')},
+      {label:'All years', sub:`Everything since ${safe(YEARS[0])}, with totals towards CCT`, on:()=>run('all')} ]});
+  };
   window.wWrapped = function(){
     try{
       const lc=lastCompletedMonth(), s=WrappedEngine.gatherStats(state, lc.year, lc.month);
@@ -6481,7 +6602,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     prepend(head({ title:sp.short, color:'var(--c-spec)', kicker:`${currentYear} · ${sp.label}`, big:String(r.pct), unit:'%',
       sub:`${r.met} of ${r.total} requirements met${r.open?` · ${r.open} still open`:''}`,
       tab:{label:'Add evidence', right:`${r.open} open`, on:"wQuick('procedures','spec')"},
-      acts:[['clinic','Clinic',"wQuick('clinics','spec')"],['proc','Procedure',"wQuick('procedures','spec')"],['book','CPD',"wQuick('cpd','spec')"],['file','Summary','printSpecSummary()']],
+      acts:[['clinic','Clinic',"wQuick('clinics','spec')"],['proc','Procedure',"wQuick('procedures','spec')"],['book','CPD',"wQuick('cpd','spec')"],['file','Summary',"wSummary('spec')"]],
       right:{icon:'sliders',label:'Profile and specialty',on:'openSettings()'} }));
     if(!yearLocked()) append(feedSection('Activity', feed(e=>e.scope==='spec'&&inCurrentYear(e)), `${sp.short} entries in ${currentYear}`));
   }
@@ -6492,7 +6613,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     prepend(head({ title:'GIM', color:'var(--c-gim)', kicker:`${currentYear} · General Internal Medicine`, big:String(r.pct), unit:'%',
       sub:`${r.met} of ${r.total} requirements met · DOPS ${d.met} of ${d.total}`,
       tab:{label:'Add evidence', right:`${r.open} open`, on:"wQuick('procedures','gim')"},
-      acts:[['clinic','Clinic',"wQuick('clinics','gim')"],['proc','Procedure',"wQuick('procedures','gim')"],['book','CPD',"wQuick('cpd','gim')"],['file','Summary','printGimSummary()']],
+      acts:[['clinic','Clinic',"wQuick('clinics','gim')"],['proc','Procedure',"wQuick('procedures','gim')"],['book','CPD',"wQuick('cpd','gim')"],['file','Summary',"wSummary('gim')"]],
       right:{icon:'sliders',label:'Profile and specialty',on:'openSettings()'} }));
     if(!yearLocked()) append(feedSection('Activity', feed(e=>e.scope==='gim'&&inCurrentYear(e)), `GIM entries in ${currentYear}`));
   }
@@ -6513,7 +6634,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     const hd=head({ title:'Logbook', color:'var(--c-log)', kicker:`${currentYear} · All entries`, big:String(n), unit:'',
       sub:`${c} clinic${c===1?'':'s'} · ${p} procedure${p===1?'':'s'} · ${t} teaching`,
       tab:{label:'New entry', right:'5 types', on:"openLogbookForm(logSubTab&&logSubTab!=='all'?logSubTab:'clinics')"},
-      acts:[['plus','Add',"openLogbookForm(logSubTab&&logSubTab!=='all'?logSubTab:'clinics')"],['print','Report','showPrintStylePicker()'],['book','CPD diary','exportCpdDiary()'],['dl','Excel','exportLogbook()']] });
+      acts:[['plus','Add',"openLogbookForm(logSubTab&&logSubTab!=='all'?logSubTab:'clinics')"],['print','Report','showPrintStylePicker()'],['chart','Insights',"wScroll('w-insights')"],['dl','Excel','exportLogbook()']] });
     if(yearLocked()){ O.lbv2(); prepend(hd); return; }
     O.lbv2();
     const first=main().firstElementChild; if(first && first.querySelector('button[onclick="exportLogbook()"]')) first.remove();
@@ -6597,10 +6718,49 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
 
   document.addEventListener('keydown', e=>{
     if(e.key!=='Escape' || currentTab==='home') return;
-    if(document.querySelector('#fb-modal,#fb-qr-full,#print-style-modal,#cpd-edit-modal,#wrapped-overlay.show,#gate.show,#auth-gate.show')) return;
+    if(document.querySelector('#w-ask,#fb-modal,#fb-qr-full,#print-style-modal,#cpd-edit-modal,#wrapped-overlay.show,#gate.show,#auth-gate.show')) return;
     if(/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||'')) return;
     currentTab==='logbook-form' ? setTab(window.__wPrev||'home') : wHome();
   });
+
+  const isDate = el => el && el.tagName==='INPUT' && el.type==='date';
+  document.addEventListener('focusin', e=>{
+    const el=e.target; if(!isDate(el)) return;
+    if(!el.min) el.min='1900-01-01';
+    if(!el.max) el.max='2099-12-31';   // keeps the year to 4 digits so typing moves on after the year
+  }, true);
+  // Typing into a date saves when you leave the field (Tab, Enter or click away), not after every digit;
+  // picking from the calendar still saves straight away.
+  document.addEventListener('keydown', e=>{
+    const el=e.target; if(!isDate(el)) return;
+    if(e.key==='Enter'){ e.preventDefault(); el.blur(); return; }
+    if(/^[0-9]$/.test(e.key) || /^(Arrow(Up|Down)|Backspace|Delete)$/.test(e.key)) el.__wTyping=true;
+  }, true);
+  document.addEventListener('pointerdown', e=>{ if(isDate(e.target)) e.target.__wTyping=false; }, true);
+  document.addEventListener('change', e=>{
+    const el=e.target; if(!isDate(el) || el.__wFlush) return;
+    const y=el.value?parseInt(el.value.slice(0,4),10):NaN;
+    const partYear = el.value && !(y>=1900);
+    if(partYear || el.__wTyping){   // (activeElement can blink to <body> as Chrome hops between day/month/year)
+      e.stopImmediatePropagation(); e.stopPropagation();
+      el.__wPending = !partYear;
+    } else el.__wPending=false;
+  }, true);
+  document.addEventListener('focusout', e=>{
+    const el=e.target; if(!isDate(el)) return;
+    el.__wTyping=false;
+    if(!el.__wPending) return;
+    el.__wPending=false;
+    const y=parseInt(el.value.slice(0,4),10); if(el.value && !(y>=1900)) return;
+    el.__wFlush=true;
+    try{ el.dispatchEvent(new Event('change',{bubbles:true})); } finally { el.__wFlush=false; }
+  }, true);
+  document.addEventListener('click', e=>{
+    const el=e.target; if(!isDate(el) || el.disabled || el.readOnly || typeof el.showPicker!=='function') return;
+    if(!(window.matchMedia && matchMedia('(pointer: fine)').matches)) return;   // phones already show their own picker
+    if(e.offsetX > el.clientWidth-34) return;   // the calendar icon opens it by itself
+    try{ el.showPicker(); }catch(err){}
+  }, true);
 
   currentTab=normTab(currentTab);
   try{ render(); }catch(e){ console.error('[Outcome1] wallet render failed', e); }
