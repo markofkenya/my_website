@@ -1110,6 +1110,86 @@ div.w-row{cursor:default}
 }
 @media (prefers-reduced-motion:reduce){.w-card,.w-act i{transition:none}}
 @media print{.w-head,.w-hometop{display:none!important}}
+/* ── ARCP outcome ── */
+/* stamp on the home ARCP card */
+.w-stamp{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;border:2.5px solid currentColor;border-radius:14px;padding:5px 10px 4px;transform:rotate(-7deg);line-height:1;vertical-align:top}
+.w-stamp .k{font:800 9.5px/1 var(--font);letter-spacing:.16em;text-transform:uppercase}
+.w-stamp .n{font:800 30px/1 var(--font);letter-spacing:-.04em;margin-top:2px}
+.w-stamp.new{animation:wStampHome .6s .15s cubic-bezier(.2,.9,.25,1.25) both}
+@keyframes wStampHome{0%{transform:scale(2.1) rotate(-24deg);opacity:0}70%{transform:scale(.94) rotate(-5deg);opacity:1}100%{transform:rotate(-7deg)}}
+/* "Start ST5" card that replaces Quick log once a year is signed off */
+.w-next .w-qt{color:inherit}
+.w-npill{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;border:2px solid rgba(244,243,238,.45);font:700 14px/1 var(--font);white-space:nowrap}
+.w-npill .w-i{color:var(--c-quick)}
+.w-ntext{font:500 16px/1.45 var(--font);margin:14px 0 12px;opacity:.85}
+.w-carry{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.w-carry li{display:flex;align-items:flex-start;gap:10px;font:600 15.5px/1.3 var(--font)}
+.w-carry li .w-i{flex:none;color:var(--c-quick);margin-top:1px}
+.w-next .w-go{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--c-quick);color:#1E1E1E;margin-top:22px}
+.w-next .w-go:hover{background:#c6ef84}
+.w-nlink{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;padding:10px;border-radius:14px;font:700 15px var(--font);color:rgba(244,243,238,.85)}
+.w-nlink:hover{color:#fff}
+.w-nlink:focus-visible{outline:3px solid var(--c-quick);outline-offset:2px}
+.w-textbtn{all:unset;cursor:pointer;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+/* the celebration sheet */
+.w-cele{position:fixed;inset:0;z-index:2100;background:var(--bg);color:var(--text);overflow-y:auto;display:flex;padding:max(28px,env(safe-area-inset-top)) 18px max(28px,env(safe-area-inset-bottom))}
+.w-cele-in{position:relative;z-index:1;width:100%;max-width:460px;text-align:center;margin:auto}
+.w-confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+.w-cele-x{all:unset;box-sizing:border-box;position:fixed;top:max(14px,env(safe-area-inset-top));right:14px;z-index:4;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--bg2);border:2px solid var(--line-ink);cursor:pointer;color:var(--text)}
+.w-cele-x:focus-visible,.w-cele-link:focus-visible{outline:3px solid var(--text);outline-offset:3px}
+.w-cele-stamp{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:150px;height:150px;border-radius:36px;background:var(--oc);color:#1E1E1E;border:3px solid #1E1E1E;transform:rotate(-8deg);margin:6px auto 28px;box-shadow:8px 8px 0 #1E1E1E}
+body.focus .w-cele-stamp{box-shadow:8px 8px 0 rgba(244,243,238,.16)}
+.w-cele-stamp span{font:800 15px/1 var(--font);letter-spacing:.18em;text-transform:uppercase}
+.w-cele-stamp b{font:800 92px/.9 var(--font);letter-spacing:-.05em;margin-top:4px}
+.w-cele-icon{width:88px;height:88px;border-radius:50%;margin:6px auto 22px;display:grid;place-items:center;background:var(--oc);color:#1E1E1E;border:2px solid var(--line-ink)}
+.tone-neutral .w-cele-icon{background:var(--bg2);color:var(--text)}
+.w-cele h2{font:800 46px/1 var(--font);letter-spacing:-.045em;margin:0 0 12px}
+.w-cele-sub{font:500 17px/1.45 var(--font);color:var(--dim);margin:0 auto 26px;max-width:36ch}
+.w-cele-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:0 0 26px}
+.w-cele-stats>div{background:var(--c);color:#1E1E1E;border:2px solid var(--line-ink);border-radius:22px;padding:15px 14px 14px;text-align:left}
+.w-cele-stats b{display:block;font:800 30px/1 var(--font);letter-spacing:-.04em}
+.w-cele-stats span{display:block;font:500 14px/1.25 var(--font);margin-top:6px}
+.w-cele-field{text-align:left;margin:0 0 16px}
+.w-cele-field label{display:block;font:700 15px var(--font);margin:0 0 7px}
+.w-cele-field small{display:block;font:500 13.5px/1.35 var(--font);color:var(--dim);margin-top:7px}
+.w-cele-field textarea,.w-cele-field input{box-sizing:border-box;width:100%;font:500 16px/1.4 var(--font);color:var(--text);background:var(--bg2);border:2px solid var(--line-ink);border-radius:18px;padding:12px 14px;margin:0}
+.w-cele-field textarea{min-height:112px;resize:vertical}
+.w-cele-field textarea:focus,.w-cele-field input:focus{outline:3px solid var(--c-quick);outline-offset:1px}
+.w-cele-btns{display:grid;gap:10px;margin-top:6px}
+.w-cele-btns .w-go{margin-top:0;display:flex;align-items:center;justify-content:center;gap:10px}
+body.focus .w-cele .w-go:not(.alt){background:#F4F3EE;color:#121212}
+.w-go.alt{background:var(--c-quick);color:#1E1E1E;border:2px solid var(--line-ink)}
+.w-go.alt:hover{background:#c6ef84}
+.w-cele-link{all:unset;box-sizing:border-box;cursor:pointer;padding:13px;font:700 15px var(--font);color:var(--dim);text-align:center;border-radius:14px}
+.w-cele-link:hover{color:var(--text)}
+.w-cele-in>*{animation:wRise .5s cubic-bezier(.2,.8,.2,1) both}
+.w-cele-in>:nth-child(2){animation-delay:.22s}.w-cele-in>:nth-child(3){animation-delay:.3s}.w-cele-in>:nth-child(4){animation-delay:.38s}.w-cele-in>:nth-child(5){animation-delay:.46s}.w-cele-in>:nth-child(6){animation-delay:.54s}
+.w-cele-in>.w-cele-stamp{animation:wStamp .65s cubic-bezier(.2,.9,.25,1.2) both}
+@keyframes wStamp{0%{transform:scale(2.3) rotate(-26deg);opacity:0}65%{transform:scale(.93) rotate(-5deg);opacity:1}100%{transform:rotate(-8deg)}}
+@keyframes wRise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@media (min-width:700px){.w-cele-stats{grid-template-columns:repeat(4,1fr)}.w-cele-stats b{font-size:28px}}
+@media (max-width:600px){.w-cele h2{font-size:38px}.w-cele-stamp{width:132px;height:132px;border-radius:32px}.w-cele-stamp b{font-size:80px}}
+/* toast */
+.w-toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:2200;display:flex;align-items:center;gap:10px;padding:14px 20px;border-radius:999px;background:#1E1E1E;color:#F4F3EE;border:2px solid #1E1E1E;font:700 16px var(--font);box-shadow:0 14px 40px -12px rgba(0,0,0,.5);animation:wToastIn .35s cubic-bezier(.2,.9,.25,1.2) both}
+.w-toast .w-i{color:var(--c-quick)}
+.w-toast{white-space:nowrap}
+#wrapped-overlay .wr-brand{right:58px;text-shadow:0 1px 3px rgba(0,0,0,.25)}
+#w-cele:focus{outline:none}
+.w-toast.out{opacity:0;transform:translate(-50%,10px);transition:.4s ease}
+body.focus .w-toast{background:#F4F3EE;color:#121212}
+body.focus .w-toast .w-i{color:#121212}
+@keyframes wToastIn{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+/* year Wrapped skins in the app's card colours */
+#wrapped-overlay .c-o1-intro{background:#1E1E1E;color:#F4F3EE}
+#wrapped-overlay .c-o1-intro::after{content:"";position:absolute;left:22px;right:22px;bottom:-34px;height:150px;border-radius:34px 34px 0 0;background:#D3F69C;box-shadow:0 -28px 0 #EE9F98,0 -56px 0 #A3EEF2,0 -84px 0 #F4B683,0 -112px 0 #C8BFF1;pointer-events:none}
+#wrapped-overlay .c-o1-oc1,#wrapped-overlay .c-o1-oc6,#wrapped-overlay .c-o1-lime{background:#D3F69C;color:#1E1E1E}
+#wrapped-overlay .c-o1-oc2{background:#F4B683;color:#1E1E1E}
+#wrapped-overlay .c-o1-oc8,#wrapped-overlay .c-o1-lilac{background:#C8BFF1;color:#1E1E1E}
+#wrapped-overlay .c-o1-cyan{background:#A3EEF2;color:#1E1E1E}
+#wrapped-overlay .c-o1-salmon{background:#EE9F98;color:#1E1E1E}
+#wrapped-overlay [class*="c-o1-"]:not(.c-o1-intro) .wr-row{border-bottom-color:rgba(30,30,30,.18)}
+#wrapped-overlay .c-o1-oc1 .wr-head,#wrapped-overlay .c-o1-oc2 .wr-head,#wrapped-overlay .c-o1-oc6 .wr-head,#wrapped-overlay .c-o1-oc8 .wr-head{font-size:64px}
+@media (prefers-reduced-motion:reduce){.w-cele-in>*,.w-cele-in>.w-cele-stamp,.w-stamp.new,.w-toast{animation:none}}
 </style>
 
 </head>
@@ -6472,12 +6552,13 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
       <button class="w-go" onclick="wQuickGo()">Log entry</button>
     </div>`;
     const stack=
-      card('arcp','var(--c-arcp)','ARCP',`${currentYear} · ${yearPct()}% through`, p.days>=0?`${p.days} day${p.days===1?'':'s'}`:'Done', p.lockTxt, true, alsPill())+
+      (outcomeArcpCard(card)||card('arcp','var(--c-arcp)','ARCP',`${currentYear} · ${yearPct()}% through`, p.days>=0?`${p.days} day${p.days===1?'':'s'}`:'Done', p.lockTxt, true, alsPill()))+
       card('specialty','var(--c-spec)',safe(sp.short),'',`${spec.pct}%`,`${spec.met} of ${spec.total} met`, false, scePill())+
       card('gim','var(--c-gim)','GIM','',`${gim.pct}%`,`${gim.met} of ${gim.total} met`)+
       card('cpd','var(--c-cpd)','CPD','',`${cpdH}h`,`GIM external ${gimExt} of 100h`)+
       card('logbook','var(--c-log)','Logbook','',`${logN}`,`entries in ${currentYear}`)+
-      front;
+      (outcomeFrontCard()||front);
+    window.__wStampNew=false;
 
     // Still to close: this year's open requirements plus unsigned DOPS
     const thisYear=r=>r.deadline==='annual'||r.deadline===currentYear;
@@ -6491,10 +6572,12 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
       if(s && s.total && s.met<s.total) open.push({tab,lab,label:s.label||'DOPS',pct:Math.round(s.met/s.total*100),val:`${s.met} / ${s.total}`,s2:'signed',due:'DOPS'});
     });
     open.sort((a,b)=>a.pct-b.pct);
+    if(yearLocked()) open.length=0;
+    needRows().reverse().forEach(n=>open.unshift({tab:'arcp',lab:n.label,label:n.n,pct:0,val:'To do',s2:'',due:'Development need',need:true}));
     const showAll=!!window.__wAllOpen, shown=showAll?open:open.slice(0,6);
     const openRows=open.length
-      ? shown.map(o=>`<button class="w-row" onclick="setTab('${o.tab}')">${ring(o.pct)}<span class="w-row-m"><span class="w-row-t">${safe(o.label)}</span><span class="w-row-s">${safe(o.lab)} · ${safe(o.due)}</span></span><span class="w-row-r"><span class="w-row-v">${safe(o.val)}</span><span class="w-row-s">${safe(o.s2)}</span></span></button>`).join('')+(open.length>6?`<button class="w-more" onclick="window.__wAllOpen=!window.__wAllOpen;render()">${showAll?'Show fewer':`Show all ${open.length}`}</button>`:'')
-      : `<div class="w-empty">Everything due this year is met.</div>`;
+      ? shown.map(o=>`<button class="w-row" onclick="setTab('${o.tab}')">${o.need?`<span class="w-tile">${I('flag',22)}</span>`:ring(o.pct)}<span class="w-row-m"><span class="w-row-t">${safe(o.label)}</span><span class="w-row-s">${safe(o.lab)} · ${safe(o.due)}</span></span><span class="w-row-r"><span class="w-row-v">${safe(o.val)}</span><span class="w-row-s">${safe(o.s2)}</span></span></button>`).join('')+(open.length>6?`<button class="w-more" onclick="window.__wAllOpen=!window.__wAllOpen;render()">${showAll?'Show fewer':`Show all ${open.length}`}</button>`:'')
+      : `<div class="w-empty">${yearLocked()?`${currentYear} is signed off. Nothing left to close.`:'Everything due this year is met.'}</div>`;
     const recent=feed();
     const recentRows=recent.length
       ? recent.slice(0,6).map(feedRow).join('')+`<button class="w-more" onclick="setTab('logbook')">Open logbook</button>`
@@ -6514,7 +6597,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
       <div class="w-homegrid">
         <div><div class="w-stack">${stack}</div><div class="w-foot"><b>● ${safe(sync)}</b> · ${safe(sp.label)} + GIM · ${safe(state.profile?.deanery||'')}</div></div>
         <aside class="w-side">
-          <div class="w-h2">Still to close <small>${open.length} open in ${currentYear}</small></div>
+          <div class="w-h2">Still to close <small>${yearLocked()?(outcome()?`${currentYear} · Outcome ${outcome()}`:`${currentYear} locked`):`${open.length} open in ${currentYear}`}</small></div>
           <div class="w-list">${openRows}</div>
           <div class="w-h2">Recent activity</div>
           <div class="w-list">${recentRows}</div>
@@ -6605,6 +6688,329 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     }catch(e){ console.error('[Outcome1] Wrapped failed', e); }
   };
 
+  // ── ARCP OUTCOME: celebration, outcome card, next-year card, year Wrapped ──
+  const OC_META = {
+    '1':{tone:'party',   col:'var(--c-quick)', stamp:true},
+    '2':{tone:'warm',    col:'var(--c-gim)',   stamp:true},
+    '3':{tone:'support', col:'var(--c-log)'},
+    '4':{tone:'neutral', col:'var(--c-arcp)'},
+    '5':{tone:'support', col:'var(--c-log)'},
+    '6':{tone:'finale',  col:'var(--c-quick)', stamp:true},
+    '8':{tone:'calm',    col:'var(--c-spec)',  stamp:true}
+  };
+  const ocShort = k => String(OUTCOMES[k]||'').replace(/^Outcome\s+\d+\s*[—–-]\s*/i,'').trim();
+  const nameParts = () => String(state.profile?.name||'').replace(/^dr\.?\s+/i,'').trim().split(/\s+/).filter(Boolean);
+  const firstName = () => nameParts()[0]||'';
+  const lastName = () => { const n=nameParts(); return n.length>1?n[n.length-1]:''; };
+  const nextYearOf = y => YEARS[YEARS.indexOf(y)+1]||null;
+  const prevYearOf = y => { const i=YEARS.indexOf(y); return i>0?YEARS[i-1]:null; };
+  // Run a calculation as if another training year were selected
+  function withYear(y, fn){ const cy=currentYear; currentYear=y; try{ return fn(); } finally { currentYear=cy; } }
+  const inYearOf = (e,y) => withYear(y, ()=>inCurrentYear(e));
+  const fmtD = (d,o) => d.toLocaleDateString('en-GB', o||{day:'numeric',month:'short'});
+  function signedOff(y){
+    const yo=state.years?.[y]||{}, panel=new Date(state.arcpDates?.[y]||ARCP_DEFAULTS[y]); panel.setHours(0,0,0,0);
+    if(!isNaN(panel) && panel<=today0()) return panel;           // panel already happened: that's the sign-off day
+    const t=yo.outcomeAt||yo.lockedAt; return t?new Date(t):today0();
+  }
+  const listOf = v => (Array.isArray(v)?v:(v&&typeof v==='object'?Object.values(v):[])).map(x=>String(x||'').trim()).filter(Boolean);
+  const devNeeds = y => listOf(state.years?.[y]?.devNeeds);
+  const needDone = (y,i) => !!(state.years?.[y]?.devDone||{})['n'+i];
+  window.wNeedToggle = function(y,i){
+    state.years[y]=state.years[y]||{}; const d=Object.assign({}, state.years[y].devDone||{});
+    if(d['n'+i]) delete d['n'+i]; else d['n'+i]=true;
+    state.years[y].devDone=d; saveState(); render();
+  };
+
+  // ── numbers for a training year (or the whole of training) ──
+  function rankList(arr){ const m=new Map(); arr.forEach(n=>{ n=String(n||'').trim(); if(n) m.set(n,(m.get(n)||0)+1); }); return [...m].map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name)); }
+  function streakOf(dates){
+    const days=[...new Set(dates.filter(Boolean).map(d=>String(d).slice(0,10)))].filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+    let best={len:0}, cur=null;
+    days.forEach(d=>{ const t=new Date(d+'T00:00:00').getTime(); if(cur && Math.round((t-cur.end)/DAY)===1){ cur.end=t; cur.len++; } else cur={start:t,end:t,len:1}; if(cur.len>best.len) best={...cur}; });
+    return best;
+  }
+  function periodStats(sel){
+    const L=k=>entries(k).filter(sel);
+    const clinics=L('clinics'), procs=L('procedures'), teach=L('teaching'), cpd=L('cpd'), sim=L('simulation');
+    const acute=firthRows().filter(r=>sel(r.e));
+    const all=[...clinics,...procs,...teach,...cpd,...sim];
+    const dates=[...all.map(e=>e.date), ...acute.map(r=>r.start)].filter(Boolean).map(String).sort();
+    const pName=e=>normProcName(e.type)||e.type||'Procedure';
+    // "firsts" only make sense when there is earlier history to compare against
+    const outside=entries('procedures').filter(e=>!sel(e));
+    const hasHistory=dates.length && outside.some(o=>String(o.date||'')<dates[0]);
+    const firstDate={}; procs.forEach(e=>{ const n=pName(e), d=String(e.date||''); if(!firstDate[n]||d<firstDate[n]) firstDate[n]=d; });
+    const firsts=hasHistory?Object.keys(firstDate).filter(n=>!outside.some(o=>pName(o)===n && String(o.date||'')<firstDate[n])):[];
+    const monthCount={}; all.forEach(e=>{ const m=String(e.date||'').slice(0,7); if(/^\d{4}-\d{2}$/.test(m)) monthCount[m]=(monthCount[m]||0)+1; });
+    const busiest=Object.entries(monthCount).sort((a,b)=>b[1]-a[1])[0]||null;
+    const hospitals=[...new Set([...clinics,...procs].map(e=>e.hospital).concat(acute.map(r=>r.hospital)).map(h=>String(h||'').trim()).filter(Boolean))];
+    const sumN=(arr,f)=>arr.reduce((a,x)=>a+(Number(f(x))||0),0);
+    return { clinics:clinics.length, clinicPts:sumN(clinics,e=>parseInt(e.patients,10)), clinicRank:rankList(clinics.map(e=>e.type||'Clinic')),
+      procs:procs.length, procRank:rankList(procs.map(pName)), dops:procs.filter(e=>e.dops==='Yes').length, firsts,
+      teachN:teach.length, teachH:hrs(teach), feedback:sumN(teach,e=>e.feedbackCount),
+      cpdN:cpd.length, cpdH:hrs(cpd), cpdRank:rankList(cpd.map(e=>e.title||'')),
+      simH:hrs(sim), acuteN:acute.length, acutePts:sumN(acute,r=>r.est), takes:sumN(acute,r=>r.takes),
+      total:all.length+acute.length, busiest, streak:streakOf(all.map(e=>e.date)), hospitals, first:dates[0]||'', last:dates[dates.length-1]||'' };
+  }
+  function reqSummary(y){
+    return withYear(y, ()=>{ try{ return { spec:calcReqsWithExtra(specReqs(),specDopsStats()), gim:calcReqsWithExtra(visibleGimReqs(),gimDopsStats()) }; }catch(e){ return null; } });
+  }
+
+  // ── Wrapped for a whole training year (y) or the whole of training ('all') ──
+  function buildYearDeck(y){
+    const whole=y==='all', lastY=YEARS[YEARS.length-1];
+    const oc=whole?outcome(lastY):outcome(y);
+    const s=periodStats(whole?(()=>true):(e=>inYearOf(e,y)));
+    const label=whole?`${YEARS[0]}–${lastY}`:y;
+    const panel=new Date(state.arcpDates?.[whole?lastY:y]||ARCP_DEFAULTS[whole?lastY:y]);
+    const span=whole?(s.first&&s.last&&s.first.slice(0,4)!==s.last.slice(0,4)?`${s.first.slice(0,4)}–${s.last.slice(0,4)}`:(s.first||'').slice(0,4))
+                    :(isNaN(panel)?'':`${panel.getFullYear()-1}–${String(panel.getFullYear()).slice(2)}`);
+    const plural=(n,a,b)=>`${n} ${n===1?a:(b||a+'s')}`;
+    const cards=[];
+    cards.push({ skin:'c-o1-intro', kicker:whole?'Your training, start to finish':'Your year in training',
+      headline:`${label},\nwrapped.`, sub:`${plural(s.total,'entry','entries')} logged${span?` · ${span}`:''}. Tap through →` });
+    if(OC_META[oc] && !['3','4','5'].includes(oc)) cards.push({ skin:'c-o1-oc'+oc, kicker:'The verdict', headline:`Outcome ${oc}.`,
+      sub:`${ocShort(oc)}. Signed off ${fmtD(signedOff(whole?lastY:y),{day:'numeric',month:'long',year:'numeric'})}.` });
+    const rows=[{lab:'Clinics',val:s.clinics},{lab:'Procedures',val:s.procs},{lab:'Teaching delivered',val:r1(s.teachH)+'h'},{lab:'CPD & learning',val:r1(s.cpdH)+'h'}];
+    if(s.simH>0) rows.push({lab:'Simulation',val:r1(s.simH)+'h'});
+    if(s.acutePts>0) rows.push({lab:'Acute take patients',val:s.acutePts.toLocaleString('en-GB')});
+    cards.push({ skin:'c-totals', kicker:'The headline numbers', type:'rows', rows:rows.map(r=>({...r,noDelta:true})),
+      sub:whole?`Across ${YEARS.length} years of training.`:`Everything you logged in ${y}.` });
+    const flex=[];
+    if(s.procRank.length && s.procRank[0].count>=2) flex.push({score:60+s.procRank[0].count, c:{ skin:'c-top', kicker:'Your most-logged procedures', type:'rank',
+      ranks:s.procRank.slice(0,4).map(r=>({name:safe(r.name),count:r.count})), sub:s.dops?`${plural(s.dops,'DOPS','DOPS')} signed along the way. Safe hands.`:'Hands-on, all year.' }});
+    if(s.firsts.length) flex.push({score:85, c:{ skin:'c-first', kicker:whole?'Firsts along the way':'A first this year',
+      headline:`Your first\n${safe(s.firsts[0].toLowerCase())}.`, sub:s.firsts.length>1?`Plus ${plural(s.firsts.length-1,'other new procedure')}.`:'New territory on the curriculum.' }});
+    if(s.acutePts>0) flex.push({score:70, c:{ skin:'c-o1-salmon', kicker:'On the take', stat:s.acutePts.toLocaleString('en-GB'), statUnit:'acute take patients (Firth estimate)',
+      sub:`${plural(s.takes,'take')} across ${plural(s.acuteN,'placement')}.` }});
+    if(s.clinicPts>0) flex.push({score:55, c:{ skin:'c-o1-lilac', kicker:'In clinic', stat:s.clinicPts.toLocaleString('en-GB'), statUnit:'patients seen in clinic',
+      sub:`${plural(s.clinics,'clinic')}${s.clinicRank[0]?`, mostly ${safe(s.clinicRank[0].name)}`:''}.` }});
+    if(s.teachH>=1) flex.push({score:50+s.teachH, c:{ skin:'c-teach', kicker:'Hours you gave back', stat:r1(s.teachH), statUnit:'hours of teaching delivered',
+      sub:s.feedback?`${plural(s.feedback,'feedback response')} collected.`:`${plural(s.teachN,'session')}.` }});
+    if(s.cpdH>=2) flex.push({score:45+s.cpdH/2, c:{ skin:'c-o1-cyan', kicker:'Hours you banked', stat:r1(s.cpdH), statUnit:'hours of CPD & learning',
+      sub:s.cpdRank[0]?`Including ${safe(s.cpdRank[0].name)}${s.cpdRank.length>1?` and ${s.cpdRank.length-1} more`:''}.`:`${plural(s.cpdN,'session')}.` }});
+    if(s.busiest && s.busiest[1]>=4){ const [yy,mm]=s.busiest[0].split('-').map(Number), mn=new Date(yy,mm-1,1).toLocaleDateString('en-GB',{month:'long'});
+      flex.push({score:40+s.busiest[1], c:{ skin:'c-arcp', kicker:'Your busiest month', headline:`${mn} was\nfull throttle.`, sub:`${s.busiest[1]} entries in ${mn} ${yy}.` }}); }
+    if(s.streak.len>=3) flex.push({score:35+s.streak.len*3, c:{ skin:'c-streak', kicker:'Your longest streak', stat:s.streak.len, statUnit:'days in a row with a logged entry',
+      sub:`${fmtD(new Date(s.streak.start))} – ${fmtD(new Date(s.streak.end))}. Momentum.` }});
+    if(s.hospitals.length>=2) flex.push({score:25+s.hospitals.length*3, c:{ skin:'c-totals', kicker:'On the move', headline:`${s.hospitals.length} sites,\none trainee.`,
+      sub:`${safe(s.hospitals.slice(0,3).join(', '))}${s.hospitals.length>3?' and more':''}.` }});
+    flex.sort((a,b)=>b.score-a.score).slice(0,7).forEach(x=>cards.push(x.c));
+    if(!whole){
+      const rq=reqSummary(y);
+      if(rq && rq.spec.total+rq.gim.total) cards.push({ skin:'c-o1-lime', kicker:'Curriculum check', type:'rows', rows:[
+        {lab:`${safe(specCfg().short)} checklist`, val:`${rq.spec.met}/${rq.spec.total}`, noDelta:true},
+        {lab:'GIM checklist', val:`${rq.gim.met}/${rq.gim.total}`, noDelta:true},
+        {lab:'DOPS signed', val:s.dops, noDelta:true}],
+        sub:rq.spec.met>=rq.spec.total && rq.gim.met>=rq.gim.total ? 'Every box ticked.' : `${rq.spec.pct}% and ${rq.gim.pct}% of this year’s checklist in the app.` });
+    }
+    const p=WrappedEngine.derivePersonality({counts:{procedures:s.procs,clinics:s.clinics,teaching:s.teachN,cpd:s.cpdN}});
+    cards.push({ skin:'c-person', type:'person', badge:whole?'Across your training, you were':'This year, you were', name:p.name, em:p.em,
+      desc:p.desc.replace(/\bmonth\b/g, whole?'training':'year'), traits:p.traits });
+    const fn=firstName(), ln=lastName();
+    cards.push({ skin:'c-summary', type:'summary',
+      eyebrow:`${label}${span?' · '+span:''} · Dr ${safe(ln?(fn?fn[0]+'. ':'')+ln:(fn||'Trainee'))}`,
+      cells:[{v:s.clinics,l:'Clinics'},{v:s.procs,l:'Procedures',accent:true},{v:r1(s.cpdH)+'h',l:'CPD',accent:true},{v:r1(s.teachH)+'h',l:'Teaching done'}],
+      foot:OC_META[oc]?`Outcome ${oc} · ${ocShort(oc)}`:'',
+      foot2:whole?'The consultant era starts now.':(nextYearOf(y)?`On to ${nextYearOf(y)}.`:'') });
+    return { meta:{year:span, monthName:label, totalEntries:s.total, cardCount:cards.length}, stats:s, cards };
+  }
+  window.wYearWrapped = function(y){
+    try{
+      y=y||currentYear;
+      const deck=buildYearDeck(y);
+      WrappedUI.open(deck, { brand:(y==='all'?'Training':y)+' Wrapped', title:firstName() });
+    }catch(e){ console.error('[Outcome1] year Wrapped failed', e); alert('Could not build your Wrapped: '+(e.message||e)); }
+  };
+
+  // ── confetti in the card colours ──
+  function confetti(host, kind){
+    try{ if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return; }catch(e){}
+    if(!['party','finale','warm','calm'].includes(kind)) return;   // no confetti for Outcomes 3, 4 and 5
+    const cv=document.createElement('canvas'); cv.className='w-confetti'; cv.setAttribute('aria-hidden','true'); host.appendChild(cv);
+    const ctx=cv.getContext('2d'); if(!ctx){ cv.remove(); return; }
+    const dpr=Math.min(2,window.devicePixelRatio||1); let W=0,H=0;
+    const size=()=>{ W=innerWidth; H=innerHeight; cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); };
+    size(); addEventListener('resize', size);
+    const COL=['#C8BFF1','#F4B683','#A3EEF2','#EE9F98','#D3F69C','#1E1E1E','#D3F69C'];
+    const P=[], rnd=(a,b)=>a+Math.random()*(b-a);
+    const piece=(x,y,vx,vy)=>P.push({x,y,vx,vy,r:rnd(0,6.28),vr:rnd(-.25,.25),w:rnd(7,13),h:rnd(4,8),c:COL[(Math.random()*COL.length)|0],shape:Math.random()<.22?'dot':(Math.random()<.2?'ribbon':'rect'),wob:rnd(0,6.28)});
+    // side -1 fires up and to the right from the left edge; side 1 fires up and to the left from the right edge
+    const cannon=(n,side)=>{ for(let i=0;i<n;i++){ const a=side<0?rnd(-1.3,-.75):rnd(-2.4,-1.85), sp=rnd(10,19)*Math.min(1.25,Math.max(.75,H/800)); piece(side<0?-10:W+10, H*rnd(.62,.9), Math.cos(a)*sp, Math.sin(a)*sp); } };
+    const rain=n=>{ for(let i=0;i<n;i++) piece(rnd(0,W), rnd(-H*.5,-10), rnd(-1.5,1.5), rnd(1,4)); };
+    const plan={ party:[[0,()=>{cannon(80,-1);cannon(80,1);}],[650,()=>rain(70)]],
+                 finale:[[0,()=>{cannon(110,-1);cannon(110,1);}],[600,()=>rain(110)],[1500,()=>{cannon(80,-1);cannon(80,1);}],[2300,()=>rain(90)]],
+                 warm:[[0,()=>rain(55)]], calm:[[0,()=>rain(45)]] }[kind]||[];
+    const timers=plan.map(([t,f])=>setTimeout(f,t));
+    let last=performance.now(); const start=last, stopAfter=kind==='finale'?6500:4800;
+    function tick(now){
+      if(!cv.isConnected){ timers.forEach(clearTimeout); removeEventListener('resize', size); return; }
+      const dt=Math.min(2.5,(now-last)/16.67); last=now;
+      ctx.clearRect(0,0,W,H);
+      for(let i=P.length-1;i>=0;i--){
+        const p=P[i]; p.vy+=.32*dt; p.vx*=Math.pow(.985,dt); p.vy*=Math.pow(.985,dt); p.vy=Math.min(p.vy,7.5);
+        p.wob+=.12*dt; p.x+=(p.vx+Math.sin(p.wob)*.6)*dt; p.y+=p.vy*dt; p.r+=p.vr*dt;
+        if(p.y>H+30){ P.splice(i,1); continue; }
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle=p.c;
+        if(p.shape==='dot'){ ctx.beginPath(); ctx.arc(0,0,p.h*.6,0,6.283); ctx.fill(); }
+        else if(p.shape==='ribbon'){ ctx.scale(1,Math.cos(p.wob)); ctx.fillRect(-p.w*.9,-1.6,p.w*1.8,3.2); }
+        else { ctx.scale(1,Math.cos(p.wob*1.3)); ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); }
+        ctx.restore();
+      }
+      if(now-start<stopAfter || P.length) requestAnimationFrame(tick); else { cv.remove(); removeEventListener('resize', size); }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ── the moment you record an outcome ──
+  window.wCelebrate = function(y, oc, quiet){
+    y=y||currentYear; oc=String(oc||outcome(y)||''); if(!OUTCOMES[oc]) return;
+    document.getElementById('w-cele')?.remove();
+    const m=OC_META[oc]||OC_META['4'], next=nextYearOf(y), fn=firstName(), ln=lastName(), whole=oc==='6';
+    const s=periodStats(whole?(()=>true):(e=>inYearOf(e,y)));
+    const tiles=[[s.total, whole?'entries across training':'entries logged','var(--c-spec)'],[s.procs,'procedures','var(--c-gim)'],
+      [r1(s.cpdH)+'h','CPD & learning','var(--c-cpd)'], s.acutePts?[s.acutePts.toLocaleString('en-GB'),'take patients','var(--c-log)']:[s.clinics,'clinics','var(--c-log)']];
+    const stats=`<div class="w-cele-stats">${tiles.map(([v,l,c])=>`<div style="--c:${c}"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
+    const yo=state.years?.[y]||{};
+    const needsField=(label,hint)=>`<div class="w-cele-field"><label for="w-cele-needs">${label}</label><textarea id="w-cele-needs" placeholder="One per line, e.g. Two more renal biopsy DOPS">${safe(devNeeds(y).join('\n'))}</textarea>${hint?`<small>${hint}</small>`:''}</div>`;
+    const reviewField=`<div class="w-cele-field"><label for="w-cele-review">Review panel date</label><input id="w-cele-review" type="date" value="${safe(yo.reviewDate||'')}"><small>The ARCP card on Home counts down to it.</small></div>`;
+    const btnWrapped=(lbl)=>`<button class="w-go" data-act="wrapped">${I('spark',20)}<span>${lbl}</span></button>`;
+    const btnNext=(lbl)=>next?`<button class="w-go alt" data-act="next"><span>${lbl}</span>${I('chev',20)}</button>`:'';
+    const link=(lbl)=>`<button class="w-cele-link" data-act="close">${lbl}</button>`;
+    let title, sub, body='', btns='';
+    if(oc==='1'){ title=`${y} signed off!`; sub=`${ocShort(oc)}. ${fn?`Well done, ${safe(fn)}.`:'Well done.'}`; body=stats;
+      btns=btnWrapped(`See your ${y} Wrapped`)+btnNext(`Start ${next}`)+link('Close'); }
+    else if(oc==='6'){ title='Training complete!'; sub=`${ocShort(oc)}. Congratulations${ln||fn?`, Dr ${safe(ln||fn)}`:''}. The consultant era starts now.`; body=stats;
+      btns=btnWrapped('See your training Wrapped')+link('Close'); }
+    else if(oc==='2'){ title=`${y} complete.`; sub='Progress made, and the panel has shown you exactly what to sharpen next.';
+      body=stats+needsField('Development needs from the panel', next?`These follow you into ${next} so you can tick them off.`:'');
+      btns=btnWrapped(`Save and see your ${y} Wrapped`)+btnNext(`Save and start ${next}`)+link('Save and close'); }
+    else if(oc==='8'){ title='Enjoy the time out.'; sub=`${ocShort(oc)}. Your ${y} portfolio is saved and locked, ready for when you’re back.`; body=stats;
+      btns=btnWrapped(`See your ${y} Wrapped`)+link('Close'); }
+    else if(oc==='3'||oc==='5'){ title=`Outcome ${oc} recorded.`;
+      sub=oc==='3'?`${ocShort(oc)}. A setback, not the end of the road. ${y} stays open so you can keep building your evidence before the review.`
+                  :`${ocShort(oc)}. ${y} stays open, so you can add what the panel needs before your review.`;
+      body=needsField('What the panel asked for','They’ll show on Home under Still to close.')+reviewField;
+      btns=`<button class="w-go" data-act="close">${I('check',20)}<span>Save plan</span></button>`+`<button class="w-cele-link" data-act="cancel">Not now</button>`; }
+    else { title=`Outcome ${oc} recorded.`; sub=`${ocShort(oc)}. Everything you logged stays saved, and you can download it at any time.`;
+      btns=`<button class="w-go" data-act="excel">${I('dl',20)}<span>Download logbook (Excel)</span></button>`+link('Close'); }
+    const top=m.stamp?`<div class="w-cele-stamp"><span>Outcome</span><b>${oc}</b></div>`:`<div class="w-cele-icon">${I(oc==='4'?'file':'flag',34)}</div>`;
+    const ov=document.createElement('div');
+    ov.id='w-cele'; ov.className=`w-cele tone-${m.tone}`; ov.style.setProperty('--oc', m.col);
+    ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-labelledby','w-cele-t');
+    ov.innerHTML=`<button class="w-cele-x" data-act="close" aria-label="Close">${I('x',22)}</button>
+      <div class="w-cele-in">${top}<h2 id="w-cele-t">${title}</h2><p class="w-cele-sub">${sub}</p>${body}<div class="w-cele-btns">${btns}</div></div>`;
+    const prevFocus=document.activeElement;
+    const save=()=>{
+      const ta=ov.querySelector('#w-cele-needs'), rv=ov.querySelector('#w-cele-review'); if(!ta&&!rv) return false;
+      state.years[y]=state.years[y]||{}; const before=JSON.stringify(state.years[y]);
+      if(ta){ const list=ta.value.split(/\n+/).map(x=>x.replace(/^\s*(?:[•\-–*]\s*|\d+[.)]\s+)?/,'').trim()).filter(Boolean).slice(0,12);
+        if(JSON.stringify(list)!==JSON.stringify(devNeeds(y))) delete state.years[y].devDone;
+        if(list.length) state.years[y].devNeeds=list; else delete state.years[y].devNeeds; }
+      if(rv){ if(rv.value) state.years[y].reviewDate=rv.value; else delete state.years[y].reviewDate; }
+      if(JSON.stringify(state.years[y])===before) return false;
+      saveState(); return true;
+    };
+    const onKey=e=>{
+      if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); finish('close'); return; }
+      if(e.key==='Tab'){ const f=[...ov.querySelectorAll('button,textarea,input')]; const i=f.indexOf(document.activeElement); e.preventDefault(); f[(i+(e.shiftKey?-1:1)+f.length)%f.length].focus(); }
+    };
+    function finish(act){
+      const changed = act==='cancel' ? false : save();
+      ov.remove(); document.removeEventListener('keydown', onKey, true);
+      if(act==='wrapped'){ if(changed) render(); wYearWrapped(whole?'all':y); return; }
+      if(act==='next'){ wStartNext(y); return; }
+      if(act==='excel'){ try{ exportLogbook(); }catch(e){} }
+      window.__wStampNew = !quiet && !!m.stamp;
+      if(changed || currentTab==='home' || currentTab==='arcp') render();
+      try{ prevFocus&&prevFocus.isConnected&&prevFocus.focus({preventScroll:true}); }catch(e){}
+    }
+    ov.addEventListener('click', e=>{ const b=e.target.closest('[data-act]'); if(b) finish(b.dataset.act); });
+    document.addEventListener('keydown', onKey, true);
+    document.body.appendChild(ov);
+    ov.tabIndex=-1; ov.focus({preventScroll:true});
+    if(!quiet){
+      confetti(ov, m.tone);
+      if(m.tone==='party'||m.tone==='finale'){ try{ navigator.vibrate&&navigator.vibrate([24,60,40]); }catch(e){} }
+    }
+  };
+
+  // Recording an outcome now celebrates (or supports) instead of silently locking the year
+  const __setOutcome = window.setOutcome;
+  window.setOutcome = function(y, v){
+    const prev=state.years?.[y]?.outcome||'';
+    state.years[y]=state.years[y]||{};
+    if(v) state.years[y].outcomeAt=Date.now(); else delete state.years[y].outcomeAt;
+    __setOutcome(y, v);
+    if(v && v!==prev) setTimeout(()=>wCelebrate(y, v), 150);
+  };
+
+  window.wStartNext = function(from){
+    from=from||currentYear; const next=nextYearOf(from); if(!next) return;
+    if(state.profile && YEARS.indexOf(state.profile.trainingYear)<YEARS.indexOf(next)){ state.profile.trainingYear=next; saveState(); }
+    currentTab='home'; try{ localStorage.setItem('arcp_v2_tab','home'); }catch(e){}
+    setYear(next);
+    try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); }
+    wToast(`Welcome to ${next}`);
+  };
+  window.wToast = function(msg){
+    document.querySelector('.w-toast')?.remove();
+    const t=document.createElement('div'); t.className='w-toast'; t.setAttribute('role','status'); t.innerHTML=`${I('spark',18)}<span>${safe(msg)}</span>`;
+    document.body.appendChild(t); setTimeout(()=>t.classList.add('out'),2400); setTimeout(()=>t.remove(),2900);
+  };
+
+  // Home pieces
+  function outcomeArcpCard(card){
+    const oc=outcome(), m=OC_META[oc]; if(!m) return '';
+    if(oc==='3'||oc==='5'){
+      const rd=state.years?.[currentYear]?.reviewDate, dd=rd?Math.round((new Date(rd+'T00:00:00')-today0())/DAY):null;
+      return card('arcp', m.col, 'ARCP', `${currentYear} · Outcome ${oc} · ${ocShort(oc)}`,
+        rd?(dd>=0?`${dd} day${dd===1?'':'s'}`:'Due'):'Plan', rd?(dd>=0?'to your review panel':'Review date passed'):'Add your review date', false, alsPill());
+    }
+    const st=`<span class="w-stamp ${window.__wStampNew?'new':''}" aria-label="Outcome ${oc}"><span class="k">Outcome</span><span class="n">${oc}</span></span>`;
+    return card('arcp', m.col, 'ARCP', `${currentYear} · ${ocShort(oc)}`, st, `Signed off ${fmtD(signedOff(currentYear))}`, oc==='4', alsPill());
+  }
+  function outcomeFrontCard(){
+    const oc=outcome(); if(!(yearLocked()||oc==='4')) return '';
+    const next=nextYearOf(currentYear), y=currentYear;
+    const shell=(title,pill,text,inner)=>`<div class="w-card w-front w-next dark" style="--c:var(--c-arcp)"><div class="w-qhead"><span class="w-qt">${title}</span>${pill?`<span class="w-npill">${I('check',15)}${pill}</span>`:''}</div><p class="w-ntext">${text}</p>${inner}</div>`;
+    if(oc==='4') return shell('Your portfolio','', 'Everything you logged is saved here. Download a copy any time.',
+      `<button class="w-go" onclick="exportLogbook()">${I('dl',18)}<span>Download logbook (Excel)</span></button><button class="w-nlink" onclick="showPrintStylePicker()">${I('print',16)}<span>Print a report</span></button>`);
+    if(!next || oc==='6') return shell('Training complete','CCT', 'Every year of your portfolio is saved. Relive the whole journey, or download the lot.',
+      `<button class="w-go" onclick="wYearWrapped('all')">${I('spark',18)}<span>See your training Wrapped</span></button><button class="w-nlink" onclick="exportLogbook()">${I('dl',16)}<span>Download full logbook</span></button>`);
+    const items=[], needs=devNeeds(y);
+    if(needs.length) items.push(['flag',`${needs.length} development need${needs.length===1?'':'s'} from your ${y} panel`]);
+    if(state.als){ const d=new Date(state.als); if(!isNaN(d)) items.push(['check',`ALS valid to ${d.toLocaleDateString('en-GB',{month:'short',year:'numeric'})}`]); }
+    const sce=specReqs().spec_sce;
+    if(sce && !getReqVal('spec_sce',sce) && state.sceDate){ const d=new Date(state.sceDate); if(!isNaN(d)) items.push(['book',`ESENeph / SCE planned ${d.toLocaleDateString('en-GB',{month:'short',year:'numeric'})}`]); }
+    const np=new Date(state.arcpDates?.[next]||ARCP_DEFAULTS[next]);
+    if(!isNaN(np)) items.push(['flag',`${next} ARCP · ${np.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`]);
+    items.push(['list','Logbook totals keep counting towards CCT']);
+    const started=YEARS.indexOf(state.profile?.trainingYear)>=YEARS.indexOf(next);
+    return shell(`${started?'On to':'Start'} ${next}`, `${y} locked`, `Your ${y} portfolio is saved and locked. Coming with you:`,
+      `<ul class="w-carry">${items.map(([ic,t])=>`<li>${I(ic,18)}<span>${safe(t)}</span></li>`).join('')}</ul>
+       <button class="w-go" onclick="wStartNext('${y}')"><span>${started?'Go to':'Start'} ${next}</span>${I('chev',20)}</button>
+       <button class="w-nlink" onclick="wYearWrapped('${y}')">${I('spark',16)}<span>See your ${y} Wrapped</span></button>`);
+  }
+  // Development needs to act on: this year's (Outcome 2/3/5) and last year's carried over
+  function needRows(){
+    const out=[], oc=outcome(), prev=prevYearOf(currentYear);
+    const add=(yr,label)=>devNeeds(yr).forEach((n,i)=>{ if(!needDone(yr,i)) out.push({yr,i,n,label}); });
+    if(['2','3','5'].includes(oc)) add(currentYear, `From your ${currentYear} panel`);
+    if(prev && outcome(prev)) add(prev, `From your ${prev} ARCP`);
+    return out;
+  }
+  function needsSection(){
+    const blocks=[]; const prev=prevYearOf(currentYear), oc=outcome();
+    const block=(yr,note)=>{ const list=devNeeds(yr); if(!list.length) return;
+      const rows=list.map((n,i)=>{ const d=needDone(yr,i); return `<button class="w-row" onclick="wNeedToggle('${yr}',${i})" aria-pressed="${d}">${d?doneTile():`<span class="w-tile">${I('flag',22)}</span>`}<span class="w-row-m"><span class="w-row-t" style="${d?'text-decoration:line-through;opacity:.6':''}">${safe(n)}</span><span class="w-row-s">${d?'Done · tap to undo':'Tap when addressed'}</span></span></button>`; }).join('');
+      blocks.push(`<section class="section"><div class="sec-head"><span class="sec-title">Development needs</span><span class="sec-note">${note} · <button class="w-textbtn" onclick="wCelebrate('${yr}','${outcome(yr)}',true)">Edit</button></span></div><div class="w-list">${rows}</div></section>`); };
+    if(['2','3','5'].includes(oc)) block(currentYear, `From your ${currentYear} panel`);
+    if(prev && outcome(prev)) block(prev, `From your ${prev} ARCP`);
+    return blocks.join('');
+  }
+
   // ── MODULE SCREENS ──
   function renderSpecScreen(){
     const sp=specCfg(), r=calcReqsWithExtra(specReqs(),specDopsStats());
@@ -6662,10 +7068,26 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
     const mat=main().querySelector('.z-mat'); if(mat) mat.id='w-countdown';
     const p=panelInfo(), nx=nextArcpStep();
     const panelLong=p.panel.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+    const oc=outcome(), om=OC_META[oc], y=currentYear;
+    if(om && !['3','5'].includes(oc)){
+      prepend(head({ title:'ARCP', color:om.col, dark:oc==='4', kicker:`${y} · signed off ${fmtD(signedOff(y),{day:'numeric',month:'short',year:'numeric'})}`, big:`Outcome ${oc}`, bigText:true,
+        sub:safe(ocShort(oc)),
+        tab:{icon:'spark', label:oc==='6'?'Your training Wrapped':`Your ${y} Wrapped`, right:'Open', on:`wYearWrapped('${oc==='6'?'all':y}')`},
+        acts:[['spark','Celebrate',`wCelebrate('${y}','${oc}')`],['print','Logbook',"arcpGenerate('logbook')"],['book','CPD diary',"arcpGenerate('cpd')"],['plus','Add doc','arcpAddDoc()']] }));
+    } else if(om){
+      const rd=state.years?.[y]?.reviewDate, dd=rd?Math.round((new Date(rd+'T00:00:00')-today0())/DAY):null;
+      prepend(head({ title:'ARCP', color:om.col, kicker:rd?`Review panel · ${fmtD(new Date(rd+'T00:00:00'),{weekday:'short',day:'numeric',month:'short',year:'numeric'})}`:`${y} · Outcome ${oc}`,
+        big:rd?String(Math.max(0,dd)):`Outcome ${oc}`, unit:rd?(dd===1?' day':' days'):'', bigText:!rd,
+        sub:`Outcome ${oc} · ${safe(ocShort(oc))}`,
+        tab:{icon:'flag', label:rd?'Edit your plan':'Add your review date and plan', right:'', on:`wCelebrate('${y}','${oc}',true)`},
+        acts:[['table','Firth',"arcpGenerate('firth')"],['print','Logbook',"arcpGenerate('logbook')"],['book','CPD diary',"arcpGenerate('cpd')"],['flag','Plan',`wCelebrate('${y}','${oc}',true)`]] }));
+    } else {
     prepend(head({ title:'ARCP', color:'var(--c-arcp)', dark:true, kicker:`Panel · ${panelLong}`, big:String(Math.max(0,p.days)), unit:p.days===1?' day':' days',
       sub:`${p.lockTxt} · ${yearPct()}% of ${currentYear} gone`,
       tab:{icon:'flag', label:`Next: ${nx.title}`, right:arcpFmt(nx.date), on:"wScroll('w-countdown')"},
       acts:[['table','Firth',"arcpGenerate('firth')"],['print','Logbook',"arcpGenerate('logbook')"],['book','CPD diary',"arcpGenerate('cpd')"],['plus','Add doc','arcpAddDoc()']] }));
+    }
+    const ns=needsSection(); if(ns) main().querySelector('.w-head')?.insertAdjacentHTML('afterend', ns);
     if(tl) append(`<section class="z-sec" style="padding-top:88px"><div class="arcp-sec-head"><div><h2 class="arcp-h2">Road to CCT</h2><span class="z-script">${YEARS[0]} to ${YEARS[YEARS.length-1]}</span></div></div>${tl}</section>`);
   }
   function renderAdminScreen(){
@@ -6728,7 +7150,7 @@ try{ render(); forceLiveStatus(); }catch(e){ console.warn('V13 refresh skipped',
 
   document.addEventListener('keydown', e=>{
     if(e.key!=='Escape' || currentTab==='home') return;
-    if(document.querySelector('#w-ask,#fb-modal,#fb-qr-full,#print-style-modal,#cpd-edit-modal,#wrapped-overlay.show,#gate.show,#auth-gate.show')) return;
+    if(document.querySelector('#w-cele,#w-ask,#fb-modal,#fb-qr-full,#print-style-modal,#cpd-edit-modal,#wrapped-overlay.show,#gate.show,#auth-gate.show')) return;
     if(/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||'')) return;
     currentTab==='logbook-form' ? setTab(window.__wPrev||'home') : wHome();
   });
